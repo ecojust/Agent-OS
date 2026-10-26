@@ -44,6 +44,7 @@ import android.widget.Toast;
 import dev.agentos.core.ModelSettings;
 import dev.agentos.core.ModelProbe;
 import dev.agentos.core.RunControl;
+import dev.agentos.core.VisionModelProbe;
 
 import java.io.IOException;
 import java.text.Collator;
@@ -94,7 +95,13 @@ public final class MainActivity extends Activity implements AgentController.List
     private UiDraft retainedDraft;
     private RunControl modelProbe;
     private long probeGeneration;
-    private Button probeButton, cancelProbeButton;
+    private enum ProbeKind { TOOL, VISION }
+    private ProbeKind activeProbeKind;
+    private boolean resumed, toolProbeTested, toolVerified, imageProbeTested, syntheticImageVerified;
+    private String probeConnection = "未测试", probeMessage = "";
+    private int probeResultColor = R.color.agent_muted;
+    private AlertDialog probeTrustDialog;
+    private Button probeButton, visionProbeButton, cancelProbeButton;
     private TextView probeResult;
     private Button compatibilityButton;
     private final ThreadPoolExecutor diagnosticsWorker = new ThreadPoolExecutor(1, 1, 15, TimeUnit.SECONDS,
@@ -141,7 +148,14 @@ public final class MainActivity extends Activity implements AgentController.List
 
     @Override protected void onResume() {
         super.onResume();
+        resumed = true;
         renderState();
+    }
+
+    @Override protected void onPause() {
+        resumed = false;
+        dismissProbeTrustDialog();
+        super.onPause();
     }
 
     @Override protected void onStop() {
@@ -255,6 +269,13 @@ public final class MainActivity extends Activity implements AgentController.List
         probeButton.setOnClickListener(view -> testModel());
         configurationViews.add(probeButton);
         marginAdd(modelFields, probeButton, 12);
+        visionProbeButton = button("测试图像理解", R.drawable.ic_settings, false);
+        visionProbeButton.setId(R.id.test_model_vision);
+        visionProbeButton.setOnClickListener(view -> startModelProbe(ProbeKind.VISION));
+        configurationViews.add(visionProbeButton);
+        marginAdd(modelFields, visionProbeButton, 8);
+        marginAdd(modelFields, text("只上传自动生成的合成色块，不读取屏幕或发送任务内容。", 12,
+                R.color.agent_muted, false), 6);
         cancelProbeButton = button("取消测试", R.drawable.ic_stop, false);
         cancelProbeButton.setId(R.id.cancel_model_test);
         cancelProbeButton.setOnClickListener(view -> cancelModelProbe("测试已取消，未操作手机应用。", true));
@@ -877,66 +898,133 @@ public final class MainActivity extends Activity implements AgentController.List
         if (dismiss && oldDialog != null && oldDialog.isShowing()) oldDialog.dismiss();
     }
 
-    private void testModel() {
-        if (!ready || busy || destroyed || storageDamaged || modelProbe != null || controller.getState().running) return;
+    private void testModel() { startModelProbe(ProbeKind.TOOL); }
+
+    private boolean canStartModelProbe() {
+        return ready && resumed && !busy && !destroyed && !isFinishing() && !storageDamaged
+                && modelProbe == null && probeTrustDialog == null && !controller.getState().running;
+    }
+
+    private void startModelProbe(ProbeKind kind) {
+        if (!canStartModelProbe()) return;
         ModelSettings model = new ModelSettings(endpointField.getText().toString(), keyField.getText().toString(), modelField.getText().toString());
         try { model.validate(); }
         catch (IllegalArgumentException invalid) { showMessage(invalid.getMessage(), true); return; }
         if (model.endpoint.toLowerCase(Locale.ROOT).startsWith("http://") && !model.endpoint.equals(acceptedHttpEndpoint)) {
-            new AlertDialog.Builder(this).setTitle("使用未加密的本地连接？")
-                    .setMessage("此地址使用 HTTP。测试请求和密钥在传输时不会加密，请仅连接你信任的本机或局域网服务。你也可以改用 HTTPS。")
+            final long generation = ++probeGeneration;
+            AlertDialog prompt = new AlertDialog.Builder(this).setTitle("使用未加密的本地连接？")
+                    .setMessage("此地址使用 HTTP。测试请求、合成测试图片和密钥在传输时不会加密，请仅连接你信任的本机或局域网服务。你也可以改用 HTTPS。")
                     .setNegativeButton("返回修改", null)
                     .setPositiveButton("信任此连接", (dialog, which) -> {
-                        if (destroyed || controller.getState().running) return;
+                        // The prompt authorizes only the captured configuration and this foreground lifecycle.
+                        if (probeTrustDialog != dialog || generation != probeGeneration || !resumed
+                                || destroyed || isFinishing() || !modelMatchesFields(model)) return;
+                        probeTrustDialog = null;
+                        if (!canStartModelProbe()) return;
                         acceptedHttpEndpoint = model.endpoint;
-                        testModel();
-                    }).show();
+                        beginModelProbe(kind, model);
+                    }).create();
+            probeTrustDialog = prompt;
+            prompt.setOnDismissListener(dialog -> {
+                if (probeTrustDialog == dialog) { probeTrustDialog = null; ++probeGeneration; }
+            });
+            if (prompt.getWindow() != null) prompt.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+            prompt.show();
             return;
         }
+        beginModelProbe(kind, model);
+    }
+
+    private boolean modelMatchesFields(ModelSettings model) {
+        ModelSettings current = new ModelSettings(endpointField.getText().toString(), keyField.getText().toString(), modelField.getText().toString());
+        return model.endpoint.equals(current.endpoint) && model.model.equals(current.model)
+                && model.apiKey.equals(current.apiKey) && model.maxOutputTokens == current.maxOutputTokens;
+    }
+
+    private void beginModelProbe(ProbeKind kind, ModelSettings model) {
+        if (!canStartModelProbe() || !modelMatchesFields(model)) return;
         final RunControl control = new RunControl(draft.profileId);
         final long generation = ++probeGeneration;
         modelProbe = control;
-        probeResult.setText("网络连接：正在检查\n工具调用：等待测试\n图像能力：未验证");
-        probeResult.setTextColor(color(R.color.agent_muted));
+        activeProbeKind = kind;
+        probeConnection = "正在检查";
+        probeMessage = "";
+        probeResultColor = R.color.agent_muted;
+        if (kind == ProbeKind.TOOL) { toolProbeTested = true; toolVerified = false; }
+        else { imageProbeTested = true; syntheticImageVerified = false; }
+        renderProbeResult();
         renderState();
-        storageWorker.execute(() -> {
+        try { storageWorker.execute(() -> {
             if (destroyed) { control.cancel(); return; }
             try {
-                ModelProbe.Result result = new ModelProbe().test(model, control);
+                final boolean connected, verified;
+                final String message;
+                if (kind == ProbeKind.VISION) {
+                    VisionModelProbe.Result result = new VisionModelProbe().test(model, control);
+                    connected = result.connected; verified = result.syntheticImageVerified; message = result.message;
+                } else {
+                    ModelProbe.Result result = new ModelProbe().test(model, control);
+                    connected = result.connected; verified = result.toolCallingVerified; message = result.message;
+                }
                 main.post(() -> {
                     if (destroyed || modelProbe != control || generation != probeGeneration || control.isCancelled()) return;
                     modelProbe = null;
-                    probeResult.setText("网络连接：" + (result.connected ? "已连接" : "未连接")
-                            + "\n工具调用：" + (result.toolCallingVerified ? "已验证" : "未验证")
-                            + "\n图像能力：未验证\n" + result.message);
-                    probeResult.setTextColor(color(result.toolCallingVerified ? R.color.agent_success : R.color.agent_error));
+                    activeProbeKind = null;
+                    control.cancel();
+                    probeConnection = connected ? "已连接" : "未连接";
+                    if (kind == ProbeKind.TOOL) toolVerified = verified;
+                    else syntheticImageVerified = verified;
+                    probeMessage = message;
+                    probeResultColor = verified ? R.color.agent_success : R.color.agent_error;
+                    renderProbeResult();
                     renderState();
                 });
             } catch (InterruptedException cancelled) {
                 main.post(() -> {
                     if (destroyed || modelProbe != control || generation != probeGeneration) return;
-                    modelProbe = null;
-                    probeResult.setText("测试已取消，连接与工具能力未验证。");
-                    renderState();
+                    cancelModelProbe("测试已取消，未操作手机应用。", true);
                 });
             } catch (RuntimeException failed) {
                 // A failed adapter must never expose arbitrary response bodies or credentials.
                 main.post(() -> {
                     if (destroyed || modelProbe != control || generation != probeGeneration) return;
                     modelProbe = null;
-                    probeResult.setText("测试未完成，连接与工具能力未验证。请检查模型配置和网络后重试。");
-                    probeResult.setTextColor(color(R.color.agent_error));
+                    activeProbeKind = null;
+                    control.cancel();
+                    probeConnection = "未验证";
+                    probeMessage = "本次测试未完成。请检查模型配置和网络后重试。";
+                    probeResultColor = R.color.agent_error;
+                    renderProbeResult();
                     renderState();
                 });
             }
-        });
+        }); } catch (RejectedExecutionException unavailable) {
+            cancelModelProbe("测试未启动，请重新打开配置页面后重试。", true);
+        }
+    }
+
+    private void renderProbeResult() {
+        if (probeResult == null) return;
+        String tools = activeProbeKind == ProbeKind.TOOL ? "正在测试"
+                : !toolProbeTested ? "未测试" : toolVerified ? "已验证" : "未验证";
+        String image = activeProbeKind == ProbeKind.VISION ? "正在测试合成图片"
+                : !imageProbeTested ? "未验证" : syntheticImageVerified ? "本次合成图片已验证" : "本次合成图片未验证";
+        probeResult.setText("网络连接：" + probeConnection + "\n工具调用：" + tools + "\n图像能力：" + image
+                + (probeMessage.isEmpty() ? "" : "\n" + probeMessage));
+        probeResult.setTextColor(color(probeResultColor));
     }
 
     private void watchModelConfiguration() {
         TextWatcher watcher = new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence text, int start, int count, int after) { }
             @Override public void onTextChanged(CharSequence text, int start, int before, int count) {
-                cancelModelProbe("配置已更改，请重新测试连接与工具调用。", true);
+                cancelModelProbe("", false);
+                probeConnection = "未测试";
+                toolProbeTested = toolVerified = imageProbeTested = syntheticImageVerified = false;
+                probeMessage = "配置已更改，请重新测试连接、工具调用与图像理解。";
+                probeResultColor = R.color.agent_muted;
+                renderProbeResult();
+                if (!destroyed && statusText != null) renderState();
             }
             @Override public void afterTextChanged(Editable text) { }
         };
@@ -947,14 +1035,26 @@ public final class MainActivity extends Activity implements AgentController.List
 
     private void cancelModelProbe(String reason, boolean updateUi) {
         ++probeGeneration;
+        dismissProbeTrustDialog();
         RunControl current = modelProbe;
         modelProbe = null;
+        activeProbeKind = null;
         if (current != null) current.cancel();
         if (!destroyed && probeResult != null && (current != null || updateUi)) {
-            probeResult.setText(reason);
-            probeResult.setTextColor(color(R.color.agent_muted));
+            if (current != null) probeConnection = "未验证";
+            probeMessage = reason;
+            probeResultColor = R.color.agent_muted;
+            renderProbeResult();
         }
         if (updateUi && !destroyed && statusText != null) renderState();
+    }
+
+    private void dismissProbeTrustDialog() {
+        AlertDialog previous = probeTrustDialog;
+        if (previous == null) return;
+        probeTrustDialog = null;
+        ++probeGeneration;
+        previous.dismiss();
     }
 
     private void updateModelPanel() {

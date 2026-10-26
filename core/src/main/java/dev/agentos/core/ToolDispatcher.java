@@ -52,7 +52,7 @@ public final class ToolDispatcher implements AutoCloseable {
                     catch (IllegalArgumentException invalid) { return save(entry, envelope(request, error("INVALID_ARGUMENT", invalid.getMessage()))); }
                     control.checkExecutionEpoch(request.executionEpoch);
                     enteredHandler = true;
-                    result = handler.execute(request.tool, arguments.deepCopy(), control);
+                    result = handler.execute(request.tool, arguments.deepCopy(), control, request.executionEpoch);
                     if (result == null || !result.has("ok") || !result.get("ok").isJsonPrimitive() || !result.get("ok").getAsJsonPrimitive().isBoolean())
                         result = error(ToolCatalog.isMutation(request.tool) ? "OUTCOME_UNKNOWN" : "INVALID_RESULT", "执行器没有返回可核对的结果。");
                     else result = result.deepCopy();

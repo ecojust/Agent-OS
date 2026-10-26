@@ -49,12 +49,16 @@ public final class AgentRunner {
         ToolHandler guarded = new ToolHandler() {
             @Override public Set<String> availableTools() { return tools.availableTools(); }
             @Override public JsonObject execute(String name, JsonObject arguments, RunControl active) throws Exception {
+                return execute(name, arguments, active, state.epoch);
+            }
+            @Override public JsonObject execute(String name, JsonObject arguments, RunControl active,
+                                                long requestEpoch) throws Exception {
+                active.checkExecutionEpoch(requestEpoch);
                 if (ToolCatalog.isMutation(name) && state.batchMutated) return ToolDispatcher.error("STALE_OBSERVATION", "上一步已改变界面，请先根据新观察重新规划。");
                 if (ToolCatalog.requiresRevision(name) && (state.revision == null || !state.revision.equals(arguments.get("expectedRevision").getAsString())))
                     return ToolDispatcher.error("STALE_OBSERVATION", "请求使用了过期界面版本，请根据最新观察重新规划。");
-                active.checkExecutionEpoch(state.epoch);
                 state.actualDeviceCall = true;
-                return tools.execute(name, arguments, active);
+                return tools.execute(name, arguments, active, requestEpoch);
             }
         };
         try (ToolDispatcher dispatcher = new ToolDispatcher(guarded)) {

@@ -190,19 +190,19 @@ public final class AndroidDeviceTools implements ToolHandler {
         validateInstalledGrant(name);
         onMain(() -> {
             requireReady(control, epoch); requireFastGrant(name);
-            // Do not reclaim focus after the user has moved away during model/approval work.
-            if (lastObservedEpoch == epoch && lastObservedRevision != null) {
-                try (Snapshot current = snapshot(control, epoch)) {
-                    if (!lastObservedRevision.equals(current.revision)) throw stale();
-                }
+            try (Snapshot current = snapshot(control, epoch)) {
+                // Do not reclaim focus after the user has moved away during model/approval work.
+                if (lastObservedEpoch == epoch && lastObservedRevision != null
+                        && !lastObservedRevision.equals(current.revision)) throw stale();
+                Intent intent = service.getPackageManager().getLaunchIntentForPackage(name);
+                if (intent == null) throw unavailable("应用未提供启动入口");
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                current.verifyWindowUnchanged();
+                finalGuard(control, epoch);
+                control.markDispatchAttempt(epoch);
+                dispatch.started = true;
+                service.startActivity(intent);
             }
-            Intent intent = service.getPackageManager().getLaunchIntentForPackage(name);
-            if (intent == null) throw unavailable("应用未提供启动入口");
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            finalGuard(control, epoch);
-            control.markDispatchAttempt(epoch);
-            dispatch.started = true;
-            service.startActivity(intent);
             return null;
         }, control, epoch, dispatch);
         control.checkExecutionEpoch(epoch);
@@ -226,6 +226,7 @@ public final class AndroidDeviceTools implements ToolHandler {
             try (Snapshot state = snapshot(control, epoch)) {
                 state.requireRevision(revision); validateMutation(name, args, state, control, epoch);
                 requireFastGrant(state.packageName);
+                state.verifyWindowUnchanged();
                 finalGuard(control, epoch);
                 control.markDispatchAttempt(epoch);
                 dispatch.started = true;
@@ -332,8 +333,7 @@ public final class AndroidDeviceTools implements ToolHandler {
 
     private Snapshot snapshot(RunControl control, long epoch) throws Exception {
         control.checkExecutionEpoch(epoch);
-        AccessibilityNodeInfo root = service.getRootInActiveWindow();
-        if (root == null) throw unavailable("当前没有可读取的应用窗口");
+        AccessibilityNodeInfo root = focusedRoot(control, epoch);
         Snapshot state = new Snapshot(control, epoch);
         state.owned.add(root);
         try {
@@ -347,6 +347,7 @@ public final class AndroidDeviceTools implements ToolHandler {
                 requireFastGrant(state.packageName);
                 state.visit(root, "n", 0);
             }
+            state.verifyWindowUnchanged();
             String structural = profileId + ":" + control.getTaskId() + ":" + epoch + ":" + state.packageName + ":" + state.windowSignature
                     + ":" + state.elements + ":" + state.contentHashes + ":" + state.truncated;
             state.revision = digest(structural);
@@ -354,6 +355,35 @@ public final class AndroidDeviceTools implements ToolHandler {
             control.checkExecutionEpoch(epoch);
             return state;
         } catch (Exception failure) { state.close(); throw failure; }
+    }
+
+    /** The interaction-active window may lag behind HOME/activity changes on some releases. */
+    private AccessibilityNodeInfo focusedRoot(RunControl control, long epoch) throws Exception {
+        List<AccessibilityWindowInfo> windows = service.getWindows();
+        try {
+            AccessibilityWindowInfo focused = uniqueFocusedWindow(windows, control, epoch);
+            AccessibilityNodeInfo root = focused.getRoot();
+            if (root == null) throw stale();
+            try {
+                control.checkExecutionEpoch(epoch);
+                if (root.getWindowId() != focused.getId()) throw stale();
+                return root;
+            } catch (Exception failure) { recycle(root); throw failure; }
+        } finally { if (windows != null) recycleWindows(windows); }
+    }
+
+    private static AccessibilityWindowInfo uniqueFocusedWindow(List<AccessibilityWindowInfo> windows,
+                                                                 RunControl control, long epoch) throws Exception {
+        if (windows == null || windows.isEmpty() || windows.size() > 40) throw stale();
+        AccessibilityWindowInfo focused = null;
+        for (AccessibilityWindowInfo window : windows) {
+            control.checkExecutionEpoch(epoch);
+            if (window.getDisplayId() != Display.DEFAULT_DISPLAY || !window.isFocused()) continue;
+            if (focused != null) throw stale();
+            focused = window;
+        }
+        if (focused == null) throw stale();
+        return focused;
     }
 
     private final class Snapshot implements AutoCloseable {
@@ -379,18 +409,16 @@ public final class AndroidDeviceTools implements ToolHandler {
         void inspectWindows() throws Exception {
             control.checkExecutionEpoch(epoch);
             List<AccessibilityWindowInfo> windows = service.getWindows();
-            if (windows == null || windows.isEmpty() || windows.size() > 40) throw unavailable("无法可靠确认窗口层级");
             try {
-                AccessibilityWindowInfo active = null;
-                for (AccessibilityWindowInfo window : windows) {
-                    control.checkExecutionEpoch(epoch);
-                    if (window.getId() == windowId) active = window;
-                }
-                if (active == null || active.getDisplayId() != Display.DEFAULT_DISPLAY) throw unavailable("当前窗口或显示不可验证");
+                AccessibilityWindowInfo active = uniqueFocusedWindow(windows, control, epoch);
+                if (active.getId() != windowId) throw stale();
                 if (active.getType() != AccessibilityWindowInfo.TYPE_APPLICATION) scoped = false;
+                obscured.clear();
+                systemBars.clear();
                 Rect activeBounds = new Rect(); active.getBoundsInScreen(activeBounds);
                 if (!bounds.intersect(activeBounds) || bounds.isEmpty()) throw unavailable("应用窗口没有可观察区域");
-                StringBuilder signature = new StringBuilder(windowId + ":" + active.getLayer() + ":" + active.isFocused() + ":" + bounds.toShortString());
+                StringBuilder signature = new StringBuilder(windowId + ":" + active.getType() + ":" + active.getLayer()
+                        + ":focused:" + activeBounds.toShortString() + ":" + bounds.toShortString());
                 WindowManager wm = (WindowManager) service.getSystemService(Context.WINDOW_SERVICE);
                 if (wm == null) throw unavailable("显示几何信息不可用");
                 WindowMetrics metrics = wm.getCurrentWindowMetrics();
@@ -419,7 +447,20 @@ public final class AndroidDeviceTools implements ToolHandler {
                     obscured.add(other);
                 }
                 windowSignature = signature.toString();
-            } finally { recycleWindows(windows); }
+            } finally { if (windows != null) recycleWindows(windows); }
+        }
+
+        void verifyWindowUnchanged() throws Exception {
+            String expected = windowSignature;
+            boolean expectedScope = scoped;
+            try { inspectWindows(); }
+            catch (DeviceException changed) {
+                // This snapshot already had valid geometry; losing it during a
+                // second read is a transition, not permission to reuse old data.
+                if ("CAPABILITY_UNAVAILABLE".equals(changed.code)) throw stale();
+                throw changed;
+            }
+            if (!expected.equals(windowSignature) || scoped != expectedScope) throw stale();
         }
 
         boolean containedByBar(Rect region) {
@@ -500,6 +541,7 @@ public final class AndroidDeviceTools implements ToolHandler {
 
         JsonObject json() {
             JsonObject result = new JsonObject(); result.addProperty("packageName", packageName);
+            result.addProperty("windowId", windowId); result.addProperty("focused", true);
             result.addProperty("profileId", profileId); result.addProperty("revision", revision);
             result.addProperty("scoped", scoped); result.addProperty("truncated", truncated);
             result.addProperty("hasOcclusion", !obscured.isEmpty()); result.add("nodes", elements.deepCopy());

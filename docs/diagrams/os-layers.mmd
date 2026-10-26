@@ -1,0 +1,34 @@
+flowchart TB
+    subgraph experience[交互与应用层]
+        direction LR
+        launcher[自研桌面与对话入口]
+        controls[任务状态与用户控制]
+        apps[Android 应用]
+    end
+    subgraph agent[Agent 运行层]
+        direction LR
+        core[任务协调与结果验证]
+        model[模型网关与加密配置]
+        policy[授权策略与工具注册]
+    end
+    bridge[平台适配边界<br/>原型：Accessibility 与公开接口<br/>系统：受权限保护的 Binder / AIDL 服务]
+    framework[Android Framework 与系统服务<br/>应用生命周期 · 窗口 · 包管理 · 权限 · 媒体]
+    hal[厂商接口与 HAL<br/>显示 · 相机 · 音频 · 传感器 · 通信]
+    kernel[Linux 内核与设备驱动<br/>进程 · 内存 · 网络 · 电源 · 设备访问]
+    hardware[目标手机硬件<br/>ARM64 SoC · 屏幕 · 存储 · 外设]
+
+    launcher --> core
+    controls --> policy
+    core <--> model
+    core --> policy --> bridge --> framework
+    apps --> framework
+    framework --> hal --> kernel --> hardware
+
+    classDef interface fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e,stroke-width:2px;
+    classDef agentNode fill:#ede9fe,stroke:#7c3aed,color:#4c1d95,stroke-width:2px;
+    classDef platform fill:#dcfce7,stroke:#16a34a,color:#14532d,stroke-width:2px;
+    classDef device fill:#fff7ed,stroke:#ea580c,color:#7c2d12,stroke-width:2px;
+    class launcher,controls,apps interface;
+    class core,model,policy agentNode;
+    class bridge,framework platform;
+    class hal,kernel,hardware device;

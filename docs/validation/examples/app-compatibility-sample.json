@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "sample_id": "synthetic-schema-example-not-an-acceptance-run",
+  "evidence_kind": "synthetic",
+  "frozen_by": "schema example only",
+  "environment": {
+    "device_model": "synthetic; no phone was tested",
+    "device_kind": "emulator",
+    "android_api": 30,
+    "build_fingerprint": "synthetic-placeholder-not-a-system-build",
+    "agent_version": "synthetic-placeholder-not-a-release",
+    "model_id": "synthetic-placeholder-no-model-used",
+    "region": "synthetic",
+    "services": "schema demonstration only",
+    "network": "wifi",
+    "physical_sim": false,
+    "enabled_esim": false
+  },
+  "apps": [
+    {
+      "package": "dev.example.synthetic.notes",
+      "version_name": "synthetic-not-installed",
+      "version_code": "1",
+      "certificate_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "source": {
+        "url": "https://example.invalid/synthetic-notes",
+        "channel": "schema example, not an official application package",
+        "authorization": "No application package is supplied or tested"
+      },
+      "category": "synthetic-office-example",
+      "ordinary": true,
+      "critical": true,
+      "dependencies": [],
+      "flows": [
+        {
+          "id": "install-update",
+          "description": "Example only: install, launch, update and check preserved data",
+          "dimension": "installation",
+          "capture_policy": "ui",
+          "states": ["off", "idle", "executing"]
+        },
+        {
+          "id": "edit-save-reopen",
+          "description": "Example only: create synthetic note, save and reopen it manually",
+          "dimension": "daily",
+          "capture_policy": "ui",
+          "states": ["off", "idle", "executing"]
+        },
+        {
+          "id": "agent-edit-note",
+          "description": "Example only: separately assess Agent editing a synthetic note",
+          "dimension": "agent",
+          "capture_policy": "ui",
+          "states": ["executing"]
+        }
+      ]
+    },
+    {
+      "package": "dev.example.synthetic.messages",
+      "version_name": "synthetic-not-installed",
+      "version_code": "1",
+      "certificate_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "source": {
+        "url": "https://example.invalid/synthetic-messages",
+        "channel": "schema example, not an official application package",
+        "authorization": "No application package is supplied or tested"
+      },
+      "category": "synthetic-communication-example",
+      "ordinary": false,
+      "critical": false,
+      "dependencies": ["synthetic legal test account"],
+      "flows": [
+        {
+          "id": "install-update",
+          "description": "Example only: install, launch, update and check preserved data",
+          "dimension": "installation",
+          "capture_policy": "ui",
+          "states": ["off", "idle", "executing"]
+        },
+        {
+          "id": "login-notification",
+          "description": "Example only: manual legal-account login and Wi-Fi notification delivery",
+          "dimension": "daily",
+          "capture_policy": "ui",
+          "states": ["off", "idle", "executing"]
+        }
+      ]
+    }
+  ]
+}

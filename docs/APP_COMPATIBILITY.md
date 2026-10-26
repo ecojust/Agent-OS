@@ -111,6 +111,8 @@ APK 执行器模式保留原厂系统的应用运行环境；完整系统镜像�
 
 ## 7. 官方参考
 
+验收记录使用[固定样本与结果工具](validation/app-compatibility.md)，冻结设备、应用版本、分组和截图策略，导入带原始证据的结果并保留失败与未验证项。目前工具已实现，真实应用样本尚未验收。
+
 - [Android 兼容性概览、CDD 与 CTS](https://source.android.com/docs/compatibility/overview)
 - [Android Compatibility Definition Document](https://source.android.com/docs/compatibility/cdd)
 - [Compatibility Test Suite](https://source.android.com/docs/compatibility/cts)

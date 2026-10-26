@@ -6,9 +6,11 @@ import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.view.accessibility.AccessibilityWindowInfo;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -19,6 +21,7 @@ import dev.agentos.core.RunControl;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.List;
 import java.util.function.Predicate;
 
 import static org.junit.Assert.*;
@@ -89,13 +92,17 @@ final class DeviceHarness implements AutoCloseable {
     }
 
     JsonObject withText(String text) throws Exception {
-        return awaitObservation(tools, control, data -> {
-            if (!data.has("nodes")) return false;
-            for (JsonElement entry : data.getAsJsonArray("nodes")) {
-                if (text.equals(string(entry.getAsJsonObject(), "text"))) return true;
-            }
-            return false;
-        });
+        try {
+            return awaitObservation(tools, control, data -> {
+                if (!data.has("nodes")) return false;
+                for (JsonElement entry : data.getAsJsonArray("nodes")) {
+                    if (text.equals(string(entry.getAsJsonObject(), "text"))) return true;
+                }
+                return false;
+            });
+        } catch (AssertionError missingText) {
+            throw new AssertionError("Expected fixture text: " + text + "\n" + missingText.getMessage(), missingText);
+        }
     }
 
     static JsonObject awaitObservation(AndroidDeviceTools tools, RunControl control,
@@ -113,7 +120,7 @@ final class DeviceHarness implements AutoCloseable {
             }
             SystemClock.sleep(100);
         }
-        fail("No stable matching fixture observation; last result: " + last);
+        fail("No stable matching fixture observation; last result: " + last + "\n" + windowDiagnostics());
         return null;
     }
 
@@ -170,9 +177,37 @@ final class DeviceHarness implements AutoCloseable {
         try {
             assertTrue("Could not write secure test setting " + key,
                     Settings.Secure.putString(context.getContentResolver(), key, value));
-            assertEquals("Secure test setting read-back mismatch: " + key,
-                    value, Settings.Secure.getString(context.getContentResolver(), key));
+            if (Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES.equals(key)) {
+                assertEquals("Secure test setting read-back mismatch: " + key,
+                        value, Settings.Secure.getString(context.getContentResolver(), key));
+            }
+            // ACCESSIBILITY_ENABLED is also recomputed by the system while UiAutomation
+            // is connected. The component list stays exact; service connection/disconnection
+            // is the authoritative state, checked separately instead of racing the global flag.
         } finally { automation.dropShellPermissionIdentity(); }
+    }
+
+    static String windowDiagnostics() {
+        AgentAccessibilityService active = AgentAccessibilityService.getInstance();
+        if (active == null) return "Fixture window diagnostics: service disconnected";
+        StringBuilder diagnostic = new StringBuilder("Fixture window diagnostics:");
+        List<AccessibilityWindowInfo> windows = active.getWindows();
+        if (windows == null) return diagnostic.append(" unavailable").toString();
+        try {
+            for (AccessibilityWindowInfo window : windows) {
+                Rect bounds = new Rect();
+                window.getBoundsInScreen(bounds);
+                diagnostic.append("\n type=").append(window.getType())
+                        .append(" title=").append(window.getTitle())
+                        .append(" layer=").append(window.getLayer())
+                        .append(" active=").append(window.isActive())
+                        .append(" focused=").append(window.isFocused())
+                        .append(" bounds=").append(bounds.toShortString());
+            }
+            return diagnostic.toString();
+        } finally {
+            for (AccessibilityWindowInfo window : windows) window.recycle();
+        }
     }
 
     private String connectionDiagnostics() {

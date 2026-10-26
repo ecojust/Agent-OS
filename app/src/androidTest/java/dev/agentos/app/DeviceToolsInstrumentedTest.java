@@ -9,13 +9,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
-import android.graphics.Rect;
 import android.os.Build;
 import android.os.SystemClock;
 import android.view.Gravity;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
-import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.TextView;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.gson.JsonElement;
@@ -27,7 +25,6 @@ import org.junit.runner.RunWith;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -235,8 +232,13 @@ public final class DeviceToolsInstrumentedTest {
             arguments.addProperty("expectedRevision", string(first, "revision"));
             JsonObject home = device.tools.execute("home", arguments, device.control);
             assertTrue(home.toString(), home.get("ok").getAsBoolean());
-            JsonObject launcher = awaitObservation(device.tools, device.control,
-                    data -> !FIXTURE.equals(string(data, "packageName")));
+            JsonObject launcher;
+            try {
+                launcher = awaitObservation(device.tools, device.control,
+                        data -> !FIXTURE.equals(string(data, "packageName")));
+            } catch (AssertionError notHome) {
+                throw new AssertionError("After accepted home action: " + notHome.getMessage(), notHome);
+            }
             assertFalse(launcher.get("scoped").getAsBoolean());
             assertFalse(device.control.isPaused());
         }
@@ -271,15 +273,9 @@ public final class DeviceToolsInstrumentedTest {
             });
             long attempts = device.control.getDispatchAttempts();
             try {
-                JsonObject obscured;
-                try {
-                    obscured = awaitObservation(device.tools, device.control,
-                            data -> data.get("hasOcclusion").getAsBoolean()
-                                    && node(data, "increment").get("obscured").getAsBoolean());
-                } catch (AssertionError missingObstruction) {
-                    throw new AssertionError(missingObstruction.getMessage() + "\n" + fixtureWindowDiagnostics(device),
-                            missingObstruction);
-                }
+                JsonObject obscured = awaitObservation(device.tools, device.control,
+                        data -> data.get("hasOcclusion").getAsBoolean()
+                                && node(data, "increment").get("obscured").getAsBoolean());
                 try {
                     device.tools.execute("click", nodeArguments(obscured, "increment"), device.control);
                     fail("A different overlay must stop the target action");
@@ -292,25 +288,6 @@ public final class DeviceToolsInstrumentedTest {
             }
             device.control.resume();
             device.withText("Count: 0");
-        }
-    }
-
-    private static String fixtureWindowDiagnostics(DeviceHarness device) {
-        StringBuilder diagnostic = new StringBuilder("Synthetic fixture window diagnostics:");
-        List<AccessibilityWindowInfo> windows = device.service.getWindows();
-        if (windows == null) return diagnostic.append(" unavailable").toString();
-        try {
-            for (AccessibilityWindowInfo window : windows) {
-                Rect bounds = new Rect();
-                window.getBoundsInScreen(bounds);
-                diagnostic.append("\n type=").append(window.getType())
-                        .append(" title=").append(window.getTitle())
-                        .append(" layer=").append(window.getLayer())
-                        .append(" bounds=").append(bounds.toShortString());
-            }
-            return diagnostic.toString();
-        } finally {
-            for (AccessibilityWindowInfo window : windows) window.recycle();
         }
     }
 

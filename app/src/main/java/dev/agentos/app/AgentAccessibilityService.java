@@ -35,6 +35,7 @@ import java.util.concurrent.CompletableFuture;
 /** User-enabled bridge. It never starts a task merely because accessibility is enabled. */
 public final class AgentAccessibilityService extends AccessibilityService {
     private static final String USER_SWITCHED = "android.intent.action.USER_SWITCHED";
+    private static final long EVENT_READY_CHECK_INTERVAL_MS = 100;
     public interface OverlayCallbacks {
         void onPauseResume();
         void onStop();
@@ -61,6 +62,11 @@ public final class AgentAccessibilityService extends AccessibilityService {
     private boolean receiverRegistered;
     private boolean packageReceiverRegistered;
     private boolean connected;
+    private boolean eventReadyCheckPending;
+    private final Runnable eventReadyCheck = () -> {
+        eventReadyCheckPending = false;
+        if (overlay != null && !isDeviceReady()) stopFromDevice();
+    };
 
     private final BroadcastReceiver screenReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
@@ -336,6 +342,8 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     private void removeOverlay() {
+        main.removeCallbacks(eventReadyCheck);
+        eventReadyCheckPending = false;
         if (overlay == null) return;
         try { ((WindowManager) getSystemService(WINDOW_SERVICE)).removeViewImmediate(overlay); }
         catch (RuntimeException ignored) { }
@@ -360,7 +368,14 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
-        if (overlay != null && !isDeviceReady()) stopFromDevice();
+        // Let the framework process every window-removal/focus event for its cache.
+        // Only coalesce our own readiness queries; retain no event or node contents.
+        // This deadline is not extended by later events, so continuous scrolling
+        // cannot postpone the check indefinitely. Broadcast and dispatch guards
+        // remain immediate and do not use this queue.
+        if (overlay == null || eventReadyCheckPending) return;
+        eventReadyCheckPending = true;
+        main.postDelayed(eventReadyCheck, EVENT_READY_CHECK_INTERVAL_MS);
     }
 
     @Override public void onInterrupt() { stopFromDevice(); }

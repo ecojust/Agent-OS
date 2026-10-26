@@ -2,6 +2,7 @@
 
 import tempfile
 from pathlib import Path
+import subprocess
 import unittest
 from unittest.mock import patch
 
@@ -59,12 +60,42 @@ class InspectionTests(unittest.TestCase):
             root = Path(temporary)
             (root / "malicious.py").write_text("raise RuntimeError('must not execute')")
             (root / "result.xml").write_text('<testsuite><testcase name="case"><failure>diag=synthetic</failure></testcase></testsuite>')
-            with patch.object(inspector.subprocess, "run") as process:
+            with patch.object(inspector.subprocess, "run",
+                              return_value=subprocess.CompletedProcess([], 0, stdout="")) as process:
                 inspector.inspect_reports(root)
                 self.assertEqual(1, process.call_count)
                 command = process.call_args.args[0]
                 self.assertEqual("print_android_test_failures.py", Path(command[1]).name)
                 self.assertNotEqual(root, Path(command[2]))
+
+    def test_ime_summary_retains_late_state_without_echoing_other_values(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            report = root / "result.xml"
+            report.write_text('<testsuite><testcase name="keyboard"><failure>'
+                + ('unrelated history\n' * 1000)
+                + 'TOKEN=secret-value\nUSER_TEXT=private-editor-content\n'
+                + 'mInputViewStarted=true mWindowVisible=false extraKey=secret-value\n'
+                + 'onEvaluateInputViewShown(): true\nreason=HIDE_SOFT_INPUT\n'
+                + '</failure></testcase></testsuite>')
+            summary = inspector.ime_summary([report])
+            self.assertIn('mInputViewStarted=true', summary)
+            self.assertIn('mWindowVisible=false', summary)
+            self.assertIn('onEvaluateInputViewShown=true', summary)
+            self.assertIn('reason=HIDE_SOFT_INPUT', summary)
+            self.assertNotIn('secret-value', summary)
+            self.assertNotIn('private-editor-content', summary)
+            self.assertNotIn('TOKEN', summary)
+
+    def test_ime_summary_is_bounded_and_favors_latest_fields(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "result.xml"
+            failure = '<failure>' + ('mWindowVisible=false\n' * 1000) + 'mWindowVisible=true</failure>'
+            report.write_text('<testsuite>' + ''.join(
+                f'<testcase name="keyboard{n}">{failure}</testcase>' for n in range(100)) + '</testsuite>')
+            summary = inspector.ime_summary([report])
+            self.assertLessEqual(len(summary), inspector.MAX_IME_CHARS)
+            self.assertIn('mWindowVisible=true', summary)
 
 
 if __name__ == "__main__":

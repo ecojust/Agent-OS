@@ -9,6 +9,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import xml.etree.ElementTree as ET
 
 
 LABELS = tuple(str(api) for api in range(30, 37)) + ("37.0",)
@@ -16,6 +17,19 @@ MAX_ARTIFACT_BYTES = 64 * 1024 * 1024
 MAX_FILES = 2000
 MAX_XML_FILES = 24
 MAX_XML_BYTES = 2 * 1024 * 1024
+MAX_PRINT_CHARS = 64000
+MAX_IME_CHARS = 20000
+MAX_IME_FAILURE_CHARS = 6000
+IME_SCALARS = re.compile(
+    r"\b(mShowRequested|mShowExplicitlyRequested|mShowForced|mInputShown|"
+    r"mWindowVisible|mDecorViewVisible|mShowInputRequested|mInputViewStarted|"
+    r"mInputViewShown|mIsInputViewShown|mImeWindowVis|mInputStarted|"
+    r"mIsHardwareKeyboardAvailable|mImeHiddenByDisplayPolicy|mVisibility|"
+    r"mReportedVisibility|mRequestedVisibleTypes|mShowInputFlags|mInShowWindow|"
+    r"mViewsCreated|show_ime_with_hard_keyboard|hardKeyboardHidden|keyboardHidden|"
+    r"onEvaluateFullscreenMode|onEvaluateInputViewShown)(?:\(\))?\s*[:=]\s*"
+    r"(true|false|null|0x[0-9a-fA-F]+|-?[0-9]+|[A-Z][A-Z0-9_|]*)(?=$|[\s,;}])")
+IME_REASONS = re.compile(r"\breason\s*[:=]\s*((?:SHOW|HIDE)_[A-Z0-9_]+)\b")
 
 
 def read_json(path):
@@ -90,6 +104,45 @@ def select_report(run, jobs, artifacts, repository, label):
     return matches[0]["id"], job["conclusion"]
 
 
+def ime_summary(reports):
+    """Keep trailing IME state, never arbitrary log lines, environment or editor values."""
+    output = []
+    remaining = MAX_IME_CHARS
+    for path in reports:
+        try:
+            root = ET.parse(path).getroot()
+        except (OSError, ET.ParseError):
+            continue
+        for testcase in root.iter("testcase"):
+            for failure in testcase:
+                if failure.tag not in ("failure", "error"):
+                    continue
+                fields = []
+                for line in "".join(failure.itertext()).splitlines():
+                    scalars = [f"{key}={value}" for key, value in IME_SCALARS.findall(line)]
+                    scalars += [f"reason={reason}" for reason in IME_REASONS.findall(line)]
+                    if scalars:
+                        fields.append("  | " + ", ".join(scalars))
+                if not fields or remaining <= 0:
+                    continue
+                # Names are controlled by the test source; bound and prefix every line.
+                name = f"{testcase.get('classname', '')}.{testcase.get('name', '')}"
+                name = " ".join(name.split())[:240]
+                header = f"  | Trailing IME state: {name}\n"
+                budget = min(MAX_IME_FAILURE_CHARS, remaining) - len(header)
+                selected = []
+                for line in reversed(fields[-64:]):
+                    if len(line) + 1 > budget:
+                        break
+                    selected.append(line)
+                    budget -= len(line) + 1
+                value = header + "\n".join(reversed(selected)) + "\n"
+                if len(value) <= remaining:
+                    output.append(value)
+                    remaining -= len(value)
+    return "".join(output)
+
+
 def inspect_reports(directory):
     directory = directory.resolve(strict=True)
     seen = 0
@@ -118,7 +171,13 @@ def inspect_reports(directory):
             raise ValueError("No JUnit XML reports were produced by this API job")
         # Only this repository's checked-in printer runs, never downloaded code or HTML.
         printer = Path(__file__).with_name("print_android_test_failures.py")
-        subprocess.run([sys.executable, str(printer), str(safe)], check=True)
+        summary = ime_summary(sorted(safe.glob("*.xml")))
+        result = subprocess.run([sys.executable, str(printer), str(safe)], check=True,
+                                capture_output=True, text=True)
+        # Preserve an overall cap, reserving room for states buried after long histories.
+        print(result.stdout[:MAX_PRINT_CHARS - len(summary) - 1], end="")
+        if summary:
+            print("\n" + summary, end="")
 
 
 def main():

@@ -24,6 +24,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.agentos.core.RunControl;
+import dev.agentos.core.TaskControlException;
 import org.junit.Test;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
@@ -607,6 +608,39 @@ public final class DeviceToolsInstrumentedTest {
             JsonObject observed = awaitObservation(device.tools, fresh,
                     data -> "Count: 0".equals(string(node(data, "counter_value"), "text")));
             assertEquals("Count: 0", string(node(observed, "counter_value"), "text"));
+        }
+    }
+
+    @Test public void anOldExecutionEpochCannotLaunchAfterPauseAndResume() throws Exception {
+        try (DeviceHarness device = new DeviceHarness()) {
+            device.launch("SecondActivity");
+            AtomicInteger approvals = new AtomicInteger();
+            AndroidDeviceTools tools = new AndroidDeviceTools(device.service, Collections.singleton(FIXTURE),
+                    Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)),
+                    true, (description, active, requestEpoch) -> { approvals.incrementAndGet(); return true; });
+            JsonObject before = awaitObservation(tools, device.control,
+                    data -> "Second page reached".equals(string(node(data, "second_marker"), "text")));
+            assertEquals("Second page reached", actualFixtureText(device, "second_marker"));
+            long originalEpoch = device.control.getExecutionEpoch();
+            long dispatches = device.control.getDispatchAttempts();
+            device.control.pause();
+            device.control.resume();
+            assertFalse(device.control.isPaused());
+            assertNotEquals(originalEpoch, device.control.getExecutionEpoch());
+
+            // launch_app has no expectedRevision argument. Its original task epoch
+            // must still survive the dispatcher-to-device boundary unchanged.
+            JsonObject arguments = new JsonObject();
+            arguments.addProperty("packageName", FIXTURE);
+            try {
+                tools.execute("launch_app", arguments, device.control, originalEpoch);
+                fail("An old queued launch must not adopt the resumed task's epoch");
+            } catch (TaskControlException stale) { assertEquals("TASK_PAUSED", stale.getCode()); }
+            assertEquals("An old launch must not ask for a new confirmation", 0, approvals.get());
+            assertEquals("An old launch reached Android dispatch", dispatches, device.control.getDispatchAttempts());
+            assertEquals(before.get("windowId").getAsInt(), focusedWindowId(device.service));
+            assertEquals("Second page reached", actualFixtureText(device, "second_marker"));
+            screenshots.capture("stale-epoch-launch-rejected-without-navigation");
         }
     }
 

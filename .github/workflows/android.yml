@@ -129,6 +129,12 @@ jobs:
         if: always()
         continue-on-error: true
         run: python3 scripts/print_android_test_failures.py
+      - name: Finalize performance diagnostics
+        if: always()
+        continue-on-error: true
+        env:
+          EMULATOR_OUTCOME: ${{ steps.instrumentation.outcome }}
+        run: python3 scripts/collect_performance_evidence.py finalize --matrix-label ${{ matrix.api-level }} --step-outcome "${EMULATOR_OUTCOME:-unknown}"
       - name: Upload emulator test reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -145,5 +151,13 @@ jobs:
         with:
           name: screenshots-api-${{ matrix.api-level }}-attempt-${{ github.run_attempt }}
           path: test-evidence/api-${{ matrix.api-level }}/
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Upload performance diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-reports-api-${{ matrix.api-level }}-attempt-${{ github.run_attempt }}
+          path: performance-evidence/api-${{ matrix.api-level }}/
           if-no-files-found: warn
           retention-days: 30

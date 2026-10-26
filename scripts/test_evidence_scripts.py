@@ -96,7 +96,8 @@ class EvidenceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             (root / "scripts").mkdir()
-            for name in ("run_android_tests.sh", "collect_android_evidence.py", "print_android_test_failures.py"):
+            for name in ("run_android_tests.sh", "collect_android_evidence.py", "print_android_test_failures.py",
+                         "collect_performance_evidence.py"):
                 (root / "scripts" / name).write_bytes((SCRIPTS / name).read_bytes())
             (root / "bin").mkdir()
             adb = root / "bin" / "adb"
@@ -116,12 +117,17 @@ class EvidenceTests(unittest.TestCase):
             (root / "sdk/emulator").mkdir(parents=True)
             (root / "sdk/emulator/source.properties").write_text("Pkg.Revision=37.2.12\n")
             env["ANDROID_HOME"] = str(root / "sdk")
+            env.update({"GITHUB_REPOSITORY": "ecojust/Agent-OS", "GITHUB_SHA": "a" * 40,
+                        "GITHUB_RUN_ID": "123", "GITHUB_RUN_ATTEMPT": "2"})
             result = subprocess.run(["bash", "scripts/run_android_tests.sh", matrix_label], cwd=root,
                                     env=env, capture_output=True, text=True, check=False)
             self.assertEqual(expected_exit, result.returncode, result.stderr)
             record = json.loads((root / f"test-evidence/api-{matrix_label}/capture.json").read_text())
             self.assertEqual(expected_exit, record["gradleExitCode"])
             self.assertEqual("unavailable", record["captureStatus"])
+            performance = json.loads((root / f"performance-evidence/api-{matrix_label}/capture.json").read_text())
+            self.assertEqual(expected_exit, performance["gradleExitCode"])
+            self.assertEqual("unavailable", performance["captureStatus"])
             self.assertIn("No Android XML reports were produced", result.stdout)
             self.assertEqual(expected_exit == 7, (root / "gradle-started").exists())
             if expected_exit == 7:

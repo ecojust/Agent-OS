@@ -16,6 +16,7 @@ collect_on_exit() {
     python3 scripts/print_android_test_failures.py || true
   fi
   python3 scripts/collect_android_evidence.py collect --api "$api_level" --matrix-label "$matrix_label" --exit-code "$result" || true
+  python3 scripts/collect_performance_evidence.py collect --matrix-label "$matrix_label" --exit-code "$result" || true
   exit "$result"
 }
 trap collect_on_exit EXIT
@@ -58,6 +59,7 @@ done
 
 # The target APK may not yet exist on a clean emulator. Never reuse prior screenshots.
 adb shell run-as dev.agentos.app rm -rf files/screenshots >/dev/null 2>&1 || true
+adb shell run-as dev.agentos.app rm -rf files/performance >/dev/null 2>&1 || true
 
 ./gradlew --no-daemon \
   -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true \

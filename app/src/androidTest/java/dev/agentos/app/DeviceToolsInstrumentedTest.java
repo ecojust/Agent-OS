@@ -13,6 +13,8 @@ import android.graphics.Rect;
 import android.os.Build;
 import android.os.SystemClock;
 import android.view.Gravity;
+import android.view.InputDevice;
+import android.view.MotionEvent;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -407,6 +409,23 @@ public final class DeviceToolsInstrumentedTest {
             JsonObject before = device.observe();
             JsonObject clicked = device.tools.execute("click", nodeArguments(before, "edit_value"), device.control);
             assertTrue(clicked.toString(), clicked.get("ok").getAsBoolean());
+            // ACTION_CLICK can succeed even when InputMethodManager declines its
+            // show request. Establish this keyboard scenario with one real user
+            // touch; it does not retry a model action or enable production gestures.
+            JsonObject input = node(before, "edit_value");
+            float x = (input.getAsJsonArray("bounds").get(0).getAsFloat()
+                    + input.getAsJsonArray("bounds").get(2).getAsFloat()) / 2;
+            float y = (input.getAsJsonArray("bounds").get(1).getAsFloat()
+                    + input.getAsJsonArray("bounds").get(3).getAsFloat()) / 2;
+            long touchStarted = SystemClock.uptimeMillis();
+            MotionEvent down = MotionEvent.obtain(touchStarted, touchStarted, MotionEvent.ACTION_DOWN, x, y, 0);
+            MotionEvent up = MotionEvent.obtain(touchStarted, touchStarted + 1, MotionEvent.ACTION_UP, x, y, 0);
+            down.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+            up.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+            try {
+                assertTrue("The synthetic user's editor touch was not delivered", device.automation.injectInputEvent(down, true));
+                assertTrue("The synthetic user's editor release was not delivered", device.automation.injectInputEvent(up, true));
+            } finally { down.recycle(); up.recycle(); }
             long deadline = SystemClock.elapsedRealtime() + 5_000;
             boolean keyboard = false;
             while (!keyboard && SystemClock.elapsedRealtime() < deadline) {

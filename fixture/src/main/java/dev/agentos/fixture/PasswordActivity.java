@@ -3,6 +3,8 @@ package dev.agentos.fixture;
 import android.app.Activity;
 import android.os.Bundle;
 import android.text.InputType;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -25,6 +27,19 @@ public final class PasswordActivity extends Activity {
         password.setContentDescription("fixture-private-description");
         password.setMinHeight(Math.round(48 * getResources().getDisplayMetrics().density));
         content.addView(password);
+        TextView changes = new TextView(this);
+        changes.setId(R.id.password_changes);
+        changes.setText("Password writes: 0");
+        content.addView(changes);
+        password.addTextChangedListener(new TextWatcher() {
+            private int count;
+            @Override public void beforeTextChanged(CharSequence value, int start, int removed, int added) { }
+            @Override public void onTextChanged(CharSequence value, int start, int before, int added) { }
+            @Override public void afterTextChanged(Editable value) {
+                // Independent evidence of a real mutation; no secret text is exposed.
+                changes.setText("Password writes: " + ++count);
+            }
+        });
         FixtureLayout.install(this, content);
     }
 }

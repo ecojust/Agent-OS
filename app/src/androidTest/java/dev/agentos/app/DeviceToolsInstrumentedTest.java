@@ -538,12 +538,45 @@ public final class DeviceToolsInstrumentedTest {
             assertFalse(observed.toString().contains("fixture-private-description"));
             JsonObject password = node(observed, "password_field");
             assertTrue(password.get("password").getAsBoolean());
+            assertEquals("Password writes: 0", actualFixtureText(device, "password_changes"));
+            AtomicInteger approvals = new AtomicInteger();
+            AndroidDeviceTools tools = new AndroidDeviceTools(device.service, Collections.singleton(FIXTURE),
+                    Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)),
+                    true, (description, active) -> { approvals.incrementAndGet(); return true; });
+            long dispatches = device.control.getDispatchAttempts();
             JsonObject arguments = nodeArguments(observed, "password_field");
             arguments.addProperty("text", "must-not-be-written");
-            JsonObject result = device.tools.execute("type_text", arguments, device.control);
+            JsonObject result = tools.execute("type_text", arguments, device.control);
             assertFalse(result.get("ok").getAsBoolean());
+            assertEquals("PERMISSION_DENIED", string(result, "code"));
+            assertEquals(0, approvals.get());
+            assertEquals(dispatches, device.control.getDispatchAttempts());
+            // Read the fixture's separate TextWatcher counter directly through the
+            // platform, so executor redaction cannot conceal an accidental write.
+            assertEquals("Password writes: 0", actualFixtureText(device, "password_changes"));
             assertFalse(device.observe().toString().contains("must-not-be-written"));
         }
+    }
+
+    private static String actualFixtureText(DeviceHarness device, String id) {
+        List<AccessibilityWindowInfo> windows = device.service.getWindows();
+        try {
+            for (AccessibilityWindowInfo window : windows) {
+                if (!window.isFocused()) continue;
+                AccessibilityNodeInfo root = window.getRoot();
+                if (root == null) continue;
+                try {
+                    if (!FIXTURE.contentEquals(root.getPackageName() == null ? "" : root.getPackageName())) continue;
+                    List<AccessibilityNodeInfo> nodes = root.findAccessibilityNodeInfosByViewId(FIXTURE + ":id/" + id);
+                    try {
+                        if (nodes.size() == 1 && nodes.get(0).refresh() && nodes.get(0).getText() != null) {
+                            return nodes.get(0).getText().toString();
+                        }
+                    } finally { for (AccessibilityNodeInfo node : nodes) node.recycle(); }
+                } finally { root.recycle(); }
+            }
+        } finally { for (AccessibilityWindowInfo window : windows) window.recycle(); }
+        throw new AssertionError("Independent fixture evidence is unavailable: " + id);
     }
 
     @Test public void screenshotUnavailableIsReportedWithoutInvokingApproval() throws Exception {

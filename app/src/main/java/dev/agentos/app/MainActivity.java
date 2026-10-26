@@ -3,6 +3,8 @@ package dev.agentos.app;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -11,11 +13,16 @@ import android.graphics.drawable.StateListDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.CancellationSignal;
+import android.os.OperationCanceledException;
 import android.provider.Settings;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.text.TextWatcher;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.StyleSpan;
 import android.text.method.PasswordTransformationMethod;
 import android.view.Gravity;
 import android.view.View;
@@ -32,6 +39,7 @@ import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import dev.agentos.core.ModelSettings;
 import dev.agentos.core.ModelProbe;
@@ -48,6 +56,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /** A local, user-initiated task console. No chat text is written to disk or restored after process death. */
 public final class MainActivity extends Activity implements AgentController.Listener {
@@ -83,6 +96,18 @@ public final class MainActivity extends Activity implements AgentController.List
     private long probeGeneration;
     private Button probeButton, cancelProbeButton;
     private TextView probeResult;
+    private Button compatibilityButton;
+    private final ThreadPoolExecutor diagnosticsWorker = new ThreadPoolExecutor(1, 1, 15, TimeUnit.SECONDS,
+            new ArrayBlockingQueue<>(1), runnable -> {
+                Thread thread = new Thread(runnable, "agent-os-device-report");
+                thread.setDaemon(true);
+                return thread;
+            }, new ThreadPoolExecutor.AbortPolicy());
+    private long diagnosticsGeneration;
+    private CancellationSignal diagnosticsCancellation;
+    private Future<?> diagnosticsFuture;
+    private AlertDialog diagnosticsDialog;
+    private DeviceCapabilities.Report deviceReport;
 
     private static final class UiDraft {
         final SettingsStore.SavedSettings settings;
@@ -101,6 +126,7 @@ public final class MainActivity extends Activity implements AgentController.List
         getWindow().setDecorFitsSystemWindows(false);
         getWindow().setNavigationBarContrastEnforced(false);
         controller = AgentController.get(this);
+        diagnosticsWorker.allowCoreThreadTimeOut(true);
         Object retained = getLastNonConfigurationInstance();
         if (retained instanceof UiDraft) retainedDraft = (UiDraft) retained;
         buildInterface();
@@ -119,14 +145,17 @@ public final class MainActivity extends Activity implements AgentController.List
     }
 
     @Override protected void onStop() {
+        closeDeviceDiagnostics(true);
         cancelModelProbe("已离开配置页面，测试已取消。", false);
         controller.removeListener(this);
         super.onStop();
     }
 
     @Override protected void onDestroy() {
+        closeDeviceDiagnostics(true);
         cancelModelProbe("测试已取消。", false);
         destroyed = true;
+        diagnosticsWorker.shutdownNow();
         storageWorker.shutdown();
         main.removeCallbacksAndMessages(null);
         super.onDestroy();
@@ -194,6 +223,10 @@ public final class MainActivity extends Activity implements AgentController.List
         marginAdd(service, serviceButton, 10);
         TextView capabilities = text("首版支持授权应用的结构化界面读取、节点点击、输入与滚动。截图和坐标手势暂未启用；自绘、密码或无法观察的界面不会自动改用坐标点击。", 12, R.color.agent_muted, false);
         marginAdd(service, capabilities, 8);
+        compatibilityButton = button("设备与兼容性", R.drawable.ic_shield, false);
+        compatibilityButton.setId(R.id.device_compatibility);
+        compatibilityButton.setOnClickListener(view -> showDeviceDiagnostics());
+        marginAdd(service, compatibilityButton, 8);
 
         LinearLayout configuration = card(content);
         modelToggle = button("模型连接 · 展开设置", R.drawable.ic_settings, false);
@@ -682,6 +715,7 @@ public final class MainActivity extends Activity implements AgentController.List
         taskField.setEnabled(editable && !probing);
         resetButton.setEnabled(store != null && !busy && !state.running && !probing);
         serviceButton.setEnabled(!state.running && !busy && !probing);
+        compatibilityButton.setEnabled(!state.running && !busy && !probing);
         modelToggle.setEnabled(!probing);
         cancelProbeButton.setVisibility(probing ? View.VISIBLE : View.GONE);
         startButton.setEnabled(editable && service && !probing);
@@ -735,6 +769,110 @@ public final class MainActivity extends Activity implements AgentController.List
             labels.append(appLabels.getOrDefault(packageName, packageName));
         }
         scopeSummary.setText("已选择 " + draft.allowedPackages.size() + " 个应用\n" + labels + (draft.allowedPackages.size() > 4 ? " 等" : ""));
+    }
+
+    private void showDeviceDiagnostics() {
+        if (destroyed || isFinishing() || busy || modelProbe != null || controller.getState().running || diagnosticsDialog != null) return;
+        final DeviceCapabilities.DisplaySnapshot display = DeviceCapabilities.captureDisplay(this);
+        final CancellationSignal cancellation = new CancellationSignal();
+        final long generation = ++diagnosticsGeneration;
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("设备与兼容性")
+                .setMessage("正在读取本机系统条件…\n\n不会操作手机应用、读取任务或联系模型服务。本页诊断不代表机型或性能已通过验收。")
+                .setNegativeButton("关闭", null)
+                .setPositiveButton("复制脱敏报告", null)
+                .create();
+        diagnosticsDialog = dialog;
+        diagnosticsCancellation = cancellation;
+        deviceReport = null;
+        dialog.setOnDismissListener(ignored -> {
+            if (diagnosticsDialog == dialog) closeDeviceDiagnostics(false);
+        });
+        try { dialog.show(); }
+        catch (RuntimeException unavailable) {
+            closeDeviceDiagnostics(false);
+            showMessage("当前窗口无法显示设备报告，请返回页面后重试。", true);
+            return;
+        }
+        TextView reportView = dialog.findViewById(android.R.id.message);
+        reportView.setId(R.id.device_report);
+        reportView.setTextSize(14);
+        reportView.setTextIsSelectable(true);
+        Button copy = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        copy.setId(R.id.copy_device_report);
+        copy.setAllCaps(false);
+        copy.setMinHeight(dp(48));
+        copy.setEnabled(false);
+        copy.setOnClickListener(view -> {
+            DeviceCapabilities.Report shown = deviceReport;
+            if (destroyed || diagnosticsDialog != dialog || shown == null) return;
+            ClipboardManager clipboard = getSystemService(ClipboardManager.class);
+            if (clipboard == null) {
+                Toast.makeText(this, "系统剪贴板不可用，请稍后重试。", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            try {
+                clipboard.setPrimaryClip(ClipData.newPlainText("Agent OS 设备条件报告", shown.text));
+                copy.setText("报告已复制");
+            } catch (RuntimeException unavailable) {
+                Toast.makeText(this, "无法复制报告，请稍后重试。", Toast.LENGTH_SHORT).show();
+            }
+        });
+        try {
+            diagnosticsWorker.purge();
+            diagnosticsFuture = diagnosticsWorker.submit(() -> {
+                try {
+                    DeviceCapabilities.Report report = DeviceCapabilities.collect(getApplicationContext(), display, cancellation);
+                    main.post(() -> {
+                        if (!isCurrentDiagnostics(dialog, cancellation, generation)) return;
+                        deviceReport = report;
+                        reportView.setText(styledDeviceReport(report));
+                        copy.setEnabled(true);
+                    });
+                } catch (OperationCanceledException cancelled) {
+                    // Dismissal and lifecycle changes discard the snapshot without any UI callback.
+                } catch (RuntimeException unavailable) {
+                    main.post(() -> {
+                        if (!isCurrentDiagnostics(dialog, cancellation, generation)) return;
+                        reportView.setText("系统条件查询未完成。请关闭后重试。\n\n没有操作手机应用，也没有发送网络请求；本次未产生兼容或性能验收结论。正常应用仍由原系统运行。");
+                    });
+                }
+            });
+        } catch (RejectedExecutionException unavailable) {
+            reportView.setText("上一项系统查询尚未返回，请关闭后稍后重试。\n\n这不会阻止你手动使用手机应用。当前没有兼容或性能验收结论。");
+        }
+    }
+
+    private boolean isCurrentDiagnostics(AlertDialog dialog, CancellationSignal cancellation, long generation) {
+        return !destroyed && diagnosticsDialog == dialog && dialog.isShowing()
+                && diagnosticsCancellation == cancellation && !cancellation.isCanceled() && diagnosticsGeneration == generation;
+    }
+
+    private CharSequence styledDeviceReport(DeviceCapabilities.Report report) {
+        SpannableString content = new SpannableString(report.text);
+        int firstLine = report.text.indexOf('\n');
+        if (firstLine > 0) content.setSpan(new StyleSpan(Typeface.BOLD), 0, firstLine, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        for (DeviceCapabilities.Section section : report.sections) {
+            int position = report.text.indexOf("\n\n" + section.title + "\n");
+            if (position >= 0) content.setSpan(new StyleSpan(Typeface.BOLD), position + 2,
+                    position + 2 + section.title.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        return content;
+    }
+
+    private void closeDeviceDiagnostics(boolean dismiss) {
+        ++diagnosticsGeneration;
+        AlertDialog oldDialog = diagnosticsDialog;
+        diagnosticsDialog = null;
+        deviceReport = null;
+        CancellationSignal oldCancellation = diagnosticsCancellation;
+        diagnosticsCancellation = null;
+        if (oldCancellation != null) oldCancellation.cancel();
+        Future<?> oldFuture = diagnosticsFuture;
+        diagnosticsFuture = null;
+        if (oldFuture != null) oldFuture.cancel(true);
+        diagnosticsWorker.purge();
+        if (dismiss && oldDialog != null && oldDialog.isShowing()) oldDialog.dismiss();
     }
 
     private void testModel() {

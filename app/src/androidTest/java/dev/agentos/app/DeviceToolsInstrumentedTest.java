@@ -39,6 +39,8 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static dev.agentos.app.DeviceHarness.*;
 import static org.junit.Assert.*;
@@ -112,6 +114,98 @@ public final class DeviceToolsInstrumentedTest {
             } finally {
                 device.context.unregisterReceiver(receiver);
                 observation.cancel(true);
+                worker.shutdownNow();
+            }
+        }
+    }
+
+    @Test public void slowWritePreparationRemainsResponsiveAndPausePreventsApprovalAndDispatch() throws Exception {
+        try (DeviceHarness device = new DeviceHarness()) {
+            device.launch("SlowActivity");
+            AtomicInteger approvals = new AtomicInteger();
+            AndroidDeviceTools tools = new AndroidDeviceTools(device.service, Collections.singleton(FIXTURE),
+                    Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), true,
+                    (description, control) -> { approvals.incrementAndGet(); return true; });
+            ExecutorService worker = Executors.newSingleThreadExecutor();
+            AtomicBoolean pauseOnRead = new AtomicBoolean();
+            AtomicBoolean operationStarted = new AtomicBoolean();
+            AtomicBoolean inFlight = new AtomicBoolean();
+            AtomicLong latency = new AtomicLong(Long.MAX_VALUE);
+            AtomicReference<FutureTask<JsonObject>> operation = new AtomicReference<>();
+            AtomicReference<CountDownLatch> heartbeat = new AtomicReference<>();
+            AtomicReference<CountDownLatch> armed = new AtomicReference<>();
+            BroadcastReceiver receiver = new BroadcastReceiver() {
+                @Override public void onReceive(Context context, Intent intent) {
+                    if (!"write-preparation-root".equals(intent.getStringExtra("readKind"))) return;
+                    if ("dev.agentos.fixture.OBSERVATION_ARMED".equals(intent.getAction())) {
+                        armed.get().countDown();
+                        return;
+                    }
+                    latency.set(SystemClock.elapsedRealtime() - intent.getLongExtra("startedAt", 0));
+                    inFlight.set(operationStarted.get() && operation.get() != null && !operation.get().isDone());
+                    if (pauseOnRead.get()) device.control.pause();
+                    heartbeat.get().countDown();
+                }
+            };
+            IntentFilter events = new IntentFilter("dev.agentos.fixture.OBSERVATION_BLOCKED");
+            events.addAction("dev.agentos.fixture.OBSERVATION_ARMED");
+            registerFixtureReceiver(device.context, receiver, events);
+            try {
+                for (int phase = 0; phase < 2; phase++) {
+                    JsonObject before = device.observe();
+                    JsonObject arguments = nodeArguments(before, "increment");
+                    pauseOnRead.set(phase == 1);
+                    operationStarted.set(false);
+                    inFlight.set(false);
+                    latency.set(Long.MAX_VALUE);
+                    heartbeat.set(new CountDownLatch(1));
+                    armed.set(new CountDownLatch(1));
+                    FutureTask<JsonObject> action = new FutureTask<>(() -> {
+                        operationStarted.set(true);
+                        return tools.execute("click", arguments, device.control);
+                    });
+                    operation.set(action);
+                    AccessibilityEvent invalidated = device.automation.executeAndWaitForEvent(() ->
+                            device.context.sendBroadcast(new Intent("dev.agentos.fixture.ARM_SLOW_WRITE_PREPARATION")
+                                    .setComponent(new ComponentName(FIXTURE, FIXTURE + ".SlowObservationReceiver"))),
+                            event -> FIXTURE.contentEquals(event.getPackageName() == null ? "" : event.getPackageName())
+                                    && event.getEventType() == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED, 5_000);
+                    invalidated.recycle();
+                    assertTrue("Fixture did not arm its unchanged root", armed.get().await(3, TimeUnit.SECONDS));
+                    device.automation.waitForIdle(200, 3_000);
+                    worker.execute(action);
+                    boolean received = heartbeat.get().await(3, TimeUnit.SECONDS);
+                    assertTrue("Slow preparation was not exercised: " + completedObservation(action), received);
+                    assertTrue("Root delay did not occur inside the actual mutation", inFlight.get());
+                    assertTrue("Write preparation blocked the control thread: " + latency.get() + " ms", latency.get() < 500);
+                    if (phase == 0) {
+                        JsonObject accepted = action.get(8, TimeUnit.SECONDS);
+                        assertTrue("Unchanged delayed revision must remain a valid write: " + accepted, accepted.get("ok").getAsBoolean());
+                        assertEquals(1, approvals.get());
+                        assertEquals(1, device.control.getDispatchAttempts());
+                        device.withText("Count: 1");
+                    } else {
+                        try {
+                            action.get(8, TimeUnit.SECONDS);
+                            fail("Paused write preparation must not reach confirmation");
+                        } catch (ExecutionException cancelled) { assertTrue(cancelled.getCause() instanceof InterruptedException); }
+                        assertTrue(device.control.isPaused());
+                        assertEquals("Pause must occur before confirmation", 1, approvals.get());
+                        assertEquals("Pause must occur before dispatch", 1, device.control.getDispatchAttempts());
+                        device.control.resume();
+                        JsonObject stale = tools.execute("click", arguments, device.control);
+                        assertFalse(stale.get("ok").getAsBoolean());
+                        assertEquals("STALE_OBSERVATION", string(stale, "code"));
+                        assertEquals(1, approvals.get());
+                        assertEquals(1, device.control.getDispatchAttempts());
+                        device.withText("Count: 1");
+                    }
+                }
+                screenshots.capture("slow-preparation-paused-without-second-write");
+            } finally {
+                device.context.unregisterReceiver(receiver);
+                FutureTask<JsonObject> pending = operation.get();
+                if (pending != null) pending.cancel(true);
                 worker.shutdownNow();
             }
         }

@@ -17,6 +17,8 @@ import java.lang.ref.WeakReference;
 /** Simulates a slow remote accessibility provider without changing production execution code. */
 public final class SlowActivity extends Activity {
     private static WeakReference<SlowLayout> active = new WeakReference<>(null);
+    private static WeakReference<View> activeRoot = new WeakReference<>(null);
+    private static boolean rootArmed;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -32,11 +34,38 @@ public final class SlowActivity extends Activity {
         Button increment = new Button(this);
         increment.setId(R.id.increment);
         increment.setText("Increment slow test counter");
-        increment.setOnClickListener(view -> count.setText("Count: 1"));
+        int[] clicks = {0};
+        increment.setOnClickListener(view -> count.setText("Count: " + ++clicks[0]));
         content.addView(increment);
         content.addView(count);
         FixtureLayout.install(this, content);
         active = new WeakReference<>(content);
+        rootArmed = false;
+        View root = getWindow().getDecorView();
+        activeRoot = new WeakReference<>(root);
+        root.setAccessibilityDelegate(new View.AccessibilityDelegate() {
+            @Override public void onInitializeAccessibilityNodeInfo(View host, AccessibilityNodeInfo info) {
+                super.onInitializeAccessibilityNodeInfo(host, info);
+                if (!rootArmed) return;
+                rootArmed = false;
+                host.getContext().sendBroadcast(new Intent("dev.agentos.fixture.OBSERVATION_BLOCKED")
+                        .setPackage("dev.agentos.app").putExtra("readKind", "write-preparation-root")
+                        .putExtra("startedAt", SystemClock.elapsedRealtime()));
+                // Delay the root reply without changing any node semantics or revision.
+                SystemClock.sleep(650);
+            }
+        });
+    }
+
+    static void armRootWithoutChangingContent() {
+        View root = activeRoot.get();
+        if (root == null || !root.isAttachedToWindow()) return;
+        rootArmed = true;
+        AccessibilityEvent changed = AccessibilityEvent.obtain(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
+        changed.setContentChangeTypes(AccessibilityEvent.CONTENT_CHANGE_TYPE_SUBTREE);
+        root.sendAccessibilityEventUnchecked(changed);
+        root.getContext().sendBroadcast(new Intent("dev.agentos.fixture.OBSERVATION_ARMED")
+                .setPackage("dev.agentos.app").putExtra("readKind", "write-preparation-root"));
     }
 
     static void arm() {

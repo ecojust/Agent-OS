@@ -6,10 +6,13 @@ import android.app.UiAutomation;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.content.ClipboardManager;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Rect;
 import android.os.SystemClock;
 import android.os.Build;
 import android.view.View;
+import android.view.InputDevice;
+import android.view.MotionEvent;
 import android.view.inspector.WindowInspector;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
@@ -103,6 +106,8 @@ public final class DeviceCompatibilityUiInstrumentedTest {
                 instrumentation.runOnMainSync(() -> { if (clipboard != null) clipboard.clearPrimaryClip(); });
                 screenshots.captureEmptyMainActivity(activity, "clipboard-preview-cleared");
             } catch (Exception | AssertionError cleanupFailure) {
+                try { screenshots.captureEmptyMainActivity(activity, "clipboard-cleanup-failed"); }
+                catch (Exception | AssertionError evidenceFailure) { cleanupFailure.addSuppressed(evidenceFailure); }
                 if (primaryFailure != null) primaryFailure.addSuppressed(cleanupFailure);
                 else throw cleanupFailure;
             } finally {
@@ -120,26 +125,27 @@ public final class DeviceCompatibilityUiInstrumentedTest {
     /** Test-only cleanup of the UI created by the real copy action; no production bypass. */
     private static void dismissClipboardPreview(UiAutomation automation) throws Exception {
         Set<Integer> clipboardWindows = new HashSet<>();
-        AtomicBoolean dismissClicked = new AtomicBoolean();
+        AtomicBoolean dismissalRequested = new AtomicBoolean();
         boolean observed = false;
         long deadline = SystemClock.elapsedRealtime() + 5_000;
         while (SystemClock.elapsedRealtime() < deadline) {
-            boolean present = clipboardPreviewPresent(automation, clipboardWindows, dismissClicked);
+            boolean present = clipboardPreviewPresent(automation, clipboardWindows, dismissalRequested);
             if (present && !observed) {
                 observed = true;
                 deadline = SystemClock.elapsedRealtime() + 5_000;
             }
             // Absence before seeing the actual preview is inconclusive, not successful cleanup.
-            if (observed && dismissClicked.get() && !present) return;
+            // The platform may also time out the preview; its verified removal is what matters.
+            if (observed && !present) return;
             try { automation.waitForIdle(100, Math.min(1_000, Math.max(100, deadline - SystemClock.elapsedRealtime()))); }
             catch (TimeoutException busy) { }
         }
         fail("Clipboard preview cleanup was not verified: observed=" + observed
-                + ", dismissClicked=" + dismissClicked.get() + ", knownWindows=" + clipboardWindows
+                + ", dismissalRequested=" + dismissalRequested.get() + ", knownWindows=" + clipboardWindows
                 + "; " + systemWindowSummary(automation));
     }
 
-    private static boolean clipboardPreviewPresent(UiAutomation automation, Set<Integer> knownWindows, AtomicBoolean dismissClicked) {
+    private static boolean clipboardPreviewPresent(UiAutomation automation, Set<Integer> knownWindows, AtomicBoolean dismissalRequested) {
         // UiAutomation's cached tree can predate the clipboard overlay and its dismiss button.
         if (Build.VERSION.SDK_INT >= 34) automation.clearCache();
         List<AccessibilityWindowInfo> windows = automation.getWindows();
@@ -159,21 +165,72 @@ public final class DeviceCompatibilityUiInstrumentedTest {
                     if (!clipboard) continue;
                     present = true;
                     knownWindows.add(window.getId());
-                    if (!dismissClicked.get() && root != null) {
+                    if (!dismissalRequested.get() && root != null) {
                         List<AccessibilityNodeInfo> controls = root.findAccessibilityNodeInfosByViewId("com.android.systemui:id/dismiss_button");
                         try {
                             for (AccessibilityNodeInfo close : controls) {
                                 if (close.isVisibleToUser() && close.isEnabled()) {
-                                    dismissClicked.set(close.performAction(AccessibilityNodeInfo.ACTION_CLICK));
+                                    dismissalRequested.set(close.performAction(AccessibilityNodeInfo.ACTION_CLICK));
                                     break;
                                 }
                             }
                         } finally { for (AccessibilityNodeInfo close : controls) close.recycle(); }
+                        if (!dismissalRequested.get()) {
+                            dismissalRequested.set(dismissPreviewNode(automation, root));
+                        }
                     }
                 } finally { if (root != null) root.recycle(); }
             }
             return present;
         } finally { for (AccessibilityWindowInfo window : windows) window.recycle(); }
+    }
+
+    private static boolean dismissPreviewNode(UiAutomation automation, AccessibilityNodeInfo root) {
+        List<AccessibilityNodeInfo> previews = root.findAccessibilityNodeInfosByViewId("com.android.systemui:id/clipboard_preview");
+        try {
+            for (AccessibilityNodeInfo preview : previews) {
+                if (!preview.isVisibleToUser() || !preview.isEnabled()) continue;
+                if (preview.getActionList().contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_DISMISS)
+                        && preview.performAction(AccessibilityNodeInfo.ACTION_DISMISS)) return true;
+                // Newer system versions omit the close button. Swipe away the actual, identified
+                // preview as a user would; never send a gesture before its node is observable.
+                Rect bounds = new Rect();
+                preview.getBoundsInScreen(bounds);
+                if (bounds.isEmpty()) continue;
+                float startX = bounds.exactCenterX();
+                float y = bounds.exactCenterY();
+                int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
+                float endX = startX < screenWidth / 2f ? screenWidth - 2f : 2f;
+                if (Math.abs(endX - startX) < bounds.width()) continue;
+                return swipe(automation, startX, endX, y);
+            }
+        } finally { for (AccessibilityNodeInfo preview : previews) preview.recycle(); }
+        return false;
+    }
+
+    private static boolean swipe(UiAutomation automation, float startX, float endX, float y) {
+        long downTime = SystemClock.uptimeMillis();
+        boolean complete = false;
+        try {
+            if (!touch(automation, downTime, MotionEvent.ACTION_DOWN, startX, y)) return false;
+            for (int step = 1; step <= 12; step++) {
+                // This is the gesture's input cadence, not a blind wait for window dismissal.
+                SystemClock.sleep(12);
+                if (!touch(automation, downTime, MotionEvent.ACTION_MOVE,
+                        startX + (endX - startX) * step / 12f, y)) return false;
+            }
+            complete = touch(automation, downTime, MotionEvent.ACTION_UP, endX, y);
+            return complete;
+        } finally {
+            if (!complete) touch(automation, downTime, MotionEvent.ACTION_CANCEL, startX, y);
+        }
+    }
+
+    private static boolean touch(UiAutomation automation, long downTime, int action, float x, float y) {
+        MotionEvent event = MotionEvent.obtain(downTime, SystemClock.uptimeMillis(), action, x, y, 0);
+        event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        try { return automation.injectInputEvent(event, true); }
+        finally { event.recycle(); }
     }
 
     private static String systemWindowSummary(UiAutomation automation) {

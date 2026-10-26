@@ -98,6 +98,10 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: ./gradlew --no-daemon :fixture:installDebug :app:connectedDebugAndroidTest
+      - name: Print Android failure details
+        if: always()
+        continue-on-error: true
+        run: python3 scripts/print_android_test_failures.py
       - name: Upload emulator test reports
         if: always()
         uses: actions/upload-artifact@v4

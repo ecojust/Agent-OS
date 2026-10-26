@@ -1,14 +1,20 @@
 package dev.agentos.app;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
+import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.SystemClock;
+import android.view.Gravity;
+import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
+import android.widget.TextView;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -39,6 +45,8 @@ public final class DeviceToolsInstrumentedTest {
         try (DeviceHarness device = new DeviceHarness()) {
             device.launch("SlowActivity");
             JsonObject previous = device.observe();
+            assertTrue("Slow fixture node is missing from the real accessibility tree: " + previous,
+                    previous.toString().contains("Slow observation generation 0"));
             JsonObject oldClick = nodeArguments(previous, "increment");
             AtomicBoolean observationStarted = new AtomicBoolean();
             FutureTask<JsonObject> observation = new FutureTask<>(() -> {
@@ -47,10 +55,15 @@ public final class DeviceToolsInstrumentedTest {
             });
             ExecutorService worker = Executors.newSingleThreadExecutor();
             CountDownLatch heartbeat = new CountDownLatch(1);
+            CountDownLatch armed = new CountDownLatch(1);
             AtomicLong latency = new AtomicLong(Long.MAX_VALUE);
             AtomicBoolean wasInFlight = new AtomicBoolean();
             BroadcastReceiver receiver = new BroadcastReceiver() {
                 @Override public void onReceive(Context context, Intent intent) {
+                    if ("dev.agentos.fixture.OBSERVATION_ARMED".equals(intent.getAction())) {
+                        armed.countDown();
+                        return;
+                    }
                     latency.set(SystemClock.elapsedRealtime() - intent.getLongExtra("startedAt", 0));
                     wasInFlight.set(observationStarted.get() && !observation.isDone());
                     device.control.pause();
@@ -58,8 +71,8 @@ public final class DeviceToolsInstrumentedTest {
                 }
             };
             IntentFilter filter = new IntentFilter("dev.agentos.fixture.OBSERVATION_BLOCKED");
-            if (Build.VERSION.SDK_INT >= 33) device.context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
-            else device.context.registerReceiver(receiver, filter);
+            filter.addAction("dev.agentos.fixture.OBSERVATION_ARMED");
+            registerFixtureReceiver(device.context, receiver, filter);
             try {
                 AccessibilityEvent changed = device.automation.executeAndWaitForEvent(() ->
                         device.context.sendBroadcast(new Intent("dev.agentos.fixture.ARM_SLOW_OBSERVATION")
@@ -67,10 +80,13 @@ public final class DeviceToolsInstrumentedTest {
                         event -> FIXTURE.contentEquals(event.getPackageName() == null ? "" : event.getPackageName())
                                 && event.getEventType() == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED, 5_000);
                 changed.recycle();
+                assertTrue("Fixture never acknowledged the slow-node arm request", armed.await(3, TimeUnit.SECONDS));
                 // Allow the normal accessibility cache invalidation event to reach both services.
                 SystemClock.sleep(200);
                 worker.execute(observation);
-                assertTrue("Slow fixture did not start its accessibility read", heartbeat.await(3, TimeUnit.SECONDS));
+                boolean received = heartbeat.await(3, TimeUnit.SECONDS);
+                assertTrue("Slow fixture did not start its accessibility read; armed=" + (armed.getCount() == 0)
+                        + "; observation=" + completedObservation(observation), received);
                 assertTrue("Observation had already completed before the heartbeat", wasInFlight.get());
                 assertTrue("Main thread was blocked by remote observation: " + latency.get() + " ms", latency.get() < 500);
                 try {
@@ -92,6 +108,20 @@ public final class DeviceToolsInstrumentedTest {
                 worker.shutdownNow();
             }
         }
+    }
+
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
+    private static void registerFixtureReceiver(Context context, BroadcastReceiver receiver, IntentFilter filter) {
+        // This test receives a broadcast from the separately installed fixture process.
+        // API 30-32 have only the legacy exported-by-default overload without flag constants.
+        if (Build.VERSION.SDK_INT >= 33) context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
+        else context.registerReceiver(receiver, filter);
+    }
+
+    private static String completedObservation(FutureTask<JsonObject> observation) {
+        if (!observation.isDone()) return "still running";
+        try { return String.valueOf(observation.get()); }
+        catch (Exception failure) { return failure.toString(); }
     }
 
     @Test public void initialObservationFromAgentScreenCanLaunchAnAuthorizedApp() throws Exception {
@@ -186,6 +216,71 @@ public final class DeviceToolsInstrumentedTest {
                 return false;
             });
             device.instrumentation.runOnMainSync(() -> assertTrue(device.service.isControlAvailable()));
+        }
+    }
+
+    @Test public void ordinarySystemBarsDoNotPreventBackOrHome() throws Exception {
+        try (DeviceHarness device = new DeviceHarness()) {
+            JsonObject opened = device.tools.execute("click", nodeArguments(device.observe(), "open_second"), device.control);
+            assertTrue(opened.toString(), opened.get("ok").getAsBoolean());
+            JsonObject second = device.withText("Second page reached");
+            JsonObject arguments = new JsonObject();
+            arguments.addProperty("expectedRevision", string(second, "revision"));
+            JsonObject back = device.tools.execute("back", arguments, device.control);
+            assertTrue(back.toString(), back.get("ok").getAsBoolean());
+            JsonObject first = device.withText("Count: 0");
+            arguments.addProperty("expectedRevision", string(first, "revision"));
+            JsonObject home = device.tools.execute("home", arguments, device.control);
+            assertTrue(home.toString(), home.get("ok").getAsBoolean());
+            JsonObject launcher = awaitObservation(device.tools, device.control,
+                    data -> !FIXTURE.equals(string(data, "packageName")));
+            assertFalse(launcher.get("scoped").getAsBoolean());
+            assertFalse(device.control.isPaused());
+        }
+    }
+
+    @Test public void anUnrecognizedOverlayStillBlocksTheTargetAndPausesBeforeDispatch() throws Exception {
+        try (DeviceHarness device = new DeviceHarness()) {
+            JsonObject target = node(device.observe(), "increment");
+            int left = target.getAsJsonArray("bounds").get(0).getAsInt();
+            int top = target.getAsJsonArray("bounds").get(1).getAsInt();
+            int right = target.getAsJsonArray("bounds").get(2).getAsInt();
+            int bottom = target.getAsJsonArray("bounds").get(3).getAsInt();
+            TextView blocker = new TextView(device.service);
+            WindowManager manager = (WindowManager) device.service.getSystemService(Context.WINDOW_SERVICE);
+            assertNotNull(manager);
+            device.instrumentation.runOnMainSync(() -> {
+                blocker.setText("Unrecognized integration overlay");
+                blocker.setBackgroundColor(Color.rgb(80, 30, 30));
+                WindowManager.LayoutParams params = new WindowManager.LayoutParams(right - left, bottom - top,
+                        WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                                | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                        PixelFormat.TRANSLUCENT);
+                params.gravity = Gravity.TOP | Gravity.LEFT;
+                params.x = left;
+                params.y = top;
+                // Deliberately not the trusted Agent control window's identity.
+                params.setTitle("Fixture test obstruction");
+                manager.addView(blocker, params);
+            });
+            long attempts = device.control.getDispatchAttempts();
+            try {
+                JsonObject obscured = awaitObservation(device.tools, device.control,
+                        data -> data.get("hasOcclusion").getAsBoolean()
+                                && node(data, "increment").get("obscured").getAsBoolean());
+                try {
+                    device.tools.execute("click", nodeArguments(obscured, "increment"), device.control);
+                    fail("A different overlay must stop the target action");
+                } catch (InterruptedException expected) {
+                    assertTrue("The obscuring window must pause the task", device.control.isPaused());
+                }
+                assertEquals("Occluded action was dispatched", attempts, device.control.getDispatchAttempts());
+            } finally {
+                device.instrumentation.runOnMainSync(() -> manager.removeViewImmediate(blocker));
+            }
+            device.control.resume();
+            device.withText("Count: 0");
         }
     }
 

@@ -15,6 +15,9 @@ public final class FixtureActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        // Intentionally retain an edge-to-edge scroll container: normal system bars
+        // must not be mistaken for an unrelated window obstructing every scroll.
+        getWindow().setDecorFitsSystemWindows(false);
         clicks = state == null ? 0 : state.getInt("clicks");
         ScrollView scroll = new ScrollView(this);
         scroll.setId(R.id.fixture_scroll);

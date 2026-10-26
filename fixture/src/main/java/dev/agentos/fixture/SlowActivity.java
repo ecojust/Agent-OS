@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Button;
@@ -20,6 +21,9 @@ public final class SlowActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         SlowLayout content = new SlowLayout(this);
+        // A structural layout is normally omitted from the remote accessibility tree.
+        // This node is deliberately observable so its one-shot delay can be exercised.
+        content.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
         content.setOrientation(LinearLayout.VERTICAL);
         content.setPadding(32, Math.round(220 * getResources().getDisplayMetrics().density), 32, 32);
         TextView count = new TextView(this);
@@ -31,7 +35,7 @@ public final class SlowActivity extends Activity {
         increment.setOnClickListener(view -> count.setText("Count: 1"));
         content.addView(increment);
         content.addView(count);
-        setContentView(content);
+        FixtureLayout.install(this, content);
         active = new WeakReference<>(content);
     }
 
@@ -44,6 +48,8 @@ public final class SlowActivity extends Activity {
         changed.setContentChangeTypes(AccessibilityEvent.CONTENT_CHANGE_TYPE_SUBTREE);
         // Invalidate the cache rather than requesting an eager node refresh before the test read.
         view.sendAccessibilityEventUnchecked(changed);
+        view.getContext().sendBroadcast(new Intent("dev.agentos.fixture.OBSERVATION_ARMED")
+                .setPackage("dev.agentos.app").putExtra("generation", view.generation));
     }
 
     private static final class SlowLayout extends LinearLayout {

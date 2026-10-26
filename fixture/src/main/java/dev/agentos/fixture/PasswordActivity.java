@@ -25,6 +25,6 @@ public final class PasswordActivity extends Activity {
         password.setContentDescription("fixture-private-description");
         password.setMinHeight(Math.round(48 * getResources().getDisplayMetrics().density));
         content.addView(password);
-        setContentView(content);
+        FixtureLayout.install(this, content);
     }
 }

@@ -18,7 +18,9 @@ The slow-node check verifies the Agent control thread can receive a heartbeat wh
 
 The continuous integration matrix targets Android API 30 through API 36 and the SDK's API 37.0 image (runtime API 37). Test source or a successful APK build alone is not a passing emulator result; inspect the uploaded instrumentation reports for each run.
 
-Each CI emulator uses the named `agent-os-phone` AVD with `hw.keyboard=no`, configured after AVD creation and before startup. The test command verifies that exact setting again before running. This represents a touchscreen phone without a connected physical keyboard; it retains the system image's own input method and checks actual keyboard-window and visible-inset behavior. It does not establish compatibility with attached hardware keyboards or replace a missing keyboard view with a successful test result.
+Each CI emulator uses the named `agent-os-phone` AVD with `hw.keyboard=no`, configured after AVD creation and before startup. The test command verifies that exact file setting again before running. This requests a touchscreen phone configuration; it does not prove the runtime reports no physical keyboard. In the recorded API 36 and 37 runs, runtime `Configuration` still reported `qwerty/v/v`, so a runtime `NOKEYS` baseline has not been demonstrated. Tests retain the system image's own input method and require actual keyboard-window and visible-inset behavior. They do not establish compatibility with attached hardware keyboards or replace a missing keyboard view with a successful test result.
+
+The current environment comparison explicitly sets and verifies all three system animation scales (`window_animation_scale`, `transition_animation_scale`, and `animator_duration_scale`) at `1.0` before tests. Earlier runs with animations disabled and their failures remain archived. This comparison investigates window-lifecycle behavior; it is not by itself a fix for stale server-side accessibility windows or a requirement to change animation settings on users' phones.
 
 ## Screenshot evidence
 

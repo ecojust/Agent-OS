@@ -38,6 +38,24 @@ PY
   if [[ "$?" != 0 ]]; then exit 2; fi
 fi
 
+# A dedicated emulator baseline, not a required setting on users' phones.
+# Record explicit 1.0 values instead of assuming an image or runner's defaults.
+for animation_setting in window_animation_scale transition_animation_scale animator_duration_scale; do
+  if ! adb shell settings put global "$animation_setting" 1.0; then
+    echo "Could not configure animation baseline: $animation_setting" >&2
+    exit 2
+  fi
+  if ! animation_value="$(adb shell settings get global "$animation_setting" | tr -d '\r')"; then
+    echo "Could not read animation baseline: $animation_setting" >&2
+    exit 2
+  fi
+  echo "Emulator baseline: $animation_setting=$animation_value"
+  if [[ "$animation_value" != '1.0' ]]; then
+    echo "Expected animation baseline 1.0: $animation_setting" >&2
+    exit 2
+  fi
+done
+
 # The target APK may not yet exist on a clean emulator. Never reuse prior screenshots.
 adb shell run-as dev.agentos.app rm -rf files/screenshots >/dev/null 2>&1 || true
 

@@ -89,7 +89,10 @@ class EvidenceTests(unittest.TestCase):
     def test_full_api_label_checks_package_metadata_without_launching_another_emulator(self):
         self.check_test_exit("37.0", 37)
 
-    def check_test_exit(self, matrix_label, sdk_int):
+    def test_unverified_animation_baseline_prevents_test_execution(self):
+        self.check_test_exit("30", 30, animation_value="0.0", expected_exit=2)
+
+    def check_test_exit(self, matrix_label, sdk_int, animation_value="1.0", expected_exit=7):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             (root / "scripts").mkdir()
@@ -97,23 +100,34 @@ class EvidenceTests(unittest.TestCase):
                 (root / "scripts" / name).write_bytes((SCRIPTS / name).read_bytes())
             (root / "bin").mkdir()
             adb = root / "bin" / "adb"
-            adb.write_text(f'#!/bin/sh\nif [ "$1 $2" = "shell getprop" ]; then echo {sdk_int}; exit 0; fi\nexit 1\n')
+            adb.write_text(f'#!/bin/sh\n'
+                f'if [ "$1 $2" = "shell getprop" ]; then echo {sdk_int}; exit 0; fi\n'
+                'if [ "$1 $2 $3 $4" = "shell settings put global" ]; then '
+                'printf "%s\\n" "$5=$6" >> "$FAKE_SETTINGS_LOG"; exit 0; fi\n'
+                f'if [ "$1 $2 $3 $4" = "shell settings get global" ]; then echo {animation_value}; exit 0; fi\n'
+                'exit 1\n')
             adb.chmod(0o755)
             gradle = root / "gradlew"
-            gradle.write_text("#!/bin/sh\nexit 7\n")
+            gradle.write_text("#!/bin/sh\ntouch gradle-started\nexit 7\n")
             gradle.chmod(0o755)
             env = os.environ.copy()
             env["PATH"] = str(root / "bin") + os.pathsep + env["PATH"]
+            env["FAKE_SETTINGS_LOG"] = str(root / "animation-settings.txt")
             (root / "sdk/emulator").mkdir(parents=True)
             (root / "sdk/emulator/source.properties").write_text("Pkg.Revision=37.2.12\n")
             env["ANDROID_HOME"] = str(root / "sdk")
             result = subprocess.run(["bash", "scripts/run_android_tests.sh", matrix_label], cwd=root,
                                     env=env, capture_output=True, text=True, check=False)
-            self.assertEqual(7, result.returncode, result.stderr)
+            self.assertEqual(expected_exit, result.returncode, result.stderr)
             record = json.loads((root / f"test-evidence/api-{matrix_label}/capture.json").read_text())
-            self.assertEqual(7, record["gradleExitCode"])
+            self.assertEqual(expected_exit, record["gradleExitCode"])
             self.assertEqual("unavailable", record["captureStatus"])
             self.assertIn("No Android XML reports were produced", result.stdout)
+            self.assertEqual(expected_exit == 7, (root / "gradle-started").exists())
+            if expected_exit == 7:
+                self.assertEqual(["window_animation_scale=1.0", "transition_animation_scale=1.0",
+                    "animator_duration_scale=1.0"], (root / "animation-settings.txt").read_text().splitlines())
+                self.assertEqual(3, result.stdout.count("Emulator baseline:"))
 
     def test_archive_keeps_missing_lanes_and_source_failure(self):
         with tempfile.TemporaryDirectory() as temp:

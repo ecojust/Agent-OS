@@ -114,7 +114,7 @@ jobs:
           avd-name: agent-os-phone
           enable-hw-keyboard: false
           pre-emulator-launch-script: python3 scripts/configure_emulator_phone.py --avd-name agent-os-phone
-          disable-animations: true
+          disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: |
             python3 scripts/configure_emulator_phone.py --avd-name agent-os-phone --check

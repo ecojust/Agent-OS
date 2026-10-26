@@ -111,9 +111,14 @@ jobs:
           system-image-api-level: ${{ matrix.api-level }}
           arch: x86_64
           target: default
+          avd-name: agent-os-phone
+          enable-hw-keyboard: false
+          pre-emulator-launch-script: python3 scripts/configure_emulator_phone.py --avd-name agent-os-phone
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
-          script: bash scripts/run_android_tests.sh ${{ matrix.api-level }}
+          script: |
+            python3 scripts/configure_emulator_phone.py --avd-name agent-os-phone --check
+            bash scripts/run_android_tests.sh ${{ matrix.api-level }}
       - name: Finalize screenshot evidence
         if: always()
         continue-on-error: true

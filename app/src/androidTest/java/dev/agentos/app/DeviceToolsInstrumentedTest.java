@@ -414,6 +414,11 @@ public final class DeviceToolsInstrumentedTest {
             boolean keyboard = false;
             boolean visibleInset = false;
             while (!(keyboard && visibleInset) && SystemClock.elapsedRealtime() < deadline) {
+                // Exercise the executor's authoritative observation path, including
+                // its platform cache refresh, rather than a stale test-only window read.
+                JsonObject sample = device.tools.execute("observe", new JsonObject(), device.control);
+                assertTrue(sample.toString(), sample.get("ok").getAsBoolean()
+                        || "STALE_OBSERVATION".equals(string(sample, "code")));
                 keyboard = false;
                 List<AccessibilityWindowInfo> windows = device.service.getWindows();
                 try {
@@ -433,10 +438,49 @@ public final class DeviceToolsInstrumentedTest {
                     data -> data.has("windowId") && data.get("windowId").getAsInt() == focusedWindowId(device.service));
             assertEquals(FIXTURE, string(observed, "packageName"));
             assertTrue(observed.get("focused").getAsBoolean());
+            if (keyboardOverlapsObservedContent(device, observed)) {
+                assertTrue("An overlapping keyboard must remain an obstruction", observed.get("hasOcclusion").getAsBoolean());
+            }
+            long attempts = device.control.getDispatchAttempts();
+            JsonObject stale = device.tools.execute("click", nodeArguments(before, "show_keyboard"), device.control);
+            assertFalse(stale.get("ok").getAsBoolean());
+            assertEquals("STALE_OBSERVATION", string(stale, "code"));
+            assertEquals("The pre-keyboard revision dispatched another action", attempts, device.control.getDispatchAttempts());
             screenshots.capture("focused-editor-with-keyboard");
-            device.shell("input keyevent 111");
+            // BACK is the platform IME-dismiss action; ESC is not guaranteed to hide it.
+            device.shell("input keyevent 4");
             device.withText("Keyboard visible: false");
         }
+    }
+
+    private static boolean keyboardOverlapsObservedContent(DeviceHarness device, JsonObject observed) {
+        JsonObject root = observed.getAsJsonArray("nodes").get(0).getAsJsonObject();
+        assertEquals("n", string(root, "id"));
+        Rect content = new Rect(root.getAsJsonArray("bounds").get(0).getAsInt(),
+                root.getAsJsonArray("bounds").get(1).getAsInt(), root.getAsJsonArray("bounds").get(2).getAsInt(),
+                root.getAsJsonArray("bounds").get(3).getAsInt());
+        List<AccessibilityWindowInfo> windows = device.service.getWindows();
+        try {
+            boolean focusedFound = false;
+            for (AccessibilityWindowInfo window : windows) {
+                if (window.getId() != observed.get("windowId").getAsInt()) continue;
+                Rect bounds = new Rect(); window.getBoundsInScreen(bounds);
+                assertTrue("Observed content lost its current window", content.intersect(bounds));
+                focusedFound = window.isFocused();
+            }
+            assertTrue("Observed application lost focus", focusedFound);
+            boolean keyboardFound = false;
+            boolean overlaps = false;
+            for (AccessibilityWindowInfo window : windows) {
+                if (window.getType() != AccessibilityWindowInfo.TYPE_INPUT_METHOD) continue;
+                keyboardFound = true;
+                Rect bounds = new Rect(); window.getBoundsInScreen(bounds);
+                overlaps |= Rect.intersects(content, bounds);
+            }
+            assertTrue("The keyboard disappeared before the focused-window assertion", keyboardFound);
+            // adjustResize may legitimately place the entire app above the keyboard.
+            return overlaps;
+        } finally { for (AccessibilityWindowInfo window : windows) window.recycle(); }
     }
 
     @Test public void anUnrecognizedOverlayStillBlocksTheTargetAndPausesBeforeDispatch() throws Exception {

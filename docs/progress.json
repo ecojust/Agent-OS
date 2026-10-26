@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-10-26T14:56:56Z",
+  "note": "建立固定检查点进度条；正在接入焦点窗口修复、设备诊断、API 矩阵及逐次测试截图归档。",
+  "latest_evidence": null,
+  "checkpoints": [
+    {
+      "id": "design",
+      "name": "设计规则与兼容性基线",
+      "status": "complete",
+      "evidence": "docs/DESIGN_RULES.md"
+    },
+    {
+      "id": "build",
+      "name": "可重复 APK 构建",
+      "status": "complete",
+      "evidence": ".github/workflows/android.yml"
+    },
+    {
+      "id": "runtime",
+      "name": "有界任务与工具协议",
+      "status": "complete",
+      "evidence": "core/src/test/java/dev/agentos/core"
+    },
+    {
+      "id": "gateway",
+      "name": "模型网关与连接探测",
+      "status": "complete",
+      "evidence": "core/src/main/java/dev/agentos/core/ModelProbe.java"
+    },
+    {
+      "id": "console",
+      "name": "原生控制台与加密配置",
+      "status": "complete",
+      "evidence": "app/src/main/java/dev/agentos/app/SettingsStore.java"
+    },
+    {
+      "id": "structured_tools",
+      "name": "基础结构化设备操作",
+      "status": "complete",
+      "evidence": "https://github.com/ecojust/Agent-OS/actions/runs/40342640357"
+    },
+    {
+      "id": "focused_windows",
+      "name": "焦点窗口一致性与切换回归",
+      "status": "in_progress"
+    },
+    {
+      "id": "capabilities",
+      "name": "设备能力与兼容性诊断",
+      "status": "in_progress"
+    },
+    {
+      "id": "screenshots",
+      "name": "逐次测试截图与证据归档",
+      "status": "in_progress"
+    },
+    {
+      "id": "api_matrix",
+      "name": "Android 11–17 API 行为矩阵",
+      "status": "in_progress"
+    },
+    {
+      "id": "performance",
+      "name": "三态性能测量与预算验收",
+      "status": "pending"
+    },
+    {
+      "id": "visual_observation",
+      "name": "受控截图与视觉观察",
+      "status": "pending"
+    },
+    {
+      "id": "coordinate_actions",
+      "name": "绑定界面版本的坐标操作",
+      "status": "pending"
+    },
+    {
+      "id": "continuous_actions",
+      "name": "普通操作连续执行与接管",
+      "status": "pending"
+    },
+    {
+      "id": "model_acceptance",
+      "name": "真实模型跨应用任务验收",
+      "status": "pending"
+    },
+    {
+      "id": "app_acceptance",
+      "name": "冻结常用应用样本与日常使用验收",
+      "status": "pending"
+    },
+    {
+      "id": "physical_devices",
+      "name": "跨厂商近五年真机与资源档验证",
+      "status": "blocked",
+      "reason": "尚未提供参考手机或真机测试环境。"
+    },
+    {
+      "id": "aosp",
+      "name": "参考机 AOSP 集成与平台兼容套件",
+      "status": "blocked",
+      "reason": "需要明确可解锁机型、内核和厂商驱动。"
+    },
+    {
+      "id": "recovery",
+      "name": "机型 OTA 与失败启动恢复",
+      "status": "blocked",
+      "reason": "依赖参考机镜像与可验证恢复环境。"
+    },
+    {
+      "id": "release",
+      "name": "正式签名交付与维护验收",
+      "status": "blocked",
+      "reason": "依赖正式签名、设备与应用验收及维护范围。"
+    }
+  ]
+}

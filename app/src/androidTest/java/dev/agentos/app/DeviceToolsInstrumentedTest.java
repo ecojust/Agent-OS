@@ -227,27 +227,34 @@ public final class DeviceToolsInstrumentedTest {
 
     @Test public void ordinarySystemBarsDoNotPreventBackOrHome() throws Exception {
         try (DeviceHarness device = new DeviceHarness()) {
-            JsonObject opened = device.tools.execute("click", nodeArguments(device.observe(), "open_second"), device.control);
-            assertTrue(opened.toString(), opened.get("ok").getAsBoolean());
-            JsonObject second = device.withText("Second page reached");
-            JsonObject arguments = new JsonObject();
-            arguments.addProperty("expectedRevision", string(second, "revision"));
-            JsonObject back = device.tools.execute("back", arguments, device.control);
-            assertTrue(back.toString(), back.get("ok").getAsBoolean());
-            JsonObject first = device.withText("Count: 0");
-            screenshots.capture("before-home");
-            arguments.addProperty("expectedRevision", string(first, "revision"));
-            JsonObject home = device.tools.execute("home", arguments, device.control);
-            assertTrue(home.toString(), home.get("ok").getAsBoolean());
-            JsonObject launcher;
             try {
-                launcher = awaitObservation(device.tools, device.control,
-                        data -> !FIXTURE.equals(string(data, "packageName")));
-            } catch (AssertionError notHome) {
-                throw new AssertionError("After accepted home action: " + notHome.getMessage(), notHome);
+                JsonObject opened = device.tools.execute("click", nodeArguments(device.observe(), "open_second"), device.control);
+                assertTrue(opened.toString(), opened.get("ok").getAsBoolean());
+                JsonObject second = device.withText("Second page reached");
+                JsonObject arguments = new JsonObject();
+                arguments.addProperty("expectedRevision", string(second, "revision"));
+                JsonObject back = device.tools.execute("back", arguments, device.control);
+                assertTrue(back.toString(), back.get("ok").getAsBoolean());
+                JsonObject first = device.withText("Count: 0");
+                screenshots.capture("before-home");
+                arguments.addProperty("expectedRevision", string(first, "revision"));
+                JsonObject home = device.tools.execute("home", arguments, device.control);
+                assertTrue(home.toString(), home.get("ok").getAsBoolean());
+                JsonObject launcher;
+                try {
+                    launcher = awaitObservation(device.tools, device.control,
+                            data -> !FIXTURE.equals(string(data, "packageName")));
+                } catch (AssertionError notHome) {
+                    throw new AssertionError("After accepted home action: " + notHome.getMessage(), notHome);
+                }
+                assertFalse(launcher.get("scoped").getAsBoolean());
+                assertFalse(device.control.isPaused());
+            } catch (Throwable failure) {
+                // Capture while the service and its original window list are still present.
+                try { screenshots.capture("failure-before-service-cleanup"); }
+                catch (Throwable captureFailure) { failure.addSuppressed(captureFailure); }
+                throw failure;
             }
-            assertFalse(launcher.get("scoped").getAsBoolean());
-            assertFalse(device.control.isPaused());
         }
     }
 
@@ -316,7 +323,10 @@ public final class DeviceToolsInstrumentedTest {
                 } finally { for (AccessibilityWindowInfo window : windows) window.recycle(); }
                 if (!keyboard) SystemClock.sleep(50);
             }
-            assertTrue("The synthetic editor did not show its keyboard\n" + windowDiagnostics(), keyboard);
+            if (!keyboard) {
+                screenshots.capture("keyboard-not-visible");
+                fail("The synthetic editor did not show its keyboard\n" + windowDiagnostics() + "\n" + device.keyboardDiagnostics());
+            }
             JsonObject observed = awaitObservation(device.tools, device.control,
                     data -> data.has("windowId") && data.get("windowId").getAsInt() == focusedWindowId(device.service));
             assertEquals(FIXTURE, string(observed, "packageName"));

@@ -165,6 +165,26 @@ final class DeviceHarness implements AutoCloseable {
         return () -> writeSecure("show_ime_with_hard_keyboard", original);
     }
 
+    String keyboardDiagnostics() {
+        StringBuilder diagnostic = new StringBuilder("Synthetic input-method diagnostics:");
+        for (String key : new String[]{"default_input_method", "enabled_input_methods", "show_ime_with_hard_keyboard"}) {
+            diagnostic.append("\n ").append(key).append('=').append(readSecure(key));
+        }
+        try (ParcelFileDescriptor.AutoCloseInputStream input = new ParcelFileDescriptor.AutoCloseInputStream(
+                automation.executeShellCommand("dumpsys input_method")); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[2048];
+            int length;
+            while (output.size() < 16_384 && (length = input.read(buffer, 0, Math.min(buffer.length, 16_384 - output.size()))) != -1) {
+                output.write(buffer, 0, length);
+            }
+            diagnostic.append("\n").append(output.toString(StandardCharsets.UTF_8.name()));
+            if (output.size() == 16_384) diagnostic.append("\n[bounded input-method diagnostic]");
+        } catch (Exception failure) {
+            diagnostic.append("\ninput_method dump unavailable: ").append(failure.getClass().getSimpleName());
+        }
+        return diagnostic.toString();
+    }
+
     AutoCloseable enableTouchExploration() {
         AccessibilityServiceInfo info = automation.getServiceInfo();
         int previous = info.flags & AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;

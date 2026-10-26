@@ -22,10 +22,15 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.util.Collections;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -38,27 +43,89 @@ public final class SettingsStore {
     private static final Object STORAGE_LOCK = new Object();
     private static final int MAX_ENVELOPE_LENGTH = 200_000;
     private static final String STORAGE_KEY = "encrypted_settings";
+    private static final String REVISION_KEY = "configuration_revision";
+    private static final Map<String, ProfileState> PROFILES = new ConcurrentHashMap<>();
     private final Context context;
     private final String profileId;
     private final String keyAlias;
     private final byte[] associatedData;
     private final SharedPreferences preferences;
+    private final ProfileState state;
+    private final Committer committer;
 
     public SettingsStore(Context context) {
+        this(context, "", SharedPreferences.Editor::commit);
+    }
+
+    /** Isolated storage/Keystore namespace and one narrow failure seam for package tests. */
+    SettingsStore(Context context, String isolatedNamespace, Committer committer) {
         this.context = context.getApplicationContext();
+        if (isolatedNamespace == null || !isolatedNamespace.isEmpty()
+                && !isolatedNamespace.matches("[A-Za-z0-9_-]{1,64}")) throw new IllegalArgumentException("Invalid storage namespace");
+        this.committer = Objects.requireNonNull(committer);
         profileId = currentProfileId(context);
-        keyAlias = "dev.agentos.settings.v1." + profileId;
-        associatedData = ("Agent OS settings v1 " + profileId).getBytes(StandardCharsets.UTF_8);
-        preferences = this.context.getSharedPreferences("agent_settings_secure_" + profileId.replace(':', '_'), Context.MODE_PRIVATE);
+        String suffix = isolatedNamespace.isEmpty() ? "" : "." + isolatedNamespace;
+        keyAlias = "dev.agentos.settings.v1." + profileId + suffix;
+        associatedData = ("Agent OS settings v1 " + profileId + suffix).getBytes(StandardCharsets.UTF_8);
+        String name = "agent_settings_secure_" + profileId.replace(':', '_')
+                + (isolatedNamespace.isEmpty() ? "" : "__" + isolatedNamespace);
+        preferences = this.context.getSharedPreferences(name, Context.MODE_PRIVATE);
+        state = PROFILES.computeIfAbsent(name, ignored -> new ProfileState());
     }
 
     public SavedSettings load() throws IOException {
+        return loadWithLease().settings;
+    }
+
+    /** Worker-only decryption. A lease is issued only for a fully validated, nonempty configuration. */
+    public LoadedSettings loadWithLease() throws IOException {
+        List<Registration> invalidated = Collections.emptyList();
+        LoadedSettings loaded = null;
+        IOException failure = null;
         synchronized (STORAGE_LOCK) {
-        String encoded = preferences.getString(STORAGE_KEY, null);
+            requireReadable();
+            try {
+                ParsedSettings parsed = readStored();
+                synchronized (state.lock) {
+                    Published current = state.published;
+                    if (!Objects.equals(current.envelope, parsed.raw.envelope)
+                            || !Objects.equals(current.revision, parsed.raw.revision)
+                            || parsed.raw.envelope != null && current.lease == null) {
+                        invalidated = detachWatchersLocked();
+                        long generation = current.generation + 1;
+                        ConfigurationLease lease = parsed.raw.envelope == null ? null
+                                : new ConfigurationLease(state, profileId, generation);
+                        state.published = new Published(generation, lease, false, false,
+                                parsed.raw.envelope, parsed.raw.revision);
+                    }
+                    loaded = new LoadedSettings(parsed.settings, state.published.lease);
+                }
+            } catch (IOException error) {
+                synchronized (state.lock) {
+                    invalidated = detachWatchersLocked();
+                    Published current = state.published;
+                    state.published = new Published(current.generation + 1, null, false, false, null, null);
+                }
+                failure = error;
+            }
+        }
+        notifyInvalidated(invalidated);
+        if (failure != null) throw failure;
+        if (loaded.lease != null && !isCurrent(loaded.lease)) throw new IOException("配置在读取期间已改变，请重新读取。");
+        return loaded;
+    }
+
+    private ParsedSettings readStored() throws IOException {
+        RawSettings raw = readRaw();
+        if (raw.revision != null && (!(raw.revision instanceof String) || !validRevision((String) raw.revision))) {
+            throw new IOException("配置版本标识无效；原配置尚未修改，请明确重置后重试。");
+        }
+        if (raw.envelope != null && !(raw.envelope instanceof String)) throw new IOException("已保存配置的格式无效；原配置尚未修改。");
+        String encoded = (String) raw.envelope;
         if (encoded == null) {
             SavedSettings empty = new SavedSettings();
             empty.profileId = profileId;
-            return empty;
+            return new ParsedSettings(empty, raw);
         }
         if (encoded.length() > MAX_ENVELOPE_LENGTH) throw new IOException("已保存配置的大小异常。请重新保存配置。");
         try {
@@ -71,6 +138,13 @@ public final class SettingsStore {
             cipher.init(Cipher.DECRYPT_MODE, getKey(false), new GCMParameterSpec(128, iv));
             cipher.updateAAD(associatedData);
             JSONObject json = new JSONObject(new String(cipher.doFinal(ciphertext), StandardCharsets.UTF_8));
+            // The plaintext sidecar is never independently trusted. A reset tombstone
+            // cannot authorize an old ciphertext, and only double absence is legacy v1.
+            Object revision = json.has("configurationRevision") ? json.get("configurationRevision") : null;
+            if (revision != null || raw.revision != null) {
+                if (!(revision instanceof String) || !validRevision((String) revision)
+                        || !revision.equals(raw.revision)) throw new IOException("配置版本与加密内容不一致；原配置尚未修改，请明确重置后重试。");
+            }
             SavedSettings settings = new SavedSettings();
             settings.profileId = json.getString("profileId");
             if (!profileId.equals(settings.profileId)) throw new IOException("配置所属的用户资料已变化，请重新配置。");
@@ -90,23 +164,27 @@ public final class SettingsStore {
                 settings.grants.put(identity.packageName, identity);
             }
             validate(settings);
-            return settings;
+            return new ParsedSettings(settings, raw);
         } catch (GeneralSecurityException | JSONException | IllegalArgumentException error) {
             // Do not expose provider errors, ciphertext, or secrets in UI/log output.
             throw new IOException("无法解密已保存的配置。请重新填写并保存；原配置尚未修改。");
         }
-        }
     }
 
-    public void save(SavedSettings settings) throws IOException {
+    public ConfigurationLease save(SavedSettings settings) throws IOException {
+        Mutation mutation = beginMutation(false);
+        try {
         synchronized (STORAGE_LOCK) {
+        requireMutation(mutation);
         validate(settings);
         if (!profileId.equals(settings.profileId)) throw new IOException("配置所属的用户资料已变化，请重新配置。");
         // A damaged/newer configuration must first be explicitly reset by the user.
         // Reading before replacement also rejects a lost Keystore key without plaintext fallback.
-        if (preferences.contains(STORAGE_KEY)) load();
+        ParsedSettings previous = readStored();
         try {
+            String revision = UUID.randomUUID().toString();
             JSONObject json = new JSONObject();
+            json.put("configurationRevision", revision);
             json.put("profileId", settings.profileId);
             json.put("endpoint", settings.endpoint);
             json.put("apiKey", settings.apiKey);
@@ -135,12 +213,18 @@ public final class SettingsStore {
             envelope.put("ciphertext", Base64.encodeToString(ciphertext, Base64.NO_WRAP));
             String encoded = envelope.toString();
             if (encoded.length() > MAX_ENVELOPE_LENGTH) throw new IOException("配置过大，未修改原配置。请减少允许操作的应用后重试。");
-            if (!preferences.edit().putString(STORAGE_KEY, encoded).commit()) {
-                throw new IOException("配置保存失败，请稍后重试。");
+            commitOrFault(preferences.edit().putString(STORAGE_KEY, encoded).putString(REVISION_KEY, revision), previous.raw, mutation);
+            synchronized (state.lock) {
+                ConfigurationLease lease = new ConfigurationLease(state, profileId, mutation.generation);
+                state.published = new Published(mutation.generation, lease, false, false, encoded, revision);
+                return lease;
             }
         } catch (GeneralSecurityException | JSONException error) {
             throw new IOException("无法安全保存模型配置。请解锁设备后重试。");
         }
+        }
+        } finally {
+            finishFailedMutation(mutation);
         }
     }
 
@@ -185,16 +269,230 @@ public final class SettingsStore {
 
     /** Explicit user reset only; never call this as an automatic recovery path. */
     public void reset() throws IOException {
+        Mutation mutation = beginMutation(true);
+        try {
         synchronized (STORAGE_LOCK) {
-        if (!preferences.edit().remove(STORAGE_KEY).commit()) throw new IOException("无法清除配置，请稍后重试。");
+        requireMutation(mutation);
+        RawSettings previous = readRaw();
+        String revision = UUID.randomUUID().toString();
+        commitOrFault(preferences.edit().remove(STORAGE_KEY).putString(REVISION_KEY, revision), previous, mutation);
         try {
             KeyStore store = KeyStore.getInstance("AndroidKeyStore");
             store.load(null);
             if (store.containsAlias(keyAlias)) store.deleteEntry(keyAlias);
-        } catch (GeneralSecurityException error) {
+        } catch (GeneralSecurityException | IOException error) {
+            markFault(mutation);
             throw new IOException("配置已清除，但密钥清理未完成，请重启后重试。");
         }
+        synchronized (state.lock) {
+            // Persisted tombstone remains, but an empty configuration has no execution lease.
+            state.published = new Published(mutation.generation, null, false, false, null, revision);
         }
+        }
+        } finally {
+            finishFailedMutation(mutation);
+        }
+    }
+
+    /** Pure in-process check: no preference access, locks, disk I/O or decryption. */
+    public static boolean isCurrent(ConfigurationLease lease) {
+        if (lease == null) return false;
+        Published current = lease.owner.published;
+        return !current.mutating && !current.fault && current.lease == lease
+                && current.generation == lease.generation;
+    }
+
+    /** Atomically watches this exact lease. Never invokes callbacks while holding a store/state lock. */
+    public Registration watch(ConfigurationLease lease, Runnable invalidated) {
+        return watchState(state, lease, invalidated);
+    }
+
+    private static Registration watchState(ProfileState state, ConfigurationLease lease, Runnable invalidated) {
+        Objects.requireNonNull(invalidated);
+        Registration registration = new Registration(state, invalidated);
+        boolean notifyNow;
+        synchronized (state.lock) {
+            notifyNow = lease == null || lease.owner != state || !isCurrent(lease);
+            if (notifyNow) registration.closed = true;
+            else state.watchers.add(registration);
+        }
+        if (notifyNow) registration.notifyInvalidation();
+        return registration;
+    }
+
+    private Mutation beginMutation(boolean resetting) throws IOException {
+        List<Registration> invalidated;
+        Mutation mutation;
+        synchronized (STORAGE_LOCK) {
+            synchronized (state.lock) {
+                Published current = state.published;
+                if (current.mutating) throw new IOException("配置正在修改，请稍后重试。");
+                if (current.fault && !resetting) throw new IOException("上次存储结果无法确认，请先明确重置本机配置。");
+                mutation = new Mutation(current.generation + 1);
+                invalidated = detachWatchersLocked();
+                state.published = new Published(mutation.generation, null, true, current.fault, null, null);
+            }
+        }
+        // Invalidation happens before any disk/Keystore mutation. Reentrant callbacks
+        // can inspect the invalid lease, but a new load/save sees MUTATING and fails closed.
+        notifyInvalidated(invalidated);
+        return mutation;
+    }
+
+    private void requireReadable() throws IOException {
+        Published current = state.published;
+        if (current.fault) throw new IOException("上次存储结果无法确认，请先明确重置本机配置。");
+        if (current.mutating) throw new IOException("配置正在修改，请稍后重试。");
+    }
+
+    private void requireMutation(Mutation mutation) throws IOException {
+        Published current = state.published;
+        if (!current.mutating || current.generation != mutation.generation) throw new IOException("配置修改已失效，请重新操作。");
+    }
+
+    private void finishFailedMutation(Mutation mutation) {
+        synchronized (state.lock) {
+            Published current = state.published;
+            if (current.mutating && current.generation == mutation.generation) {
+                state.published = new Published(current.generation, null, false, current.fault, null, null);
+            }
+        }
+    }
+
+    private void markFault(Mutation mutation) {
+        synchronized (state.lock) {
+            state.published = new Published(mutation.generation, null, false, true, null, null);
+        }
+    }
+
+    private RawSettings readRaw() throws IOException {
+        try {
+            Map<String, ?> all = preferences.getAll();
+            return new RawSettings(all.get(STORAGE_KEY), all.get(REVISION_KEY));
+        } catch (RuntimeException error) {
+            throw new IOException("无法读取配置存储；原配置尚未修改。");
+        }
+    }
+
+    private void commitOrFault(SharedPreferences.Editor editor, RawSettings previous, Mutation mutation) throws IOException {
+        boolean committed;
+        try { committed = committer.commit(editor); }
+        catch (RuntimeException uncertain) { committed = false; }
+        if (committed) return;
+        // commit() updates SharedPreferences memory before it reports the disk result.
+        // Restore the prior envelope best-effort, but do not claim this proves disk rollback.
+        markFault(mutation);
+        try {
+            SharedPreferences.Editor restore = preferences.edit();
+            restoreValue(restore, STORAGE_KEY, previous.envelope);
+            restoreValue(restore, REVISION_KEY, previous.revision);
+            restore.commit();
+        } catch (RuntimeException ignored) { }
+        throw new IOException("配置写入结果无法确认，旧确认已失效。请先明确重置本机配置后重试。");
+    }
+
+    private static void restoreValue(SharedPreferences.Editor editor, String name, Object value) {
+        if (value == null) editor.remove(name);
+        else if (value instanceof String) editor.putString(name, (String) value);
+        else if (value instanceof Boolean) editor.putBoolean(name, (Boolean) value);
+        else if (value instanceof Integer) editor.putInt(name, (Integer) value);
+        else if (value instanceof Long) editor.putLong(name, (Long) value);
+        else if (value instanceof Float) editor.putFloat(name, (Float) value);
+        else if (value instanceof Set<?>) {
+            @SuppressWarnings("unchecked") Set<String> strings = (Set<String>) value;
+            editor.putStringSet(name, strings);
+        }
+    }
+
+    private List<Registration> detachWatchersLocked() {
+        List<Registration> detached = new ArrayList<>(state.watchers);
+        state.watchers.clear();
+        for (Registration registration : detached) registration.closed = true;
+        return detached;
+    }
+
+    private static void notifyInvalidated(List<Registration> invalidated) {
+        for (Registration registration : invalidated) registration.notifyInvalidation();
+    }
+
+    private static boolean validRevision(String revision) {
+        return revision.matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
+    }
+
+    interface Committer { boolean commit(SharedPreferences.Editor editor); }
+
+    public static final class ConfigurationLease {
+        public final String profileId;
+        /** Random local binding only: contains no endpoint, model, API key or credential hash. */
+        public final String configurationToken = UUID.randomUUID().toString();
+        private final ProfileState owner;
+        private final long generation;
+        private ConfigurationLease(ProfileState owner, String profileId, long generation) {
+            this.owner = owner;
+            this.profileId = profileId;
+            this.generation = generation;
+        }
+        /** Lightweight registration for controllers that must not open storage on the UI thread. */
+        public Registration watch(Runnable invalidated) { return watchState(owner, this, invalidated); }
+    }
+
+    public static final class LoadedSettings {
+        public final SavedSettings settings;
+        public final ConfigurationLease lease;
+        private LoadedSettings(SavedSettings settings, ConfigurationLease lease) {
+            this.settings = settings;
+            this.lease = lease;
+        }
+    }
+
+    public static final class Registration implements AutoCloseable {
+        private final ProfileState owner;
+        private final Runnable invalidated;
+        private boolean closed;
+        private Registration(ProfileState owner, Runnable invalidated) { this.owner = owner; this.invalidated = invalidated; }
+        @Override public void close() {
+            synchronized (owner.lock) {
+                if (closed) return;
+                closed = true;
+                owner.watchers.remove(this);
+            }
+        }
+        private void notifyInvalidation() {
+            try { invalidated.run(); } catch (RuntimeException ignored) { }
+        }
+    }
+
+    private static final class ProfileState {
+        final Object lock = new Object();
+        final List<Registration> watchers = new ArrayList<>();
+        volatile Published published = new Published(0, null, false, false, null, null);
+    }
+
+    private static final class Published {
+        final long generation;
+        final ConfigurationLease lease;
+        final boolean mutating, fault;
+        final Object envelope, revision;
+        Published(long generation, ConfigurationLease lease, boolean mutating, boolean fault, Object envelope, Object revision) {
+            this.generation = generation; this.lease = lease; this.mutating = mutating; this.fault = fault;
+            this.envelope = envelope; this.revision = revision;
+        }
+    }
+
+    private static final class Mutation {
+        final long generation;
+        Mutation(long generation) { this.generation = generation; }
+    }
+
+    private static final class RawSettings {
+        final Object envelope, revision;
+        RawSettings(Object envelope, Object revision) { this.envelope = envelope; this.revision = revision; }
+    }
+
+    private static final class ParsedSettings {
+        final SavedSettings settings;
+        final RawSettings raw;
+        ParsedSettings(SavedSettings settings, RawSettings raw) { this.settings = settings; this.raw = raw; }
     }
 
     /** Call on a worker thread. Choosing applications is an explicit reauthorization. */

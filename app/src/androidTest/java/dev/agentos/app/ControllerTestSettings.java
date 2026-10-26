@@ -12,6 +12,7 @@ final class ControllerTestSettings implements AutoCloseable {
     private final SharedPreferences preferences;
     private final Map<String, ?> original;
     final ModelSettings model;
+    final SettingsStore.ConfigurationLease lease;
 
     ControllerTestSettings(Context context, LocalControllerModelServer server) throws IOException {
         String profile = SettingsStore.currentProfileId(context);
@@ -28,7 +29,7 @@ final class ControllerTestSettings implements AutoCloseable {
             saved.confirmEachAction = true;
             saved.allowedPackages.add(DeviceHarness.FIXTURE);
             saved.grants.put(DeviceHarness.FIXTURE, SettingsStore.captureGrant(context, DeviceHarness.FIXTURE));
-            store.save(saved);
+            lease = store.save(saved);
         } catch (Throwable failure) {
             try { close(); } catch (IOException cleanup) { failure.addSuppressed(cleanup); }
             throw failure;

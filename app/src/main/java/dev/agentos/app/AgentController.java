@@ -69,6 +69,7 @@ public final class AgentController {
     private long generation;
     private long stopGeneration = -1, stoppedEpoch = -1, stoppedDispatchAttempts = -1;
     private RunControl control;
+    private SettingsStore.ConfigurationLease configuration;
     private PendingApproval pending;
     private String status = "准备就绪";
     private String summary = "";
@@ -77,9 +78,12 @@ public final class AgentController {
         final String id = UUID.randomUUID().toString();
         final String description;
         final long epoch;
+        final SettingsStore.ConfigurationLease configuration;
         final long deadline = SystemClock.elapsedRealtime() + 60_000L;
         Boolean answer;
-        PendingApproval(String description, long epoch) { this.description = description; this.epoch = epoch; }
+        PendingApproval(String description, long epoch, SettingsStore.ConfigurationLease configuration) {
+            this.description = description; this.epoch = epoch; this.configuration = configuration;
+        }
     }
 
     private AgentController(Context context) { this.context = context.getApplicationContext(); }
@@ -106,7 +110,7 @@ public final class AgentController {
     public void removeListener(Listener listener) { listeners.remove(listener); }
 
     public void start(ModelSettings settings, String task, Set<String> allowedPackages,
-                      boolean confirmEachAction) {
+                      boolean confirmEachAction, SettingsStore.ConfigurationLease configurationLease) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
             throw new IllegalStateException("请从任务界面启动。");
         }
@@ -118,6 +122,10 @@ public final class AgentController {
         }
         settings.validate();
         SettingsStore.requirePersonalProfile(context);
+        if (!SettingsStore.isCurrent(configurationLease)
+                || !configurationLease.profileId.equals(SettingsStore.currentProfileId(context))) {
+            throw new IllegalStateException("配置已改变，请重新保存后启动。");
+        }
         if (task.length() > 6000) throw new IllegalArgumentException("任务内容请控制在 6000 字以内。");
         Set<String> scope = new LinkedHashSet<>(allowedPackages == null
                 ? Collections.emptySet() : allowedPackages);
@@ -130,16 +138,24 @@ public final class AgentController {
             if (control != null) throw new IllegalStateException("已有任务正在运行，请先停止。");
             session = ++generation;
             control = active;
+            configuration = configurationLease;
             pending = null;
             log.clear();
             summary = "";
             status = "正在连接模型";
             appendLogLocked("任务已启动；允许操作 " + scope.size() + " 个应用。");
         }
+        final SettingsStore.Registration configurationWatch = configurationLease.watch(
+                () -> configurationInvalidated(session, active));
+        if (active.isCancelled()) {
+            configurationWatch.close();
+            throw new IllegalStateException("配置已改变，请重新保存后启动。");
+        }
         service.setOverlayCallbacks(callbacksFor(""));
         try {
             service.showOverlay(status, false, "");
         } catch (RuntimeException error) {
+            configurationWatch.close();
             stop();
             throw new IllegalStateException("无法显示任务控制条，请检查无障碍服务状态。");
         }
@@ -149,8 +165,11 @@ public final class AgentController {
             try {
                 active.checkCancelled();
                 SettingsStore store = new SettingsStore(context);
-                SettingsStore.SavedSettings saved = store.load();
-                if (!store.validateAllowedPackages(saved).containsAll(scope)
+                active.checkCancelled();
+                SettingsStore.LoadedSettings loaded = store.loadWithLease();
+                SettingsStore.SavedSettings saved = loaded.settings;
+                if (loaded.lease != configurationLease || !SettingsStore.isCurrent(configurationLease)
+                        || !store.validateAllowedPackages(saved).containsAll(scope)
                         || !settings.endpoint.equals(saved.endpoint.trim())
                         || !settings.model.equals(saved.model.trim())
                         || !settings.apiKey.equals(saved.apiKey.trim())
@@ -161,7 +180,7 @@ public final class AgentController {
                 }
                 active.checkCancelled();
                 AndroidDeviceTools tools = new AndroidDeviceTools(service, scope, saved.grants,
-                        confirmEachAction, (description, run, epoch) -> requestApproval(session, description, run, epoch));
+                        confirmEachAction, (description, run, epoch) -> requestApproval(session, description, run, epoch, configurationLease));
                 AgentRunner runner = new AgentRunner(settings, tools, new AgentRunner.Listener() {
                     @Override public void onStatus(String next) {
                         synchronized (lock) {
@@ -193,9 +212,11 @@ public final class AgentController {
                 // Exceptions may contain provider response bodies or input values; do not display them.
                 finish(session, "执行中断，请检查模型配置、网络和无障碍服务状态。", false);
             } finally {
+                configurationWatch.close();
                 active.cancel();
             }
         }); } catch (java.util.concurrent.RejectedExecutionException busy) {
+            configurationWatch.close();
             active.cancel();
             finish(session, "上一任务仍在释放资源，请稍后重试。", false);
         }
@@ -205,7 +226,9 @@ public final class AgentController {
         synchronized (lock) {
             if (control == null) return;
             pending = null;
-            if (control.isPaused()) {
+            if (!SettingsStore.isCurrent(configuration)) {
+                configurationInvalidatedLocked(control);
+            } else if (control.isPaused()) {
                 if (!isUnlocked()) { stop(); return; }
                 control.resume();
                 status = "正在重新观察";
@@ -231,6 +254,7 @@ public final class AgentController {
             PerformanceTrace.mark(PerformanceTrace.Stage.STOP_EPOCH_INVALIDATED,
                     cancelled.getExecutionEpoch(), cancelled.getDispatchAttempts());
             control = null;
+            configuration = null;
             ++generation;
             stopGeneration = generation;
             stoppedEpoch = cancelled.getExecutionEpoch();
@@ -250,7 +274,9 @@ public final class AgentController {
         synchronized (lock) {
             if (pending == null || control == null || pending.answer != null
                     || control.isPaused() || !pending.id.equals(approvalId)) return;
-            if (pending.epoch != control.getExecutionEpoch()
+            if (!SettingsStore.isCurrent(pending.configuration) || pending.configuration != configuration) {
+                configurationInvalidatedLocked(control);
+            } else if (pending.epoch != control.getExecutionEpoch()
                     || SystemClock.elapsedRealtime() >= pending.deadline) {
                 control.pause(); pending = null; status = "确认已过期，任务已暂停";
             } else {
@@ -262,13 +288,15 @@ public final class AgentController {
         publish();
     }
 
-    private boolean requestApproval(long session, String description, RunControl run, long requestEpoch)
+    private boolean requestApproval(long session, String description, RunControl run, long requestEpoch,
+                                    SettingsStore.ConfigurationLease configurationLease)
             throws InterruptedException {
         // The approval belongs to the originating request, never a later resume.
-        PendingApproval request = new PendingApproval(safeText(description, 6000), requestEpoch);
+        PendingApproval request = new PendingApproval(safeText(description, 6000), requestEpoch, configurationLease);
         synchronized (lock) {
             run.checkExecutionEpoch(request.epoch);
             if (!isCurrentLocked(session)) throw new InterruptedException("Task changed");
+            requireConfigurationLocked(configurationLease, run);
             pending = request;
             status = "等待确认（60 秒内有效）";
         }
@@ -284,6 +312,7 @@ public final class AgentController {
                 synchronized (lock) {
                     run.checkExecutionEpoch(request.epoch);
                     if (!isCurrentLocked(session)) throw new TaskControlException("TASK_STOPPED", "任务已结束。");
+                    requireConfigurationLocked(configurationLease, run);
                     if (pending != request) throw new TaskControlException("TASK_PAUSED", "确认已失效。");
                     long remaining = request.deadline - SystemClock.elapsedRealtime();
                     if (remaining <= 0) {
@@ -307,6 +336,38 @@ public final class AgentController {
         }
     }
 
+    private void requireConfigurationLocked(SettingsStore.ConfigurationLease lease, RunControl run)
+            throws TaskControlException {
+        if (configuration != lease || !SettingsStore.isCurrent(lease)) {
+            if (control == run) configurationInvalidatedLocked(run);
+            throw new TaskControlException("TASK_STOPPED", "配置已改变，任务已停止。");
+        }
+    }
+
+    private void configurationInvalidated(long session, RunControl active) {
+        synchronized (lock) {
+            // A delayed observer from a completed task must never cancel a new one.
+            if (generation != session || control != active) return;
+            configurationInvalidatedLocked(active);
+        }
+        publish();
+    }
+
+    private void configurationInvalidatedLocked(RunControl active) {
+        // Use the existing cancellation hook to abort transport; never replace it.
+        active.cancel();
+        control = null;
+        configuration = null;
+        pending = null;
+        ++generation;
+        status = "配置已改变，任务已停止";
+        summary = active.hasInFlightDispatch()
+                ? "配置已改变，旧确认已失效。有动作已进入提交阶段，可能仍在完成；请核对当前应用。"
+                : "配置已改变，旧任务和旧确认已失效，请重新启动任务。";
+        appendLogLocked("配置已改变；任务已停止。");
+        lock.notifyAll();
+    }
+
     private void finish(long session, String result, boolean normallyEnded) {
         finish(session, new TaskResult(normallyEnded ? TaskResult.Kind.MODEL_REPORT : TaskResult.Kind.FAILED,
                 result, ""));
@@ -317,6 +378,7 @@ public final class AgentController {
             if (!isCurrentLocked(session)) return;
             control.cancel();
             control = null;
+            configuration = null;
             pending = null;
             switch (result.kind) {
                 case VERIFIED: status = "结果已验证"; break;

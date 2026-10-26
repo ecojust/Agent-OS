@@ -492,15 +492,17 @@ public final class MainActivity extends Activity implements AgentController.List
             if (destroyed) return;
             String failure = "";
             Set<String> valid = new LinkedHashSet<>();
+            SettingsStore.ConfigurationLease savedLease = null;
             try {
                 valid = store.validateAllowedPackages(settings);
                 if (!valid.equals(settings.allowedPackages)) throw new IOException("应用安装身份已变化，请重新选择允许操作的应用。");
-                store.save(settings);
+                savedLease = store.save(settings);
             } catch (IOException | RuntimeException error) {
                 failure = "无法保存或验证配置。请检查当前资料和应用授权；若配置已损坏，请先重置后重新填写。";
             }
             String errorText = failure;
             Set<String> allowed = valid;
+            SettingsStore.ConfigurationLease configurationLease = savedLease;
             main.post(() -> {
                 if (destroyed) return;
                 busy = false;
@@ -511,7 +513,7 @@ public final class MainActivity extends Activity implements AgentController.List
                 try {
                     // Start is only invoked from this still-live Activity after the save succeeds.
                     hideCurrentResult = false;
-                    controller.start(model, goal, allowed, settings.confirmEachAction);
+                    controller.start(model, goal, allowed, settings.confirmEachAction, configurationLease);
                     messageText.setVisibility(View.GONE);
                     View focus = getCurrentFocus();
                     if (focus != null) {

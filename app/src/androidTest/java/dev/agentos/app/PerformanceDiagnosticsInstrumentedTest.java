@@ -128,7 +128,7 @@ public final class PerformanceDiagnosticsInstrumentedTest {
             try (SampleWindow window = new SampleWindow("C_LOCAL_MODEL_FIXTURE", modes)) {
                 instrumentation.runOnMainSync(() -> controller.start(settings.model,
                         "Save the synthetic sample and increment the fixture counter once.",
-                        Collections.singleton(DeviceHarness.FIXTURE), true));
+                        Collections.singleton(DeviceHarness.FIXTURE), true, settings.lease));
                 Set<String> approved = new HashSet<>();
                 long deadline = SystemClock.elapsedRealtime() + 30_000;
                 while (controller.getState().running && SystemClock.elapsedRealtime() < deadline) {
@@ -165,7 +165,7 @@ public final class PerformanceDiagnosticsInstrumentedTest {
             try (SampleWindow window = new SampleWindow("STOP_WAITING_APPROVAL", modes)) {
                 instrumentation.runOnMainSync(() -> controller.start(settings.model,
                         "Prepare one synthetic increment and wait for confirmation.",
-                        Collections.singleton(DeviceHarness.FIXTURE), true));
+                        Collections.singleton(DeviceHarness.FIXTURE), true, settings.lease));
                 await("Synthetic stop trial did not reach confirmation", () -> {
                     server.assertHealthy();
                     return !controller.getState().approvalId.isEmpty();

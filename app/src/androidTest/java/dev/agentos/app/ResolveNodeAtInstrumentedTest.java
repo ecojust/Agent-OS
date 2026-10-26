@@ -37,6 +37,9 @@ public final class ResolveNodeAtInstrumentedTest {
             assertFalse(tools.availableTools().contains("swipe"));
 
             JsonObject screen = observed(device, tools);
+            // Some platform versions expose an empty editor's hint as node text.
+            // Compare independent before/after evidence instead of assuming "".
+            String initialEditorText = actualText(device, "edit_value");
             JsonObject scroll = node(screen, "fixture_scroll");
             Rect scrollBounds = bounds(scroll);
             Rect controls = new Rect();
@@ -54,7 +57,7 @@ public final class ResolveNodeAtInstrumentedTest {
             JsonObject selected = resolvedNode(device, tools, screen, "increment", "click");
             assertNoDispatch(device, approvals);
             assertEquals("Count: 0", actualText(device, "counter_value"));
-            assertEquals("", actualText(device, "edit_value"));
+            assertEquals("Read-only resolution must not change editor text", initialEditorText, actualText(device, "edit_value"));
             JsonObject unchanged = observed(device, tools);
             assertEquals("Resolving candidates must not scroll or otherwise change the fixture",
                     string(screen, "revision"), string(unchanged, "revision"));

@@ -1,0 +1,63 @@
+name: Inspect completed Android job
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Trusted master Android checks run (the full matrix may still be running)
+        required: true
+        type: string
+      api_label:
+        description: Completed API job to inspect
+        required: true
+        type: choice
+        options: ['30', '31', '32', '33', '34', '35', '36', '37.0']
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  inspect:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify source run
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.run_id }}
+        run: |
+          [[ "$SOURCE_RUN_ID" =~ ^[0-9]+$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > "$RUNNER_TEMP/inspection-run.json"
+          python3 scripts/inspect_android_job.py verify-run \
+            --run "$RUNNER_TEMP/inspection-run.json" --repository "$GITHUB_REPOSITORY" \
+            --github-output "$GITHUB_OUTPUT"
+      - name: Verify completed job and report
+        id: report
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ steps.source.outputs.run_id }}
+          SOURCE_ATTEMPT: ${{ steps.source.outputs.attempt }}
+          API_LABEL: ${{ inputs.api_label }}
+        run: |
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/attempts/$SOURCE_ATTEMPT/jobs?per_page=100" > "$RUNNER_TEMP/inspection-jobs.json"
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/inspection-artifacts.json"
+          python3 scripts/inspect_android_job.py select \
+            --run "$RUNNER_TEMP/inspection-run.json" --repository "$GITHUB_REPOSITORY" \
+            --jobs "$RUNNER_TEMP/inspection-jobs.json" --artifacts "$RUNNER_TEMP/inspection-artifacts.json" \
+            --api-label "$API_LABEL" --github-output "$GITHUB_OUTPUT"
+      - name: Download only the verified report
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.source.outputs.run_id }}
+          artifact-ids: ${{ steps.report.outputs.artifact_id }}
+          path: ${{ runner.temp }}/inspection-report
+      - name: Print bounded JUnit diagnostics
+        run: python3 scripts/inspect_android_job.py print --directory "$RUNNER_TEMP/inspection-report"

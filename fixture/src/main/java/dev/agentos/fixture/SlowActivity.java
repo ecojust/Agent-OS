@@ -16,6 +16,7 @@ import java.lang.ref.WeakReference;
 
 /** Simulates a slow remote accessibility provider without changing production execution code. */
 public final class SlowActivity extends Activity {
+    private final Object barrierOwner = new Object();
     private static WeakReference<SlowLayout> active = new WeakReference<>(null);
     private static WeakReference<View> activeRoot = new WeakReference<>(null);
     private static boolean rootArmed;
@@ -43,9 +44,11 @@ public final class SlowActivity extends Activity {
         rootArmed = false;
         View root = getWindow().getDecorView();
         activeRoot = new WeakReference<>(root);
+        SlowReadBarrier.attach(barrierOwner);
         root.setAccessibilityDelegate(new View.AccessibilityDelegate() {
             @Override public void onInitializeAccessibilityNodeInfo(View host, AccessibilityNodeInfo info) {
                 super.onInitializeAccessibilityNodeInfo(host, info);
+                SlowReadBarrier.beforeRootReply(host.getContext(), barrierOwner);
                 if (!rootArmed) return;
                 rootArmed = false;
                 host.getContext().sendBroadcast(new Intent("dev.agentos.fixture.OBSERVATION_BLOCKED")
@@ -55,6 +58,11 @@ public final class SlowActivity extends Activity {
                 SystemClock.sleep(650);
             }
         });
+    }
+
+    @Override protected void onDestroy() {
+        SlowReadBarrier.detach(barrierOwner);
+        super.onDestroy();
     }
 
     static void armRootWithoutChangingContent() {

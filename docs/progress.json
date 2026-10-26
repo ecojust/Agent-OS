@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-26T19:22:39Z",
-  "note": "最终快照和系统动作迁移到同一串行工作线程，保留完整最终校验并明确提交状态；节点不跨线程、停止不等远端调用。主代码/测试编译及lint通过，待八API验证。",
+  "updated_at": "2026-10-26T19:25:08Z",
+  "note": "新增真实跨进程最终读取屏障，回归暂停、停止及仅控制条失效时零派发，排除截断/内容变化造成的假通过；编译与lint通过，并修正测试中的低版本API调用，待八版本实跑。",
   "latest_evidence": {
     "path": "screenshots/40381396419-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40381396419"

@@ -18,5 +18,7 @@
         <activity android:name=".KeyboardActivity" android:exported="true"
             android:windowSoftInputMode="stateUnspecified|adjustResize" />
         <receiver android:name=".SlowObservationReceiver" android:exported="true" />
+        <provider android:name=".SlowReadControlProvider" android:exported="true"
+            android:authorities="dev.agentos.fixture.slow-read-control" />
     </application>
 </manifest>

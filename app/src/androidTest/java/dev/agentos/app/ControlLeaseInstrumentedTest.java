@@ -8,6 +8,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +35,7 @@ public final class ControlLeaseInstrumentedTest {
 
             CompletableFuture<AgentAccessibilityService.ControlLease> waiting;
             device.instrumentation.runOnMainSync(() -> service.showOverlay("Lease test", false,
-                    "Synthetic approval\n" + "A bounded confirmation line.\n".repeat(20)));
+                    "Synthetic approval\n" + String.join("\n", Collections.nCopies(20, "A bounded confirmation line."))));
             assertFalse(service.isControlLeaseCurrent(original));
             waiting = service.acquireControlLease();
             device.instrumentation.waitForIdleSync();

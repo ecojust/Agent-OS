@@ -62,16 +62,11 @@ public final class ResolveNodeAtInstrumentedTest {
             assertEquals("Resolving candidates must not scroll or otherwise change the fixture",
                     string(screen, "revision"), string(unchanged, "revision"));
 
-            JsonObject action = new JsonObject();
-            action.addProperty("nodeId", string(selected, "nodeId"));
-            action.addProperty("expectedRevision", string(selected, "revision"));
-            JsonObject clicked = tools.execute("click", action, device.control);
-            assertTrue(clicked.toString(), clicked.get("ok").getAsBoolean());
-            assertEquals("Resolution must not replace the ordinary action's confirmation", 1, approvals.get());
+            clickWithFreshCandidatePlans(device, tools, selected, approvals);
             assertEquals(1, device.control.getDispatchAttempts());
             awaitObservation(tools, device.control, data -> "Count: 1".equals(string(node(data, "counter_value"), "text")));
             assertEquals("Count: 1", actualText(device, "counter_value"));
-            screenshots.capture("resolved-node-click-confirmed-once");
+            screenshots.capture("resolved-node-click-after-current-confirmation");
         }
     }
 
@@ -218,6 +213,64 @@ public final class ResolveNodeAtInstrumentedTest {
         assertTrue(selected.get("candidateOnly").getAsBoolean());
         assertTrue("Resolution must not bypass later action confirmation", selected.get("requiresConfirmation").getAsBoolean());
         return selected;
+    }
+
+    /**
+     * A candidate is not permission to reuse a target after the final guard rejects it.
+     * Only an explicitly unsubmitted stale plan may be replaced, by observing and resolving
+     * the target again. Every replacement still needs its own ordinary click confirmation.
+     * Negative resolver tests never use this positive-flow replanning helper.
+     */
+    private static void clickWithFreshCandidatePlans(DeviceHarness device, AndroidDeviceTools tools,
+                                                      JsonObject firstCandidate, AtomicInteger approvals) throws Exception {
+        final long epoch = device.control.getExecutionEpoch();
+        JsonObject selected = firstCandidate;
+        StringBuilder outcomes = new StringBuilder();
+        for (int plan = 0; plan < 3; plan++) {
+            device.control.checkExecutionEpoch(epoch);
+            if (plan > 0) {
+                JsonObject fresh = observed(device, tools);
+                int beforeResolution = approvals.get();
+                selected = resolvedNode(device, tools, fresh, "increment", "click");
+                assertEquals("A new lookup must not request approval", beforeResolution, approvals.get());
+                assertEquals("A new lookup must not dispatch input", 0, device.control.getDispatchAttempts());
+            }
+            JsonObject action = new JsonObject();
+            action.addProperty("nodeId", string(selected, "nodeId"));
+            action.addProperty("expectedRevision", string(selected, "revision"));
+            int beforeApproval = approvals.get();
+            JsonObject clicked = tools.execute("click", action, device.control);
+            int confirmationDelta = approvals.get() - beforeApproval;
+            outcomes.append("plan=").append(plan).append(" confirmationDelta=")
+                    .append(confirmationDelta).append(" result=").append(clicked).append('\n');
+            assertTrue(outcomes.toString(), clicked.has("ok") && clicked.get("ok").isJsonPrimitive()
+                    && clicked.getAsJsonPrimitive("ok").isBoolean());
+            if (clicked.get("ok").getAsBoolean()) {
+                assertEquals("The accepted plan must obtain its own confirmation: " + outcomes,
+                        1, confirmationDelta);
+                assertEquals("Exactly one device action may be submitted: " + outcomes,
+                        1, device.control.getDispatchAttempts());
+                return;
+            }
+            assertEquals(outcomes.toString(), "STALE_OBSERVATION", string(clicked, "code"));
+            for (String flag : new String[]{"submitted", "dispatchSubmitted", "dispatchAccepted"}) {
+                assertTrue(outcomes.toString(), clicked.has(flag) && clicked.get(flag).isJsonPrimitive()
+                        && clicked.getAsJsonPrimitive(flag).isBoolean());
+                assertFalse(outcomes.toString(), clicked.get(flag).getAsBoolean());
+            }
+            if (clicked.has("accepted")) {
+                assertTrue(outcomes.toString(), clicked.get("accepted").isJsonPrimitive()
+                        && clicked.getAsJsonPrimitive("accepted").isBoolean());
+                assertFalse(outcomes.toString(), clicked.get("accepted").getAsBoolean());
+            }
+            // Rejection can precede or follow approval; that approval must not authorize
+            // the next plan. Unknown outcomes or any dispatch stop this test immediately.
+            assertTrue(outcomes.toString(), confirmationDelta == 0 || confirmationDelta == 1);
+            assertEquals(outcomes.toString(), 0, device.control.getDispatchAttempts());
+            assertEquals(outcomes.toString(), "Count: 0", actualText(device, "counter_value"));
+            device.control.checkExecutionEpoch(epoch);
+        }
+        fail("No current candidate completed within three fresh plans: " + outcomes);
     }
 
     private static JsonObject request(JsonObject screen, Rect bounds, String action) {

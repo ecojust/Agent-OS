@@ -129,7 +129,8 @@ final class DeviceHarness implements AutoCloseable {
             }
             SystemClock.sleep(100);
         }
-        fail("No stable matching fixture observation; last result: " + last + "\n" + windowDiagnostics());
+        fail("No stable matching fixture observation\n" + serverWindowDiagnostics()
+                + "\n" + windowDiagnostics() + "\nlast result: " + last);
         return null;
     }
 
@@ -314,6 +315,59 @@ final class DeviceHarness implements AutoCloseable {
             return diagnostic.toString();
         } finally {
             for (AccessibilityWindowInfo window : windows) window.recycle();
+        }
+    }
+
+    /** Failure-only server evidence; it never refreshes a snapshot or converts a test to success. */
+    private static String serverWindowDiagnostics() {
+        StringBuilder result = new StringBuilder("Synthetic fixture server window evidence:");
+        try {
+            UiAutomation automation = InstrumentationRegistry.getInstrumentation().getUiAutomation(
+                    UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+            appendFilteredServerDump(result, automation, "window-manager", "dumpsys -t 2 window windows", true, 4_000);
+            appendFilteredServerDump(result, automation, "accessibility-manager", "dumpsys -t 2 accessibility", false, 3_000);
+        } catch (RuntimeException unavailable) { result.append(" [unavailable: ").append(unavailable.getClass().getSimpleName()).append(']'); }
+        return result.toString();
+    }
+
+    private static void appendFilteredServerDump(StringBuilder result, UiAutomation automation,
+                                                 String label, String command, boolean windowManager, int outputLimit) {
+        result.append("\n ").append(label).append(':');
+        try (ParcelFileDescriptor.AutoCloseInputStream input = new ParcelFileDescriptor.AutoCloseInputStream(
+                automation.executeShellCommand(command)); ByteArrayOutputStream bytes = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[4096];
+            int length;
+            int byteLimit = 256 * 1024;
+            while (bytes.size() < byteLimit && (length = input.read(buffer, 0, Math.min(buffer.length, byteLimit - bytes.size()))) != -1) {
+                bytes.write(buffer, 0, length);
+            }
+            boolean fixtureWindow = false;
+            int emitted = 0;
+            for (String raw : bytes.toString(StandardCharsets.UTF_8.name()).split("\\r?\\n")) {
+                String line = raw.trim();
+                boolean include;
+                if (windowManager) {
+                    if (line.matches("Window #[0-9]+.*")) fixtureWindow = line.contains(FIXTURE);
+                    include = fixtureWindow && (line.matches("Window #[0-9]+.*")
+                            || line.matches(".*(?:mViewVisibility|mHasSurface|isOnScreen|isVisible|mDestroying|mRemoved|mRemoveOnExit|mAnimatingExit|mAppDied|mObscured|mDrawState|mHidden|mVisibleRequested|mSurfaceShown)=.*"));
+                    include |= (line.startsWith("mCurrentFocus=") || line.startsWith("mFocusedApp=")) && line.contains(FIXTURE);
+                } else {
+                    // Only the fixture's platform window metadata, never other apps'
+                    // node text, connected service configuration, or account state.
+                    include = line.contains("AccessibilityWindowInfo[") && line.contains("Agent OS Test Fixture");
+                }
+                if (!include) continue;
+                line = line.substring(0, Math.min(line.length(), 1_200));
+                int available = outputLimit - emitted;
+                if (available <= 0) break;
+                String bounded = line.substring(0, Math.min(line.length(), available));
+                result.append("\n  ").append(bounded);
+                emitted += bounded.length() + 3;
+            }
+            if (emitted == 0) result.append(" [no matching fixture entries in bounded dump]");
+            if (emitted >= outputLimit || bytes.size() == byteLimit) result.append(" [bounded server evidence]");
+        } catch (Exception unavailable) {
+            result.append(" [unavailable: ").append(unavailable.getClass().getSimpleName()).append(']');
         }
     }
 

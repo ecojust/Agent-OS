@@ -1,7 +1,7 @@
 # 架构图源文件
 
-- `system-architecture.mmd`：Agent 任务、模型服务、设备兼容与手机执行能力之间的关系。
-- `os-layers.mmd`：后续 AOSP 定制系统的目标逻辑分层。
+- `system-architecture.mmd`：Agent 任务、资源调度、模型服务、设备兼容与手机执行能力之间的关系。
+- `os-layers.mmd`：后续 AOSP 定制系统的目标逻辑分层，以及第三方应用的标准运行路径。
 - 同名 `.svg` 用于缩放查看，`.png` 用于仓库页面直接展示。
 - 执行时序、任务状态与演进路线使用 [ARCHITECTURE.md](../ARCHITECTURE.md) 中的 Mermaid 代码块。
 

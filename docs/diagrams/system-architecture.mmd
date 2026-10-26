@@ -5,6 +5,7 @@ flowchart TB
         direction TB
         ui[对话与任务控制台<br/>模型配置 · 应用范围<br/>执行过程 · 暂停 / 停止]
         runtime[任务协调器<br/>状态机 · 执行预算<br/>取消 · 结果汇总]
+        scheduler[性能与资源调度<br/>有界队列 · 事件合并<br/>内存预算 · 优先取消]
         capabilities[设备兼容与能力探测<br/>系统版本 · 厂商行为<br/>可用工具与版本适配]
         gateway[模型网关<br/>协议适配 · 上下文裁剪<br/>请求取消]
         policy[执行控制层<br/>授权范围 · 用户确认<br/>锁屏与界面版本校验]
@@ -14,7 +15,9 @@ flowchart TB
 
         ui --> runtime
         runtime <--> gateway
-        runtime --> capabilities --> policy --> tools
+        runtime --> scheduler --> capabilities --> policy --> tools
+        ui -. 暂停与停止优先通道 .-> scheduler
+        scheduler -. 请求与资源预算 .-> gateway
         ui --> storage
         gateway -. 读取认证配置 .-> storage
 
@@ -35,7 +38,7 @@ flowchart TB
         apps --> observer --> runtime
     end
 
-    gateway <-->|结构化请求与响应<br/>界面数据按授权披露| model[用户配置的模型服务<br/>服务地址 · API Key<br/>模型]
+    gateway <-->|异步请求与响应<br/>界面数据按授权披露| model[用户配置的模型服务<br/>服务地址 · API Key<br/>模型]
 
     classDef interaction fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e,stroke-width:2px;
     classDef orchestration fill:#ede9fe,stroke:#7c3aed,color:#4c1d95,stroke-width:2px;
@@ -43,7 +46,7 @@ flowchart TB
     classDef future fill:#f8fafc,stroke:#64748b,color:#475569,stroke-width:2px,stroke-dasharray:5 5;
     classDef boundary fill:#fff7ed,stroke:#ea580c,color:#7c2d12,stroke-width:2px;
     class user,ui interaction;
-    class runtime,capabilities,gateway,observer orchestration;
+    class runtime,scheduler,capabilities,gateway,observer orchestration;
     class policy,tools,publicapi,access,apps execution;
     class system future;
     class model,storage boundary;

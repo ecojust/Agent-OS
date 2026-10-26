@@ -34,6 +34,8 @@ import android.widget.Switch;
 import android.widget.TextView;
 
 import dev.agentos.core.ModelSettings;
+import dev.agentos.core.ModelProbe;
+import dev.agentos.core.RunControl;
 
 import java.io.IOException;
 import java.text.Collator;
@@ -77,6 +79,10 @@ public final class MainActivity extends Activity implements AgentController.List
     private String boundApprovalId = "";
     private String acceptedHttpEndpoint = "";
     private UiDraft retainedDraft;
+    private RunControl modelProbe;
+    private long probeGeneration;
+    private Button probeButton, cancelProbeButton;
+    private TextView probeResult;
 
     private static final class UiDraft {
         final SettingsStore.SavedSettings settings;
@@ -113,11 +119,13 @@ public final class MainActivity extends Activity implements AgentController.List
     }
 
     @Override protected void onStop() {
+        cancelModelProbe("已离开配置页面，测试已取消。", false);
         controller.removeListener(this);
         super.onStop();
     }
 
     @Override protected void onDestroy() {
+        cancelModelProbe("测试已取消。", false);
         destroyed = true;
         storageWorker.shutdown();
         main.removeCallbacksAndMessages(null);
@@ -209,6 +217,21 @@ public final class MainActivity extends Activity implements AgentController.List
         configurationViews.add(reveal);
         marginAdd(modelFields, reveal, 4);
         marginAdd(modelFields, text("使用兼容 Chat Completions 的接口。界面文字和任务会发送至此地址，密钥仅加密保存在本机；公网地址必须使用 HTTPS。", 12, R.color.agent_muted, false), 8);
+        probeButton = button("测试模型连接 / 工具调用", R.drawable.ic_settings, false);
+        probeButton.setId(R.id.test_model);
+        probeButton.setOnClickListener(view -> testModel());
+        configurationViews.add(probeButton);
+        marginAdd(modelFields, probeButton, 12);
+        cancelProbeButton = button("取消测试", R.drawable.ic_stop, false);
+        cancelProbeButton.setId(R.id.cancel_model_test);
+        cancelProbeButton.setOnClickListener(view -> cancelModelProbe("测试已取消，未操作手机应用。", true));
+        cancelProbeButton.setVisibility(View.GONE);
+        marginAdd(modelFields, cancelProbeButton, 4);
+        probeResult = text("网络连接：未测试\n工具调用：未测试\n图像能力：未验证", 12, R.color.agent_muted, false);
+        probeResult.setId(R.id.model_test_result);
+        probeResult.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+        marginAdd(modelFields, probeResult, 8);
+        marginAdd(modelFields, text("测试仅发送固定的合成请求，不读取或操作手机应用，也不发送你的任务或界面内容。可能产生模型调用费用；测试不会保存配置。", 12, R.color.agent_muted, false), 6);
         saveButton = button("保存模型与授权设置", R.drawable.ic_check, false);
         saveButton.setId(R.id.save_settings);
         saveButton.setOnClickListener(view -> saveConfiguration(false));
@@ -334,6 +357,7 @@ public final class MainActivity extends Activity implements AgentController.List
         actions.addView(runningButtons);
         root.addView(actions, new LinearLayout.LayoutParams(-1, -2));
         setContentView(root);
+        watchModelConfiguration();
         updateModelPanel();
         renderState();
     }
@@ -400,7 +424,7 @@ public final class MainActivity extends Activity implements AgentController.List
     }
 
     private void saveConfiguration(boolean startTask) {
-        if (!ready || busy || destroyed || controller.getState().running) return;
+        if (!ready || busy || destroyed || modelProbe != null || controller.getState().running) return;
         if (storageDamaged) { showMessage("原配置无法读取。请先明确重置本机配置，再保存新的设置。", true); return; }
         SettingsStore.SavedSettings settings = readDraft();
         ModelSettings model = new ModelSettings(settings.endpoint, settings.apiKey, settings.model);
@@ -483,7 +507,7 @@ public final class MainActivity extends Activity implements AgentController.List
     }
 
     private void loadApps() {
-        if (!ready || busy || destroyed || controller.getState().running || storageDamaged) return;
+        if (!ready || busy || destroyed || modelProbe != null || controller.getState().running || storageDamaged) return;
         busy = true;
         appsButton.setText("正在读取应用…");
         renderState();
@@ -602,7 +626,7 @@ public final class MainActivity extends Activity implements AgentController.List
     }
 
     private void confirmReset() {
-        if (store == null || busy || controller.getState().running) return;
+        if (store == null || busy || modelProbe != null || controller.getState().running) return;
         new AlertDialog.Builder(this).setTitle("重置本机配置？")
                 .setMessage("会删除本机保存的模型地址、密钥、模型名称和应用授权。此操作不会删除目标应用的数据，也不会删除已发送到模型服务的数据。")
                 .setNegativeButton("保留配置", null)
@@ -649,20 +673,27 @@ public final class MainActivity extends Activity implements AgentController.List
         serviceState.setTextColor(color(service ? R.color.agent_success : R.color.agent_muted));
         serviceButton.setText(service ? "查看系统服务设置" : "前往开启无障碍服务");
         boolean editable = ready && !busy && !state.running && !storageDamaged;
-        for (View view : configurationViews) view.setEnabled(editable);
-        taskField.setEnabled(editable);
-        resetButton.setEnabled(store != null && !busy && !state.running);
-        serviceButton.setEnabled(!state.running && !busy);
-        startButton.setEnabled(editable && service);
-        startButton.setText(busy ? "正在准备…" : "开始执行任务");
+        boolean probing = modelProbe != null;
+        for (View view : configurationViews) view.setEnabled(editable && !probing);
+        // Editing any connection field cancels the old request before another probe can start.
+        endpointField.setEnabled(editable);
+        keyField.setEnabled(editable);
+        modelField.setEnabled(editable);
+        taskField.setEnabled(editable && !probing);
+        resetButton.setEnabled(store != null && !busy && !state.running && !probing);
+        serviceButton.setEnabled(!state.running && !busy && !probing);
+        modelToggle.setEnabled(!probing);
+        cancelProbeButton.setVisibility(probing ? View.VISIBLE : View.GONE);
+        startButton.setEnabled(editable && service && !probing);
+        startButton.setText(probing ? "正在测试模型…" : busy ? "正在准备…" : "开始执行任务");
         startButton.setVisibility(state.running ? View.GONE : View.VISIBLE);
         runningButtons.setVisibility(state.running ? View.VISIBLE : View.GONE);
         pauseButton.setText(state.paused ? "继续" : "暂停");
         pauseButton.setContentDescription(state.paused ? "重新观察并继续当前任务" : "暂停任务并接管手机");
         setButtonIcon(pauseButton, state.paused ? R.drawable.ic_play : R.drawable.ic_pause, false);
         clearButton.setEnabled(!state.running);
-        statusText.setText(!ready && busy ? "正在读取本机配置…" : state.status);
-        progress.setVisibility(state.running && !state.paused && state.approval.isEmpty() ? View.VISIBLE : View.GONE);
+        statusText.setText(probing ? "正在测试模型（未操作手机）" : !ready && busy ? "正在读取本机配置…" : state.status);
+        progress.setVisibility(probing || state.running && !state.paused && state.approval.isEmpty() ? View.VISIBLE : View.GONE);
         String approvalId = state.approvalId == null ? "" : state.approvalId;
         if (!approvalId.equals(boundApprovalId)) {
             allowButton.cancelPendingInputEvents();
@@ -704,6 +735,86 @@ public final class MainActivity extends Activity implements AgentController.List
             labels.append(appLabels.getOrDefault(packageName, packageName));
         }
         scopeSummary.setText("已选择 " + draft.allowedPackages.size() + " 个应用\n" + labels + (draft.allowedPackages.size() > 4 ? " 等" : ""));
+    }
+
+    private void testModel() {
+        if (!ready || busy || destroyed || storageDamaged || modelProbe != null || controller.getState().running) return;
+        ModelSettings model = new ModelSettings(endpointField.getText().toString(), keyField.getText().toString(), modelField.getText().toString());
+        try { model.validate(); }
+        catch (IllegalArgumentException invalid) { showMessage(invalid.getMessage(), true); return; }
+        if (model.endpoint.toLowerCase(Locale.ROOT).startsWith("http://") && !model.endpoint.equals(acceptedHttpEndpoint)) {
+            new AlertDialog.Builder(this).setTitle("使用未加密的本地连接？")
+                    .setMessage("此地址使用 HTTP。测试请求和密钥在传输时不会加密，请仅连接你信任的本机或局域网服务。你也可以改用 HTTPS。")
+                    .setNegativeButton("返回修改", null)
+                    .setPositiveButton("信任此连接", (dialog, which) -> {
+                        if (destroyed || controller.getState().running) return;
+                        acceptedHttpEndpoint = model.endpoint;
+                        testModel();
+                    }).show();
+            return;
+        }
+        final RunControl control = new RunControl(draft.profileId);
+        final long generation = ++probeGeneration;
+        modelProbe = control;
+        probeResult.setText("网络连接：正在检查\n工具调用：等待测试\n图像能力：未验证");
+        probeResult.setTextColor(color(R.color.agent_muted));
+        renderState();
+        storageWorker.execute(() -> {
+            if (destroyed) { control.cancel(); return; }
+            try {
+                ModelProbe.Result result = new ModelProbe().test(model, control);
+                main.post(() -> {
+                    if (destroyed || modelProbe != control || generation != probeGeneration || control.isCancelled()) return;
+                    modelProbe = null;
+                    probeResult.setText("网络连接：" + (result.connected ? "已连接" : "未连接")
+                            + "\n工具调用：" + (result.toolCallingVerified ? "已验证" : "未验证")
+                            + "\n图像能力：未验证\n" + result.message);
+                    probeResult.setTextColor(color(result.toolCallingVerified ? R.color.agent_success : R.color.agent_error));
+                    renderState();
+                });
+            } catch (InterruptedException cancelled) {
+                main.post(() -> {
+                    if (destroyed || modelProbe != control || generation != probeGeneration) return;
+                    modelProbe = null;
+                    probeResult.setText("测试已取消，连接与工具能力未验证。");
+                    renderState();
+                });
+            } catch (RuntimeException failed) {
+                // A failed adapter must never expose arbitrary response bodies or credentials.
+                main.post(() -> {
+                    if (destroyed || modelProbe != control || generation != probeGeneration) return;
+                    modelProbe = null;
+                    probeResult.setText("测试未完成，连接与工具能力未验证。请检查模型配置和网络后重试。");
+                    probeResult.setTextColor(color(R.color.agent_error));
+                    renderState();
+                });
+            }
+        });
+    }
+
+    private void watchModelConfiguration() {
+        TextWatcher watcher = new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence text, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence text, int start, int before, int count) {
+                cancelModelProbe("配置已更改，请重新测试连接与工具调用。", true);
+            }
+            @Override public void afterTextChanged(Editable text) { }
+        };
+        endpointField.addTextChangedListener(watcher);
+        keyField.addTextChangedListener(watcher);
+        modelField.addTextChangedListener(watcher);
+    }
+
+    private void cancelModelProbe(String reason, boolean updateUi) {
+        ++probeGeneration;
+        RunControl current = modelProbe;
+        modelProbe = null;
+        if (current != null) current.cancel();
+        if (!destroyed && probeResult != null && (current != null || updateUi)) {
+            probeResult.setText(reason);
+            probeResult.setTextColor(color(R.color.agent_muted));
+        }
+        if (updateUi && !destroyed && statusText != null) renderState();
     }
 
     private void updateModelPanel() {

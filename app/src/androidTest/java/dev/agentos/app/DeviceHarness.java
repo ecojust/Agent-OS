@@ -1,5 +1,6 @@
 package dev.agentos.app;
 
+import android.Manifest;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.ComponentName;
@@ -7,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.provider.Settings;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -36,19 +38,23 @@ final class DeviceHarness implements AutoCloseable {
     AndroidDeviceTools tools;
 
     DeviceHarness() throws Exception {
-        originalServices = shell("settings get secure enabled_accessibility_services").trim();
-        originalEnabled = shell("settings get secure accessibility_enabled").trim();
+        originalServices = readSecure(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        originalEnabled = readSecure(Settings.Secure.ACCESSIBILITY_ENABLED);
         try {
             shell("input keyevent 224");
             shell("wm dismiss-keyguard");
-            String enabled = "null".equals(originalServices) ? "" : originalServices;
+            String enabled = originalServices == null ? "" : originalServices;
             if (!enabled.contains(COMPONENT)) enabled = enabled.isEmpty() ? COMPONENT : enabled + ":" + COMPONENT;
-            shell("settings put secure enabled_accessibility_services " + quote(enabled));
-            shell("settings put secure accessibility_enabled 1");
-            await("Accessibility service did not connect", () -> {
-                service = AgentAccessibilityService.getInstance();
-                return service != null && service.isConnected();
-            });
+            writeSecure(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, enabled);
+            writeSecure(Settings.Secure.ACCESSIBILITY_ENABLED, "1");
+            try {
+                await("Accessibility service did not connect", () -> {
+                    service = AgentAccessibilityService.getInstance();
+                    return service != null && service.isConnected();
+                });
+            } catch (AssertionError disconnected) {
+                throw new AssertionError(disconnected.getMessage() + "\n" + connectionDiagnostics(), disconnected);
+            }
             instrumentation.runOnMainSync(() -> {
                 service.setOverlayCallbacks(new AgentAccessibilityService.OverlayCallbacks() {
                     @Override public void onPauseResume() {
@@ -132,8 +138,8 @@ final class DeviceHarness implements AutoCloseable {
     }
 
     void disableService() throws Exception {
-        shell("settings put secure enabled_accessibility_services ''");
-        shell("settings put secure accessibility_enabled 0");
+        writeSecure(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, "");
+        writeSecure(Settings.Secure.ACCESSIBILITY_ENABLED, "0");
         await("Accessibility service remained connected", () -> AgentAccessibilityService.getInstance() == null);
     }
 
@@ -151,7 +157,33 @@ final class DeviceHarness implements AutoCloseable {
         }
     }
 
-    private static String quote(String value) { return "'" + value.replace("'", "'\\''") + "'"; }
+    private String readSecure(String key) {
+        automation.adoptShellPermissionIdentity(Manifest.permission.WRITE_SECURE_SETTINGS);
+        try { return Settings.Secure.getString(context.getContentResolver(), key); }
+        finally { automation.dropShellPermissionIdentity(); }
+    }
+
+    private void writeSecure(String key, String value) {
+        // executeShellCommand is not a shell-language parser: quoted values can be stored
+        // literally. Use the settings provider so component IDs and empty values stay exact.
+        automation.adoptShellPermissionIdentity(Manifest.permission.WRITE_SECURE_SETTINGS);
+        try {
+            assertTrue("Could not write secure test setting " + key,
+                    Settings.Secure.putString(context.getContentResolver(), key, value));
+            assertEquals("Secure test setting read-back mismatch: " + key,
+                    value, Settings.Secure.getString(context.getContentResolver(), key));
+        } finally { automation.dropShellPermissionIdentity(); }
+    }
+
+    private String connectionDiagnostics() {
+        try {
+            String dump = shell("dumpsys accessibility");
+            if (dump.length() > 8_000) dump = dump.substring(0, 8_000) + "\n[truncated]";
+            return "enabledServices=" + readSecure(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
+                    + "; accessibilityEnabled=" + readSecure(Settings.Secure.ACCESSIBILITY_ENABLED)
+                    + "\n" + dump;
+        } catch (Exception failure) { return "Connection diagnostics unavailable: " + failure.getClass().getSimpleName(); }
+    }
 
     private static void await(String failure, java.util.function.BooleanSupplier condition) {
         long deadline = SystemClock.elapsedRealtime() + 8_000;
@@ -172,13 +204,8 @@ final class DeviceHarness implements AutoCloseable {
             shell("input keyevent 224");
             shell("wm dismiss-keyguard");
         } finally {
-            try { restore("enabled_accessibility_services", originalServices); }
-            finally { restore("accessibility_enabled", originalEnabled); }
+            try { writeSecure(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, originalServices); }
+            finally { writeSecure(Settings.Secure.ACCESSIBILITY_ENABLED, originalEnabled); }
         }
-    }
-
-    private void restore(String key, String original) throws Exception {
-        if ("null".equals(original)) shell("settings delete secure " + key);
-        else shell("settings put secure " + key + " " + quote(original));
     }
 }

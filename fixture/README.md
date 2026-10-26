@@ -10,7 +10,7 @@ On an unlocked test emulator with no screen-lock credential:
 ./gradlew :fixture:installDebug :app:connectedDebugAndroidTest
 ```
 
-The instrumentation suite temporarily enables the normal Agent OS accessibility service through the test device's shell, leaves the user-visible task controls present, and restores the previous accessibility settings after each device-tool test. Run it only on a dedicated development emulator or test device.
+The instrumentation suite temporarily adopts the test device's shell permission identity to configure the normal Agent OS accessibility service through the settings provider. It checks the stored component identity, leaves the user-visible task controls present, and restores the previous accessibility settings after each device-tool test. Run it only on a dedicated development emulator or test device.
 
 Checks include actual text entry and saved state, stale-target rejection, application scope, password redaction, unavailable screenshot reporting, cancellation, service revocation, encrypted configuration persistence and recovery boundaries, and launcher startup. Model-network behavior is covered separately by the core JVM tests. Passing this fixture does not demonstrate compatibility with third-party applications or physical phones.
 

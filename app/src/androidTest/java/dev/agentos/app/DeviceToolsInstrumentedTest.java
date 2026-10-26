@@ -375,6 +375,7 @@ public final class DeviceToolsInstrumentedTest {
     @Test public void observationsAndWritesFollowTheInputFocusedWindowAcrossNavigation() throws Exception {
         try (DeviceHarness device = new DeviceHarness(); AutoCloseable focusMode = device.enableTouchExploration()) {
             for (int attempt = 0; attempt < 2; attempt++) {
+                device.awaitUiIdle();
                 JsonObject first = device.observe();
                 assertTrue(first.get("focused").getAsBoolean());
                 assertEquals(focusedWindowId(device.service), first.get("windowId").getAsInt());
@@ -411,6 +412,7 @@ public final class DeviceToolsInstrumentedTest {
                 assertFalse(rejected.toString(), rejected.get("ok").getAsBoolean());
                 assertEquals("STALE_OBSERVATION", string(rejected, "code"));
                 assertEquals(dispatches, device.control.getDispatchAttempts());
+                device.awaitUiIdle();
                 JsonObject currentSecond = device.withText("Second page reached");
                 JsonObject backArguments = new JsonObject();
                 backArguments.addProperty("expectedRevision", string(currentSecond, "revision"));

@@ -13,8 +13,6 @@ import android.graphics.Rect;
 import android.os.Build;
 import android.os.SystemClock;
 import android.view.Gravity;
-import android.view.InputDevice;
-import android.view.MotionEvent;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -407,40 +405,29 @@ public final class DeviceToolsInstrumentedTest {
 
     @Test public void showingTheKeyboardDoesNotSwitchObservationToAnOldApplicationWindow() throws Exception {
         try (DeviceHarness device = new DeviceHarness(); AutoCloseable keyboardPreference = device.enableSoftwareKeyboard()) {
+            device.launch("KeyboardActivity");
             JsonObject before = device.observe();
-            JsonObject clicked = device.tools.execute("click", nodeArguments(before, "edit_value"), device.control);
+            assertEquals("Keyboard visible: false", actualFixtureText(device, "keyboard_visible"));
+            JsonObject clicked = device.tools.execute("click", nodeArguments(before, "show_keyboard"), device.control);
             assertTrue(clicked.toString(), clicked.get("ok").getAsBoolean());
-            // ACTION_CLICK can succeed even when InputMethodManager declines its
-            // show request. Establish this keyboard scenario with one real user
-            // touch; it does not retry a model action or enable production gestures.
-            JsonObject input = node(before, "edit_value");
-            float x = (input.getAsJsonArray("bounds").get(0).getAsFloat()
-                    + input.getAsJsonArray("bounds").get(2).getAsFloat()) / 2;
-            float y = (input.getAsJsonArray("bounds").get(1).getAsFloat()
-                    + input.getAsJsonArray("bounds").get(3).getAsFloat()) / 2;
-            long touchStarted = SystemClock.uptimeMillis();
-            MotionEvent down = MotionEvent.obtain(touchStarted, touchStarted, MotionEvent.ACTION_DOWN, x, y, 0);
-            MotionEvent up = MotionEvent.obtain(touchStarted, touchStarted + 1, MotionEvent.ACTION_UP, x, y, 0);
-            down.setSource(InputDevice.SOURCE_TOUCHSCREEN);
-            up.setSource(InputDevice.SOURCE_TOUCHSCREEN);
-            try {
-                assertTrue("The synthetic user's editor touch was not delivered", device.automation.injectInputEvent(down, true));
-                assertTrue("The synthetic user's editor release was not delivered", device.automation.injectInputEvent(up, true));
-            } finally { down.recycle(); up.recycle(); }
             long deadline = SystemClock.elapsedRealtime() + 5_000;
             boolean keyboard = false;
-            while (!keyboard && SystemClock.elapsedRealtime() < deadline) {
+            boolean visibleInset = false;
+            while (!(keyboard && visibleInset) && SystemClock.elapsedRealtime() < deadline) {
+                keyboard = false;
                 List<AccessibilityWindowInfo> windows = device.service.getWindows();
                 try {
                     for (AccessibilityWindowInfo window : windows) {
                         if (window.getType() == AccessibilityWindowInfo.TYPE_INPUT_METHOD) keyboard = true;
                     }
                 } finally { for (AccessibilityWindowInfo window : windows) window.recycle(); }
-                if (!keyboard) SystemClock.sleep(50);
+                visibleInset = "Keyboard visible: true".equals(actualFixtureText(device, "keyboard_visible"));
+                if (!(keyboard && visibleInset)) SystemClock.sleep(50);
             }
-            if (!keyboard) {
+            if (!(keyboard && visibleInset)) {
                 screenshots.capture("keyboard-not-visible");
-                fail("The synthetic editor did not show its keyboard\n" + windowDiagnostics() + "\n" + device.keyboardDiagnostics());
+                fail("The synthetic editor did not show its keyboard: window=" + keyboard + ", visibleInset=" + visibleInset
+                        + "\n" + windowDiagnostics() + "\n" + device.keyboardDiagnostics());
             }
             JsonObject observed = awaitObservation(device.tools, device.control,
                     data -> data.has("windowId") && data.get("windowId").getAsInt() == focusedWindowId(device.service));
@@ -448,7 +435,7 @@ public final class DeviceToolsInstrumentedTest {
             assertTrue(observed.get("focused").getAsBoolean());
             screenshots.capture("focused-editor-with-keyboard");
             device.shell("input keyevent 111");
-            device.withText("Count: 0");
+            device.withText("Keyboard visible: false");
         }
     }
 

@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-26T19:38:25Z",
-  "note": "Android15遮挡负例未得到预期暂停，原记录缺少实际返回值；新增真实窗口空闲等待及失败现场/返回值诊断，仍严格要求一次尝试、暂停和零派发。编译与lint通过，等待重新验证。",
+  "updated_at": "2026-10-26T19:42:02Z",
+  "note": "归档工作线程路径的328项设备测试：327通过、API35遮挡负例1项失败；423张实际截图及8份性能诊断保留。新增修正与在途动作回归待下一批验证，API矩阵检查点暂回进行中。",
   "latest_evidence": {
-    "path": "screenshots/40381396419-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40381396419"
+    "path": "screenshots/40386701414-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40386701414"
   },
   "checkpoints": [
     {
@@ -62,7 +62,7 @@
     {
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
-      "status": "complete",
+      "status": "in_progress",
       "evidence": "screenshots/40381396419-1/manifest.json",
       "scope": "Eight x86_64 emulator API baselines with system animations at 1.0 and synthetic fixtures; not physical-device, third-party-app or performance acceptance."
     },

@@ -1,7 +1,14 @@
 package dev.agentos.app;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Build;
+import android.os.SystemClock;
+import android.view.accessibility.AccessibilityEvent;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -13,6 +20,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static dev.agentos.app.DeviceHarness.*;
 import static org.junit.Assert.*;
@@ -20,6 +35,65 @@ import static org.junit.Assert.*;
 /** Runs real accessibility operations against the separately installed offline fixture app. */
 @RunWith(AndroidJUnit4.class)
 public final class DeviceToolsInstrumentedTest {
+    @Test public void slowObservationKeepsTheControlThreadResponsiveAndDiscardsPausedResults() throws Exception {
+        try (DeviceHarness device = new DeviceHarness()) {
+            device.launch("SlowActivity");
+            JsonObject previous = device.observe();
+            JsonObject oldClick = nodeArguments(previous, "increment");
+            AtomicBoolean observationStarted = new AtomicBoolean();
+            FutureTask<JsonObject> observation = new FutureTask<>(() -> {
+                observationStarted.set(true);
+                return device.tools.execute("observe", new JsonObject(), device.control);
+            });
+            ExecutorService worker = Executors.newSingleThreadExecutor();
+            CountDownLatch heartbeat = new CountDownLatch(1);
+            AtomicLong latency = new AtomicLong(Long.MAX_VALUE);
+            AtomicBoolean wasInFlight = new AtomicBoolean();
+            BroadcastReceiver receiver = new BroadcastReceiver() {
+                @Override public void onReceive(Context context, Intent intent) {
+                    latency.set(SystemClock.elapsedRealtime() - intent.getLongExtra("startedAt", 0));
+                    wasInFlight.set(observationStarted.get() && !observation.isDone());
+                    device.control.pause();
+                    heartbeat.countDown();
+                }
+            };
+            IntentFilter filter = new IntentFilter("dev.agentos.fixture.OBSERVATION_BLOCKED");
+            if (Build.VERSION.SDK_INT >= 33) device.context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
+            else device.context.registerReceiver(receiver, filter);
+            try {
+                AccessibilityEvent changed = device.automation.executeAndWaitForEvent(() ->
+                        device.context.sendBroadcast(new Intent("dev.agentos.fixture.ARM_SLOW_OBSERVATION")
+                                .setComponent(new ComponentName(FIXTURE, FIXTURE + ".SlowObservationReceiver"))),
+                        event -> FIXTURE.contentEquals(event.getPackageName() == null ? "" : event.getPackageName())
+                                && event.getEventType() == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED, 5_000);
+                changed.recycle();
+                // Allow the normal accessibility cache invalidation event to reach both services.
+                SystemClock.sleep(200);
+                worker.execute(observation);
+                assertTrue("Slow fixture did not start its accessibility read", heartbeat.await(3, TimeUnit.SECONDS));
+                assertTrue("Observation had already completed before the heartbeat", wasInFlight.get());
+                assertTrue("Main thread was blocked by remote observation: " + latency.get() + " ms", latency.get() < 500);
+                try {
+                    observation.get(3, TimeUnit.SECONDS);
+                    fail("The paused observation must not be delivered as a valid result");
+                } catch (ExecutionException expected) {
+                    assertTrue(expected.getCause() instanceof InterruptedException);
+                }
+                assertTrue(device.control.isPaused());
+                try {
+                    device.tools.execute("click", oldClick, device.control);
+                    fail("Paused task must not dispatch a click");
+                } catch (InterruptedException expected) { }
+                device.control.resume();
+                device.withText("Count: 0");
+            } finally {
+                device.context.unregisterReceiver(receiver);
+                observation.cancel(true);
+                worker.shutdownNow();
+            }
+        }
+    }
+
     @Test public void initialObservationFromAgentScreenCanLaunchAnAuthorizedApp() throws Exception {
         try (DeviceHarness device = new DeviceHarness()) {
             Activity activity = device.instrumentation.startActivitySync(new Intent(device.context, MainActivity.class)

@@ -155,10 +155,15 @@ public final class AndroidDeviceTools implements ToolHandler {
     }
 
     private JsonObject observation(RunControl control, long epoch) throws Exception {
-        JsonObject result = onMain(() -> {
-            requireReady(control, epoch);
-            try (Snapshot state = snapshot(control, epoch)) { return success(state.json()); }
-        }, control, epoch, new Dispatch());
+        // Accessibility queries use their per-calling-thread interaction client. Keep
+        // traversal, JSON construction and hashing off the UI/control thread. This
+        // read-only path does not call controlBounds() or read any Android View.
+        onMain(() -> { requireReady(control, epoch); return null; }, control, epoch, new Dispatch());
+        JsonObject result;
+        try (Snapshot state = snapshot(control, epoch)) { result = success(state.json()); }
+        // A screen lock, permission loss or stop while the remote tree was queried
+        // invalidates the completed snapshot before any content reaches the model.
+        onMain(() -> { requireReady(control, epoch); return null; }, control, epoch, new Dispatch());
         control.checkExecutionEpoch(epoch);
         lastObservedRevision = result.getAsJsonObject("data").get("revision").getAsString();
         lastObservedEpoch = epoch;
@@ -323,11 +328,13 @@ public final class AndroidDeviceTools implements ToolHandler {
     }
 
     private Snapshot snapshot(RunControl control, long epoch) throws Exception {
+        control.checkExecutionEpoch(epoch);
         AccessibilityNodeInfo root = service.getRootInActiveWindow();
         if (root == null) throw unavailable("当前没有可读取的应用窗口");
-        Snapshot state = new Snapshot();
+        Snapshot state = new Snapshot(control, epoch);
         state.owned.add(root);
         try {
+            control.checkExecutionEpoch(epoch);
             state.packageName = root.getPackageName() == null ? "" : root.getPackageName().toString();
             state.scoped = allowedPackages.contains(state.packageName) && !state.packageName.equals(service.getPackageName());
             root.getBoundsInScreen(state.bounds);
@@ -347,6 +354,8 @@ public final class AndroidDeviceTools implements ToolHandler {
     }
 
     private final class Snapshot implements AutoCloseable {
+        final RunControl control;
+        final long epoch;
         String packageName, revision, windowSignature = "";
         int windowId;
         boolean scoped, password, truncated, highImpactScreen;
@@ -360,12 +369,18 @@ public final class AndroidDeviceTools implements ToolHandler {
         int byteCount = 2048;
         long started = SystemClock.elapsedRealtime();
 
-        void inspectWindows() throws DeviceException {
+        Snapshot(RunControl control, long epoch) { this.control = control; this.epoch = epoch; }
+
+        void inspectWindows() throws Exception {
+            control.checkExecutionEpoch(epoch);
             List<AccessibilityWindowInfo> windows = service.getWindows();
             if (windows == null || windows.isEmpty() || windows.size() > 40) throw unavailable("无法可靠确认窗口层级");
             try {
                 AccessibilityWindowInfo active = null;
-                for (AccessibilityWindowInfo window : windows) if (window.getId() == windowId) active = window;
+                for (AccessibilityWindowInfo window : windows) {
+                    control.checkExecutionEpoch(epoch);
+                    if (window.getId() == windowId) active = window;
+                }
                 if (active == null || active.getDisplayId() != Display.DEFAULT_DISPLAY) throw unavailable("当前窗口或显示不可验证");
                 if (active.getType() != AccessibilityWindowInfo.TYPE_APPLICATION) scoped = false;
                 Rect activeBounds = new Rect(); active.getBoundsInScreen(activeBounds);
@@ -374,6 +389,7 @@ public final class AndroidDeviceTools implements ToolHandler {
                 WindowManager wm = (WindowManager) service.getSystemService(Context.WINDOW_SERVICE);
                 signature.append(':').append(wm.getDefaultDisplay().getRotation());
                 for (AccessibilityWindowInfo window : windows) {
+                    control.checkExecutionEpoch(epoch);
                     if (window.getId() == windowId || window.getLayer() <= active.getLayer()) continue;
                     Rect other = new Rect(); window.getBoundsInScreen(other);
                     if (!Rect.intersects(bounds, other)) continue;
@@ -395,7 +411,8 @@ public final class AndroidDeviceTools implements ToolHandler {
             finally { recycle(root); }
         }
 
-        void visit(AccessibilityNodeInfo node, String id, int depth) {
+        void visit(AccessibilityNodeInfo node, String id, int depth) throws InterruptedException {
+            control.checkExecutionEpoch(epoch);
             if (owned.size() > MAX_NODES || depth > 30 || SystemClock.elapsedRealtime() - started > 160) { truncated = true; return; }
             boolean secret = sensitive(node);
             if (secret) password = true;
@@ -424,6 +441,7 @@ public final class AndroidDeviceTools implements ToolHandler {
             // A sensitive container can expose values through its descendants; omit the subtree.
             if (secret) return;
             for (int index = 0; index < node.getChildCount(); index++) {
+                control.checkExecutionEpoch(epoch);
                 if (owned.size() >= MAX_NODES || byteCount > MAX_BYTES - 1800 || SystemClock.elapsedRealtime() - started > 160) { truncated = true; break; }
                 AccessibilityNodeInfo child = node.getChild(index);
                 if (child != null) { owned.add(child); visit(child, id + "." + index, depth + 1); }

@@ -1,9 +1,13 @@
 package dev.agentos.app;
 
+import android.graphics.Rect;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import com.google.gson.JsonObject;
 import dev.agentos.core.TaskBudget;
 import org.junit.Rule;
 import org.junit.Test;
@@ -13,6 +17,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.*;
 
@@ -27,6 +34,8 @@ public final class AgentControllerInstrumentedTest {
              ControllerTestSettings settings = new ControllerTestSettings(device.context, server)) {
             AgentController controller = AgentController.get(device.context);
             try {
+                Rect input = inputBounds(device);
+                assertFalse("The input must be below the compact controls", controlsIntersect(device, input));
                 start(device, controller, settings, "Use the synthetic fixture to save the sample text and increment its counter once.");
                 Set<String> approved = new HashSet<>();
                 long deadline = SystemClock.elapsedRealtime() + 30_000;
@@ -35,6 +44,7 @@ public final class AgentControllerInstrumentedTest {
                     AgentController.State state = controller.getState();
                     if (!state.approvalId.isEmpty() && approved.add(state.approvalId)) {
                         assertFalse(state.approval.isEmpty());
+                        if (approved.size() == 1) awaitExpandedControlsCoverInput(device, input);
                         screenshots.capture("approval-" + approved.size());
                         String current = state.approvalId;
                         device.instrumentation.runOnMainSync(() -> controller.approve("unrelated-" + current, true));
@@ -57,6 +67,55 @@ public final class AgentControllerInstrumentedTest {
                 assertFalse("Finished task sent another model request", server.receivedAnotherRequest(server.requestCount(), 350));
                 assertEquals("Count: 1", fixtureText(device, "counter_value"));
             } finally { clear(device, controller); }
+        }
+    }
+
+    @Test public void pausingAfterConfirmationWhileLayoutIsPendingNeverDispatchesTheOldInput() throws Exception {
+        try (DeviceHarness device = new DeviceHarness();
+             LocalControllerModelServer server = new LocalControllerModelServer(LocalControllerModelServer.Scenario.SAVE_AND_COUNT);
+             ControllerTestSettings settings = new ControllerTestSettings(device.context, server)) {
+            AgentController controller = AgentController.get(device.context);
+            CountDownLatch releaseMain = new CountDownLatch(1);
+            AtomicBoolean barrierExpired = new AtomicBoolean();
+            try {
+                Rect input = inputBounds(device);
+                assertFalse(controlsIntersect(device, input));
+                start(device, controller, settings, "Prepare synthetic text input and wait for confirmation.");
+                AgentController.State pending = awaitApproval(controller, server);
+                awaitExpandedControlsCoverInput(device, input);
+                CountDownLatch mainBlocked = new CountDownLatch(1);
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    mainBlocked.countDown();
+                    try { if (!releaseMain.await(3, TimeUnit.SECONDS)) barrierExpired.set(true); }
+                    catch (InterruptedException interrupted) { barrierExpired.set(true); Thread.currentThread().interrupt(); }
+                });
+                try {
+                    assertTrue("Test UI barrier was not reached", mainBlocked.await(1, TimeUnit.SECONDS));
+                    // These public controller methods are thread-safe. Keep the UI frame
+                    // pending so confirmation cannot race past the cancellation check.
+                    controller.approve(pending.approvalId, true);
+                    long deadline = SystemClock.elapsedRealtime() + 1_500;
+                    while (!controller.getState().approvalId.isEmpty() && SystemClock.elapsedRealtime() < deadline) {
+                        SystemClock.sleep(10);
+                    }
+                    assertTrue("Confirmation gate did not return", controller.getState().approvalId.isEmpty());
+                    assertTrue(controller.getState().running);
+                    controller.pauseResume();
+                    assertTrue(controller.getState().paused);
+                } finally { releaseMain.countDown(); }
+                device.instrumentation.waitForIdleSync();
+                assertFalse("The artificial test UI barrier reached its hard limit", barrierExpired.get());
+                assertNotEquals(LocalControllerModelServer.TEXT, fixtureText(device, "edit_value"));
+                assertEquals("Saved: empty", fixtureText(device, "saved_value"));
+                assertEquals("Count: 0", fixtureText(device, "counter_value"));
+                assertFalse("Paused task requested a new plan", server.receivedAnotherRequest(1, 350));
+                assertEquals(1, server.requestCount());
+                server.assertHealthy();
+                screenshots.capture("paused-before-confirmed-layout-dispatch");
+            } finally {
+                releaseMain.countDown();
+                clear(device, controller);
+            }
         }
     }
 
@@ -110,6 +169,24 @@ public final class AgentControllerInstrumentedTest {
         device.instrumentation.runOnMainSync(() -> controller.start(settings.model, task,
                 Collections.singleton(DeviceHarness.FIXTURE), true));
         assertTrue("Controller did not enter a running state", controller.getState().running);
+    }
+
+    private static Rect inputBounds(DeviceHarness device) throws Exception {
+        JsonObject input = DeviceHarness.node(device.observe(), "edit_value");
+        return new Rect(input.getAsJsonArray("bounds").get(0).getAsInt(), input.getAsJsonArray("bounds").get(1).getAsInt(),
+                input.getAsJsonArray("bounds").get(2).getAsInt(), input.getAsJsonArray("bounds").get(3).getAsInt());
+    }
+
+    private static boolean controlsIntersect(DeviceHarness device, Rect target) {
+        boolean[] intersects = {false};
+        device.instrumentation.runOnMainSync(() -> intersects[0] = Rect.intersects(target, device.service.controlBounds()));
+        return intersects[0];
+    }
+
+    private static void awaitExpandedControlsCoverInput(DeviceHarness device, Rect input) {
+        long deadline = SystemClock.elapsedRealtime() + 5_000;
+        while (!controlsIntersect(device, input) && SystemClock.elapsedRealtime() < deadline) SystemClock.sleep(25);
+        assertTrue("Expanded confirmation must cover the same input that compact controls leave free", controlsIntersect(device, input));
     }
 
     private static AgentController.State awaitApproval(AgentController controller, LocalControllerModelServer server) {

@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.graphics.Rect;
 import android.os.Build;
 import android.os.SystemClock;
 import android.view.Gravity;
@@ -381,6 +382,27 @@ public final class DeviceToolsInstrumentedTest {
             }
             device.control.resume();
             device.withText("Count: 0");
+        }
+    }
+
+    @Test public void theCompactStopControlsStillPreventClickingACoveredFixtureTarget() throws Exception {
+        try (DeviceHarness device = new DeviceHarness()) {
+            device.launch("CoveredActivity");
+            JsonObject observed = device.observe();
+            JsonObject target = node(observed, "increment");
+            Rect bounds = new Rect(target.getAsJsonArray("bounds").get(0).getAsInt(),
+                    target.getAsJsonArray("bounds").get(1).getAsInt(),
+                    target.getAsJsonArray("bounds").get(2).getAsInt(),
+                    target.getAsJsonArray("bounds").get(3).getAsInt());
+            device.instrumentation.runOnMainSync(() -> assertTrue("Fixture target must actually be covered by the compact controls",
+                    Rect.intersects(bounds, device.service.controlBounds())));
+            long dispatched = device.control.getDispatchAttempts();
+            JsonObject result = device.tools.execute("click", nodeArguments(observed, "increment"), device.control);
+            assertFalse(result.toString(), result.get("ok").getAsBoolean());
+            assertEquals("CAPABILITY_UNAVAILABLE", string(result, "code"));
+            assertEquals(dispatched, device.control.getDispatchAttempts());
+            device.withText("Count: 0");
+            screenshots.capture("compact-controls-still-cover-target");
         }
     }
 

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-26T18:39:30Z",
-  "note": "新增默认关闭的有界性能记录器，区分主线程排队、快照和停止界面时点；停止显示绑定实际代次。Java及Android测试编译、lint通过，新插桩用例尚待设备执行，未宣称性能预算达标。",
+  "updated_at": "2026-10-26T18:44:40Z",
+  "note": "核心图片附件改为绑定任务/代次/观察版本的单次传输，严格限制PNG及解压预算，不保留在历史或去重记录；非法写结果保持未知结果终止。81项JVM测试通过，Android截图及坐标能力仍未开放。",
   "latest_evidence": {
     "path": "screenshots/40374358177-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40374358177"
@@ -74,7 +74,7 @@
     {
       "id": "visual_observation",
       "name": "受控截图与视觉观察",
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "id": "coordinate_actions",

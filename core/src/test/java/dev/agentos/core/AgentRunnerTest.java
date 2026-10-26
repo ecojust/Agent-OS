@@ -13,7 +13,7 @@ import static org.junit.Assert.*;
 
 public class AgentRunnerTest {
     private static final String KEY = "private-test-key-never-log";
-    private static final String IMAGE = "data:image/png;base64,iVBORw0KGgo=";
+    private static final String IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==";
     private static JsonObject json(String text) { return JsonParser.parseString(text).getAsJsonObject(); }
     private static JsonObject observation(String revision) {
         JsonObject result = json("{\"ok\":true,\"data\":{\"packageName\":\"demo.app\",\"nodes\":[]}}");
@@ -196,7 +196,7 @@ public class AgentRunnerTest {
             ToolHandler tools=new ToolHandler() {
                 public JsonObject execute(String name,JsonObject args,RunControl control) {
                     if(name.equals("observe"))return observation("r1");
-                    JsonObject result=ok();result.addProperty("imageDataUrl",IMAGE);return result;
+                    JsonObject result=ok();result.add("data",json("{\"revision\":\"r1\",\"width\":1,\"height\":1}"));result.addProperty("imageDataUrl",IMAGE);return result;
                 }
                 public Set<String> availableTools() {
                     Set<String> available=new HashSet<>(ToolHandler.super.availableTools());available.add("take_screenshot");return available;

@@ -20,6 +20,21 @@ public final class ToolDispatcher implements AutoCloseable {
     public ToolDispatcher(ToolHandler handler) { this.handler = java.util.Objects.requireNonNull(handler); }
 
     public JsonObject dispatch(ToolRequest request, RunControl control) throws InterruptedException {
+        try (ToolDispatchResult result = dispatchWithAttachment(request, control)) { return result.getResult(); }
+    }
+
+    public ToolDispatchResult dispatchWithAttachment(ToolRequest request, RunControl control) throws InterruptedException {
+        ImageAttachment[] image = new ImageAttachment[1];
+        boolean transferred = false;
+        try {
+            JsonObject metadata = dispatchInternal(request, control, image);
+            ToolDispatchResult result = new ToolDispatchResult(metadata, image[0]);
+            transferred = true;
+            return result;
+        } finally { if (!transferred && image[0] != null) image[0].close(); }
+    }
+
+    private JsonObject dispatchInternal(ToolRequest request, RunControl control, ImageAttachment[] image) throws InterruptedException {
         control.checkExecutionEpoch(request.executionEpoch);
         control.consumeToolCall();
         if (request.protocolVersion != ToolCatalog.PROTOCOL_VERSION) return envelope(request, error("UNSUPPORTED_VERSION", "不支持的工具协议版本。"));
@@ -35,7 +50,10 @@ public final class ToolDispatcher implements AutoCloseable {
             Entry previous = ledger.get(request.callId);
             if (previous != null) {
                 if (!previous.fingerprint.equals(fingerprint)) return envelope(request, error("INVALID_ARGUMENT", "同一调用标识不能更换动作或参数。"));
-                return previous.result == null ? envelope(request, error("IN_PROGRESS", "该调用正在处理，不会重复提交。")) : previous.result.deepCopy();
+                if (previous.result == null) return envelope(request, error("IN_PROGRESS", "该调用正在处理，不会重复提交。"));
+                JsonObject cached = previous.result.deepCopy();
+                if (cached.has("imageAttachment")) cached.getAsJsonObject("imageAttachment").addProperty("delivery", "not_replayed");
+                return cached;
             }
             if (ledger.size() >= 1000) return envelope(request, error("BUDGET_EXCEEDED", "调用记录已达到上限。"));
             entry = new Entry(fingerprint); ledger.put(request.callId, entry);
@@ -55,7 +73,23 @@ public final class ToolDispatcher implements AutoCloseable {
                     result = handler.execute(request.tool, arguments.deepCopy(), control, request.executionEpoch);
                     if (result == null || !result.has("ok") || !result.get("ok").isJsonPrimitive() || !result.get("ok").getAsJsonPrimitive().isBoolean())
                         result = error(ToolCatalog.isMutation(request.tool) ? "OUTCOME_UNKNOWN" : "INVALID_RESULT", "执行器没有返回可核对的结果。");
-                    else result = result.deepCopy();
+                    else {
+                        result = result.deepCopy();
+                        // Strip bytes before saving any ledger entry, including failures
+                        // and images attached to the wrong tool. Only the local screenshot
+                        // adapter can create a transient typed image for this request.
+                        JsonElement dataUrl = result.remove("imageDataUrl");
+                        if (dataUrl != null || "take_screenshot".equals(request.tool) && result.get("ok").getAsBoolean()) {
+                            try {
+                                image[0] = ImageAttachment.fromLocalResult(request, result, dataUrl);
+                                result.add("imageAttachment", image[0].metadata());
+                            } catch (IllegalArgumentException invalidImage) {
+                                result = error(ToolCatalog.isMutation(request.tool) ? "OUTCOME_UNKNOWN" : "INVALID_RESULT",
+                                        ToolCatalog.isMutation(request.tool) ? "写操作返回了无效附件，无法确认完整结果，不能自动重发。"
+                                                : "图像附件无效或超出当前预算，未发送到模型。");
+                            }
+                        }
+                    }
                     control.checkExecutionEpoch(request.executionEpoch);
                 }
             }

@@ -171,7 +171,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         // read-only path does not call controlBounds() or read any Android View.
         onMain(() -> { requireReady(control, epoch); return null; }, control, epoch, new Dispatch());
         JsonObject result;
-        try (Snapshot state = snapshot(control, epoch)) { result = success(state.json()); }
+        try (Snapshot state = snapshot(control, epoch, PerformanceTrace.Stage.SNAPSHOT_OBSERVE)) { result = success(state.json()); }
         // A screen lock, permission loss or stop while the remote tree was queried
         // invalidates the completed snapshot before any content reaches the model.
         onMain(() -> { requireReady(control, epoch); return null; }, control, epoch, new Dispatch());
@@ -198,7 +198,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         validateInstalledGrant(name);
         onMain(() -> {
             requireReady(control, epoch); requireFastGrant(name);
-            try (Snapshot current = snapshot(control, epoch)) {
+            try (Snapshot current = snapshot(control, epoch, PerformanceTrace.Stage.SNAPSHOT_FINAL_LAUNCH)) {
                 // Do not reclaim focus after the user has moved away during model/approval work.
                 if (lastObservedEpoch == epoch && lastObservedRevision != null
                         && !lastObservedRevision.equals(current.revision)) throw stale();
@@ -208,6 +208,7 @@ public final class AndroidDeviceTools implements ToolHandler {
                 current.verifyWindowUnchanged();
                 finalGuard(control, epoch);
                 control.markDispatchAttempt(epoch);
+                PerformanceTrace.mark(PerformanceTrace.Stage.DEVICE_DISPATCH_ATTEMPT, epoch, control.getDispatchAttempts());
                 dispatch.started = true;
                 service.startActivity(intent);
             }
@@ -224,7 +225,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         // Preparation only reads the authorized UI; keep remote traversal and serialization
         // on the worker. Pass no recyclable accessibility nodes across the thread boundary:
         // cancellation can release this snapshot before a queued main-thread callback ends.
-        try (Snapshot state = snapshot(control, epoch)) {
+        try (Snapshot state = snapshot(control, epoch, PerformanceTrace.Stage.SNAPSHOT_PREPARE)) {
             state.requireRevision(revision);
             MutationTarget target = mutationTarget(name, args, state);
             onMain(() -> {
@@ -239,12 +240,13 @@ public final class AndroidDeviceTools implements ToolHandler {
         validateInstalledGrant(prepared.packageName);
         boolean accepted = onMain(() -> {
             requireReady(control, epoch);
-            try (Snapshot state = snapshot(control, epoch)) {
+            try (Snapshot state = snapshot(control, epoch, PerformanceTrace.Stage.SNAPSHOT_FINAL_MUTATION)) {
                 state.requireRevision(revision); validateMutation(name, args, state, control, epoch);
                 requireFastGrant(state.packageName);
                 state.verifyWindowUnchanged();
                 finalGuard(control, epoch);
                 control.markDispatchAttempt(epoch);
+                PerformanceTrace.mark(PerformanceTrace.Stage.DEVICE_DISPATCH_ATTEMPT, epoch, control.getDispatchAttempts());
                 dispatch.started = true;
                 switch (name) {
                     case "click": return state.node(required(args, "nodeId")).performAction(AccessibilityNodeInfo.ACTION_CLICK);
@@ -381,7 +383,17 @@ public final class AndroidDeviceTools implements ToolHandler {
         } catch (PackageManager.NameNotFoundException missing) { throw denied("应用已卸载"); }
     }
 
-    private Snapshot snapshot(RunControl control, long epoch) throws Exception {
+    private Snapshot snapshot(RunControl control, long epoch, PerformanceTrace.Stage stage) throws Exception {
+        PerformanceTrace.Span timing = PerformanceTrace.begin(stage);
+        Snapshot result = null;
+        try { result = buildSnapshot(control, epoch); return result; }
+        finally {
+            timing.finishSnapshot(result == null ? -1 : result.nodes.size(),
+                    result == null ? -1 : result.snapshotJsonBytes, result != null && result.truncated, epoch);
+        }
+    }
+
+    private Snapshot buildSnapshot(RunControl control, long epoch) throws Exception {
         control.checkExecutionEpoch(epoch);
         AccessibilityNodeInfo root = focusedRoot(control, epoch);
         Snapshot state = new Snapshot(control, epoch);
@@ -401,7 +413,8 @@ public final class AndroidDeviceTools implements ToolHandler {
             String structural = profileId + ":" + control.getTaskId() + ":" + epoch + ":" + state.packageName + ":" + state.windowSignature
                     + ":" + state.elements + ":" + state.contentHashes + ":" + state.truncated;
             state.revision = digest(structural);
-            if (state.json().toString().getBytes(StandardCharsets.UTF_8).length + 30 > MAX_BYTES) throw unavailable("界面快照超过字节预算");
+            state.snapshotJsonBytes = state.json().toString().getBytes(StandardCharsets.UTF_8).length;
+            if (state.snapshotJsonBytes + 30 > MAX_BYTES) throw unavailable("界面快照超过字节预算");
             control.checkExecutionEpoch(epoch);
             return state;
         } catch (Exception failure) { state.close(); throw failure; }
@@ -478,6 +491,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         final Set<String> longTextNodes = new HashSet<>();
         final StringBuilder contentHashes = new StringBuilder();
         int byteCount = 2048;
+        int snapshotJsonBytes;
         long started = SystemClock.elapsedRealtime();
 
         Snapshot(RunControl control, long epoch) { this.control = control; this.epoch = epoch; }
@@ -644,10 +658,14 @@ public final class AndroidDeviceTools implements ToolHandler {
     private <T> T onMain(Callable<T> action, RunControl control, long epoch, Dispatch dispatch) throws Exception {
         control.checkExecutionEpoch(epoch);
         CompletableFuture<T> result = new CompletableFuture<>();
+        PerformanceTrace.Span queuedTiming = PerformanceTrace.begin(PerformanceTrace.Stage.MAIN_QUEUE);
         Runnable queued = () -> {
+            queuedTiming.finish();
             if (result.isDone()) return;
+            PerformanceTrace.Span callbackTiming = PerformanceTrace.begin(PerformanceTrace.Stage.MAIN_CALLBACK);
             try { requireReady(control, epoch); result.complete(action.call()); }
             catch (Exception failed) { result.completeExceptionally(failed); }
+            finally { callbackTiming.finish(); }
         };
         main.post(queued);
         try { return await(result, control, epoch, MAIN_TIMEOUT_MS); }

@@ -67,6 +67,7 @@ public final class AgentController {
     private final Object lock = new Object();
     private final List<String> log = new ArrayList<>();
     private long generation;
+    private long stopGeneration = -1, stoppedEpoch = -1, stoppedDispatchAttempts = -1;
     private RunControl control;
     private PendingApproval pending;
     private String status = "准备就绪";
@@ -220,13 +221,20 @@ public final class AgentController {
     }
 
     public void stop() {
+        PerformanceTrace.Span stopTiming = PerformanceTrace.begin(PerformanceTrace.Stage.STOP_RECEIVED);
         RunControl cancelled;
         synchronized (lock) {
             if (control == null) return;
+            stopTiming.finish();
             cancelled = control;
             cancelled.cancel();
+            PerformanceTrace.mark(PerformanceTrace.Stage.STOP_EPOCH_INVALIDATED,
+                    cancelled.getExecutionEpoch(), cancelled.getDispatchAttempts());
             control = null;
             ++generation;
+            stopGeneration = generation;
+            stoppedEpoch = cancelled.getExecutionEpoch();
+            stoppedDispatchAttempts = cancelled.getDispatchAttempts();
             pending = null;
             status = "已停止";
             summary = "任务已停止。已完成的应用操作不会自动撤销。";
@@ -332,9 +340,15 @@ public final class AgentController {
 
     private void publish() {
         if (!publicationPending.compareAndSet(false, true)) return;
+        PerformanceTrace.Span queuedTiming = PerformanceTrace.begin(PerformanceTrace.Stage.UI_PUBLICATION_QUEUE);
         main.post(() -> {
+            queuedTiming.finish();
+            PerformanceTrace.Span publicationTiming = PerformanceTrace.begin(PerformanceTrace.Stage.UI_PUBLICATION_APPLIED);
+            try {
             publicationPending.set(false);
-            State state = getState();
+            State state;
+            long publishedGeneration;
+            synchronized (lock) { state = getState(); publishedGeneration = generation; }
             AgentAccessibilityService service = AgentAccessibilityService.getInstance();
             if (service != null) {
                 try {
@@ -349,6 +363,15 @@ public final class AgentController {
                 stop();
             }
             for (Listener listener : listeners) listener.onChanged();
+            synchronized (lock) {
+                // A previously captured running state is not proof that the stop UI
+                // has applied. Associate this marker with the actual stopped generation.
+                if (!state.running && publishedGeneration == generation && publishedGeneration == stopGeneration) {
+                    PerformanceTrace.mark(PerformanceTrace.Stage.STOP_UI_APPLIED, stoppedEpoch, stoppedDispatchAttempts);
+                    stopGeneration = -1;
+                }
+            }
+            } finally { publicationTiming.finish(); }
         });
     }
 

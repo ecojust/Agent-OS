@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-26T18:19:19Z",
-  "note": "第十一轮八档模拟器共264项测试全部通过，318张真实截图已归档；本地重新执行67项JVM测试、CI的20项工具测试及构建检查均通过。基础API矩阵检查点完成；真机、真实模型、应用兼容和性能仍待验收。",
+  "updated_at": "2026-10-26T18:39:30Z",
+  "note": "新增默认关闭的有界性能记录器，区分主线程排队、快照和停止界面时点；停止显示绑定实际代次。Java及Android测试编译、lint通过，新插桩用例尚待设备执行，未宣称性能预算达标。",
   "latest_evidence": {
     "path": "screenshots/40374358177-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40374358177"
@@ -69,7 +69,7 @@
     {
       "id": "performance",
       "name": "三态性能测量与预算验收",
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "id": "visual_observation",

@@ -153,6 +153,7 @@ public final class DeviceToolsInstrumentedTest {
             registerFixtureReceiver(device.context, receiver, events);
             try {
                 for (int phase = 0; phase < 2; phase++) {
+                    device.awaitUiIdle();
                     JsonObject before = device.observe();
                     JsonObject arguments = nodeArguments(before, "increment");
                     pauseOnRead.set(phase == 1);
@@ -232,6 +233,7 @@ public final class DeviceToolsInstrumentedTest {
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             try {
                 device.instrumentation.waitForIdleSync();
+                device.awaitUiIdle();
                 JsonObject ownScreen = awaitObservation(device.tools, device.control,
                         data -> device.context.getPackageName().equals(string(data, "packageName")));
                 assertFalse(ownScreen.get("scoped").getAsBoolean());

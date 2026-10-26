@@ -94,6 +94,16 @@ final class DeviceHarness implements AutoCloseable {
         context.startActivity(intent);
         instrumentation.waitForIdleSync();
         awaitObservation(tools, control, data -> FIXTURE.equals(string(data, "packageName")));
+        awaitUiIdle();
+        // A package can become focused before its entry animation or layout ends.
+        // Read the baseline again after actual cross-process event quiescence.
+        awaitObservation(tools, control, data -> FIXTURE.equals(string(data, "packageName")));
+    }
+
+    void awaitUiIdle() throws Exception {
+        // Instrumentation's main-thread idle only covers our own process. Fixture
+        // activities and system window animations report through UiAutomation.
+        automation.waitForIdle(500, 8_000);
     }
 
     JsonObject observe() throws Exception {

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-26T20:31:21Z",
-  "note": "新增绑定界面版本的只读节点定位核心，17项新回归通过；明确区分屏幕坐标、节点候选与真正手势，Android接入和平台行为继续验证。",
+  "updated_at": "2026-10-26T20:33:12Z",
+  "note": "接入只读resolve_node_at、同批次规划守卫及五项真实设备回归；完整核心113/113通过，Android编译和lint通过。启动47项/设备的新一轮矩阵，截图结果随后归档。",
   "latest_evidence": {
     "path": "screenshots/40391925593-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40391925593"
@@ -62,7 +62,7 @@
     {
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
-      "status": "complete",
+      "status": "in_progress",
       "evidence": "screenshots/40391925593-1/manifest.json",
       "scope": "Eight x86_64 emulator API baselines with system animations at 1.0 and synthetic fixtures; not physical-device, third-party-app or performance acceptance."
     },

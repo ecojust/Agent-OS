@@ -188,6 +188,78 @@ public class AgentRunnerTest {
         }
     }
 
+    @Test public void nodeLookupCannotReuseTheSameBatchAfterAWriteEvenWhenTheRevisionIsUnchanged() throws Exception {
+        Events events = new Events(); List<String> actions = new ArrayList<>();
+        String point = "{\"x\":120,\"y\":160,\"action\":\"click\",\"coordinateSpace\":\"screen_pixels\",\"expectedRevision\":\"r1\"}";
+        try (Server server = new Server((index, request) -> new Reply(index == 0
+                ? replyTools(tool("write", "click", "{\"nodeId\":\"n1\",\"expectedRevision\":\"r1\"}"),
+                        tool("lookup", "resolve_node_at", point)) : replyText("重新规划")))) {
+            runner(server, (name, args, control) -> {
+                actions.add(name);
+                // Some accepted actions do not change the structural revision.
+                return name.equals("observe") ? observation("r1") : ok();
+            }, events).run("点击后重新定位", new RunControl());
+            assertEquals(Arrays.asList("observe", "click", "observe"), actions);
+            JsonObject lookup = toolMessages(server.requests.get(1).json()).stream()
+                    .filter(message -> "lookup".equals(message.get("tool_call_id").getAsString())).findFirst().orElseThrow();
+            JsonObject result = json(lookup.get("content").getAsString());
+            assertEquals("STALE_OBSERVATION", result.get("code").getAsString());
+            assertFalse(result.get("dispatchSubmitted").getAsBoolean());
+            server.assertHealthy();
+        }
+    }
+
+    @Test public void nodeLookupCannotFollowACaptureInTheSameModelPlan() throws Exception {
+        Events events = new Events(); List<String> actions = new ArrayList<>();
+        String point = "{\"x\":120,\"y\":160,\"action\":\"click\",\"coordinateSpace\":\"screen_pixels\",\"expectedRevision\":\"r1\"}";
+        try (Server server = new Server((index, request) -> new Reply(index == 0
+                ? replyTools(tool("image", "take_screenshot", "{\"expectedRevision\":\"r1\"}"),
+                        tool("lookup", "resolve_node_at", point)) : replyText("依据图像重新规划")))) {
+            ToolHandler tools = new ToolHandler() {
+                public JsonObject execute(String name, JsonObject args, RunControl control) {
+                    actions.add(name);
+                    if (name.equals("observe")) return observation("r1");
+                    assertEquals("take_screenshot", name);
+                    JsonObject result = ok();
+                    result.add("data", json("{\"revision\":\"r1\",\"width\":1,\"height\":1}"));
+                    result.addProperty("imageDataUrl", IMAGE); return result;
+                }
+                public Set<String> availableTools() {
+                    Set<String> names = new HashSet<>(ToolHandler.super.availableTools());
+                    names.add("take_screenshot"); return names;
+                }
+            };
+            runner(server, tools, events).run("观察后定位", new RunControl());
+            assertEquals(Arrays.asList("observe", "take_screenshot"), actions);
+            assertTrue(server.requests.get(1).body.contains("image_url"));
+            JsonObject lookup = toolMessages(server.requests.get(1).json()).stream()
+                    .filter(message -> "lookup".equals(message.get("tool_call_id").getAsString())).findFirst().orElseThrow();
+            assertEquals("STALE_OBSERVATION", json(lookup.get("content").getAsString()).get("code").getAsString());
+            server.assertHealthy();
+        }
+    }
+
+    @Test public void aNodeCandidateCannotReplaceTheLatestObservationRevision() throws Exception {
+        Events events = new Events(); List<String> actions = new ArrayList<>();
+        String point = "{\"x\":120,\"y\":160,\"action\":\"click\",\"coordinateSpace\":\"screen_pixels\",\"expectedRevision\":\"r1\"}";
+        try (Server server = new Server((index, request) -> new Reply(index == 0
+                ? replyTools(tool("lookup", "resolve_node_at", point)) : index == 1
+                ? replyTools(tool("write", "click", "{\"nodeId\":\"n1\",\"expectedRevision\":\"r2\"}")) : replyText("请重新观察")))) {
+            runner(server, (name, args, control) -> {
+                actions.add(name);
+                if (name.equals("observe")) return observation("r1");
+                assertEquals("resolve_node_at", name);
+                // A faulty read-only result cannot mint an authoritative observation.
+                return json("{\"ok\":true,\"data\":{\"nodeId\":\"n1\",\"revision\":\"r2\"}}");
+            }, events).run("定位并确认", new RunControl());
+            assertEquals(Arrays.asList("observe", "resolve_node_at"), actions);
+            JsonObject write = toolMessages(server.requests.get(2).json()).stream()
+                    .filter(message -> "write".equals(message.get("tool_call_id").getAsString())).findFirst().orElseThrow();
+            assertEquals("STALE_OBSERVATION", json(write.get("content").getAsString()).get("code").getAsString());
+            server.assertHealthy();
+        }
+    }
+
     @Test public void screenshotIsForwardedAsImageAndNeverLoggedOrRepeatedAsToolText() throws Exception {
         Events events=new Events();
         try(Server server=new Server((index,request)->new Reply(index==0

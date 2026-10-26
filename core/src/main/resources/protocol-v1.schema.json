@@ -32,6 +32,7 @@
       "enum": [
         "list_apps",
         "observe",
+        "resolve_node_at",
         "launch_app",
         "click",
         "type_text",
@@ -81,6 +82,57 @@
           "additionalProperties": false,
           "properties": {},
           "required": []
+        }
+      }
+    },
+    {
+      "properties": {
+        "tool": {
+          "const": "resolve_node_at"
+        },
+        "arguments": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "x": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 16384
+            },
+            "y": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 16384
+            },
+            "coordinateSpace": {
+              "type": "string",
+              "maxLength": 128,
+              "enum": [
+                "screen_pixels"
+              ]
+            },
+            "action": {
+              "type": "string",
+              "maxLength": 128,
+              "enum": [
+                "scroll_forward",
+                "type_text",
+                "click",
+                "scroll_backward"
+              ]
+            },
+            "expectedRevision": {
+              "type": "string",
+              "maxLength": 128
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "coordinateSpace",
+            "action",
+            "expectedRevision"
+          ]
         }
       }
     },
@@ -172,8 +224,8 @@
               "type": "string",
               "maxLength": 128,
               "enum": [
-                "backward",
-                "forward"
+                "forward",
+                "backward"
               ]
             },
             "nodeId": {

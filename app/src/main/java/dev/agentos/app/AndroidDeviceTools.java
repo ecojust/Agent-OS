@@ -23,6 +23,7 @@ import android.view.accessibility.AccessibilityWindowInfo;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import dev.agentos.core.CoordinateNodeResolver;
 import dev.agentos.core.RunControl;
 import dev.agentos.core.ToolCatalog;
 import dev.agentos.core.ToolHandler;
@@ -33,6 +34,7 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -66,6 +68,7 @@ public final class AndroidDeviceTools implements ToolHandler {
     private String lastObservedRevision;
     private long lastObservedEpoch = -1;
     private ObservedBlockers lastObservedBlockers;
+    private CoordinateNodeResolver.Binding lastObservedCoordinateBinding;
     private boolean denied;
 
     public AndroidDeviceTools(AgentAccessibilityService service, Set<String> packages,
@@ -139,6 +142,7 @@ public final class AndroidDeviceTools implements ToolHandler {
             switch (name) {
                 case "list_apps": return listApps();
                 case "observe": return observation(control, epoch);
+                case "resolve_node_at": return resolveNodeAt(args, control, epoch);
                 case "wait": return waitForScreen(args, control, epoch);
                 case "launch_app": return launch(args, control, epoch, dispatch);
                 case "click": case "type_text": case "scroll":
@@ -181,9 +185,16 @@ public final class AndroidDeviceTools implements ToolHandler {
         onMain(() -> { requireReady(control, epoch); return null; }, control, epoch, new Dispatch());
         JsonObject result;
         ObservedBlockers blockers;
+        CoordinateNodeResolver.Binding coordinateBinding;
         try (Snapshot state = snapshot(control, epoch, PerformanceTrace.Stage.SNAPSHOT_OBSERVE)) {
             result = success(state.json());
             blockers = state.observedBlockers();
+            // Unsupported coordinate geometry must not disable ordinary structured observation.
+            coordinateBinding = null;
+            if (state.scoped) {
+                try { coordinateBinding = coordinateBinding(state); }
+                catch (IllegalArgumentException unsupportedGeometry) { /* No coordinate candidate for this observation. */ }
+            }
         }
         // A screen lock, permission loss or stop while the remote tree was queried
         // invalidates the completed snapshot before any content reaches the model.
@@ -192,7 +203,130 @@ public final class AndroidDeviceTools implements ToolHandler {
         lastObservedRevision = result.getAsJsonObject("data").get("revision").getAsString();
         lastObservedEpoch = epoch;
         lastObservedBlockers = blockers;
+        lastObservedCoordinateBinding = coordinateBinding;
         return result;
+    }
+
+    private JsonObject resolveNodeAt(JsonObject args, RunControl control, long epoch) throws Exception {
+        String expectedRevision = required(args, "expectedRevision");
+        CoordinateNodeResolver.Binding expected = lastObservedCoordinateBinding;
+        if (expected == null) throw unavailable("当前观察没有可用于坐标定位的完整授权窗口，请先 observe");
+        if (!expected.revision.equals(expectedRevision) || expected.executionEpoch != epoch
+                || !expected.taskId.equals(control.getTaskId()) || !expected.profileId.equals(control.getProfileId())) throw stale();
+        validateInstalledGrant(expected.packageName);
+        AgentAccessibilityService.ControlLease controls = acquireActionControls(control, epoch);
+        try (Snapshot state = snapshot(control, epoch, PerformanceTrace.Stage.SNAPSHOT_OBSERVE)) {
+            state.requireRevision(expectedRevision);
+            validateInstalledGrant(state.packageName);
+            CoordinateNodeResolver.Observation current;
+            try { current = coordinateObservation(state, controls); }
+            catch (IllegalArgumentException unsupportedGeometry) { throw unavailable("当前界面几何或节点信息超过可靠坐标定位范围"); }
+            CoordinateNodeResolver.NodeAction action = CoordinateNodeResolver.NodeAction.fromWireName(required(args, "action"));
+            int x = integer(args, "x", 0), y = integer(args, "y", 0);
+            CoordinateNodeResolver.Resolution resolution = CoordinateNodeResolver.resolve(current,
+                    new CoordinateNodeResolver.Query(expected, x, y, action), control);
+            if (resolution.candidate == null) return coordinateRejection(resolution.code);
+            AccessibilityNodeInfo node = state.node(resolution.candidate.nodeId);
+            Rect target = new Rect(); node.getBoundsInScreen(target);
+            // A semantic scroll does not click through its container's controls. Its
+            // queried point must still be clear; click/type protect the complete target.
+            boolean scroll = action == CoordinateNodeResolver.NodeAction.SCROLL_FORWARD
+                    || action == CoordinateNodeResolver.NodeAction.SCROLL_BACKWARD;
+            if (controls.intersects(scroll ? new Rect(x, y, x + 1, y + 1) : target)) {
+                return coordinateRejection(CoordinateNodeResolver.Code.BLOCKED_TARGET);
+            }
+            JsonObject data = new JsonObject();
+            data.addProperty("nodeId", resolution.candidate.nodeId);
+            data.addProperty("action", action.wireName);
+            data.addProperty("revision", expectedRevision);
+            data.addProperty("coordinateSpace", "screen_pixels");
+            JsonArray bounds = new JsonArray(); bounds.add(target.left); bounds.add(target.top);
+            bounds.add(target.right); bounds.add(target.bottom); data.add("bounds", bounds);
+            data.addProperty("packageName", state.packageName); data.addProperty("windowId", state.windowId);
+            data.addProperty("displayId", state.displayId); data.addProperty("taskId", control.getTaskId());
+            data.addProperty("profileId", profileId); data.addProperty("executionEpoch", epoch);
+            data.addProperty("candidateOnly", true); data.addProperty("requiresConfirmation", true);
+            JsonObject result = success(data); result.addProperty("submitted", false);
+            requireFastGrant(state.packageName);
+            state.verifyWindowUnchanged();
+            finalGuard(control, epoch, controls);
+            return result;
+        }
+    }
+
+    private static JsonObject coordinateRejection(CoordinateNodeResolver.Code reason) {
+        String code = reason == CoordinateNodeResolver.Code.STALE_OBSERVATION ? "STALE_OBSERVATION"
+                : reason == CoordinateNodeResolver.Code.OUT_OF_SCOPE ? "PERMISSION_DENIED" : "CAPABILITY_UNAVAILABLE";
+        JsonObject result = error(code, "无法在当前授权观察中确定安全且唯一的节点候选",
+                "重新观察并核对坐标与动作；存在歧义、遮挡或敏感内容时由用户操作");
+        result.addProperty("reasonCode", reason.name());
+        return result;
+    }
+
+    private CoordinateNodeResolver.Binding coordinateBinding(Snapshot state) {
+        return new CoordinateNodeResolver.Binding(state.control.getTaskId(), state.epoch, profileId,
+                state.packageName, state.displayId, state.windowId, state.revision, coordinateBounds(state.bounds));
+    }
+
+    private CoordinateNodeResolver.Observation coordinateObservation(Snapshot state,
+            AgentAccessibilityService.ControlLease controls) throws Exception {
+        EnumSet<CoordinateNodeResolver.ObservationFlag> flags = EnumSet.of(CoordinateNodeResolver.ObservationFlag.FOCUSED);
+        if (state.scoped) flags.add(CoordinateNodeResolver.ObservationFlag.SCOPED);
+        if (state.truncated) flags.add(CoordinateNodeResolver.ObservationFlag.TRUNCATED);
+        if (state.password) flags.add(CoordinateNodeResolver.ObservationFlag.SENSITIVE);
+        if (state.highImpactScreen) flags.add(CoordinateNodeResolver.ObservationFlag.HIGH_IMPACT);
+        if (!state.obscured.isEmpty()) flags.add(CoordinateNodeResolver.ObservationFlag.UNKNOWN_OCCLUSION);
+        List<CoordinateNodeResolver.Node> nodes = new ArrayList<>();
+        for (Map.Entry<String, AccessibilityNodeInfo> entry : state.nodes.entrySet()) {
+            state.control.checkExecutionEpoch(state.epoch);
+            AccessibilityNodeInfo node = entry.getValue();
+            Rect box = new Rect(); node.getBoundsInScreen(box);
+            EnumSet<CoordinateNodeResolver.NodeFlag> properties = EnumSet.noneOf(CoordinateNodeResolver.NodeFlag.class);
+            if (node.isVisibleToUser()) properties.add(CoordinateNodeResolver.NodeFlag.VISIBLE);
+            if (node.isEnabled()) properties.add(CoordinateNodeResolver.NodeFlag.ENABLED);
+            if (sensitive(node)) properties.add(CoordinateNodeResolver.NodeFlag.SENSITIVE);
+            if (state.intersectsObscurer(box)) properties.add(CoordinateNodeResolver.NodeFlag.OBSCURED);
+            if (state.longTextNodes.contains(entry.getKey())) properties.add(CoordinateNodeResolver.NodeFlag.CONTENT_TRUNCATED);
+            if (!sensitive(node) && knownHighImpact(limited(node.getText()) + " " + limited(node.getContentDescription()))) {
+                properties.add(CoordinateNodeResolver.NodeFlag.HIGH_IMPACT);
+            }
+            EnumSet<CoordinateNodeResolver.NodeAction> actions = EnumSet.noneOf(CoordinateNodeResolver.NodeAction.class);
+            int mask = coordinateActionMask(node);
+            if ((mask & AccessibilityNodeInfo.ACTION_CLICK) != 0) actions.add(CoordinateNodeResolver.NodeAction.CLICK);
+            if ((mask & AccessibilityNodeInfo.ACTION_SET_TEXT) != 0) actions.add(CoordinateNodeResolver.NodeAction.TYPE_TEXT);
+            if ((mask & AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) != 0) actions.add(CoordinateNodeResolver.NodeAction.SCROLL_FORWARD);
+            if ((mask & AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD) != 0) actions.add(CoordinateNodeResolver.NodeAction.SCROLL_BACKWARD);
+            nodes.add(new CoordinateNodeResolver.Node(entry.getKey(), coordinateBounds(box), actions, properties));
+        }
+        List<CoordinateNodeResolver.Bounds> blocked = new ArrayList<>();
+        for (Rect region : state.obscured) blocked.add(coordinateBounds(region));
+        return new CoordinateNodeResolver.Observation(coordinateBinding(state), coordinateBounds(state.safeContent), flags,
+                nodes, blocked, Collections.singletonList(coordinateBounds(controls.copyBounds())));
+    }
+
+    /** The revision and candidate capabilities must describe the same actual platform actions. */
+    private static int coordinateActionMask(AccessibilityNodeInfo node) {
+        List<AccessibilityNodeInfo.AccessibilityAction> actions = node.getActionList();
+        if (actions.size() > 64) throw new IllegalArgumentException("Node action budget exceeded");
+        int mask = 0;
+        for (AccessibilityNodeInfo.AccessibilityAction action : actions) {
+            switch (action.getId()) {
+                case AccessibilityNodeInfo.ACTION_CLICK:
+                    if (node.isClickable()) mask |= AccessibilityNodeInfo.ACTION_CLICK; break;
+                case AccessibilityNodeInfo.ACTION_SET_TEXT:
+                    if (node.isEditable()) mask |= AccessibilityNodeInfo.ACTION_SET_TEXT; break;
+                case AccessibilityNodeInfo.ACTION_SCROLL_FORWARD:
+                    if (node.isScrollable()) mask |= AccessibilityNodeInfo.ACTION_SCROLL_FORWARD; break;
+                case AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD:
+                    if (node.isScrollable()) mask |= AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD; break;
+                default: break;
+            }
+        }
+        return mask;
+    }
+
+    private static CoordinateNodeResolver.Bounds coordinateBounds(Rect bounds) {
+        return new CoordinateNodeResolver.Bounds(bounds.left, bounds.top, bounds.right, bounds.bottom);
     }
 
     private JsonObject waitForScreen(JsonObject args, RunControl control, long epoch) throws Exception {
@@ -575,7 +709,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         final RunControl control;
         final long epoch;
         String packageName, revision, windowSignature = "";
-        int windowId;
+        int windowId, displayId = -1;
         boolean scoped, password, truncated, highImpactScreen;
         final Rect bounds = new Rect();
         final Rect safeContent = new Rect();
@@ -598,6 +732,8 @@ public final class AndroidDeviceTools implements ToolHandler {
             try {
                 AccessibilityWindowInfo active = uniqueFocusedWindow(windows, control, epoch);
                 if (active.getId() != windowId) throw stale();
+                displayId = active.getDisplayId();
+                if (displayId != Display.DEFAULT_DISPLAY) throw unavailable("坐标与窗口观察仅支持默认显示器");
                 if (active.getType() != AccessibilityWindowInfo.TYPE_APPLICATION) scoped = false;
                 obscured.clear();
                 systemBars.clear();
@@ -673,6 +809,11 @@ public final class AndroidDeviceTools implements ToolHandler {
                 Rect box = new Rect(); node.getBoundsInScreen(box);
                 if (!box.isEmpty() && Rect.intersects(bounds, box)) {
                     JsonObject item = new JsonObject();
+                    try { contentHashes.append(":actions=").append(coordinateActionMask(node)); }
+                    catch (IllegalArgumentException tooManyActions) {
+                        truncated = true;
+                        contentHashes.append(":actions-over-budget");
+                    }
                     item.addProperty("id", id); item.addProperty("role", limited(node.getClassName()));
                     item.addProperty("viewId", limited(node.getViewIdResourceName()));
                     boolean blocked = intersectsObscurer(box) || !Rect.intersects(safeContent, box);

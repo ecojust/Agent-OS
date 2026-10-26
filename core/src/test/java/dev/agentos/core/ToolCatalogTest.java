@@ -17,7 +17,7 @@ public class ToolCatalogTest {
             assertEquals("object", parameters.get("type").getAsString());
             assertFalse(parameters.get("additionalProperties").getAsBoolean());
         }
-        assertEquals(new HashSet<>(Arrays.asList("list_apps", "observe", "launch_app", "click", "type_text", "scroll", "tap", "swipe", "back", "home", "wait", "take_screenshot")), names);
+        assertEquals(new HashSet<>(Arrays.asList("list_apps", "observe", "resolve_node_at", "launch_app", "click", "type_text", "scroll", "tap", "swipe", "back", "home", "wait", "take_screenshot")), names);
     }
 
     @Test public void rejectsUnknownMissingAndUnexpectedArguments() {
@@ -36,5 +36,34 @@ public class ToolCatalogTest {
         ToolCatalog.validate("tap", object("{\"x\":12,\"y\":30,\"expectedRevision\":\"r1\"}"));
         ToolCatalog.validate("wait", object("{\"milliseconds\":3000}"));
         ToolCatalog.validate("scroll", object("{\"direction\":\"forward\",\"expectedRevision\":\"r1\"}"));
+    }
+
+    @Test public void coordinateLookupIsReadOnlyAndRequiresAnExplicitScreenSpaceAndAction() {
+        assertFalse(ToolCatalog.isMutation("resolve_node_at"));
+        assertTrue(ToolCatalog.requiresRevision("resolve_node_at"));
+        for (String action : Arrays.asList("click", "type_text", "scroll_forward", "scroll_backward")) {
+            JsonObject args = object("{\"x\":24,\"y\":260,\"coordinateSpace\":\"screen_pixels\",\"expectedRevision\":\"r1\"}");
+            args.addProperty("action", action);
+            ToolCatalog.validate("resolve_node_at", args);
+        }
+        JsonObject valid = object("{\"x\":24,\"y\":260,\"action\":\"click\",\"coordinateSpace\":\"screen_pixels\",\"expectedRevision\":\"r1\"}");
+        for (String missing : Arrays.asList("x", "y", "action", "coordinateSpace", "expectedRevision")) {
+            JsonObject args = valid.deepCopy(); args.remove(missing);
+            assertThrows(IllegalArgumentException.class, () -> ToolCatalog.validate("resolve_node_at", args));
+        }
+        for (String invalidSpace : Arrays.asList("dp", "normalized", "image_pixels")) {
+            JsonObject args = valid.deepCopy(); args.addProperty("coordinateSpace", invalidSpace);
+            assertThrows(IllegalArgumentException.class, () -> ToolCatalog.validate("resolve_node_at", args));
+        }
+        for (String invalidAction : Arrays.asList("tap", "swipe", "long_click", "scroll")) {
+            JsonObject args = valid.deepCopy(); args.addProperty("action", invalidAction);
+            assertThrows(IllegalArgumentException.class, () -> ToolCatalog.validate("resolve_node_at", args));
+        }
+        JsonObject stringCoordinate = valid.deepCopy(); stringCoordinate.addProperty("x", "24");
+        assertThrows(IllegalArgumentException.class, () -> ToolCatalog.validate("resolve_node_at", stringCoordinate));
+        JsonObject fractionalCoordinate = valid.deepCopy(); fractionalCoordinate.addProperty("x", 0.5);
+        assertThrows(IllegalArgumentException.class, () -> ToolCatalog.validate("resolve_node_at", fractionalCoordinate));
+        JsonObject unauthorizedOverride = valid.deepCopy(); unauthorizedOverride.addProperty("ignoreOcclusion", true);
+        assertThrows(IllegalArgumentException.class, () -> ToolCatalog.validate("resolve_node_at", unauthorizedOverride));
     }
 }

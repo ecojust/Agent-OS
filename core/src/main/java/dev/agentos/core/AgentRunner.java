@@ -54,8 +54,11 @@ public final class AgentRunner {
                                                 long requestEpoch) throws Exception {
                 active.checkExecutionEpoch(requestEpoch);
                 boolean imageOrWrite = "take_screenshot".equals(name) || ToolCatalog.isMutation(name);
-                if (imageOrWrite && state.batchMutated) return ToolDispatcher.error("STALE_OBSERVATION", "上一步已改变界面，请先根据新观察重新规划。");
-                if (imageOrWrite && state.batchImageCaptured) return ToolDispatcher.error("STALE_OBSERVATION", "本轮已取得图像，请先依据该图像重新规划，不继续抓图或提交旧计划。");
+                // A point-to-node lookup still belongs to the original UI plan.
+                // It must not make old coordinates usable after a write or capture.
+                boolean requiresFreshPlan = imageOrWrite || "resolve_node_at".equals(name);
+                if (requiresFreshPlan && state.batchMutated) return ToolDispatcher.error("STALE_OBSERVATION", "上一步已改变界面，请先根据新观察重新规划。");
+                if (requiresFreshPlan && state.batchImageCaptured) return ToolDispatcher.error("STALE_OBSERVATION", "本轮已取得图像，请先依据该图像重新规划，不继续抓图或提交旧计划。");
                 if (ToolCatalog.requiresRevision(name) && (state.revision == null || !state.revision.equals(arguments.get("expectedRevision").getAsString())))
                     return ToolDispatcher.error("STALE_OBSERVATION", "请求使用了过期界面版本，请根据最新观察重新规划。");
                 state.actualDeviceCall = true;

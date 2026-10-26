@@ -62,6 +62,9 @@ public final class AgentAccessibilityService extends AccessibilityService {
                     && top < target.bottom && target.top < bottom;
         }
 
+        /** Pure value copy of this lease; does not query a View or current geometry. */
+        public Rect copyBounds() { return new Rect(left, top, right, bottom); }
+
         private boolean matches(Rect bounds, long generation, long connection, long callbacks) {
             return this.generation == generation && connectionGeneration == connection
                     && callbackGeneration == callbacks && left == bounds.left && top == bounds.top

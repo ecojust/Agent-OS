@@ -168,7 +168,19 @@ final class DeviceHarness implements AutoCloseable {
     String keyboardDiagnostics() {
         StringBuilder diagnostic = new StringBuilder("Synthetic input-method diagnostics:");
         for (String key : new String[]{"default_input_method", "enabled_input_methods", "show_ime_with_hard_keyboard"}) {
-            diagnostic.append("\n ").append(key).append('=').append(readSecure(key));
+            diagnostic.append("\n ").append(key).append('=');
+            try { diagnostic.append(readSecure(key)); }
+            catch (RuntimeException restricted) {
+                // New releases restrict individual settings even for a test process.
+                // Never replace the original keyboard assertion with a diagnostic error.
+                diagnostic.append("[app read restricted: ").append(restricted.getClass().getSimpleName()).append(']');
+                try {
+                    String value = shell("settings get secure " + key).trim();
+                    diagnostic.append(" shell=").append(value.substring(0, Math.min(value.length(), 1_024)));
+                } catch (Exception unavailable) {
+                    diagnostic.append(" [shell unavailable: ").append(unavailable.getClass().getSimpleName()).append(']');
+                }
+            }
         }
         try (ParcelFileDescriptor.AutoCloseInputStream input = new ParcelFileDescriptor.AutoCloseInputStream(
                 automation.executeShellCommand("dumpsys input_method")); ByteArrayOutputStream output = new ByteArrayOutputStream()) {

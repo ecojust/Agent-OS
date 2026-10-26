@@ -66,6 +66,12 @@ public final class AgentControllerInstrumentedTest {
                 for (String oldApproval : approved) controller.approve(oldApproval, true);
                 assertFalse("Finished task sent another model request", server.receivedAnotherRequest(server.requestCount(), 350));
                 assertEquals("Count: 1", fixtureText(device, "counter_value"));
+            } catch (AssertionError failure) {
+                try { screenshots.capture("failure-before-controller-cleanup"); }
+                catch (Throwable evidenceFailure) { failure.addSuppressed(evidenceFailure); }
+                try { failure.addSuppressed(new AssertionError(DeviceHarness.windowDiagnostics())); }
+                catch (Throwable diagnosticFailure) { failure.addSuppressed(diagnosticFailure); }
+                throw failure;
             } finally { clear(device, controller); }
         }
     }

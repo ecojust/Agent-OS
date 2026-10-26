@@ -31,6 +31,9 @@ final class LocalControllerModelServer implements AutoCloseable {
     private volatile boolean closed;
     private volatile Socket active;
     private volatile Throwable failure;
+    private volatile String protocolStage = "listening";
+    private volatile String safeObservation = "not observed";
+    private volatile String safeToolResults = "none";
     private int phase;
     private int refreshes;
     private volatile boolean finalStateObserved;
@@ -48,7 +51,11 @@ final class LocalControllerModelServer implements AutoCloseable {
     boolean finalStateObserved() { return finalStateObserved; }
 
     void assertHealthy() {
-        if (failure != null) throw new AssertionError("Local protocol fixture failed: " + failure.getClass().getSimpleName(), failure);
+        Throwable problem = failure;
+        if (problem != null) throw new AssertionError("Local protocol fixture failed: " + problem.getClass().getSimpleName()
+                + "; stage=" + protocolStage + "; phase=" + phaseName() + "; requests=" + requests.get()
+                + "; refreshes=" + refreshes + (problem instanceof IOException ? "; reason=" + safeMessage(problem.getMessage()) : "")
+                + "\nobservation=" + safeObservation + "\ntoolResults=" + safeToolResults, problem);
     }
 
     boolean receivedAnotherRequest(int baseline, long timeoutMillis) throws InterruptedException {
@@ -68,15 +75,19 @@ final class LocalControllerModelServer implements AutoCloseable {
             try (Socket socket = server.accept()) {
                 active = socket;
                 socket.setSoTimeout(5_000);
+                protocolStage = "read-http-request";
                 JsonObject request = readRequest(socket.getInputStream());
                 int round = requests.incrementAndGet();
                 synchronized (changed) { changed.notifyAll(); }
+                protocolStage = "plan-from-device-observation";
                 byte[] response = respond(request, round).toString().getBytes(StandardCharsets.UTF_8);
+                protocolStage = "write-http-response";
                 String headers = "HTTP/1.1 200 OK\r\nContent-Type: application/json; charset=utf-8\r\n"
                         + "Connection: close\r\nContent-Length: " + response.length + "\r\n\r\n";
                 socket.getOutputStream().write(headers.getBytes(StandardCharsets.US_ASCII));
                 socket.getOutputStream().write(response);
                 socket.getOutputStream().flush();
+                protocolStage = "await-next-request";
             } catch (SocketException stopped) {
                 if (!closed) failure = stopped;
             } catch (Throwable error) {
@@ -125,6 +136,8 @@ final class LocalControllerModelServer implements AutoCloseable {
 
     private JsonObject respond(JsonObject request, int round) throws IOException {
         JsonObject observed = latestObservation(request);
+        safeObservation = summarizeObservation(observed);
+        safeToolResults = summarizeToolResults(request);
         require(DeviceHarness.FIXTURE.equals(observed.get("packageName").getAsString()), "Unexpected observed application");
         require(observed.get("scoped").getAsBoolean(), "Fixture was not actually authorized");
         if (scenario == Scenario.EXHAUST_ROUND_BUDGET) {
@@ -164,7 +177,7 @@ final class LocalControllerModelServer implements AutoCloseable {
     }
 
     private JsonObject refresh(int round) throws IOException {
-        require(++refreshes <= 3, "Accepted action never produced the expected observable fixture result");
+        require(++refreshes <= 3, "Submitted plan did not produce the expected observable fixture result");
         // A dispatch acknowledgement need not mean the remote view's update is visible yet.
         // Use bounded read-only tools; never repeat an already submitted write.
         JsonObject wait = new JsonObject(); wait.addProperty("milliseconds", 125);
@@ -197,7 +210,7 @@ final class LocalControllerModelServer implements AutoCloseable {
             JsonObject node = item.getAsJsonObject();
             if ((DeviceHarness.FIXTURE + ":id/" + id).equals(node.get("viewId").getAsString())) return node;
         }
-        throw new IOException("Required synthetic fixture node is not visible");
+        throw new IOException("Required synthetic fixture node is not visible: " + id);
     }
 
     private static String nodeText(JsonObject observed, String id) throws IOException { return node(observed, id).get("text").getAsString(); }
@@ -228,6 +241,76 @@ final class LocalControllerModelServer implements AutoCloseable {
         JsonArray choices = new JsonArray(); choices.add(choice);
         JsonObject response = new JsonObject(); response.add("choices", choices);
         return response;
+    }
+
+    private String phaseName() {
+        if (scenario != Scenario.SAVE_AND_COUNT) return scenario.name();
+        switch (phase) {
+            case 0: return "before-type";
+            case 1: return "await-typed-text";
+            case 2: return "await-saved-text";
+            case 3: return "await-counter-increment";
+            default: return "final-report";
+        }
+    }
+
+    private static String summarizeObservation(JsonObject observed) {
+        // Only fixed fixture fields and text classifications are recorded. Never dump
+        // model requests, Authorization headers, arbitrary UI text, or key material.
+        StringBuilder result = new StringBuilder();
+        for (String key : new String[]{"windowId", "focused", "scoped", "hasOcclusion", "truncated"}) {
+            result.append(key).append('=').append(observed.has(key) ? observed.get(key) : "missing").append(' ');
+        }
+        for (String id : new String[]{"edit_value", "saved_value", "counter_value"}) {
+            result.append(id).append('{');
+            try {
+                JsonObject item = node(observed, id);
+                String value = DeviceHarness.string(item, "text");
+                String classification = value.isEmpty() ? "empty"
+                        : TEXT.equals(value) ? "expected-input"
+                        : ("Saved: " + TEXT).equals(value) ? "expected-saved"
+                        : "Saved: empty".equals(value) ? "initial-saved"
+                        : "Count: 0".equals(value) ? "counter-zero"
+                        : "Count: 1".equals(value) ? "counter-one"
+                        : "[obscured]".equals(value) ? "obscured" : "other-length-" + value.length();
+                result.append("text=").append(classification);
+                for (String key : new String[]{"obscured", "enabled", "focused", "editable"}) {
+                    result.append(',').append(key).append('=').append(item.has(key) ? item.get(key) : "missing");
+                }
+            } catch (IOException missing) { result.append("missing"); }
+            result.append("} ");
+        }
+        return result.toString();
+    }
+
+    private static String summarizeToolResults(JsonObject request) {
+        StringBuilder result = new StringBuilder();
+        JsonArray messages = request.getAsJsonArray("messages");
+        for (int index = messages.size() - 1, count = 0; index >= 0 && count < 10; index--) {
+            JsonObject message = messages.get(index).getAsJsonObject();
+            if (!"tool".equals(DeviceHarness.string(message, "role"))) continue;
+            count++;
+            try {
+                JsonObject tool = JsonParser.parseString(message.get("content").getAsString()).getAsJsonObject();
+                String callId = DeviceHarness.string(message, "tool_call_id");
+                result.append("{call=").append(callId.matches("script-round-[0-9]+(?:-wait|-observe)?") ? callId : "other");
+                result.append(",ok=").append(tool.has("ok") ? tool.get("ok") : "missing");
+                String code = DeviceHarness.string(tool, "code");
+                // Codes are protocol identifiers, never free-form error descriptions.
+                result.append(",code=").append(code.matches("[A-Z_]{0,80}") ? code : "nonstandard");
+                for (String flag : new String[]{"submitted", "accepted"}) {
+                    if (tool.has(flag)) result.append(',').append(flag).append('=').append(tool.get(flag).getAsBoolean());
+                }
+                result.append("} ");
+            } catch (RuntimeException malformed) { result.append("{unreadable-result} "); }
+        }
+        return result.length() == 0 ? "none" : result.toString();
+    }
+
+    private static String safeMessage(String message) {
+        if (message == null) return "none";
+        String bounded = message.replace(SYNTHETIC_KEY, "[redacted]").replace('\r', ' ').replace('\n', ' ');
+        return bounded.substring(0, Math.min(bounded.length(), 512));
     }
     private static void require(boolean condition, String message) throws IOException { if (!condition) throw new IOException(message); }
 

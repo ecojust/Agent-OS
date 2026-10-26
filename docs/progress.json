@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-26T19:17:12Z",
-  "note": "新增绑定执行代次的单次提交凭据，区分本地准入与系统接受；停止不等待远端调用、旧凭据不能恢复执行。92项核心测试通过，Android工作线程路径正在集成。",
+  "updated_at": "2026-10-26T19:19:06Z",
+  "note": "新增不可变控制条位置凭据及跨服务实例的设备执行互斥，避免工作线程读取View或旧调用未结束时并发操作；3项仪器用例已编译、lint通过，等待八API实跑。",
   "latest_evidence": {
     "path": "screenshots/40381396419-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40381396419"

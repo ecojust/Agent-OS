@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 /** User-enabled bridge. It never starts a task merely because accessibility is enabled. */
 public final class AgentAccessibilityService extends AccessibilityService {
@@ -41,6 +42,31 @@ public final class AgentAccessibilityService extends AccessibilityService {
         void onStop();
         void onApprove(boolean approved);
         default void onDevicePaused(String reason) { }
+    }
+
+    /** Immutable main-thread geometry. A worker must also validate the current lease and epoch. */
+    public static final class ControlLease {
+        private final int left, top, right, bottom;
+        private final long generation, connectionGeneration, callbackGeneration;
+
+        private ControlLease(Rect bounds, long generation, long connectionGeneration,
+                             long callbackGeneration) {
+            left = bounds.left; top = bounds.top; right = bounds.right; bottom = bounds.bottom;
+            this.generation = generation;
+            this.connectionGeneration = connectionGeneration;
+            this.callbackGeneration = callbackGeneration;
+        }
+
+        public boolean intersects(Rect target) {
+            return target != null && left < target.right && target.left < right
+                    && top < target.bottom && target.top < bottom;
+        }
+
+        private boolean matches(Rect bounds, long generation, long connection, long callbacks) {
+            return this.generation == generation && connectionGeneration == connection
+                    && callbackGeneration == callbacks && left == bounds.left && top == bounds.top
+                    && right == bounds.right && bottom == bounds.bottom;
+        }
     }
 
     private static volatile AgentAccessibilityService instance;
@@ -61,7 +87,13 @@ public final class AgentAccessibilityService extends AccessibilityService {
     private Set<String> watchedPackages = Collections.emptySet();
     private boolean receiverRegistered;
     private boolean packageReceiverRegistered;
-    private boolean connected;
+    private volatile boolean connected;
+    private volatile ControlLease currentControlLease;
+    // Only the main thread writes generations. Workers read the published immutable lease.
+    private long controlGeneration, connectionGeneration, callbackGeneration;
+    // A disconnected service can still have a platform call in flight. A replacement
+    // service must share this gate; only the original worker releases it on return.
+    private static final AtomicReference<Thread> DEVICE_CALL_OWNER = new AtomicReference<>();
     private boolean eventReadyCheckPending;
     private final Runnable eventReadyCheck = () -> {
         eventReadyCheckPending = false;
@@ -86,6 +118,8 @@ public final class AgentAccessibilityService extends AccessibilityService {
 
     @Override protected void onServiceConnected() {
         super.onServiceConnected();
+        invalidateControlLease();
+        connectionGeneration++;
         connected = true;
         instance = this;
         IntentFilter filter = new IntentFilter();
@@ -119,6 +153,21 @@ public final class AgentAccessibilityService extends AccessibilityService {
 
     public boolean isControlAvailable() { return overlay != null && overlay.isAttachedToWindow() && callbacks != null; }
 
+    /** Does not touch Views or wait for the main thread. */
+    public boolean isControlLeaseCurrent(ControlLease lease) {
+        return lease != null && currentControlLease == lease && connected && instance == this;
+    }
+
+    /** One device request per process, including replacement services and adapters. */
+    public boolean tryBeginDeviceCall() { return DEVICE_CALL_OWNER.compareAndSet(null, Thread.currentThread()); }
+
+    /** The worker that acquired the gate retains it through actual platform completion. */
+    public void endDeviceCall() {
+        if (!DEVICE_CALL_OWNER.compareAndSet(Thread.currentThread(), null)) {
+            throw new IllegalStateException("Device request gate is not owned by this worker");
+        }
+    }
+
     public void notifyDevicePaused(String reason) { onMain(() -> { if (callbacks != null) callbacks.onDevicePaused(reason); }); }
 
     void watchPackages(Set<String> packages) {
@@ -127,11 +176,18 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     public void setOverlayCallbacks(OverlayCallbacks value) {
-        onMain(() -> callbacks = value);
+        onMain(() -> {
+            if (callbacks != value) {
+                invalidateControlLease();
+                callbackGeneration++;
+                callbacks = value;
+            }
+        });
     }
 
     public void showOverlay(String status, boolean paused, String approval) {
         onMain(() -> {
+            invalidateControlLease();
             if (!isDeviceReady()) { stopFromDevice(); return; }
             try {
                 String previousApproval = currentApproval;
@@ -169,6 +225,89 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     public void hideOverlay() { onMain(() -> { watchedPackages = Collections.emptySet(); removeOverlay(); }); }
+
+    /** Acquires actual compact control geometry before the final worker snapshot begins. */
+    public CompletableFuture<ControlLease> acquireControlLease() {
+        CompletableFuture<ControlLease> result = new CompletableFuture<>();
+        ControlLeaseWaiter waiter = new ControlLeaseWaiter(result);
+        result.whenComplete((unused, failure) -> onMain(waiter::close));
+        onMain(waiter::start);
+        return result;
+    }
+
+    private void invalidateControlLease() {
+        currentControlLease = null;
+        controlGeneration++;
+    }
+
+    /** Main thread only. Never replace a valid token merely because another frame was drawn. */
+    private ControlLease stableControlLease() {
+        if (!connected || instance != this || overlay == null || callbacks == null
+                || !overlay.isAttachedToWindow() || !overlay.isShown() || !overlay.isLaidOut()
+                || overlay.isLayoutRequested() || overlay.getWidth() <= 0 || overlay.getHeight() <= 0
+                || !currentApproval.isEmpty() || approvalScroll == null || approvalButtons == null
+                || approvalScroll.getVisibility() != View.GONE || approvalButtons.getVisibility() != View.GONE) {
+            if (currentControlLease != null) invalidateControlLease();
+            return null;
+        }
+        Rect bounds = controlBounds();
+        if (bounds.isEmpty()) {
+            if (currentControlLease != null) invalidateControlLease();
+            return null;
+        }
+        ControlLease previous = currentControlLease;
+        if (previous != null && previous.matches(bounds, controlGeneration,
+                connectionGeneration, callbackGeneration)) return previous;
+        if (previous != null) invalidateControlLease();
+        ControlLease lease = new ControlLease(bounds, controlGeneration,
+                connectionGeneration, callbackGeneration);
+        currentControlLease = lease;
+        return lease;
+    }
+
+    private final class ControlLeaseWaiter implements ViewTreeObserver.OnPreDrawListener,
+            View.OnAttachStateChangeListener {
+        private final CompletableFuture<ControlLease> result;
+        private View panel;
+        private ViewTreeObserver observer;
+
+        ControlLeaseWaiter(CompletableFuture<ControlLease> result) { this.result = result; }
+
+        void start() {
+            if (result.isDone()) return;
+            panel = overlay;
+            if (panel == null || !connected || callbacks == null || !panel.isAttachedToWindow()) {
+                result.completeExceptionally(new IllegalStateException("任务控制条不可用"));
+                return;
+            }
+            observer = panel.getViewTreeObserver();
+            observer.addOnPreDrawListener(this);
+            panel.addOnAttachStateChangeListener(this);
+            checkLayout();
+        }
+
+        private void checkLayout() {
+            if (result.isDone()) return;
+            if (!connected || panel != overlay || callbacks == null || !panel.isAttachedToWindow()) {
+                result.completeExceptionally(new IllegalStateException("任务控制条已改变"));
+                return;
+            }
+            ControlLease lease = stableControlLease();
+            if (lease != null) result.complete(lease);
+        }
+
+        @Override public boolean onPreDraw() { checkLayout(); return true; }
+        @Override public void onViewAttachedToWindow(View view) { checkLayout(); }
+        @Override public void onViewDetachedFromWindow(View view) {
+            result.completeExceptionally(new IllegalStateException("任务控制条已移除"));
+        }
+        void close() {
+            if (observer != null && observer.isAlive()) observer.removeOnPreDrawListener(this);
+            if (panel != null) panel.removeOnAttachStateChangeListener(this);
+            observer = null;
+            panel = null;
+        }
+    }
 
     /**
      * Acknowledges the actual compact layout, not just a request to hide approval views.
@@ -243,7 +382,32 @@ public final class AgentAccessibilityService extends AccessibilityService {
         if (overlay != null) return;
         WindowManager manager = (WindowManager) getSystemService(WINDOW_SERVICE);
         if (manager == null) throw new IllegalStateException("悬浮控制不可用");
-        LinearLayout panel = new LinearLayout(this);
+        LinearLayout panel = new LinearLayout(this) {
+            @Override public void requestLayout() {
+                invalidateControlLease();
+                super.requestLayout();
+            }
+            @Override protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+                if (changed) invalidateControlLease();
+                super.onLayout(changed, left, top, right, bottom);
+            }
+            @Override protected void onAttachedToWindow() {
+                invalidateControlLease();
+                super.onAttachedToWindow();
+            }
+            @Override protected void onDetachedFromWindow() {
+                invalidateControlLease();
+                super.onDetachedFromWindow();
+            }
+            @Override protected void onWindowVisibilityChanged(int visibility) {
+                invalidateControlLease();
+                super.onWindowVisibilityChanged(visibility);
+            }
+        };
+        panel.getViewTreeObserver().addOnPreDrawListener(() -> {
+            if (overlay == panel) stableControlLease();
+            return true;
+        });
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setPadding(dp(12), dp(8), dp(12), dp(8));
         GradientDrawable background = new GradientDrawable();
@@ -311,6 +475,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
                     startY = event.getRawY(); originalY = params.y; return true;
                 }
                 if (event.getActionMasked() == MotionEvent.ACTION_MOVE) {
+                    invalidateControlLease();
                     int height = manager.getCurrentWindowMetrics().getBounds().height();
                     params.y = Math.max(0, Math.min(Math.max(0, height - panel.getHeight() - dp(48)), originalY + Math.round(event.getRawY() - startY)));
                     try { manager.updateViewLayout(panel, params); } catch (RuntimeException failed) { stopFromDevice(); }
@@ -342,6 +507,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     private void removeOverlay() {
+        invalidateControlLease();
         main.removeCallbacks(eventReadyCheck);
         eventReadyCheckPending = false;
         if (overlay == null) return;
@@ -361,6 +527,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     private void stopFromDevice() {
+        invalidateControlLease();
         if (stopNotifying) return;
         stopNotifying = true;
         try { if (callbacks != null) callbacks.onStop(); }
@@ -381,6 +548,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
     @Override public void onInterrupt() { stopFromDevice(); }
 
     @Override public void onConfigurationChanged(Configuration configuration) {
+        invalidateControlLease();
         super.onConfigurationChanged(configuration);
         if (overlay == null) return;
         String status = currentStatus, approval = currentApproval;
@@ -400,6 +568,8 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     private void disconnect() {
+        invalidateControlLease();
+        connectionGeneration++;
         connected = false;
         if (instance == this) instance = null;
         stopFromDevice();

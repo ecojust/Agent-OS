@@ -5,6 +5,7 @@ flowchart TB
         direction TB
         ui[对话与任务控制台<br/>模型配置 · 应用范围<br/>执行过程 · 暂停 / 停止]
         runtime[任务协调器<br/>状态机 · 执行预算<br/>取消 · 结果汇总]
+        capabilities[设备兼容与能力探测<br/>系统版本 · 厂商行为<br/>可用工具与版本适配]
         gateway[模型网关<br/>协议适配 · 上下文裁剪<br/>请求取消]
         policy[执行控制层<br/>授权范围 · 用户确认<br/>锁屏与界面版本校验]
         tools[原子设备工具<br/>启动 · 观察 · 点击 · 输入<br/>手势 · 按需截图]
@@ -13,7 +14,7 @@ flowchart TB
 
         ui --> runtime
         runtime <--> gateway
-        runtime --> policy --> tools
+        runtime --> capabilities --> policy --> tools
         ui --> storage
         gateway -. 读取认证配置 .-> storage
 
@@ -42,7 +43,7 @@ flowchart TB
     classDef future fill:#f8fafc,stroke:#64748b,color:#475569,stroke-width:2px,stroke-dasharray:5 5;
     classDef boundary fill:#fff7ed,stroke:#ea580c,color:#7c2d12,stroke-width:2px;
     class user,ui interaction;
-    class runtime,gateway,observer orchestration;
+    class runtime,capabilities,gateway,observer orchestration;
     class policy,tools,publicapi,access,apps execution;
     class system future;
     class model,storage boundary;

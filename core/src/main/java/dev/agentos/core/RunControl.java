@@ -1,0 +1,121 @@
+package dev.agentos.core;
+
+import java.util.UUID;
+import java.util.function.LongSupplier;
+
+/** One task identity and a monotonically invalidated execution epoch. */
+public final class RunControl {
+    private static final long MAX_PAUSED_NANOS = 600_000_000_000L;
+    private final String taskId = UUID.randomUUID().toString();
+    private final String profileId;
+    private final TaskBudget budget;
+    private final LongSupplier nanoClock;
+    private long epoch = 1, lastAccounted, pausedSince, activeNanos, pausedNanos, approvalNanos;
+    private boolean cancelled, paused;
+    private int approvalWaits, modelRounds, toolCalls;
+    private long dispatchAttempts;
+    private Runnable cancelHook;
+
+    public RunControl() { this("current-personal"); }
+    public RunControl(String profileId) { this(profileId, TaskBudget.DEFAULT); }
+    public RunControl(String profileId, TaskBudget budget) { this(profileId, budget, System::nanoTime); }
+    RunControl(String profileId, TaskBudget budget, LongSupplier nanoClock) {
+        if (profileId == null || profileId.trim().isEmpty() || profileId.length() > 128) throw new IllegalArgumentException("资料身份无效。");
+        this.profileId = profileId; this.budget = java.util.Objects.requireNonNull(budget);
+        this.nanoClock = java.util.Objects.requireNonNull(nanoClock); lastAccounted = nanoClock.getAsLong();
+    }
+    public String getTaskId() { return taskId; }
+    public String getProfileId() { return profileId; }
+    public synchronized long getExecutionEpoch() { return epoch; }
+    /** Called on the platform thread at the last checked boundary before a write API. */
+    public synchronized void markDispatchAttempt(long expectedEpoch) throws TaskControlException {
+        checkExecutionEpoch(expectedEpoch); dispatchAttempts++;
+    }
+    public synchronized long getDispatchAttempts() { return dispatchAttempts; }
+    public void cancel() {
+        Runnable hook;
+        synchronized (this) {
+            if (cancelled) return;
+            account(); cancelled = true; paused = false; epoch++; approvalWaits = 0;
+            hook = cancelHook; cancelHook = null; notifyAll();
+        }
+        runHook(hook);
+    }
+    public void pause() {
+        Runnable hook;
+        synchronized (this) {
+            if (cancelled || paused) return;
+            account(); paused = true; pausedSince = nanoClock.getAsLong(); epoch++;
+            hook = cancelHook; cancelHook = null; notifyAll();
+        }
+        runHook(hook);
+    }
+    public synchronized void resume() {
+        if (cancelled || !paused) return;
+        account();
+        if (nanoClock.getAsLong() - pausedSince >= MAX_PAUSED_NANOS) {
+            cancelled = true; paused = false; epoch++; notifyAll(); return;
+        }
+        paused = false; epoch++; notifyAll();
+    }
+    public synchronized boolean isCancelled() { return cancelled; }
+    public synchronized boolean isPaused() { return paused; }
+    public synchronized void checkCancelled() throws TaskControlException {
+        if (cancelled || Thread.currentThread().isInterrupted()) throw new TaskControlException("TASK_STOPPED", "任务已停止。");
+        account();
+        if (activeNanos / 1_000_000 >= budget.maxActiveMillis) throw new TaskControlException("BUDGET_EXCEEDED", "任务活动时间已达到上限。");
+    }
+    public synchronized void checkExecutionEpoch(long expected) throws TaskControlException {
+        checkCancelled();
+        if (paused || expected != epoch) throw new TaskControlException("TASK_PAUSED", "执行代次已失效，继续后须重新观察。");
+    }
+    public synchronized void awaitIfPaused() throws InterruptedException {
+        checkCancelled();
+        while (paused && !cancelled) {
+            long remaining = MAX_PAUSED_NANOS - (nanoClock.getAsLong() - pausedSince);
+            if (remaining <= 0) { cancel(); throw new TaskControlException("TASK_STOPPED", "暂停保留时间已到，任务已结束。"); }
+            wait(Math.max(1, Math.min(1000, remaining / 1_000_000)));
+            checkCancelled();
+        }
+        checkCancelled();
+    }
+    /** Hooks must be nonblocking; the model gateway's hook only invalidates its future. */
+    public void setCancelHook(Runnable hook) {
+        boolean callNow;
+        synchronized (this) { callNow = cancelled || paused; if (!callNow) cancelHook = hook; }
+        if (callNow) runHook(hook);
+    }
+    public synchronized void consumeModelRound() throws TaskControlException {
+        checkCancelled();
+        if (modelRounds >= budget.maxModelRounds) throw new TaskControlException("BUDGET_EXCEEDED", "模型轮次已达到上限。");
+        modelRounds++;
+    }
+    public synchronized void consumeToolCall() throws TaskControlException {
+        checkCancelled();
+        if (toolCalls >= budget.maxToolCalls) throw new TaskControlException("BUDGET_EXCEEDED", "工具调用次数已达到上限。");
+        toolCalls++;
+    }
+    public synchronized void beginApprovalWait() { account(); if (!cancelled) approvalWaits++; }
+    public synchronized void endApprovalWait() { account(); if (approvalWaits > 0) approvalWaits--; }
+    public synchronized long remainingActiveMillis() throws TaskControlException {
+        checkCancelled(); return Math.max(1, budget.maxActiveMillis - activeNanos / 1_000_000);
+    }
+    public synchronized BudgetSnapshot budgetSnapshot() {
+        account(); return new BudgetSnapshot(modelRounds, toolCalls, activeNanos / 1_000_000, pausedNanos / 1_000_000, approvalNanos / 1_000_000);
+    }
+    private void account() {
+        long now = nanoClock.getAsLong(), elapsed = Math.max(0, now - lastAccounted); lastAccounted = now;
+        if (cancelled) return;
+        if (paused) pausedNanos += elapsed;
+        else if (approvalWaits > 0) approvalNanos += elapsed;
+        else activeNanos += elapsed;
+    }
+    private static void runHook(Runnable hook) { if (hook != null) try { hook.run(); } catch (RuntimeException ignored) { } }
+    public static final class BudgetSnapshot {
+        public final int modelRounds, toolCalls;
+        public final long activeMillis, pausedMillis, approvalMillis;
+        BudgetSnapshot(int modelRounds, int toolCalls, long activeMillis, long pausedMillis, long approvalMillis) {
+            this.modelRounds = modelRounds; this.toolCalls = toolCalls; this.activeMillis = activeMillis; this.pausedMillis = pausedMillis; this.approvalMillis = approvalMillis;
+        }
+    }
+}

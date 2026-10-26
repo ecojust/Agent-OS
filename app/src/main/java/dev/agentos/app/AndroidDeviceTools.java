@@ -262,6 +262,12 @@ public final class AndroidDeviceTools implements ToolHandler {
         }
         // A pause and resume invalidates this request, even if the old confirmation returns true.
         control.checkExecutionEpoch(epoch);
+        // Approval publication hides its views asynchronously. Wait for the real compact
+        // layout before re-observing and checking target overlap, otherwise old expanded
+        // bounds can reject a target that is now clear. Final scope/revision checks remain.
+        CompletableFuture<Void> compact = service.whenControlsReadyForAction();
+        try { await(compact, control, epoch, MAIN_TIMEOUT_MS); }
+        finally { compact.cancel(false); }
     }
 
     private void validateMutation(String name, JsonObject args, Snapshot state, RunControl control, long epoch) throws Exception {

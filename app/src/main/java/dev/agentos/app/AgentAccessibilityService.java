@@ -20,6 +20,7 @@ import android.os.UserManager;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.Button;
@@ -29,6 +30,7 @@ import android.widget.TextView;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /** User-enabled bridge. It never starts a task merely because accessibility is enabled. */
 public final class AgentAccessibilityService extends AccessibilityService {
@@ -161,6 +163,67 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     public void hideOverlay() { onMain(() -> { watchedPackages = Collections.emptySet(); removeOverlay(); }); }
+
+    /**
+     * Acknowledges the actual compact layout, not just a request to hide approval views.
+     * The caller waits on a worker with its own task deadline and cancels this future on
+     * pause/stop/timeout. No UI thread is blocked and no target geometry is guessed.
+     */
+    CompletableFuture<Void> whenControlsReadyForAction() {
+        CompletableFuture<Void> result = new CompletableFuture<>();
+        ControlLayoutWaiter waiter = new ControlLayoutWaiter(result);
+        result.whenComplete((unused, failure) -> onMain(waiter::close));
+        onMain(waiter::start);
+        return result;
+    }
+
+    private final class ControlLayoutWaiter implements ViewTreeObserver.OnPreDrawListener,
+            View.OnAttachStateChangeListener {
+        private final CompletableFuture<Void> result;
+        private View panel;
+        private ViewTreeObserver observer;
+
+        ControlLayoutWaiter(CompletableFuture<Void> result) { this.result = result; }
+
+        void start() {
+            if (result.isDone()) return;
+            panel = overlay;
+            if (panel == null || !panel.isAttachedToWindow()) {
+                result.completeExceptionally(new IllegalStateException("任务控制条不可用"));
+                return;
+            }
+            observer = panel.getViewTreeObserver();
+            observer.addOnPreDrawListener(this);
+            panel.addOnAttachStateChangeListener(this);
+            checkLayout();
+        }
+
+        private void checkLayout() {
+            if (result.isDone()) return;
+            if (!connected || panel != overlay || !panel.isAttachedToWindow()) {
+                result.completeExceptionally(new IllegalStateException("任务控制条已改变"));
+                return;
+            }
+            if (currentApproval.isEmpty() && approvalScroll.getVisibility() == View.GONE
+                    && approvalButtons.getVisibility() == View.GONE && panel.isLaidOut()
+                    && !panel.isLayoutRequested() && panel.getWidth() > 0 && panel.getHeight() > 0) {
+                result.complete(null);
+            }
+        }
+
+        @Override public boolean onPreDraw() { checkLayout(); return true; }
+        @Override public void onViewAttachedToWindow(View view) { checkLayout(); }
+        @Override public void onViewDetachedFromWindow(View view) {
+            result.completeExceptionally(new IllegalStateException("任务控制条已移除"));
+        }
+
+        void close() {
+            if (observer != null && observer.isAlive()) observer.removeOnPreDrawListener(this);
+            if (panel != null) panel.removeOnAttachStateChangeListener(this);
+            observer = null;
+            panel = null;
+        }
+    }
 
     /** Read on the main thread; gesture tools must not target the task controls. */
     Rect controlBounds() {

@@ -331,10 +331,26 @@ public final class DeviceToolsInstrumentedTest {
                 arguments.addProperty("expectedRevision", string(second, "revision"));
                 JsonObject back = device.tools.execute("back", arguments, device.control);
                 assertTrue(back.toString(), back.get("ok").getAsBoolean());
-                JsonObject first = device.withText("Count: 0");
+                device.withText("Count: 0");
                 screenshots.capture("before-home");
-                arguments.addProperty("expectedRevision", string(first, "revision"));
-                JsonObject home = device.tools.execute("home", arguments, device.control);
+                JsonObject home = null;
+                for (int plan = 0; plan <= 3; plan++) {
+                    // Capturing evidence may span an activity-exit animation. Plan
+                    // from a new observation, never the revision preceding a screenshot.
+                    JsonObject first = device.withText("Count: 0");
+                    JsonObject homeArguments = new JsonObject();
+                    homeArguments.addProperty("expectedRevision", string(first, "revision"));
+                    long attempts = device.control.getDispatchAttempts();
+                    home = device.tools.execute("home", homeArguments, device.control);
+                    if (home.get("ok").getAsBoolean()) break;
+                    boolean unsubmittedStale = "STALE_OBSERVATION".equals(string(home, "code"))
+                            && home.has("submitted") && !home.get("submitted").getAsBoolean();
+                    if (!unsubmittedStale) break;
+                    assertEquals("A purportedly unsubmitted plan reached dispatch", attempts, device.control.getDispatchAttempts());
+                    if (plan == 3) break;
+                    SystemClock.sleep(Math.min(250, 125L * (plan + 1)));
+                }
+                assertNotNull(home);
                 assertTrue(home.toString(), home.get("ok").getAsBoolean());
                 JsonObject launcher;
                 try {
@@ -393,8 +409,9 @@ public final class DeviceToolsInstrumentedTest {
                 assertFalse(rejected.toString(), rejected.get("ok").getAsBoolean());
                 assertEquals("STALE_OBSERVATION", string(rejected, "code"));
                 assertEquals(dispatches, device.control.getDispatchAttempts());
+                JsonObject currentSecond = device.withText("Second page reached");
                 JsonObject backArguments = new JsonObject();
-                backArguments.addProperty("expectedRevision", string(second, "revision"));
+                backArguments.addProperty("expectedRevision", string(currentSecond, "revision"));
                 JsonObject back = device.tools.execute("back", backArguments, device.control);
                 assertTrue(back.toString(), back.get("ok").getAsBoolean());
                 JsonObject restored = device.withText("Count: 0");

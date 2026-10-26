@@ -40,8 +40,21 @@ public final class DeviceCompatibilityUiInstrumentedTest {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         ClipboardManager clipboard = activity.getSystemService(ClipboardManager.class);
         AtomicBoolean copied = new AtomicBoolean();
+        UiAutomation clipboardAutomation = null;
+        int originalAutomationFlags = 0;
         Throwable primaryFailure = null;
         try {
+            if (Build.VERSION.SDK_INT >= 33) {
+                clipboardAutomation = instrumentation.getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+                AccessibilityServiceInfo info = clipboardAutomation.getServiceInfo();
+                originalAutomationFlags = info.flags;
+                // Configure discovery before copying. Clipboard containers can be omitted from
+                // the important-only tree, and their window title is null on some system images.
+                info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
+                        | AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
+                        | AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS;
+                clipboardAutomation.setServiceInfo(info);
+            }
             await(instrumentation, () -> activity.findViewById(R.id.device_compatibility).isEnabled());
             assertFalse(AgentController.get(activity).getState().running);
             instrumentation.runOnMainSync(() -> {
@@ -86,47 +99,49 @@ public final class DeviceCompatibilityUiInstrumentedTest {
             throw failure;
         } finally {
             try {
-                if (copied.get()) dismissClipboardPreview(instrumentation);
+                if (copied.get() && clipboardAutomation != null) dismissClipboardPreview(clipboardAutomation);
                 instrumentation.runOnMainSync(() -> { if (clipboard != null) clipboard.clearPrimaryClip(); });
                 screenshots.captureEmptyMainActivity(activity, "clipboard-preview-cleared");
             } catch (Exception | AssertionError cleanupFailure) {
                 if (primaryFailure != null) primaryFailure.addSuppressed(cleanupFailure);
                 else throw cleanupFailure;
             } finally {
-                instrumentation.runOnMainSync(activity::finish);
+                try {
+                    if (clipboardAutomation != null) {
+                        AccessibilityServiceInfo restore = clipboardAutomation.getServiceInfo();
+                        restore.flags = originalAutomationFlags;
+                        clipboardAutomation.setServiceInfo(restore);
+                    }
+                } finally { instrumentation.runOnMainSync(activity::finish); }
             }
         }
     }
 
     /** Test-only cleanup of the UI created by the real copy action; no production bypass. */
-    private static void dismissClipboardPreview(Instrumentation instrumentation) throws Exception {
-        if (Build.VERSION.SDK_INT < 33) return;
-        UiAutomation automation = instrumentation.getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
-        AccessibilityServiceInfo info = automation.getServiceInfo();
-        int originalFlags = info.flags;
-        info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS | AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS;
-        automation.setServiceInfo(info);
+    private static void dismissClipboardPreview(UiAutomation automation) throws Exception {
         Set<Integer> clipboardWindows = new HashSet<>();
+        AtomicBoolean dismissClicked = new AtomicBoolean();
+        boolean observed = false;
         long deadline = SystemClock.elapsedRealtime() + 5_000;
-        try {
-            // Let the copy's window/content events settle before considering the window absent.
-            // This waits for UI events, not an assumed duration for the preview timeout.
-            try { automation.waitForIdle(100, 1_000); } catch (TimeoutException busy) { }
-            while (SystemClock.elapsedRealtime() < deadline) {
-                if (!clipboardPreviewPresent(automation, clipboardWindows, true)) return;
-                try { automation.waitForIdle(100, Math.min(1_000, Math.max(100, deadline - SystemClock.elapsedRealtime()))); }
-                catch (TimeoutException busy) { }
+        while (SystemClock.elapsedRealtime() < deadline) {
+            boolean present = clipboardPreviewPresent(automation, clipboardWindows, dismissClicked);
+            if (present && !observed) {
+                observed = true;
+                deadline = SystemClock.elapsedRealtime() + 5_000;
             }
-            assertFalse("The copy test left a system clipboard preview window over later fixtures",
-                    clipboardPreviewPresent(automation, clipboardWindows, false));
-        } finally {
-            AccessibilityServiceInfo restore = automation.getServiceInfo();
-            restore.flags = originalFlags;
-            automation.setServiceInfo(restore);
+            // Absence before seeing the actual preview is inconclusive, not successful cleanup.
+            if (observed && dismissClicked.get() && !present) return;
+            try { automation.waitForIdle(100, Math.min(1_000, Math.max(100, deadline - SystemClock.elapsedRealtime()))); }
+            catch (TimeoutException busy) { }
         }
+        fail("Clipboard preview cleanup was not verified: observed=" + observed
+                + ", dismissClicked=" + dismissClicked.get() + ", knownWindows=" + clipboardWindows
+                + "; " + systemWindowSummary(automation));
     }
 
-    private static boolean clipboardPreviewPresent(UiAutomation automation, Set<Integer> knownWindows, boolean dismiss) {
+    private static boolean clipboardPreviewPresent(UiAutomation automation, Set<Integer> knownWindows, AtomicBoolean dismissClicked) {
+        // UiAutomation's cached tree can predate the clipboard overlay and its dismiss button.
+        if (Build.VERSION.SDK_INT >= 34) automation.clearCache();
         List<AccessibilityWindowInfo> windows = automation.getWindows();
         assertNotNull("Cannot verify clipboard preview cleanup without system windows", windows);
         boolean present = false;
@@ -134,20 +149,22 @@ public final class DeviceCompatibilityUiInstrumentedTest {
             for (AccessibilityWindowInfo window : windows) {
                 AccessibilityNodeInfo root = window.getRoot();
                 try {
+                    if (root != null) root.refresh();
                     boolean clipboard = knownWindows.contains(window.getId())
                             || "ClipboardOverlay".contentEquals(window.getTitle() == null ? "" : window.getTitle());
                     if (!clipboard && root != null && "com.android.systemui".contentEquals(root.getPackageName() == null ? "" : root.getPackageName())) {
-                        clipboard = hasNode(root, "clipboard_ui") || hasNode(root, "clipboard_preview");
+                        clipboard = hasNode(root, "clipboard_ui") || hasNode(root, "clipboard_preview")
+                                || hasNode(root, "text_preview") || hasNode(root, "minimized_preview");
                     }
                     if (!clipboard) continue;
                     present = true;
                     knownWindows.add(window.getId());
-                    if (dismiss && root != null) {
+                    if (!dismissClicked.get() && root != null) {
                         List<AccessibilityNodeInfo> controls = root.findAccessibilityNodeInfosByViewId("com.android.systemui:id/dismiss_button");
                         try {
                             for (AccessibilityNodeInfo close : controls) {
                                 if (close.isVisibleToUser() && close.isEnabled()) {
-                                    close.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                                    dismissClicked.set(close.performAction(AccessibilityNodeInfo.ACTION_CLICK));
                                     break;
                                 }
                             }
@@ -157,6 +174,35 @@ public final class DeviceCompatibilityUiInstrumentedTest {
             }
             return present;
         } finally { for (AccessibilityWindowInfo window : windows) window.recycle(); }
+    }
+
+    private static String systemWindowSummary(UiAutomation automation) {
+        StringBuilder summary = new StringBuilder();
+        List<AccessibilityWindowInfo> windows = automation.getWindows();
+        try {
+            for (AccessibilityWindowInfo window : windows) {
+                AccessibilityNodeInfo root = window.getRoot();
+                try {
+                    if (root == null || !"com.android.systemui".contentEquals(root.getPackageName() == null ? "" : root.getPackageName())) continue;
+                    summary.append("systemWindow(id=").append(window.getId()).append(", title=")
+                            .append(window.getTitle()).append(", ids=");
+                    appendNodeIds(root, summary, new int[] {64});
+                    summary.append(") ");
+                } finally { if (root != null) root.recycle(); }
+            }
+        } finally { for (AccessibilityWindowInfo window : windows) window.recycle(); }
+        return summary.toString();
+    }
+
+    private static void appendNodeIds(AccessibilityNodeInfo node, StringBuilder summary, int[] remaining) {
+        if (remaining[0]-- <= 0) return;
+        if (node.getViewIdResourceName() != null) summary.append(node.getViewIdResourceName()).append(' ');
+        for (int index = 0; index < node.getChildCount() && remaining[0] > 0; index++) {
+            AccessibilityNodeInfo child = node.getChild(index);
+            if (child == null) continue;
+            try { appendNodeIds(child, summary, remaining); }
+            finally { child.recycle(); }
+        }
     }
 
     private static boolean hasNode(AccessibilityNodeInfo root, String id) {

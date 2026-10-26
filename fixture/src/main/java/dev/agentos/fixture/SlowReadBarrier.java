@@ -9,7 +9,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** A controllable remote-root reply, present only in the separate offline fixture APK. */
+/** Controllable remote root/action replies, present only in the separate offline fixture APK. */
 final class SlowReadBarrier {
     private static volatile Object attachedOwner;
     private static volatile Session active;
@@ -25,10 +25,14 @@ final class SlowReadBarrier {
         if (previous != null) previous.release.countDown();
     }
 
-    static synchronized Bundle arm(String token) {
+    static Bundle arm(String token) { return arm(token, false); }
+
+    static Bundle armAction(String token) { return arm(token, true); }
+
+    private static synchronized Bundle arm(String token, boolean action) {
         if (attachedOwner == null) throw new IllegalStateException("The slow fixture must be foreground before arming");
         if (active != null && active.release.getCount() != 0) throw new IllegalStateException("A barrier is already armed");
-        active = new Session(token);
+        active = new Session(token, action);
         return status(token);
     }
 
@@ -49,7 +53,7 @@ final class SlowReadBarrier {
         Session session = active;
         if (session != null && session.token.equals(token) && session.claimed.get()) {
             try {
-                if (!session.finished.await(3, TimeUnit.SECONDS)) throw new IllegalStateException("Fixture root did not return after release");
+                if (!session.finished.await(3, TimeUnit.SECONDS)) throw new IllegalStateException("Fixture callback did not return after release");
             } catch (InterruptedException interrupted) {
                 Thread.currentThread().interrupt();
                 throw new IllegalStateException("Fixture completion wait was interrupted", interrupted);
@@ -64,6 +68,7 @@ final class SlowReadBarrier {
         boolean exists = session != null && session.token.equals(token);
         result.putBoolean("exists", exists);
         if (!exists) return result;
+        result.putString("kind", session.action ? "ACTION" : "ROOT");
         result.putBoolean("claimed", session.claimed.get());
         result.putBoolean("released", session.release.getCount() == 0);
         result.putBoolean("returned", session.returned);
@@ -74,11 +79,20 @@ final class SlowReadBarrier {
     }
 
     static void beforeRootReply(Context context, Object owner) {
+        beforeReply(context, owner, false);
+    }
+
+    static void beforeActionReply(Context context, Object owner) {
+        beforeReply(context, owner, true);
+    }
+
+    private static void beforeReply(Context context, Object owner, boolean action) {
         if (attachedOwner != owner) return;
         Session session = active;
-        if (session == null || session.release.getCount() == 0 || !session.claimed.compareAndSet(false, true)) return;
+        if (session == null || session.action != action || session.release.getCount() == 0
+                || !session.claimed.compareAndSet(false, true)) return;
         session.startedNanos = SystemClock.elapsedRealtimeNanos();
-        context.sendBroadcast(new Intent("dev.agentos.fixture.FINAL_ROOT_BLOCKED")
+        context.sendBroadcast(new Intent(action ? "dev.agentos.fixture.ACTION_REPLY_BLOCKED" : "dev.agentos.fixture.FINAL_ROOT_BLOCKED")
                 .setPackage("dev.agentos.app").putExtra("token", session.token)
                 .putExtra("startedNanos", session.startedNanos));
         try {
@@ -97,11 +111,12 @@ final class SlowReadBarrier {
 
     private static final class Session {
         final String token;
+        final boolean action;
         final CountDownLatch release = new CountDownLatch(1);
         final CountDownLatch finished = new CountDownLatch(1);
         final AtomicBoolean claimed = new AtomicBoolean();
         volatile boolean returned, expired;
         volatile long startedNanos, finishedNanos;
-        Session(String token) { this.token = token; }
+        Session(String token, boolean action) { this.token = token; this.action = action; }
     }
 }

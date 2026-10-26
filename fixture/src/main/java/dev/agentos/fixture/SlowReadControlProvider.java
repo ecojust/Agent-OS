@@ -15,6 +15,7 @@ public final class SlowReadControlProvider extends ContentProvider {
         if (token == null || !token.matches("[a-f0-9-]{36}")) throw new IllegalArgumentException("Invalid barrier token");
         switch (method) {
             case "arm": return SlowReadBarrier.arm(token);
+            case "arm_action": return SlowReadBarrier.armAction(token);
             case "status": return SlowReadBarrier.status(token);
             case "release": return SlowReadBarrier.release(token);
             case "finish": return SlowReadBarrier.finish(token);

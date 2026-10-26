@@ -36,7 +36,10 @@ public final class SlowActivity extends Activity {
         increment.setId(R.id.increment);
         increment.setText("Increment slow test counter");
         int[] clicks = {0};
-        increment.setOnClickListener(view -> count.setText("Count: " + ++clicks[0]));
+        increment.setOnClickListener(view -> {
+            SlowReadBarrier.beforeActionReply(view.getContext(), barrierOwner);
+            count.setText("Count: " + ++clicks[0]);
+        });
         content.addView(increment);
         content.addView(count);
         FixtureLayout.install(this, content);

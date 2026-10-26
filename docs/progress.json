@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-26T16:44:05Z",
-  "note": "补齐键盘测试的标准输入视图显示请求，并优先记录所选输入法服务的有界诊断；保持真实窗口与遮挡断言，构建和 lint 通过，Android 16/17 实测待复核。",
+  "updated_at": "2026-10-26T16:45:11Z",
+  "note": "修正确定性测试模型的重规划：仅对明确未提交的过期动作生成新请求，已接受或结果未知的动作不重放；新增有界规划回归，本地逻辑验证、编译及 lint 通过，设备矩阵待验证。",
   "latest_evidence": {
     "path": "screenshots/40359941265-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40359941265"

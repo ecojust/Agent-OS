@@ -7,12 +7,17 @@ import android.os.SystemClock;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import dev.agentos.core.TaskBudget;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -26,7 +31,10 @@ import static org.junit.Assert.*;
 /** Real Android controller/network/approval/device loop; model replies are deterministic test data. */
 @RunWith(AndroidJUnit4.class)
 public final class AgentControllerInstrumentedTest {
-    @Rule public final ScreenshotEvidence screenshots = new ScreenshotEvidence();
+    public final ScreenshotEvidence screenshots = new ScreenshotEvidence();
+    @Rule public final TestRule evidence = (base, description) ->
+            ("scriptReplansOnlyDefinitelyUnsubmittedWritesAndNeverRepeatsAcceptedOrUnknownWrites".equals(description.getMethodName())
+                    ? new ScreenshotEvidence("non_visual_synthetic_planner_regression") : screenshots).apply(base, description);
 
     @Test public void approvedHttpPlansTypeSaveAndClickWithFreshDeviceObservations() throws Exception {
         try (DeviceHarness device = new DeviceHarness();
@@ -55,9 +63,12 @@ public final class AgentControllerInstrumentedTest {
                 }
                 assertFalse("Controller did not finish: " + controller.getState().status, controller.getState().running);
                 server.assertHealthy();
-                assertEquals(3, approved.size());
+                assertEquals("Exactly three writes must be accepted by the actual executor", 3, server.acceptedWriteCount());
+                assertTrue("Each accepted write needs a distinct confirmation", approved.size() >= 3);
+                assertTrue("Safety checks may reject a plan before or after confirmation", approved.size() <= server.writePlanCount());
+                assertTrue(server.writePlanCount() <= LocalControllerModelServer.MAX_WRITE_PLANS);
                 assertTrue("Final result must come from actual device observations", server.finalStateObserved());
-                assertTrue(server.requestCount() >= 4 && server.requestCount() <= 13);
+                assertTrue(server.requestCount() >= 4 && server.requestCount() <= LocalControllerModelServer.MAX_SCENARIO_REQUESTS);
                 assertEquals("Saved: " + LocalControllerModelServer.TEXT, fixtureText(device, "saved_value"));
                 assertEquals("Count: 1", fixtureText(device, "counter_value"));
                 assertEquals("执行已结束 · 模型报告待核对", controller.getState().status);
@@ -73,6 +84,113 @@ public final class AgentControllerInstrumentedTest {
                 catch (Throwable diagnosticFailure) { failure.addSuppressed(diagnosticFailure); }
                 throw failure;
             } finally { clear(device, controller); }
+        }
+    }
+
+    @Test public void scriptReplansOnlyDefinitelyUnsubmittedWritesAndNeverRepeatsAcceptedOrUnknownWrites() throws Exception {
+        JsonObject accepted = JsonParser.parseString("{\"ok\":true,\"submitted\":true,\"accepted\":true,\"dispatchSubmitted\":true,\"dispatchAccepted\":true}").getAsJsonObject();
+        JsonObject stale = JsonParser.parseString("{\"ok\":false,\"code\":\"STALE_OBSERVATION\",\"submitted\":false,\"dispatchSubmitted\":false,\"dispatchAccepted\":false}").getAsJsonObject();
+        try (LocalControllerModelServer server = new LocalControllerModelServer(LocalControllerModelServer.Scenario.SAVE_AND_COUNT)) {
+            JsonObject first = singlePlan(server.respond(planningRequest(syntheticObservation("r1", false, false, 0), null, null), 1));
+            JsonObject retry = singlePlan(server.respond(planningRequest(syntheticObservation("r2", false, false, 0), planId(first), stale), 2));
+            assertNotEquals(planId(first), planId(retry));
+            assertEquals("type_text", retry.getAsJsonObject("function").get("name").getAsString());
+            JsonObject retryArgs = JsonParser.parseString(retry.getAsJsonObject("function").get("arguments").getAsString()).getAsJsonObject();
+            assertEquals("r2", retryArgs.get("expectedRevision").getAsString());
+            assertEquals("edit_value-r2", retryArgs.get("nodeId").getAsString());
+            assertEquals(2, server.writePlanCount());
+            assertEquals(0, server.acceptedWriteCount());
+
+            // An accepted action can take time to appear; an unchanged observation
+            // permits bounded reads only, never another text or counter write.
+            assertReadOnlyPlans(server.respond(planningRequest(syntheticObservation("r2", false, false, 0), planId(retry), accepted), 3));
+            assertEquals(2, server.writePlanCount());
+            JsonObject save = singlePlan(server.respond(planningRequest(syntheticObservation("r3", true, false, 0), null, null), 4));
+            JsonObject increment = singlePlan(server.respond(planningRequest(syntheticObservation("r4", true, true, 0), planId(save), accepted), 5));
+            assertReadOnlyPlans(server.respond(planningRequest(syntheticObservation("r4", true, true, 0), planId(increment), accepted), 6));
+            assertEquals(4, server.writePlanCount());
+            JsonObject finalReply = server.respond(planningRequest(syntheticObservation("r5", true, true, 1), null, null), 7);
+            assertFalse(finalReply.getAsJsonArray("choices").get(0).getAsJsonObject().getAsJsonObject("message").has("tool_calls"));
+            assertTrue(server.finalStateObserved());
+            assertEquals(3, server.acceptedWriteCount());
+            assertEquals(4, server.writePlanCount());
+        }
+
+        // Missing, unknown, contradictory or other failed results must not be
+        // treated as a safe stale rejection, even when the visible counter is 0.
+        String[] unsafeResults = {
+                "{\"ok\":false,\"code\":\"OUTCOME_UNKNOWN\",\"submitted\":null}",
+                "{\"ok\":false,\"code\":\"STALE_OBSERVATION\"}",
+                "{\"ok\":false,\"code\":\"STALE_OBSERVATION\",\"submitted\":false,\"dispatchSubmitted\":true}",
+                "{\"ok\":false,\"code\":\"STALE_OBSERVATION\",\"submitted\":false,\"accepted\":true}",
+                "{\"ok\":false,\"code\":\"PERMISSION_DENIED\",\"submitted\":false}",
+                null
+        };
+        for (String unsafe : unsafeResults) {
+            try (LocalControllerModelServer server = new LocalControllerModelServer(LocalControllerModelServer.Scenario.SAVE_AND_COUNT)) {
+                JsonObject first = singlePlan(server.respond(planningRequest(syntheticObservation("r1", false, false, 0), null, null), 1));
+                JsonObject result = unsafe == null ? null : JsonParser.parseString(unsafe).getAsJsonObject();
+                assertThrows(IOException.class, () -> server.respond(planningRequest(syntheticObservation("r2", false, false, 0), planId(first), result), 2));
+                assertEquals(1, server.writePlanCount());
+                assertEquals(0, server.acceptedWriteCount());
+                assertFalse(server.finalStateObserved());
+            }
+        }
+
+        try (LocalControllerModelServer server = new LocalControllerModelServer(LocalControllerModelServer.Scenario.SAVE_AND_COUNT)) {
+            JsonObject current = singlePlan(server.respond(planningRequest(syntheticObservation("r1", false, false, 0), null, null), 1));
+            Set<String> callIds = new HashSet<>(); callIds.add(planId(current));
+            for (int retry = 1; retry <= LocalControllerModelServer.MAX_WRITE_REPLANS; retry++) {
+                current = singlePlan(server.respond(planningRequest(syntheticObservation("r" + (retry + 1), false, false, 0), planId(current), stale), retry + 1));
+                assertTrue(callIds.add(planId(current)));
+            }
+            String exhausted = planId(current);
+            assertThrows(IOException.class, () -> server.respond(planningRequest(syntheticObservation("latest", false, false, 0), exhausted, stale), 5));
+            assertEquals(1 + LocalControllerModelServer.MAX_WRITE_REPLANS, server.writePlanCount());
+            assertEquals(0, server.acceptedWriteCount());
+        }
+    }
+
+    private static JsonObject syntheticObservation(String revision, boolean typed, boolean saved, int count) {
+        JsonObject data = new JsonObject();
+        data.addProperty("packageName", DeviceHarness.FIXTURE); data.addProperty("scoped", true); data.addProperty("revision", revision);
+        JsonArray nodes = new JsonArray();
+        String[][] values = {{"edit_value", typed ? LocalControllerModelServer.TEXT : ""}, {"save_value", "Save"},
+                {"saved_value", saved ? "Saved: " + LocalControllerModelServer.TEXT : "Saved: empty"},
+                {"increment", "Increment"}, {"counter_value", "Count: " + count}};
+        for (String[] value : values) {
+            JsonObject node = new JsonObject();
+            node.addProperty("id", value[0] + "-" + revision); node.addProperty("viewId", DeviceHarness.FIXTURE + ":id/" + value[0]);
+            node.addProperty("text", value[1]); nodes.add(node);
+        }
+        data.add("nodes", nodes); return data;
+    }
+
+    private static JsonObject planningRequest(JsonObject observation, String callId, JsonObject result) {
+        JsonArray messages = new JsonArray();
+        if (result != null) {
+            JsonObject tool = new JsonObject(); tool.addProperty("role", "tool");
+            tool.addProperty("tool_call_id", callId); tool.addProperty("content", result.toString()); messages.add(tool);
+        }
+        JsonObject observed = new JsonObject(); observed.addProperty("ok", true); observed.add("data", observation);
+        JsonObject latest = new JsonObject(); latest.addProperty("role", "user");
+        latest.addProperty("content", "最新本机观察（合成测试数据）：" + observed); messages.add(latest);
+        JsonObject request = new JsonObject(); request.add("messages", messages); return request;
+    }
+
+    private static JsonObject singlePlan(JsonObject response) {
+        JsonArray plans = response.getAsJsonArray("choices").get(0).getAsJsonObject().getAsJsonObject("message").getAsJsonArray("tool_calls");
+        assertEquals(1, plans.size()); return plans.get(0).getAsJsonObject();
+    }
+
+    private static String planId(JsonObject plan) { return plan.get("id").getAsString(); }
+
+    private static void assertReadOnlyPlans(JsonObject response) {
+        JsonArray plans = response.getAsJsonArray("choices").get(0).getAsJsonObject().getAsJsonObject("message").getAsJsonArray("tool_calls");
+        assertEquals(2, plans.size());
+        for (JsonElement value : plans) {
+            String name = value.getAsJsonObject().getAsJsonObject("function").get("name").getAsString();
+            assertTrue("Accepted writes must never be replayed", "observe".equals(name) || "wait".equals(name));
         }
     }
 

@@ -23,6 +23,9 @@ final class LocalControllerModelServer implements AutoCloseable {
     static final String SYNTHETIC_KEY = "controller-test-only-key";
     static final String MODEL = "synthetic-controller-model";
     static final String TEXT = "Controller integration sample";
+    static final int MAX_WRITE_REPLANS = 3;
+    static final int MAX_WRITE_PLANS = 3 + MAX_WRITE_REPLANS;
+    static final int MAX_SCENARIO_REQUESTS = 4 + MAX_WRITE_REPLANS + 3 * 3;
     private final Scenario scenario;
     private final ServerSocket server;
     private final Thread worker;
@@ -36,6 +39,11 @@ final class LocalControllerModelServer implements AutoCloseable {
     private volatile String safeToolResults = "none";
     private int phase;
     private int refreshes;
+    private String pendingWriteCallId;
+    private boolean pendingWriteAccepted;
+    private volatile int writePlans;
+    private volatile int acceptedWrites;
+    private volatile int staleReplans;
     private volatile boolean finalStateObserved;
 
     LocalControllerModelServer(Scenario scenario) throws IOException {
@@ -49,6 +57,8 @@ final class LocalControllerModelServer implements AutoCloseable {
     String endpoint() { return "http://127.0.0.1:" + server.getLocalPort() + "/v1"; }
     int requestCount() { return requests.get(); }
     boolean finalStateObserved() { return finalStateObserved; }
+    int writePlanCount() { return writePlans; }
+    int acceptedWriteCount() { return acceptedWrites; }
 
     void assertHealthy() {
         Throwable problem = failure;
@@ -134,7 +144,8 @@ final class LocalControllerModelServer implements AutoCloseable {
         return request;
     }
 
-    private JsonObject respond(JsonObject request, int round) throws IOException {
+    // Package visible so the fixture's planning rules can be checked without a device.
+    JsonObject respond(JsonObject request, int round) throws IOException {
         JsonObject observed = latestObservation(request);
         safeObservation = summarizeObservation(observed);
         safeToolResults = summarizeToolResults(request);
@@ -149,31 +160,77 @@ final class LocalControllerModelServer implements AutoCloseable {
             require(round == 1, "Task requested another plan after its action was rejected");
             return tool("click", nodeArguments(observed, "increment"), round);
         }
-        if (phase == 0) {
-            require("Count: 0".equals(nodeText(observed, "counter_value")), "Fixture did not start from a clean counter");
-            JsonObject args = nodeArguments(observed, "edit_value");
-            args.addProperty("text", TEXT);
+        if (pendingWriteCallId != null && !pendingWriteAccepted) {
+            JsonObject result = matchingResult(request, pendingWriteCallId);
+            if (flag(result, "ok", false) && "STALE_OBSERVATION".equals(DeviceHarness.string(result, "code"))
+                    && flag(result, "submitted", false) && optionalFlag(result, "accepted", false)
+                    && optionalFlag(result, "dispatchSubmitted", false) && optionalFlag(result, "dispatchAccepted", false)) {
+                // The executor explicitly rejected this request before submission. A new
+                // plan uses the newest observation and gets its own call ID and approval.
+                // Never infer this from a missing flag or from the unchanged target alone.
+                require(++staleReplans <= MAX_WRITE_REPLANS, "Unsubmitted stale plans exceeded the fixture replan limit");
+                pendingWriteCallId = null;
+            } else {
+                require(flag(result, "ok", true) && flag(result, "submitted", true) && flag(result, "accepted", true)
+                                && optionalFlag(result, "dispatchSubmitted", true) && optionalFlag(result, "dispatchAccepted", true),
+                        "Write result is not definitely accepted or definitely unsubmitted stale; refusing to replay");
+                pendingWriteAccepted = true;
+                acceptedWrites++;
+            }
+        }
+        if (pendingWriteAccepted) {
+            boolean actualResult = phase == 0 ? TEXT.equals(nodeText(observed, "edit_value"))
+                    : phase == 1 ? ("Saved: " + TEXT).equals(nodeText(observed, "saved_value"))
+                    : "Count: 1".equals(nodeText(observed, "counter_value"));
+            if (!actualResult) return refresh(round);
             phase++;
-            return tool("type_text", args, round);
+            pendingWriteCallId = null;
+            pendingWriteAccepted = false;
+            refreshes = 0;
         }
-        if (phase == 1) {
-            if (!TEXT.equals(nodeText(observed, "edit_value"))) return refresh(round);
-            phase++; refreshes = 0;
-            return tool("click", nodeArguments(observed, "save_value"), round);
+        if (phase == 3) {
+            require(("Saved: " + TEXT).equals(nodeText(observed, "saved_value"))
+                    && "Count: 1".equals(nodeText(observed, "counter_value")), "Final fixture state changed unexpectedly");
+            require(acceptedWrites == 3, "Final state must follow exactly three accepted writes");
+            finalStateObserved = true;
+            phase++;
+            JsonObject message = new JsonObject();
+            message.addProperty("role", "assistant");
+            message.addProperty("content", "Synthetic fixture observed: saved text and counter 1.");
+            return envelope(message);
         }
-        if (phase == 2) {
-            if (!("Saved: " + TEXT).equals(nodeText(observed, "saved_value"))) return refresh(round);
-            phase++; refreshes = 0;
-            return tool("click", nodeArguments(observed, "increment"), round);
+        require(phase >= 0 && phase < 3, "Unexpected extra planning round");
+        require("Count: 0".equals(nodeText(observed, "counter_value")), "Counter changed before its sole accepted increment");
+        if (phase >= 1) require(TEXT.equals(nodeText(observed, "edit_value")), "Typed fixture text changed before planning");
+        if (phase >= 2) require(("Saved: " + TEXT).equals(nodeText(observed, "saved_value")), "Saved fixture text changed before planning");
+        String target = phase == 0 ? "edit_value" : phase == 1 ? "save_value" : "increment";
+        JsonObject args = nodeArguments(observed, target);
+        if (phase == 0) args.addProperty("text", TEXT);
+        require(++writePlans <= MAX_WRITE_PLANS, "Fixture write plans exceeded the task limit");
+        pendingWriteCallId = "script-round-" + round;
+        return tool(phase == 0 ? "type_text" : "click", args, round);
+    }
+
+    private static JsonObject matchingResult(JsonObject request, String callId) throws IOException {
+        JsonArray messages = request.getAsJsonArray("messages");
+        for (int index = messages.size() - 1; index >= 0; index--) {
+            JsonObject message = messages.get(index).getAsJsonObject();
+            if ("tool".equals(DeviceHarness.string(message, "role"))
+                    && callId.equals(DeviceHarness.string(message, "tool_call_id"))) {
+                try { return JsonParser.parseString(message.get("content").getAsString()).getAsJsonObject(); }
+                catch (RuntimeException malformed) { throw new IOException("Pending write result is malformed"); }
+            }
         }
-        require(phase == 3, "Unexpected extra planning round");
-        if (!"Count: 1".equals(nodeText(observed, "counter_value"))) return refresh(round);
-        finalStateObserved = true;
-        phase++;
-        JsonObject message = new JsonObject();
-        message.addProperty("role", "assistant");
-        message.addProperty("content", "Synthetic fixture observed: saved text and counter 1.");
-        return envelope(message);
+        throw new IOException("Pending write result is missing; refusing to guess whether it was submitted");
+    }
+
+    private static boolean flag(JsonObject value, String name, boolean expected) {
+        JsonElement field = value.get(name);
+        return field != null && field.isJsonPrimitive() && field.getAsJsonPrimitive().isBoolean() && field.getAsBoolean() == expected;
+    }
+
+    private static boolean optionalFlag(JsonObject value, String name, boolean expected) {
+        return !value.has(name) || flag(value, name, expected);
     }
 
     private JsonObject refresh(int round) throws IOException {
@@ -246,10 +303,9 @@ final class LocalControllerModelServer implements AutoCloseable {
     private String phaseName() {
         if (scenario != Scenario.SAVE_AND_COUNT) return scenario.name();
         switch (phase) {
-            case 0: return "before-type";
-            case 1: return "await-typed-text";
-            case 2: return "await-saved-text";
-            case 3: return "await-counter-increment";
+            case 0: return pendingWriteCallId == null ? "before-type" : "await-typed-text";
+            case 1: return "await-saved-text";
+            case 2: return "await-counter-increment";
             default: return "final-report";
         }
     }

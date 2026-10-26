@@ -1,0 +1,17 @@
+plugins {
+    id 'com.android.application' version '8.9.2' apply false
+}
+
+// Optional output location for constrained development environments.
+def externalBuildRoot = providers.environmentVariable('AGENT_OS_BUILD_DIR').orNull
+if (externalBuildRoot) {
+    allprojects {
+        layout.buildDirectory.set(new File(externalBuildRoot, project == rootProject ? 'root' : project.name))
+    }
+}
+
+tasks.named('wrapper') {
+    gradleVersion = '8.11.1'
+    distributionType = Wrapper.DistributionType.BIN
+    distributionSha256Sum = 'f397b287023acdba1e9f6fc5ea72d22dd63669d59ed4a289a29b1a76eee151c6'
+}

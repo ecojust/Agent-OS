@@ -211,13 +211,21 @@ public final class AndroidDeviceTools implements ToolHandler {
 
     private JsonObject mutate(String name, JsonObject args, RunControl control, long epoch, Dispatch dispatch) throws Exception {
         String revision = required(args, "expectedRevision");
-        Prepared prepared = onMain(() -> {
-            requireReady(control, epoch);
-            try (Snapshot state = snapshot(control, epoch)) {
-                state.requireRevision(revision); validateMutation(name, args, state, control, epoch);
-                return new Prepared(state.packageName, description(name, args, state));
-            }
-        }, control, epoch, dispatch);
+        onMain(() -> null, control, epoch, dispatch);
+        Prepared prepared;
+        // Preparation only reads the authorized UI; keep remote traversal and serialization
+        // on the worker. Pass no recyclable accessibility nodes across the thread boundary:
+        // cancellation can release this snapshot before a queued main-thread callback ends.
+        try (Snapshot state = snapshot(control, epoch)) {
+            state.requireRevision(revision);
+            MutationTarget target = mutationTarget(name, args, state);
+            onMain(() -> {
+                target.requireAccessible(control, epoch);
+                return null;
+            }, control, epoch, dispatch);
+            control.checkExecutionEpoch(epoch);
+            prepared = new Prepared(state.packageName, description(name, args, state));
+        }
         validateInstalledGrant(prepared.packageName);
         approve(prepared.description, control, epoch);
         validateInstalledGrant(prepared.packageName);
@@ -271,6 +279,11 @@ public final class AndroidDeviceTools implements ToolHandler {
     }
 
     private void validateMutation(String name, JsonObject args, Snapshot state, RunControl control, long epoch) throws Exception {
+        mutationTarget(name, args, state).requireAccessible(control, epoch);
+    }
+
+    /** Reads sealed node metadata only; the returned value has no Snapshot or node reference. */
+    private MutationTarget mutationTarget(String name, JsonObject args, Snapshot state) throws DeviceException {
         Rect target;
         switch (name) {
             case "click": case "type_text": {
@@ -282,17 +295,40 @@ public final class AndroidDeviceTools implements ToolHandler {
                 if (state.longTextNodes.contains(required(args, "nodeId"))) throw unavailable("目标内容超过可靠观察范围");
                 if (!node.isEnabled() || ("click".equals(name) ? !node.isClickable() : !node.isEditable())) throw unavailable("目标当前不可执行该动作");
                 target = new Rect(); node.getBoundsInScreen(target);
-                state.requireVisibleTarget(target, true, control, epoch); break;
+                return state.visibleTarget(target, true);
             }
             case "scroll": {
                 AccessibilityNodeInfo node = scrollNode(args, state);
                 target = new Rect(); node.getBoundsInScreen(target);
-                state.requireVisibleTarget(target, false, control, epoch); break;
+                return state.visibleTarget(target, false);
             }
             case "back": case "home":
                 // Global actions must not silently dismiss a system dialog or unrelated foreground window.
-                if (!state.obscured.isEmpty()) pauseForInterruption("当前应用被其他窗口遮挡，请由用户检查后继续", control, epoch);
-                break;
+                return new MutationTarget(null, false, !state.obscured.isEmpty(),
+                        "当前应用被其他窗口遮挡，请由用户检查后继续");
+            default: throw unavailable("当前设备未提供该写操作");
+        }
+    }
+
+    private final class MutationTarget {
+        private final Rect bounds;
+        private final boolean protectsControl, obscured;
+        private final String interruption;
+
+        MutationTarget(Rect bounds, boolean protectsControl, boolean obscured, String interruption) {
+            this.bounds = bounds == null ? null : new Rect(bounds);
+            this.protectsControl = protectsControl;
+            this.obscured = obscured;
+            this.interruption = interruption;
+        }
+
+        void requireAccessible(RunControl control, long epoch) throws Exception {
+            if (Looper.myLooper() != Looper.getMainLooper()) throw new IllegalStateException("Control geometry requires the main thread");
+            control.checkExecutionEpoch(epoch);
+            if (obscured) pauseForInterruption(interruption, control, epoch);
+            if (protectsControl && Rect.intersects(bounds, service.controlBounds())) {
+                throw unavailable("目标被任务控制条遮挡，请先拖动控制条再重新观察");
+            }
         }
     }
 
@@ -535,14 +571,14 @@ public final class AndroidDeviceTools implements ToolHandler {
             return false;
         }
 
-        void requireVisibleTarget(Rect target, boolean protectsControl, RunControl control, long epoch) throws Exception {
+        MutationTarget visibleTarget(Rect target, boolean protectsControl) throws DeviceException {
             if (target.isEmpty() || !bounds.contains(target)) throw unavailable("目标不完整地位于当前应用窗口内");
             if (!Rect.intersects(target, safeContent)
                     || (protectsControl && !safeContent.contains(target.centerX(), target.centerY()))) {
                 throw unavailable("目标位于系统栏或屏幕安全区域之外，请由用户调整界面后重新观察");
             }
-            if (intersectsObscurer(target)) pauseForInterruption("目标被其他窗口遮挡，请由用户检查后继续", control, epoch);
-            if (protectsControl && Rect.intersects(target, service.controlBounds())) throw unavailable("目标被任务控制条遮挡，请先拖动控制条再重新观察");
+            return new MutationTarget(target, protectsControl, intersectsObscurer(target),
+                    "目标被其他窗口遮挡，请由用户检查后继续");
         }
 
         JsonObject json() {

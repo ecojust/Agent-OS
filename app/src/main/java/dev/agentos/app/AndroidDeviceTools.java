@@ -1,6 +1,7 @@
 package dev.agentos.app;
 
 import android.accessibilityservice.AccessibilityService;
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -408,7 +409,7 @@ public final class AndroidDeviceTools implements ToolHandler {
 
     /** The interaction-active window may lag behind HOME/activity changes on some releases. */
     private AccessibilityNodeInfo focusedRoot(RunControl control, long epoch) throws Exception {
-        List<AccessibilityWindowInfo> windows = service.getWindows();
+        List<AccessibilityWindowInfo> windows = freshWindows(control, epoch);
         try {
             AccessibilityWindowInfo focused = uniqueFocusedWindow(windows, control, epoch);
             AccessibilityNodeInfo root = focused.getRoot();
@@ -419,6 +420,32 @@ public final class AndroidDeviceTools implements ToolHandler {
                 return root;
             } catch (Exception failure) { recycle(root); throw failure; }
         } finally { if (windows != null) recycleWindows(windows); }
+    }
+
+    private List<AccessibilityWindowInfo> freshWindows(RunControl control, long epoch) throws Exception {
+        control.checkExecutionEpoch(epoch);
+        // Cache invalidation events can lag a completed navigation or IME transition.
+        // Query a fresh window list at every authoritative read, including the last
+        // write guard. Keep prefetching enabled within each individual tree read.
+        if (Build.VERSION.SDK_INT >= 33) {
+            if (!service.clearCache()) throw unavailable("无法刷新无障碍窗口缓存");
+        } else {
+            // Android 11/12 expose no clearCache method. Their public setServiceInfo
+            // implementation clears the interaction cache after updating the server.
+            // Reapply the current configuration unchanged; never alter scope or flags.
+            AccessibilityServiceInfo current = service.getServiceInfo();
+            if (current == null) throw unavailable("无障碍服务配置暂不可用");
+            service.setServiceInfo(current);
+        }
+        control.checkExecutionEpoch(epoch);
+        List<AccessibilityWindowInfo> windows = service.getWindows();
+        try {
+            control.checkExecutionEpoch(epoch);
+            return windows;
+        } catch (Exception interrupted) {
+            if (windows != null) recycleWindows(windows);
+            throw interrupted;
+        }
     }
 
     private static AccessibilityWindowInfo uniqueFocusedWindow(List<AccessibilityWindowInfo> windows,
@@ -457,7 +484,7 @@ public final class AndroidDeviceTools implements ToolHandler {
 
         void inspectWindows() throws Exception {
             control.checkExecutionEpoch(epoch);
-            List<AccessibilityWindowInfo> windows = service.getWindows();
+            List<AccessibilityWindowInfo> windows = freshWindows(control, epoch);
             try {
                 AccessibilityWindowInfo active = uniqueFocusedWindow(windows, control, epoch);
                 if (active.getId() != windowId) throw stale();

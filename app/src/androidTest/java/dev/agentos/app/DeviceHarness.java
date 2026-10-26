@@ -160,11 +160,69 @@ final class DeviceHarness implements AutoCloseable {
         await("Accessibility service remained connected", () -> AgentAccessibilityService.getInstance() == null);
     }
 
-    AutoCloseable enableSoftwareKeyboard() {
-        String original = readSecure("show_ime_with_hard_keyboard");
-        writeSecure("show_ime_with_hard_keyboard", "1");
-        return () -> writeSecure("show_ime_with_hard_keyboard", original);
+    AutoCloseable enableSoftwareKeyboard() throws Exception {
+        String original = readSecureFromShell("show_ime_with_hard_keyboard");
+        String selected = Build.VERSION.SDK_INT >= 36 ? readSecureFromShell("default_input_method") : null;
+        String enabled = Build.VERSION.SDK_INT >= 36 ? readSecureFromShell("enabled_input_methods") : null;
+        String subtype = Build.VERSION.SDK_INT >= 36 ? readSecureFromShell("selected_input_method_subtype") : null;
+        String history = Build.VERSION.SDK_INT >= 36 ? readSecureFromShell("input_methods_subtype_history") : null;
+        if (Build.VERSION.SDK_INT >= 36 && (selected == null || selected.length() > 256
+                || !selected.matches("[A-Za-z0-9_.$]+/[A-Za-z0-9_.$]+") || enabled == null)) {
+            throw new AssertionError("The dedicated emulator must already have a selected stock input method");
+        }
+        try {
+            writeSecure("show_ime_with_hard_keyboard", "1");
+            assertEquals("1", readSecureFromShell("show_ime_with_hard_keyboard"));
+            if (Build.VERSION.SDK_INT >= 36) {
+                // These system images retained FALSE in the stock IME observer even
+                // after the provider stored 1. Rebind that same component so its new
+                // service instance reads the setting; never replace or clear the IME.
+                shell("ime disable " + selected);
+                shell("ime enable " + selected);
+                shell("ime set " + selected);
+                assertEquals("The original input method was not reselected", selected, readSecureFromShell("default_input_method"));
+            }
+        } catch (Exception | AssertionError failure) {
+            try { restoreKeyboardSettings(original, selected, enabled, subtype, history); }
+            catch (Exception | AssertionError cleanup) { failure.addSuppressed(cleanup); }
+            throw failure;
+        }
+        return () -> restoreKeyboardSettings(original, selected, enabled, subtype, history);
     }
+
+    private String readSecureFromShell(String key) throws Exception {
+        String value = shell("settings get secure " + key).trim();
+        return "null".equals(value) ? null : value;
+    }
+
+    private void restoreKeyboardSettings(String original, String selected, String enabled,
+                                         String subtype, String history) throws Exception {
+        if (Build.VERSION.SDK_INT < 36) {
+            writeSecure("show_ime_with_hard_keyboard", original);
+            return;
+        }
+        Throwable failure = null;
+        for (KeyboardRestoreStep step : new KeyboardRestoreStep[]{
+                () -> writeSecure("enabled_input_methods", enabled),
+                () -> {
+                    shell("ime set " + selected);
+                    assertEquals("The original input-method selection was not restored", selected,
+                            readSecureFromShell("default_input_method"));
+                },
+                () -> writeSecure("selected_input_method_subtype", subtype),
+                () -> writeSecure("input_methods_subtype_history", history),
+                () -> writeSecure("show_ime_with_hard_keyboard", original)}) {
+            try { step.restore(); }
+            catch (Exception | AssertionError problem) {
+                if (failure == null) failure = problem;
+                else failure.addSuppressed(problem);
+            }
+        }
+        if (failure instanceof Exception) throw (Exception) failure;
+        if (failure != null) throw (AssertionError) failure;
+    }
+
+    @FunctionalInterface private interface KeyboardRestoreStep { void restore() throws Exception; }
 
     String keyboardDiagnostics() {
         StringBuilder diagnostic = new StringBuilder("Synthetic input-method diagnostics:");

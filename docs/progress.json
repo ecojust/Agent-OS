@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-26T17:11:35Z",
-  "note": "增加默认动画倍率 1.0 的模拟器环境对照，逐项写入并读回验证；20 项脚本测试通过。记录 hw.keyboard=no 与新版模拟器运行时 QWERTY 的差异，不将配置文件值视为键盘行为验收。",
+  "updated_at": "2026-10-26T17:16:03Z",
+  "note": "为 Android 16/17 测试重新绑定原系统输入法，使其重新读取软键盘偏好，并在结束或准备失败时恢复原输入法及相关设置；编译和 lint 通过，保持真实键盘窗口断言，开始环境对照复测。",
   "latest_evidence": {
     "path": "screenshots/40364326880-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40364326880"

@@ -56,3 +56,5 @@ A/B 每档各 7 个样本，单次内存采集约 6.6–36.2 ms；C 仅约 0.45�
 本地提交凭据只表示一个工作线程进入提交阶段，不表示系统已接受。停止使原代次失效并阻止新凭据，调用前再次检查已观察到的取消；已经进入提交阶段的动作可能仍在返回，结果未知时不得自动重发。票据及进程级设备通道都由原工作线程在 `finally` 中释放，停止或服务重建不能提前释放，也不等待远端 Binder 调用。
 
 无障碍查询通过每个调用线程的交互客户端访问目标应用；目标应用处理动作仍发生在其自身 UI 线程。底层查询可能等待远端响应且不立即响应 Java 中断，因此本轮目标是保持本机控制界面响应，不能承诺底层调用即时撤回。实现依据见 [交互客户端源码](https://android.googlesource.com/platform/frameworks/base/+/refs/heads/main/core/java/android/view/accessibility/AccessibilityInteractionClient.java)与[节点动作接口](https://developer.android.com/reference/android/view/accessibility/AccessibilityNodeInfo#performAction(int))。Android 11/12 的缓存配置刷新仍保持单工作线程所有权，不与其他设备请求并发修改服务配置。
+
+[第十三轮原始报告](../screenshots/40386701414-1/performance/)已验证 25 次最终写前快照及 24 次派发记录均在工作线程。C 阶段设备主线程回调最大值为 0.744–4.217 ms，UI 发布回调最高 11.491 ms；后者不能被遗漏。API 37 仍记录到 184.232 ms 的工作线程快照并截断。停止请求到状态应用为 17.755–42.612 ms，仍只覆盖等待确认时的单次样本；A/B 事件记录为零，无最终打开应用的数值样本。本轮与上一轮没有固定相同 CI 主机，不能将这些观察值当作严格配对的加速比例。完整矩阵有一项 API 35 遮挡失败，性能诊断通过不覆盖该失败。

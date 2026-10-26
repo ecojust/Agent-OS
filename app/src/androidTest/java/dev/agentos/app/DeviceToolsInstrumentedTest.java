@@ -50,8 +50,9 @@ public final class DeviceToolsInstrumentedTest {
         try (DeviceHarness device = new DeviceHarness()) {
             device.launch("SlowActivity");
             JsonObject previous = device.observe();
-            assertTrue("Slow fixture node is missing from the real accessibility tree: " + previous,
-                    previous.toString().contains("Slow observation generation 0"));
+            if (!previous.toString().contains("Slow observation generation 0")) {
+                fail("Slow fixture node is missing from the real accessibility tree: " + previous + "\n" + windowDiagnostics());
+            }
             JsonObject oldClick = nodeArguments(previous, "increment");
             AtomicBoolean observationStarted = new AtomicBoolean();
             FutureTask<JsonObject> observation = new FutureTask<>(() -> {

@@ -8,10 +8,16 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
+import android.graphics.Region;
+import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.view.Display;
+import android.view.WindowInsets;
+import android.view.WindowManager;
+import android.view.WindowMetrics;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.view.accessibility.AccessibilityManager;
 
@@ -217,6 +223,11 @@ final class DeviceHarness implements AutoCloseable {
         AgentAccessibilityService active = AgentAccessibilityService.getInstance();
         if (active == null) return "Fixture window diagnostics: service disconnected";
         StringBuilder diagnostic = new StringBuilder("Fixture window diagnostics:");
+        WindowManager manager = (WindowManager) active.getSystemService(Context.WINDOW_SERVICE);
+        if (manager != null) {
+            appendMetrics(diagnostic, "current", manager.getCurrentWindowMetrics());
+            appendMetrics(diagnostic, "maximum", manager.getMaximumWindowMetrics());
+        }
         List<AccessibilityWindowInfo> windows = active.getWindows();
         if (windows == null) return diagnostic.append(" unavailable").toString();
         try {
@@ -224,16 +235,45 @@ final class DeviceHarness implements AutoCloseable {
                 Rect bounds = new Rect();
                 window.getBoundsInScreen(bounds);
                 diagnostic.append("\n type=").append(window.getType())
+                        .append(" id=").append(window.getId())
                         .append(" title=").append(window.getTitle())
                         .append(" layer=").append(window.getLayer())
                         .append(" active=").append(window.isActive())
                         .append(" focused=").append(window.isFocused())
+                        .append(" display=").append(window.getDisplayId())
                         .append(" bounds=").append(bounds.toShortString());
+                if (Build.VERSION.SDK_INT >= 33) {
+                    Region region = new Region();
+                    window.getRegionInScreen(region);
+                    diagnostic.append(" region=").append(region);
+                }
+                AccessibilityNodeInfo root = window.getRoot();
+                if (root == null) { diagnostic.append(" root=null"); continue; }
+                try {
+                    diagnostic.append(" rootId=").append(root.getWindowId())
+                            .append(" rootPackage=").append(root.getPackageName())
+                            .append(" rootClass=").append(root.getClassName())
+                            .append(" visibleBeforeRefresh=").append(root.isVisibleToUser());
+                    boolean refreshed = root.refresh();
+                    diagnostic.append(" rootRefresh=").append(refreshed)
+                            .append(" visibleAfterRefresh=").append(root.isVisibleToUser());
+                } finally { root.recycle(); }
             }
             return diagnostic.toString();
         } finally {
             for (AccessibilityWindowInfo window : windows) window.recycle();
         }
+    }
+
+    private static void appendMetrics(StringBuilder diagnostic, String name, WindowMetrics metrics) {
+        WindowInsets insets = metrics.getWindowInsets();
+        diagnostic.append("\n ").append(name).append("Metrics=").append(metrics.getBounds().toShortString())
+                .append(" status=").append(insets.getInsets(WindowInsets.Type.statusBars()))
+                .append(" navigation=").append(insets.getInsets(WindowInsets.Type.navigationBars()))
+                .append(" stableBars=").append(insets.getInsetsIgnoringVisibility(WindowInsets.Type.systemBars()))
+                .append(" cutout=").append(insets.getInsets(WindowInsets.Type.displayCutout()))
+                .append(" statusVisible=").append(insets.isVisible(WindowInsets.Type.statusBars()))
+                .append(" navigationVisible=").append(insets.isVisible(WindowInsets.Type.navigationBars()));
     }
 
     static int focusedWindowId(AgentAccessibilityService service) {

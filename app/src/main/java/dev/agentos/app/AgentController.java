@@ -213,7 +213,7 @@ public final class AgentController {
             } else {
                 control.pause();
                 status = "已暂停";
-                appendLogLocked("任务已暂停；当前已发出的系统动作可能仍在完成。");
+                appendLogLocked("任务已暂停；已进入提交阶段的动作可能仍在完成，请核对当前应用。");
             }
             lock.notifyAll();
         }
@@ -237,7 +237,9 @@ public final class AgentController {
             stoppedDispatchAttempts = cancelled.getDispatchAttempts();
             pending = null;
             status = "已停止";
-            summary = "任务已停止。已完成的应用操作不会自动撤销。";
+            summary = cancelled.hasInFlightDispatch()
+                    ? "任务已停止。有动作已进入提交阶段，可能仍在完成；请核对当前应用。"
+                    : "任务已停止。已完成的应用操作不会自动撤销。";
             appendLogLocked("任务已停止。");
             lock.notifyAll();
         }

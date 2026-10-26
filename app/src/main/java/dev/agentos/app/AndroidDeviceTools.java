@@ -122,6 +122,12 @@ public final class AndroidDeviceTools implements ToolHandler {
         if (Looper.myLooper() == Looper.getMainLooper()) throw new IllegalStateException("设备工具必须在工作线程调用");
         JsonObject args = arguments == null ? new JsonObject() : arguments.deepCopy();
         Dispatch dispatch = new Dispatch();
+        // The service owns the gate across adapters and task generations. A stopped
+        // task may still be returning from Binder; never start another device call
+        // or legacy cache configuration write concurrently with it.
+        if (!service.tryBeginDeviceCall()) {
+            return error("CAPABILITY_UNAVAILABLE", "上一项设备操作仍在结束，当前请求未提交", "稍后重新观察；不要并发重发写操作");
+        }
         try {
             if ("take_screenshot".equals(name) || "tap".equals(name) || "swipe".equals(name)) {
                 return error("CAPABILITY_UNAVAILABLE", "M1 未启用截图外发及坐标手势：仅开放可校验的结构化节点路径", "使用结构化 observe 与节点操作；需要视觉识别或坐标操作时由用户接管");
@@ -151,6 +157,8 @@ public final class AndroidDeviceTools implements ToolHandler {
         } catch (Exception failure) {
             if (dispatch.started) return unknown();
             return error("CAPABILITY_UNAVAILABLE", "设备操作不可用，未提交动作", "重新观察；持续失败时由用户接管");
+        } finally {
+            service.endDeviceCall();
         }
     }
 
@@ -196,24 +204,27 @@ public final class AndroidDeviceTools implements ToolHandler {
         String frozenDescription = "目标应用：" + appLabel(name) + "\n动作：打开应用\n包名：" + name;
         approve(frozenDescription, control, epoch);
         validateInstalledGrant(name);
-        onMain(() -> {
-            requireReady(control, epoch); requireFastGrant(name);
-            try (Snapshot current = snapshot(control, epoch, PerformanceTrace.Stage.SNAPSHOT_FINAL_LAUNCH)) {
-                // Do not reclaim focus after the user has moved away during model/approval work.
-                if (lastObservedEpoch == epoch && lastObservedRevision != null
-                        && !lastObservedRevision.equals(current.revision)) throw stale();
-                Intent intent = service.getPackageManager().getLaunchIntentForPackage(name);
-                if (intent == null) throw unavailable("应用未提供启动入口");
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                current.verifyWindowUnchanged();
-                finalGuard(control, epoch);
-                control.markDispatchAttempt(epoch);
+        Intent intent = service.getPackageManager().getLaunchIntentForPackage(name);
+        if (intent == null) throw unavailable("应用未提供启动入口");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        AgentAccessibilityService.ControlLease controls = acquireActionControls(control, epoch);
+        // Keep the final read, nodes and platform call on this same worker. No
+        // queued main-thread callback receives or outlives a recyclable Snapshot.
+        try (Snapshot current = snapshot(control, epoch, PerformanceTrace.Stage.SNAPSHOT_FINAL_LAUNCH)) {
+            // Do not reclaim focus after the user has moved away during model/approval work.
+            if (lastObservedEpoch == epoch && lastObservedRevision != null
+                    && !lastObservedRevision.equals(current.revision)) throw stale();
+            requireFastGrant(name);
+            current.verifyWindowUnchanged();
+            finalGuard(control, epoch, controls);
+            try (RunControl.DispatchTicket ticket = control.beginDispatch(epoch)) {
+                ticket.checkExecutionEpoch();
+                if (!service.isControlLeaseCurrent(controls)) throw stale();
                 PerformanceTrace.mark(PerformanceTrace.Stage.DEVICE_DISPATCH_ATTEMPT, epoch, control.getDispatchAttempts());
                 dispatch.started = true;
                 service.startActivity(intent);
             }
-            return null;
-        }, control, epoch, dispatch);
+        }
         control.checkExecutionEpoch(epoch);
         return accepted("已向系统请求打开应用；必须重新 observe 确认实际前台应用");
     }
@@ -238,36 +249,58 @@ public final class AndroidDeviceTools implements ToolHandler {
         validateInstalledGrant(prepared.packageName);
         approve(prepared.description, control, epoch);
         validateInstalledGrant(prepared.packageName);
-        boolean accepted = onMain(() -> {
-            requireReady(control, epoch);
-            try (Snapshot state = snapshot(control, epoch, PerformanceTrace.Stage.SNAPSHOT_FINAL_MUTATION)) {
-                state.requireRevision(revision); validateMutation(name, args, state, control, epoch);
-                requireFastGrant(state.packageName);
-                state.verifyWindowUnchanged();
-                finalGuard(control, epoch);
-                control.markDispatchAttempt(epoch);
+        AgentAccessibilityService.ControlLease controls = acquireActionControls(control, epoch);
+        boolean accepted;
+        try (Snapshot state = snapshot(control, epoch, PerformanceTrace.Stage.SNAPSHOT_FINAL_MUTATION)) {
+            state.requireRevision(revision);
+            mutationTarget(name, args, state).requireAccessible(control, epoch, controls);
+            requireFastGrant(state.packageName);
+            state.verifyWindowUnchanged();
+            Callable<Boolean> action = mutationAction(name, args, state);
+            finalGuard(control, epoch, controls);
+            // Admission is a short local boundary, not a claim of system acceptance.
+            // Stop never waits on the remote action; an admitted action may still
+            // finish. Recheck observed cancellation immediately before entering it.
+            try (RunControl.DispatchTicket ticket = control.beginDispatch(epoch)) {
+                ticket.checkExecutionEpoch();
+                if (!service.isControlLeaseCurrent(controls)) throw stale();
                 PerformanceTrace.mark(PerformanceTrace.Stage.DEVICE_DISPATCH_ATTEMPT, epoch, control.getDispatchAttempts());
                 dispatch.started = true;
-                switch (name) {
-                    case "click": return state.node(required(args, "nodeId")).performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                    case "type_text": {
-                        Bundle value = new Bundle(); value.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, required(args, "text"));
-                        return state.node(required(args, "nodeId")).performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, value);
-                    }
-                    case "scroll": return scrollNode(args, state).performAction("forward".equals(required(args, "direction"))
-                            ? AccessibilityNodeInfo.ACTION_SCROLL_FORWARD : AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD);
-                    case "back": return service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK);
-                    case "home": return service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME);
-                    default: return false;
-                }
+                accepted = action.call();
             }
-        }, control, epoch, dispatch);
+        }
         if (!accepted) {
             JsonObject result = error("CAPABILITY_UNAVAILABLE", "系统未接受该动作", "重新观察，不能认定动作已经完成");
-            result.addProperty("submitted", true); result.addProperty("accepted", false); return result;
+            result.addProperty("submitted", true); result.addProperty("dispatchSubmitted", true);
+            result.addProperty("accepted", false); return result;
         }
         control.checkExecutionEpoch(epoch);
         return accepted("系统已接受动作；必须重新 observe 验证目标，不能据此认定任务完成");
+    }
+
+    /** Prepared and invoked synchronously by the same worker while its Snapshot is owned. */
+    private Callable<Boolean> mutationAction(String name, JsonObject args, Snapshot state) throws DeviceException {
+        switch (name) {
+            case "click": {
+                AccessibilityNodeInfo target = state.node(required(args, "nodeId"));
+                return () -> target.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+            }
+            case "type_text": {
+                AccessibilityNodeInfo target = state.node(required(args, "nodeId"));
+                Bundle value = new Bundle();
+                value.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, required(args, "text"));
+                return () -> target.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, value);
+            }
+            case "scroll": {
+                AccessibilityNodeInfo target = scrollNode(args, state);
+                int direction = "forward".equals(required(args, "direction"))
+                        ? AccessibilityNodeInfo.ACTION_SCROLL_FORWARD : AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD;
+                return () -> target.performAction(direction);
+            }
+            case "back": return () -> service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK);
+            case "home": return () -> service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME);
+            default: throw unavailable("当前设备未提供该写操作");
+        }
     }
 
     private void approve(String description, RunControl control, long epoch) throws Exception {
@@ -288,8 +321,10 @@ public final class AndroidDeviceTools implements ToolHandler {
         finally { compact.cancel(false); }
     }
 
-    private void validateMutation(String name, JsonObject args, Snapshot state, RunControl control, long epoch) throws Exception {
-        mutationTarget(name, args, state).requireAccessible(control, epoch);
+    private AgentAccessibilityService.ControlLease acquireActionControls(RunControl control, long epoch) throws Exception {
+        CompletableFuture<AgentAccessibilityService.ControlLease> result = service.acquireControlLease();
+        try { return await(result, control, epoch, MAIN_TIMEOUT_MS); }
+        finally { result.cancel(false); }
     }
 
     /** Reads sealed node metadata only; the returned value has no Snapshot or node reference. */
@@ -340,6 +375,15 @@ public final class AndroidDeviceTools implements ToolHandler {
                 throw unavailable("目标被任务控制条遮挡，请先拖动控制条再重新观察");
             }
         }
+
+        void requireAccessible(RunControl control, long epoch, AgentAccessibilityService.ControlLease controls) throws Exception {
+            control.checkExecutionEpoch(epoch);
+            if (!service.isControlLeaseCurrent(controls)) throw stale();
+            if (obscured) pauseForInterruption(interruption, control, epoch);
+            if (protectsControl && controls.intersects(bounds)) {
+                throw unavailable("目标被任务控制条遮挡，请先拖动控制条再重新观察");
+            }
+        }
     }
 
     private AccessibilityNodeInfo scrollNode(JsonObject args, Snapshot state) throws DeviceException {
@@ -363,8 +407,17 @@ public final class AndroidDeviceTools implements ToolHandler {
         if (!service.isControlAvailable()) { control.cancel(); control.checkCancelled(); }
     }
 
-    private void finalGuard(RunControl control, long epoch) throws Exception {
-        requireReady(control, epoch);
+    private void finalGuard(RunControl control, long epoch, AgentAccessibilityService.ControlLease controls) throws Exception {
+        // All system queries here are worker-side. The immutable lease is the only
+        // control geometry crossing threads; never inspect an Android View here.
+        control.checkExecutionEpoch(epoch);
+        try { SettingsStore.requirePersonalProfile(service); }
+        catch (IllegalStateException wrongProfile) { control.cancel(); control.checkCancelled(); }
+        if (!profileId.equals(SettingsStore.currentProfileId(service)) || !profileId.equals(control.getProfileId())
+                || !service.isConnected() || !service.isDeviceReady()) {
+            control.cancel(); control.checkCancelled();
+        }
+        if (!service.isControlLeaseCurrent(controls)) throw stale();
         control.checkExecutionEpoch(epoch);
     }
 
@@ -743,15 +796,19 @@ public final class AndroidDeviceTools implements ToolHandler {
     private static JsonObject success(JsonObject data) { JsonObject value = new JsonObject(); value.addProperty("ok", true); if (data != null) value.add("data", data); return value; }
     private static JsonObject accepted(String note) {
         JsonObject value = success(null); value.addProperty("submitted", true); value.addProperty("accepted", true);
+        value.addProperty("dispatchSubmitted", true);
         value.addProperty("dispatchAccepted", true); value.addProperty("verification", "UNVERIFIED"); value.addProperty("note", note); return value;
     }
     private static JsonObject error(String code, String message, String next) {
         JsonObject value = new JsonObject(); value.addProperty("ok", false); value.addProperty("code", code);
-        value.addProperty("error", message); value.addProperty("nextAction", next); value.addProperty("submitted", false); return value;
+        value.addProperty("error", message); value.addProperty("nextAction", next); value.addProperty("submitted", false);
+        value.addProperty("dispatchSubmitted", false); value.addProperty("dispatchAccepted", false); return value;
     }
     private static JsonObject unknown() {
         JsonObject result = error("OUTCOME_UNKNOWN", "动作可能已提交，结果未能确认", "先 observe 并由用户核对，不自动重复动作");
-        result.addProperty("submitted", true); result.addProperty("verification", "UNKNOWN"); return result;
+        result.add("submitted", com.google.gson.JsonNull.INSTANCE); result.add("dispatchSubmitted", com.google.gson.JsonNull.INSTANCE);
+        result.add("dispatchAccepted", com.google.gson.JsonNull.INSTANCE);
+        result.addProperty("verification", "UNKNOWN"); return result;
     }
     private static DeviceException unavailable(String message) { return new DeviceException("CAPABILITY_UNAVAILABLE", message, "重新观察；无法可靠确认时由用户接管"); }
     private static DeviceException denied(String message) { return new DeviceException("PERMISSION_DENIED", message, "由用户核对授权，不使用其他工具绕过"); }

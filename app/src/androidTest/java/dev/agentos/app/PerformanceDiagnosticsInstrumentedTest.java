@@ -146,7 +146,8 @@ public final class PerformanceDiagnosticsInstrumentedTest {
                 assertFixtureText("counter_value", "Count: 1");
                 assertFixtureText("saved_value", "Saved: " + LocalControllerModelServer.TEXT);
                 assertTrue(window.trace.events().stream().anyMatch(event -> event.stage == PerformanceTrace.Stage.SNAPSHOT_OBSERVE && !event.mainThread));
-                assertTrue(window.trace.events().stream().anyMatch(event -> event.stage == PerformanceTrace.Stage.SNAPSHOT_FINAL_MUTATION && event.mainThread));
+                assertTrue(window.trace.events().stream().anyMatch(event -> event.stage == PerformanceTrace.Stage.SNAPSHOT_FINAL_MUTATION && !event.mainThread));
+                assertFalse(window.trace.events().stream().anyMatch(event -> event.stage == PerformanceTrace.Stage.SNAPSHOT_FINAL_MUTATION && event.mainThread));
                 window.passed = true;
             } finally {
                 instrumentation.runOnMainSync(() -> { controller.stop(); controller.clearCompletedTask(); });

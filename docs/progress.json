@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-26T16:59:04Z",
-  "note": "将 CI 模拟器明确配置为无硬件键盘的触屏手机：启动前写入并验证 hw.keyboard=no，保留系统输入法真实显示测试；19 项辅助工具测试通过，重新执行八版本矩阵。",
+  "updated_at": "2026-10-26T17:00:20Z",
+  "note": "设备能力与只读诊断模块已独立验收：八个 API 环境中的 32 项相关用例全部通过，覆盖报告、取消、主线程限制、复制和关闭；完整交互矩阵仍有待解决项。",
   "latest_evidence": {
     "path": "screenshots/40362128378-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40362128378"
@@ -51,7 +51,8 @@
     {
       "id": "capabilities",
       "name": "设备能力与兼容性诊断",
-      "status": "in_progress"
+      "status": "complete",
+      "evidence": "screenshots/40362128378-1/manifest.json"
     },
     {
       "id": "screenshots",

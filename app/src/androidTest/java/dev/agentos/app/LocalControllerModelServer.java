@@ -157,14 +157,20 @@ final class LocalControllerModelServer implements AutoCloseable {
             return tool("observe", new JsonObject(), round);
         }
         if (scenario == Scenario.REJECT_CLICK) {
-            require(round == 1, "Task requested another plan after its action was rejected");
+            if (pendingWriteCallId != null) {
+                JsonObject result = matchingResult(request, pendingWriteCallId);
+                require(definitelyUnsubmittedStale(result),
+                        "Rejection scenario requested another plan without an explicitly unsubmitted stale result");
+                require(++staleReplans <= MAX_WRITE_REPLANS, "Unsubmitted stale plans exceeded the fixture replan limit");
+            }
+            require("Count: 0".equals(nodeText(observed, "counter_value")), "Rejected fixture action changed the counter");
+            require(++writePlans <= 1 + MAX_WRITE_REPLANS, "Rejection scenario exceeded the fixture plan limit");
+            pendingWriteCallId = "script-round-" + round;
             return tool("click", nodeArguments(observed, "increment"), round);
         }
         if (pendingWriteCallId != null && !pendingWriteAccepted) {
             JsonObject result = matchingResult(request, pendingWriteCallId);
-            if (flag(result, "ok", false) && "STALE_OBSERVATION".equals(DeviceHarness.string(result, "code"))
-                    && flag(result, "submitted", false) && optionalFlag(result, "accepted", false)
-                    && optionalFlag(result, "dispatchSubmitted", false) && optionalFlag(result, "dispatchAccepted", false)) {
+            if (definitelyUnsubmittedStale(result)) {
                 // The executor explicitly rejected this request before submission. A new
                 // plan uses the newest observation and gets its own call ID and approval.
                 // Never infer this from a missing flag or from the unchanged target alone.
@@ -222,6 +228,12 @@ final class LocalControllerModelServer implements AutoCloseable {
             }
         }
         throw new IOException("Pending write result is missing; refusing to guess whether it was submitted");
+    }
+
+    private static boolean definitelyUnsubmittedStale(JsonObject result) {
+        return flag(result, "ok", false) && "STALE_OBSERVATION".equals(DeviceHarness.string(result, "code"))
+                && flag(result, "submitted", false) && optionalFlag(result, "accepted", false)
+                && optionalFlag(result, "dispatchSubmitted", false) && optionalFlag(result, "dispatchAccepted", false);
     }
 
     private static boolean flag(JsonObject value, String name, boolean expected) {

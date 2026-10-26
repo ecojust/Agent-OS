@@ -137,17 +137,44 @@ public final class AgentControllerInstrumentedTest {
             }
         }
 
-        try (LocalControllerModelServer server = new LocalControllerModelServer(LocalControllerModelServer.Scenario.SAVE_AND_COUNT)) {
-            JsonObject current = singlePlan(server.respond(planningRequest(syntheticObservation("r1", false, false, 0), null, null), 1));
-            Set<String> callIds = new HashSet<>(); callIds.add(planId(current));
-            for (int retry = 1; retry <= LocalControllerModelServer.MAX_WRITE_REPLANS; retry++) {
-                current = singlePlan(server.respond(planningRequest(syntheticObservation("r" + (retry + 1), false, false, 0), planId(current), stale), retry + 1));
-                assertTrue(callIds.add(planId(current)));
+        for (LocalControllerModelServer.Scenario scenario : new LocalControllerModelServer.Scenario[]{
+                LocalControllerModelServer.Scenario.SAVE_AND_COUNT, LocalControllerModelServer.Scenario.REJECT_CLICK}) {
+            try (LocalControllerModelServer server = new LocalControllerModelServer(scenario)) {
+                JsonObject current = singlePlan(server.respond(planningRequest(syntheticObservation("r1", false, false, 0), null, null), 1));
+                Set<String> callIds = new HashSet<>(); callIds.add(planId(current));
+                for (int retry = 1; retry <= LocalControllerModelServer.MAX_WRITE_REPLANS; retry++) {
+                    current = singlePlan(server.respond(planningRequest(syntheticObservation("r" + (retry + 1), false, false, 0), planId(current), stale), retry + 1));
+                    assertTrue(callIds.add(planId(current)));
+                }
+                String exhausted = planId(current);
+                assertThrows(IOException.class, () -> server.respond(planningRequest(syntheticObservation("latest", false, false, 0), exhausted, stale), 5));
+                assertEquals(1 + LocalControllerModelServer.MAX_WRITE_REPLANS, server.writePlanCount());
+                assertEquals(0, server.acceptedWriteCount());
             }
-            String exhausted = planId(current);
-            assertThrows(IOException.class, () -> server.respond(planningRequest(syntheticObservation("latest", false, false, 0), exhausted, stale), 5));
-            assertEquals(1 + LocalControllerModelServer.MAX_WRITE_REPLANS, server.writePlanCount());
-            assertEquals(0, server.acceptedWriteCount());
+        }
+
+        String[] rejectionResults = {
+                accepted.toString(),
+                "{\"ok\":false,\"code\":\"USER_DENIED\",\"submitted\":false}",
+                "{\"ok\":false,\"code\":\"OUTCOME_UNKNOWN\",\"submitted\":null}",
+                "{\"ok\":false,\"code\":\"STALE_OBSERVATION\"}",
+                "{\"ok\":false,\"code\":\"STALE_OBSERVATION\",\"submitted\":false,\"dispatchSubmitted\":true}",
+                null
+        };
+        for (String rejected : rejectionResults) {
+            try (LocalControllerModelServer server = new LocalControllerModelServer(LocalControllerModelServer.Scenario.REJECT_CLICK)) {
+                JsonObject first = singlePlan(server.respond(planningRequest(syntheticObservation("r1", false, false, 0), null, null), 1));
+                JsonObject retry = singlePlan(server.respond(planningRequest(syntheticObservation("r2", false, false, 0), planId(first), stale), 2));
+                assertNotEquals(planId(first), planId(retry));
+                assertEquals("click", retry.getAsJsonObject("function").get("name").getAsString());
+                JsonObject arguments = JsonParser.parseString(retry.getAsJsonObject("function").get("arguments").getAsString()).getAsJsonObject();
+                assertEquals("r2", arguments.get("expectedRevision").getAsString());
+                assertEquals("increment-r2", arguments.get("nodeId").getAsString());
+                JsonObject result = rejected == null ? null : JsonParser.parseString(rejected).getAsJsonObject();
+                assertThrows(IOException.class, () -> server.respond(planningRequest(syntheticObservation("r3", false, false, 0), planId(retry), result), 3));
+                assertEquals(2, server.writePlanCount());
+                assertFalse(server.finalStateObserved());
+            }
         }
     }
 
@@ -214,6 +241,8 @@ public final class AgentControllerInstrumentedTest {
                 assertFalse(controlsIntersect(device, input));
                 start(device, controller, settings, "Prepare synthetic text input and wait for confirmation.");
                 AgentController.State pending = awaitApproval(controller, server);
+                int requestBaseline = server.requestCount();
+                assertTrue(requestBaseline >= 1 && requestBaseline <= 1 + LocalControllerModelServer.MAX_WRITE_REPLANS);
                 awaitExpandedControlsCoverInput(device, input);
                 CountDownLatch mainBlocked = new CountDownLatch(1);
                 new Handler(Looper.getMainLooper()).post(() -> {
@@ -252,8 +281,8 @@ public final class AgentControllerInstrumentedTest {
                 assertNotEquals(LocalControllerModelServer.TEXT, fixtureText(device, "edit_value"));
                 assertEquals("Saved: empty", fixtureText(device, "saved_value"));
                 assertEquals("Count: 0", fixtureText(device, "counter_value"));
-                assertFalse("Interrupted task requested a new plan", server.receivedAnotherRequest(1, 350));
-                assertEquals(1, server.requestCount());
+                assertFalse("Interrupted task requested a new plan", server.receivedAnotherRequest(requestBaseline, 350));
+                assertEquals(requestBaseline, server.requestCount());
                 server.assertHealthy();
                 if (stop) {
                     controller.approve(pending.approvalId, true);
@@ -276,6 +305,8 @@ public final class AgentControllerInstrumentedTest {
             try {
                 start(device, controller, settings, "Request one synthetic counter increment and wait for confirmation.");
                 AgentController.State pending = awaitApproval(controller, server);
+                int requestBaseline = server.requestCount();
+                assertTrue(requestBaseline >= 1 && requestBaseline <= 1 + LocalControllerModelServer.MAX_WRITE_REPLANS);
                 assertEquals("Count: 0", fixtureText(device, "counter_value"));
                 screenshots.capture("before-rejection");
                 device.instrumentation.runOnMainSync(() -> controller.approve(pending.approvalId, false));
@@ -284,8 +315,8 @@ public final class AgentControllerInstrumentedTest {
                 assertTrue(controller.getState().summary.contains("拒绝"));
                 assertEquals("Count: 0", fixtureText(device, "counter_value"));
                 controller.approve(pending.approvalId, true);
-                assertFalse("Rejected task requested a fallback plan", server.receivedAnotherRequest(1, 350));
-                assertEquals(1, server.requestCount());
+                assertFalse("Rejected task requested a fallback plan", server.receivedAnotherRequest(requestBaseline, 350));
+                assertEquals(requestBaseline, server.requestCount());
                 assertEquals("Count: 0", fixtureText(device, "counter_value"));
                 server.assertHealthy();
                 screenshots.capture("rejection-left-counter-unchanged");

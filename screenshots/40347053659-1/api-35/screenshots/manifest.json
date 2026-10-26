@@ -1,0 +1,579 @@
+{
+  "schemaVersion": 1,
+  "api": 35,
+  "runId": "1793027870601-68a43e20",
+  "scope": "Dedicated synthetic Android fixture and verified empty application UI only",
+  "jvmTests": "No UI; no screenshot is claimed for JVM tests",
+  "tests": [
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.DeviceCapabilitiesInstrumentedTest",
+      "testName": "cancelledReportDoesNotContinueCollecting",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027870602,
+      "finishedAt": 1793027870605,
+      "captures": [
+        {
+          "stage": "finished",
+          "capturedAt": 1793027870604,
+          "status": "blocked",
+          "captureError": "non_visual_device_capabilities_test"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.DeviceCapabilitiesInstrumentedTest",
+      "testName": "slowerCollectionCannotRunOnMainThread",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027870624,
+      "finishedAt": 1793027870625,
+      "captures": [
+        {
+          "stage": "finished",
+          "capturedAt": 1793027870625,
+          "status": "blocked",
+          "captureError": "non_visual_device_capabilities_test"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.DeviceCapabilitiesInstrumentedTest",
+      "testName": "reportUsesSystemConditionsWithoutCertifyingTheDevice",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027870631,
+      "finishedAt": 1793027870650,
+      "captures": [
+        {
+          "stage": "finished",
+          "capturedAt": 1793027870649,
+          "status": "blocked",
+          "captureError": "non_visual_device_capabilities_test"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.DeviceCompatibilityUiInstrumentedTest",
+      "testName": "reportIsReadOnlyUntilTheUserCopiesAndCanBeClosed",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027870660,
+      "finishedAt": 1793027872665,
+      "captures": [
+        {
+          "stage": "device-compatibility-report",
+          "capturedAt": 1793027872347,
+          "foregroundPackage": "dev.agentos.app",
+          "status": "pass",
+          "png": "api-35-reportIsReadOnlyUntilTheUserCopiesAndCanBeClosed-91cbb43c-device-compatibility-report-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": true
+        },
+        {
+          "stage": "finished",
+          "capturedAt": 1793027872592,
+          "foregroundPackage": "dev.agentos.app",
+          "status": "blocked",
+          "captureError": "foreground_is_not_an_approved_synthetic_test_screen"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.DeviceToolsInstrumentedTest",
+      "testName": "ordinarySystemBarsDoNotPreventBackOrHome",
+      "assertionResult": "fail",
+      "testResult": "fail",
+      "status": "fail",
+      "startedAt": 1793027873395,
+      "finishedAt": 1793027875987,
+      "failureClass": "TaskControlException",
+      "captures": [
+        {
+          "stage": "failed",
+          "capturedAt": 1793027875926,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-ordinarySystemBarsDoNotPreventBackOrHome-a33d949e-failed-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.DeviceToolsInstrumentedTest",
+      "testName": "entersTextAndVerifiesTheActualSavedFixtureState",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027876011,
+      "finishedAt": 1793027877359,
+      "captures": [
+        {
+          "stage": "finished",
+          "capturedAt": 1793027877326,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-entersTextAndVerifiesTheActualSavedFixtureState-24635c86-finished-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.DeviceToolsInstrumentedTest",
+      "testName": "slowObservationKeepsTheControlThreadResponsiveAndDiscardsPausedResults",
+      "assertionResult": "fail",
+      "testResult": "fail",
+      "status": "fail",
+      "startedAt": 1793027877371,
+      "finishedAt": 1793027878591,
+      "failureClass": "AssertionError",
+      "captures": [
+        {
+          "stage": "failed",
+          "capturedAt": 1793027878557,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-slowObservationKeepsTheControlThreadResponsiveAndDiscardsPausedResults-5f6cdeda-failed-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.DeviceToolsInstrumentedTest",
+      "testName": "scrollsAContainerWhileTheStopControlRemainsVisible",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027878606,
+      "finishedAt": 1793027879840,
+      "captures": [
+        {
+          "stage": "finished",
+          "capturedAt": 1793027879817,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-scrollsAContainerWhileTheStopControlRemainsVisible-fdf85fcc-finished-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.DeviceToolsInstrumentedTest",
+      "testName": "staleRevisionCannotRepeatACompletedClick",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027879845,
+      "finishedAt": 1793027880923,
+      "captures": [
+        {
+          "stage": "finished",
+          "capturedAt": 1793027880900,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-staleRevisionCannotRepeatACompletedClick-d134012e-finished-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.DeviceToolsInstrumentedTest",
+      "testName": "passwordContentIsRedactedAndCannotBeModified",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027880927,
+      "finishedAt": 1793027882094,
+      "captures": [
+        {
+          "stage": "finished",
+          "capturedAt": 1793027882071,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-passwordContentIsRedactedAndCannotBeModified-e0a61c19-finished-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.DeviceToolsInstrumentedTest",
+      "testName": "initialObservationFromAgentScreenCanLaunchAnAuthorizedApp",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027882100,
+      "finishedAt": 1793027883409,
+      "captures": [
+        {
+          "stage": "finished",
+          "capturedAt": 1793027883386,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-initialObservationFromAgentScreenCanLaunchAnAuthorizedApp-19f062c1-finished-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.DeviceToolsInstrumentedTest",
+      "testName": "showingTheKeyboardDoesNotSwitchObservationToAnOldApplicationWindow",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027883418,
+      "finishedAt": 1793027885356,
+      "captures": [
+        {
+          "stage": "focused-editor-with-keyboard",
+          "capturedAt": 1793027884945,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-showingTheKeyboardDoesNotSwitchObservationToAnOldApplicationWindow-facd377e-focused-editor-with-keyboard-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        },
+        {
+          "stage": "finished",
+          "capturedAt": 1793027885321,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-showingTheKeyboardDoesNotSwitchObservationToAnOldApplicationWindow-facd377e-finished-1.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.DeviceToolsInstrumentedTest",
+      "testName": "anUnrecognizedOverlayStillBlocksTheTargetAndPausesBeforeDispatch",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027885361,
+      "finishedAt": 1793027886550,
+      "captures": [
+        {
+          "stage": "finished",
+          "capturedAt": 1793027886522,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-anUnrecognizedOverlayStillBlocksTheTargetAndPausesBeforeDispatch-62c8d7bf-finished-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.DeviceToolsInstrumentedTest",
+      "testName": "observesOnlyThePermittedAppWithBoundedData",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027886555,
+      "finishedAt": 1793027887256,
+      "captures": [
+        {
+          "stage": "finished",
+          "capturedAt": 1793027887227,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-observesOnlyThePermittedAppWithBoundedData-1390aca8-finished-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.DeviceToolsInstrumentedTest",
+      "testName": "cancellationPreventsDispatchAndLeavesCounterUnchanged",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027887260,
+      "finishedAt": 1793027888070,
+      "captures": [
+        {
+          "stage": "finished",
+          "capturedAt": 1793027888042,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-cancellationPreventsDispatchAndLeavesCounterUnchanged-c4b1c591-finished-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.DeviceToolsInstrumentedTest",
+      "testName": "observationsAndWritesFollowTheInputFocusedWindowAcrossNavigation",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027888075,
+      "finishedAt": 1793027890304,
+      "captures": [
+        {
+          "stage": "focused-second-page-0",
+          "capturedAt": 1793027889071,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-observationsAndWritesFollowTheInputFocusedWindowAcrossNavigation-2fee5746-focused-second-page-0-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        },
+        {
+          "stage": "focused-second-page-1",
+          "capturedAt": 1793027889885,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-observationsAndWritesFollowTheInputFocusedWindowAcrossNavigation-2fee5746-focused-second-page-1-1.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        },
+        {
+          "stage": "finished",
+          "capturedAt": 1793027890278,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-observationsAndWritesFollowTheInputFocusedWindowAcrossNavigation-2fee5746-finished-2.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.DeviceToolsInstrumentedTest",
+      "testName": "revokingAccessibilityCannotLeaveAUsableExecutor",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027890310,
+      "finishedAt": 1793027891031,
+      "captures": [
+        {
+          "stage": "finished",
+          "capturedAt": 1793027891012,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-revokingAccessibilityCannotLeaveAUsableExecutor-a77c577e-finished-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.DeviceToolsInstrumentedTest",
+      "testName": "screenshotUnavailableIsReportedWithoutInvokingApproval",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027891036,
+      "finishedAt": 1793027891726,
+      "captures": [
+        {
+          "stage": "finished",
+          "capturedAt": 1793027891703,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-screenshotUnavailableIsReportedWithoutInvokingApproval-856d1985-finished-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.DeviceToolsInstrumentedTest",
+      "testName": "changingActivitiesInvalidatesTheOldTarget",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027891733,
+      "finishedAt": 1793027892900,
+      "captures": [
+        {
+          "stage": "finished",
+          "capturedAt": 1793027892874,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-changingActivitiesInvalidatesTheOldTarget-8790159d-finished-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.MainActivityInstrumentedTest",
+      "testName": "nativeLauncherOpensWithoutStartingAnAgentTask",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027892907,
+      "finishedAt": 1793027893171,
+      "captures": [
+        {
+          "stage": "empty-launcher",
+          "capturedAt": 1793027893128,
+          "foregroundPackage": "dev.agentos.app",
+          "status": "pass",
+          "png": "api-35-nativeLauncherOpensWithoutStartingAnAgentTask-d53c8110-empty-launcher-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": true
+        },
+        {
+          "stage": "finished",
+          "capturedAt": 1793027893164,
+          "foregroundPackage": "dev.agentos.app",
+          "status": "blocked",
+          "captureError": "foreground_is_not_an_approved_synthetic_test_screen"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.SettingsStoreInstrumentedTest",
+      "testName": "encryptedConfigurationSurvivesAStoreReopen",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027893391,
+      "finishedAt": 1793027893489,
+      "captures": [
+        {
+          "stage": "finished",
+          "capturedAt": 1793027893489,
+          "status": "blocked",
+          "captureError": "non_visual_encrypted_storage_test"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.SettingsStoreInstrumentedTest",
+      "testName": "newerConfigurationVersionIsPreserved",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027893497,
+      "finishedAt": 1793027893510,
+      "captures": [
+        {
+          "stage": "finished",
+          "capturedAt": 1793027893510,
+          "status": "blocked",
+          "captureError": "non_visual_encrypted_storage_test"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.SettingsStoreInstrumentedTest",
+      "testName": "applicationGrantMatchesTheInstalledIdentity",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027893517,
+      "finishedAt": 1793027893535,
+      "captures": [
+        {
+          "stage": "finished",
+          "capturedAt": 1793027893535,
+          "status": "blocked",
+          "captureError": "non_visual_encrypted_storage_test"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.SettingsStoreInstrumentedTest",
+      "testName": "corruptedConfigurationIsNotSilentlyOverwritten",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793027893541,
+      "finishedAt": 1793027893551,
+      "captures": [
+        {
+          "stage": "finished",
+          "capturedAt": 1793027893551,
+          "status": "blocked",
+          "captureError": "non_visual_encrypted_storage_test"
+        }
+      ]
+    }
+  ]
+}

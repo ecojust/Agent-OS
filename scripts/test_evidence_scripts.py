@@ -84,26 +84,36 @@ class EvidenceTests(unittest.TestCase):
             self.assertEqual((3, 1, 1), (result["tests"], result["failures"], result["skipped"]))
 
     def test_test_command_exit_is_preserved_when_capture_is_unavailable(self):
+        self.check_test_exit("30", 30)
+
+    def test_full_api_label_checks_package_metadata_without_launching_another_emulator(self):
+        self.check_test_exit("37.0", 37)
+
+    def check_test_exit(self, matrix_label, sdk_int):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             (root / "scripts").mkdir()
-            for name in ("run_android_tests.sh", "collect_android_evidence.py"):
+            for name in ("run_android_tests.sh", "collect_android_evidence.py", "print_android_test_failures.py"):
                 (root / "scripts" / name).write_bytes((SCRIPTS / name).read_bytes())
             (root / "bin").mkdir()
             adb = root / "bin" / "adb"
-            adb.write_text('#!/bin/sh\nif [ "$1 $2" = "shell getprop" ]; then echo 30; exit 0; fi\nexit 1\n')
+            adb.write_text(f'#!/bin/sh\nif [ "$1 $2" = "shell getprop" ]; then echo {sdk_int}; exit 0; fi\nexit 1\n')
             adb.chmod(0o755)
             gradle = root / "gradlew"
             gradle.write_text("#!/bin/sh\nexit 7\n")
             gradle.chmod(0o755)
             env = os.environ.copy()
             env["PATH"] = str(root / "bin") + os.pathsep + env["PATH"]
-            result = subprocess.run(["bash", "scripts/run_android_tests.sh", "30"], cwd=root,
+            (root / "sdk/emulator").mkdir(parents=True)
+            (root / "sdk/emulator/source.properties").write_text("Pkg.Revision=37.2.12\n")
+            env["ANDROID_HOME"] = str(root / "sdk")
+            result = subprocess.run(["bash", "scripts/run_android_tests.sh", matrix_label], cwd=root,
                                     env=env, capture_output=True, text=True, check=False)
             self.assertEqual(7, result.returncode, result.stderr)
-            record = json.loads((root / "test-evidence/api-30/capture.json").read_text())
+            record = json.loads((root / f"test-evidence/api-{matrix_label}/capture.json").read_text())
             self.assertEqual(7, record["gradleExitCode"])
             self.assertEqual("unavailable", record["captureStatus"])
+            self.assertIn("No Android XML reports were produced", result.stdout)
 
     def test_archive_keeps_missing_lanes_and_source_failure(self):
         with tempfile.TemporaryDirectory() as temp:

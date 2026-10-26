@@ -167,9 +167,14 @@ final class DeviceHarness implements AutoCloseable {
 
     String keyboardDiagnostics() {
         StringBuilder diagnostic = new StringBuilder("Synthetic input-method diagnostics:");
+        String selectedInputMethod = null;
         for (String key : new String[]{"default_input_method", "enabled_input_methods", "show_ime_with_hard_keyboard"}) {
             diagnostic.append("\n ").append(key).append('=');
-            try { diagnostic.append(readSecure(key)); }
+            try {
+                String value = readSecure(key);
+                diagnostic.append(value);
+                if ("default_input_method".equals(key)) selectedInputMethod = value;
+            }
             catch (RuntimeException restricted) {
                 // New releases restrict individual settings even for a test process.
                 // Never replace the original keyboard assertion with a diagnostic error.
@@ -177,24 +182,39 @@ final class DeviceHarness implements AutoCloseable {
                 try {
                     String value = shell("settings get secure " + key).trim();
                     diagnostic.append(" shell=").append(value.substring(0, Math.min(value.length(), 1_024)));
+                    if ("default_input_method".equals(key)) selectedInputMethod = value;
                 } catch (Exception unavailable) {
                     diagnostic.append(" [shell unavailable: ").append(unavailable.getClass().getSimpleName()).append(']');
                 }
             }
         }
+        // The global dump has a long client/history prelude. Capture the selected
+        // keyboard service first so its actual input-view state cannot be lost to it.
+        if (selectedInputMethod != null && selectedInputMethod.length() <= 256
+                && selectedInputMethod.matches("[A-Za-z0-9_.$]+/[A-Za-z0-9_.$]+")) {
+            // UiAutomation uses Runtime.exec tokenization, not a shell: '$' stays
+            // literal, and adding quotes would make them part of the component.
+            appendShellDump(diagnostic, "selected input-method service",
+                    "dumpsys activity service " + selectedInputMethod, 12_288);
+        } else diagnostic.append("\nSelected input-method service is unavailable or has an invalid component identifier");
+        appendShellDump(diagnostic, "global input-method state", "dumpsys input_method", 16_384);
+        return diagnostic.toString();
+    }
+
+    private void appendShellDump(StringBuilder diagnostic, String label, String command, int limit) {
+        diagnostic.append("\n").append(label).append(':');
         try (ParcelFileDescriptor.AutoCloseInputStream input = new ParcelFileDescriptor.AutoCloseInputStream(
-                automation.executeShellCommand("dumpsys input_method")); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+                automation.executeShellCommand(command)); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             byte[] buffer = new byte[2048];
             int length;
-            while (output.size() < 16_384 && (length = input.read(buffer, 0, Math.min(buffer.length, 16_384 - output.size()))) != -1) {
+            while (output.size() < limit && (length = input.read(buffer, 0, Math.min(buffer.length, limit - output.size()))) != -1) {
                 output.write(buffer, 0, length);
             }
             diagnostic.append("\n").append(output.toString(StandardCharsets.UTF_8.name()));
-            if (output.size() == 16_384) diagnostic.append("\n[bounded input-method diagnostic]");
+            if (output.size() == limit) diagnostic.append("\n[bounded diagnostic: ").append(label).append(']');
         } catch (Exception failure) {
-            diagnostic.append("\ninput_method dump unavailable: ").append(failure.getClass().getSimpleName());
+            diagnostic.append("\nDump unavailable: ").append(failure.getClass().getSimpleName());
         }
-        return diagnostic.toString();
     }
 
     AutoCloseable enableTouchExploration() {

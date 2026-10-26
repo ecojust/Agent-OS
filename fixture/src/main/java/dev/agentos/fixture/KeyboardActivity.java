@@ -37,16 +37,20 @@ public final class KeyboardActivity extends Activity {
             editor.requestFocus();
             editor.post(() -> {
                 if (!editor.isFocused() || !editor.hasWindowFocus()) return;
+                InputMethodManager input = getSystemService(InputMethodManager.class);
                 if (Build.VERSION.SDK_INT < 33) {
                     // The public query synchronizes the newly focused input connection
                     // on older platforms before the window requests IME visibility.
-                    InputMethodManager input = getSystemService(InputMethodManager.class);
                     if (input != null) input.isActive();
                 }
                 // No service or test injection pretends that a keyboard appeared;
                 // the test also checks its actual accessibility window and insets.
                 WindowInsetsController controller = getWindow().getInsetsController();
                 if (controller != null) controller.show(WindowInsets.Type.ime());
+                // Also deliver the editor/tool-type information through the public
+                // input-method path. A visible-insets request alone can leave the
+                // input view uncreated on newer platform/keyboard combinations.
+                if (input != null) input.showSoftInput(editor, 0);
             });
         });
         content.addView(open);

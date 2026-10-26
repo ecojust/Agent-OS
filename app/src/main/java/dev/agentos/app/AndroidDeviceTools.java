@@ -7,6 +7,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Rect;
+import android.graphics.Insets;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -14,6 +15,8 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.view.Display;
 import android.view.WindowManager;
+import android.view.WindowInsets;
+import android.view.WindowMetrics;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 
@@ -360,6 +363,8 @@ public final class AndroidDeviceTools implements ToolHandler {
         int windowId;
         boolean scoped, password, truncated, highImpactScreen;
         final Rect bounds = new Rect();
+        final Rect safeContent = new Rect();
+        final List<Rect> systemBars = new ArrayList<>();
         final List<Rect> obscured = new ArrayList<>();
         final JsonArray elements = new JsonArray();
         final Map<String, AccessibilityNodeInfo> nodes = new LinkedHashMap<>();
@@ -387,6 +392,16 @@ public final class AndroidDeviceTools implements ToolHandler {
                 if (!bounds.intersect(activeBounds) || bounds.isEmpty()) throw unavailable("应用窗口没有可观察区域");
                 StringBuilder signature = new StringBuilder(windowId + ":" + active.getLayer() + ":" + active.isFocused() + ":" + bounds.toShortString());
                 WindowManager wm = (WindowManager) service.getSystemService(Context.WINDOW_SERVICE);
+                if (wm == null) throw unavailable("显示几何信息不可用");
+                WindowMetrics metrics = wm.getCurrentWindowMetrics();
+                Rect displayBounds = metrics.getBounds();
+                Insets bars = metrics.getWindowInsets().getInsets(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+                Insets safe = metrics.getWindowInsets().getInsets(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars() | WindowInsets.Type.displayCutout());
+                collectBarRegions(displayBounds, bars, systemBars);
+                safeContent.set(displayBounds.left + safe.left, displayBounds.top + safe.top,
+                        displayBounds.right - safe.right, displayBounds.bottom - safe.bottom);
+                if (!safeContent.intersect(bounds) || safeContent.isEmpty()) throw unavailable("应用没有可验证的安全内容区域");
+                signature.append(":safe=").append(safeContent.toShortString());
                 signature.append(':').append(wm.getDefaultDisplay().getRotation());
                 for (AccessibilityWindowInfo window : windows) {
                     control.checkExecutionEpoch(epoch);
@@ -394,12 +409,23 @@ public final class AndroidDeviceTools implements ToolHandler {
                     Rect other = new Rect(); window.getBoundsInScreen(other);
                     if (!Rect.intersects(bounds, other)) continue;
                     if (isOurControl(window)) continue;
+                    // Edge-to-edge application roots can overlap permanent system bars.
+                    // Exclude only SYSTEM windows completely contained in platform-reported
+                    // visible bar strips. IME, dialogs, expanded shades and unknown overlays
+                    // remain blockers, even if their title resembles a system bar.
+                    if (window.getType() == AccessibilityWindowInfo.TYPE_SYSTEM && containedByBar(other)) continue;
                     // Titles and roots of unrelated windows are not sent to the model.
                     signature.append('|').append(window.getId()).append(':').append(window.getType()).append(':').append(other.toShortString());
                     obscured.add(other);
                 }
                 windowSignature = signature.toString();
             } finally { recycleWindows(windows); }
+        }
+
+        boolean containedByBar(Rect region) {
+            if (region.isEmpty()) return false;
+            for (Rect bar : systemBars) if (bar.contains(region)) return true;
+            return false;
         }
 
         boolean isOurControl(AccessibilityWindowInfo window) {
@@ -422,7 +448,7 @@ public final class AndroidDeviceTools implements ToolHandler {
                     JsonObject item = new JsonObject();
                     item.addProperty("id", id); item.addProperty("role", limited(node.getClassName()));
                     item.addProperty("viewId", limited(node.getViewIdResourceName()));
-                    boolean blocked = intersectsObscurer(box);
+                    boolean blocked = intersectsObscurer(box) || !Rect.intersects(safeContent, box);
                     String text = blocked ? "[obscured]" : field(node.getText(), id, secret);
                     String description = blocked ? "[obscured]" : field(node.getContentDescription(), id, secret);
                     if (!secret && !blocked && knownHighImpact(text + " " + description)) highImpactScreen = true;
@@ -464,6 +490,10 @@ public final class AndroidDeviceTools implements ToolHandler {
 
         void requireVisibleTarget(Rect target, boolean protectsControl, RunControl control, long epoch) throws Exception {
             if (target.isEmpty() || !bounds.contains(target)) throw unavailable("目标不完整地位于当前应用窗口内");
+            if (!Rect.intersects(target, safeContent)
+                    || (protectsControl && !safeContent.contains(target.centerX(), target.centerY()))) {
+                throw unavailable("目标位于系统栏或屏幕安全区域之外，请由用户调整界面后重新观察");
+            }
             if (intersectsObscurer(target)) pauseForInterruption("目标被其他窗口遮挡，请由用户检查后继续", control, epoch);
             if (protectsControl && Rect.intersects(target, service.controlBounds())) throw unavailable("目标被任务控制条遮挡，请先拖动控制条再重新观察");
         }
@@ -547,6 +577,16 @@ public final class AndroidDeviceTools implements ToolHandler {
             if (value.contains(marker)) return true;
         }
         return false;
+    }
+    private static void collectBarRegions(Rect display, Insets insets, List<Rect> output) throws DeviceException {
+        if (insets.left < 0 || insets.top < 0 || insets.right < 0 || insets.bottom < 0
+                || insets.left + insets.right >= display.width() || insets.top + insets.bottom >= display.height()) {
+            throw unavailable("系统栏几何信息不可验证");
+        }
+        if (insets.top > 0) output.add(new Rect(display.left, display.top, display.right, display.top + insets.top));
+        if (insets.bottom > 0) output.add(new Rect(display.left, display.bottom - insets.bottom, display.right, display.bottom));
+        if (insets.left > 0) output.add(new Rect(display.left, display.top, display.left + insets.left, display.bottom));
+        if (insets.right > 0) output.add(new Rect(display.right - insets.right, display.top, display.right, display.bottom));
     }
     private static String required(JsonObject args, String name) { return args.get(name).getAsString(); }
     private static int integer(JsonObject args, String name, int fallback) { return args.has(name) ? args.get(name).getAsInt() : fallback; }

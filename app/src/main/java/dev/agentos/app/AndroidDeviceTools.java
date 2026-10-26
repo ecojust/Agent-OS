@@ -47,7 +47,7 @@ import java.util.concurrent.TimeoutException;
 /** A scoped Android adapter. It never treats an accepted dispatch as task completion. */
 public final class AndroidDeviceTools implements ToolHandler {
     public interface ApprovalGate {
-        boolean approve(String description, RunControl control) throws InterruptedException;
+        boolean approve(String description, RunControl control, long requestEpoch) throws InterruptedException;
     }
     public static final class AppInfo {
         public final String packageName, label;
@@ -109,7 +109,14 @@ public final class AndroidDeviceTools implements ToolHandler {
     }
 
     @Override public JsonObject execute(String name, JsonObject arguments, RunControl control) throws Exception {
-        long epoch = control.getExecutionEpoch();
+        // Direct local callers start a new request. Dispatched model calls use the
+        // explicit epoch overload and must never inherit a later resumed epoch.
+        return execute(name, arguments, control, control.getExecutionEpoch());
+    }
+
+    @Override public JsonObject execute(String name, JsonObject arguments, RunControl control,
+                                        long requestEpoch) throws Exception {
+        long epoch = requestEpoch;
         control.checkExecutionEpoch(epoch);
         if (Looper.myLooper() == Looper.getMainLooper()) throw new IllegalStateException("设备工具必须在工作线程调用");
         JsonObject args = arguments == null ? new JsonObject() : arguments.deepCopy();
@@ -264,7 +271,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         control.checkExecutionEpoch(epoch);
         // M1 cannot establish consequences for arbitrary third-party controls. Keep a human
         // gate on generic UI writes even when the preference permits proven ordinary tools.
-        if (approvalGate == null || !approvalGate.approve(description, control)) {
+        if (approvalGate == null || !approvalGate.approve(description, control, epoch)) {
             denied = true;
             throw new DeviceException("USER_DENIED", "用户拒绝了此动作，本次任务不再执行写操作", "结束任务，由用户修改目标后重新发起");
         }

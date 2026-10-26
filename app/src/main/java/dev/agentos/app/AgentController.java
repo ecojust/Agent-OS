@@ -160,7 +160,7 @@ public final class AgentController {
                 }
                 active.checkCancelled();
                 AndroidDeviceTools tools = new AndroidDeviceTools(service, scope, saved.grants,
-                        confirmEachAction, (description, run) -> requestApproval(session, description, run));
+                        confirmEachAction, (description, run, epoch) -> requestApproval(session, description, run, epoch));
                 AgentRunner runner = new AgentRunner(settings, tools, new AgentRunner.Listener() {
                     @Override public void onStatus(String next) {
                         synchronized (lock) {
@@ -252,9 +252,10 @@ public final class AgentController {
         publish();
     }
 
-    private boolean requestApproval(long session, String description, RunControl run)
+    private boolean requestApproval(long session, String description, RunControl run, long requestEpoch)
             throws InterruptedException {
-        PendingApproval request = new PendingApproval(safeText(description, 6000), run.getExecutionEpoch());
+        // The approval belongs to the originating request, never a later resume.
+        PendingApproval request = new PendingApproval(safeText(description, 6000), requestEpoch);
         synchronized (lock) {
             run.checkExecutionEpoch(request.epoch);
             if (!isCurrentLocked(session)) throw new InterruptedException("Task changed");

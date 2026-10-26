@@ -80,7 +80,7 @@ final class DeviceHarness implements AutoCloseable {
             instrumentation.waitForIdleSync();
             tools = new AndroidDeviceTools(service, Collections.singleton(FIXTURE),
                     Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(context, FIXTURE)), false,
-                    (description, active) -> true);
+                    (description, active, requestEpoch) -> true);
             launch("FixtureActivity");
         } catch (Throwable error) {
             try { close(); } catch (Exception cleanup) { error.addSuppressed(cleanup); }

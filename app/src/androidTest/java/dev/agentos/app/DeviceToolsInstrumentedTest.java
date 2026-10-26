@@ -127,7 +127,7 @@ public final class DeviceToolsInstrumentedTest {
             AtomicInteger approvals = new AtomicInteger();
             AndroidDeviceTools tools = new AndroidDeviceTools(device.service, Collections.singleton(FIXTURE),
                     Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), true,
-                    (description, control) -> { approvals.incrementAndGet(); return true; });
+                    (description, control, requestEpoch) -> { approvals.incrementAndGet(); return true; });
             ExecutorService worker = Executors.newSingleThreadExecutor();
             AtomicBoolean pauseOnRead = new AtomicBoolean();
             AtomicBoolean operationStarted = new AtomicBoolean();
@@ -259,7 +259,7 @@ public final class DeviceToolsInstrumentedTest {
             assertTrue(observed.toString().getBytes(StandardCharsets.UTF_8).length <= 64 * 1024);
 
             AndroidDeviceTools unscoped = new AndroidDeviceTools(device.service, Collections.emptySet(),
-                    Collections.emptyMap(), false, (description, active) -> true);
+                    Collections.emptyMap(), false, (description, active, requestEpoch) -> true);
             JsonObject result = unscoped.execute("observe", new JsonObject(), device.control);
             assertTrue(result.get("ok").getAsBoolean());
             JsonObject data = result.getAsJsonObject("data");
@@ -542,7 +542,7 @@ public final class DeviceToolsInstrumentedTest {
             AtomicInteger approvals = new AtomicInteger();
             AndroidDeviceTools tools = new AndroidDeviceTools(device.service, Collections.singleton(FIXTURE),
                     Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)),
-                    true, (description, active) -> { approvals.incrementAndGet(); return true; });
+                    true, (description, active, requestEpoch) -> { approvals.incrementAndGet(); return true; });
             long dispatches = device.control.getDispatchAttempts();
             JsonObject arguments = nodeArguments(observed, "password_field");
             arguments.addProperty("text", "must-not-be-written");
@@ -583,7 +583,7 @@ public final class DeviceToolsInstrumentedTest {
         try (DeviceHarness device = new DeviceHarness()) {
             AndroidDeviceTools tools = new AndroidDeviceTools(device.service, Collections.singleton(FIXTURE),
                     Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)),
-                    false, (description, active) -> { fail("Unsupported capture must not ask for approval"); return false; });
+                    false, (description, active, requestEpoch) -> { fail("Unsupported capture must not ask for approval"); return false; });
             JsonObject args = new JsonObject();
             args.addProperty("expectedRevision", string(device.observe(), "revision"));
             JsonObject result = tools.execute("take_screenshot", args, device.control);

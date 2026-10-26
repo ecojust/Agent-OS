@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-26T19:32:30Z",
-  "note": "补充真实performAction进入目标应用后再取消的回归：停止不等远端、在途票据与设备通道不提前释放，已进入动作仅完成一次且旧代次不能重发。编译/lint通过，待下一轮设备验证。",
+  "updated_at": "2026-10-26T19:38:25Z",
+  "note": "Android15遮挡负例未得到预期暂停，原记录缺少实际返回值；新增真实窗口空闲等待及失败现场/返回值诊断，仍严格要求一次尝试、暂停和零派发。编译与lint通过，等待重新验证。",
   "latest_evidence": {
     "path": "screenshots/40381396419-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40381396419"

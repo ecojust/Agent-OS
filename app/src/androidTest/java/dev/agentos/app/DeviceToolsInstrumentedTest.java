@@ -552,12 +552,20 @@ public final class DeviceToolsInstrumentedTest {
             });
             long attempts = device.control.getDispatchAttempts();
             try {
+                device.awaitUiIdle();
                 JsonObject obscured = awaitObservation(device.tools, device.control,
                         data -> data.get("hasOcclusion").getAsBoolean()
                                 && node(data, "increment").get("obscured").getAsBoolean());
+                long epoch = device.control.getExecutionEpoch();
                 try {
-                    device.tools.execute("click", nodeArguments(obscured, "increment"), device.control);
-                    fail("A different overlay must stop the target action");
+                    JsonObject returned = device.tools.execute("click", nodeArguments(obscured, "increment"), device.control);
+                    AssertionError failure = new AssertionError("A different overlay must stop the target action; result=" + returned
+                            + "; paused=" + device.control.isPaused() + "; cancelled=" + device.control.isCancelled()
+                            + "; epoch=" + epoch + "->" + device.control.getExecutionEpoch()
+                            + "; dispatchDelta=" + (device.control.getDispatchAttempts() - attempts));
+                    try { screenshots.capture("obstruction-returned-before-cleanup"); }
+                    catch (Throwable captureFailure) { failure.addSuppressed(captureFailure); }
+                    throw failure;
                 } catch (InterruptedException expected) {
                     assertTrue("The obscuring window must pause the task", device.control.isPaused());
                 }

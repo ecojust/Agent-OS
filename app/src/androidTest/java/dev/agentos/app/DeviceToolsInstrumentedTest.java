@@ -42,6 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import static dev.agentos.app.DeviceHarness.*;
 import static org.junit.Assert.*;
@@ -278,8 +279,8 @@ public final class DeviceToolsInstrumentedTest {
             JsonObject typed = device.tools.execute("type_text", text, device.control);
             assertTrue(typed.toString(), typed.get("ok").getAsBoolean());
             assertTrue(typed.get("dispatchAccepted").getAsBoolean());
-            observed = device.withText("Agent integration sample");
-            JsonObject clicked = device.tools.execute("click", nodeArguments(observed, "save_value"), device.control);
+            JsonObject clicked = executePositivePlan(device, "click", "Agent integration sample",
+                    current -> nodeArguments(current, "save_value"));
             assertTrue(clicked.toString(), clicked.get("ok").getAsBoolean());
             JsonObject saved = device.withText("Saved: Agent integration sample");
             assertEquals("Saved: Agent integration sample", string(node(saved, "saved_value"), "text"));
@@ -328,31 +329,13 @@ public final class DeviceToolsInstrumentedTest {
             try {
                 JsonObject opened = device.tools.execute("click", nodeArguments(device.observe(), "open_second"), device.control);
                 assertTrue(opened.toString(), opened.get("ok").getAsBoolean());
-                JsonObject second = device.withText("Second page reached");
-                JsonObject arguments = new JsonObject();
-                arguments.addProperty("expectedRevision", string(second, "revision"));
-                JsonObject back = device.tools.execute("back", arguments, device.control);
+                JsonObject back = executePositivePlan(device, "back", "Second page reached",
+                        DeviceToolsInstrumentedTest::revisionArguments);
                 assertTrue(back.toString(), back.get("ok").getAsBoolean());
                 device.withText("Count: 0");
                 screenshots.capture("before-home");
-                JsonObject home = null;
-                for (int plan = 0; plan <= 3; plan++) {
-                    // Capturing evidence may span an activity-exit animation. Plan
-                    // from a new observation, never the revision preceding a screenshot.
-                    JsonObject first = device.withText("Count: 0");
-                    JsonObject homeArguments = new JsonObject();
-                    homeArguments.addProperty("expectedRevision", string(first, "revision"));
-                    long attempts = device.control.getDispatchAttempts();
-                    home = device.tools.execute("home", homeArguments, device.control);
-                    if (home.get("ok").getAsBoolean()) break;
-                    boolean unsubmittedStale = "STALE_OBSERVATION".equals(string(home, "code"))
-                            && home.has("submitted") && !home.get("submitted").getAsBoolean();
-                    if (!unsubmittedStale) break;
-                    assertEquals("A purportedly unsubmitted plan reached dispatch", attempts, device.control.getDispatchAttempts());
-                    if (plan == 3) break;
-                    SystemClock.sleep(Math.min(250, 125L * (plan + 1)));
-                }
-                assertNotNull(home);
+                JsonObject home = executePositivePlan(device, "home", "Count: 0",
+                        DeviceToolsInstrumentedTest::revisionArguments);
                 assertTrue(home.toString(), home.get("ok").getAsBoolean());
                 JsonObject launcher;
                 try {
@@ -412,16 +395,52 @@ public final class DeviceToolsInstrumentedTest {
                 assertFalse(rejected.toString(), rejected.get("ok").getAsBoolean());
                 assertEquals("STALE_OBSERVATION", string(rejected, "code"));
                 assertEquals(dispatches, device.control.getDispatchAttempts());
-                device.awaitUiIdle();
-                JsonObject currentSecond = device.withText("Second page reached");
-                JsonObject backArguments = new JsonObject();
-                backArguments.addProperty("expectedRevision", string(currentSecond, "revision"));
-                JsonObject back = device.tools.execute("back", backArguments, device.control);
+                JsonObject back = executePositivePlan(device, "back", "Second page reached",
+                        DeviceToolsInstrumentedTest::revisionArguments);
                 assertTrue(back.toString(), back.get("ok").getAsBoolean());
                 JsonObject restored = device.withText("Count: 0");
                 assertEquals(focusedWindowId(device.service), restored.get("windowId").getAsInt());
             }
         }
+    }
+
+    /** Only for the ordinary positive, sequential actions above, never stale/paused/slow-write probes. */
+    private static JsonObject executePositivePlan(DeviceHarness device, String tool, String expectedText,
+                                                  Function<JsonObject, JsonObject> plan) throws Exception {
+        long epoch = device.control.getExecutionEpoch();
+        for (int attempt = 0; attempt <= 3; attempt++) {
+            // A preceding write or screenshot can span input/layout/window events.
+            // Re-establish the expected page and derive new arguments after real idle.
+            device.awaitUiIdle();
+            device.control.checkExecutionEpoch(epoch);
+            JsonObject current = device.withText(expectedText);
+            JsonObject arguments = plan.apply(current);
+            long dispatches = device.control.getDispatchAttempts();
+            JsonObject result = device.tools.execute(tool, arguments, device.control, epoch);
+            assertTrue("Action result must declare a boolean ok: " + result,
+                    explicitBoolean(result, "ok", true) || explicitBoolean(result, "ok", false));
+            if (explicitBoolean(result, "ok", true)) return result;
+            boolean unsubmittedStale = "STALE_OBSERVATION".equals(string(result, "code"))
+                    && explicitBoolean(result, "ok", false) && explicitBoolean(result, "submitted", false);
+            for (String accepted : new String[]{"accepted", "dispatchSubmitted", "dispatchAccepted"}) {
+                if (result.has(accepted) && !explicitBoolean(result, accepted, false)) unsubmittedStale = false;
+            }
+            if (!unsubmittedStale) return result;
+            assertEquals("A purportedly unsubmitted plan reached dispatch", dispatches, device.control.getDispatchAttempts());
+            if (attempt == 3) return result;
+        }
+        throw new AssertionError("Positive planning exceeded its bounded attempts");
+    }
+
+    private static boolean explicitBoolean(JsonObject result, String key, boolean expected) {
+        return result.has(key) && result.get(key).isJsonPrimitive()
+                && result.getAsJsonPrimitive(key).isBoolean() && result.get(key).getAsBoolean() == expected;
+    }
+
+    private static JsonObject revisionArguments(JsonObject observed) {
+        JsonObject arguments = new JsonObject();
+        arguments.addProperty("expectedRevision", string(observed, "revision"));
+        return arguments;
     }
 
     @Test public void showingTheKeyboardDoesNotSwitchObservationToAnOldApplicationWindow() throws Exception {

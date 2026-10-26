@@ -21,9 +21,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。
+**本次更新：** Archived tenth-run evidence (263/264 Android tests, 319 real screenshots). Sequential positive tests now use bounded fresh plans within the original epoch only after explicitly unsubmitted stale results; rejection and slow-write probes are unchanged. Compilation and lint passed.
 
-**记录时间：** 2026-10-26T18:01:24Z
+**记录时间：** 2026-10-26T18:03:34Z
 
 [最近测试截图与清单](screenshots/40372206277-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40372206277)。通过、失败及未截图原因见清单。
 

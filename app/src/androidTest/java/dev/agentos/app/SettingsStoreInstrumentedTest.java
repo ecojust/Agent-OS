@@ -7,6 +7,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Rule;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
@@ -18,6 +19,7 @@ import static org.junit.Assert.*;
 /** Uses the real Android Keystore; all credentials below are synthetic test values. */
 @RunWith(AndroidJUnit4.class)
 public final class SettingsStoreInstrumentedTest {
+    @Rule public final ScreenshotEvidence screenshots = new ScreenshotEvidence("non_visual_encrypted_storage_test");
     private Context context;
     private SettingsStore store;
     private SharedPreferences preferences;

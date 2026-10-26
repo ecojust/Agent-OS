@@ -14,17 +14,21 @@ import android.os.SystemClock;
 import android.view.Gravity;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.TextView;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.agentos.core.RunControl;
 import org.junit.Test;
+import org.junit.Rule;
 import org.junit.runner.RunWith;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -41,6 +45,7 @@ import static org.junit.Assert.*;
 /** Runs real accessibility operations against the separately installed offline fixture app. */
 @RunWith(AndroidJUnit4.class)
 public final class DeviceToolsInstrumentedTest {
+    @Rule public final ScreenshotEvidence screenshots = new ScreenshotEvidence();
     @Test public void slowObservationKeepsTheControlThreadResponsiveAndDiscardsPausedResults() throws Exception {
         try (DeviceHarness device = new DeviceHarness()) {
             device.launch("SlowActivity");
@@ -229,6 +234,7 @@ public final class DeviceToolsInstrumentedTest {
             JsonObject back = device.tools.execute("back", arguments, device.control);
             assertTrue(back.toString(), back.get("ok").getAsBoolean());
             JsonObject first = device.withText("Count: 0");
+            screenshots.capture("before-home");
             arguments.addProperty("expectedRevision", string(first, "revision"));
             JsonObject home = device.tools.execute("home", arguments, device.control);
             assertTrue(home.toString(), home.get("ok").getAsBoolean());
@@ -241,6 +247,82 @@ public final class DeviceToolsInstrumentedTest {
             }
             assertFalse(launcher.get("scoped").getAsBoolean());
             assertFalse(device.control.isPaused());
+        }
+    }
+
+    @Test public void observationsAndWritesFollowTheInputFocusedWindowAcrossNavigation() throws Exception {
+        try (DeviceHarness device = new DeviceHarness(); AutoCloseable focusMode = device.enableTouchExploration()) {
+            for (int attempt = 0; attempt < 2; attempt++) {
+                JsonObject first = device.observe();
+                assertTrue(first.get("focused").getAsBoolean());
+                assertEquals(focusedWindowId(device.service), first.get("windowId").getAsInt());
+                JsonObject oldClick = nodeArguments(first, "increment");
+                List<AccessibilityWindowInfo> windows = device.service.getWindows();
+                try {
+                    for (AccessibilityWindowInfo window : windows) {
+                        if (window.getId() != first.get("windowId").getAsInt()) continue;
+                        AccessibilityNodeInfo root = window.getRoot();
+                        assertNotNull(root);
+                        try {
+                            List<AccessibilityNodeInfo> targets = root.findAccessibilityNodeInfosByViewId(FIXTURE + ":id/increment");
+                            try {
+                                assertFalse(targets.isEmpty());
+                                assertTrue("Fixture could not receive accessibility focus",
+                                        targets.get(0).isAccessibilityFocused()
+                                                || targets.get(0).performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS));
+                            } finally { for (AccessibilityNodeInfo target : targets) target.recycle(); }
+                        } finally { root.recycle(); }
+                    }
+                } finally { for (AccessibilityWindowInfo window : windows) window.recycle(); }
+
+                // Keep the old activity alive: input focus moves to a new window while the
+                // previous accessibility target can still exist in the application's task.
+                device.context.startActivity(new Intent().setComponent(new ComponentName(FIXTURE, FIXTURE + ".SecondActivity"))
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                JsonObject second = device.withText("Second page reached");
+                assertTrue(second.get("focused").getAsBoolean());
+                assertEquals(focusedWindowId(device.service), second.get("windowId").getAsInt());
+                assertNotEquals(first.get("windowId").getAsInt(), second.get("windowId").getAsInt());
+                screenshots.capture("focused-second-page-" + attempt);
+                long dispatches = device.control.getDispatchAttempts();
+                JsonObject rejected = device.tools.execute("click", oldClick, device.control);
+                assertFalse(rejected.toString(), rejected.get("ok").getAsBoolean());
+                assertEquals("STALE_OBSERVATION", string(rejected, "code"));
+                assertEquals(dispatches, device.control.getDispatchAttempts());
+                JsonObject backArguments = new JsonObject();
+                backArguments.addProperty("expectedRevision", string(second, "revision"));
+                JsonObject back = device.tools.execute("back", backArguments, device.control);
+                assertTrue(back.toString(), back.get("ok").getAsBoolean());
+                JsonObject restored = device.withText("Count: 0");
+                assertEquals(focusedWindowId(device.service), restored.get("windowId").getAsInt());
+            }
+        }
+    }
+
+    @Test public void showingTheKeyboardDoesNotSwitchObservationToAnOldApplicationWindow() throws Exception {
+        try (DeviceHarness device = new DeviceHarness(); AutoCloseable keyboardPreference = device.enableSoftwareKeyboard()) {
+            JsonObject before = device.observe();
+            JsonObject clicked = device.tools.execute("click", nodeArguments(before, "edit_value"), device.control);
+            assertTrue(clicked.toString(), clicked.get("ok").getAsBoolean());
+            long deadline = SystemClock.elapsedRealtime() + 5_000;
+            boolean keyboard = false;
+            while (!keyboard && SystemClock.elapsedRealtime() < deadline) {
+                List<AccessibilityWindowInfo> windows = device.service.getWindows();
+                try {
+                    for (AccessibilityWindowInfo window : windows) {
+                        if (window.getType() == AccessibilityWindowInfo.TYPE_INPUT_METHOD) keyboard = true;
+                    }
+                } finally { for (AccessibilityWindowInfo window : windows) window.recycle(); }
+                if (!keyboard) SystemClock.sleep(50);
+            }
+            assertTrue("The synthetic editor did not show its keyboard\n" + windowDiagnostics(), keyboard);
+            JsonObject observed = awaitObservation(device.tools, device.control,
+                    data -> data.has("windowId") && data.get("windowId").getAsInt() == focusedWindowId(device.service));
+            assertEquals(FIXTURE, string(observed, "packageName"));
+            assertTrue(observed.get("focused").getAsBoolean());
+            screenshots.capture("focused-editor-with-keyboard");
+            device.shell("input keyevent 111");
+            device.withText("Count: 0");
         }
     }
 

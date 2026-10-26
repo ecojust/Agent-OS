@@ -9,12 +9,15 @@ import android.view.WindowManager;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.Test;
+import org.junit.Rule;
 import org.junit.runner.RunWith;
 import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 public final class MainActivityInstrumentedTest {
-    @Test public void nativeLauncherOpensWithoutStartingAnAgentTask() {
+    @Rule public final ScreenshotEvidence screenshots = new ScreenshotEvidence();
+
+    @Test public void nativeLauncherOpensWithoutStartingAnAgentTask() throws Exception {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         Intent intent = new Intent(instrumentation.getTargetContext(), MainActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -36,7 +39,8 @@ public final class MainActivityInstrumentedTest {
                 assertFalse(AgentController.get(activity).getState().running);
             });
         } finally {
-            instrumentation.runOnMainSync(activity::finish);
+            try { screenshots.captureEmptyMainActivity(activity, "empty-launcher"); }
+            finally { instrumentation.runOnMainSync(activity::finish); }
         }
     }
 }

@@ -16,4 +16,10 @@ Checks include actual text entry and saved state, stale-target rejection, applic
 
 The slow-node check verifies the Agent control thread can receive a heartbeat while a remote observation is in flight and that pausing discards the old result; its generous timing limit is a regression guard, not proof of the full performance budget. Model-network behavior is covered separately by the core JVM tests. Passing this fixture does not demonstrate compatibility with third-party applications or physical phones.
 
-The continuous integration matrix targets Android API 30 and API 35. Test source or a successful APK build alone is not a passing emulator result; inspect the uploaded instrumentation reports for each run.
+The continuous integration matrix targets Android API 30 through API 36 and the SDK's API 37.0 image (runtime API 37). Test source or a successful APK build alone is not a passing emulator result; inspect the uploaded instrumentation reports for each run.
+
+## Screenshot evidence
+
+Android instrumentation records real screenshots in the tested application's `files/screenshots` directory. Each PNG has the runtime API level, test name, stage and a unique suffix. Per-test JSON files and `manifest.json` associate the images with the actual test result and capture status (`pass`, `fail` or `blocked`). CI retrieves this directory before removing the development APK; reviewed run evidence belongs under the repository's `screenshots/` directory.
+
+Only the separate synthetic fixture and a verified empty application screen are eligible. The product's secure-window flag remains enabled in production. A test may temporarily clear it only after confirming that saved configuration and visible input fields are empty and no Agent task is running; it restores the flag in `finally`. Blank or protected surfaces and unrelated foreground applications are recorded as blocked instead of being presented as visible UI evidence. Storage and JVM checks have no UI screenshot to claim. Screenshot or manifest write failures remain explicit test failures.

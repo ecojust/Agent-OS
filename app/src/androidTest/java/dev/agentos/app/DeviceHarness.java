@@ -1,6 +1,7 @@
 package dev.agentos.app;
 
 import android.Manifest;
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.ComponentName;
@@ -10,7 +11,9 @@ import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.view.Display;
 import android.view.accessibility.AccessibilityWindowInfo;
+import android.view.accessibility.AccessibilityManager;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -150,6 +153,29 @@ final class DeviceHarness implements AutoCloseable {
         await("Accessibility service remained connected", () -> AgentAccessibilityService.getInstance() == null);
     }
 
+    AutoCloseable enableSoftwareKeyboard() {
+        String original = readSecure("show_ime_with_hard_keyboard");
+        writeSecure("show_ime_with_hard_keyboard", "1");
+        return () -> writeSecure("show_ime_with_hard_keyboard", original);
+    }
+
+    AutoCloseable enableTouchExploration() {
+        AccessibilityServiceInfo info = automation.getServiceInfo();
+        int previous = info.flags & AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+        AccessibilityManager manager = (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
+        assertNotNull(manager);
+        info.flags |= AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+        automation.setServiceInfo(info);
+        Runnable restore = () -> {
+            AccessibilityServiceInfo current = automation.getServiceInfo();
+            current.flags = (current.flags & ~AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE) | previous;
+            automation.setServiceInfo(current);
+        };
+        try { await("Test accessibility focus requires touch exploration", manager::isTouchExplorationEnabled); }
+        catch (Throwable failure) { restore.run(); throw failure; }
+        return restore::run;
+    }
+
     String shell(String command) throws Exception {
         try (ParcelFileDescriptor.AutoCloseInputStream input = new ParcelFileDescriptor.AutoCloseInputStream(
                     automation.executeShellCommand(command));
@@ -205,6 +231,22 @@ final class DeviceHarness implements AutoCloseable {
                         .append(" bounds=").append(bounds.toShortString());
             }
             return diagnostic.toString();
+        } finally {
+            for (AccessibilityWindowInfo window : windows) window.recycle();
+        }
+    }
+
+    static int focusedWindowId(AgentAccessibilityService service) {
+        List<AccessibilityWindowInfo> windows = service.getWindows();
+        if (windows == null) return -1;
+        int found = -1;
+        try {
+            for (AccessibilityWindowInfo window : windows) {
+                if (!window.isFocused() || window.getDisplayId() != Display.DEFAULT_DISPLAY) continue;
+                if (found != -1) return -1;
+                found = window.getId();
+            }
+            return found;
         } finally {
             for (AccessibilityWindowInfo window : windows) window.recycle();
         }

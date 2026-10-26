@@ -77,6 +77,14 @@ public final class AgentControllerInstrumentedTest {
     }
 
     @Test public void pausingAfterConfirmationWhileLayoutIsPendingNeverDispatchesTheOldInput() throws Exception {
+        verifyInterruptionBeforeConfirmedLayout(false);
+    }
+
+    @Test public void stoppingAfterConfirmationWhileLayoutIsPendingRejectsLateApprovalAndNeverWrites() throws Exception {
+        verifyInterruptionBeforeConfirmedLayout(true);
+    }
+
+    private void verifyInterruptionBeforeConfirmedLayout(boolean stop) throws Exception {
         try (DeviceHarness device = new DeviceHarness();
              LocalControllerModelServer server = new LocalControllerModelServer(LocalControllerModelServer.Scenario.SAVE_AND_COUNT);
              ControllerTestSettings settings = new ControllerTestSettings(device.context, server)) {
@@ -106,18 +114,35 @@ public final class AgentControllerInstrumentedTest {
                     }
                     assertTrue("Confirmation gate did not return", controller.getState().approvalId.isEmpty());
                     assertTrue(controller.getState().running);
-                    controller.pauseResume();
-                    assertTrue(controller.getState().paused);
+                    if (stop) {
+                        controller.stop();
+                        assertFalse(controller.getState().running);
+                        assertTrue(controller.getState().approvalId.isEmpty());
+                        // A late old confirmation and a resume click must not revive
+                        // the stopped generation while the queued UI work is blocked.
+                        controller.approve(pending.approvalId, true);
+                        controller.pauseResume();
+                        assertFalse(controller.getState().running);
+                        assertEquals("已停止", controller.getState().status);
+                    } else {
+                        controller.pauseResume();
+                        assertTrue(controller.getState().paused);
+                    }
                 } finally { releaseMain.countDown(); }
                 device.instrumentation.waitForIdleSync();
                 assertFalse("The artificial test UI barrier reached its hard limit", barrierExpired.get());
                 assertNotEquals(LocalControllerModelServer.TEXT, fixtureText(device, "edit_value"));
                 assertEquals("Saved: empty", fixtureText(device, "saved_value"));
                 assertEquals("Count: 0", fixtureText(device, "counter_value"));
-                assertFalse("Paused task requested a new plan", server.receivedAnotherRequest(1, 350));
+                assertFalse("Interrupted task requested a new plan", server.receivedAnotherRequest(1, 350));
                 assertEquals(1, server.requestCount());
                 server.assertHealthy();
-                screenshots.capture("paused-before-confirmed-layout-dispatch");
+                if (stop) {
+                    controller.approve(pending.approvalId, true);
+                    assertFalse(controller.getState().running);
+                    assertEquals("已停止", controller.getState().status);
+                }
+                screenshots.capture((stop ? "stopped" : "paused") + "-before-confirmed-layout-dispatch");
             } finally {
                 releaseMain.countDown();
                 clear(device, controller);

@@ -551,14 +551,16 @@ public final class DeviceToolsInstrumentedTest {
                 manager.addView(blocker, params);
             });
             long attempts = device.control.getDispatchAttempts();
+            JsonObject blockedArguments = null;
             try {
                 device.awaitUiIdle();
                 JsonObject obscured = awaitObservation(device.tools, device.control,
                         data -> data.get("hasOcclusion").getAsBoolean()
                                 && node(data, "increment").get("obscured").getAsBoolean());
+                blockedArguments = nodeArguments(obscured, "increment");
                 long epoch = device.control.getExecutionEpoch();
                 try {
-                    JsonObject returned = device.tools.execute("click", nodeArguments(obscured, "increment"), device.control);
+                    JsonObject returned = device.tools.execute("click", blockedArguments, device.control);
                     AssertionError failure = new AssertionError("A different overlay must stop the target action; result=" + returned
                             + "; paused=" + device.control.isPaused() + "; cancelled=" + device.control.isCancelled()
                             + "; epoch=" + epoch + "->" + device.control.getExecutionEpoch()
@@ -574,6 +576,13 @@ public final class DeviceToolsInstrumentedTest {
                 device.instrumentation.runOnMainSync(() -> manager.removeViewImmediate(blocker));
             }
             device.control.resume();
+            device.withText("Count: 0");
+            assertNotNull(blockedArguments);
+            JsonObject stale = device.tools.execute("click", blockedArguments, device.control);
+            assertFalse(stale.toString(), stale.get("ok").getAsBoolean());
+            assertEquals("STALE_OBSERVATION", string(stale, "code"));
+            assertFalse("Old obstruction evidence must not pause a resumed request after fresh observation", device.control.isPaused());
+            assertEquals(attempts, device.control.getDispatchAttempts());
             device.withText("Count: 0");
         }
     }

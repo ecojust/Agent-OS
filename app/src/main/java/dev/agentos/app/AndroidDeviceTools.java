@@ -65,6 +65,7 @@ public final class AndroidDeviceTools implements ToolHandler {
     private final Handler main = new Handler(Looper.getMainLooper());
     private String lastObservedRevision;
     private long lastObservedEpoch = -1;
+    private ObservedBlockers lastObservedBlockers;
     private boolean denied;
 
     public AndroidDeviceTools(AgentAccessibilityService service, Set<String> packages,
@@ -179,13 +180,18 @@ public final class AndroidDeviceTools implements ToolHandler {
         // read-only path does not call controlBounds() or read any Android View.
         onMain(() -> { requireReady(control, epoch); return null; }, control, epoch, new Dispatch());
         JsonObject result;
-        try (Snapshot state = snapshot(control, epoch, PerformanceTrace.Stage.SNAPSHOT_OBSERVE)) { result = success(state.json()); }
+        ObservedBlockers blockers;
+        try (Snapshot state = snapshot(control, epoch, PerformanceTrace.Stage.SNAPSHOT_OBSERVE)) {
+            result = success(state.json());
+            blockers = state.observedBlockers();
+        }
         // A screen lock, permission loss or stop while the remote tree was queried
         // invalidates the completed snapshot before any content reaches the model.
         onMain(() -> { requireReady(control, epoch); return null; }, control, epoch, new Dispatch());
         control.checkExecutionEpoch(epoch);
         lastObservedRevision = result.getAsJsonObject("data").get("revision").getAsString();
         lastObservedEpoch = epoch;
+        lastObservedBlockers = blockers;
         return result;
     }
 
@@ -232,6 +238,16 @@ public final class AndroidDeviceTools implements ToolHandler {
     private JsonObject mutate(String name, JsonObject args, RunControl control, long epoch, Dispatch dispatch) throws Exception {
         String revision = required(args, "expectedRevision");
         onMain(() -> null, control, epoch, dispatch);
+        // R2: a request that explicitly names a target already observed behind an
+        // unknown window must pause. This evidence can only reject, never permit
+        // an action or resolve an old node ID against a newer tree. Otherwise a
+        // later snapshot/version change could hide this known interruption behind
+        // an ordinary stale result before the target guard is reached.
+        ObservedBlockers blockers = lastObservedBlockers;
+        if (blockers != null && blockers.rejects(name, args, revision, control, epoch)) {
+            control.checkExecutionEpoch(epoch);
+            pauseForInterruption("所引用观察中的目标被其他窗口遮挡，请由用户检查后继续", control, epoch);
+        }
         Prepared prepared;
         // Preparation only reads the authorized UI; keep remote traversal and serialization
         // on the worker. Pass no recyclable accessibility nodes across the thread boundary:
@@ -382,6 +398,33 @@ public final class AndroidDeviceTools implements ToolHandler {
             if (obscured) pauseForInterruption(interruption, control, epoch);
             if (protectsControl && controls.intersects(bounds)) {
                 throw unavailable("目标被任务控制条遮挡，请先拖动控制条再重新观察");
+            }
+        }
+    }
+
+    /** Bounded, content-free denial evidence from one successfully delivered observation. */
+    private static final class ObservedBlockers {
+        final String taskId, profileId, revision;
+        final long epoch;
+        final Set<String> nodeIds;
+        final boolean global, defaultScroll;
+
+        ObservedBlockers(RunControl control, long epoch, String revision, Set<String> nodeIds,
+                        boolean global, boolean defaultScroll) {
+            taskId = control.getTaskId(); profileId = control.getProfileId();
+            this.epoch = epoch; this.revision = revision;
+            this.nodeIds = Collections.unmodifiableSet(new HashSet<>(nodeIds));
+            this.global = global; this.defaultScroll = defaultScroll;
+        }
+
+        boolean rejects(String tool, JsonObject args, String expectedRevision, RunControl control, long epoch) {
+            if (this.epoch != epoch || !taskId.equals(control.getTaskId()) || !profileId.equals(control.getProfileId())
+                    || !revision.equals(expectedRevision)) return false;
+            switch (tool) {
+                case "back": case "home": return global;
+                case "click": case "type_text": return nodeIds.contains(args.get("nodeId").getAsString());
+                case "scroll": return args.has("nodeId") ? nodeIds.contains(args.get("nodeId").getAsString()) : defaultScroll;
+                default: return false;
             }
         }
     }
@@ -670,6 +713,26 @@ public final class AndroidDeviceTools implements ToolHandler {
         boolean intersectsObscurer(Rect target) {
             for (Rect other : obscured) if (Rect.intersects(target, other)) return true;
             return false;
+        }
+
+        ObservedBlockers observedBlockers() {
+            // A new unscoped observation clears prior evidence as well. Only
+            // unknown-window intersections count: the JSON obscured flag also
+            // covers unsafe screen regions and is deliberately not reused here.
+            if (!scoped) return null;
+            Set<String> blockedIds = new HashSet<>();
+            boolean foundScroll = false, blockedScroll = false;
+            for (Map.Entry<String, AccessibilityNodeInfo> entry : nodes.entrySet()) {
+                AccessibilityNodeInfo node = entry.getValue();
+                Rect target = new Rect(); node.getBoundsInScreen(target);
+                boolean blocked = intersectsObscurer(target);
+                if (blocked) blockedIds.add(entry.getKey());
+                if (!foundScroll && node.isScrollable() && node.isEnabled()) {
+                    foundScroll = true;
+                    blockedScroll = blocked;
+                }
+            }
+            return new ObservedBlockers(control, epoch, revision, blockedIds, !obscured.isEmpty(), blockedScroll);
         }
 
         MutationTarget visibleTarget(Rect target, boolean protectsControl) throws DeviceException {

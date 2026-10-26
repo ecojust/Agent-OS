@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-26T18:16:38Z",
-  "note": "归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。",
+  "updated_at": "2026-10-26T18:19:19Z",
+  "note": "第十一轮八档模拟器共264项测试全部通过，318张真实截图已归档；本地重新执行67项JVM测试、CI的20项工具测试及构建检查均通过。基础API矩阵检查点完成；真机、真实模型、应用兼容和性能仍待验收。",
   "latest_evidence": {
     "path": "screenshots/40374358177-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40374358177"
@@ -62,7 +62,9 @@
     {
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
-      "status": "in_progress"
+      "status": "complete",
+      "evidence": "screenshots/40374358177-1/manifest.json",
+      "scope": "Eight x86_64 emulator API baselines with system animations at 1.0 and synthetic fixtures; not physical-device, third-party-app or performance acceptance."
     },
     {
       "id": "performance",

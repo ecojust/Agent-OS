@@ -14,6 +14,7 @@ public final class RunControl {
     private boolean cancelled, paused;
     private int approvalWaits, modelRounds, toolCalls;
     private long dispatchAttempts;
+    private DispatchTicket inFlightDispatch;
     private Runnable cancelHook;
 
     public RunControl() { this("current-personal"); }
@@ -27,11 +28,68 @@ public final class RunControl {
     public String getTaskId() { return taskId; }
     public String getProfileId() { return profileId; }
     public synchronized long getExecutionEpoch() { return epoch; }
-    /** Called on the platform thread at the last checked boundary before a write API. */
+    /** Compatibility counter only; it does not track an in-flight operation or system acceptance. */
     public synchronized void markDispatchAttempt(long expectedEpoch) throws TaskControlException {
         checkExecutionEpoch(expectedEpoch); dispatchAttempts++;
     }
     public synchronized long getDispatchAttempts() { return dispatchAttempts; }
+
+    /**
+     * Admits one local submission after slow validation has finished. This is not
+     * evidence that the platform accepted the action. The worker must recheck the
+     * ticket and any immutable platform guard immediately before invoking its API.
+     * No platform call or waiting takes place while this monitor is held.
+     */
+    public synchronized DispatchTicket beginDispatch(long expectedEpoch) throws TaskControlException {
+        checkExecutionEpoch(expectedEpoch);
+        if (inFlightDispatch != null)
+            throw new TaskControlException("DISPATCH_IN_PROGRESS", "上一个设备提交仍未结束，不能开始新的提交。");
+        DispatchTicket ticket = new DispatchTicket(this, expectedEpoch);
+        inFlightDispatch = ticket; dispatchAttempts++;
+        return ticket;
+    }
+
+    /** Includes a cancelled or paused operation until its owning worker settles it. */
+    public synchronized boolean hasInFlightDispatch() { return inFlightDispatch != null; }
+
+    /**
+     * Ownership stays with the worker performing the action, normally in a
+     * try-with-resources block. UI cancellation must not close this ticket for
+     * that worker: an external call may still be running. Closing releases only
+     * this admission; it neither verifies a result nor changes task/epoch state.
+     */
+    public static final class DispatchTicket implements AutoCloseable {
+        private final RunControl owner;
+        public final long executionEpoch;
+        private boolean settled;
+
+        private DispatchTicket(RunControl owner, long executionEpoch) {
+            this.owner = owner; this.executionEpoch = executionEpoch;
+        }
+
+        /** A last local check, not an atomic transaction with the external API. */
+        public void checkExecutionEpoch() throws TaskControlException {
+            synchronized (owner) {
+                owner.checkExecutionEpoch(executionEpoch);
+                if (settled || owner.inFlightDispatch != this)
+                    throw new TaskControlException("DISPATCH_SETTLED", "设备提交已结束，不能复用旧提交凭据。");
+            }
+        }
+
+        public boolean isSettled() { synchronized (owner) { return settled; } }
+
+        /** Idempotent and available even after cancellation, expiry or an API exception. */
+        public void settle() {
+            synchronized (owner) {
+                if (settled) return;
+                settled = true;
+                if (owner.inFlightDispatch == this) owner.inFlightDispatch = null;
+            }
+        }
+
+        @Override public void close() { settle(); }
+    }
+
     public void cancel() {
         Runnable hook;
         synchronized (this) {

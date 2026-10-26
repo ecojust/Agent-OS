@@ -1,0 +1,90 @@
+name: Archive Android test evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Completed Android checks run from this repository's master branch
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: archive-evidence-${{ inputs.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify trusted source run
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.run_id }}
+        run: |
+          [[ "$SOURCE_RUN_ID" =~ ^[0-9]+$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > "$RUNNER_TEMP/source-run.json"
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/source-artifacts.json"
+          python3 scripts/publish_test_evidence.py verify \
+            --run "$RUNNER_TEMP/source-run.json" --repository "$GITHUB_REPOSITORY" \
+            --artifacts "$RUNNER_TEMP/source-artifacts.json" --github-output "$GITHUB_OUTPUT"
+      - name: Read matching attempt jobs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ steps.source.outputs.run_id }}
+          SOURCE_ATTEMPT: ${{ steps.source.outputs.attempt }}
+        run: |
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/attempts/$SOURCE_ATTEMPT/jobs?per_page=100" > "$RUNNER_TEMP/source-jobs.json"
+      - name: Download screenshot artifacts
+        if: steps.source.outputs.has_artifacts == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.source.outputs.run_id }}
+          pattern: screenshots-api-*-attempt-${{ steps.source.outputs.attempt }}
+          path: ${{ runner.temp }}/evidence-input
+      - name: Prepare evidence and refresh README
+        env:
+          EVIDENCE_PATH: ${{ steps.source.outputs.evidence_path }}
+          SOURCE_RUN_ID: ${{ steps.source.outputs.run_id }}
+        run: |
+          python3 scripts/publish_test_evidence.py archive \
+            --run "$RUNNER_TEMP/source-run.json" --repository "$GITHUB_REPOSITORY" \
+            --artifacts "$RUNNER_TEMP/source-artifacts.json" --jobs "$RUNNER_TEMP/source-jobs.json" \
+            --incoming "$RUNNER_TEMP/evidence-input"
+          python3 scripts/update_progress.py --evidence-path "$EVIDENCE_PATH" \
+            --run-url "https://github.com/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID"
+          python3 scripts/update_progress.py --check
+      - name: Commit evidence to a separate branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVIDENCE_PATH: ${{ steps.source.outputs.evidence_path }}
+          SOURCE_RUN_ID: ${{ steps.source.outputs.run_id }}
+          SOURCE_ATTEMPT: ${{ steps.source.outputs.attempt }}
+        run: |
+          branch="evidence/$SOURCE_RUN_ID-$SOURCE_ATTEMPT"
+          gh auth setup-git
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            echo "Evidence branch already exists; it will not be overwritten."
+            exit 1
+          fi
+          git switch -c "$branch"
+          git config user.name agent
+          git config user.email 30574854+ecojust@users.noreply.github.com
+          git add -- "$EVIDENCE_PATH" README.md docs/progress.json docs/diagrams/development-progress.svg
+          git diff --cached --check
+          git commit -m "Archive Android test evidence for run $SOURCE_RUN_ID [skip ci]"
+          git push origin "HEAD:refs/heads/$branch"
+          echo "Evidence branch: https://github.com/$GITHUB_REPOSITORY/tree/$branch" >> "$GITHUB_STEP_SUMMARY"

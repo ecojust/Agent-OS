@@ -32,6 +32,10 @@ final class LocalVisionProbeServer implements AutoCloseable {
     static final String MODEL = "vision-ui-synthetic-model";
     static final String PRIVATE_TASK = "PRIVATE_TASK_MUST_NOT_BE_SENT";
     private final Mode mode;
+    // Optional explicit test route only. Its planner consumes the actual task observation;
+    // it never supplies or replaces the synthetic PNG/nonce verification algorithm.
+    private final LocalControllerModelServer taskPlanner;
+    private final AtomicInteger taskRequests = new AtomicInteger();
     private final ServerSocket server;
     private final Thread worker;
     private final Object changed = new Object();
@@ -45,8 +49,11 @@ final class LocalVisionProbeServer implements AutoCloseable {
     private volatile boolean closed;
     private volatile Throwable failure;
 
-    LocalVisionProbeServer(Mode mode) throws IOException {
+    LocalVisionProbeServer(Mode mode) throws IOException { this(mode, null); }
+
+    LocalVisionProbeServer(Mode mode, LocalControllerModelServer taskPlanner) throws IOException {
         this.mode = mode;
+        this.taskPlanner = taskPlanner;
         server = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"));
         worker = new Thread(this::serve, "synthetic-vision-http");
         worker.setDaemon(true); worker.start();
@@ -68,6 +75,7 @@ final class LocalVisionProbeServer implements AutoCloseable {
     }
     int imageRequestCount() { return images.get(); }
     int toolRequestCount() { return tools.get(); }
+    int taskRequestCount() { return taskRequests.get(); }
     void releaseResponse() { responseGate.countDown(); }
     boolean awaitResponseAttempt() throws InterruptedException { return responseAttempted.await(5, TimeUnit.SECONDS); }
 
@@ -91,20 +99,23 @@ final class LocalVisionProbeServer implements AutoCloseable {
     private void serve() {
         while (!closed) {
             boolean writing = false;
+            boolean heldSynthetic = false;
             try (Socket socket = server.accept()) {
                 active = socket; socket.setSoTimeout(5000);
                 JsonObject request = readRequest(socket.getInputStream());
                 recordMaxTokens(request);
+                boolean synthetic = isSyntheticProbe(request);
+                heldSynthetic = mode == Mode.HELD_VERIFIED && (taskPlanner == null || synthetic);
                 JsonObject reply = response(request);
                 requests.incrementAndGet();
                 synchronized (changed) { changed.notifyAll(); }
-                if (mode == Mode.HELD_VERIFIED && !responseGate.await(20, TimeUnit.SECONDS)) {
+                if (heldSynthetic && !responseGate.await(20, TimeUnit.SECONDS)) {
                     throw new IOException("Synthetic response was never released");
                 }
                 byte[] body = reply.toString().getBytes(StandardCharsets.UTF_8);
                 writing = true;
                 try {
-                    String status = mode == Mode.HTTP_UNAUTHORIZED ? "401 Unauthorized" : "200 OK";
+                    String status = mode == Mode.HTTP_UNAUTHORIZED && synthetic ? "401 Unauthorized" : "200 OK";
                     String header = "HTTP/1.1 " + status + "\r\nContent-Type: application/json; charset=utf-8\r\n"
                             + "Connection: close\r\nContent-Length: " + body.length + "\r\n\r\n";
                     socket.getOutputStream().write(header.getBytes(StandardCharsets.US_ASCII));
@@ -112,7 +123,7 @@ final class LocalVisionProbeServer implements AutoCloseable {
                 } finally { Arrays.fill(body, (byte) 0); responseAttempted.countDown(); }
             } catch (IOException error) {
                 // Explicitly cancelled held probes may close their client before this write.
-                if (!closed && !(writing && mode == Mode.HELD_VERIFIED)) failure = error;
+                if (!closed && !(writing && heldSynthetic)) failure = error;
             } catch (Throwable error) {
                 if (!closed) failure = error;
             } finally {
@@ -151,7 +162,6 @@ final class LocalVisionProbeServer implements AutoCloseable {
                 require(count > 0, "Incomplete probe body"); offset += count;
             }
             String text = new String(bytes, StandardCharsets.UTF_8);
-            require(!text.contains(PRIVATE_TASK), "Task content entered a capability probe");
             JsonObject request = JsonParser.parseString(text).getAsJsonObject();
             require(MODEL.equals(request.get("model").getAsString()), "Unexpected model identity");
             require(!request.get("stream").getAsBoolean(), "Probe unexpectedly streamed");
@@ -159,7 +169,32 @@ final class LocalVisionProbeServer implements AutoCloseable {
         } finally { Arrays.fill(bytes, (byte) 0); }
     }
 
+    private static boolean isSyntheticProbe(JsonObject request) {
+        JsonArray definitions = request.getAsJsonArray("tools");
+        if (definitions == null || definitions.size() != 1) return false;
+        String name = definitions.get(0).getAsJsonObject().getAsJsonObject("function").get("name").getAsString();
+        return "agent_os_vision_probe".equals(name) || "agent_os_probe".equals(name);
+    }
+
     private JsonObject response(JsonObject request) throws IOException {
+        if (!isSyntheticProbe(request)) {
+            require(taskPlanner != null, "No structured task route was explicitly installed");
+            require(request.toString().contains(PRIVATE_TASK), "The explicit structured route did not receive the real synthetic task");
+            require(!request.toString().contains("image_url"), "The structured task unexpectedly received an image");
+            JsonArray definitions = request.getAsJsonArray("tools");
+            require(definitions != null && !definitions.isEmpty(), "Missing real structured tools");
+            boolean observe = false, click = false;
+            for (JsonElement definition : definitions) {
+                String name = definition.getAsJsonObject().getAsJsonObject("function").get("name").getAsString();
+                require(!"take_screenshot".equals(name) && !"tap".equals(name) && !"swipe".equals(name),
+                        "Qualification must not advertise disabled device capabilities");
+                require(!name.startsWith("agent_os_"), "Synthetic diagnostic tool leaked into the real task");
+                observe |= "observe".equals(name); click |= "click".equals(name);
+            }
+            require(observe && click, "The real structured task tool set was not supplied");
+            return taskPlanner.respond(request, taskRequests.incrementAndGet());
+        }
+        require(!request.toString().contains(PRIVATE_TASK), "Task content entered a capability probe");
         JsonArray definitions = request.getAsJsonArray("tools");
         require(definitions != null && definitions.size() == 1, "Probe must define one synthetic tool");
         JsonObject function = definitions.get(0).getAsJsonObject().getAsJsonObject("function");

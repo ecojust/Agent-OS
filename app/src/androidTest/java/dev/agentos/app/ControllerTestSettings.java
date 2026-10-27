@@ -22,18 +22,26 @@ final class ControllerTestSettings implements AutoCloseable {
 
     ControllerTestSettings(Context context, LocalControllerModelServer server,
                            ActionConfirmationPolicy.Mode executionMode) throws IOException {
+        this(context, new ModelSettings(server.endpoint(), LocalControllerModelServer.SYNTHETIC_KEY,
+                LocalControllerModelServer.MODEL), executionMode);
+    }
+
+    /** Real saved configuration for a fixture that serves both synthetic image and task requests. */
+    ControllerTestSettings(Context context, ModelSettings model,
+                           ActionConfirmationPolicy.Mode executionMode) throws IOException {
         this.executionMode = executionMode;
         String profile = SettingsStore.currentProfileId(context);
         preferences = context.getSharedPreferences("agent_settings_secure_" + profile.replace(':', '_'), Context.MODE_PRIVATE);
         original = preferences.getAll();
         if (!preferences.edit().clear().commit()) throw new IOException("Could not isolate test configuration");
-        model = new ModelSettings(server.endpoint(), LocalControllerModelServer.SYNTHETIC_KEY, LocalControllerModelServer.MODEL);
+        this.model = model;
         try {
             SettingsStore store = new SettingsStore(context);
             SettingsStore.SavedSettings saved = store.load();
             saved.endpoint = model.endpoint;
             saved.apiKey = model.apiKey;
             saved.model = model.model;
+            saved.maxOutputTokens = model.maxOutputTokens;
             saved.confirmEachAction = true;
             saved.executionMode = executionMode;
             saved.allowedPackages.add(DeviceHarness.FIXTURE);

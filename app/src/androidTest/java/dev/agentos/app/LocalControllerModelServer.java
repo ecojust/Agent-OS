@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /** Deterministic protocol fixture. It neither contacts nor evaluates a real language model. */
 final class LocalControllerModelServer implements AutoCloseable {
-    enum Scenario { SAVE_AND_COUNT, REJECT_CLICK, EXHAUST_ROUND_BUDGET, CONTINUOUS_NAVIGATION }
+    enum Scenario { SAVE_AND_COUNT, REJECT_CLICK, EXHAUST_ROUND_BUDGET, CONTINUOUS_NAVIGATION, QUALIFICATION_PENDING }
     static final String SYNTHETIC_KEY = "controller-test-only-key";
     static final String MODEL = "synthetic-controller-model";
     static final String TEXT = "Controller integration sample";
@@ -57,6 +57,15 @@ final class LocalControllerModelServer implements AutoCloseable {
     }
 
     LocalControllerModelServer(Scenario scenario, String expectedHomePackage) throws IOException {
+        this(scenario, expectedHomePackage, true);
+    }
+
+    /** Share planning with the explicit mixed fixture without binding a second HTTP endpoint. */
+    static LocalControllerModelServer forPlanningOnly(Scenario scenario) throws IOException {
+        return new LocalControllerModelServer(scenario, null, false);
+    }
+
+    private LocalControllerModelServer(Scenario scenario, String expectedHomePackage, boolean bindHttp) throws IOException {
         if (scenario == Scenario.CONTINUOUS_NAVIGATION) {
             if (expectedHomePackage == null || expectedHomePackage.isEmpty()
                     || DeviceHarness.FIXTURE.equals(expectedHomePackage) || "dev.agentos.app".equals(expectedHomePackage)) {
@@ -67,13 +76,18 @@ final class LocalControllerModelServer implements AutoCloseable {
         }
         this.scenario = scenario;
         this.expectedHomePackage = expectedHomePackage;
-        server = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"));
-        worker = new Thread(this::serve, "controller-protocol-fixture");
-        worker.setDaemon(true);
-        worker.start();
+        if (bindHttp) {
+            server = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"));
+            worker = new Thread(this::serve, "controller-protocol-fixture");
+            worker.setDaemon(true);
+            worker.start();
+        } else { server = null; worker = null; }
     }
 
-    String endpoint() { return "http://127.0.0.1:" + server.getLocalPort() + "/v1"; }
+    String endpoint() {
+        if (server == null) throw new IllegalStateException("The planning-only fixture has no HTTP endpoint");
+        return "http://127.0.0.1:" + server.getLocalPort() + "/v1";
+    }
     int requestCount() { return requests.get(); }
     /** Only bounded integer transport metadata; never retain extra prompts or credentials. */
     List<Integer> receivedMaxTokens() { synchronized (outputLimits) { return new ArrayList<>(outputLimits); } }
@@ -207,6 +221,15 @@ final class LocalControllerModelServer implements AutoCloseable {
             // The next reply would contain a write, but the controller must never ask for it.
             if (round > TaskBudget.DEFAULT.maxModelRounds) return tool("click", nodeArguments(observed, "increment"), round);
             return tool("observe", new JsonObject(), round);
+        }
+        if (scenario == Scenario.QUALIFICATION_PENDING) {
+            // Qualification tests never approve these plans and separately require
+            // zero platform dispatches. A resumed epoch drops old chat history, so
+            // this explicit scenario plans from each new real observation without
+            // weakening the accepted/unknown-write replay checks in other scenarios.
+            require("Count: 0".equals(nodeText(observed, "counter_value")), "Unapproved qualification task changed the counter");
+            require(++writePlans <= 8, "Qualification fixture exceeded its bounded planning attempts");
+            return tool("click", nodeArguments(observed, "increment"), round);
         }
         if (scenario == Scenario.REJECT_CLICK) {
             if (pendingWriteCallId != null) {
@@ -544,11 +567,13 @@ final class LocalControllerModelServer implements AutoCloseable {
 
     @Override public void close() throws Exception {
         closed = true;
-        server.close();
+        if (server != null) server.close();
         Socket current = active;
         if (current != null) current.close();
         synchronized (changed) { changed.notifyAll(); }
-        worker.join(2_000);
-        if (worker.isAlive()) throw new IOException("Local model fixture did not terminate");
+        if (worker != null) {
+            worker.join(2_000);
+            if (worker.isAlive()) throw new IOException("Local model fixture did not terminate");
+        }
     }
 }

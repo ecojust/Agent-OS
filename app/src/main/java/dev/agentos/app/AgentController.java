@@ -35,6 +35,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class AgentController {
     public interface Listener { void onChanged(); }
 
+    /** Synthetic model diagnostics only; none of these states authorizes a screenshot. */
+    public enum VisualQualification {
+        NOT_REQUESTED, CHECKING, SYNTHETIC_VERIFIED, UNVERIFIED, FAILED, BUSY, INVALIDATED
+    }
+
     /** Numeric task-budget accounting only; no prompt, model settings, response or credentials. */
     public static final class TaskUsage {
         public final String taskId;
@@ -60,9 +65,12 @@ public final class AgentController {
         public final String summary;
         /** Null before the first task or after explicit clearing. */
         public final TaskUsage usage;
+        public final boolean visualRequested;
+        public final VisualQualification visualQualification;
 
         State(String status, boolean running, boolean paused, String approval, String approvalId,
-              List<String> log, String summary, TaskUsage usage) {
+              List<String> log, String summary, TaskUsage usage, boolean visualRequested,
+              VisualQualification visualQualification) {
             this.status = status;
             this.running = running;
             this.paused = paused;
@@ -71,6 +79,8 @@ public final class AgentController {
             this.log = Collections.unmodifiableList(new ArrayList<>(log));
             this.summary = summary;
             this.usage = usage;
+            this.visualRequested = visualRequested;
+            this.visualQualification = visualQualification;
         }
     }
 
@@ -92,6 +102,9 @@ public final class AgentController {
     private RunControl control;
     private TaskBudget usageBudget;
     private TaskUsage completedUsage;
+    private TaskVisualQualification taskVisual;
+    private boolean completedVisualRequested;
+    private VisualQualification completedVisualQualification = VisualQualification.NOT_REQUESTED;
     private SettingsStore.ConfigurationLease configuration;
     private PendingApproval pending;
     private String status = "准备就绪";
@@ -102,6 +115,23 @@ public final class AgentController {
     private RunControl overlayCallbackOwner;
     private long overlayCallbackGeneration = -1;
     private String overlayCallbackApprovalId = "";
+
+    /** Accessed under the controller lock; holds no model settings, image or task text. */
+    private static final class TaskVisualQualification {
+        final RunControl owner;
+        final SettingsStore.ConfigurationLease configuration;
+        final long originalEpoch;
+        final boolean requested;
+        VisualQualification state;
+        SavedVisionProbe.Verification verification;
+
+        TaskVisualQualification(RunControl owner, SettingsStore.ConfigurationLease configuration,
+                                long originalEpoch, boolean requested) {
+            this.owner = owner; this.configuration = configuration;
+            this.originalEpoch = originalEpoch; this.requested = requested;
+            state = requested ? VisualQualification.CHECKING : VisualQualification.NOT_REQUESTED;
+        }
+    }
 
     private static final class PendingApproval {
         final String id = UUID.randomUUID().toString();
@@ -146,7 +176,9 @@ public final class AgentController {
             return new State(status, control != null && !control.isCancelled(),
                     control != null && control.isPaused(),
                     pending == null ? "" : pending.description,
-                    pending == null ? "" : pending.id, log, summary, taskUsageLocked());
+                    pending == null ? "" : pending.id, log, summary, taskUsageLocked(),
+                    taskVisual == null ? completedVisualRequested : taskVisual.requested,
+                    visualQualificationLocked());
         }
     }
 
@@ -166,6 +198,35 @@ public final class AgentController {
             completedUsage = new TaskUsage(owner, usageBudget, true);
     }
 
+    /** Pure memory/clock checks: getters do not cancel, publish or initiate a probe. */
+    private VisualQualification visualQualificationLocked() {
+        TaskVisualQualification current = taskVisual;
+        if (current == null) return completedVisualQualification;
+        if (current.requested && (current.state == VisualQualification.CHECKING
+                || current.state == VisualQualification.SYNTHETIC_VERIFIED)) {
+            boolean sameEpoch = !current.owner.isCancelled() && !current.owner.isPaused()
+                    && current.owner.getExecutionEpoch() == current.originalEpoch
+                    && SettingsStore.isCurrent(current.configuration);
+            if (!sameEpoch || current.state == VisualQualification.SYNTHETIC_VERIFIED
+                    && (current.verification == null || !current.verification.isCurrentFor(
+                            current.configuration, current.owner, current.originalEpoch))) {
+                current.state = VisualQualification.INVALIDATED;
+                current.verification = null;
+            }
+        }
+        return current.state;
+    }
+
+    private void releaseVisualQualificationLocked(RunControl owner) {
+        if (taskVisual == null || taskVisual.owner != owner) return;
+        completedVisualRequested = taskVisual.requested;
+        VisualQualification state = visualQualificationLocked();
+        completedVisualQualification = state == VisualQualification.CHECKING
+                || state == VisualQualification.SYNTHETIC_VERIFIED ? VisualQualification.INVALIDATED : state;
+        taskVisual.verification = null;
+        taskVisual = null;
+    }
+
     public void addListener(Listener listener) { listeners.addIfAbsent(listener); }
     public void removeListener(Listener listener) { listeners.remove(listener); }
 
@@ -177,6 +238,13 @@ public final class AgentController {
     public void start(ModelSettings settings, String task, Set<String> allowedPackages,
                       ActionConfirmationPolicy.Mode executionMode, TaskBudget taskBudget,
                       SettingsStore.ConfigurationLease configurationLease) {
+        start(settings, task, allowedPackages, executionMode, taskBudget, configurationLease, false);
+    }
+
+    /** Explicit intent for this new task only; the legacy overloads remain structured-only. */
+    public void start(ModelSettings settings, String task, Set<String> allowedPackages,
+                      ActionConfirmationPolicy.Mode executionMode, TaskBudget taskBudget,
+                      SettingsStore.ConfigurationLease configurationLease, boolean visualRequested) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
             throw new IllegalStateException("请从任务界面启动。");
         }
@@ -202,6 +270,10 @@ public final class AgentController {
         if (scope.isEmpty()) throw new IllegalArgumentException("请至少选择一个允许操作的应用。");
 
         final RunControl active = new RunControl(SettingsStore.currentProfileId(context), taskBudget);
+        // Capture before publishing the control: a pause in the queue must never
+        // grant a new origin epoch to the old visual request.
+        final TaskVisualQualification visual = new TaskVisualQualification(active, configurationLease,
+                active.getExecutionEpoch(), visualRequested);
         final long session;
         synchronized (lock) {
             if (control != null) throw new IllegalStateException("已有任务正在运行，请先停止。");
@@ -209,6 +281,9 @@ public final class AgentController {
             control = active;
             usageBudget = taskBudget;
             completedUsage = null;
+            taskVisual = visual;
+            completedVisualRequested = false;
+            completedVisualQualification = VisualQualification.NOT_REQUESTED;
             configuration = configurationLease;
             pending = null;
             log.clear();
@@ -262,6 +337,8 @@ public final class AgentController {
                     return;
                 }
                 active.checkCancelled();
+                if (visual.requested) qualifyTaskVisual(session, visual);
+                active.checkCancelled();
                 AndroidDeviceTools tools = new AndroidDeviceTools(service, scope, saved.grants,
                         executionMode, configurationLease, (description, run, epoch) -> requestApproval(session, description, run, epoch, configurationLease));
                 AgentRunner runner = new AgentRunner(settings, tools, new AgentRunner.Listener() {
@@ -311,6 +388,85 @@ public final class AgentController {
         }
     }
 
+    /** Runs once on the existing task worker, before any structured observation. */
+    private void qualifyTaskVisual(long session, TaskVisualQualification visual) throws InterruptedException {
+        VisualQualification result;
+        SavedVisionProbe.Verification verification = null;
+        try {
+            visual.owner.checkExecutionEpoch(visual.originalEpoch);
+            synchronized (lock) {
+                requireVisualTaskLocked(session, visual);
+                requireConfigurationLocked(visual.configuration, visual.owner);
+                visual.owner.checkExecutionEpoch(visual.originalEpoch);
+                status = "正在检查本次任务的图像输入";
+                appendLogLocked("本次任务进行一次合成图片测试，计入模型轮次和活动时间；截图工具仍未开放。");
+            }
+            publish();
+            SavedVisionProbe registry = SavedVisionProbe.process();
+            SavedVisionProbe.Outcome outcome = registry.test(context, visual.configuration,
+                    visual.owner, visual.originalEpoch);
+            switch (outcome.status) {
+                case VERIFIED:
+                    verification = registry.current(visual.configuration);
+                    result = VisualQualification.SYNTHETIC_VERIFIED;
+                    break;
+                case UNVERIFIED: result = VisualQualification.UNVERIFIED; break;
+                case BUSY: result = VisualQualification.BUSY; break;
+                default: result = VisualQualification.FAILED;
+            }
+        } catch (TaskControlException interrupted) {
+            if (!"TASK_PAUSED".equals(interrupted.getCode())) throw interrupted;
+            // A pause only discards this original visual attempt. The final
+            // current-task/config/budget checks below must still pass before the
+            // structured runner may enter its existing pause/resume loop.
+            result = VisualQualification.INVALIDATED;
+        } catch (java.io.IOException unavailable) {
+            // Never expose storage/provider details or treat a cancelled task as
+            // an ordinary failed test. The same final guards apply below.
+            result = VisualQualification.FAILED;
+        }
+        visual.owner.checkCancelled();
+        synchronized (lock) {
+            requireVisualTaskLocked(session, visual);
+            requireConfigurationLocked(visual.configuration, visual.owner);
+            visual.owner.checkCancelled();
+            if (visual.owner.isPaused() || visual.owner.getExecutionEpoch() != visual.originalEpoch) {
+                result = VisualQualification.INVALIDATED;
+                verification = null;
+            } else if (result == VisualQualification.SYNTHETIC_VERIFIED
+                    && (verification == null || !verification.isCurrentFor(
+                            visual.configuration, visual.owner, visual.originalEpoch))) {
+                result = VisualQualification.INVALIDATED;
+                verification = null;
+            }
+            visual.state = result;
+            visual.verification = result == VisualQualification.SYNTHETIC_VERIFIED ? verification : null;
+            if (!visual.owner.isPaused()) status = "正在连接模型";
+            appendLogLocked(visualQualificationMessage(result));
+        }
+        publish();
+    }
+
+    private void requireVisualTaskLocked(long session, TaskVisualQualification visual) throws TaskControlException {
+        if (!isCurrentLocked(session) || control != visual.owner || taskVisual != visual)
+            throw new TaskControlException("TASK_STOPPED", "原任务已结束，旧图像测试不能继续。");
+    }
+
+    private static String visualQualificationMessage(VisualQualification result) {
+        switch (result) {
+            case SYNTHETIC_VERIFIED:
+                return "本次任务的合成图像理解测试通过；这不是截图许可，当前仍仅使用结构化工具。";
+            case BUSY:
+                return "图像测试服务正忙，本次不重试，继续使用结构化工具。";
+            case UNVERIFIED:
+                return "本次合成图像理解未通过校验，继续使用结构化工具。";
+            case INVALIDATED:
+                return "本次图像资格已失效，不沿用旧记录或自动重测；继续后使用结构化工具。";
+            default:
+                return "本次图像测试未完成，继续使用结构化工具。";
+        }
+    }
+
     public void pauseResume() {
         synchronized (lock) {
             if (control == null) return;
@@ -341,6 +497,7 @@ public final class AgentController {
             cancelled = control;
             cancelled.cancel();
             freezeUsageLocked(cancelled);
+            releaseVisualQualificationLocked(cancelled);
             PerformanceTrace.mark(PerformanceTrace.Stage.STOP_EPOCH_INVALIDATED,
                     cancelled.getExecutionEpoch(), cancelled.getDispatchAttempts());
             control = null;
@@ -448,6 +605,7 @@ public final class AgentController {
         // Use the existing cancellation hook to abort transport; never replace it.
         active.cancel();
         freezeUsageLocked(active);
+        releaseVisualQualificationLocked(active);
         control = null;
         configuration = null;
         clearOverlayCallbacksLocked();
@@ -471,6 +629,7 @@ public final class AgentController {
             if (!isCurrentLocked(session)) return;
             control.cancel();
             freezeUsageLocked(control);
+            releaseVisualQualificationLocked(control);
             control = null;
             configuration = null;
             clearOverlayCallbacksLocked();
@@ -550,6 +709,8 @@ public final class AgentController {
             summary = ""; log.clear(); status = "准备就绪";
             completedUsage = null;
             usageBudget = null;
+            completedVisualRequested = false;
+            completedVisualQualification = VisualQualification.NOT_REQUESTED;
         }
         publish();
     }

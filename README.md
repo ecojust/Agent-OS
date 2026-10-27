@@ -25,11 +25,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Add a separate fixed-APK page-predicate workflow: five actual pages across API34–37, preserving failed/blocked/missing evidence. APK/test APK/lint and all 173 script tests passed locally; the dedicated 20-case device run is pending. Default Android tests explicitly exclude this separate class.
+**本次更新：** Archive all 1920 actual round-51 device results: 1919 passed and one API31 keyboard inventory inconsistency failed. New service-generation module passed 40/40 within its stated low-API limits. Independently verified 4038 payloads and 2086 PNGs; preserve 1013 blocked captures and the original failure.
 
-**记录时间：** 2026-10-27T12:54:04Z
+**记录时间：** 2026-10-27T12:55:52Z
 
-[最近测试截图与清单](screenshots/40501804363-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40501804363)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40504724795-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40504724795)。通过、失败及未截图原因见清单。
 
 | 检查点 | 状态 |
 | --- | --- |

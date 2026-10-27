@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "api": 30,
+  "testClass": "dev.agentos.app.ContinuousNavigationInstrumentedTest",
+  "testName": "launchScrollAndHomeChangeTheRealUiWithoutAnApproval",
+  "assertionResult": "pass",
+  "testResult": "pass",
+  "status": "pass",
+  "startedAt": 1793120440576,
+  "finishedAt": 1793120446009,
+  "captures": [
+    {
+      "stage": "continuous-navigation-real-scroll-without-confirmation",
+      "capturedAt": 1793120444717,
+      "foregroundPackage": "dev.agentos.fixture",
+      "status": "pass",
+      "png": "api-30-launchScrollAndHomeChangeTheRealUiWithoutAnApproval-6e257bf1-continuous-navigation-real-scroll-without-confirmation-0.png",
+      "width": 320,
+      "height": 640,
+      "secureWindowTemporarilyCleared": false
+    },
+    {
+      "stage": "continuous-navigation-real-home-without-confirmation",
+      "capturedAt": 1793120445400,
+      "foregroundPackage": "com.android.launcher3",
+      "status": "blocked",
+      "captureError": "foreground_is_not_an_approved_synthetic_test_screen"
+    },
+    {
+      "stage": "finished",
+      "capturedAt": 1793120446009,
+      "foregroundPackage": "com.android.launcher3",
+      "status": "blocked",
+      "captureError": "foreground_is_not_an_approved_synthetic_test_screen"
+    }
+  ]
+}

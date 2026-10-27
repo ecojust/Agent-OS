@@ -374,7 +374,10 @@ final class SmokeHarness {
                 Rect overlay = new Rect(); other.getBoundsInScreen(overlay);
                 if (!Rect.intersects(bounds, overlay)) continue;
                 if (allowInputMethod && other.getType() == AccessibilityWindowInfo.TYPE_INPUT_METHOD) {
-                    require(inputMethod.isEmpty() && verifiedSystemInputMethod(other, overlay, display), "Unexpected input-method window");
+                    require(inputMethod.isEmpty(), "More than one input-method window");
+                    String refusal = systemInputMethodRefusal(other, overlay, display);
+                    require(refusal == null, "Unexpected input-method window: " + refusal
+                            + " region=" + overlay.toShortString() + " display=" + display.toShortString());
                     inputMethod.set(overlay);
                     continue;
                 }
@@ -391,28 +394,50 @@ final class SmokeHarness {
         }
     }
 
-    private boolean verifiedSystemInputMethod(AccessibilityWindowInfo window, Rect region, Rect display) {
-        if (target != NOTES_TARGET || region.isEmpty() || !display.contains(region)
-                || region.bottom != display.bottom || region.height() >= display.height()) return false;
+    private String systemInputMethodRefusal(AccessibilityWindowInfo window, Rect region, Rect display) {
+        if (target != NOTES_TARGET || window.getType() != AccessibilityWindowInfo.TYPE_INPUT_METHOD
+                || window.getDisplayId() != Display.DEFAULT_DISPLAY) return "unexpected_type_or_display";
+        ServiceInfo service = configuredSystemInputMethod();
+        if (service == null) return "configured_system_identity_unverified";
+        AccessibilityNodeInfo root = window.getRoot();
+        try {
+            if (root == null || !service.packageName.contentEquals(root.getPackageName() == null ? "" : root.getPackageName()))
+                return "root_package_mismatch";
+        } finally { if (root != null) root.recycle(); }
+        // Accessibility reports a touchable region, which can translate during
+        // the IME animation and need not include the navigation bar. This
+        // bounded allowance is only for hiding the verified keyboard, never
+        // for clicking or taking a screenshot through its region.
+        if (!plausibleInputMethodRegion(region, display)) return "unexplained_geometry";
+        return null;
+    }
+
+    private static boolean plausibleInputMethodRegion(Rect region, Rect display) {
+        return !region.isEmpty() && !display.isEmpty() && Rect.intersects(region, display)
+                && region.left >= display.left && region.right <= display.right
+                && region.top >= display.top && region.height() < display.height()
+                && (long) region.bottom <= (long) display.bottom + region.height();
+    }
+
+    ServiceInfo configuredSystemInputMethod() {
+        require(dedicated && target == NOTES_TARGET, "Only the frozen notes probe can inspect its system keyboard");
         String configured = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.DEFAULT_INPUT_METHOD);
         ComponentName component = configured == null ? null : ComponentName.unflattenFromString(configured);
         InputMethodManager manager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (component == null || manager == null) return false;
+        if (component == null || manager == null) return null;
         List<InputMethodInfo> enabled = manager.getEnabledInputMethodList();
-        if (enabled == null || enabled.size() > 16) return false;
+        if (enabled == null || enabled.size() > 16) return null;
         ServiceInfo matched = null;
         for (InputMethodInfo method : enabled) {
             ServiceInfo service = method.getServiceInfo();
             if (service != null && component.equals(new ComponentName(service.packageName, service.name))) {
-                if (matched != null) return false;
+                if (matched != null) return null;
                 matched = service;
             }
         }
         if (matched == null || !Manifest.permission.BIND_INPUT_METHOD.equals(matched.permission) || matched.applicationInfo == null
-                || (matched.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) return false;
-        AccessibilityNodeInfo root = window.getRoot();
-        try { return root != null && component.getPackageName().contentEquals(root.getPackageName() == null ? "" : root.getPackageName()); }
-        finally { if (root != null) root.recycle(); }
+                || (matched.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) return null;
+        return matched;
     }
 
     /** The sole IME-aware operation hides a verified system keyboard; it never clicks through it. */
@@ -521,20 +546,31 @@ final class SmokeHarness {
     }
 
     String notesAssertTitle(String expected) {
-        try (WindowSnapshot window = appWindow(false)) {
-            List<AccessibilityNodeInfo> found = window.root.findAccessibilityNodeInfosByText(expected);
-            int exact = 0;
-            try {
-                require(found != null && found.size() <= 32, "Notes title result is unavailable or ambiguous");
-                for (AccessibilityNodeInfo node : found) {
-                    if (node.isVisibleToUser() && node.getText() != null && expected.contentEquals(node.getText())) {
-                        requireUsableNotesNode(window, node); exact++;
+        long deadline = SystemClock.elapsedRealtime() + 5_000;
+        do {
+            try (WindowSnapshot window = appWindow(false)) {
+                List<AccessibilityNodeInfo> found = window.root.findAccessibilityNodeInfosByText(expected);
+                int exact = 0;
+                try {
+                    require(found != null && found.size() <= 32, "Notes title result is unavailable or ambiguous");
+                    for (AccessibilityNodeInfo node : found) {
+                        if (node.isVisibleToUser() && node.getText() != null && expected.contentEquals(node.getText())) {
+                            requireUsableNotesNode(window, node); exact++;
+                        }
                     }
+                } finally { if (found != null) for (AccessibilityNodeInfo node : found) node.recycle(); }
+                if (exact == 1) {
+                    require(SystemClock.elapsedRealtime() < deadline, "Created notes title arrived after its 5000ms observation deadline");
+                    return expected;
                 }
-            } finally { if (found != null) for (AccessibilityNodeInfo node : found) node.recycle(); }
-            require(exact == 1, "Created notes title is not uniquely visible");
-            return expected;
-        }
+                require(exact == 0, "Created notes title is ambiguous: exact=" + exact);
+            }
+            // Creation publishes the database-backed pager title asynchronously.
+            // Wait only for its exact text; never replay the create action, hide
+            // an unknown window, accept a different title or drop uniqueness.
+            if (SystemClock.elapsedRealtime() < deadline) SystemClock.sleep(50);
+        } while (SystemClock.elapsedRealtime() < deadline);
+        throw new AssertionError("Created notes title did not become uniquely visible within 5000ms: exact=0");
     }
 
     void notesBackgroundForSave() throws Exception {

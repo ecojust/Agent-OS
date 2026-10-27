@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Fix the test-only single-slot drain race observed in three round-48 usage cases, preserving the actual task queue. Accepted no-op waits share one fixed deadline; no device action is replayed. Test APK/lint passed. Next matrix also includes six compiled task-image qualification regressions.
+**本次更新：** Fix official Notes probe title publication and verified system-keyboard geometry; add conservative bounded IME-hide checks for test captures. Probe APK/lint passed and all original 32 combinations await rerun. Also queue the 235-per-API main regression, including task-image qualification and the usage drain fix.
 
-**记录时间：** 2026-10-27T11:48:36Z
+**记录时间：** 2026-10-27T11:50:09Z
 
 [最近测试截图与清单](screenshots/40496409142-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40496409142)。通过、失败及未截图原因见清单。
 

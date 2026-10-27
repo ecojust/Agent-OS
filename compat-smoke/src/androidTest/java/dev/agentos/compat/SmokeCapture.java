@@ -1,7 +1,9 @@
 package dev.agentos.compat;
 
+import android.content.pm.ServiceInfo;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
+import android.os.SystemClock;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -24,6 +26,7 @@ final class SmokeCapture {
         Bitmap bitmap = null;
         try {
             harness.verifyTargetIdentity();
+            String hiddenIme = awaitHiddenNotesInputMethod(harness);
             try (SmokeHarness.WindowSnapshot before = harness.appWindow(false)) {
                 SmokeHarness.require(before.bounds.width() <= 4096 && before.bounds.height() <= 4096,
                         "Unexpected screenshot geometry");
@@ -57,6 +60,10 @@ final class SmokeCapture {
                         return;
                     }
                     harness.verifyTargetIdentity();
+                    if (hiddenIme != null && !hiddenIme.equals(hiddenNotesInputMethod(harness))) {
+                        item.put("status", "blocked").put("reason", "input_method_changed_during_capture");
+                        return;
+                    }
                     if (!hasVisibleCalculatorContent(bitmap, before.bounds)) {
                         item.put("status", "blocked").put("reason", "application_surface_is_blank_or_protected");
                         return;
@@ -90,6 +97,78 @@ final class SmokeCapture {
             if (bitmap != null) bitmap.recycle();
             captures.put(item);
         }
+    }
+
+    private static String awaitHiddenNotesInputMethod(SmokeHarness harness) throws Exception {
+        if (harness.target != SmokeHarness.NOTES_TARGET) return null;
+        long deadline = SystemClock.elapsedRealtime() + 5_000;
+        String stable = null, last = "input_method_hidden_state_unverified";
+        // Read-only, at most four bounded dumps; never press BACK from capture.
+        // WMS state is not a SurfaceFlinger presentation fence. Two separated
+        // observations plus a post-capture check reduce, but cannot atomically
+        // eliminate, a new surface appearing between observations.
+        for (int attempt = 0; attempt < 4 && SystemClock.elapsedRealtime() < deadline; attempt++) {
+            try {
+                String current = hiddenNotesInputMethod(harness);
+                if (SystemClock.elapsedRealtime() >= deadline)
+                    throw new CaptureRefused("input_method_hidden_state_timed_out");
+                if (current.equals(stable)) return current;
+                stable = current;
+            } catch (CaptureRefused refusal) {
+                stable = null;
+                last = refusal.getMessage();
+            }
+            if (attempt < 3 && SystemClock.elapsedRealtime() < deadline) SystemClock.sleep(150);
+        }
+        throw new CaptureRefused(last);
+    }
+
+    private static String hiddenNotesInputMethod(SmokeHarness harness) throws Exception {
+        ServiceInfo ime = harness.configuredSystemInputMethod();
+        if (ime == null) throw new CaptureRefused("configured_system_input_method_unverified");
+        String identity = inspectedHiddenInputMethod(harness.shell("dumpsys -t 2 window -a windows"),
+                ime.applicationInfo.uid, ime.packageName);
+        return identity + "/" + ime.name;
+    }
+
+    /** Narrow Notes evidence check, not a general window parser or an action permission. */
+    private static String inspectedHiddenInputMethod(String dump, int ownerUid, String packageName) throws CaptureRefused {
+        if (!dump.startsWith("WINDOW MANAGER WINDOWS")) throw new CaptureRefused("input_method_window_dump_unavailable");
+        Matcher selected = Pattern.compile("(?m)^[\\t ]*mInputMethodWindow=Window\\{([0-9a-fA-F]+)\\s+u0\\s+[^}]+\\}").matcher(dump);
+        if (!selected.find()) throw new CaptureRefused("input_method_window_reference_unavailable");
+        String token = selected.group(1);
+        if (selected.find()) throw new CaptureRefused("input_method_window_reference_ambiguous");
+        String[] records = dump.split("(?m)(?=^[\\t ]*Window #[0-9]+ )");
+        String matched = null;
+        int inputMethods = 0;
+        for (String record : records) {
+            if (!record.trim().startsWith("Window #")) continue;
+            if (!Pattern.compile("\\bty=(?:INPUT_METHOD|2011)\\b").matcher(record).find()) continue;
+            inputMethods++;
+            if (Pattern.compile("^[\\t ]*Window #[0-9]+ Window\\{" + Pattern.quote(token)
+                    + "\\s+u0\\s+[^}]+\\}:").matcher(record).find()) matched = record;
+        }
+        if (inputMethods != 1 || matched == null) throw new CaptureRefused("input_method_window_record_missing_or_ambiguous");
+        if (!oneField(matched, "mOwnerUid", Integer.toString(ownerUid))
+                || !oneField(matched, "mDisplayId", "0")
+                || !Pattern.compile("(?m)^[\\t ]*mOwnerUid=" + ownerUid
+                        + "[\\t ]+[^\\r\\n]*\\bpackage=" + Pattern.quote(packageName) + "(?:[\\t ]|$)").matcher(matched).find())
+            throw new CaptureRefused("input_method_window_identity_mismatch");
+        if (!oneField(matched, "isOnScreen", "false") || !oneField(matched, "isVisible", "false")
+                || !oneField(matched, "isReadyForDisplay()", "false")
+                || !oneField(matched, "mLastHidden", "true")
+                || !oneField(matched, "mEnterAnimationPending", "false")
+                || Pattern.compile("\\bmAnimatingExit=true\\b").matcher(matched).find())
+            throw new CaptureRefused("input_method_is_visible_animating_or_unverified");
+        if (!oneField(matched, "mHasSurface", "false")
+                && !(oneField(matched, "mHasSurface", "true") && oneField(matched, "Surface: shown", "false")))
+            throw new CaptureRefused("input_method_surface_is_visible_or_unverified");
+        return token + "/" + ownerUid + "/" + packageName;
+    }
+
+    private static boolean oneField(String block, String field, String expected) {
+        Matcher matcher = Pattern.compile("(?<![A-Za-z0-9_])" + Pattern.quote(field) + "=([^\\s]+)").matcher(block);
+        return matcher.find() && expected.equals(matcher.group(1)) && !matcher.find();
     }
 
     private static WindowFlags inspectedWindow(String dump) throws CaptureRefused {
@@ -157,6 +236,7 @@ final class SmokeCapture {
                 "Numeric secure window flag was missed");
         SmokeHarness.require(inspectedWindow(complete.replace("fl=0x100", "fl=SECURE")).secure,
                 "Named secure window flag was missed");
+        verifyInputMethodWindowParser();
         String notes = complete.replace("org.fossify.math", "org.fossify.notes");
         SmokeHarness.require(!inspectedWindow(notes, SmokeHarness.NOTES_TARGET).secure, "Pinned notes page was not matched");
         boolean crossPackageRefused = false;
@@ -169,6 +249,43 @@ final class SmokeCapture {
             boolean refused = false;
             try { inspectedWindow(rejected); } catch (CaptureRefused expected) { refused = true; }
             SmokeHarness.require(refused, "Missing, ambiguous, foreign or uninspectable window was accepted");
+        }
+    }
+
+    private static void verifyInputMethodWindowParser() throws Exception {
+        // Parser-only fixtures. These are never written as UI/PNG evidence.
+        String ime = "WINDOW MANAGER WINDOWS (dumpsys window windows)\n"
+                + "  Window #0 Window{abc u0 InputMethod}:\n"
+                + "    mDisplayId=0\n    mOwnerUid=10100 showForAllUsers=false package=com.android.inputmethod.latin appop=NONE\n"
+                + "    mAttrs={ ty=INPUT_METHOD }\n"
+                + "    mHasSurface=true isReadyForDisplay()=false\n"
+                + "    mLastHidden=true mEnterAnimationPending=false\n"
+                + "    Surface: shown=false layer=0\n"
+                + "    isOnScreen=false\n    isVisible=false\n"
+                + "  mInputMethodWindow=Window{abc u0 InputMethod}\n";
+        inspectedHiddenInputMethod(ime, 10100, "com.android.inputmethod.latin");
+        inspectedHiddenInputMethod(ime.replace("mHasSurface=true", "mHasSurface=false")
+                .replace("    Surface: shown=false layer=0\n", ""), 10100, "com.android.inputmethod.latin");
+        for (String rejected : new String[] {
+                ime.replace("isOnScreen=false", "isOnScreen=true"),
+                ime.replace("isVisible=false", "isVisible=true"),
+                ime.replace("Surface: shown=false", "Surface: shown=true"),
+                ime.replace("mEnterAnimationPending=false", "mEnterAnimationPending=true"),
+                ime.replace("mLastHidden=true", "mLastHidden=false"),
+                ime.replace("isReadyForDisplay()=false", "isReadyForDisplay()=true"),
+                ime.replace("isVisible=false", "isVisible=false isVisible=false"),
+                ime.replace("isOnScreen=false\n", ""),
+                ime.replace("mOwnerUid=10100", "mOwnerUid=10101"),
+                ime.replace("mDisplayId=0", "mDisplayId=1"),
+                ime.replace("ty=INPUT_METHOD", "ty=APPLICATION"),
+                ime.replace("mInputMethodWindow=Window{abc", "mInputMethodWindow=Window{def"),
+                ime.replace("mInputMethodWindow=", "unknownWindow="),
+                ime + "mInputMethodWindow=Window{abc u0 InputMethod}\n",
+                ime.replace("isOnScreen=false", "mAnimatingExit=true isOnScreen=false")}) {
+            boolean refused = false;
+            try { inspectedHiddenInputMethod(rejected, 10100, "com.android.inputmethod.latin"); }
+            catch (CaptureRefused expected) { refused = true; }
+            SmokeHarness.require(refused, "Visible, animating or unverified IME surface was accepted");
         }
     }
 

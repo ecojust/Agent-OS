@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Independently audit round49 at source5060f597: 1880/1880 Android emulator cases passed; 3922 payloads and 2010 real PNGs verified, protected captures retained. Task usage and original-task image checks each passed 48/48. GitHub access restored; later guarded-image module has 282 passing local core tests.
+**本次更新：** Record the independently audited round49 baseline: 1880/1880 across eight Android emulators, including all task usage and image qualification cases. Real model, physical phone and production screenshot acceptance remain separate; later image request guard module passes 282 core tests locally.
 
-**记录时间：** 2026-10-27T12:14:19Z
+**记录时间：** 2026-10-27T12:14:41Z
 
 [最近测试截图与清单](screenshots/40499116931-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40499116931)。通过、失败及未截图原因见清单。
 

@@ -500,15 +500,22 @@ public final class DeviceToolsInstrumentedTest {
             long deadline = SystemClock.elapsedRealtime() + 5_000;
             boolean keyboard = false;
             boolean visibleInset = false;
+            int observedOk = 0, observedStale = 0;
+            String lastObservationCode = "not_attempted", lastWindows = "not_read";
             while (!(keyboard && visibleInset) && SystemClock.elapsedRealtime() < deadline) {
                 // Exercise the executor's authoritative observation path, including
                 // its platform cache refresh, rather than a stale test-only window read.
                 JsonObject sample = device.tools.execute("observe", new JsonObject(), device.control);
+                boolean sampleOk = sample.get("ok").getAsBoolean();
+                lastObservationCode = sampleOk ? "OK" : string(sample, "code");
+                if (sampleOk) observedOk++;
+                else if ("STALE_OBSERVATION".equals(lastObservationCode)) observedStale++;
                 assertTrue(sample.toString(), sample.get("ok").getAsBoolean()
                         || "STALE_OBSERVATION".equals(string(sample, "code")));
                 keyboard = false;
                 List<AccessibilityWindowInfo> windows = device.service.getWindows();
                 try {
+                    lastWindows = compactWindowMetadata(windows);
                     for (AccessibilityWindowInfo window : windows) {
                         if (window.getType() == AccessibilityWindowInfo.TYPE_INPUT_METHOD) keyboard = true;
                     }
@@ -518,8 +525,10 @@ public final class DeviceToolsInstrumentedTest {
             }
             if (!(keyboard && visibleInset)) {
                 screenshots.capture("keyboard-not-visible");
-                fail("The synthetic editor did not show its keyboard: window=" + keyboard + ", visibleInset=" + visibleInset
-                        + "\n" + windowDiagnostics() + "\n" + device.keyboardDiagnostics());
+                fail("Keyboard visibility evidence did not agree: window=" + keyboard + ", visibleInset=" + visibleInset
+                        + "; observeOk=" + observedOk + ", observeStale=" + observedStale + ", lastCode=" + lastObservationCode
+                        + "\nLast loop service windows: " + lastWindows
+                        + "\n" + device.keyboardWindowDiagnostics() + "\n" + device.keyboardDiagnostics());
             }
             JsonObject observed = awaitObservation(device.tools, device.control,
                     data -> data.has("windowId") && data.get("windowId").getAsInt() == focusedWindowId(device.service));

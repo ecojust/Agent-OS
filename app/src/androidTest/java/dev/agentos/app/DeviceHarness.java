@@ -35,6 +35,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.junit.Assert.*;
 
@@ -342,6 +344,157 @@ final class DeviceHarness implements AutoCloseable {
         } else diagnostic.append("\nSelected input-method service is unavailable or has an invalid component identifier");
         appendShellDump(diagnostic, "global input-method state", "dumpsys input_method", 16_384);
         return diagnostic.toString();
+    }
+
+    /** Failure-only, synthetic-device metadata; never a new observation or an IME acceptance shortcut. */
+    String keyboardWindowDiagnostics() {
+        StringBuilder result = new StringBuilder("Synthetic keyboard window registration evidence (same-process shared cache; sequential reads, not simultaneous snapshots):");
+        try {
+            AccessibilityServiceInfo info = service.getServiceInfo();
+            result.append("\nservice flags=").append(info == null ? "unavailable" : "0x" + Integer.toHexString(info.flags));
+            if (info != null) service.setServiceInfo(info);
+            result.append(info == null ? " refresh=unavailable" : " refresh=same-info-requested");
+            appendConnectionWindows(result, service.getWindows());
+        } catch (RuntimeException unavailable) {
+            result.append("\nservice unavailable: ").append(unavailable.getClass().getSimpleName());
+        }
+        try {
+            // Each connection reapplies its own unchanged configuration before
+            // reading. Older releases share a cache: neither list is server proof.
+            AccessibilityServiceInfo info = automation.getServiceInfo();
+            result.append("\nUiAutomation flags=").append(info == null ? "unavailable" : "0x" + Integer.toHexString(info.flags));
+            if (info != null) automation.setServiceInfo(info);
+            result.append(info == null ? " refresh=unavailable" : " refresh=same-info-requested");
+            appendConnectionWindows(result, automation.getWindows());
+        } catch (RuntimeException unavailable) {
+            result.append("\nUiAutomation unavailable: ").append(unavailable.getClass().getSimpleName());
+        }
+        String selected = null;
+        int selectedUid = -1;
+        try {
+            String component;
+            try { component = readSecure("default_input_method"); }
+            catch (RuntimeException restricted) {
+                result.append("\nselectedIme read=existing shell fallback");
+                component = readSecureFromShell("default_input_method");
+            }
+            if (component != null && component.length() <= 256
+                    && component.matches("[A-Za-z0-9_.$]+/[A-Za-z0-9_.$]+")) {
+                selected = component.substring(0, component.indexOf('/'));
+                selectedUid = context.getPackageManager().getApplicationInfo(selected, 0).uid;
+                result.append("\nselectedIme=").append(component).append(" uid=").append(selectedUid);
+            } else result.append("\nselectedIme unavailable or invalid");
+        } catch (Exception unavailable) {
+            result.append("\nselectedIme identity unavailable: ").append(unavailable.getClass().getSimpleName());
+        }
+        appendKeyboardServerMetadata(result, true, selectedUid);
+        appendKeyboardServerMetadata(result, false, selectedUid);
+        return result.toString();
+    }
+
+    /** Does not fetch roots or recycle caller-owned windows. */
+    static String compactWindowMetadata(List<AccessibilityWindowInfo> windows) {
+        if (windows == null) return "unavailable";
+        StringBuilder result = new StringBuilder("count=" + windows.size());
+        int count = 0;
+        for (AccessibilityWindowInfo window : windows) {
+            if (count++ == 10) { result.append(" [remaining windows omitted]"); break; }
+            Rect bounds = new Rect(); window.getBoundsInScreen(bounds);
+            result.append(" {id=").append(window.getId()).append(",type=").append(window.getType())
+                    .append(",display=").append(window.getDisplayId()).append(",layer=").append(window.getLayer())
+                    .append(",focused=").append(window.isFocused()).append(",active=").append(window.isActive())
+                    .append(",bounds=").append(bounds.toShortString()).append('}');
+        }
+        return result.toString();
+    }
+
+    private static void appendConnectionWindows(StringBuilder target, List<AccessibilityWindowInfo> windows) {
+        try {
+            target.append(" windows=").append(compactWindowMetadata(windows));
+        } finally { if (windows != null) for (AccessibilityWindowInfo window : windows) window.recycle(); }
+    }
+
+    private void appendKeyboardServerMetadata(StringBuilder result, boolean windowManager, int selectedUid) {
+        String label = windowManager ? "WM fixture/selected-IME window metadata" : "AMS accessibility fixture/input-method records";
+        result.append('\n').append(label).append(':');
+        String command = windowManager ? "dumpsys -t 2 window windows" : "dumpsys -t 2 accessibility";
+        int byteLimit = 128 * 1024, outputLimit = windowManager ? 2_000 : 1_400;
+        try (ParcelFileDescriptor.AutoCloseInputStream input = new ParcelFileDescriptor.AutoCloseInputStream(
+                automation.executeShellCommand(command)); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[4096];
+            int read;
+            while (output.size() < byteLimit && (read = input.read(buffer, 0, Math.min(buffer.length, byteLimit - output.size()))) != -1)
+                output.write(buffer, 0, read);
+            String dump = output.toString(StandardCharsets.UTF_8.name());
+            StringBuilder selected = new StringBuilder();
+            boolean truncated = false;
+            int imeRecords = 0, fixtureRecords = 0, associatedImeRecords = 0;
+            if (windowManager) {
+                Pattern owner = Pattern.compile("\\bmOwnerUid=" + selectedUid + "\\b");
+                Matcher targets = Pattern.compile("(?m)^[\\t ]*(m?(?:ImeLayeringTarget|ImeInputTarget|ImeControlTarget|InputMethodWindow)|imeLayeringTarget|imeInputTarget|imeControlTarget)=(.*)$").matcher(dump);
+                int targetCount = 0;
+                while (targetCount < 4 && targets.find()) {
+                    targetCount++;
+                    Matcher token = Pattern.compile("Window\\{[0-9a-fA-F]+").matcher(targets.group(2));
+                    result.append("\n  ").append(targets.group(1)).append('=')
+                            .append(token.find() ? token.group() : targets.group(2).trim().equals("null") ? "null" : "unparsed")
+                            .append(targets.group(2).contains(FIXTURE) ? " fixture" : "");
+                }
+                if (targetCount == 0) result.append(" [IME target references absent from bounded dump]");
+                String[] blocks = dump.split("(?m)(?=^[\\t ]*Window #[0-9]+ )");
+                // Put the selected IME first so fixture metadata cannot consume
+                // the output budget before the missing-window question is shown.
+                for (int pass = 0; pass < 2 && selected.length() < outputLimit; pass++) for (String block : blocks) {
+                    String[] lines = block.trim().split("\\r?\\n");
+                    String header = lines[0].trim();
+                    if (!header.matches("Window #[0-9]+.*")) continue;
+                    boolean fixture = header.contains(FIXTURE);
+                    boolean inputMethod = Pattern.compile("\\bty=(?:INPUT_METHOD|2011)\\b").matcher(block).find();
+                    boolean matchesIme = inputMethod && selectedUid >= 0 && owner.matcher(block).find();
+                    if (pass == 0 ? !inputMethod : !fixture) continue;
+                    if (fixture) fixtureRecords++; else imeRecords++;
+                    if (matchesIme) associatedImeRecords++;
+                    selected.append("\n  ").append(fixture ? "fixture" : matchesIme
+                            ? "selected-IME UID matched" : "IME window; selected owner unassociated");
+                    Matcher identity = Pattern.compile("Window #[0-9]+|Window\\{[0-9a-fA-F]+").matcher(header);
+                    while (identity.find()) selected.append(' ').append(identity.group());
+                    int recordLimit = selected.length() + 800;
+                    for (String raw : lines) {
+                        String line = raw.trim();
+                        // Only window registration, geometry, type and visibility;
+                        // never root/node text or unrelated Activity/service state.
+                        if (!line.matches(".*(?:mDisplayId|mOwnerUid|mViewVisibility|mHasSurface|isOnScreen|isVisible|mDestroying|mRemoved|mRemoveOnExit|mAnimatingExit|mAppDied|mObscured|mDrawState|mHidden|mVisibleRequested|mSurfaceShown|mFrame|frame|mTouchableInsets|touchableRegion)=.*")
+                                && !line.startsWith("mAttrs=") && !line.startsWith("Frames:") && !line.startsWith("fl=")) continue;
+                        selected.append("\n   ").append(line, 0, Math.min(line.length(), 320));
+                        if (line.length() > 320) truncated = true;
+                        if (selected.length() >= recordLimit || selected.length() >= outputLimit) { truncated = true; break; }
+                    }
+                    if (selected.length() >= outputLimit) break;
+                }
+            } else {
+                Pattern fields = Pattern.compile("\\b(?:id|type|layer|focused|active|displayId|parentId)=[^,\\]]+|bounds=Rect\\([^)]*\\)");
+                for (String line : dump.split("\\r?\\n")) {
+                    if (!line.contains("AccessibilityWindowInfo[")) continue;
+                    boolean fixture = line.contains("Agent OS Test Fixture");
+                    boolean inputMethod = line.contains("type=TYPE_INPUT_METHOD") || line.matches(".*\\btype=2[,\\]].*");
+                    if (!fixture && !inputMethod) continue;
+                    if (fixture) fixtureRecords++; else imeRecords++;
+                    selected.append("\n  ").append(fixture ? "fixture" : "input-method type; selected UID not exposed");
+                    Matcher metadata = fields.matcher(line);
+                    while (metadata.find()) selected.append(' ').append(metadata.group());
+                    if (selected.length() >= outputLimit) break;
+                }
+            }
+            result.append(" fixtureRecords=").append(fixtureRecords)
+                    .append(", inputMethodTypeRecords=").append(imeRecords);
+            if (windowManager) result.append(", selectedImeUidMatches=").append(associatedImeRecords);
+            if (selected.length() == 0) result.append(" [no matching records in bounded dump; not proof of absence]");
+            else result.append(selected, 0, Math.min(selected.length(), outputLimit));
+            if (truncated || selected.length() > outputLimit || output.size() == byteLimit) result.append(" [bounded/truncated]");
+            if (windowManager && selectedUid < 0) result.append(" [selected IME UID unavailable]");
+        } catch (Exception unavailable) {
+            result.append(" [unavailable: ").append(unavailable.getClass().getSimpleName()).append(']');
+        }
     }
 
     private void appendShellDump(StringBuilder diagnostic, String label, String command, int limit) {

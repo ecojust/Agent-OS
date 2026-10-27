@@ -1,0 +1,30 @@
+  | Report: /tmp/agent-os-junit-k7fbkqqd/report-01.xml
+  | Suite: dev.agentos.app.OwnedControlWindowInstrumentedTest
+  | Test: dev.agentos.app.OwnedControlWindowInstrumentedTest.changedPresentationAndCallbacksStillRevokeTheActualControlOwner
+  | Kind: failure / 
+  | java.lang.AssertionError: Real window did not register with id=6 display=0 bounds=Rect(12, 24 - 308, 114)
+  | Fixture window diagnostics:
+  | currentMetrics=[0,0][320,640] status=Insets{left=0, top=24, right=0, bottom=0} navigation=Insets{left=0, top=0, right=0, bottom=0} stableBars=Insets{left=0, top=24, right=0, bottom=0} cutout=Insets{left=0, top=0, right=0, bottom=0} statusVisible=true navigationVisible=false
+  | maximumMetrics=[0,0][320,640] status=Insets{left=0, top=24, right=0, bottom=0} navigation=Insets{left=0, top=0, right=0, bottom=0} stableBars=Insets{left=0, top=24, right=0, bottom=0} cutout=Insets{left=0, top=0, right=0, bottom=0} statusVisible=true navigationVisible=false
+  | type=4 id=6 title=Agent OS task controls layer=2 active=false focused=false display=0 bounds=[12,12][308,102] rootId=6 rootPackage=dev.agentos.app rootClass=android.widget.LinearLayout visibleBeforeRefresh=true rootRefresh=true visibleAfterRefresh=true
+  | type=3 id=4 title=null layer=1 active=false focused=false display=0 bounds=[0,0][320,24] rootId=4 rootPackage=com.android.systemui rootClass=android.widget.FrameLayout visibleBeforeRefresh=true rootRefresh=true visibleAfterRefresh=true
+  | type=1 id=8 title=Agent OS Test Fixture layer=0 active=true focused=true display=0 bounds=[0,0][320,640] rootId=8 rootPackage=dev.agentos.fixture rootClass=android.widget.FrameLayout visibleBeforeRefresh=true rootRefresh=true visibleAfterRefresh=true
+  | Drag registration failure-only measurements: expectedId=6 expectedDisplay=0 expectedBounds=[12,24][308,114] samples_are_sequential_not_atomic=true
+  | local atMs=1 attached=true shown=true laidOut=true layoutRequested=false hasWindowToken=true viewBounds=[12,24][308,114] inWindow=0,0 hasGlobalVisibleRect=true globalVisibleRect=[0,0][296,90] translation=0.0,0.0 scale=1.0,1.0 paramsX=0 paramsY=24 paramsWidth=296 paramsHeight=-2 paramsGravity=49 paramsType=2032 paramsFlags=16777256 published=true publishedId=6 publishedDisplay=0 publishedBounds=[12,24][308,114] publishedCurrent=true
+  | platform atMs=1 matchingIdCount=1 id=6 type=4 display=0 focused=false layer=2 bounds=[12,12][308,102] rootIdBefore=6 rootBoundsBefore=[12,24][308,114] rootPackageMatchesBefore=true rootRefresh=true rootIdAfter=6 rootBoundsAfter=[12,24][308,114] rootPackageMatchesAfter=true endMs=2
+  | wm atMs=2 shellStreamComplete=true bytesRead=23785 candidateCountScope=complete_returned_stdout association=synthetic_title_uid_type_only candidateCount=1 displayCount=1 display=0 ownerUidCount=1 ownerUid=10106 frameCount=1 frame=[12,24][308,114] lastFrameCount=1 lastFrame=[12,24][308,114] touchableInsetsCount=0 touchableInsets=not_reported touchableRegionCount=0 touchableRegion=not_reported mHasSurfaceCount=1 mHasSurface=true isOnScreenCount=1 isOnScreen=true isVisibleCount=1 isVisible=true mRelayoutCalledCount=0 mRelayoutCalled=not_reported mLayoutNeededCount=0 mLayoutNeeded=not_reported mHaveFrameCount=1 mHaveFrame=true endMs=14
+  | at dev.agentos.app.OwnedControlWindowInstrumentedTest.assertFreshRegisteredAfterDrag(OwnedControlWindowInstrumentedTest.java:404)
+  | at dev.agentos.app.OwnedControlWindowInstrumentedTest.changedPresentationAndCallbacksStillRevokeTheActualControlOwner(OwnedControlWindowInstrumentedTest.java:275)
+  | ... 33 trimmed
+  | Caused by: java.lang.AssertionError: Real window did not register with id=6 display=0 bounds=Rect(12, 24 - 308, 114)
+  | Fixture window diagnostics:
+  | currentMetrics=[0,0][320,640] status=Insets{left=0, top=24, right=0, bottom=0} navigation=Insets{left=0, top=0, right=0, bottom=0} stableBars=Insets{left=0, top=24, right=0, bottom=0} cutout=Insets{left=0, top=0, right=0, bottom=0} statusVisible=true navigationVisible=false
+  | maximumMetrics=[0,0][320,640] status=Insets{left=0, top=24, right=0, bottom=0} navigation=Insets{left=0, top=0, right=0, bottom=0} stableBars=Insets{left=0, top=24, right=0, bottom=0} cutout=Insets{left=0, top=0, right=0, bottom=0} statusVisible=true navigationVisible=false
+  | type=4 id=6 title=Agent OS task controls layer=2 active=false focused=false display=0 bounds=[12,12][308,102] rootId=6 rootPackage=dev.agentos.app rootClass=android.widget.LinearLayout visibleBeforeRefresh=true rootRefresh=true visibleAfterRefresh=true
+  | type=3 id=4 title=null layer=1 active=false focused=false display=0 bounds=[0,0][320,24] rootId=4 rootPackage=com.android.systemui rootClass=android.widget.FrameLayout visibleBeforeRefresh=true rootRefresh=true visibleAfterRefresh=true
+  | type=1 id=8 title=Agent OS Test Fixture layer=0 active=true focused=true display=0 bounds=[0,0][320,640] rootId=8 rootPackage=dev.agentos.fixture rootClass=android.widget.FrameLayout visibleBeforeRefresh=true rootRefresh=true visibleAfterRefresh=true
+  | at org.junit.Assert.fail(Assert.java:89)
+  | at dev.agentos.app.OwnedControlWindowInstrumentedTest.assertRegistered(OwnedControlWindowInstrumentedTest.java:447)
+  | at dev.agentos.app.OwnedControlWindowInstrumentedTest.assertFreshRegisteredAfterDrag(OwnedControlWindowInstrumentedTest.java:392)
+  | ... 35 more
+Parsed 1 Android reports; found 1 failure/error entries.

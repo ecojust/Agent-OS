@@ -25,11 +25,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Add an explicit manual owned-control diagnostic scope: exactly one fixed case per API, eight expected cases, original XML/capture identity checks and honest missing/skipped results. The normal 242-case-per-API regression is unchanged. All 241 Python checks and shell syntax validation pass; focused device diagnostics are next.
+**本次更新：** Archive the focused owned-control diagnostic only: 5/8 pass, API30–32 fail, with 72 verified payloads and 40 real screenshots. Original Checks summaries show moved View/root geometry while the accessibility window table remains at the old position. Preserve source/artifact hashes and keep this separate from the full 1,936-case regression; compatibility repair is still in progress.
 
-**记录时间：** 2026-10-27T16:16:33Z
+**记录时间：** 2026-10-27T16:29:28Z
 
-[最近测试截图与清单](screenshots/40534427816-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40534427816)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40539311569-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40539311569)。通过、失败及未截图原因见清单。
 
 **整体操作演示：** [播放视频](screenshots/demos/40531630013-1/demo.mp4) · [录制与验证清单](screenshots/demos/40531630013-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40531630013)。
 录制版本：[`7f47313b9`](https://github.com/ecojust/Agent-OS/commit/7f47313b949461458529bc972a36f11fa1b327be)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。

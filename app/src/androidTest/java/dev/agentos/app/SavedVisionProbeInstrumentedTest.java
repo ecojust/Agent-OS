@@ -50,6 +50,14 @@ public final class SavedVisionProbeInstrumentedTest {
             assertTrue(record.verifiedAtElapsedRealtimeMillis <= after);
             assertEquals(record.verifiedAtElapsedRealtimeMillis + FRESHNESS_MILLIS, record.expiresAtElapsedRealtimeMillis);
             assertFalse(record.isCurrentFor(null)); assertSame(record, registry.current(env.lease));
+            // A UI owner must not adopt another attempt's result, even when
+            // both attempts name the same saved configuration and profile.
+            assertTrue(record.isCurrentFor(env.lease, owner, epoch));
+            assertFalse(record.isCurrentFor(env.lease, null, epoch));
+            assertFalse(record.isCurrentFor(env.lease, env.control(), epoch));
+            assertFalse(record.isCurrentFor(env.lease, owner, epoch + 1));
+            assertSame(record, registry.current(env.lease));
+            assertTrue(record.isCurrentFor(env.lease, owner, epoch));
             assertEquals(1, owner.budgetSnapshot().modelRounds); assertEquals(0, owner.budgetSnapshot().toolCalls);
             assertEquals(0, owner.getDispatchAttempts()); assertEquals(epoch, owner.getExecutionEpoch()); assertFalse(owner.isCancelled());
             assertSame(env.lease, env.store.loadWithLease().lease);

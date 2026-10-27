@@ -13,6 +13,7 @@ import android.graphics.drawable.StateListDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.os.CancellationSignal;
 import android.os.OperationCanceledException;
 import android.provider.Settings;
@@ -105,7 +106,27 @@ public final class MainActivity extends Activity implements AgentController.List
     private UiDraft retainedDraft;
     private RunControl modelProbe;
     private long probeGeneration;
-    private enum ProbeKind { TOOL, VISION }
+    private enum ProbeKind { TOOL, VISION, SAVED_VISION }
+    private ProbeKind displayedVisionKind = ProbeKind.VISION;
+    private long configurationGeneration;
+    private long savedConfigurationGeneration = -1;
+    private SettingsStore.ConfigurationLease savedConfigurationLease;
+    private SavedProbeOwner savedProbeOwner;
+    private String savedProbeState = "未建立";
+
+    /** Main-thread lifetime; no credentials, response, image or worker are retained. */
+    private static final class SavedProbeOwner {
+        final RunControl control;
+        final long epoch, configurationGeneration;
+        final SettingsStore.ConfigurationLease lease;
+        SettingsStore.Registration registration;
+        SavedVisionProbe.Verification verification;
+        Runnable expiry;
+        SavedProbeOwner(RunControl control, SettingsStore.ConfigurationLease lease, long generation) {
+            this.control = control; this.epoch = control.getExecutionEpoch();
+            this.lease = lease; this.configurationGeneration = generation;
+        }
+    }
     private ProbeKind activeProbeKind;
     private boolean resumed, toolProbeTested, toolVerified, imageProbeTested, syntheticImageVerified;
     private String probeConnection = "未测试", probeMessage = "";
@@ -170,12 +191,16 @@ public final class MainActivity extends Activity implements AgentController.List
     @Override protected void onPause() {
         resumed = false;
         dismissProbeTrustDialog();
+        invalidateSavedProbe("已失效，请重新测试");
+        renderProbeResult();
         super.onPause();
     }
 
     @Override protected void onStop() {
         closeDeviceDiagnostics(true);
         cancelModelProbe("已离开配置页面，测试已取消。", false);
+        invalidateSavedProbe("已失效，请重新测试");
+        renderProbeResult();
         controller.removeListener(this);
         super.onStop();
     }
@@ -183,6 +208,7 @@ public final class MainActivity extends Activity implements AgentController.List
     @Override protected void onDestroy() {
         closeDeviceDiagnostics(true);
         cancelModelProbe("测试已取消。", false);
+        invalidateSavedProbe("已失效，请重新测试");
         destroyed = true;
         diagnosticsWorker.shutdownNow();
         storageWorker.shutdown();
@@ -290,10 +316,10 @@ public final class MainActivity extends Activity implements AgentController.List
         marginAdd(modelFields, probeButton, 12);
         visionProbeButton = button("测试图像理解", R.drawable.ic_settings, false);
         visionProbeButton.setId(R.id.test_model_vision);
-        visionProbeButton.setOnClickListener(view -> startModelProbe(ProbeKind.VISION));
+        visionProbeButton.setOnClickListener(view -> startModelProbe(displayedVisionKind));
         configurationViews.add(visionProbeButton);
         marginAdd(modelFields, visionProbeButton, 8);
-        marginAdd(modelFields, text("只上传自动生成的合成色块，不读取屏幕或发送任务内容。", 12,
+        marginAdd(modelFields, text("只上传自动生成的合成色块，不读取屏幕或发送任务内容。已保存配置会建立短期诊断记录；未保存的修改仅测试当前填写内容。记录不开放截图能力。", 12,
                 R.color.agent_muted, false), 6);
         cancelProbeButton = button("取消测试", R.drawable.ic_stop, false);
         cancelProbeButton.setId(R.id.cancel_model_test);
@@ -341,8 +367,11 @@ public final class MainActivity extends Activity implements AgentController.List
                 bindExecutionMode();
                 return;
             }
+            configurationEdited();
             draft.executionMode = checkedId == R.id.execution_mode_continuous_navigation
                     ? ActionConfirmationPolicy.Mode.CONTINUOUS_NAVIGATION : ActionConfirmationPolicy.Mode.CONFIRM_ALL;
+            renderProbeResult();
+            renderState();
         });
         marginAdd(scope, executionModes, 4);
         TextView modeExplanation = text("逐步确认会先确认所有界面操作。连续导航仅允许打开已授权应用、滚动和回到桌面免逐次确认；返回、点击和输入仍须确认。\n由你在本机选择，保存或开始任务后生效，模型不能更改。拒绝后不会换另一种方式绕过该动作。", 12, R.color.agent_muted, false);
@@ -471,12 +500,15 @@ public final class MainActivity extends Activity implements AgentController.List
             if (destroyed) return;
             SettingsStore loadedStore = null;
             SettingsStore.SavedSettings loaded = null;
+            SettingsStore.ConfigurationLease loadedLease = null;
             String failure = "";
             Set<String> revoked = new LinkedHashSet<>();
             try {
                 SettingsStore.requirePersonalProfile(getApplicationContext());
                 loadedStore = new SettingsStore(getApplicationContext());
-                loaded = loadedStore.load();
+                SettingsStore.LoadedSettings persisted = loadedStore.loadWithLease();
+                loaded = persisted.settings;
+                loadedLease = persisted.lease;
                 Set<String> valid = loadedStore.validateAllowedPackages(loaded);
                 revoked.addAll(loaded.allowedPackages);
                 revoked.removeAll(valid);
@@ -489,6 +521,7 @@ public final class MainActivity extends Activity implements AgentController.List
             }
             SettingsStore nextStore = loadedStore;
             SettingsStore.SavedSettings next = loaded;
+            SettingsStore.ConfigurationLease nextLease = loadedLease;
             String errorText = failure;
             main.post(() -> {
                 if (destroyed) return;
@@ -497,6 +530,7 @@ public final class MainActivity extends Activity implements AgentController.List
                 ready = nextStore != null;
                 storageDamaged = next == null;
                 if (next != null) {
+                    boolean retained = retainedDraft != null && next.profileId.equals(retainedDraft.settings.profileId);
                     draft = next;
                     if (retainedDraft != null && next.profileId.equals(retainedDraft.settings.profileId)) {
                         draft = retainedDraft.settings;
@@ -511,6 +545,10 @@ public final class MainActivity extends Activity implements AgentController.List
                     }
                     modelExpanded = retainedDraft != null ? retainedDraft.expanded : next.endpoint.trim().isEmpty() || next.model.trim().isEmpty();
                     retainedDraft = null;
+                    // Bind all fields first: their TextWatchers invalidate prior baselines.
+                    savedConfigurationLease = nextLease;
+                    savedConfigurationGeneration = !retained && revoked.isEmpty() && nextLease != null
+                            ? configurationGeneration : -1;
                     if (!revoked.isEmpty()) showMessage("有 " + revoked.size() + " 个应用的安装身份已变化，授权已取消。需要继续操作时，请重新选择这些应用。", true);
                 } else showMessage(errorText, true);
                 updateModelPanel();
@@ -557,6 +595,9 @@ public final class MainActivity extends Activity implements AgentController.List
 
     private void saveConfiguration(boolean startTask) {
         if (!ready || busy || destroyed || modelProbe != null || controller.getState().running) return;
+        invalidateSavedProbe("已失效，请重新测试");
+        dismissProbeTrustDialog();
+        renderProbeResult();
         if (storageDamaged) { showMessage("原配置无法读取。请先明确重置本机配置，再保存新的设置。", true); return; }
         TaskBudget selectedBudget = readBudget(true);
         if (selectedBudget == null) {
@@ -592,6 +633,7 @@ public final class MainActivity extends Activity implements AgentController.List
             if (settings.allowedPackages.isEmpty()) { showMessage("请先选择允许操作的应用。", true); return; }
             if (AgentAccessibilityService.getInstance() == null) { showMessage("请先在系统设置中手动启用 Agent OS 手机操作服务。", true); return; }
         }
+        final long savedUiGeneration = configurationGeneration;
         busy = true;
         showMessage("正在加密保存设置…", false);
         renderState();
@@ -615,6 +657,8 @@ public final class MainActivity extends Activity implements AgentController.List
                 busy = false;
                 if (!errorText.isEmpty()) { showMessage(errorText, true); renderState(); return; }
                 draft = settings;
+                savedConfigurationLease = configurationLease;
+                savedConfigurationGeneration = savedUiGeneration;
                 configSummary.setText("已保存模型 · " + model.model);
                 if (!startTask) { showMessage("设置已加密保存在当前个人资料中。", false); renderState(); return; }
                 try {
@@ -688,9 +732,12 @@ public final class MainActivity extends Activity implements AgentController.List
             @Override public void afterTextChanged(Editable text) {
                 if (suppressBudgetChange) return;
                 if (!canEditBudget()) { bindBudgetTexts(budgetTexts); return; }
+                configurationEdited();
                 field.setError(null);
                 budgetTexts = new String[]{budgetRounds.getText().toString(), budgetTools.getText().toString(), budgetSeconds.getText().toString()};
                 updateBudgetSummary();
+                renderProbeResult();
+                renderState();
             }
         });
         return field;
@@ -833,9 +880,11 @@ public final class MainActivity extends Activity implements AgentController.List
                 main.post(() -> {
                     if (destroyed) return;
                     busy = false;
+                    configurationEdited();
                     draft.allowedPackages = new LinkedHashSet<>(grants.keySet());
                     draft.grants = new LinkedHashMap<>(grants);
                     refreshScopeSummary();
+                    renderProbeResult();
                     showMessage("已选择 " + grants.size() + " 个应用。保存设置或开始任务时会保存本次授权。", false);
                     renderState();
                 });
@@ -868,7 +917,12 @@ public final class MainActivity extends Activity implements AgentController.List
                 .setNegativeButton("保留配置", null)
                 .setPositiveButton("删除并重新配置", (dialog, which) -> {
                     if (destroyed || controller.getState().running) return;
+                    invalidateSavedProbe("已失效，请重新测试");
+                    savedConfigurationLease = null;
+                    savedConfigurationGeneration = -1;
+                    dismissProbeTrustDialog();
                     busy = true;
+                    renderProbeResult();
                     renderState();
                     storageWorker.execute(() -> {
                         if (destroyed) return;
@@ -901,6 +955,11 @@ public final class MainActivity extends Activity implements AgentController.List
 
     private void renderState() {
         if (destroyed || statusText == null) return;
+        refreshSavedProbe();
+        displayedVisionKind = savedVisionLease() == null ? ProbeKind.VISION : ProbeKind.SAVED_VISION;
+        if (visionProbeButton != null) visionProbeButton.setText(displayedVisionKind == ProbeKind.VISION
+                ? "测试当前填写的图像理解" : "测试已保存配置的图像理解");
+        renderProbeResult();
         AgentController.State state = controller.getState();
         if (wasRunning && !state.running) taskField.setText("");
         wasRunning = state.running;
@@ -1087,9 +1146,21 @@ public final class MainActivity extends Activity implements AgentController.List
 
     private void startModelProbe(ProbeKind kind) {
         if (!canStartModelProbe()) return;
+        final SettingsStore.ConfigurationLease lease = kind == ProbeKind.SAVED_VISION ? savedVisionLease() : null;
+        if (kind == ProbeKind.SAVED_VISION && lease == null) {
+            // A stale saved-mode click must not silently become a draft request.
+            renderState();
+            showMessage("已保存配置已变化，请重新保存，或明确测试当前填写内容。", false);
+            return;
+        }
+        final long uiGeneration = configurationGeneration;
         ModelSettings model = new ModelSettings(endpointField.getText().toString(), keyField.getText().toString(), modelField.getText().toString());
         try { model.validate(); }
         catch (IllegalArgumentException invalid) { showMessage(invalid.getMessage(), true); return; }
+        if (kind != ProbeKind.TOOL) {
+            invalidateSavedProbe("已失效，请重新测试");
+            renderProbeResult();
+        }
         if (model.endpoint.toLowerCase(Locale.ROOT).startsWith("http://") && !model.endpoint.equals(acceptedHttpEndpoint)) {
             final long generation = ++probeGeneration;
             AlertDialog prompt = new AlertDialog.Builder(this).setTitle("使用未加密的本地连接？")
@@ -1098,21 +1169,26 @@ public final class MainActivity extends Activity implements AgentController.List
                     .setPositiveButton("信任此连接", (dialog, which) -> {
                         // The prompt authorizes only the captured configuration and this foreground lifecycle.
                         if (probeTrustDialog != dialog || generation != probeGeneration || !resumed
-                                || destroyed || isFinishing() || !modelMatchesFields(model)) return;
+                                || destroyed || isFinishing() || !modelMatchesFields(model)
+                                || uiGeneration != configurationGeneration
+                                || kind == ProbeKind.SAVED_VISION && savedVisionLease() != lease) return;
                         probeTrustDialog = null;
                         if (!canStartModelProbe()) return;
                         acceptedHttpEndpoint = model.endpoint;
-                        beginModelProbe(kind, model);
+                        beginModelProbe(kind, model, lease, uiGeneration);
                     }).create();
             probeTrustDialog = prompt;
             prompt.setOnDismissListener(dialog -> {
-                if (probeTrustDialog == dialog) { probeTrustDialog = null; ++probeGeneration; }
+                if (probeTrustDialog == dialog) {
+                    probeTrustDialog = null; ++probeGeneration;
+                    if (!destroyed) renderState();
+                }
             });
             if (prompt.getWindow() != null) prompt.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
             prompt.show();
             return;
         }
-        beginModelProbe(kind, model);
+        beginModelProbe(kind, model, lease, uiGeneration);
     }
 
     private boolean modelMatchesFields(ModelSettings model) {
@@ -1121,10 +1197,14 @@ public final class MainActivity extends Activity implements AgentController.List
                 && model.apiKey.equals(current.apiKey) && model.maxOutputTokens == current.maxOutputTokens;
     }
 
-    private void beginModelProbe(ProbeKind kind, ModelSettings model) {
-        if (!canStartModelProbe() || !modelMatchesFields(model)) return;
+    private void beginModelProbe(ProbeKind kind, ModelSettings model,
+                                 SettingsStore.ConfigurationLease lease, long uiGeneration) {
+        if (!canStartModelProbe() || !modelMatchesFields(model) || uiGeneration != configurationGeneration
+                || kind == ProbeKind.SAVED_VISION && (lease == null || savedVisionLease() != lease)) return;
         final RunControl control = new RunControl(draft.profileId);
         final long generation = ++probeGeneration;
+        final SavedProbeOwner owner = kind == ProbeKind.SAVED_VISION
+                ? new SavedProbeOwner(control, lease, uiGeneration) : null;
         modelProbe = control;
         activeProbeKind = kind;
         probeConnection = "正在检查";
@@ -1132,50 +1212,92 @@ public final class MainActivity extends Activity implements AgentController.List
         probeResultColor = R.color.agent_muted;
         if (kind == ProbeKind.TOOL) { toolProbeTested = true; toolVerified = false; }
         else { imageProbeTested = true; syntheticImageVerified = false; }
-        renderProbeResult();
-        renderState();
+        if (owner != null) {
+            savedProbeOwner = owner;
+            savedProbeState = "正在测试";
+            try {
+                // A synchronous invalidation can occur during watch registration.
+                // It only cancels this original control; View work is posted below.
+                owner.registration = lease.watch(() -> {
+                    owner.control.cancelIfExecutionEpoch(owner.epoch);
+                    main.post(() -> {
+                        if (destroyed || savedProbeOwner != owner) return;
+                        invalidateSavedProbe("已失效，请重新测试");
+                        renderProbeResult(); renderState();
+                    });
+                });
+                if (!savedOwnerIsCurrent(owner)) {
+                    invalidateSavedProbe("已失效，请重新测试"); renderProbeResult(); renderState(); return;
+                }
+            } catch (RuntimeException unavailable) {
+                invalidateSavedProbe("已失效，请重新测试"); renderProbeResult(); renderState(); return;
+            }
+        }
+        renderProbeResult(); renderState();
         try { storageWorker.execute(() -> {
             if (destroyed) { control.cancel(); return; }
             try {
                 final boolean connected, verified;
                 final String message;
-                if (kind == ProbeKind.VISION) {
+                final SavedVisionProbe.Verification record;
+                if (owner != null) {
+                    SavedVisionProbe.Outcome result = SavedVisionProbe.process().test(
+                            getApplicationContext(), owner.lease, control, owner.epoch);
+                    connected = result.connected;
+                    record = result.status == SavedVisionProbe.Status.VERIFIED
+                            ? SavedVisionProbe.process().current(owner.lease) : null;
+                    verified = record != null && record.isCurrentFor(owner.lease, control, owner.epoch);
+                    message = result.status == SavedVisionProbe.Status.BUSY ? "已有已保存配置测试正在进行，请稍后重试。"
+                            : verified ? "本次已保存配置的合成图片测试通过；记录最多保留 10 分钟，并受本次测试剩余时间预算限制。"
+                            : "本次未建立有效的已保存配置图像记录。请检查模型配置和网络后重试。";
+                } else if (kind == ProbeKind.VISION) {
                     VisionModelProbe.Result result = new VisionModelProbe().test(model, control);
-                    connected = result.connected; verified = result.syntheticImageVerified; message = result.message;
+                    connected = result.connected; verified = result.syntheticImageVerified; message = result.message; record = null;
                 } else {
                     ModelProbe.Result result = new ModelProbe().test(model, control);
-                    connected = result.connected; verified = result.toolCallingVerified; message = result.message;
+                    connected = result.connected; verified = result.toolCallingVerified; message = result.message; record = null;
                 }
-                main.post(() -> {
+                if (!main.post(() -> {
                     if (destroyed || modelProbe != control || generation != probeGeneration || control.isCancelled()) return;
+                    if (owner != null && (!savedOwnerIsCurrent(owner)
+                            || verified && !record.isCurrentFor(owner.lease, control, owner.epoch))) {
+                        invalidateSavedProbe("已失效，请重新测试"); renderProbeResult(); renderState(); return;
+                    }
                     modelProbe = null;
                     activeProbeKind = null;
-                    control.cancel();
+                    if (owner != null && verified) {
+                        owner.verification = record;
+                        savedProbeState = "当前有效";
+                        scheduleSavedProbeExpiry(owner);
+                        // Scheduling can synchronously expire the original budget or fail.
+                        // Do not publish success after that path has released the owner.
+                        refreshSavedProbe();
+                        if (savedProbeOwner != owner) {
+                            renderProbeResult(); renderState(); return;
+                        }
+                    } else {
+                        control.cancel();
+                        if (owner != null) invalidateSavedProbe("未建立");
+                    }
                     probeConnection = connected ? "已连接" : "未连接";
                     if (kind == ProbeKind.TOOL) toolVerified = verified;
                     else syntheticImageVerified = verified;
                     probeMessage = message;
                     probeResultColor = verified ? R.color.agent_success : R.color.agent_error;
-                    renderProbeResult();
-                    renderState();
-                });
+                    renderProbeResult(); renderState();
+                })) control.cancel();
             } catch (InterruptedException cancelled) {
                 main.post(() -> {
                     if (destroyed || modelProbe != control || generation != probeGeneration) return;
                     cancelModelProbe("测试已取消，未操作手机应用。", true);
                 });
-            } catch (RuntimeException failed) {
-                // A failed adapter must never expose arbitrary response bodies or credentials.
+            } catch (IOException | RuntimeException failed) {
+                // No arbitrary provider body, stored value or exception is shown.
                 main.post(() -> {
                     if (destroyed || modelProbe != control || generation != probeGeneration) return;
-                    modelProbe = null;
-                    activeProbeKind = null;
-                    control.cancel();
-                    probeConnection = "未验证";
-                    probeMessage = "本次测试未完成。请检查模型配置和网络后重试。";
+                    cancelModelProbe("本次测试未完成。请检查模型配置和网络后重试。", false);
                     probeResultColor = R.color.agent_error;
-                    renderProbeResult();
-                    renderState();
+                    renderProbeResult(); renderState();
                 });
             }
         }); } catch (RejectedExecutionException unavailable) {
@@ -1183,13 +1305,81 @@ public final class MainActivity extends Activity implements AgentController.List
         }
     }
 
+    /** A saved probe must use this exact loaded/saved baseline, never edited fields. */
+    private SettingsStore.ConfigurationLease savedVisionLease() {
+        return savedConfigurationGeneration == configurationGeneration
+                && SettingsStore.isCurrent(savedConfigurationLease) ? savedConfigurationLease : null;
+    }
+
+    private void configurationEdited() {
+        configurationGeneration++;
+        invalidateSavedProbe("已失效，请重新测试");
+    }
+
+    private boolean savedOwnerIsCurrent(SavedProbeOwner owner) {
+        if (savedProbeOwner != owner || owner.configurationGeneration != configurationGeneration
+                || savedVisionLease() != owner.lease || !resumed || destroyed || isFinishing()) return false;
+        try { owner.control.checkExecutionEpoch(owner.epoch); return true; }
+        catch (InterruptedException invalid) { return false; }
+    }
+
+    private void invalidateSavedProbe(String state) {
+        SavedProbeOwner owner = savedProbeOwner;
+        if (owner == null) return;
+        savedProbeOwner = null;
+        savedProbeState = state;
+        syntheticImageVerified = false;
+        probeResultColor = R.color.agent_muted;
+        if (owner.expiry != null) main.removeCallbacks(owner.expiry);
+        if (owner.registration != null) owner.registration.close();
+        owner.control.cancelIfExecutionEpoch(owner.epoch);
+        if (modelProbe == owner.control) {
+            ++probeGeneration;
+            modelProbe = null;
+            activeProbeKind = null;
+            probeConnection = "未验证";
+            syntheticImageVerified = false;
+        }
+    }
+
+    private void refreshSavedProbe() {
+        SavedProbeOwner owner = savedProbeOwner;
+        if (owner != null && (!savedOwnerIsCurrent(owner) || owner.verification != null
+                && !owner.verification.isCurrentFor(owner.lease, owner.control, owner.epoch)))
+            invalidateSavedProbe("已失效，请重新测试");
+    }
+
+    private void scheduleSavedProbeExpiry(SavedProbeOwner owner) {
+        if (savedProbeOwner != owner || owner.verification == null) return;
+        try {
+            long remaining = Math.min(owner.verification.expiresAtElapsedRealtimeMillis - SystemClock.elapsedRealtime(),
+                    owner.control.remainingActiveMillis());
+            if (remaining <= 0) { invalidateSavedProbe("已失效，请重新测试"); return; }
+            if (owner.expiry == null) owner.expiry = () -> {
+                if (destroyed || savedProbeOwner != owner) return;
+                refreshSavedProbe();
+                if (savedProbeOwner == owner) {
+                    scheduleSavedProbeExpiry(owner);
+                    if (savedProbeOwner == owner) return;
+                }
+                renderProbeResult(); renderState();
+            };
+            // Another real attempt can supersede this same lease without a store
+            // notification. Keep one bounded memory-only check, with no redraw
+            // while current; never poll/decrypt the store or extend either deadline.
+            if (!main.postDelayed(owner.expiry, Math.min(remaining, 1_000)))
+                invalidateSavedProbe("已失效，请重新测试");
+        } catch (InterruptedException expired) { invalidateSavedProbe("已失效，请重新测试"); }
+    }
+
     private void renderProbeResult() {
         if (probeResult == null) return;
+        refreshSavedProbe();
         String tools = activeProbeKind == ProbeKind.TOOL ? "正在测试"
                 : !toolProbeTested ? "未测试" : toolVerified ? "已验证" : "未验证";
-        String image = activeProbeKind == ProbeKind.VISION ? "正在测试合成图片"
+        String image = activeProbeKind == ProbeKind.VISION || activeProbeKind == ProbeKind.SAVED_VISION ? "正在测试合成图片"
                 : !imageProbeTested ? "未验证" : syntheticImageVerified ? "本次合成图片已验证" : "本次合成图片未验证";
-        probeResult.setText("网络连接：" + probeConnection + "\n工具调用：" + tools + "\n图像能力：" + image
+        probeResult.setText("网络连接：" + probeConnection + "\n工具调用：" + tools + "\n图像能力：" + image + "\n已保存配置记录：" + savedProbeState
                 + (probeMessage.isEmpty() ? "" : "\n" + probeMessage));
         probeResult.setTextColor(color(probeResultColor));
     }
@@ -1198,6 +1388,7 @@ public final class MainActivity extends Activity implements AgentController.List
         TextWatcher watcher = new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence text, int start, int count, int after) { }
             @Override public void onTextChanged(CharSequence text, int start, int before, int count) {
+                configurationEdited();
                 cancelModelProbe("", false);
                 probeConnection = "未测试";
                 toolProbeTested = toolVerified = imageProbeTested = syntheticImageVerified = false;
@@ -1217,6 +1408,8 @@ public final class MainActivity extends Activity implements AgentController.List
         ++probeGeneration;
         dismissProbeTrustDialog();
         RunControl current = modelProbe;
+        if (savedProbeOwner != null && savedProbeOwner.control == current)
+            invalidateSavedProbe("已失效，请重新测试");
         modelProbe = null;
         activeProbeKind = null;
         if (current != null) current.cancel();

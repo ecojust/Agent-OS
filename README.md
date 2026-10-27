@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。
+**本次更新：** Connect saved-configuration image diagnostics to native UI with exact request ownership and bounded expiry; seven new real UI/HTTP regressions compiled. APKs and lint pass. Latest device matrix:1661/1664, with three known removed-window publication failures; core263 pass.
 
-**记录时间：** 2026-10-27T10:28:53Z
+**记录时间：** 2026-10-27T10:33:00Z
 
 [最近测试截图与清单](screenshots/40487057153-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40487057153)。通过、失败及未截图原因见清单。
 

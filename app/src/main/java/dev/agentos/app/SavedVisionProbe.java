@@ -18,7 +18,8 @@ import java.util.function.LongSupplier;
 /**
  * Internal diagnostic of one real saved configuration against a synthetic image.
  * It grants no screenshot, page, disclosure, device-action or general vision
- * capability. Nothing is persisted, and no UI/Controller/tool route calls it.
+ * capability. Only the explicit saved-configuration UI diagnostic calls it;
+ * no Controller/tool route consumes this record, and nothing is persisted.
  */
 final class SavedVisionProbe {
     private static final long FRESHNESS_MILLIS = 600_000;
@@ -51,6 +52,13 @@ final class SavedVisionProbe {
             expiresAtElapsedRealtimeMillis = Math.addExact(now, FRESHNESS_MILLIS);
             this.registry = registry; this.original = original;
             lastChecked = now;
+        }
+
+        /** The UI may retain only the record minted by its own original attempt. */
+        boolean isCurrentFor(SettingsStore.ConfigurationLease expectedLease, RunControl originalControl,
+                             long originalEpoch) {
+            return original.control == originalControl && original.epoch == originalEpoch
+                    && isCurrentFor(expectedLease);
         }
 
         /** Bounded memory/clock checks only: no decryption, View, Binder or network work. */

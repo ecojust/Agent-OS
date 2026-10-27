@@ -15,6 +15,21 @@ MAX_FILE_BYTES = 16 * 1024 * 1024
 MAX_TOTAL_BYTES = 128 * 1024 * 1024
 MAX_FILES = 2000
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+DIAGNOSTIC_SCOPE = "owned-control-diagnostic"
+DIAGNOSTIC_TEST = "dev.agentos.app.OwnedControlWindowInstrumentedTest#changedPresentationAndCallbacksStillRevokeTheActualControlOwner"
+
+
+def test_selection(scope: str) -> str:
+    if scope not in ("full", DIAGNOSTIC_SCOPE):
+        raise ValueError("unsupported execution scope")
+    return DIAGNOSTIC_TEST if scope == DIAGNOSTIC_SCOPE else "full-suite"
+
+
+def verify_capture_scope(record: dict, scope: str) -> None:
+    # Old full-run captures remain readable. Missing metadata cannot identify a diagnostic.
+    if (record.get("executionScope", "full") != scope
+            or record.get("testSelection", "full-suite") != test_selection(scope)):
+        raise ValueError("capture scope differs from the requested execution")
 
 
 def limit_archive_output() -> None:
@@ -24,10 +39,15 @@ def limit_archive_output() -> None:
     resource.setrlimit(resource.RLIMIT_FSIZE, (maximum, maximum))
 
 
-def junit_summary(directory: Path) -> dict:
+def junit_summary(directory: Path, selection: str | None = None) -> dict:
     result = {"reports": 0, "tests": 0, "failures": 0, "errors": 0, "skipped": 0,
               "unreadableReports": 0}
-    for path in sorted(directory.rglob("*.xml"))[:24]:
+    if selection is not None:
+        result.update({"selection": selection, "selectedTests": 0, "unexpectedTests": 0})
+    reports = sorted(directory.rglob("*.xml"))
+    if selection is not None and len(reports) > 24:
+        result["unreadableReports"] += 1  # Unread reports cannot silently certify the fixed selection.
+    for path in reports[:24]:
         try:
             if path.stat().st_size > 2 * 1024 * 1024:
                 raise ValueError("oversized XML")
@@ -36,6 +56,9 @@ def junit_summary(directory: Path) -> dict:
             result["reports"] += 1
             result["tests"] += len(cases)
             for case in cases:
+                if selection is not None:
+                    identity = str(case.get("classname", "")) + "#" + str(case.get("name", ""))
+                    result["selectedTests" if identity == selection else "unexpectedTests"] += 1
                 for tag, field in (("failure", "failures"), ("error", "errors"),
                                    ("skipped", "skipped")):
                     result[field] += int(case.find(tag) is not None)
@@ -116,6 +139,7 @@ def main() -> None:
     parser.add_argument("--matrix-label")
     parser.add_argument("--exit-code", type=int, default=1)
     parser.add_argument("--step-outcome", default="unknown")
+    parser.add_argument("--scope", choices=("full", DIAGNOSTIC_SCOPE), default="full")
     args = parser.parse_args()
     matrix_label = args.matrix_label or str(args.api)
     if not re.fullmatch(r"3[0-6]|37\.0", matrix_label):
@@ -130,6 +154,7 @@ def main() -> None:
         record = collect(api, matrix_label, args.exit_code, output)
     elif path.exists():
         record = json.loads(path.read_text())
+        verify_capture_scope(record, args.scope)
     else:
         record = {"schemaVersion": 1, "apiLevel": api, "matrixLabel": matrix_label,
                   "actualSdkInt": None, "gradleExitCode": None,
@@ -137,7 +162,9 @@ def main() -> None:
                   "capturedAt": datetime.now(timezone.utc).isoformat(), "files": []}
     if args.mode == "finalize":
         record["emulatorStepOutcome"] = args.step_outcome
-    record["junit"] = junit_summary(Path("app/build/outputs/androidTest-results"))
+    record.update({"executionScope": args.scope, "testSelection": test_selection(args.scope)})
+    record["junit"] = junit_summary(Path("app/build/outputs/androidTest-results"),
+                                    DIAGNOSTIC_TEST if args.scope == DIAGNOSTIC_SCOPE else None)
     record["screenshotCount"] = sum(name.endswith(".png") for name in record["files"])
     path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
     print(f"API {matrix_label}: {record['captureStatus']}, {record['screenshotCount']} screenshots; "

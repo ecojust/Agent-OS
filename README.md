@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Add failure-only measurements for the unresolved legacy Android drag discrepancy: local View/layout parameters, actual root bounds, bounded native window fields and a screenshot before cleanup. Original assertions and execution guards are unchanged. Thirteen synthetic parser checks and the test APK build pass; actual diagnostic execution is pending.
+**本次更新：** Add an explicit manual owned-control diagnostic scope: exactly one fixed case per API, eight expected cases, original XML/capture identity checks and honest missing/skipped results. The normal 242-case-per-API regression is unchanged. All 241 Python checks and shell syntax validation pass; focused device diagnostics are next.
 
-**记录时间：** 2026-10-27T16:15:35Z
+**记录时间：** 2026-10-27T16:16:33Z
 
 [最近测试截图与清单](screenshots/40534427816-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40534427816)。通过、失败及未截图原因见清单。
 

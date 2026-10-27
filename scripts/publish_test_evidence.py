@@ -10,6 +10,7 @@ import re
 import shutil
 
 import collect_performance_evidence as performance
+import collect_android_evidence as android_evidence
 
 EXPECTED_MATRIX = [str(api) for api in range(30, 37)] + ["37.0"]
 PINNED_WORKFLOW = ".github/workflows/pinned-calculator-page.yml"
@@ -19,6 +20,48 @@ MAX_FILE_BYTES = 16 * 1024 * 1024
 MAX_TOTAL_BYTES = 64 * 1024 * 1024
 MAX_FILES = 8000
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+DIAGNOSTIC_TITLE = "Android checks [owned-control-diagnostic]"
+
+
+def android_execution_scope(run: dict) -> str:
+    # This is trusted workflow metadata, not an inference from a partial test count.
+    # The fixed run-name is emitted only by the explicit manual choice. Legacy
+    # runs and unchanged push/PR/full titles keep their existing full-suite scope.
+    if run.get("event") == "workflow_dispatch":
+        title = run.get("display_title", "")
+        if title == DIAGNOSTIC_TITLE:
+            return android_evidence.DIAGNOSTIC_SCOPE
+        if title.startswith("Android checks ["):
+            raise ValueError("unsupported Android diagnostic scope")
+    return "full"
+
+
+def diagnostic_result(capture: dict, tests: list, job: dict | None) -> str:
+    """Only original exact-case evidence can pass the one-case diagnostic."""
+    junit = capture.get("junit", {})
+    fields = ("reports", "tests", "failures", "errors", "skipped", "unreadableReports",
+              "selectedTests", "unexpectedTests")
+    if (not isinstance(junit, dict)
+            or any(type(junit.get(field)) is not int or junit[field] < 0 for field in fields)
+            or junit.get("selection") != android_evidence.DIAGNOSTIC_TEST
+            or junit["tests"] > 1 or junit["selectedTests"] != junit["tests"]
+            or junit["unexpectedTests"] != 0
+            or any(junit[field] > junit["tests"] for field in ("failures", "errors", "skipped"))
+            or not isinstance(tests, list) or len(tests) > 1):
+        raise ValueError("diagnostic evidence does not match the fixed one-case selection")
+    for test in tests:
+        if (not isinstance(test, dict)
+                or str(test.get("testClass", "")) + "#" + str(test.get("testName", "")) != android_evidence.DIAGNOSTIC_TEST
+                or test.get("testResult") not in ("pass", "fail")):
+            raise ValueError("unexpected test in owned-control diagnostic evidence")
+    if junit["failures"] or junit["errors"] or any(test["testResult"] == "fail" for test in tests):
+        return "failed"
+    if (junit["tests"] == 1 and junit["reports"] > 0 and junit["skipped"] == 0
+            and junit["unreadableReports"] == 0 and len(tests) == 1
+            and type(capture.get("gradleExitCode")) is int and capture["gradleExitCode"] == 0
+            and job is not None and job.get("conclusion") == "success"):
+        return "passed"
+    return "unverified"
 
 
 def read_json(path: Path, maximum: int = 2 * 1024 * 1024):
@@ -179,6 +222,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
             import pinned_calculator_page as profile
         archive_pinned_page(args, run, run_id, attempt, profile)
         return
+    execution_scope = android_execution_scope(run)
+    diagnostic = execution_scope == android_evidence.DIAGNOSTIC_SCOPE
     output = Path("screenshots") / f"{run_id}-{attempt}"
     if output.exists():
         raise ValueError("this run's evidence directory already exists")
@@ -198,6 +243,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
                   "jobConclusion": job.get("conclusion") if job else "not_scheduled",
                   "jobUrl": job.get("html_url") if job else None,
                   "captureStatus": "artifact_unavailable", "screenshotCount": 0, "files": []}
+        if diagnostic:
+            record["diagnosticResult"] = "unverified"
         if name in expected_names:
             if not source.is_dir() or source.is_symlink():
                 raise ValueError("an expected screenshot artifact was not downloaded")
@@ -205,6 +252,7 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
             if (capture.get("schemaVersion") != 1 or capture.get("apiLevel") != api
                     or capture.get("matrixLabel") != matrix_label):
                 raise ValueError("capture identity does not match its artifact")
+            android_evidence.verify_capture_scope(capture, execution_scope)
             copied = copy_files(source, output / f"api-{matrix_label}", budget)
             png_files = [item for item in copied if item["path"].endswith(".png")]
             record.update({"captureStatus": capture.get("captureStatus", "unknown"),
@@ -214,6 +262,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
                            "files": copied})
             test_manifest = source / "screenshots" / "manifest.json"
             tests = read_json(test_manifest).get("tests", []) if test_manifest.exists() else []
+            if diagnostic:
+                record["diagnosticResult"] = diagnostic_result(capture, tests, job)
             actual_png = {item["path"] for item in png_files}
             tests_with_images = sum(any(capture.get("status") == "pass"
                                        and "screenshots/" + str(capture.get("png", "")) in actual_png
@@ -234,16 +284,31 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
                       "conclusion": run.get("conclusion"), "finishedAt": run.get("updated_at"),
                       "url": f"https://github.com/{args.repository}/actions/runs/{run_id}"},
         "expectedMatrixLabels": EXPECTED_MATRIX, "apis": records,
+        "executionScope": execution_scope, "testSelection": android_evidence.test_selection(execution_scope),
         "performanceDiagnostics": performance_records,
         "jvm": {"screenshotStatus": "not_applicable", "reason": "JVM tests have no device UI",
                 "buildJobConclusion": build_job.get("conclusion", "not_scheduled")},
         "scope": "Synthetic fixture and Agent OS test UI; emulator results are not real-device certification",
         "fileCount": budget["files"], "totalBytes": budget["bytes"],
     }
+    if diagnostic:
+        manifest.update({"expectedTestsPerApi": 1, "expectedTests": len(EXPECTED_MATRIX),
+                         "diagnosticCaseCounts": {status: sum(record["diagnosticResult"] == status for record in records)
+                                                  for status in ("passed", "failed", "unverified")},
+                         "fullSuiteAcceptance": False,
+                         "scope": "Fixed owned-control diagnostic only: one selected test per API. Other suite tests were not selected and receive no passing status; this cannot replace a full regression."})
     (output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
-    lines = ["# Android Test Evidence", "", f"Source run: {manifest['sourceRun']['url']}", "",
+    lines = ["# " + ("Owned Control Diagnostic Evidence" if diagnostic else "Android Test Evidence"), "", f"Source run: {manifest['sourceRun']['url']}", "",
              f"Source commit: `{run['head_sha']}` · Attempt: {attempt}", "",
-             "These screenshots show synthetic test scenarios. Missing screenshots and failed tests remain visible in the manifest.", "",
+             "These screenshots show synthetic test scenarios. Missing screenshots and failed tests remain visible in the manifest.", ""]
+    if diagnostic:
+        lines += [f"Execution scope: `{execution_scope}`. Only `{android_evidence.DIAGNOSTIC_TEST}` was selected.", "",
+                  "The diagnostic denominator is 8 cases (8 APIs × 1 test); missing, skipped and unexecuted cases remain unverified. "
+                  "The rest of the normal suite was not run by this scope and is not counted as passed. A complete default matrix is still required for full regression acceptance.", "",
+                  "| API | Diagnostic case result |", "| --- | --- |"]
+        lines += [f"| {record['matrixLabel']} | {record['diagnosticResult']} |" for record in records]
+        lines.append("")
+    lines += [
              "| API | Job result | Screenshots | Recorded tests | Tests without screenshots |",
              "| --- | --- | --- | --- | --- |"]
     for record in records:

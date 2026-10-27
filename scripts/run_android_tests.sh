@@ -3,6 +3,20 @@
 set -uo pipefail
 
 matrix_label="${1:?Android API level is required}"
+test_scope="${2:-full}"
+if (( $# > 2 )); then
+  echo "Unexpected Android test arguments" >&2
+  exit 2
+fi
+case "$test_scope" in
+  full)
+    selection=(-Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest,dev.agentos.app.DemoWalkthroughInstrumentedTest,dev.agentos.app.PinnedWindowDisclosureInstrumentedTest)
+    ;;
+  owned-control-diagnostic)
+    selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.OwnedControlWindowInstrumentedTest#changedPresentationAndCallbacksStillRevokeTheActualControlOwner)
+    ;;
+  *) echo "Invalid Android test scope" >&2; exit 2 ;;
+esac
 if [[ ! "$matrix_label" =~ ^(3[0-6]|37\.0)$ ]]; then
   echo "Invalid Android API level" >&2
   exit 2
@@ -38,7 +52,7 @@ collect_on_exit() {
   if [[ "$result" != 0 ]]; then
     python3 scripts/print_android_test_failures.py || true
   fi
-  python3 scripts/collect_android_evidence.py collect --api "$api_level" --matrix-label "$matrix_label" --exit-code "$result" || true
+  python3 scripts/collect_android_evidence.py collect --api "$api_level" --matrix-label "$matrix_label" --scope "$test_scope" --exit-code "$result" || true
   python3 scripts/collect_performance_evidence.py collect --matrix-label "$matrix_label" --exit-code "$result" || true
   exit "$result"
 }
@@ -97,7 +111,7 @@ python3 scripts/run_bounded_instrumentation.py --matrix-label "$matrix_label" \
   --termination-grace-seconds "${ANDROID_TEST_TERMINATE_GRACE_SECONDS:-10}" \
   -- ./gradlew --no-daemon \
   -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true \
-  -Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest,dev.agentos.app.DemoWalkthroughInstrumentedTest,dev.agentos.app.PinnedWindowDisclosureInstrumentedTest \
+  "${selection[@]}" \
   :fixture:installDebug :app:connectedDebugAndroidTest &
 instrumentation_pid=$!
 wait "$instrumentation_pid"

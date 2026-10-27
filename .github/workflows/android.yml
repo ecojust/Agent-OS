@@ -1,10 +1,20 @@
 name: Android checks
+# A fixed diagnostic label remains identifiable even when no emulator artifact exists.
+# Empty preserves GitHub's existing push/PR/full-dispatch display title.
+run-name: ${{ github.event_name == 'workflow_dispatch' && inputs.scope == 'owned-control-diagnostic' && 'Android checks [owned-control-diagnostic]' || '' }}
 
 on:
   push:
     branches: [master]
   pull_request:
   workflow_dispatch:
+    inputs:
+      scope:
+        description: Full regression or the single owned-control diagnostic (not full acceptance)
+        required: true
+        default: full
+        type: choice
+        options: [full, owned-control-diagnostic]
 
 permissions:
   contents: read
@@ -66,6 +76,8 @@ jobs:
   emulator-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    env:
+      ANDROID_TEST_SCOPE: ${{ github.event_name == 'workflow_dispatch' && inputs.scope || 'full' }}
     strategy:
       fail-fast: false
       # Each API has an isolated runner; keep the same matrix and test count
@@ -121,13 +133,13 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: |
             python3 scripts/configure_emulator_phone.py --avd-name agent-os-phone --check
-            bash scripts/run_android_tests.sh ${{ matrix.api-level }}
+            bash scripts/run_android_tests.sh ${{ matrix.api-level }} "$ANDROID_TEST_SCOPE"
       - name: Finalize screenshot evidence
         if: always()
         continue-on-error: true
         env:
           EMULATOR_OUTCOME: ${{ steps.instrumentation.outcome }}
-        run: python3 scripts/collect_android_evidence.py finalize --matrix-label ${{ matrix.api-level }} --step-outcome "$EMULATOR_OUTCOME"
+        run: python3 scripts/collect_android_evidence.py finalize --matrix-label ${{ matrix.api-level }} --scope "$ANDROID_TEST_SCOPE" --step-outcome "$EMULATOR_OUTCOME"
       - name: Print Android failure details
         if: always()
         continue-on-error: true

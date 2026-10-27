@@ -1,6 +1,7 @@
 """Regression checks for evidence trust boundaries and honest result reporting."""
 
 import base64
+import copy
 import io
 import json
 import os
@@ -118,7 +119,17 @@ class EvidenceTests(unittest.TestCase):
     def test_unverified_animation_baseline_prevents_test_execution(self):
         self.check_test_exit("30", 30, animation_value="0.0", expected_exit=2)
 
-    def check_test_exit(self, matrix_label, sdk_int, animation_value="1.0", expected_exit=7):
+    def test_explicit_full_and_fixed_diagnostic_keep_the_original_exit_and_collectors(self):
+        self.check_test_exit("30", 30, scope="full")
+        self.check_test_exit("30", 30, scope=collector.DIAGNOSTIC_SCOPE)
+
+    def test_arbitrary_test_filters_and_unknown_scopes_do_not_start_devices_or_gradle(self):
+        for scope in ("SomeClass#someMethod", "owned-control-diagnostic --class AnotherClass", "future-scope"):
+            with self.subTest(scope=scope):
+                self.check_test_exit("30", 30, scope=scope, expected_exit=2, invalid_scope=True)
+
+    def check_test_exit(self, matrix_label, sdk_int, animation_value="1.0", expected_exit=7,
+                        scope=None, invalid_scope=False):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             (root / "scripts").mkdir()
@@ -135,7 +146,7 @@ class EvidenceTests(unittest.TestCase):
                 'exit 1\n')
             adb.chmod(0o755)
             gradle = root / "gradlew"
-            gradle.write_text("#!/bin/sh\ntouch gradle-started\nexit 7\n")
+            gradle.write_text("#!/bin/sh\ntouch gradle-started\nprintf '%s\\n' \"$@\" > gradle-args.txt\nexit 7\n")
             gradle.chmod(0o755)
             env = os.environ.copy()
             env["PATH"] = str(root / "bin") + os.pathsep + env["PATH"]
@@ -145,11 +156,21 @@ class EvidenceTests(unittest.TestCase):
             env["ANDROID_HOME"] = str(root / "sdk")
             env.update({"GITHUB_REPOSITORY": "ecojust/Agent-OS", "GITHUB_SHA": "a" * 40,
                         "GITHUB_RUN_ID": "123", "GITHUB_RUN_ATTEMPT": "2"})
-            result = subprocess.run(["bash", "scripts/run_android_tests.sh", matrix_label], cwd=root,
+            command = ["bash", "scripts/run_android_tests.sh", matrix_label]
+            if scope is not None:
+                command.append(scope)
+            result = subprocess.run(command, cwd=root,
                                     env=env, capture_output=True, text=True, check=False)
             self.assertEqual(expected_exit, result.returncode, result.stderr)
+            if invalid_scope:
+                self.assertFalse((root / "gradle-started").exists())
+                self.assertFalse((root / "animation-settings.txt").exists())
+                self.assertFalse((root / "test-evidence").exists())
+                return
             record = json.loads((root / f"test-evidence/api-{matrix_label}/capture.json").read_text())
             self.assertEqual(expected_exit, record["gradleExitCode"])
+            self.assertEqual(scope or "full", record["executionScope"])
+            self.assertEqual(collector.test_selection(scope or "full"), record["testSelection"])
             self.assertEqual("unavailable", record["captureStatus"])
             performance = json.loads((root / f"performance-evidence/api-{matrix_label}/capture.json").read_text())
             self.assertEqual(expected_exit, performance["gradleExitCode"])
@@ -157,9 +178,133 @@ class EvidenceTests(unittest.TestCase):
             self.assertIn("No Android XML reports were produced", result.stdout)
             self.assertEqual(expected_exit == 7, (root / "gradle-started").exists())
             if expected_exit == 7:
+                arguments = (root / "gradle-args.txt").read_text().splitlines()
+                selectors = [value for value in arguments if value.startswith("-Pandroid.testInstrumentationRunnerArguments.")]
+                self.assertEqual(1, len(selectors))
+                if scope == collector.DIAGNOSTIC_SCOPE:
+                    self.assertEqual("-Pandroid.testInstrumentationRunnerArguments.class=" + collector.DIAGNOSTIC_TEST, selectors[0])
+                else:
+                    self.assertEqual("-Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest,dev.agentos.app.DemoWalkthroughInstrumentedTest,dev.agentos.app.PinnedWindowDisclosureInstrumentedTest", selectors[0])
                 self.assertEqual(["window_animation_scale=1.0", "transition_animation_scale=1.0",
                     "animator_duration_scale=1.0"], (root / "animation-settings.txt").read_text().splitlines())
                 self.assertEqual(3, result.stdout.count("Emulator baseline:"))
+
+    def test_diagnostic_junit_selection_uses_actual_case_identity_and_rejects_extra_cases(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp)
+            test_class, method = collector.DIAGNOSTIC_TEST.split("#")
+            xml = path / "results.xml"
+            xml.write_text(f'<testsuite><testcase classname="{test_class}" name="{method}"/></testsuite>')
+            selected = collector.junit_summary(path, collector.DIAGNOSTIC_TEST)
+            self.assertEqual((1, 1, 0), (selected["tests"], selected["selectedTests"], selected["unexpectedTests"]))
+            xml.write_text(f'<testsuite><testcase classname="{test_class}" name="{method}"/><testcase classname="Other" name="other"/></testsuite>')
+            extra = collector.junit_summary(path, collector.DIAGNOSTIC_TEST)
+            self.assertEqual((2, 1, 1), (extra["tests"], extra["selectedTests"], extra["unexpectedTests"]))
+            with self.assertRaises(ValueError):
+                publisher.diagnostic_result({"junit": extra}, [], {"conclusion": "success"})
+            xml.unlink()
+            for index in range(25):
+                (path / f"{index:02d}.xml").write_text("<testsuite/>" if index else
+                    f'<testsuite><testcase classname="{test_class}" name="{method}"/></testsuite>')
+            bounded = collector.junit_summary(path, collector.DIAGNOSTIC_TEST)
+            self.assertEqual((1, 1), (bounded["selectedTests"], bounded["unreadableReports"]))
+            self.assertEqual("unverified", publisher.diagnostic_result({"junit": bounded, "gradleExitCode": 0},
+                [{"testClass": test_class, "testName": method, "testResult": "pass"}], {"conclusion": "success"}))
+
+    def test_finalize_retains_explicit_diagnostic_scope_and_refuses_scope_relabel(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            command = ["python3", str(SCRIPTS / "collect_android_evidence.py"), "finalize",
+                       "--matrix-label", "31", "--scope", collector.DIAGNOSTIC_SCOPE]
+            subprocess.run(command, cwd=root, check=True, capture_output=True, text=True)
+            path = root / "test-evidence/api-31/capture.json"
+            original = path.read_bytes()
+            record = json.loads(original)
+            self.assertEqual(collector.DIAGNOSTIC_SCOPE, record["executionScope"])
+            self.assertEqual(collector.DIAGNOSTIC_TEST, record["testSelection"])
+            self.assertEqual(0, record["junit"]["selectedTests"])
+            wrong = subprocess.run(command[:-1] + ["full"], cwd=root, capture_output=True, text=True)
+            self.assertNotEqual(0, wrong.returncode)
+            self.assertEqual(original, path.read_bytes())
+
+    def test_diagnostic_scope_comes_from_trusted_run_not_a_small_test_count(self):
+        run = source_run()
+        self.assertEqual("full", publisher.android_execution_scope(run))
+        run.update(event="workflow_dispatch", display_title=publisher.DIAGNOSTIC_TITLE)
+        self.assertEqual(collector.DIAGNOSTIC_SCOPE, publisher.android_execution_scope(run))
+        run["display_title"] = "Android checks [unknown]"
+        with self.assertRaises(ValueError):
+            publisher.android_execution_scope(run)
+        with self.assertRaises(ValueError):
+            collector.verify_capture_scope({}, collector.DIAGNOSTIC_SCOPE)
+        collector.verify_capture_scope({}, "full")  # Original full captures remain readable.
+
+    def diagnostic_archive(self, lanes):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "incoming").mkdir()
+            run = source_run()
+            run.update(event="workflow_dispatch", display_title=publisher.DIAGNOSTIC_TITLE)
+            artifacts, jobs = [], []
+            test_class, method = collector.DIAGNOSTIC_TEST.split("#")
+            for label, status in lanes.items():
+                folder = root / f"incoming/screenshots-api-{label}-attempt-2"
+                (folder / "screenshots").mkdir(parents=True)
+                capture = {"schemaVersion": 1, "apiLevel": int(label.split('.')[0]), "matrixLabel": label,
+                           "actualSdkInt": int(label.split('.')[0]), "gradleExitCode": int(status == "failed"),
+                           "executionScope": collector.DIAGNOSTIC_SCOPE, "testSelection": collector.DIAGNOSTIC_TEST,
+                           "captureStatus": "collected", "junit": {"reports": 1, "tests": 1,
+                           "failures": int(status == "failed"), "errors": 0, "skipped": int(status == "skipped"),
+                           "unreadableReports": 0, "selection": collector.DIAGNOSTIC_TEST,
+                           "selectedTests": 1, "unexpectedTests": 0}}
+                tests = [] if status == "skipped" else [{"testClass": test_class, "testName": method,
+                          "testResult": "fail" if status == "failed" else "pass", "captures": []}]
+                (folder / "capture.json").write_text(json.dumps(capture))
+                (folder / "screenshots/manifest.json").write_text(json.dumps({"tests": tests}))
+                artifacts.append({"name": folder.name, "expired": False})
+                jobs.append({"name": f"emulator-tests ({label})", "conclusion": "failure" if status == "failed" else "success"})
+            (root / "source.json").write_text(json.dumps(run))
+            (root / "artifacts.json").write_text(json.dumps({"artifacts": artifacts}))
+            (root / "jobs.json").write_text(json.dumps({"jobs": jobs}))
+            subprocess.run(["python3", str(SCRIPTS / "publish_test_evidence.py"), "archive",
+                            "--run", str(root / "source.json"), "--repository", "ecojust/Agent-OS",
+                            "--artifacts", str(root / "artifacts.json"), "--jobs", str(root / "jobs.json"),
+                            "--incoming", str(root / "incoming")], cwd=root, check=True, capture_output=True, text=True)
+            output = root / "screenshots/123-2"
+            return json.loads((output / "manifest.json").read_text()), (output / "README.md").read_text()
+
+    def test_diagnostic_archive_keeps_eight_unverified_when_all_artifacts_are_missing(self):
+        manifest, readme = self.diagnostic_archive({})
+        self.assertEqual(collector.DIAGNOSTIC_SCOPE, manifest["executionScope"])
+        self.assertEqual((1, 8), (manifest["expectedTestsPerApi"], manifest["expectedTests"]))
+        self.assertEqual({"passed": 0, "failed": 0, "unverified": 8}, manifest["diagnosticCaseCounts"])
+        self.assertFalse(manifest["fullSuiteAcceptance"])
+        self.assertIn("not counted as passed", readme)
+
+    def test_diagnostic_archive_counts_only_exact_actual_case_and_keeps_failure_skip_and_missing(self):
+        manifest, readme = self.diagnostic_archive({"30": "passed", "31": "failed", "32": "skipped"})
+        self.assertEqual({"passed": 1, "failed": 1, "unverified": 6}, manifest["diagnosticCaseCounts"])
+        self.assertEqual(collector.DIAGNOSTIC_TEST, manifest["testSelection"])
+        self.assertEqual(8, len(manifest["apis"]))
+        self.assertIn("not run by this scope", readme)
+
+    def test_diagnostic_success_cannot_be_inferred_from_a_green_job_or_wrong_case(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            test_class, method = collector.DIAGNOSTIC_TEST.split("#")
+            (root / "result.xml").write_text(f'<testsuite><testcase classname="{test_class}" name="{method}"/></testsuite>')
+            capture = {"junit": collector.junit_summary(root, collector.DIAGNOSTIC_TEST), "gradleExitCode": 0}
+            tests = [{"testClass": test_class, "testName": method, "testResult": "pass"}]
+            self.assertEqual("passed", publisher.diagnostic_result(capture, tests, {"conclusion": "success"}))
+            self.assertEqual("unverified", publisher.diagnostic_result(capture, [], {"conclusion": "success"}))
+            tests[0]["testName"] = "differentMethod"
+            with self.assertRaises(ValueError):
+                publisher.diagnostic_result(capture, tests, {"conclusion": "success"})
+            wrong = copy.deepcopy(capture)
+            wrong["junit"]["selectedTests"] = 0
+            wrong["junit"]["unexpectedTests"] = 1
+            with self.assertRaises(ValueError):
+                publisher.diagnostic_result(wrong, [], {"conclusion": "success"})
 
     def test_archive_keeps_missing_lanes_and_source_failure(self):
         with tempfile.TemporaryDirectory() as temp:

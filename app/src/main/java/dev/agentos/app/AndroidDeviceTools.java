@@ -707,17 +707,17 @@ public final class AndroidDeviceTools implements ToolHandler {
     private Snapshot snapshot(RunControl control, long epoch, PerformanceTrace.Stage stage) throws Exception {
         PerformanceTrace.Span timing = PerformanceTrace.begin(stage);
         Snapshot result = null;
-        try { result = buildSnapshot(control, epoch); return result; }
+        try { result = buildSnapshot(control, epoch, stage == PerformanceTrace.Stage.SNAPSHOT_OBSERVE); return result; }
         finally {
             timing.finishSnapshot(result == null ? -1 : result.nodes.size(),
                     result == null ? -1 : result.snapshotJsonBytes, result != null && result.truncated, epoch);
         }
     }
 
-    private Snapshot buildSnapshot(RunControl control, long epoch) throws Exception {
+    private Snapshot buildSnapshot(RunControl control, long epoch, boolean readOnlyObservation) throws Exception {
         requireCurrentConfiguration(control, epoch);
         AccessibilityNodeInfo root = focusedRoot(control, epoch);
-        Snapshot state = new Snapshot(control, epoch);
+        Snapshot state = new Snapshot(control, epoch, readOnlyObservation);
         state.owned.add(root);
         try {
             requireCurrentConfiguration(control, epoch);
@@ -799,6 +799,7 @@ public final class AndroidDeviceTools implements ToolHandler {
     private final class Snapshot implements AutoCloseable {
         final RunControl control;
         final long epoch;
+        final boolean readOnlyObservation;
         String packageName, revision, windowSignature = "";
         int windowId, displayId = -1, windowType = -1;
         boolean scoped, password, truncated, highImpactScreen;
@@ -815,7 +816,9 @@ public final class AndroidDeviceTools implements ToolHandler {
         int snapshotJsonBytes;
         long started = SystemClock.elapsedRealtime();
 
-        Snapshot(RunControl control, long epoch) { this.control = control; this.epoch = epoch; }
+        Snapshot(RunControl control, long epoch, boolean readOnlyObservation) {
+            this.control = control; this.epoch = epoch; this.readOnlyObservation = readOnlyObservation;
+        }
 
         void inspectWindows() throws Exception {
             requireCurrentConfiguration(control, epoch);
@@ -830,6 +833,11 @@ public final class AndroidDeviceTools implements ToolHandler {
                 obscured.clear();
                 systemBars.clear();
                 Rect activeBounds = new Rect(); active.getBoundsInScreen(activeBounds);
+                // A newly focused application may still report a zero-sized window
+                // during entry animation. Publish nothing; only observe may use the
+                // runner's existing bounded refresh. Write validation stays unchanged.
+                if (readOnlyObservation && windowType == AccessibilityWindowInfo.TYPE_APPLICATION
+                        && activeBounds.isEmpty()) throw stale();
                 if (!bounds.intersect(activeBounds) || bounds.isEmpty()) throw unavailable("应用窗口没有可观察区域");
                 StringBuilder signature = new StringBuilder(windowId + ":" + active.getType() + ":" + active.getLayer()
                         + ":focused:" + activeBounds.toShortString() + ":" + bounds.toShortString());

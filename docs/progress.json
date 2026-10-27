@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T13:37:40Z",
-  "note": "归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。",
+  "updated_at": "2026-10-27T13:40:44Z",
+  "note": "Complete this implementation batch with audited results: 1,936/1,936 main emulator checks and 20/20 fixed-page checks. Modules were committed individually as agent; APK, test APK and lint passed. Preserve the official-app probe at 31/32 and all earlier failures. Production visual capture, real-device and ROM acceptance remain unfinished.",
   "latest_evidence": {
     "path": "screenshots/40512239862-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40512239862"
@@ -76,7 +76,9 @@
     {
       "id": "visual_observation",
       "name": "受控截图与视觉观察",
-      "status": "in_progress"
+      "status": "in_progress",
+      "evidence": "docs/VISUAL_PIPELINE.md",
+      "scope": "Internal typed capture/review/guarded-transfer wiring compiled; fixed official Calculator page predicate passed 20/20 on API34–37 in run40512239862. Main production source passed1936/1936 in run40510031737. Screenshot permission and task UI opt-in remain closed; native full capture-to-model, physical memory and real-model acceptance are unfinished. Earlier failed and blocked evidence remains archived."
     },
     {
       "id": "coordinate_actions",

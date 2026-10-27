@@ -1,6 +1,6 @@
 # First visual-page candidate: fixed Calculator basic arithmetic page
 
-Source audit and implemented candidate, 2026-10-27. The internal adapter uses this policy, but the UI and service capture permission remain disabled. Build checks do not certify real-page or complete capture-to-model behavior.
+Source audit and implemented candidate, 2026-10-27. The internal adapter uses this policy, but the UI and service capture permission remain disabled. The actual page-predicate results are scoped below; they do not certify the complete capture-to-model path.
 
 ## Decision and exact identity
 
@@ -101,3 +101,12 @@ The test setup uses the actual known menu row to open this native overflow, inst
 Four converter cases failed before the negative predicate: the actual accessibility tree has the fixed grid and category leaves, while its toolbar wrapper is folded. The test now waits for a visible category leaf beneath the actual fixed RecyclerView and separately confirms the expected UnitConverterPickerActivity; it does not change production recognition. The API36 history failure reached the negative predicate but the old assertion lost the original error code. Independent before/after samples show the same dialog window changing bounds and the older application window disappearing; they do not prove the original exception cause.
 
 History preparation now requires the actual nonempty history list and window/root/list geometry plus reported window set to remain stable for300ms inside the original8-second deadline. This is before observation and the one-shot predicate. No failure is converted to success, no new click retry is added, and final stale/busy/timeout rejections still fail the test. Assertions retain the actual fixed error code and cause for future diagnosis. The test-only changes compiled with application/test APK and lint in29seconds; the unchanged20-case rerun is pending.
+
+
+## Third actual page run: narrow predicate acceptance
+
+[Run40512239862](https://github.com/ecojust/Agent-OS/actions/runs/40512239862), source `4a8f615a85fd0e2b29566858f601611fc7eeb76b`, completed **20/20 cases**: five on each of API34,35,36 and37.0. Each original instrumentation transcript reports five executed tests with no failure. [The complete archive](../screenshots/40512239862-1/manifest.json) has128 payloads and1,334,768bytes; two independent audits checked every size and SHA-256. It preserves28 actual test-only PNGs,16 blocked pinned-page captures and20 blocked standard captures. Secure flags were never cleared. One computed-result image per API was visually reviewed.
+
+All four platforms accepted the ordinary zero/result page and the fresh observation after history dismissal. Actual overflow, nonempty history and converter pages were rejected with `UNSUPPORTED_GEOMETRY`; settings was rejected by the existing `HIGH_IMPACT_CONTENT` check. These are the actual reasons, not invented page-content diagnoses. No stale, busy, timeout, setup failure or missing case was counted as a successful rejection. Earlier20/20 and5/20 failures remain unchanged in their original archives.
+
+This completes this fixed official APK's ordinary LTR portrait page-predicate verification on the four stated emulators. It does not enable screenshot permission, a task visual switch, native capture, image review-to-HTTP disclosure, coordinate gestures, real-model or physical-device acceptance. The production source matches the separately passed eight-API main regression; this later source changes only dedicated test readiness and documentation.

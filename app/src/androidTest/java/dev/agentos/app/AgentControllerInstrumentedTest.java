@@ -1,11 +1,15 @@
 package dev.agentos.app;
 
 import android.graphics.Rect;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Button;
+import android.widget.TextView;
+import android.view.MotionEvent;
+import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityWindowInfo;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.gson.JsonArray;
@@ -13,6 +17,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.agentos.core.TaskBudget;
+import dev.agentos.core.RunControl;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -48,6 +53,7 @@ public final class AgentControllerInstrumentedTest {
              ControllerTestSettings settings = new ControllerTestSettings(device.context, server)) {
             AgentController controller = AgentController.get(device.context);
             Set<String> approved = new HashSet<>();
+            boolean replacedPendingAttachment = false;
             try {
                 Rect input = inputBounds(device);
                 assertFalse("The input must be below the compact controls", controlsIntersect(device, input));
@@ -74,22 +80,17 @@ public final class AgentControllerInstrumentedTest {
                             assertEquals(current, controller.getState().approvalId);
                             Thread.sleep(25);
                         }
-                        safeMain(device, () -> {
-                            assertTrue("Review must not extend the original task deadline", SystemClock.elapsedRealtime() < deadline);
-                            assertEquals(current, controller.getState().approvalId);
-                            assertTrue(device.service.isOwnedControlWindowCurrent(shown.identity));
-                            assertSame(shown.button, controlField(device.service, "approveButton"));
-                            assertEquals(state.approval, controlField(device.service, "currentApproval"));
-                            assertEquals(controlField(device.service, "callbackGeneration"),
-                                    controlField(device.service, "displayedCallbackGeneration"));
-                            assertTrue(shown.button.isAttachedToWindow() && shown.button.isShown() && shown.button.isEnabled());
-                            assertTrue("Approve through the actual displayed Button", shown.button.performClick());
-                        });
+                        if (Build.VERSION.SDK_INT <= 32 && !replacedPendingAttachment) {
+                            rejectOldRequestAfterActualDrag(device, controller, server, state, shown, deadline);
+                            replacedPendingAttachment = true;
+                        } else clickExpandedApproval(device, controller, state, shown, deadline);
                     }
                     SystemClock.sleep(25);
                 }
                 assertFalse("Controller did not finish: " + controller.getState().status, controller.getState().running);
                 server.assertHealthy();
+                assertEquals("Only legacy platforms rebuild during this real pending approval", Build.VERSION.SDK_INT <= 32,
+                        replacedPendingAttachment);
                 assertEquals("Exactly three writes must be accepted by the actual executor", 3, server.acceptedWriteCount());
                 assertTrue("Each accepted write needs a distinct confirmation", approved.size() >= 3);
                 assertTrue("Safety checks may reject a plan before or after confirmation", approved.size() <= server.writePlanCount());
@@ -237,6 +238,104 @@ public final class AgentControllerInstrumentedTest {
         }
     }
 
+    private static void rejectOldRequestAfterActualDrag(DeviceHarness device, AgentController controller,
+            LocalControllerModelServer server, AgentController.State original, ExpandedApproval shown, long deadline) throws Exception {
+        AtomicReference<RunControl> actualOwner = new AtomicReference<>();
+        long[] originalEpoch = new long[1];
+        AtomicReference<ViewGroup> oldPanel = new AtomicReference<>();
+        AtomicReference<TextView> oldTitle = new AtomicReference<>();
+        AtomicReference<Button> oldPause = new AtomicReference<>(), oldStop = new AtomicReference<>(), oldReject = new AtomicReference<>();
+        int priorStale = (Integer) objectField(server, LocalControllerModelServer.class, "staleReplans");
+        safeMain(device, () -> {
+            // This is the Controller's actual task, not DeviceHarness.control.
+            assertEquals(original.approvalId, controller.getState().approvalId);
+            actualOwner.set((RunControl) objectField(controller, AgentController.class, "control"));
+            assertNotNull(actualOwner.get());
+            assertEquals(0, actualOwner.get().getDispatchAttempts());
+            originalEpoch[0] = actualOwner.get().getExecutionEpoch();
+            oldPanel.set((ViewGroup) controlField(device.service, "overlay"));
+            oldTitle.set((TextView) controlField(device.service, "statusView"));
+            oldPause.set((Button) controlField(device.service, "pauseButton"));
+            oldReject.set((Button) controlField(device.service, "rejectButton"));
+            oldStop.set((Button) ((ViewGroup) oldPanel.get().getChildAt(1)).getChildAt(1));
+            dispatchTitleDrag(oldTitle.get(), true);
+            assertFalse(device.service.isOwnedControlWindowCurrent(shown.identity));
+        });
+        ExpandedApproval replacement = awaitExpandedApproval(device, controller, original, deadline);
+        assertNotEquals("A recreated actual window must register independently", shown.identity.windowId, replacement.identity.windowId);
+        assertEquals(shown.identity.copyBounds().top + Math.max(8, Math.round(12 * device.service.getResources().getDisplayMetrics().density)),
+                replacement.identity.copyBounds().top);
+        RunControl owner = actualOwner.get();
+        safeMain(device, () -> {
+            assertFalse(oldPanel.get().isAttachedToWindow());
+            assertNotSame(oldPanel.get(), controlField(device.service, "overlay"));
+            assertNotSame(shown.button, replacement.button);
+            // Programmatic stale View references must not act on the new host.
+            shown.button.performClick();
+            oldReject.get().performClick();
+            oldPause.get().performClick();
+            oldStop.get().performClick();
+            dispatchTitleDrag(oldTitle.get(), false);
+            assertEquals(original.approvalId, controller.getState().approvalId);
+            assertSame(owner, objectField(controller, AgentController.class, "control"));
+            owner.checkExecutionEpoch(originalEpoch[0]);
+            assertFalse(owner.isPaused());
+            assertTrue(device.service.isOwnedControlWindowCurrent(replacement.identity));
+            assertEquals(replacement.identity.copyBounds(), device.service.controlBounds());
+            assertEquals(0, owner.getDispatchAttempts());
+        });
+        clickExpandedApproval(device, controller, original, replacement, deadline);
+        // The real HTTP fixture only increments staleReplans after validating
+        // STALE_OBSERVATION and explicit submitted/dispatch flags=false. It then
+        // uses an actual new observation/call ID; it never replays accepted writes.
+        while (SystemClock.elapsedRealtime() < deadline) {
+            server.assertHealthy();
+            owner.checkExecutionEpoch(originalEpoch[0]);
+            assertEquals("The old approved request must remain unsubmitted", 0, owner.getDispatchAttempts());
+            assertEquals(0, server.acceptedWriteCount());
+            AgentController.State current = controller.getState();
+            int stale = (Integer) objectField(server, LocalControllerModelServer.class, "staleReplans");
+            if (stale > priorStale && !current.approvalId.isEmpty() && !original.approvalId.equals(current.approvalId)) return;
+            assertTrue("The safe stale response must produce a new plan, not stop or silently dispatch", current.running);
+            Thread.sleep(25);
+        }
+        throw new AssertionError("Cross-attachment request did not return an explicitly unsubmitted stale result within the original task deadline");
+    }
+
+    private static void clickExpandedApproval(DeviceHarness device, AgentController controller,
+            AgentController.State state, ExpandedApproval shown, long deadline) {
+        safeMain(device, () -> {
+            assertTrue("Review must not extend the original task deadline", SystemClock.elapsedRealtime() < deadline);
+            assertEquals(state.approvalId, controller.getState().approvalId);
+            assertTrue(device.service.isOwnedControlWindowCurrent(shown.identity));
+            assertSame(shown.button, controlField(device.service, "approveButton"));
+            assertEquals(state.approval, controlField(device.service, "currentApproval"));
+            assertEquals(controlField(device.service, "callbackGeneration"), controlField(device.service, "displayedCallbackGeneration"));
+            assertTrue(shown.button.isAttachedToWindow() && shown.button.isShown() && shown.button.isEnabled());
+            assertTrue("Approve through the actual displayed Button", shown.button.performClick());
+        });
+    }
+
+    private static Object objectField(Object owner, Class<?> type, String name) {
+        try {
+            Field field = type.getDeclaredField(name); field.setAccessible(true); return field.get(owner);
+        } catch (ReflectiveOperationException failed) { throw new AssertionError("Cannot read actual test owner field: " + name, failed); }
+    }
+
+    private static void dispatchTitleDrag(TextView title, boolean mustHandle) {
+        assertNotNull(title);
+        float x = title.getWidth() / 2f, y = title.getHeight() / 2f;
+        float delta = Math.max(8, Math.round(12 * title.getResources().getDisplayMetrics().density));
+        long now = SystemClock.uptimeMillis();
+        MotionEvent down = MotionEvent.obtain(now, now, MotionEvent.ACTION_DOWN, x, y, 0);
+        MotionEvent move = MotionEvent.obtain(now, now + 16, MotionEvent.ACTION_MOVE, x, y + delta, 0);
+        MotionEvent up = MotionEvent.obtain(now, now + 32, MotionEvent.ACTION_UP, x, y + delta, 0);
+        try {
+            boolean a = title.dispatchTouchEvent(down), b = title.dispatchTouchEvent(move), c = title.dispatchTouchEvent(up);
+            if (mustHandle) assertTrue("The actual drag listener must handle the gesture", a && b && c);
+        } finally { up.recycle(); move.recycle(); down.recycle(); }
+    }
+
     private static final class ExpandedApproval {
         final AgentAccessibilityService.OwnedControlWindowIdentity identity;
         final Button button;
@@ -302,7 +401,9 @@ public final class AgentControllerInstrumentedTest {
     }
 
     /** Main-thread assertions must fail the test, not terminate the instrumentation process. */
-    private static void safeMain(DeviceHarness device, Runnable action) {
+    @FunctionalInterface private interface MainAction { void run() throws Exception; }
+
+    private static void safeMain(DeviceHarness device, MainAction action) {
         AtomicReference<Throwable> failure = new AtomicReference<>();
         device.instrumentation.runOnMainSync(() -> {
             try { action.run(); } catch (Throwable failed) { failure.set(failed); }

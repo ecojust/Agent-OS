@@ -1236,6 +1236,13 @@ public final class AndroidDeviceTools implements ToolHandler {
     private AgentAccessibilityService.ControlLease confirmAndAwaitControls(String tool, String description,
             RunControl control, long epoch, ControlWindowBaseline originalControls) throws Exception {
         requireCurrentConfiguration(control, epoch);
+        // Pin the physical control attachment before approval. An owned window is
+        // excluded from the target revision, so a later, otherwise valid replacement
+        // must never let an old request/approval continue with its new lease.
+        AgentAccessibilityService.OwnedControlWindowIdentity originalAttachment = originalControls == null
+                ? service.getOwnedControlWindowIdentity() : originalControls.identity;
+        if (originalAttachment == null)
+            throw diagnosticStale(PerformanceTrace.Stage.LOCAL_CONTROL_STALE, control, epoch);
         // The immutable, locally saved mode only exempts the reviewed navigation names.
         // Generic controls, input and back retain a human gate in either mode.
         if (confirmationPolicy.requiresConfirmation(tool)) {
@@ -1260,6 +1267,10 @@ public final class AndroidDeviceTools implements ToolHandler {
         finally { acquiring.cancel(false); }
         requireCurrentConfiguration(control, epoch);
         readinessRemaining(deadline);
+        // This check is unconditional: a reattachment can clear the collapse
+        // record entirely. Only a new observation/request may use the new window.
+        if (!controls.matchesOriginalAttachment(originalAttachment))
+            throw diagnosticStale(PerformanceTrace.Stage.LOCAL_CONTROL_STALE, control, epoch);
         // The only permitted metadata lag belongs to this real approval collapse.
         // Navigation exemptions and gates that did not actually show approval do
         // not obtain a new readiness exemption. Never reacquire a revoked lease.

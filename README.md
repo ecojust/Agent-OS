@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Archive the focused owned-control diagnostic only: 5/8 pass, API30–32 fail, with 72 verified payloads and 40 real screenshots. Original Checks summaries show moved View/root geometry while the accessibility window table remains at the old position. Preserve source/artifact hashes and keep this separate from the full 1,936-case regression; compatibility repair is still in progress.
+**本次更新：** Implement guarded control-window reattachment after an actual completed drag on API30–32, including round trips. Preserve position and controls, require a genuinely new window, reject old attachments/approvals and detached View callbacks, and keep all geometry checks. Existing regressions now include real InputDispatcher gestures. App unit checks, lint and both APK builds pass; device verification and a new walkthrough are pending.
 
-**记录时间：** 2026-10-27T16:29:28Z
+**记录时间：** 2026-10-27T16:47:46Z
 
 [最近测试截图与清单](screenshots/40539311569-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40539311569)。通过、失败及未截图原因见清单。
 

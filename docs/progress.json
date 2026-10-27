@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T16:29:28Z",
-  "note": "Archive the focused owned-control diagnostic only: 5/8 pass, API30–32 fail, with 72 verified payloads and 40 real screenshots. Original Checks summaries show moved View/root geometry while the accessibility window table remains at the old position. Preserve source/artifact hashes and keep this separate from the full 1,936-case regression; compatibility repair is still in progress.",
+  "updated_at": "2026-10-27T16:47:46Z",
+  "note": "Implement guarded control-window reattachment after an actual completed drag on API30–32, including round trips. Preserve position and controls, require a genuinely new window, reject old attachments/approvals and detached View callbacks, and keep all geometry checks. Existing regressions now include real InputDispatcher gestures. App unit checks, lint and both APK builds pass; device verification and a new walkthrough are pending.",
   "latest_evidence": {
     "path": "screenshots/40539311569-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40539311569"

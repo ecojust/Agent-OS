@@ -4,15 +4,19 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
+import android.os.Build;
 import android.os.SystemClock;
 import android.view.Display;
 import android.view.Gravity;
+import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.TextView;
+import android.widget.Button;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.gson.JsonElement;
@@ -234,6 +238,10 @@ public final class OwnedControlWindowInstrumentedTest {
             // A real callback publication and a real layout, not fabricated IDs,
             // produce the one current compact lease.
             safeMain(device, () -> service.showOverlay("Collapse readiness", false, ""));
+            // Run before creating the live collapse used below: a round trip must
+            // not pre-invalidate that separate direct-drag regression's owner.
+            dragOutAndBackToOriginalPosition(device);
+            screenshots.capture("actual-control-drag-out-and-back-re-registration");
             AgentAccessibilityService.OwnedControlWindowIdentity beforeApproval = identity(service);
             AgentAccessibilityService.ControlLease beforeApprovalLease = lease(service);
             assertNull(service.approvalCollapseFor(beforeApprovalLease));
@@ -263,16 +271,57 @@ public final class OwnedControlWindowInstrumentedTest {
 
             // Dispatch touch events to the service's actual draggable title View.
             // A geometry change revokes the record immediately, before WMS settles.
+            AtomicReference<ControlViews> beforeDragViews = new AtomicReference<>();
+            AgentAccessibilityService.OwnedControlWindowIdentity beforeDragIdentity = identity(service);
+            long beforeDragEpoch = device.control.getExecutionEpoch();
             safeMain(device, () -> {
+                beforeDragViews.set(new ControlViews(service));
+                // A tap/zero-distance gesture is not a move or a new attachment.
+                dispatchTitleTouch(beforeDragViews.get().title, true, 0);
+                assertTrue(service.isOwnedControlWindowCurrent(beforeDragIdentity));
+                assertTrue(service.isControlLeaseCurrent(compact));
+                assertTrue(service.isApprovalCollapseCurrent(collapse));
+                assertSame(beforeDragViews.get().panel, controlField(service, "overlay"));
                 dragActualStatus(device);
                 assertFalse(service.isApprovalCollapseCurrent(collapse));
                 assertFalse(service.isControlLeaseCurrent(compact));
                 assertNull(service.approvalCollapseFor(compact));
             });
             AgentAccessibilityService.ControlLease dragged = lease(service);
-            assertEquals(compact.windowId, dragged.windowId);
-            assertTrue("The drag must move the real control window", dragged.copyBounds().top > compact.copyBounds().top);
+            AgentAccessibilityService.OwnedControlWindowIdentity afterDragIdentity = identity(service);
+            assertFalse(service.isOwnedControlWindowCurrent(beforeDragIdentity));
+            assertFalse(service.isControlLeaseCurrent(compact));
+            assertFalse(service.isApprovalCollapseCurrent(collapse));
+            if (Build.VERSION.SDK_INT <= 32) {
+                assertNotEquals("Legacy drag re-registers a real platform window", compact.windowId, dragged.windowId);
+                assertFalse("The new window must not inherit the original attachment", dragged.matchesOriginalAttachment(beforeDragIdentity));
+            } else {
+                assertEquals(compact.windowId, dragged.windowId);
+                assertTrue(dragged.matchesOriginalAttachment(beforeDragIdentity));
+            }
+            assertEquals("The re-registered window must preserve the actual requested drag position",
+                    compact.copyBounds().top + Math.max(8, Math.round(12 * device.service.getResources().getDisplayMetrics().density)),
+                    dragged.copyBounds().top);
             assertFreshRegisteredAfterDrag(device, dragged.windowId, dragged.displayId, dragged.copyBounds(), screenshots);
+            safeMain(device, () -> {
+                ControlViews old = beforeDragViews.get(), current = new ControlViews(service);
+                assertEquals(old.status, current.status);
+                assertEquals(old.approval, current.approval);
+                assertEquals(old.paused, current.paused);
+                assertEquals(old.pause.getText().toString(), current.pause.getText().toString());
+                assertEquals(old.stop.getText().toString(), current.stop.getText().toString());
+                if (Build.VERSION.SDK_INT <= 32) {
+                    assertNotSame(old.panel, current.panel);
+                    assertFalse(old.panel.isAttachedToWindow());
+                    old.pause.performClick(); old.stop.performClick(); old.approve.performClick(); old.reject.performClick();
+                    dispatchTitleDrag(old.title, false);
+                    device.control.checkExecutionEpoch(beforeDragEpoch);
+                    assertFalse(device.control.isPaused());
+                    assertTrue(service.isOwnedControlWindowCurrent(afterDragIdentity));
+                    assertTrue(service.isControlLeaseCurrent(dragged));
+                    assertEquals(dragged.copyBounds(), service.controlBounds());
+                } else assertSame(old.panel, current.panel);
+            });
             assertNull("A later stable frame cannot reissue the old collapse", service.approvalCollapseFor(dragged));
             safeMain(device, () -> service.showOverlay("Collapse readiness", false, ""));
             assertSame(dragged, lease(service));
@@ -319,6 +368,18 @@ public final class OwnedControlWindowInstrumentedTest {
             assertFalse(service.isApprovalCollapseCurrent(secondCollapse));
             assertEquals("Only local control UI changed; no device action was dispatched", 0, device.control.getDispatchAttempts());
             screenshots.capture("drag-and-extra-callbacks-do-not-revive-collapse-record");
+            dragThroughInputDispatcher(device, discarded);
+            screenshots.capture("real-input-dispatcher-control-drag");
+            safeMain(device, () -> {
+                ControlViews current = new ControlViews(service);
+                assertTrue(current.pause.isShown() && current.pause.isEnabled());
+                assertTrue(current.pause.performClick());
+                assertTrue("The current actual pause Button retains its callback", device.control.isPaused());
+                device.control.resume();
+                assertTrue(current.stop.isShown() && current.stop.isEnabled());
+                assertTrue(current.stop.performClick());
+                assertTrue("The current actual stop Button retains its callback", device.control.isCancelled());
+            });
         }
     }
 
@@ -330,30 +391,243 @@ public final class OwnedControlWindowInstrumentedTest {
         };
     }
 
-    /** Caller is on the main thread; reads the actual View without replacing any state. */
-    private static void dragActualStatus(DeviceHarness device) {
-        TextView title;
+    /** Read-only actual control references; constructed only on the main thread. */
+    private static final class ControlViews {
+        final ViewGroup panel;
+        final TextView title;
+        final Button pause, stop, approve, reject;
+        final String status, approval;
+        final boolean paused;
+        ControlViews(AgentAccessibilityService service) {
+            panel = (ViewGroup) controlField(service, "overlay");
+            title = (TextView) controlField(service, "statusView");
+            pause = (Button) controlField(service, "pauseButton");
+            stop = (Button) ((ViewGroup) panel.getChildAt(1)).getChildAt(1);
+            approve = (Button) controlField(service, "approveButton");
+            reject = (Button) controlField(service, "rejectButton");
+            status = (String) controlField(service, "currentStatus");
+            approval = (String) controlField(service, "currentApproval");
+            paused = (Boolean) controlField(service, "currentPaused");
+        }
+    }
+
+    private static Object controlField(AgentAccessibilityService service, String name) {
         try {
-            Field field = AgentAccessibilityService.class.getDeclaredField("statusView");
-            field.setAccessible(true); title = (TextView) field.get(device.service);
-        } catch (ReflectiveOperationException failed) { throw new AssertionError("Actual drag title is unavailable", failed); }
+            Field field = AgentAccessibilityService.class.getDeclaredField(name);
+            field.setAccessible(true); return field.get(service);
+        } catch (ReflectiveOperationException failed) { throw new AssertionError("Actual control field is unavailable: " + name, failed); }
+    }
+
+    /** Caller is on the main thread; dispatches to the actual View, never a fake identity. */
+    private static void dragActualStatus(DeviceHarness device) {
+        TextView title = (TextView) controlField(device.service, "statusView");
         assertNotNull(title);
         assertTrue(title.isAttachedToWindow() && title.isShown());
+        dispatchTitleDrag(title, true);
+    }
+
+    private static void dispatchTitleDrag(TextView title, boolean mustHandle) {
+        dispatchTitleTouch(title, mustHandle, Math.max(8, Math.round(12 * title.getResources().getDisplayMetrics().density)));
+    }
+
+    private static void dispatchTitleTouch(TextView title, boolean mustHandle, float delta) {
         float x = title.getWidth() / 2f, y = title.getHeight() / 2f;
-        float delta = Math.max(8, Math.round(12 * device.service.getResources().getDisplayMetrics().density));
         long now = SystemClock.uptimeMillis();
         MotionEvent down = MotionEvent.obtain(now, now, MotionEvent.ACTION_DOWN, x, y, 0);
         MotionEvent move = MotionEvent.obtain(now, now + 16, MotionEvent.ACTION_MOVE, x, y + delta, 0);
         MotionEvent up = MotionEvent.obtain(now, now + 32, MotionEvent.ACTION_UP, x, y + delta, 0);
         try {
-            assertTrue(title.dispatchTouchEvent(down));
-            assertTrue(title.dispatchTouchEvent(move));
-            assertTrue(title.dispatchTouchEvent(up));
+            boolean a = title.dispatchTouchEvent(down), b = title.dispatchTouchEvent(move), c = title.dispatchTouchEvent(up);
+            if (mustHandle) assertTrue(a && b && c);
         } finally { up.recycle(); move.recycle(); down.recycle(); }
     }
 
+    /** Prove a real intermediate View position, then return the same gesture to its original y. */
+    private void dragOutAndBackToOriginalPosition(DeviceHarness device) throws Exception {
+        AgentAccessibilityService service = device.service;
+        AgentAccessibilityService.ControlLease before = lease(service);
+        AgentAccessibilityService.OwnedControlWindowIdentity original = service.getOwnedControlWindowIdentity();
+        assertNotNull(original);
+        assertTrue(service.isOwnedControlWindowCurrent(original));
+        assertEquals(before.copyBounds(), original.copyBounds());
+        assertRegistered(device, before.windowId, before.displayId, before.copyBounds());
+        AtomicReference<ControlViews> views = new AtomicReference<>();
+        float[] point = new float[3];
+        long downTime = SystemClock.uptimeMillis();
+        long deadline = SystemClock.elapsedRealtime() + 5_000;
+        boolean[] ended = {false};
+        try {
+            safeMain(device, () -> {
+                requireRegistrationTime(deadline);
+                ControlViews actual = new ControlViews(service); views.set(actual);
+                assertTrue(actual.title.isAttachedToWindow() && actual.title.isShown());
+                point[0] = actual.title.getWidth() / 2f; point[1] = actual.title.getHeight() / 2f;
+                point[2] = Math.max(8, Math.round(12 * service.getResources().getDisplayMetrics().density));
+                assertTrue(dispatchTitleEvent(actual.title, downTime, MotionEvent.ACTION_DOWN, point[0], point[1]));
+                assertTrue(dispatchTitleEvent(actual.title, downTime, MotionEvent.ACTION_MOVE, point[0], point[1] + point[2]));
+                assertFalse(service.isControlLeaseCurrent(before));
+            });
+            AgentAccessibilityService.ControlLease outward = leaseBeforeDeadline(service, deadline);
+            Rect moved = before.copyBounds(); moved.offset(0, Math.round(point[2]));
+            assertEquals("The outward update must reach the actual View before moving back", moved, outward.copyBounds());
+            assertEquals(before.windowId, outward.windowId);
+            assertTrue(outward.matchesOriginalAttachment(original));
+            safeMain(device, () -> {
+                requireRegistrationTime(deadline);
+                ControlViews actual = new ControlViews(service);
+                assertSame(views.get().panel, actual.panel);
+                assertTrue(dispatchTitleEvent(actual.title, downTime, MotionEvent.ACTION_MOVE, point[0], point[1]));
+                assertTrue(dispatchTitleEvent(actual.title, downTime, MotionEvent.ACTION_UP, point[0], point[1]));
+                ended[0] = true;
+            });
+        } finally {
+            if (!ended[0] && views.get() != null) safeMain(device, () ->
+                    dispatchTitleEvent(views.get().title, downTime, MotionEvent.ACTION_CANCEL, point[0], point[1]));
+        }
+        AgentAccessibilityService.ControlLease returned = leaseBeforeDeadline(service, deadline);
+        assertEquals("Returning to the starting y must preserve the exact original final geometry", before.copyBounds(), returned.copyBounds());
+        assertFalse(service.isControlLeaseCurrent(before));
+        assertFalse(service.isOwnedControlWindowCurrent(original));
+        if (Build.VERSION.SDK_INT <= 32) {
+            assertNotEquals("An actual move requires re-registration even when net displacement is zero", before.windowId, returned.windowId);
+            assertFalse(returned.matchesOriginalAttachment(original));
+        } else {
+            assertEquals(before.windowId, returned.windowId);
+            assertTrue(returned.matchesOriginalAttachment(original));
+        }
+        assertFreshRegisteredAfterDrag(device, returned.windowId, returned.displayId, returned.copyBounds(), screenshots, deadline);
+        safeMain(device, () -> {
+            requireRegistrationTime(deadline);
+            ControlViews actual = new ControlViews(service), old = views.get();
+            assertEquals(old.status, actual.status); assertEquals(old.approval, actual.approval); assertEquals(old.paused, actual.paused);
+            if (Build.VERSION.SDK_INT <= 32) {
+                assertNotSame(old.panel, actual.panel); assertFalse(old.panel.isAttachedToWindow());
+            } else assertSame(old.panel, actual.panel);
+        });
+        requireRegistrationTime(deadline);
+        assertEquals(0, device.control.getDispatchAttempts());
+    }
+
+    private static AgentAccessibilityService.ControlLease leaseBeforeDeadline(AgentAccessibilityService service, long deadline) throws Exception {
+        requireRegistrationTime(deadline);
+        CompletableFuture<AgentAccessibilityService.ControlLease> pending = service.acquireControlLease();
+        try {
+            requireRegistrationTime(deadline);
+            AgentAccessibilityService.ControlLease result = pending.get(Math.max(1, deadline - SystemClock.elapsedRealtime()), TimeUnit.MILLISECONDS);
+            requireRegistrationTime(deadline);
+            return result;
+        } finally { pending.cancel(false); }
+    }
+
+    private static boolean dispatchTitleEvent(TextView title, long downTime, int action, float x, float y) {
+        MotionEvent event = MotionEvent.obtain(downTime, SystemClock.uptimeMillis(), action, x, y, 0);
+        try { return title.dispatchTouchEvent(event); }
+        finally { event.recycle(); }
+    }
+
+    /** A separate real InputDispatcher gesture, never injected while holding the main thread. */
+    private void dragThroughInputDispatcher(DeviceHarness device, AgentAccessibilityService.ControlLease before) throws Exception {
+        AgentAccessibilityService service = device.service;
+        AgentAccessibilityService.OwnedControlWindowIdentity original = service.getOwnedControlWindowIdentity();
+        assertNotNull(original);
+        assertTrue(service.isControlLeaseCurrent(before));
+        assertTrue(service.isOwnedControlWindowCurrent(original));
+        assertEquals(original.windowId, before.windowId);
+        assertEquals(original.copyBounds(), before.copyBounds());
+        AtomicReference<ControlViews> views = new AtomicReference<>();
+        int[] point = new int[3];
+        safeMain(device, () -> {
+            assertTrue(service.isOwnedControlWindowCurrent(original));
+            ControlViews actual = new ControlViews(service); views.set(actual);
+            assertTrue(actual.title.isAttachedToWindow() && actual.title.isShown());
+            int[] location = new int[2]; actual.title.getLocationOnScreen(location);
+            Rect title = new Rect(location[0], location[1], location[0] + actual.title.getWidth(), location[1] + actual.title.getHeight());
+            assertFalse(title.isEmpty());
+            assertTrue(original.copyBounds().contains(title));
+            point[0] = title.centerX(); point[1] = title.centerY();
+            point[2] = Math.max(8, Math.round(12 * service.getResources().getDisplayMetrics().density));
+            WindowManager manager = (WindowManager) service.getSystemService(Context.WINDOW_SERVICE);
+            assertNotNull(manager);
+            Rect display = manager.getCurrentWindowMetrics().getBounds();
+            assertTrue(display.contains(point[0], point[1]));
+            assertTrue(display.contains(point[0], point[1] + point[2]));
+            assertTrue("This small real gesture must not reach the drag clamp",
+                    original.copyBounds().bottom + point[2] < display.bottom - Math.round(48 * service.getResources().getDisplayMetrics().density));
+        });
+        long epoch = device.control.getExecutionEpoch();
+        long deadline = SystemClock.elapsedRealtime() + 5_000;
+        long downTime = SystemClock.uptimeMillis();
+        boolean released = false;
+        try {
+            requireRegistrationTime(deadline);
+            assertTrue("Real DOWN must enter InputDispatcher", injectTouch(device, downTime, MotionEvent.ACTION_DOWN, point[0], point[1]));
+            SystemClock.sleep(24);
+            requireRegistrationTime(deadline);
+            assertTrue("Real MOVE must enter InputDispatcher", injectTouch(device, downTime, MotionEvent.ACTION_MOVE, point[0], point[1] + point[2]));
+            SystemClock.sleep(24);
+            requireRegistrationTime(deadline);
+            released = injectTouch(device, downTime, MotionEvent.ACTION_UP, point[0], point[1] + point[2]);
+            assertTrue("Real UP must enter InputDispatcher", released);
+        } finally {
+            // End an incomplete physical touch even after the test deadline; never replay the gesture.
+            if (!released) injectTouch(device, downTime, MotionEvent.ACTION_CANCEL, point[0], point[1] + point[2]);
+        }
+        requireRegistrationTime(deadline);
+        CompletableFuture<AgentAccessibilityService.ControlLease> pending = service.acquireControlLease();
+        AgentAccessibilityService.ControlLease after;
+        try {
+            requireRegistrationTime(deadline);
+            after = pending.get(Math.max(1, deadline - SystemClock.elapsedRealtime()), TimeUnit.MILLISECONDS);
+            requireRegistrationTime(deadline);
+        } finally { pending.cancel(false); }
+        AgentAccessibilityService.OwnedControlWindowIdentity current = service.getOwnedControlWindowIdentity();
+        assertNotNull(current);
+        assertTrue(service.isOwnedControlWindowCurrent(current));
+        assertTrue(service.isControlLeaseCurrent(after));
+        assertEquals(current.windowId, after.windowId);
+        assertEquals(current.copyBounds(), after.copyBounds());
+        Rect expected = before.copyBounds(); expected.offset(0, point[2]);
+        assertEquals("The real input gesture must move the actual controls", expected, after.copyBounds());
+        assertFalse(service.isControlLeaseCurrent(before));
+        assertFalse(service.isOwnedControlWindowCurrent(original));
+        if (Build.VERSION.SDK_INT <= 32) {
+            assertNotEquals(before.windowId, after.windowId);
+            assertFalse(after.matchesOriginalAttachment(original));
+        } else {
+            assertEquals(before.windowId, after.windowId);
+            assertTrue(after.matchesOriginalAttachment(original));
+        }
+        assertFreshRegisteredAfterDrag(device, after.windowId, after.displayId, after.copyBounds(), screenshots, deadline);
+        safeMain(device, () -> {
+            requireRegistrationTime(deadline);
+            ControlViews actual = new ControlViews(service), old = views.get();
+            assertEquals(old.status, actual.status);
+            assertEquals(old.approval, actual.approval);
+            assertEquals(old.paused, actual.paused);
+            assertTrue(actual.pause.isAttachedToWindow() && actual.pause.isShown() && actual.pause.isEnabled());
+            assertTrue(actual.stop.isAttachedToWindow() && actual.stop.isShown() && actual.stop.isEnabled());
+            if (Build.VERSION.SDK_INT <= 32) {
+                assertNotSame(old.panel, actual.panel);
+                assertFalse(old.panel.isAttachedToWindow());
+            } else assertSame(old.panel, actual.panel);
+        });
+        requireRegistrationTime(deadline);
+        device.control.checkExecutionEpoch(epoch);
+        assertEquals("The input gesture controls the overlay, not the target app", 0, device.control.getDispatchAttempts());
+    }
+
+    private static boolean injectTouch(DeviceHarness device, long downTime, int action, int x, int y) {
+        MotionEvent event = MotionEvent.obtain(downTime, SystemClock.uptimeMillis(), action, x, y, 0);
+        try {
+            event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+            return device.automation.injectInputEvent(event, true);
+        } finally { event.recycle(); }
+    }
+
     /** Preserve failures without throwing an uncaught assertion on the application main thread. */
-    private static void safeMain(DeviceHarness device, Runnable action) {
+    @FunctionalInterface private interface MainAction { void run() throws Exception; }
+
+    private static void safeMain(DeviceHarness device, MainAction action) {
         AtomicReference<Throwable> failure = new AtomicReference<>();
         device.instrumentation.runOnMainSync(() -> {
             try { action.run(); } catch (Throwable failed) { failure.set(failed); }
@@ -388,8 +662,13 @@ public final class OwnedControlWindowInstrumentedTest {
     /** Only the completed real drag needs a cache-fresh registration observation. */
     private static void assertFreshRegisteredAfterDrag(DeviceHarness device, int id, int displayId, Rect bounds,
                                                        ScreenshotEvidence screenshots) throws Exception {
+        assertFreshRegisteredAfterDrag(device, id, displayId, bounds, screenshots, SystemClock.elapsedRealtime() + 5_000);
+    }
+
+    private static void assertFreshRegisteredAfterDrag(DeviceHarness device, int id, int displayId, Rect bounds,
+                                                       ScreenshotEvidence screenshots, long deadline) throws Exception {
         assertTrue("No device operation may overlap the drag registration read", device.service.tryBeginDeviceCall());
-        try { assertRegistered(device, id, displayId, bounds, true); }
+        try { assertRegistered(device, id, displayId, bounds, true, deadline); }
         catch (AssertionError original) {
             // The original five-second assertion has already failed. These sequential,
             // read-only measurements cannot convert it to success or renew any identity.
@@ -411,7 +690,10 @@ public final class OwnedControlWindowInstrumentedTest {
     }
 
     private static void assertRegistered(DeviceHarness device, int id, int displayId, Rect bounds, boolean fresh) throws Exception {
-        long deadline = SystemClock.elapsedRealtime() + 5_000;
+        assertRegistered(device, id, displayId, bounds, fresh, SystemClock.elapsedRealtime() + 5_000);
+    }
+
+    private static void assertRegistered(DeviceHarness device, int id, int displayId, Rect bounds, boolean fresh, long deadline) throws Exception {
         while (SystemClock.elapsedRealtime() < deadline) {
             try {
                 List<AccessibilityWindowInfo> windows = fresh

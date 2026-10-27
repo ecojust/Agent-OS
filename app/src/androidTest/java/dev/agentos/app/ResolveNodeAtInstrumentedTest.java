@@ -11,6 +11,7 @@ import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.TextView;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.junit.Rule;
 import org.junit.Test;
@@ -138,21 +139,85 @@ public final class ResolveNodeAtInstrumentedTest {
                 params.setTitle("Coordinate resolver obstruction");
                 manager.addView(blocker, params);
             });
+            final long epoch = device.control.getExecutionEpoch();
+            StringBuilder outcomes = new StringBuilder();
             try {
-                device.awaitUiIdle();
-                JsonObject obscured = awaitObservation(tools, device.control, data -> data.get("hasOcclusion").getAsBoolean()
-                        && node(data, "increment").get("obscured").getAsBoolean());
-                JsonObject rejected = tools.execute("resolve_node_at",
-                        request(obscured, bounds(node(obscured, "increment")), "click"), device.control);
-                rejected(rejected, "CAPABILITY_UNAVAILABLE");
-                assertEquals("BLOCKED_TARGET", string(rejected, "reasonCode"));
+                JsonObject resolution = null;
+                // Observation and resolution each read the real windows. A changed
+                // revision can reject the read-only lookup before the occlusion test.
+                // Replace only explicitly unsubmitted stale lookups, never an action.
+                for (int attempt = 0; attempt < 3; attempt++) {
+                    device.control.checkExecutionEpoch(epoch);
+                    device.awaitUiIdle();
+                    JsonObject obscured = awaitObservation(tools, device.control,
+                            ResolveNodeAtInstrumentedTest::hasObservedIncrementOcclusion);
+                    device.control.checkExecutionEpoch(epoch);
+                    Rect overlap = bounds(node(obscured, "increment"));
+                    Rect blockerBounds = new Rect();
+                    device.instrumentation.runOnMainSync(() -> {
+                        assertTrue("The real blocker must remain attached", blocker.isAttachedToWindow());
+                        int[] position = new int[2]; blocker.getLocationOnScreen(position);
+                        blockerBounds.set(position[0], position[1], position[0] + blocker.getWidth(), position[1] + blocker.getHeight());
+                    });
+                    assertTrue("The fresh query must lie behind the real blocker", overlap.intersect(blockerBounds));
+                    JsonObject arguments = request(obscured, overlap, "click");
+                    assertNoDispatch(device, approvals);
+                    resolution = tools.execute("resolve_node_at", arguments, device.control, epoch);
+                    outcomes.append("attempt=").append(attempt + 1).append(" windowId=").append(obscured.get("windowId"))
+                            .append(" args=").append(arguments).append(" blockerBounds=").append(blockerBounds.toShortString())
+                            .append(" result=").append(resolution).append('\n');
+                    assertUnsubmittedLookup(resolution);
+                    assertNoDispatch(device, approvals);
+                    assertEquals(outcomes.toString(), "Count: 0", actualText(device, "counter_value"));
+                    device.control.checkExecutionEpoch(epoch);
+                    if (!"STALE_OBSERVATION".equals(string(resolution, "code"))) break;
+                    if (attempt == 2) fail("Read-only resolution stayed stale after three fresh observations: " + outcomes);
+                }
+                rejected(resolution, "CAPABILITY_UNAVAILABLE");
+                assertEquals("BLOCKED_TARGET", string(resolution, "reasonCode"));
                 assertNoDispatch(device, approvals);
                 assertEquals("Count: 0", actualText(device, "counter_value"));
                 screenshots.capture("unknown-window-coordinate-resolution-denied");
+            } catch (Exception | AssertionError failure) {
+                AssertionError diagnostic = new AssertionError("Unknown-overlay resolution failed before cleanup: "
+                        + failure.getMessage() + "\n" + outcomes
+                        + "epoch=" + device.control.getExecutionEpoch() + " expectedEpoch=" + epoch
+                        + " dispatches=" + device.control.getDispatchAttempts() + " approvals=" + approvals.get()
+                        + "\n" + windowDiagnostics(), failure);
+                try { screenshots.capture("unknown-window-coordinate-resolution-failure-before-cleanup"); }
+                catch (Throwable captureFailure) { diagnostic.addSuppressed(captureFailure); }
+                throw diagnostic;
             } finally {
                 device.instrumentation.runOnMainSync(() -> manager.removeViewImmediate(blocker));
             }
         }
+    }
+
+    private static boolean hasObservedIncrementOcclusion(JsonObject data) {
+        if (!FIXTURE.equals(string(data, "packageName")) || !data.get("focused").getAsBoolean()
+                || !data.get("scoped").getAsBoolean() || data.get("truncated").getAsBoolean()
+                || !data.get("hasOcclusion").getAsBoolean()) return false;
+        for (JsonElement entry : data.getAsJsonArray("nodes")) {
+            JsonObject candidate = entry.getAsJsonObject();
+            if ((FIXTURE + ":id/increment").equals(string(candidate, "viewId")))
+                return candidate.get("obscured").getAsBoolean();
+        }
+        return false;
+    }
+
+    private static void assertUnsubmittedLookup(JsonObject result) {
+        for (String flag : new String[]{"ok", "submitted", "dispatchSubmitted", "dispatchAccepted"}) {
+            assertTrue(result.toString(), result.has(flag) && result.get(flag).isJsonPrimitive()
+                    && result.getAsJsonPrimitive(flag).isBoolean());
+            assertFalse(result.toString(), result.get(flag).getAsBoolean());
+        }
+        if (result.has("accepted")) {
+            assertTrue(result.toString(), result.get("accepted").isJsonPrimitive()
+                    && result.getAsJsonPrimitive("accepted").isBoolean());
+            assertFalse(result.toString(), result.get("accepted").getAsBoolean());
+        }
+        assertFalse("A rejected lookup must not return any candidate payload: " + result,
+                result.has("data") || result.has("nodeId") || result.has("candidate"));
     }
 
     @Test public void twoRealClickableTargetsAtTheSamePointRemainAmbiguous() throws Exception {

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T03:10:54Z",
-  "note": "模型配置守卫新增Android回归在八档共16次全部通过；完整912项中有1项旧导航测试提前读取遮挡文本。已归档911通过/1失败的完整证据，仅修正测试的只读等待与失败诊断，准备复测。",
+  "updated_at": "2026-10-27T03:23:06Z",
+  "note": "本轮复测已通过原API34导航场景；API36只读定位测试遇到未提交的旧观察拒绝。已修正为最多3次重新观察后解析，最终仍须明确BLOCKED_TARGET，零派发/零确认；测试APK和lint通过，待完整矩阵验证。",
   "latest_evidence": {
     "path": "screenshots/40441653611-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40441653611"

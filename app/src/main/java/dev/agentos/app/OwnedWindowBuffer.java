@@ -105,6 +105,25 @@ final class OwnedWindowBuffer implements AutoCloseable {
             }
         }
 
+        /** Reaccounts only verified logical pixels; native stride/driver memory remains unknown. */
+        long reduceToValidatedLogicalBytes() {
+            synchronized (owner) {
+                if (closed || owner.buffer == null || owner.buffer.isClosed())
+                    throw new IllegalStateException("Window buffer read lease is no longer usable.");
+                HardwareBuffer actual = owner.buffer;
+                int width = actual.getWidth(), height = actual.getHeight(), format = actual.getFormat();
+                int bytesPerPixel = format == HardwareBuffer.RGBA_8888 ? 4
+                        : format == HardwareBuffer.RGBA_FP16 ? 8 : 0;
+                if (width <= 0 || height <= 0 || actual.getLayers() != 1 || bytesPerPixel == 0)
+                    throw new IllegalArgumentException("Unsupported logical window buffer layout.");
+                long bytes = Math.multiplyExact(Math.multiplyExact((long) width, height), bytesPerPixel);
+                // Lock order is owner -> workset. Workset never calls this owner;
+                // this live reader prevents concurrent native/reservation release.
+                owner.reservation.reduceTo(bytes);
+                return bytes;
+            }
+        }
+
         @Override public void close() {
             synchronized (owner) {
                 if (closed) return;

@@ -123,7 +123,8 @@ final class WindowBufferCapturer {
         private final String revision;
         private volatile AndroidDeviceTools.WindowCapturePermit permit;
         private boolean abandoned, workerDone, submissionEntered, submissionReturned;
-        private boolean receiving, resourceSettled = true, claimed;
+        private boolean receiving, resourceSettled = true, claimed, conversionHeld;
+        private ConversionResources conversionResources;
         private int terminal; // 0 = awaiting native, 1 = success, 2 = failure.
         private int platformCode, duplicates, extraClosers;
         private boolean unclosedExtra;
@@ -193,7 +194,7 @@ final class WindowBufferCapturer {
                     // queue post-validation behind its own blocking await.
                     tools.validateWindowCaptureResult(permit, control, epoch);
                     checkCurrent(); checkNotAbandoned();
-                    CapturedWindow result = new CapturedWindow(permit, control, epoch, source, metadata,
+                    CapturedWindow result = new CapturedWindow(this, permit, control, epoch, source, metadata,
                             Math.min(requestDeadline, permit.deadlineElapsedRealtimeMs));
                     synchronized (lock) {
                         if (abandoned || failure != null) throw new CaptureException(Failure.ABANDONED);
@@ -368,7 +369,7 @@ final class WindowBufferCapturer {
         private void tryReleaseSlot() {
             synchronized (lock) {
                 if (workerDone && submissionReturned && (!submissionEntered || terminal != 0)
-                        && !receiving && resourceSettled && extraClosers == 0 && !unclosedExtra)
+                        && !receiving && resourceSettled && !conversionHeld && extraClosers == 0 && !unclosedExtra)
                     SLOT.compareAndSet(this, null);
             }
         }
@@ -394,11 +395,26 @@ final class WindowBufferCapturer {
         private final long epoch;
         private final long deadline;
         private final OwnedWindowBuffer owned;
-        CapturedWindow(AndroidDeviceTools.WindowCapturePermit permit, RunControl control, long epoch,
+        private final CaptureRequest request;
+        private boolean conversionStarted;
+        CapturedWindow(CaptureRequest request, AndroidDeviceTools.WindowCapturePermit permit, RunControl control, long epoch,
                        OwnedWindowBuffer owned, Metadata metadata, long deadline) {
             this.permit = permit; this.control = control; this.epoch = epoch; this.owned = owned; this.metadata = metadata;
-            this.deadline = deadline;
+            this.deadline = deadline; this.request = request;
         }
+        ConversionHold beginConversion() throws Exception {
+            requireWorker(); checkReadable();
+            synchronized (request.lock) {
+                if (conversionStarted || owned.isClosed() || !request.claimed || request.owned != owned)
+                    throw new IllegalStateException("Captured window cannot enter another conversion.");
+                ConversionHold hold = new ConversionHold(request);
+                conversionStarted = true; request.conversionHeld = true;
+                return hold;
+            }
+        }
+        /** Raw may already be closed during encoding; the original context/deadline still applies. */
+        void checkConversionCurrent() throws Exception { requireWorker(); checkReadable(); }
+
         OwnedWindowBuffer.ReadLease openRead() throws Exception {
             requireWorker();
             OwnedWindowBuffer.ReadLease reader = null;
@@ -419,6 +435,33 @@ final class WindowBufferCapturer {
         }
         @Override public void close() { owned.close(); }
         boolean isActuallyClosed() { return owned.isActuallyClosed(); }
+    }
+
+    /** Finite cleanup state; retained by the original slot on an unconfirmed native/software close. */
+    interface ConversionResources { boolean isCleanupComplete(); }
+
+    /** One conversion continues to own the original slot after its native raw reference closes. */
+    final class ConversionHold implements AutoCloseable {
+        private final CaptureRequest request;
+        private boolean closed;
+        private ConversionHold(CaptureRequest request) { this.request = request; }
+        void retainUntilClosed(ConversionResources resources) {
+            if (resources == null) throw new NullPointerException("resources");
+            synchronized (request.lock) {
+                if (closed || request.conversionResources != null)
+                    throw new IllegalStateException("Conversion resource record is already bound or closed.");
+                request.conversionResources = resources;
+            }
+        }
+        @Override public void close() {
+            synchronized (request.lock) {
+                if (closed) return;
+                if (request.conversionResources != null && !request.conversionResources.isCleanupComplete())
+                    throw new IllegalStateException("Conversion resources are still owned.");
+                closed = true; request.conversionHeld = false; request.conversionResources = null;
+            }
+            request.tryReleaseSlot();
+        }
     }
 
     private static void requireWorker() {

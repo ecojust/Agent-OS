@@ -25,11 +25,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Require stable Notes target and two positive visible IME surface samples before the one allowed BACK; preserve original timeout and failure history. Probe APKs and lint pass; Android parser/runtime acceptance pending.
+**本次更新：** 归档固定第三方应用的专用模拟器开发探针；保留关闭/空闲两态的通过、失败、受保护与未执行记录，不作为真机、升级或常用应用总体兼容验收。
 
-**记录时间：** 2026-10-27T14:38:38Z
+**记录时间：** 2026-10-27T14:49:55Z
 
-[最近测试截图与清单](screenshots/40518542706-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40518542706)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/third-party-40523086830-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40523086830)。通过、失败及未截图原因见清单。
 
 **整体操作演示：** 正在接入真实操作录制，完成后提供小于 100 MB 的视频与对应源码记录；尚未录制的过程不以示意动画代替。
 

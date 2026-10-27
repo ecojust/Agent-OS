@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T07:47:02Z",
-  "note": "异步窗口缓冲第三十八轮八档1248项全部通过；1427张实际截图与非视觉/受保护记录已归档，全部2707个文件的摘要和大小已核验。随后完成的两项核心优化239项JVM测试通过，图像转换接线仍在实现。",
+  "updated_at": "2026-10-27T07:47:53Z",
+  "note": "第三十八轮1248项全部通过，证据归档及双重校验完成；异步捕获协议和原生缓冲所有权现有明确API分支记录。随后两项核心优化239项JVM通过，下一步接入有界PNG转换，生产视觉入口保持关闭。",
   "latest_evidence": {
     "path": "screenshots/40467959286-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40467959286"
@@ -63,8 +63,8 @@
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
       "status": "in_progress",
-      "evidence": "screenshots/40466558900-1/manifest.json",
-      "scope": "Last complete eight-emulator baseline: a93b47e6b23b2d6da2eb1fba4532a03de07c24c3, 1104 passed. New asynchronous buffer lifecycle is pending its own matrix. Test-only native window capture is verified on API34–37, with explicit unsupported paths on API30–33. No physical-device, model, third-party-app or performance acceptance; production visual tools remain disabled."
+      "evidence": "screenshots/40467959286-1/manifest.json",
+      "scope": "Last complete eight-emulator baseline: dbda2bc2c8149abdd2c3150c610138ed2c9dcb3b, 1248 passed. High-API capture protocol uses synthetic buffers; native window capture is separately verified only in the test bridge on API34–37. API30–33 capture cases verify unsupported behavior. Later core reservation/range-copy changes have 239 JVM passes; PNG conversion is in progress. No physical-device, model, third-party-app or performance acceptance; production visual tools remain disabled."
     },
     {
       "id": "performance",

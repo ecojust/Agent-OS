@@ -89,7 +89,7 @@ public final class MainActivity extends Activity implements AgentController.List
     private SettingsStore.SavedSettings draft = new SettingsStore.SavedSettings();
     private AgentController controller;
     private final Map<String, String> appLabels = new LinkedHashMap<>();
-    private EditText endpointField, modelField, keyField, taskField;
+    private EditText endpointField, modelField, keyField, maxOutputTokensField, taskField;
     private EditText budgetRounds, budgetTools, budgetSeconds;
     private TextView budgetSummary;
     private LinearLayout budgetFields;
@@ -150,13 +150,15 @@ public final class MainActivity extends Activity implements AgentController.List
     private static final class UiDraft {
         final SettingsStore.SavedSettings settings;
         final String task;
+        final String maxOutputTokensText;
         final boolean expanded;
         final boolean budgetExpanded;
         final String[] budgetTexts;
-        UiDraft(SettingsStore.SavedSettings settings, String task, boolean expanded,
+        UiDraft(SettingsStore.SavedSettings settings, String task, String maxOutputTokensText, boolean expanded,
                 boolean budgetExpanded, String[] budgetTexts) {
             this.settings = settings;
             this.task = task;
+            this.maxOutputTokensText = maxOutputTokensText;
             this.expanded = expanded;
             this.budgetExpanded = budgetExpanded;
             this.budgetTexts = budgetTexts.clone();
@@ -219,7 +221,8 @@ public final class MainActivity extends Activity implements AgentController.List
     @Override public Object onRetainNonConfigurationInstance() {
         if (!ready || storageDamaged) return null;
         // Rotation retains these values in process memory only, never an instance-state file.
-        return new UiDraft(readDraft(), taskField.getText().toString(), modelExpanded, budgetExpanded, budgetTexts);
+        return new UiDraft(readDraft(), taskField.getText().toString(), maxOutputTokensField.getText().toString(),
+                modelExpanded, budgetExpanded, budgetTexts);
     }
 
     @Override public void onChanged() {
@@ -308,6 +311,13 @@ public final class MainActivity extends Activity implements AgentController.List
         });
         configurationViews.add(reveal);
         marginAdd(modelFields, reveal, 4);
+        maxOutputTokensField = field(modelFields, "每次回复 Token 上限", "2048（128–8192）",
+                R.id.settings_max_output_tokens, false, 24);
+        maxOutputTokensField.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED
+                | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        maxOutputTokensField.setSelectAllOnFocus(true);
+        marginAdd(modelFields, text("用于每次模型回复和测试请求。通过 max_tokens 请求服务限制输出；服务可能拒绝或不遵循此值，不包括输入 Token，也不是任务总量或费用上限。", 12,
+                R.color.agent_muted, false), 6);
         marginAdd(modelFields, text("使用兼容 Chat Completions 的接口。界面文字和任务会发送至此地址，密钥仅加密保存在本机；公网地址必须使用 HTTPS。", 12, R.color.agent_muted, false), 8);
         probeButton = button("测试模型连接 / 工具调用", R.drawable.ic_settings, false);
         probeButton.setId(R.id.test_model);
@@ -538,6 +548,7 @@ public final class MainActivity extends Activity implements AgentController.List
                     }
                     bindDraft();
                     if (retainedDraft != null && next.profileId.equals(retainedDraft.settings.profileId)) {
+                        maxOutputTokensField.setText(retainedDraft.maxOutputTokensText);
                         budgetTexts = retainedDraft.budgetTexts.clone();
                         budgetExpanded = retainedDraft.budgetExpanded;
                         bindBudgetTexts(budgetTexts);
@@ -583,6 +594,7 @@ public final class MainActivity extends Activity implements AgentController.List
         endpointField.setText(draft.endpoint);
         keyField.setText(draft.apiKey);
         modelField.setText(draft.model);
+        maxOutputTokensField.setText(String.valueOf(draft.maxOutputTokens));
         keyField.setTransformationMethod(PasswordTransformationMethod.getInstance());
         bindExecutionMode();
         budgetTexts = new String[]{String.valueOf(draft.taskBudget.maxModelRounds), String.valueOf(draft.taskBudget.maxToolCalls),
@@ -599,6 +611,13 @@ public final class MainActivity extends Activity implements AgentController.List
         dismissProbeTrustDialog();
         renderProbeResult();
         if (storageDamaged) { showMessage("原配置无法读取。请先明确重置本机配置，再保存新的设置。", true); return; }
+        Integer selectedMaxOutputTokens = readMaxOutputTokens(true);
+        if (selectedMaxOutputTokens == null) {
+            modelExpanded = true;
+            updateModelPanel();
+            showMessage("每次回复 Token 上限须为 128–8192 的整数。", true);
+            return;
+        }
         TaskBudget selectedBudget = readBudget(true);
         if (selectedBudget == null) {
             budgetExpanded = true;
@@ -608,7 +627,8 @@ public final class MainActivity extends Activity implements AgentController.List
         }
         SettingsStore.SavedSettings settings = readDraft();
         settings.taskBudget = selectedBudget;
-        ModelSettings model = new ModelSettings(settings.endpoint, settings.apiKey, settings.model);
+        settings.maxOutputTokens = selectedMaxOutputTokens;
+        ModelSettings model = new ModelSettings(settings.endpoint, settings.apiKey, settings.model, settings.maxOutputTokens);
         try { model.validate(); }
         catch (IllegalArgumentException invalid) {
             showMessage(invalid.getMessage(), true);
@@ -696,12 +716,29 @@ public final class MainActivity extends Activity implements AgentController.List
         copy.endpoint = endpointField.getText().toString().trim();
         copy.apiKey = keyField.getText().toString().trim();
         copy.model = modelField.getText().toString().trim();
+        Integer selectedMaxOutputTokens = readMaxOutputTokens(false);
+        // Invalid editor text is retained separately by UiDraft, never saved as
+        // configuration authority or silently substituted for a new request.
+        copy.maxOutputTokens = selectedMaxOutputTokens == null ? draft.maxOutputTokens : selectedMaxOutputTokens;
         copy.confirmEachAction = true;
         copy.executionMode = draft.executionMode;
         copy.taskBudget = draft.taskBudget;
         copy.allowedPackages = new LinkedHashSet<>(draft.allowedPackages);
         copy.grants = new LinkedHashMap<>(draft.grants);
         return copy;
+    }
+
+    private Integer readMaxOutputTokens(boolean reportErrors) {
+        String value = maxOutputTokensField.getText().toString().trim();
+        Integer parsed = null;
+        if (value.matches("[0-9]{1,4}")) {
+            int number = Integer.parseInt(value);
+            if (number >= ModelSettings.MIN_MAX_OUTPUT_TOKENS && number <= ModelSettings.MAX_MAX_OUTPUT_TOKENS)
+                parsed = number;
+        }
+        if (reportErrors) maxOutputTokensField.setError(parsed == null
+                ? "每次回复 Token 上限须为 128–8192 的整数。" : null);
+        return parsed;
     }
 
     private boolean canEditBudget() {
@@ -974,6 +1011,7 @@ public final class MainActivity extends Activity implements AgentController.List
         endpointField.setEnabled(editable);
         keyField.setEnabled(editable);
         modelField.setEnabled(editable);
+        maxOutputTokensField.setEnabled(editable);
         taskField.setEnabled(editable && !probing);
         resetButton.setEnabled(store != null && !busy && !state.running && !probing);
         serviceButton.setEnabled(!state.running && !busy && !probing);
@@ -1154,7 +1192,13 @@ public final class MainActivity extends Activity implements AgentController.List
             return;
         }
         final long uiGeneration = configurationGeneration;
-        ModelSettings model = new ModelSettings(endpointField.getText().toString(), keyField.getText().toString(), modelField.getText().toString());
+        Integer selectedMaxOutputTokens = readMaxOutputTokens(true);
+        if (selectedMaxOutputTokens == null) {
+            showMessage("每次回复 Token 上限须为 128–8192 的整数。", true);
+            return;
+        }
+        ModelSettings model = new ModelSettings(endpointField.getText().toString(), keyField.getText().toString(),
+                modelField.getText().toString(), selectedMaxOutputTokens);
         try { model.validate(); }
         catch (IllegalArgumentException invalid) { showMessage(invalid.getMessage(), true); return; }
         if (kind != ProbeKind.TOOL) {
@@ -1192,7 +1236,10 @@ public final class MainActivity extends Activity implements AgentController.List
     }
 
     private boolean modelMatchesFields(ModelSettings model) {
-        ModelSettings current = new ModelSettings(endpointField.getText().toString(), keyField.getText().toString(), modelField.getText().toString());
+        Integer selectedMaxOutputTokens = readMaxOutputTokens(false);
+        if (selectedMaxOutputTokens == null) return false;
+        ModelSettings current = new ModelSettings(endpointField.getText().toString(), keyField.getText().toString(),
+                modelField.getText().toString(), selectedMaxOutputTokens);
         return model.endpoint.equals(current.endpoint) && model.model.equals(current.model)
                 && model.apiKey.equals(current.apiKey) && model.maxOutputTokens == current.maxOutputTokens;
     }
@@ -1389,6 +1436,7 @@ public final class MainActivity extends Activity implements AgentController.List
             @Override public void beforeTextChanged(CharSequence text, int start, int count, int after) { }
             @Override public void onTextChanged(CharSequence text, int start, int before, int count) {
                 configurationEdited();
+                maxOutputTokensField.setError(null);
                 cancelModelProbe("", false);
                 probeConnection = "未测试";
                 toolProbeTested = toolVerified = imageProbeTested = syntheticImageVerified = false;
@@ -1402,6 +1450,7 @@ public final class MainActivity extends Activity implements AgentController.List
         endpointField.addTextChangedListener(watcher);
         keyField.addTextChangedListener(watcher);
         modelField.addTextChangedListener(watcher);
+        maxOutputTokensField.addTextChangedListener(watcher);
     }
 
     private void cancelModelProbe(String reason, boolean updateUi) {

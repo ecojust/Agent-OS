@@ -15,6 +15,8 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** Deterministic protocol fixture. It neither contacts nor evaluates a real language model. */
@@ -31,6 +33,7 @@ final class LocalControllerModelServer implements AutoCloseable {
     private final ServerSocket server;
     private final Thread worker;
     private final AtomicInteger requests = new AtomicInteger();
+    private final List<Integer> outputLimits = new ArrayList<>();
     private final Object changed = new Object();
     private volatile boolean closed;
     private volatile Socket active;
@@ -72,6 +75,18 @@ final class LocalControllerModelServer implements AutoCloseable {
 
     String endpoint() { return "http://127.0.0.1:" + server.getLocalPort() + "/v1"; }
     int requestCount() { return requests.get(); }
+    /** Only bounded integer transport metadata; never retain extra prompts or credentials. */
+    List<Integer> receivedMaxTokens() { synchronized (outputLimits) { return new ArrayList<>(outputLimits); } }
+    private void recordMaxTokens(JsonObject request) throws IOException {
+        JsonElement value = request.get("max_tokens");
+        if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()
+                || !value.getAsString().matches("[0-9]{1,9}")) throw new IOException("Expected an integer output-token limit");
+        int actual = Integer.parseInt(value.getAsString());
+        synchronized (outputLimits) {
+            if (outputLimits.size() >= 32) throw new IOException("Output-token fixture metadata limit reached");
+            outputLimits.add(actual);
+        }
+    }
     boolean finalStateObserved() { return finalStateObserved; }
     int writePlanCount() { return writePlans; }
     int acceptedWriteCount() { return acceptedWrites; }
@@ -121,6 +136,7 @@ final class LocalControllerModelServer implements AutoCloseable {
                 socket.setSoTimeout(5_000);
                 protocolStage = "read-http-request";
                 JsonObject request = readRequest(socket.getInputStream());
+                recordMaxTokens(request);
                 int round = requests.incrementAndGet();
                 synchronized (changed) { changed.notifyAll(); }
                 protocolStage = "plan-from-device-observation";

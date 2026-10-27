@@ -14,6 +14,7 @@ import android.util.Base64;
 
 import dev.agentos.core.ActionConfirmationPolicy;
 import dev.agentos.core.TaskBudget;
+import dev.agentos.core.ModelSettings;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -154,6 +155,7 @@ public final class SettingsStore {
             settings.endpoint = json.getString("endpoint");
             settings.apiKey = json.getString("apiKey");
             settings.model = json.getString("model");
+            settings.maxOutputTokens = readMaxOutputTokens(json);
             settings.confirmEachAction = json.getBoolean("confirmEachAction");
             settings.executionMode = readExecutionMode(json);
             settings.taskBudget = readTaskBudget(json);
@@ -187,6 +189,22 @@ public final class SettingsStore {
             }
         }
         throw new IOException("已保存的执行模式无法识别；原配置尚未修改，请明确重置后重试。");
+    }
+
+    private static int readMaxOutputTokens(JSONObject json) throws IOException, JSONException {
+        // Only absence is a legacy default. Do not coerce or silently repair a
+        // present value, and check before narrowing a JSON long to an int.
+        if (!json.has("maxOutputTokens")) return ModelSettings.DEFAULT_MAX_OUTPUT_TOKENS;
+        Object raw = json.get("maxOutputTokens");
+        if (!(raw instanceof Integer) && !(raw instanceof Long)) throw invalidMaxOutputTokens();
+        long value = ((Number) raw).longValue();
+        if (value < ModelSettings.MIN_MAX_OUTPUT_TOKENS || value > ModelSettings.MAX_MAX_OUTPUT_TOKENS)
+            throw invalidMaxOutputTokens();
+        return (int) value;
+    }
+
+    private static IOException invalidMaxOutputTokens() {
+        return new IOException("每次回复 Token 上限格式或范围无效；原配置尚未修改，请填写 128–8192 的整数。");
     }
 
     private static TaskBudget readTaskBudget(JSONObject json) throws IOException, JSONException {
@@ -239,6 +257,7 @@ public final class SettingsStore {
             json.put("endpoint", settings.endpoint);
             json.put("apiKey", settings.apiKey);
             json.put("model", settings.model);
+            json.put("maxOutputTokens", settings.maxOutputTokens);
             // Keep the legacy field restrictive for older readers. Only executionMode
             // records an explicit local choice; an old false value grants no authority.
             json.put("confirmEachAction", true);
@@ -290,6 +309,8 @@ public final class SettingsStore {
         if (settings == null || settings.endpoint == null || settings.apiKey == null || settings.model == null
                 || settings.allowedPackages == null || settings.grants == null || settings.profileId == null
                 || settings.executionMode == null) throw new IOException("模型配置不完整。");
+        if (settings.maxOutputTokens < ModelSettings.MIN_MAX_OUTPUT_TOKENS
+                || settings.maxOutputTokens > ModelSettings.MAX_MAX_OUTPUT_TOKENS) throw invalidMaxOutputTokens();
         if (settings.taskBudget == null || settings.taskBudget.maxActiveMillis < 1_000
                 || settings.taskBudget.maxActiveMillis > TaskBudget.MAX_ACTIVE_MILLIS
                 || settings.taskBudget.maxActiveMillis % 1_000 != 0) throw invalidTaskBudget();
@@ -662,6 +683,8 @@ public final class SettingsStore {
         public String endpoint = "";
         public String apiKey = "";
         public String model = "";
+        /** Requested response limit, not cumulative usage or a billing guarantee. */
+        public int maxOutputTokens = ModelSettings.DEFAULT_MAX_OUTPUT_TOKENS;
         /** Legacy storage compatibility only; never use this flag to authorize execution. */
         public boolean confirmEachAction = true;
         public ActionConfirmationPolicy.Mode executionMode = ActionConfirmationPolicy.Mode.CONFIRM_ALL;

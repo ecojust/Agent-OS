@@ -19,6 +19,8 @@ import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,6 +36,7 @@ final class LocalVisionProbeServer implements AutoCloseable {
     private final Thread worker;
     private final Object changed = new Object();
     private final AtomicInteger requests = new AtomicInteger();
+    private final List<Integer> outputLimits = new ArrayList<>();
     private final AtomicInteger images = new AtomicInteger();
     private final AtomicInteger tools = new AtomicInteger();
     private final CountDownLatch responseGate = new CountDownLatch(1);
@@ -51,6 +54,18 @@ final class LocalVisionProbeServer implements AutoCloseable {
 
     String endpoint() { return "http://127.0.0.1:" + server.getLocalPort() + "/v1"; }
     int requestCount() { return requests.get(); }
+    /** Only bounded integer transport metadata; never retain extra prompts or credentials. */
+    List<Integer> receivedMaxTokens() { synchronized (outputLimits) { return new ArrayList<>(outputLimits); } }
+    private void recordMaxTokens(JsonObject request) throws IOException {
+        JsonElement value = request.get("max_tokens");
+        if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()
+                || !value.getAsString().matches("[0-9]{1,9}")) throw new IOException("Expected an integer output-token limit");
+        int actual = Integer.parseInt(value.getAsString());
+        synchronized (outputLimits) {
+            if (outputLimits.size() >= 32) throw new IOException("Output-token fixture metadata limit reached");
+            outputLimits.add(actual);
+        }
+    }
     int imageRequestCount() { return images.get(); }
     int toolRequestCount() { return tools.get(); }
     void releaseResponse() { responseGate.countDown(); }
@@ -79,6 +94,7 @@ final class LocalVisionProbeServer implements AutoCloseable {
             try (Socket socket = server.accept()) {
                 active = socket; socket.setSoTimeout(5000);
                 JsonObject request = readRequest(socket.getInputStream());
+                recordMaxTokens(request);
                 JsonObject reply = response(request);
                 requests.incrementAndGet();
                 synchronized (changed) { changed.notifyAll(); }

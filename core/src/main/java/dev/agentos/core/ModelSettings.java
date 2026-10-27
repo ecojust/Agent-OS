@@ -7,13 +7,16 @@ import java.util.Locale;
 
 /** Connection credentials are deliberately excluded from toString and diagnostics. */
 public final class ModelSettings {
+    public static final int DEFAULT_MAX_OUTPUT_TOKENS = 2048;
+    public static final int MIN_MAX_OUTPUT_TOKENS = 128;
+    public static final int MAX_MAX_OUTPUT_TOKENS = 8192;
     public final String endpoint;
     public final String apiKey;
     public final String model;
     public final int maxOutputTokens;
 
     public ModelSettings(String endpoint, String apiKey, String model) {
-        this(endpoint, apiKey, model, 2048);
+        this(endpoint, apiKey, model, DEFAULT_MAX_OUTPUT_TOKENS);
     }
 
     public ModelSettings(String endpoint, String apiKey, String model, int maxOutputTokens) {
@@ -31,7 +34,7 @@ public final class ModelSettings {
         if (apiKey.length() > 8192 || hasControl(apiKey)) {
             throw new IllegalArgumentException("密钥格式无效。");
         }
-        if (maxOutputTokens < 128 || maxOutputTokens > 8192) throw new IllegalArgumentException("输出 token 上限应在 128 至 8192 之间。");
+        if (maxOutputTokens < MIN_MAX_OUTPUT_TOKENS || maxOutputTokens > MAX_MAX_OUTPUT_TOKENS) throw new IllegalArgumentException("输出 token 上限应在 128 至 8192 之间。");
     }
 
     public URL completionUrl() {

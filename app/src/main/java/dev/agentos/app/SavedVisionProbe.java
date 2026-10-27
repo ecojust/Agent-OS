@@ -167,7 +167,7 @@ final class SavedVisionProbe {
             // These credential-bearing values remain local to this real attempt;
             // the registry/guard/record never retain them or the probe's messages.
             ModelSettings model = new ModelSettings(loaded.settings.endpoint,
-                    loaded.settings.apiKey, loaded.settings.model);
+                    loaded.settings.apiKey, loaded.settings.model, loaded.settings.maxOutputTokens);
             DisclosureGuard guard = (owner, epoch) -> owner == attempt.control && epoch == attempt.epoch
                     && owner.getProfileId().equals(attempt.configuration.profileId)
                     && state.get() == admitted && SettingsStore.isCurrent(attempt.configuration);

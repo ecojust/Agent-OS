@@ -212,6 +212,7 @@ public final class AgentController {
                         || !settings.endpoint.equals(saved.endpoint.trim())
                         || !settings.model.equals(saved.model.trim())
                         || !settings.apiKey.equals(saved.apiKey.trim())
+                        || settings.maxOutputTokens != saved.maxOutputTokens
                         || executionMode != saved.executionMode) {
                     finish(session, new TaskResult(TaskResult.Kind.FAILED,
                             "配置或授权已改变，请重新保存配置并选择允许的应用。", "CONFIGURATION_INVALID"));

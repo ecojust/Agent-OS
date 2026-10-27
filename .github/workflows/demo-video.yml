@@ -114,6 +114,7 @@ jobs:
           github-token: ${{ github.token }}
           run-id: ${{ steps.source.outputs.source_run }}
           artifact-ids: ${{ steps.source.outputs.artifact_id }}
+          merge-multiple: true
           path: ${{ runner.temp }}/demo-incoming
       - name: Verify and archive original evidence
         run: |

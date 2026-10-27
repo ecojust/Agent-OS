@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Implement a real API35 operation walkthrough with confirmation, input/save, navigation and pause/resume/stop. APK, test APK, fixture and lint passed; 22 recording/archive checks pass. Actual recording is pending; no real-model or phone acceptance is claimed.
+**本次更新：** Keep the validated single walkthrough artifact at its expected archive root. The initial real recording run is pending; this archive-only fix does not change its tested source or start another device run.
 
-**记录时间：** 2026-10-27T13:58:55Z
+**记录时间：** 2026-10-27T14:02:16Z
 
 [最近测试截图与清单](screenshots/40512239862-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40512239862)。通过、失败及未截图原因见清单。
 

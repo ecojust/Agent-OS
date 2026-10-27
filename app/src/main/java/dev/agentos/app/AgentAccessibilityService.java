@@ -155,6 +155,51 @@ public final class AgentAccessibilityService extends AccessibilityService {
         }
     }
 
+    /**
+     * A historical, actual expanded-to-compact transition of one registered View.
+     * Only constrains a metadata readiness wait; never authorizes an action or
+     * exempts a window from the original final snapshot.
+     */
+    static final class ApprovalCollapse {
+        private final OwnedControlWindowIdentity expanded;
+        private final ControlLease compact;
+
+        private ApprovalCollapse(OwnedControlWindowIdentity expanded, ControlLease compact) {
+            this.expanded = expanded; this.compact = compact;
+        }
+
+        ControlLease compactLease() { return compact; }
+        Rect copyExpandedBounds() { return expanded.copyBounds(); }
+        Rect copyCompactBounds() { return compact.copyBounds(); }
+
+        boolean matchesOriginalAttachment(OwnedControlWindowIdentity original) {
+            return original != null && original.registration == expanded.registration
+                    && compact.windowIdentity.registration == expanded.registration;
+        }
+    }
+
+    /** Main-only, expires after the current callback publication turn. */
+    private static final class ExpandedCallbackChange {
+        final OwnedControlWindowIdentity expanded;
+        final OverlayCallbacks nextCallbacks;
+        final long callbacks, controls;
+        ExpandedCallbackChange(OwnedControlWindowIdentity expanded, OverlayCallbacks nextCallbacks,
+                               long callbacks, long controls) {
+            this.expanded = expanded; this.nextCallbacks = nextCallbacks;
+            this.callbacks = callbacks; this.controls = controls;
+        }
+    }
+
+    /** Main-only; the first stable compact lease consumes this record permanently. */
+    private static final class SettlingApprovalCollapse {
+        final OwnedControlWindowIdentity expanded;
+        final OverlayCallbacks callbacks;
+        final long callbackGeneration;
+        SettlingApprovalCollapse(OwnedControlWindowIdentity expanded, OverlayCallbacks callbacks, long generation) {
+            this.expanded = expanded; this.callbacks = callbacks; callbackGeneration = generation;
+        }
+    }
+
     private static volatile AgentAccessibilityService instance;
     private final Handler main = new Handler(Looper.getMainLooper());
     private OverlayCallbacks callbacks;
@@ -189,6 +234,9 @@ public final class AgentAccessibilityService extends AccessibilityService {
     // survive their actual attachment. They are not an event-ID exemption.
     private OwnedControlWindowIdentity visualControlGeometry;
     private OwnedReviewWindowIdentity visualReviewGeometry;
+    private ExpandedCallbackChange expandedCallbackChange;
+    private SettlingApprovalCollapse settlingApprovalCollapse;
+    private volatile ApprovalCollapse currentApprovalCollapse;
     private volatile ControlLease currentControlLease;
     private volatile OwnedControlWindowIdentity currentControlWindowIdentity;
     private volatile SecureImageReviewOverlay reviewHost;
@@ -312,6 +360,19 @@ public final class AgentAccessibilityService extends AccessibilityService {
     /** Does not touch Views or wait for the main thread. */
     public boolean isControlLeaseCurrent(ControlLease lease) {
         return lease != null && currentControlLease == lease && isOwnedControlWindowCurrent(lease.windowIdentity);
+    }
+
+    /** Historical metadata only; callers must already require this request's confirmation. */
+    ApprovalCollapse approvalCollapseFor(ControlLease lease) {
+        ApprovalCollapse collapse = currentApprovalCollapse;
+        return collapse != null && collapse.compact == lease && isApprovalCollapseCurrent(collapse) ? collapse : null;
+    }
+
+    /** Pure memory. A replacement lease cannot revive an earlier transition. */
+    boolean isApprovalCollapseCurrent(ApprovalCollapse collapse) {
+        return collapse != null && currentApprovalCollapse == collapse
+                && collapse.expanded.registration == controlWindowRegistration
+                && isControlLeaseCurrent(collapse.compact) && currentApprovalCollapse == collapse;
     }
 
     /** Pure-memory publication; absence never permits matching another window by its label. */
@@ -485,10 +546,21 @@ public final class AgentAccessibilityService extends AccessibilityService {
     public void setOverlayCallbacks(OverlayCallbacks value) {
         onMain(() -> {
             if (callbacks != value) {
+                // Controller publishes the new approval callback immediately before
+                // the matching compact text/layout. Retain only this one known pair;
+                // a second callback change cannot re-arm it from the old panel.
+                OwnedControlWindowIdentity expanded = value != null && expandedCallbackChange == null
+                        ? expandedControlIdentity() : null;
                 if (value == null) invalidateVisualEvents();
                 invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_CALLBACKS);
                 callbackGeneration++;
                 callbacks = value;
+                if (expanded != null) {
+                    ExpandedCallbackChange change = new ExpandedCallbackChange(expanded, value,
+                            callbackGeneration, controlGeneration);
+                    expandedCallbackChange = change;
+                    main.post(() -> { if (expandedCallbackChange == change) expandedCallbackChange = null; });
+                }
             }
         });
     }
@@ -506,6 +578,8 @@ public final class AgentAccessibilityService extends AccessibilityService {
                         && callbacks != null && displayedCallbackGeneration == callbackGeneration
                         && currentStatus.equals(nextStatus) && currentPaused == paused
                         && currentApproval.equals(nextApproval)) return;
+                OwnedControlWindowIdentity collapsing = !paused && !currentPaused
+                        && !currentApproval.isEmpty() && nextApproval.isEmpty() ? expandedForCollapse() : null;
                 invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_PUBLICATION);
                 boolean firstDisplay = overlay == null;
                 boolean statusChanged = !currentStatus.equals(nextStatus);
@@ -515,6 +589,9 @@ public final class AgentAccessibilityService extends AccessibilityService {
                 currentPaused = paused;
                 currentApproval = nextApproval;
                 ensureOverlay();
+                if (collapsing != null) {
+                    settlingApprovalCollapse = new SettlingApprovalCollapse(collapsing, callbacks, callbackGeneration);
+                }
                 if (firstDisplay || statusChanged) statusView.setText("Agent · " + currentStatus);
                 if (firstDisplay || pauseChanged) pauseButton.setText(paused ? "继续" : "暂停");
                 boolean waiting = approval != null && !approval.isEmpty();
@@ -545,6 +622,28 @@ public final class AgentAccessibilityService extends AccessibilityService {
         });
     }
 
+    /** Main-only: capture the actual stable expanded geometry, not an inferred height. */
+    private OwnedControlWindowIdentity expandedControlIdentity() {
+        if (callbacks == null || currentPaused || currentApproval.isEmpty()
+                || displayedCallbackGeneration != callbackGeneration
+                || approvalScroll == null || approvalButtons == null
+                || approvalScroll.getVisibility() != View.VISIBLE || approvalButtons.getVisibility() != View.VISIBLE) return null;
+        return stableControlWindowIdentity();
+    }
+
+    private OwnedControlWindowIdentity expandedForCollapse() {
+        if (displayedCallbackGeneration == callbackGeneration) return expandedControlIdentity();
+        ExpandedCallbackChange change = expandedCallbackChange;
+        if (change == null || change.nextCallbacks != callbacks || change.callbacks != callbackGeneration
+                || change.controls != controlGeneration || change.expanded.registration != controlWindowRegistration
+                || overlay == null || !overlay.isAttachedToWindow() || !overlay.isShown()
+                || !overlay.isLaidOut() || overlay.isLayoutRequested()
+                || approvalScroll == null || approvalButtons == null
+                || approvalScroll.getVisibility() != View.VISIBLE || approvalButtons.getVisibility() != View.VISIBLE
+                || !change.expanded.copyBounds().equals(controlBounds())) return null;
+        return change.expanded;
+    }
+
     public void hideOverlay() { onMain(() -> { watchedPackages = Collections.emptySet(); removeOverlay(); }); }
 
     /** Waits only for the actual owned View's platform registration and stable layout. */
@@ -570,6 +669,13 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     private void invalidateControlLease(SecureImageReviewOverlay.CloseSource source) {
+        expandedCallbackChange = null;
+        currentApprovalCollapse = null;
+        // Only the expected hide/layout may settle to its first compact lease.
+        // Drag, callbacks, publication, visibility, stop and attachment changes
+        // discard history; after pinning there is never a pending record to renew.
+        if (source != SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_LAYOUT_REQUEST
+                && source != SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_LAYOUT_CHANGED) settlingApprovalCollapse = null;
         closeImageReview(source);
         currentControlLease = null;
         currentControlWindowIdentity = null;
@@ -729,6 +835,14 @@ public final class AgentAccessibilityService extends AccessibilityService {
         ControlLease lease = new ControlLease(identity, bounds, controlGeneration,
                 connectionGeneration, callbackGeneration);
         currentControlLease = lease;
+        SettlingApprovalCollapse collapse = settlingApprovalCollapse;
+        settlingApprovalCollapse = null;
+        if (collapse != null && collapse.callbacks == callbacks && collapse.callbackGeneration == callbackGeneration
+                && collapse.expanded.registration == identity.registration
+                && collapse.expanded.left == bounds.left && collapse.expanded.top == bounds.top
+                && collapse.expanded.right == bounds.right && collapse.expanded.bottom > bounds.bottom) {
+            currentApprovalCollapse = new ApprovalCollapse(collapse.expanded, lease);
+        }
         return lease;
     }
 

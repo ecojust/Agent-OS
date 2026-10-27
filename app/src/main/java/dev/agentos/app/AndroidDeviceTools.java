@@ -83,6 +83,7 @@ public final class AndroidDeviceTools implements ToolHandler {
     private long lastObservedEpoch = -1;
     private RunControl lastObservedControl;
     private ObservedBlockers lastObservedBlockers;
+    private ControlWindowBaseline lastObservedControlBaseline;
     private CoordinateNodeResolver.Binding lastObservedCoordinateBinding;
     private boolean denied;
     private final RunControl visualOwner;
@@ -362,8 +363,10 @@ public final class AndroidDeviceTools implements ToolHandler {
         ObservedBlockers blockers;
         CoordinateNodeResolver.Binding coordinateBinding;
         AgentAccessibilityService.OwnedControlWindowIdentity controlWindow;
+        ControlWindowBaseline controlBaseline;
         try (Snapshot state = snapshot(control, epoch, PerformanceTrace.Stage.SNAPSHOT_OBSERVE)) {
             controlWindow = state.controlWindow;
+            controlBaseline = state.controlBaseline;
             result = success(state.json());
             blockers = state.observedBlockers();
             // Unsupported coordinate geometry must not disable ordinary structured observation.
@@ -382,6 +385,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         lastObservedEpoch = epoch;
         lastObservedControl = control;
         lastObservedBlockers = blockers;
+        lastObservedControlBaseline = controlBaseline;
         lastObservedCoordinateBinding = coordinateBinding;
         return result;
     }
@@ -1088,12 +1092,12 @@ public final class AndroidDeviceTools implements ToolHandler {
         String name = required(args, "packageName");
         validateInstalledGrant(name);
         String frozenDescription = "目标应用：" + appLabel(name) + "\n动作：打开应用\n包名：" + name;
-        confirmAndAwaitControls("launch_app", frozenDescription, control, epoch);
+        AgentAccessibilityService.ControlLease controls = confirmAndAwaitControls("launch_app", frozenDescription,
+                control, epoch, lastObservedControl == control && lastObservedEpoch == epoch ? lastObservedControlBaseline : null);
         validateInstalledGrant(name);
         Intent intent = service.getPackageManager().getLaunchIntentForPackage(name);
         if (intent == null) throw unavailable("应用未提供启动入口");
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        AgentAccessibilityService.ControlLease controls = acquireActionControls(control, epoch);
         // Keep the final read, nodes and platform call on this same worker. No
         // queued main-thread callback receives or outlives a recyclable Snapshot.
         try (Snapshot current = snapshot(control, epoch, PerformanceTrace.Stage.SNAPSHOT_FINAL_LAUNCH)) {
@@ -1150,12 +1154,12 @@ public final class AndroidDeviceTools implements ToolHandler {
                 return null;
             }, control, epoch, dispatch);
             requireCurrentConfiguration(control, epoch);
-            prepared = new Prepared(state.packageName, description(name, args, state));
+            prepared = new Prepared(state.packageName, description(name, args, state), state.controlBaseline);
         }
         validateInstalledGrant(prepared.packageName);
-        confirmAndAwaitControls(name, prepared.description, control, epoch);
+        AgentAccessibilityService.ControlLease controls = confirmAndAwaitControls(name, prepared.description,
+                control, epoch, prepared.controls);
         validateInstalledGrant(prepared.packageName);
-        AgentAccessibilityService.ControlLease controls = acquireActionControls(control, epoch);
         boolean accepted;
         try (Snapshot state = snapshot(control, epoch, PerformanceTrace.Stage.SNAPSHOT_FINAL_MUTATION)) {
             state.requireRevision(revision);
@@ -1229,7 +1233,8 @@ public final class AndroidDeviceTools implements ToolHandler {
         if (state.highImpactScreen) throw unavailable("当前页面涉及已知高影响操作，请由用户操作");
     }
 
-    private void confirmAndAwaitControls(String tool, String description, RunControl control, long epoch) throws Exception {
+    private AgentAccessibilityService.ControlLease confirmAndAwaitControls(String tool, String description,
+            RunControl control, long epoch, ControlWindowBaseline originalControls) throws Exception {
         requireCurrentConfiguration(control, epoch);
         // The immutable, locally saved mode only exempts the reviewed navigation names.
         // Generic controls, input and back retain a human gate in either mode.
@@ -1245,15 +1250,116 @@ public final class AndroidDeviceTools implements ToolHandler {
         // Approval publication hides its views asynchronously. Wait for the real compact
         // layout before re-observing and checking target overlap, otherwise old expanded
         // bounds can reject a target that is now clear. Final scope/revision checks remain.
+        long deadline = SystemClock.elapsedRealtime() + MAIN_TIMEOUT_MS;
         CompletableFuture<Void> compact = service.whenControlsReadyForAction();
-        try { await(compact, control, epoch, MAIN_TIMEOUT_MS); }
+        try { await(compact, control, epoch, readinessRemaining(deadline)); }
         finally { compact.cancel(false); }
+        CompletableFuture<AgentAccessibilityService.ControlLease> acquiring = service.acquireControlLease();
+        AgentAccessibilityService.ControlLease controls;
+        try { controls = await(acquiring, control, epoch, readinessRemaining(deadline)); }
+        finally { acquiring.cancel(false); }
+        requireCurrentConfiguration(control, epoch);
+        readinessRemaining(deadline);
+        // The only permitted metadata lag belongs to this real approval collapse.
+        // Navigation exemptions and gates that did not actually show approval do
+        // not obtain a new readiness exemption. Never reacquire a revoked lease.
+        AgentAccessibilityService.ApprovalCollapse collapse = service.approvalCollapseFor(controls);
+        if (confirmationPolicy.requiresConfirmation(tool) && collapse != null) {
+            awaitCollapsedWindowMetadata(controls, collapse, originalControls, control, epoch, deadline);
+        }
+        return controls;
     }
 
     private AgentAccessibilityService.ControlLease acquireActionControls(RunControl control, long epoch) throws Exception {
         CompletableFuture<AgentAccessibilityService.ControlLease> result = service.acquireControlLease();
         try { return await(result, control, epoch, MAIN_TIMEOUT_MS); }
         finally { result.cancel(false); }
+    }
+
+    private void awaitCollapsedWindowMetadata(AgentAccessibilityService.ControlLease controls,
+            AgentAccessibilityService.ApprovalCollapse collapse, ControlWindowBaseline original,
+            RunControl control, long epoch, long deadline) throws Exception {
+        if (original == null || original.otherWindows == null || !collapse.matchesOriginalAttachment(original.identity))
+            throw diagnosticStale(PerformanceTrace.Stage.OWNED_WINDOW_MISMATCH, control, epoch);
+        Rect expanded = collapse.copyExpandedBounds();
+        Rect compact = collapse.copyCompactBounds();
+        while (true) {
+            readinessRemaining(deadline);
+            requireCollapseCurrent(controls, collapse, control, epoch);
+            // execute already owns the service's device gate, including approval
+            // waiting. Do not release/reacquire it or submit a second device tool.
+            List<AccessibilityWindowInfo> windows = freshWindows(service, () -> {
+                readinessRemaining(deadline);
+                requireCollapseCurrent(controls, collapse, control, epoch);
+            });
+            boolean ready = false;
+            try {
+                readinessRemaining(deadline);
+                if (!original.otherWindows.equals(otherWindowMetadata(windows, controls.windowId)))
+                    throw diagnosticStale(PerformanceTrace.Stage.OWNED_WINDOW_MISMATCH, control, epoch);
+                int count = 0;
+                for (AccessibilityWindowInfo window : windows) {
+                    requireCollapseCurrent(controls, collapse, control, epoch);
+                    if (window.getId() != controls.windowId) continue;
+                    count++;
+                    Rect actual = new Rect(); window.getBoundsInScreen(actual);
+                    if (window.getType() != AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY
+                            || window.getDisplayId() != Display.DEFAULT_DISPLAY || window.getDisplayId() != controls.displayId
+                            || window.isFocused() || actual.isEmpty())
+                        throw diagnosticStale(PerformanceTrace.Stage.OWNED_WINDOW_MISMATCH, control, epoch);
+                    if (actual.equals(compact)) ready = true;
+                    else if (!actual.equals(expanded))
+                        throw diagnosticStale(PerformanceTrace.Stage.OWNED_WINDOW_MISMATCH, control, epoch);
+                }
+                if (count != 1) throw diagnosticStale(PerformanceTrace.Stage.OWNED_WINDOW_MISMATCH, control, epoch);
+                requireCollapseCurrent(controls, collapse, control, epoch);
+                readinessRemaining(deadline);
+            } finally { if (windows != null) recycleWindows(windows); }
+            if (ready) return; // The caller still performs the original full final snapshot/guards.
+            long pauseUntil = Math.min(deadline, SystemClock.elapsedRealtime() + 100);
+            while (SystemClock.elapsedRealtime() < pauseUntil) {
+                requireCollapseCurrent(controls, collapse, control, epoch);
+                long left = pauseUntil - SystemClock.elapsedRealtime();
+                if (left > 0) Thread.sleep(Math.min(20, left));
+            }
+        }
+    }
+
+    private void requireCollapseCurrent(AgentAccessibilityService.ControlLease controls,
+            AgentAccessibilityService.ApprovalCollapse collapse, RunControl control, long epoch) throws Exception {
+        requireCurrentConfiguration(control, epoch);
+        if (!service.isControlLeaseCurrent(controls) || !service.isApprovalCollapseCurrent(collapse))
+            throw diagnosticStale(PerformanceTrace.Stage.LOCAL_CONTROL_STALE, control, epoch);
+    }
+
+    private long readinessRemaining(long deadline) throws DeviceException {
+        long remaining = deadline - SystemClock.elapsedRealtime();
+        if (remaining <= 0) throw new DeviceException("TIMEOUT", "任务控制窗口未在规定时间内完成收起",
+                "先观察或交由用户核对；写操作不能自动重试");
+        return remaining;
+    }
+
+    /** Immutable primitive metadata only; never retain foreign roots, titles or recyclable nodes. */
+    private static final class ControlWindowBaseline {
+        final AgentAccessibilityService.OwnedControlWindowIdentity identity;
+        final String otherWindows;
+        ControlWindowBaseline(AgentAccessibilityService.OwnedControlWindowIdentity identity, String otherWindows) {
+            this.identity = identity; this.otherWindows = otherWindows;
+        }
+    }
+
+    private static String otherWindowMetadata(List<AccessibilityWindowInfo> windows, int controlsId) {
+        if (windows == null || windows.isEmpty() || windows.size() > 40) return null;
+        java.util.TreeMap<Integer, String> records = new java.util.TreeMap<>();
+        for (AccessibilityWindowInfo window : windows) {
+            int id = window.getId();
+            if (id == controlsId) continue;
+            if (id < 0 || records.containsKey(id)) return null;
+            Rect bounds = new Rect(); window.getBoundsInScreen(bounds);
+            records.put(id, id + ":" + window.getType() + ":" + window.getDisplayId() + ":" + window.getLayer()
+                    + ":" + window.isFocused() + ":" + bounds.left + "," + bounds.top + "," + bounds.right + "," + bounds.bottom);
+        }
+        return records.values().toString();
     }
 
     private AgentAccessibilityService.OwnedControlWindowIdentity acquireControlWindow(RunControl control, long epoch) throws Exception {
@@ -1555,6 +1661,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         private final WindowReadGuard extraGuard;
         final AgentAccessibilityService.OwnedControlWindowIdentity controlWindow;
         String packageName, revision, windowSignature = "";
+        ControlWindowBaseline controlBaseline;
         int windowId, displayId = -1, windowType = -1, rotation = -1;
         boolean scoped, password, truncated, highImpactScreen, ambiguousCaptureFocus;
         final Rect bounds = new Rect();
@@ -1689,6 +1796,7 @@ public final class AndroidDeviceTools implements ToolHandler {
                 }
                 if (!service.isOwnedControlWindowCurrent(controlWindow)) throw diagnosticStale(PerformanceTrace.Stage.LOCAL_CONTROL_STALE, control, epoch);
                 windowSignature = signature.toString();
+                controlBaseline = new ControlWindowBaseline(controlWindow, otherWindowMetadata(windows, controlWindow.windowId));
             } finally { if (windows != null) recycleWindows(windows); }
         }
 
@@ -1975,6 +2083,9 @@ public final class AndroidDeviceTools implements ToolHandler {
     private static final class Dispatch { volatile boolean started; }
     private static final class Prepared {
         final String packageName, description;
-        Prepared(String packageName, String description) { this.packageName = packageName; this.description = description; }
+        final ControlWindowBaseline controls;
+        Prepared(String packageName, String description, ControlWindowBaseline controls) {
+            this.packageName = packageName; this.description = description; this.controls = controls;
+        }
     }
 }

@@ -7,6 +7,7 @@ import android.graphics.Rect;
 import android.os.SystemClock;
 import android.view.Display;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -20,6 +21,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -189,19 +191,19 @@ public final class OwnedControlWindowInstrumentedTest {
             AgentAccessibilityService service = device.service;
             AgentAccessibilityService.OwnedControlWindowIdentity initial = identity(service);
             AgentAccessibilityService.ControlLease initialLease = lease(service);
-            device.instrumentation.runOnMainSync(() -> {
+            safeMain(device, () -> {
                 service.showOverlay("Updated task state", false, "");
                 assertFalse(service.isOwnedControlWindowCurrent(initial));
                 assertFalse(service.isControlLeaseCurrent(initialLease));
             });
             AgentAccessibilityService.OwnedControlWindowIdentity statusChanged = identity(service);
-            device.instrumentation.runOnMainSync(() -> {
+            safeMain(device, () -> {
                 service.showOverlay("Updated task state", true, "");
                 assertFalse(service.isOwnedControlWindowCurrent(statusChanged));
             });
             AgentAccessibilityService.OwnedControlWindowIdentity paused = identity(service);
             AgentAccessibilityService.ControlLease pausedLease = lease(service);
-            device.instrumentation.runOnMainSync(() -> {
+            safeMain(device, () -> {
                 service.showOverlay("Updated task state", true, "Synthetic approval requires review");
                 assertFalse(service.isOwnedControlWindowCurrent(paused));
                 assertFalse(service.isControlLeaseCurrent(pausedLease));
@@ -211,7 +213,7 @@ public final class OwnedControlWindowInstrumentedTest {
             assertRegistered(device, expanded.windowId, expanded.displayId, expanded.copyBounds());
             screenshots.capture("changed-approval-and-real-window-geometry-revoke-previous-owner");
 
-            device.instrumentation.runOnMainSync(() -> {
+            safeMain(device, () -> {
                 service.setOverlayCallbacks(new AgentAccessibilityService.OverlayCallbacks() {
                     @Override public void onPauseResume() { device.control.pause(); }
                     @Override public void onStop() { device.control.cancel(); }
@@ -227,7 +229,139 @@ public final class OwnedControlWindowInstrumentedTest {
             assertRegistered(device, replacement.windowId, replacement.displayId, replacement.copyBounds());
             assertEquals("The synthetic UI changes must not dispatch device actions", 0, device.control.getDispatchAttempts());
             screenshots.capture("callback-replacement-revokes-owner-even-with-identical-text");
+
+            // Use the same registered View to prove the narrow historical collapse.
+            // A real callback publication and a real layout, not fabricated IDs,
+            // produce the one current compact lease.
+            safeMain(device, () -> service.showOverlay("Collapse readiness", false, ""));
+            AgentAccessibilityService.OwnedControlWindowIdentity beforeApproval = identity(service);
+            AgentAccessibilityService.ControlLease beforeApprovalLease = lease(service);
+            assertNull(service.approvalCollapseFor(beforeApprovalLease));
+            safeMain(device, () -> service.showOverlay("Collapse readiness", false, "Synthetic approval requires review"));
+            AgentAccessibilityService.OwnedControlWindowIdentity actualExpanded = identity(service);
+            assertRegistered(device, actualExpanded.windowId, actualExpanded.displayId, actualExpanded.copyBounds());
+            assertTrue(actualExpanded.copyBounds().height() > beforeApproval.copyBounds().height());
+            safeMain(device, () -> {
+                service.setOverlayCallbacks(callbacks(device));
+                service.showOverlay("Collapse readiness", false, "");
+            });
+            AgentAccessibilityService.ControlLease compact = lease(service);
+            AgentAccessibilityService.ApprovalCollapse collapse = service.approvalCollapseFor(compact);
+            assertNotNull("The actual approval collapse must bind its first compact lease", collapse);
+            assertSame(compact, collapse.compactLease());
+            assertTrue(collapse.matchesOriginalAttachment(beforeApproval));
+            assertTrue(collapse.matchesOriginalAttachment(actualExpanded));
+            assertEquals(actualExpanded.copyBounds(), collapse.copyExpandedBounds());
+            assertEquals(compact.copyBounds(), collapse.copyCompactBounds());
+            assertTrue(service.isApprovalCollapseCurrent(collapse));
+            assertRegistered(device, compact.windowId, compact.displayId, compact.copyBounds());
+            Rect changedCopy = collapse.copyExpandedBounds(); changedCopy.setEmpty();
+            assertEquals(actualExpanded.copyBounds(), collapse.copyExpandedBounds());
+            changedCopy = collapse.copyCompactBounds(); changedCopy.setEmpty();
+            assertEquals(compact.copyBounds(), collapse.copyCompactBounds());
+            screenshots.capture("actual-expanded-to-compact-owner-record");
+
+            // Dispatch touch events to the service's actual draggable title View.
+            // A geometry change revokes the record immediately, before WMS settles.
+            safeMain(device, () -> {
+                dragActualStatus(device);
+                assertFalse(service.isApprovalCollapseCurrent(collapse));
+                assertFalse(service.isControlLeaseCurrent(compact));
+                assertNull(service.approvalCollapseFor(compact));
+            });
+            AgentAccessibilityService.ControlLease dragged = lease(service);
+            assertEquals(compact.windowId, dragged.windowId);
+            assertTrue("The drag must move the real control window", dragged.copyBounds().top > compact.copyBounds().top);
+            assertRegistered(device, dragged.windowId, dragged.displayId, dragged.copyBounds());
+            assertNull("A later stable frame cannot reissue the old collapse", service.approvalCollapseFor(dragged));
+            safeMain(device, () -> service.showOverlay("Collapse readiness", false, ""));
+            assertSame(dragged, lease(service));
+            assertFalse(service.isApprovalCollapseCurrent(collapse));
+            assertNull(service.approvalCollapseFor(dragged));
+
+            safeMain(device, () -> service.showOverlay("Collapse readiness", false, "Synthetic second approval"));
+            AgentAccessibilityService.OwnedControlWindowIdentity secondExpanded = identity(service);
+            assertRegistered(device, secondExpanded.windowId, secondExpanded.displayId, secondExpanded.copyBounds());
+            safeMain(device, () -> {
+                service.setOverlayCallbacks(callbacks(device));
+                service.showOverlay("Collapse readiness", false, "");
+            });
+            AgentAccessibilityService.ControlLease secondCompact = lease(service);
+            AgentAccessibilityService.ApprovalCollapse secondCollapse = service.approvalCollapseFor(secondCompact);
+            assertNotNull(secondCollapse);
+            assertTrue(service.isApprovalCollapseCurrent(secondCollapse));
+            assertRegistered(device, secondCompact.windowId, secondCompact.displayId, secondCompact.copyBounds());
+            safeMain(device, () -> {
+                service.setOverlayCallbacks(callbacks(device));
+                assertFalse(service.isApprovalCollapseCurrent(secondCollapse));
+                assertNull(service.approvalCollapseFor(secondCompact));
+                service.showOverlay("Collapse readiness", false, "");
+            });
+            AgentAccessibilityService.ControlLease rebound = lease(service);
+            assertFalse(service.isApprovalCollapseCurrent(secondCollapse));
+            assertNull("Extra callbacks cannot revive a consumed historical transition", service.approvalCollapseFor(rebound));
+            assertRegistered(device, rebound.windowId, rebound.displayId, rebound.copyBounds());
+
+            // Two callbacks before the same collapse must not re-arm a discarded
+            // expanded owner merely because a compact frame eventually appears.
+            safeMain(device, () -> service.showOverlay("Collapse readiness", false, "Synthetic third approval"));
+            AgentAccessibilityService.OwnedControlWindowIdentity thirdExpanded = identity(service);
+            assertRegistered(device, thirdExpanded.windowId, thirdExpanded.displayId, thirdExpanded.copyBounds());
+            safeMain(device, () -> {
+                service.setOverlayCallbacks(callbacks(device));
+                service.setOverlayCallbacks(callbacks(device));
+                service.showOverlay("Collapse readiness", false, "");
+            });
+            AgentAccessibilityService.ControlLease discarded = lease(service);
+            assertRegistered(device, discarded.windowId, discarded.displayId, discarded.copyBounds());
+            assertNull("An extra callback within the transition invalidates its original binding", service.approvalCollapseFor(discarded));
+            assertFalse(service.isApprovalCollapseCurrent(collapse));
+            assertFalse(service.isApprovalCollapseCurrent(secondCollapse));
+            assertEquals("Only local control UI changed; no device action was dispatched", 0, device.control.getDispatchAttempts());
+            screenshots.capture("drag-and-extra-callbacks-do-not-revive-collapse-record");
         }
+    }
+
+    private static AgentAccessibilityService.OverlayCallbacks callbacks(DeviceHarness device) {
+        return new AgentAccessibilityService.OverlayCallbacks() {
+            @Override public void onPauseResume() { device.control.pause(); }
+            @Override public void onStop() { device.control.cancel(); }
+            @Override public void onApprove(boolean approved) { }
+        };
+    }
+
+    /** Caller is on the main thread; reads the actual View without replacing any state. */
+    private static void dragActualStatus(DeviceHarness device) {
+        TextView title;
+        try {
+            Field field = AgentAccessibilityService.class.getDeclaredField("statusView");
+            field.setAccessible(true); title = (TextView) field.get(device.service);
+        } catch (ReflectiveOperationException failed) { throw new AssertionError("Actual drag title is unavailable", failed); }
+        assertNotNull(title);
+        assertTrue(title.isAttachedToWindow() && title.isShown());
+        float x = title.getWidth() / 2f, y = title.getHeight() / 2f;
+        float delta = Math.max(8, Math.round(12 * device.service.getResources().getDisplayMetrics().density));
+        long now = SystemClock.uptimeMillis();
+        MotionEvent down = MotionEvent.obtain(now, now, MotionEvent.ACTION_DOWN, x, y, 0);
+        MotionEvent move = MotionEvent.obtain(now, now + 16, MotionEvent.ACTION_MOVE, x, y + delta, 0);
+        MotionEvent up = MotionEvent.obtain(now, now + 32, MotionEvent.ACTION_UP, x, y + delta, 0);
+        try {
+            assertTrue(title.dispatchTouchEvent(down));
+            assertTrue(title.dispatchTouchEvent(move));
+            assertTrue(title.dispatchTouchEvent(up));
+        } finally { up.recycle(); move.recycle(); down.recycle(); }
+    }
+
+    /** Preserve failures without throwing an uncaught assertion on the application main thread. */
+    private static void safeMain(DeviceHarness device, Runnable action) {
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+        device.instrumentation.runOnMainSync(() -> {
+            try { action.run(); } catch (Throwable failed) { failure.set(failed); }
+        });
+        Throwable failed = failure.get();
+        if (failed instanceof Error) throw (Error) failed;
+        if (failed instanceof RuntimeException) throw (RuntimeException) failed;
+        if (failed != null) throw new AssertionError("Main-thread test action failed", failed);
     }
 
     private static AgentAccessibilityService.OwnedControlWindowIdentity identity(AgentAccessibilityService service) throws Exception {

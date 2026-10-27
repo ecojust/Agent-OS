@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Fix the low-contrast task-control buttons seen in actual walkthrough frames with explicit enabled and disabled foreground/background colors. Selected color contrast is 6.61:1 and 5.55:1; layout and callbacks are unchanged. Debug APK builds; updated real UI footage remains pending.
+**本次更新：** Synchronize a real approval collapse with the published owned-window metadata under the original five-second budget. Pin one compact lease, retain other-window baseline and all final guards, never replay a write. Strengthen two existing real-control regressions without changing case counts. Debug/test APKs and lint pass; cross-API and walkthrough verification pending.
 
-**记录时间：** 2026-10-27T15:25:15Z
+**记录时间：** 2026-10-27T15:30:14Z
 
 [最近测试截图与清单](screenshots/40524418849-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40524418849)。通过、失败及未截图原因见清单。
 

@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.widget.Button;
 import android.view.accessibility.AccessibilityWindowInfo;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.gson.JsonArray;
@@ -29,6 +30,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
 
@@ -56,12 +58,33 @@ public final class AgentControllerInstrumentedTest {
                     AgentController.State state = controller.getState();
                     if (!state.approvalId.isEmpty() && approved.add(state.approvalId)) {
                         assertFalse(state.approval.isEmpty());
-                        if (approved.size() == 1) awaitExpandedControlsCoverInput(device, input);
+                        ExpandedApproval shown = awaitExpandedApproval(device, controller, state, deadline);
+                        if (approved.size() == 1) assertTrue("The actual expanded approval must cover the original input",
+                                Rect.intersects(input, shown.identity.copyBounds()));
                         screenshots.capture("approval-" + approved.size());
                         String current = state.approvalId;
-                        device.instrumentation.runOnMainSync(() -> controller.approve("unrelated-" + current, true));
+                        safeMain(device, () -> controller.approve("unrelated-" + current, true));
                         assertEquals("An unrelated confirmation must not replace the pending request", current, controller.getState().approvalId);
-                        device.instrumentation.runOnMainSync(() -> controller.approve(current, true));
+                        // Let the actual expanded window remain visible while the user
+                        // reads it. Do not accelerate approval past WMS publication.
+                        long thinkingUntil = SystemClock.elapsedRealtime() + 1_200;
+                        assertTrue("The original task deadline must cover the review pause", thinkingUntil < deadline);
+                        while (SystemClock.elapsedRealtime() < thinkingUntil) {
+                            server.assertHealthy();
+                            assertEquals(current, controller.getState().approvalId);
+                            Thread.sleep(25);
+                        }
+                        safeMain(device, () -> {
+                            assertTrue("Review must not extend the original task deadline", SystemClock.elapsedRealtime() < deadline);
+                            assertEquals(current, controller.getState().approvalId);
+                            assertTrue(device.service.isOwnedControlWindowCurrent(shown.identity));
+                            assertSame(shown.button, controlField(device.service, "approveButton"));
+                            assertEquals(state.approval, controlField(device.service, "currentApproval"));
+                            assertEquals(controlField(device.service, "callbackGeneration"),
+                                    controlField(device.service, "displayedCallbackGeneration"));
+                            assertTrue(shown.button.isAttachedToWindow() && shown.button.isShown() && shown.button.isEnabled());
+                            assertTrue("Approve through the actual displayed Button", shown.button.performClick());
+                        });
                     }
                     SystemClock.sleep(25);
                 }
@@ -212,6 +235,82 @@ public final class AgentControllerInstrumentedTest {
             assertFalse("Diagnostic metadata must not echo arbitrary strings", diagnostic.contains(LocalControllerModelServer.SYNTHETIC_KEY));
             assertTrue(diagnostic.length() <= 4009);
         }
+    }
+
+    private static final class ExpandedApproval {
+        final AgentAccessibilityService.OwnedControlWindowIdentity identity;
+        final Button button;
+        ExpandedApproval(AgentAccessibilityService.OwnedControlWindowIdentity identity, Button button) {
+            this.identity = identity; this.button = button;
+        }
+    }
+
+    private static ExpandedApproval awaitExpandedApproval(DeviceHarness device, AgentController controller,
+                                                          AgentController.State expected, long taskDeadline) throws Exception {
+        long deadline = Math.min(taskDeadline, SystemClock.elapsedRealtime() + 5_000);
+        while (SystemClock.elapsedRealtime() < deadline) {
+            AtomicReference<ExpandedApproval> candidate = new AtomicReference<>();
+            safeMain(device, () -> {
+                assertEquals("The pending approval must remain the same", expected.approvalId, controller.getState().approvalId);
+                AgentAccessibilityService.OwnedControlWindowIdentity identity = device.service.getOwnedControlWindowIdentity();
+                Button button = (Button) controlField(device.service, "approveButton");
+                if (identity == null || !device.service.isOwnedControlWindowCurrent(identity)
+                        || button == null || !button.isAttachedToWindow() || !button.isShown() || !button.isEnabled()
+                        || !expected.approval.equals(controlField(device.service, "currentApproval"))
+                        || !controlField(device.service, "callbackGeneration").equals(
+                                controlField(device.service, "displayedCallbackGeneration"))) return;
+                if (!identity.copyBounds().equals(device.service.controlBounds())) return;
+                candidate.set(new ExpandedApproval(identity, button));
+            });
+            ExpandedApproval actual = candidate.get();
+            if (actual != null && registeredExpandedWindow(device, actual.identity)
+                    && device.service.isOwnedControlWindowCurrent(actual.identity)
+                    && SystemClock.elapsedRealtime() < deadline) return actual;
+            Thread.sleep(25);
+        }
+        throw new AssertionError("Displayed approval did not reach its actual current accessibility window within the original deadline");
+    }
+
+    private static boolean registeredExpandedWindow(DeviceHarness device,
+            AgentAccessibilityService.OwnedControlWindowIdentity identity) {
+        boolean matched = false; int count = 0;
+        List<AccessibilityWindowInfo> windows = device.service.getWindows();
+        try {
+            if (windows != null) for (AccessibilityWindowInfo window : windows) {
+                if (window.getId() != identity.windowId) continue;
+                count++;
+                Rect bounds = new Rect(); window.getBoundsInScreen(bounds);
+                if (window.getType() != AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY
+                        || window.getDisplayId() != identity.displayId || window.isFocused()
+                        || !identity.copyBounds().equals(bounds)) continue;
+                AccessibilityNodeInfo root = window.getRoot();
+                if (root == null) continue;
+                try {
+                    matched = root.getWindowId() == identity.windowId
+                            && device.service.getPackageName().contentEquals(root.getPackageName() == null ? "" : root.getPackageName());
+                } finally { root.recycle(); }
+            }
+            return count == 1 && matched;
+        } finally { if (windows != null) for (AccessibilityWindowInfo window : windows) window.recycle(); }
+    }
+
+    private static Object controlField(AgentAccessibilityService service, String name) {
+        try {
+            Field field = AgentAccessibilityService.class.getDeclaredField(name);
+            field.setAccessible(true); return field.get(service);
+        } catch (ReflectiveOperationException failed) { throw new AssertionError("Cannot inspect actual control field: " + name, failed); }
+    }
+
+    /** Main-thread assertions must fail the test, not terminate the instrumentation process. */
+    private static void safeMain(DeviceHarness device, Runnable action) {
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+        device.instrumentation.runOnMainSync(() -> {
+            try { action.run(); } catch (Throwable failed) { failure.set(failed); }
+        });
+        Throwable failed = failure.get();
+        if (failed instanceof Error) throw (Error) failed;
+        if (failed instanceof RuntimeException) throw (RuntimeException) failed;
+        if (failed != null) throw new AssertionError("Main-thread test action failed", failed);
     }
 
     private static String controllerFailureDiagnostic(AgentController controller,

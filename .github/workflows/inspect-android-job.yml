@@ -60,4 +60,15 @@ jobs:
           artifact-ids: ${{ steps.report.outputs.artifact_id }}
           path: ${{ runner.temp }}/inspection-report
       - name: Print bounded JUnit diagnostics
-        run: python3 scripts/inspect_android_job.py print --directory "$RUNNER_TEMP/inspection-report"
+        run: |
+          python3 scripts/inspect_android_job.py print --directory "$RUNNER_TEMP/inspection-report" > "$RUNNER_TEMP/inspection-summary.txt"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          # Keep diagnostics available through the GitHub Checks API when the
+          # artifact/log storage endpoint is unavailable to a local developer.
+          text = (Path(os.environ['RUNNER_TEMP']) / 'inspection-summary.txt').read_text()[:64000]
+          for index, start in enumerate(range(0, len(text), 8000), 1):
+              message = text[start:start + 8000].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+              print(f'::notice title=Android JUnit diagnostic {index}::{message}')
+          PY

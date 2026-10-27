@@ -25,11 +25,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Fix official Notes probe title publication and verified system-keyboard geometry; add conservative bounded IME-hide checks for test captures. Probe APK/lint passed and all original 32 combinations await rerun. Also queue the 235-per-API main regression, including task-image qualification and the usage drain fix.
+**本次更新：** 归档固定第三方应用的专用模拟器开发探针；保留关闭/空闲两态的通过、失败、受保护与未执行记录，不作为真机、升级或常用应用总体兼容验收。
 
-**记录时间：** 2026-10-27T11:50:09Z
+**记录时间：** 2026-10-27T12:00:07Z
 
-[最近测试截图与清单](screenshots/40496409142-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40496409142)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/third-party-40499117689-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40499117689)。通过、失败及未截图原因见清单。
 
 | 检查点 | 状态 |
 | --- | --- |

@@ -25,14 +25,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Implement guarded control-window reattachment after an actual completed drag on API30–32, including round trips. Preserve position and controls, require a genuinely new window, reject old attachments/approvals and detached View callbacks, and keep all geometry checks. Existing regressions now include real InputDispatcher gestures. App unit checks, lint and both APK builds pass; device verification and a new walkthrough are pending.
+**本次更新：** Archive actual API35 walkthrough evidence; local synthetic model, secure flags preserved
 
-**记录时间：** 2026-10-27T16:47:46Z
+**记录时间：** 2026-10-27T16:54:21Z
 
 [最近测试截图与清单](screenshots/40539311569-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40539311569)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/40531630013-1/demo.mp4) · [录制与验证清单](screenshots/demos/40531630013-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40531630013)。
-录制版本：[`7f47313b9`](https://github.com/ecojust/Agent-OS/commit/7f47313b949461458529bc972a36f11fa1b327be)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/40544423996-1/demo.mp4) · [录制与验证清单](screenshots/demos/40544423996-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40544423996)。
+录制版本：[`1a72395dc`](https://github.com/ecojust/Agent-OS/commit/1a72395dc85f795bd34057c8620d4eea472b28c7)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 | 检查点 | 状态 |
 | --- | --- |

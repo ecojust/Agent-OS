@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Match the fixed native Calculator wrappers and overflow to actual four-API metadata and reviewed dependency source. Keep exact installation, content and geometry checks. APK/test APK/lint passed in38s; rerun the same20 cases. Round52 is fully audited1936/1936; newer IME/page changes await device verification.
+**本次更新：** Publish the independently recomputed eight-API performance observations for round52: recorded device dispatch stays off the main thread; retain roughly185ms snapshot tails and short-sampling limits. This is diagnostic evidence, not performance-budget acceptance. Latest code device regression continues.
 
-**记录时间：** 2026-10-27T13:12:32Z
+**记录时间：** 2026-10-27T13:18:48Z
 
 [最近测试截图与清单](screenshots/40507386749-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40507386749)。通过、失败及未截图原因见清单。
 

@@ -6,7 +6,6 @@ import android.app.Dialog;
 import android.app.KeyguardManager;
 import android.content.ComponentCallbacks2;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,19 +15,9 @@ import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 
-import dev.agentos.core.ImageAttachment;
 import dev.agentos.core.ImageReviewSession;
-import dev.agentos.core.ImageWorkset;
-import dev.agentos.core.PngImage;
 
-import java.io.InputStream;
-import java.util.Arrays;
 import java.util.Objects;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Internal component host, with no production capture or network entry point.
@@ -52,27 +41,11 @@ final class SecureImageReviewDialog extends Dialog implements AutoCloseable {
     }
 
     /** Narrow package-level decoder seam; tests still use the actual BitmapFactory. */
-    interface PreviewDecoder {
-        Bitmap decode(InputStream input, BitmapFactory.Options options);
-    }
+    interface PreviewDecoder extends ImagePreviewLoader.Decoder { }
 
     private static final long CONTEXT_CHECK_INTERVAL_MS = 250;
-    private static final int DECODE_TEMP_BYTES = 16 * 1024;
-    private static final ThreadPoolExecutor DECODER = new ThreadPoolExecutor(0, 1, 10,
-            // One waiting request bridges a previous worker's post/return tail.
-            // PREVIEW_SLOT still admits only one decode or pending main consumer.
-            TimeUnit.SECONDS, new ArrayBlockingQueue<>(1), task -> {
-        Thread worker = new Thread(task, "agent-os-image-preview");
-        worker.setDaemon(true);
-        return worker;
-    }, new ThreadPoolExecutor.AbortPolicy());
-    // Includes decoded results posted to main; worker completion alone must not free this slot.
-    private static final AtomicBoolean PREVIEW_SLOT = new AtomicBoolean();
-    // Accessed only on the main thread. A single decoder alone would not bound visible images.
-    private static SecureImageReviewDialog activeHost;
-
-    /** Read-only admission state for package tests, not a renderer-memory signal. */
-    static boolean isPreviewWorkPending() { return PREVIEW_SLOT.get(); }
+    /** Read-only shared admission state, not a renderer-memory signal. */
+    static boolean isPreviewWorkPending() { return ImagePreviewLoader.isWorkPending(); }
 
     private final Activity activity;
     private final ImageReviewSession session;
@@ -154,8 +127,8 @@ final class SecureImageReviewDialog extends Dialog implements AutoCloseable {
     @Override public void show() {
         requireMain();
         if (shown || ended || closeRequested) throw new IllegalStateException("图片审阅窗口不可复用。");
-        if (activeHost != null) {
-            if (activeHost.session == session) {
+        if (ImageReviewPresentationCoordinator.hasHost()) {
+            if (ImageReviewPresentationCoordinator.isSessionOwnedByAnother(this, session)) {
                 // This unclaimed duplicate shell owns no session resources. Leave its owner alone.
                 ended = true;
                 reviewView.clearPreview();
@@ -168,13 +141,12 @@ final class SecureImageReviewDialog extends Dialog implements AutoCloseable {
             finishHost();
             throw new IllegalStateException("请在已解锁的安全窗口中审阅图片。");
         }
-        hostToken = session.claimHost();
+        hostToken = ImageReviewPresentationCoordinator.claim(this, session);
         if (hostToken == null) {
             finishHost();
             throw new IllegalStateException("图片审阅已失效。");
         }
         shown = true;
-        activeHost = this;
         activity.getApplication().registerActivityLifecycleCallbacks(lifecycle);
         activity.getApplication().registerComponentCallbacks(configuration);
         registered = true;
@@ -186,76 +158,10 @@ final class SecureImageReviewDialog extends Dialog implements AutoCloseable {
             window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
             main.postDelayed(deadline, Math.max(1, session.remainingMillis()));
             main.postDelayed(contextCheck, CONTEXT_CHECK_INTERVAL_MS);
-            if (!PREVIEW_SLOT.compareAndSet(false, true)) {
-                throw new RejectedExecutionException("上一图片预览仍在释放资源。");
-            }
-            try { DECODER.execute(this::decodePreview); }
-            catch (RuntimeException | Error rejected) { PREVIEW_SLOT.set(false); throw rejected; }
+            ImagePreviewLoader.load(session, hostToken, decoder, this::installPreview);
         } catch (RuntimeException | Error failure) {
             dismiss();
             throw failure;
-        }
-    }
-
-    private void decodePreview() {
-        byte[] temporary = null;
-        Bitmap bitmap = null;
-        ImageWorkset.Reservation pixels = null, staging = null;
-        DecodedPreview decoded = null;
-        boolean posted = false;
-        try {
-            try {
-                // Reserve before either allocation. This bounds the known payload
-                // and pixel capacity we own; codec/GPU memory is additional.
-                pixels = ImageWorkset.process().reserve(ImageAttachment.MAX_DECODED_BYTES);
-                staging = ImageWorkset.process().reserve(DECODE_TEMP_BYTES);
-                temporary = new byte[DECODE_TEMP_BYTES];
-                try (PngImage.ReadLease encoded = session.openPreviewRead(hostToken)) {
-                    if (encoded != null) {
-                        BitmapFactory.Options options = new BitmapFactory.Options();
-                        options.inScaled = false;
-                        options.inMutable = false;
-                        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-                        options.inTempStorage = temporary;
-                        bitmap = decoder.decode(encoded, options);
-                        if (bitmap != null && bitmap.getWidth() == session.width && bitmap.getHeight() == session.height
-                                && !bitmap.isMutable() && bitmap.getConfig() == Bitmap.Config.ARGB_8888
-                                && bitmap.getAllocationByteCount() <= pixels.bytes()) {
-                            decoded = new DecodedPreview(bitmap, pixels);
-                            bitmap = null;
-                            pixels = null;
-                        }
-                    }
-                }
-            } catch (RuntimeException | OutOfMemoryError failedPreview) {
-                // Decode errors may contain source details; expose only failed review.
-                if (decoded != null) decoded.close();
-                decoded = null;
-            } finally {
-                try {
-                    if (bitmap != null) bitmap.recycle(); // Never exposed to a renderer.
-                } finally {
-                    if (temporary != null) Arrays.fill(temporary, (byte) 0);
-                    try { if (staging != null) staging.close(); }
-                    finally { if (pixels != null) pixels.close(); }
-                }
-            }
-            DecodedPreview result = decoded;
-            posted = main.post(() -> {
-                try { installPreview(result); }
-                finally { PREVIEW_SLOT.set(false); }
-            });
-        } finally {
-            if (!posted) {
-                try {
-                    // No main consumer owns this result. Revoke synchronously even
-                    // if a stopped Handler cannot deliver the normal UI cleanup.
-                    session.invalidateHost(hostToken);
-                } finally {
-                    try { if (decoded != null) decoded.close(); }
-                    finally { PREVIEW_SLOT.set(false); }
-                }
-            }
         }
     }
 
@@ -342,7 +248,7 @@ final class SecureImageReviewDialog extends Dialog implements AutoCloseable {
         main.removeCallbacks(deadline);
         main.removeCallbacks(contextCheck);
         if (hostToken != null) session.invalidateHost(hostToken);
-        else if (activeHost == null || activeHost == this || activeHost.session != session) {
+        else if (!ImageReviewPresentationCoordinator.isSessionOwnedByAnother(this, session)) {
             // An unshown duplicate shell must not revoke the session claimed by another host.
             session.invalidate(ImageReviewSession.Reason.HOST_LOST);
         }
@@ -354,7 +260,7 @@ final class SecureImageReviewDialog extends Dialog implements AutoCloseable {
             activity.getApplication().unregisterActivityLifecycleCallbacks(lifecycle);
             activity.getApplication().unregisterComponentCallbacks(configuration);
         }
-        if (activeHost == this) activeHost = null;
+        ImageReviewPresentationCoordinator.release(this);
         Listener completed = listener;
         listener = null;
         if (completed != null) {

@@ -1061,7 +1061,14 @@ public final class AndroidDeviceTools implements ToolHandler {
     }
 
     private List<AccessibilityWindowInfo> freshWindows(RunControl control, long epoch) throws Exception {
-        requireCurrentConfiguration(control, epoch);
+        return freshWindows(service, () -> requireCurrentConfiguration(control, epoch));
+    }
+
+    @FunctionalInterface interface WindowReadGuard { void check() throws Exception; }
+
+    /** Shared worker cache path. Callers must own the process device gate through return. */
+    static List<AccessibilityWindowInfo> freshWindows(AgentAccessibilityService service, WindowReadGuard guard) throws Exception {
+        guard.check();
         // Cache invalidation events can lag a completed navigation or IME transition.
         // Query a fresh window list at every authoritative read, including the last
         // write guard. Keep prefetching enabled within each individual tree read.
@@ -1075,10 +1082,10 @@ public final class AndroidDeviceTools implements ToolHandler {
             if (current == null) throw unavailable("无障碍服务配置暂不可用");
             service.setServiceInfo(current);
         }
-        requireCurrentConfiguration(control, epoch);
+        guard.check();
         List<AccessibilityWindowInfo> windows = service.getWindows();
         try {
-            requireCurrentConfiguration(control, epoch);
+            guard.check();
             return windows;
         } catch (Exception interrupted) {
             if (windows != null) recycleWindows(windows);

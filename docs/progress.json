@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T08:18:25Z",
-  "note": "保留第39轮4项大窗口初始化失败证据；只将该测试改为与专用模拟器同纵横比的960×1920，仍精确核验几何及真实PNG缩放/溢出。测试包和lint通过，等待完整设备复测；图片审阅新宿主另在实现。",
+  "updated_at": "2026-10-27T08:21:24Z",
+  "note": "内部安全图片审阅浮层完成，新增8项回归；共享宿主另有3项。APK、测试包及lint通过，已批准图片遇外部窗口事件同步撤销。连同大窗口测试配置修正，开始新的八档矩阵；截图和外发入口仍未开放。",
   "latest_evidence": {
     "path": "screenshots/40470814623-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40470814623"
@@ -64,7 +64,7 @@
       "name": "Android 11–17 API 行为矩阵",
       "status": "in_progress",
       "evidence": "screenshots/40467959286-1/manifest.json",
-      "scope": "Last complete eight-emulator baseline: dbda2bc2c8149abdd2c3150c610138ed2c9dcb3b, 1248 passed. The new bounded PNG converter and later core reservation/range-copy changes are pending their own matrix; local core 239 tests, APK/test build and lint passed. High-API buffer/conversion tests use synthetic pixels; native window capture is separately verified only by the test bridge on API34–37. No physical-device, model, third-party-app or performance acceptance; production visual tools remain disabled."
+      "scope": "Last complete eight-emulator baseline remains dbda2bc2c8149abdd2c3150c610138ed2c9dcb3b (1248 passed). PNG converter run 40470814623 recorded 1300/1304 passed; four high-API large-window setup failures precede conversion. Its candidate display-ratio correction plus three shared-review and eight overlay regressions are pending the next matrix. Local APK/test builds and lint passed; core 239 tests passed. No physical-device, model, third-party-app or performance acceptance; production visual tools remain disabled."
     },
     {
       "id": "performance",

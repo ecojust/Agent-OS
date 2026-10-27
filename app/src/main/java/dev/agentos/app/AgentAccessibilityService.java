@@ -31,6 +31,8 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import dev.agentos.core.ImageReviewSession;
+import dev.agentos.core.RunControl;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -71,6 +73,32 @@ public final class AgentAccessibilityService extends AccessibilityService {
 
         private boolean matches(WindowRegistration candidate, Rect bounds, long generation, long callbacks) {
             return registration == candidate && this.generation == generation && callbackGeneration == callbacks
+                    && left == bounds.left && top == bounds.top && right == bounds.right && bottom == bounds.bottom;
+        }
+    }
+
+    /** Actual attached review window only. It never grants a normal action or screenshot permit. */
+    static final class OwnedReviewWindowIdentity {
+        public final int windowId, displayId;
+        private final SecureImageReviewOverlay owner;
+        private final WindowRegistration registration;
+        private final int left, top, right, bottom;
+        private final long generation;
+        private OwnedReviewWindowIdentity(SecureImageReviewOverlay owner, WindowRegistration registration,
+                                          Rect bounds, long generation) {
+            this.owner = owner; this.registration = registration; this.generation = generation;
+            windowId = registration.windowId; displayId = registration.displayId;
+            left = bounds.left; top = bounds.top; right = bounds.right; bottom = bounds.bottom;
+        }
+        public Rect copyBounds() { return new Rect(left, top, right, bottom); }
+        /** Cosmetic layout may change publication generation, never the actual attachment or geometry. */
+        boolean sameRegistrationAndBounds(OwnedReviewWindowIdentity other) {
+            return other != null && owner == other.owner && registration == other.registration
+                    && windowId == other.windowId && displayId == other.displayId
+                    && left == other.left && top == other.top && right == other.right && bottom == other.bottom;
+        }
+        private boolean matches(SecureImageReviewOverlay owner, WindowRegistration registration, Rect bounds, long generation) {
+            return this.owner == owner && this.registration == registration && this.generation == generation
                     && left == bounds.left && top == bounds.top && right == bounds.right && bottom == bounds.bottom;
         }
     }
@@ -141,6 +169,10 @@ public final class AgentAccessibilityService extends AccessibilityService {
     private volatile boolean connected;
     private volatile ControlLease currentControlLease;
     private volatile OwnedControlWindowIdentity currentControlWindowIdentity;
+    private volatile SecureImageReviewOverlay reviewHost;
+    private volatile OwnedReviewWindowIdentity currentReviewWindowIdentity;
+    private WindowRegistration reviewWindowRegistration;
+    private long reviewGeneration, reviewAttachmentGeneration;
     private WindowRegistration controlWindowRegistration;
     // Only the main thread writes generations. Workers read the published immutable lease.
     private long controlGeneration, connectionGeneration, callbackGeneration;
@@ -219,6 +251,121 @@ public final class AgentAccessibilityService extends AccessibilityService {
 
     public boolean isOwnedControlWindowCurrent(OwnedControlWindowIdentity identity) {
         return identity != null && currentControlWindowIdentity == identity && connected && instance == this;
+    }
+
+    /** Internal component factory only: no tool, Intent, capture, or network entry point. */
+    SecureImageReviewOverlay showImageReview(ImageReviewSession session, RunControl originalControl, long originalEpoch,
+                                             SettingsStore.ConfigurationLease configuration,
+                                             SecureImageReviewOverlay.Listener listener) {
+        return showImageReview(session, originalControl, originalEpoch, configuration, listener,
+                (input, options) -> android.graphics.BitmapFactory.decodeStream(input, null, options));
+    }
+
+    /** Decoder seam still uses the same secure host, shared admission, and real window registration. */
+    SecureImageReviewOverlay showImageReview(ImageReviewSession session, RunControl originalControl, long originalEpoch,
+                                             SettingsStore.ConfigurationLease configuration,
+                                             SecureImageReviewOverlay.Listener listener, ImagePreviewLoader.Decoder decoder) {
+        if (Looper.myLooper() != Looper.getMainLooper()) throw new IllegalStateException("Review must be shown on main");
+        if (reviewHost != null) {
+            if (!reviewHost.ownsSession(session)) session.invalidate(ImageReviewSession.Reason.HOST_LOST);
+            throw new IllegalStateException("已有图片审阅正在进行。");
+        }
+        SecureImageReviewOverlay created = null;
+        try {
+            created = new SecureImageReviewOverlay(this, session, originalControl,
+                    originalEpoch, configuration, listener, decoder);
+            reviewHost = created;
+            created.show(); return created;
+        } catch (RuntimeException | Error failed) {
+            if (created != null) created.close();
+            else if (session != null && !ImageReviewPresentationCoordinator.isSessionOwnedByAnother(null, session))
+                session.invalidate(ImageReviewSession.Reason.HOST_LOST);
+            throw failed;
+        }
+    }
+
+    OwnedReviewWindowIdentity getOwnedReviewWindowIdentity() {
+        return isConnected() ? currentReviewWindowIdentity : null;
+    }
+
+    boolean isOwnedReviewWindowCurrent(OwnedReviewWindowIdentity identity) {
+        return identity != null && isConnected() && currentReviewWindowIdentity == identity && reviewHost == identity.owner;
+    }
+
+    /** Main-only event classification from the real attachment, including temporary layout invalidation. */
+    boolean isRegisteredReviewWindow(SecureImageReviewOverlay owner, int windowId) {
+        if (Looper.myLooper() != Looper.getMainLooper()) throw new IllegalStateException("Review events require main");
+        WindowRegistration registration = reviewWindowRegistration;
+        if (!isConnected() || reviewHost != owner || registration == null || registration.windowId != windowId
+                || registration.connectionGeneration != connectionGeneration
+                || registration.attachmentGeneration != reviewAttachmentGeneration) return false;
+        View root = owner.rootView();
+        Display display = root.getDisplay();
+        return root.isAttachedToWindow() && root.getWindowToken() == registration.token
+                && display != null && display.getDisplayId() == registration.displayId;
+    }
+
+    CompletableFuture<OwnedReviewWindowIdentity> acquireOwnedReviewWindowIdentity(SecureImageReviewOverlay expectedHost) {
+        if (expectedHost == null || reviewHost != expectedHost) {
+            CompletableFuture<OwnedReviewWindowIdentity> absent = new CompletableFuture<>();
+            absent.completeExceptionally(new IllegalStateException("Review host is unavailable"));
+            return absent;
+        }
+        return expectedHost.acquireIdentity();
+    }
+
+    /** Main-only, exact service-created root. Never register a caller's arbitrary View. */
+    OwnedReviewWindowIdentity refreshReviewWindowIdentity(SecureImageReviewOverlay owner) {
+        if (Looper.myLooper() != Looper.getMainLooper()) throw new IllegalStateException("Review registration requires main");
+        if (!isConnected() || reviewHost != owner || owner.isEnded()) return null;
+        View root = owner.rootView();
+        if (!root.isAttachedToWindow() || !root.isShown() || !root.isLaidOut() || root.isLayoutRequested()
+                || root.getWidth() <= 0 || root.getHeight() <= 0) return null;
+        if (!(root.getLayoutParams() instanceof WindowManager.LayoutParams)) return null;
+        WindowManager.LayoutParams params = (WindowManager.LayoutParams) root.getLayoutParams();
+        int required = WindowManager.LayoutParams.FLAG_SECURE | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        Display display = root.getDisplay();
+        IBinder token = root.getWindowToken();
+        if (params.type != WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY || (params.flags & required) != required
+                || token == null || display == null || display.getDisplayId() != Display.DEFAULT_DISPLAY) return null;
+        WindowRegistration registration = reviewWindowRegistration;
+        if (registration == null || registration.token != token || registration.displayId != display.getDisplayId()
+                || registration.connectionGeneration != connectionGeneration
+                || registration.attachmentGeneration != reviewAttachmentGeneration) {
+            invalidateReviewWindow(owner, true);
+            android.view.accessibility.AccessibilityNodeInfo node = root.createAccessibilityNodeInfo();
+            if (node == null) return null;
+            try {
+                if (node.getWindowId() < 0) return null;
+                registration = new WindowRegistration(token, node.getWindowId(), display.getDisplayId(),
+                        connectionGeneration, reviewAttachmentGeneration);
+                reviewWindowRegistration = registration;
+            } finally { node.recycle(); }
+        }
+        int[] location = new int[2]; root.getLocationOnScreen(location);
+        Rect bounds = new Rect(location[0], location[1], location[0] + root.getWidth(), location[1] + root.getHeight());
+        OwnedReviewWindowIdentity current = currentReviewWindowIdentity;
+        if (current != null && current.matches(owner, registration, bounds, reviewGeneration)) return current;
+        currentReviewWindowIdentity = new OwnedReviewWindowIdentity(owner, registration, bounds, reviewGeneration);
+        return currentReviewWindowIdentity;
+    }
+
+    void invalidateReviewWindow(SecureImageReviewOverlay owner, boolean registrationLost) {
+        if (reviewHost != owner) return;
+        currentReviewWindowIdentity = null;
+        reviewGeneration++;
+        if (registrationLost) { reviewWindowRegistration = null; reviewAttachmentGeneration++; }
+    }
+
+    void finishImageReview(SecureImageReviewOverlay owner) {
+        if (reviewHost != owner) return;
+        invalidateReviewWindow(owner, true);
+        reviewHost = null;
+    }
+
+    private void closeImageReview() {
+        SecureImageReviewOverlay host = reviewHost;
+        if (host != null) host.close();
     }
 
     /** One device request per process, including replacement services and adapters. */
@@ -318,6 +465,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     private void invalidateControlLease() {
+        closeImageReview();
         currentControlLease = null;
         currentControlWindowIdentity = null;
         controlGeneration++;
@@ -760,6 +908,9 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
+        SecureImageReviewOverlay review = reviewHost;
+        if (review != null) review.onAccessibilityEvent(event.getEventType(), event.getWindowId(),
+                event.getEventType() == AccessibilityEvent.TYPE_WINDOWS_CHANGED ? event.getWindowChanges() : 0);
         WindowRegistration registered = controlWindowRegistration;
         if (registered != null && event.getEventType() == AccessibilityEvent.TYPE_WINDOWS_CHANGED
                 && event.getWindowId() == registered.windowId
@@ -779,6 +930,13 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     @Override public void onInterrupt() { stopFromDevice(); }
+
+    @Override public void onLowMemory() { closeImageReview(); super.onLowMemory(); }
+
+    @Override public void onTrimMemory(int level) {
+        if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) closeImageReview();
+        super.onTrimMemory(level);
+    }
 
     @Override public void onConfigurationChanged(Configuration configuration) {
         invalidateControlLease();

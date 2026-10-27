@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -198,6 +199,72 @@ public final class SlowFinalReadInstrumentedTest {
                 screenshots.capture("revoked-lease-unchanged-tree-no-dispatch");
             } finally {
                 device.instrumentation.runOnMainSync(() -> device.service.setOverlayCallbacks(callbacks));
+            }
+        }
+    }
+
+    @Test public void repeatedIdenticalControlPublicationsDuringFinalReadKeepOneApprovedActionValid() throws Exception {
+        try (DeviceHarness device = new DeviceHarness();
+             PerformanceTrace.Session trace = PerformanceTrace.startDiagnostics()) {
+            device.launch("SlowActivity");
+            JsonObject baseline = device.observe();
+            CompletableFuture<AgentAccessibilityService.ControlLease> pending = device.service.acquireControlLease();
+            AgentAccessibilityService.ControlLease controls;
+            try { controls = pending.get(5, TimeUnit.SECONDS); }
+            finally { pending.cancel(false); }
+            AgentAccessibilityService.OwnedControlWindowIdentity owner = device.service.getOwnedControlWindowIdentity();
+            assertNotNull(owner);
+            assertTrue(device.service.isOwnedControlWindowCurrent(owner));
+            long epoch = device.control.getExecutionEpoch();
+            AtomicInteger approvals = new AtomicInteger();
+            try (FinalReadProbe probe = new FinalReadProbe(device, () -> {
+                for (int publication = 0; publication < 3; publication++)
+                    device.service.showOverlay("Integration test", false, "");
+            })) {
+                AndroidDeviceTools tools = AndroidDeviceTools.forTesting(device.service, Collections.singleton(FIXTURE),
+                        Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), true, () -> true,
+                        (description, active, requestEpoch) -> {
+                            assertEquals(epoch, requestEpoch);
+                            assertEquals(1, approvals.incrementAndGet());
+                            Bundle armed = probe.call("arm");
+                            assertTrue(armed.getBoolean("exists"));
+                            assertFalse(armed.getBoolean("claimed"));
+                            return true;
+                        });
+                probe.operation = new FutureTask<>(() -> tools.execute("click", nodeArguments(baseline, "increment"), device.control, epoch));
+                probe.worker.execute(probe.operation);
+                assertTrue("The real final root read did not reach the publication barrier", probe.heartbeat.await(2, TimeUnit.SECONDS));
+                assertTrue(probe.mainThread.get());
+                assertTrue(probe.inFlight.get());
+                Bundle blocked = probe.call("status");
+                assertTrue(blocked.getBoolean("claimed"));
+                assertFalse(blocked.getBoolean("returned"));
+                assertFalse(blocked.getBoolean("released"));
+                assertFalse(blocked.getBoolean("expired"));
+                long latencyMillis = TimeUnit.NANOSECONDS.toMillis(probe.callbackNanos.get() - blocked.getLong("startedNanos"));
+                assertTrue("Final read blocked identical UI publication: " + latencyMillis + " ms", latencyMillis >= 0 && latencyMillis < 500);
+                assertSame(owner, device.service.getOwnedControlWindowIdentity());
+                assertTrue(device.service.isOwnedControlWindowCurrent(owner));
+                assertTrue(device.service.isControlLeaseCurrent(controls));
+                assertEquals(epoch, device.control.getExecutionEpoch());
+                assertFalse(device.control.isPaused());
+                assertFalse(device.control.isCancelled());
+
+                Bundle completed = probe.call("finish");
+                assertTrue(completed.getBoolean("returned"));
+                assertFalse(completed.getBoolean("expired"));
+                JsonObject result = probe.operation.get(5, TimeUnit.SECONDS);
+                assertTrue("A single unchanged approved plan must succeed without replanning: " + result, result.get("ok").getAsBoolean());
+                assertTrue(result.toString(), result.get("dispatchAccepted").getAsBoolean());
+                assertEquals(1, approvals.get());
+                assertEquals(1, device.control.getDispatchAttempts());
+                assertEquals("Count: 1", actualCounter(device));
+                PerformanceTrace.Event finalRead = assertFinalSnapshotWasExercised(trace, completed.getLong("startedNanos"), epoch);
+                assertFalse(finalRead.truncated);
+                assertEquals(baseline.getAsJsonArray("nodes").size(), finalRead.nodeCount);
+                assertEquals(baseline.toString().getBytes(StandardCharsets.UTF_8).length, finalRead.snapshotJsonBytes);
+                assertEquals(0, trace.overwrittenCount());
+                screenshots.capture("identical-control-publications-preserve-single-approved-dispatch");
             }
         }
     }

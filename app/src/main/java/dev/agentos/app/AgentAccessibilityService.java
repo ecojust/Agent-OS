@@ -133,6 +133,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
     private String currentStatus = "";
     private String currentApproval = "";
     private boolean currentPaused;
+    private long displayedCallbackGeneration = -1;
     private boolean stopNotifying;
     private Set<String> watchedPackages = Collections.emptySet();
     private boolean receiverRegistered;
@@ -249,13 +250,22 @@ public final class AgentAccessibilityService extends AccessibilityService {
 
     public void showOverlay(String status, boolean paused, String approval) {
         onMain(() -> {
-            invalidateControlLease();
             if (!isDeviceReady()) { stopFromDevice(); return; }
             try {
+                String nextStatus = status == null ? "正在操作" : status;
+                String nextApproval = approval == null ? "" : approval;
+                // Log-only publications must not relayout the controls or revoke
+                // an in-flight snapshot. Callback changes still require rebinding
+                // the displayed approval, even when all displayed text is equal.
+                if (overlay != null && overlay.isAttachedToWindow() && overlay.isShown()
+                        && callbacks != null && displayedCallbackGeneration == callbackGeneration
+                        && currentStatus.equals(nextStatus) && currentPaused == paused
+                        && currentApproval.equals(nextApproval)) return;
+                invalidateControlLease();
                 String previousApproval = currentApproval;
-                currentStatus = status == null ? "正在操作" : status;
+                currentStatus = nextStatus;
                 currentPaused = paused;
-                currentApproval = approval == null ? "" : approval;
+                currentApproval = nextApproval;
                 ensureOverlay();
                 statusView.setText("Agent · " + currentStatus);
                 pauseButton.setText(paused ? "继续" : "暂停");
@@ -279,6 +289,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
                 OverlayCallbacks shownCallbacks = callbacks;
                 rejectButton.setOnClickListener(view -> { if (shownCallbacks != null) shownCallbacks.onApprove(false); });
                 approveButton.setOnClickListener(view -> { if (shownCallbacks != null) shownCallbacks.onApprove(true); });
+                displayedCallbackGeneration = callbackGeneration;
             } catch (RuntimeException failure) {
                 // A task must not continue without its user-visible stop control.
                 stopFromDevice();
@@ -737,6 +748,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
         currentApproval = "";
         currentStatus = "";
         currentPaused = false;
+        displayedCallbackGeneration = -1;
     }
 
     private void stopFromDevice() {

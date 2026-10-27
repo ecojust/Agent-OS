@@ -76,6 +76,12 @@ public final class AgentController {
     private PendingApproval pending;
     private String status = "准备就绪";
     private String summary = "";
+    // Same task/approval publications keep their callback identity. A log update
+    // must not revoke the service's otherwise unchanged control-window lease.
+    private AgentAccessibilityService.OverlayCallbacks overlayCallbacks;
+    private RunControl overlayCallbackOwner;
+    private long overlayCallbackGeneration = -1;
+    private String overlayCallbackApprovalId = "";
 
     private static final class PendingApproval {
         final String id = UUID.randomUUID().toString();
@@ -184,7 +190,7 @@ public final class AgentController {
             configurationWatch.close();
             throw new IllegalStateException("配置已改变，请重新保存后启动。");
         }
-        service.setOverlayCallbacks(callbacksFor(""));
+        service.setOverlayCallbacks(callbacksFor(session, active, ""));
         try {
             service.showOverlay(status, false, "");
         } catch (RuntimeException error) {
@@ -299,6 +305,7 @@ public final class AgentController {
                     cancelled.getExecutionEpoch(), cancelled.getDispatchAttempts());
             control = null;
             configuration = null;
+            clearOverlayCallbacksLocked();
             ++generation;
             stopGeneration = generation;
             stoppedEpoch = cancelled.getExecutionEpoch();
@@ -402,6 +409,7 @@ public final class AgentController {
         active.cancel();
         control = null;
         configuration = null;
+        clearOverlayCallbacksLocked();
         pending = null;
         ++generation;
         status = "配置已改变，任务已停止";
@@ -423,6 +431,7 @@ public final class AgentController {
             control.cancel();
             control = null;
             configuration = null;
+            clearOverlayCallbacksLocked();
             pending = null;
             switch (result.kind) {
                 case VERIFIED: status = "结果已验证"; break;
@@ -456,12 +465,16 @@ public final class AgentController {
             publicationPending.set(false);
             State state;
             long publishedGeneration;
-            synchronized (lock) { state = getState(); publishedGeneration = generation; }
+            AgentAccessibilityService.OverlayCallbacks publishedCallbacks;
+            synchronized (lock) {
+                state = getState(); publishedGeneration = generation;
+                publishedCallbacks = state.running ? callbacksFor(publishedGeneration, control, state.approvalId) : null;
+            }
             AgentAccessibilityService service = AgentAccessibilityService.getInstance();
             if (service != null) {
                 try {
                     if (state.running) {
-                        service.setOverlayCallbacks(callbacksFor(state.approvalId));
+                        service.setOverlayCallbacks(publishedCallbacks);
                         service.showOverlay(state.status, state.paused, state.approval);
                     } else { service.hideOverlay(); service.setOverlayCallbacks(null); }
                 } catch (RuntimeException error) {
@@ -497,19 +510,53 @@ public final class AgentController {
         publish();
     }
 
-    private AgentAccessibilityService.OverlayCallbacks callbacksFor(String approvalId) {
-        return new AgentAccessibilityService.OverlayCallbacks() {
-            @Override public void onPauseResume() { pauseResume(); }
-            @Override public void onStop() { stop(); }
-            @Override public void onApprove(boolean approved) { approve(approvalId, approved); }
-            @Override public void onDevicePaused(String reason) {
-                synchronized (lock) {
-                    if (control == null || !control.isPaused()) return;
-                    pending = null; status = safeText(reason, 200); appendLogLocked(status); lock.notifyAll();
-                }
-                publish();
+    private AgentAccessibilityService.OverlayCallbacks callbacksFor(long session, RunControl owner, String approvalId) {
+        synchronized (lock) {
+            if (!isCallbackOwnerCurrentLocked(session, owner)) return null;
+            if (overlayCallbacks != null && overlayCallbackOwner == owner
+                    && overlayCallbackGeneration == session && overlayCallbackApprovalId.equals(approvalId)) {
+                return overlayCallbacks;
             }
-        };
+            overlayCallbackOwner = owner;
+            overlayCallbackGeneration = session;
+            overlayCallbackApprovalId = approvalId;
+            overlayCallbacks = new AgentAccessibilityService.OverlayCallbacks() {
+                @Override public void onPauseResume() {
+                    synchronized (lock) {
+                        if (isCallbackOwnerCurrentLocked(session, owner)) pauseResume();
+                    }
+                }
+                @Override public void onStop() {
+                    synchronized (lock) {
+                        if (isCallbackOwnerCurrentLocked(session, owner)) stop();
+                    }
+                }
+                @Override public void onApprove(boolean approved) {
+                    synchronized (lock) {
+                        if (isCallbackOwnerCurrentLocked(session, owner)) approve(approvalId, approved);
+                    }
+                }
+                @Override public void onDevicePaused(String reason) {
+                    synchronized (lock) {
+                        if (!isCallbackOwnerCurrentLocked(session, owner) || !owner.isPaused()) return;
+                        pending = null; status = safeText(reason, 200); appendLogLocked(status); lock.notifyAll();
+                    }
+                    publish();
+                }
+            };
+            return overlayCallbacks;
+        }
+    }
+
+    private boolean isCallbackOwnerCurrentLocked(long session, RunControl owner) {
+        return owner != null && control == owner && generation == session && !owner.isCancelled();
+    }
+
+    private void clearOverlayCallbacksLocked() {
+        overlayCallbacks = null;
+        overlayCallbackOwner = null;
+        overlayCallbackGeneration = -1;
+        overlayCallbackApprovalId = "";
     }
 
     private static String safeText(String value, int limit) {

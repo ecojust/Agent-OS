@@ -184,6 +184,52 @@ public final class OwnedControlWindowInstrumentedTest {
         }
     }
 
+    @Test public void changedPresentationAndCallbacksStillRevokeTheActualControlOwner() throws Exception {
+        try (DeviceHarness device = new DeviceHarness()) {
+            AgentAccessibilityService service = device.service;
+            AgentAccessibilityService.OwnedControlWindowIdentity initial = identity(service);
+            AgentAccessibilityService.ControlLease initialLease = lease(service);
+            device.instrumentation.runOnMainSync(() -> {
+                service.showOverlay("Updated task state", false, "");
+                assertFalse(service.isOwnedControlWindowCurrent(initial));
+                assertFalse(service.isControlLeaseCurrent(initialLease));
+            });
+            AgentAccessibilityService.OwnedControlWindowIdentity statusChanged = identity(service);
+            device.instrumentation.runOnMainSync(() -> {
+                service.showOverlay("Updated task state", true, "");
+                assertFalse(service.isOwnedControlWindowCurrent(statusChanged));
+            });
+            AgentAccessibilityService.OwnedControlWindowIdentity paused = identity(service);
+            AgentAccessibilityService.ControlLease pausedLease = lease(service);
+            device.instrumentation.runOnMainSync(() -> {
+                service.showOverlay("Updated task state", true, "Synthetic approval requires review");
+                assertFalse(service.isOwnedControlWindowCurrent(paused));
+                assertFalse(service.isControlLeaseCurrent(pausedLease));
+            });
+            AgentAccessibilityService.OwnedControlWindowIdentity expanded = identity(service);
+            assertTrue("The actual approval window must change geometry", expanded.copyBounds().height() > paused.copyBounds().height());
+            assertRegistered(device, expanded.windowId, expanded.displayId, expanded.copyBounds());
+            screenshots.capture("changed-approval-and-real-window-geometry-revoke-previous-owner");
+
+            device.instrumentation.runOnMainSync(() -> {
+                service.setOverlayCallbacks(new AgentAccessibilityService.OverlayCallbacks() {
+                    @Override public void onPauseResume() { device.control.pause(); }
+                    @Override public void onStop() { device.control.cancel(); }
+                    @Override public void onApprove(boolean approved) { }
+                });
+                assertFalse(service.isOwnedControlWindowCurrent(expanded));
+                service.showOverlay("Updated task state", true, "Synthetic approval requires review");
+                assertFalse("An identical display cannot revive another callback owner's identity", service.isOwnedControlWindowCurrent(expanded));
+            });
+            AgentAccessibilityService.OwnedControlWindowIdentity replacement = identity(service);
+            assertNotSame(expanded, replacement);
+            assertTrue(service.isOwnedControlWindowCurrent(replacement));
+            assertRegistered(device, replacement.windowId, replacement.displayId, replacement.copyBounds());
+            assertEquals("The synthetic UI changes must not dispatch device actions", 0, device.control.getDispatchAttempts());
+            screenshots.capture("callback-replacement-revokes-owner-even-with-identical-text");
+        }
+    }
+
     private static AgentAccessibilityService.OwnedControlWindowIdentity identity(AgentAccessibilityService service) throws Exception {
         CompletableFuture<AgentAccessibilityService.OwnedControlWindowIdentity> future = service.acquireOwnedControlWindowIdentity();
         try { return future.get(5, TimeUnit.SECONDS); }

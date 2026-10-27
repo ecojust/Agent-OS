@@ -231,22 +231,45 @@ final class SmokeHarness {
     void launchCalculator() throws Exception {
         Intent intent = context.getPackageManager().getLaunchIntentForPackage(CALCULATOR);
         require(intent != null && intent.getComponent() != null && CALCULATOR.equals(intent.getComponent().getPackageName()), "No valid installed calculator launcher");
+        int previousWindow = focusedCalculatorWindowId();
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         context.startActivity(intent);
-        awaitCalculatorPage();
-        automation.waitForIdle(350, 8_000);
-        try (WindowSnapshot ignored = calculatorWindow()) { /* Recheck after entry animation. */ }
+        awaitCalculatorPage(previousWindow);
     }
 
-    private void awaitCalculatorPage() {
+    private int focusedCalculatorWindowId() {
+        List<AccessibilityWindowInfo> windows = automation.getWindows();
+        require(windows != null && windows.size() <= 64, "Pre-launch window inventory is unavailable");
+        int previous = -1;
+        try {
+            for (AccessibilityWindowInfo window : windows) {
+                if (!window.isFocused() || window.getDisplayId() != Display.DEFAULT_DISPLAY) continue;
+                AccessibilityNodeInfo root = window.getRoot();
+                try {
+                    if (root != null && CALCULATOR.contentEquals(root.getPackageName() == null ? "" : root.getPackageName())) {
+                        require(previous == -1, "More than one prior focused calculator window");
+                        previous = window.getId();
+                    }
+                } finally { if (root != null) root.recycle(); }
+            }
+            return previous;
+        } finally { recycle(windows); }
+    }
+
+    private void awaitCalculatorPage(int previousWindow) {
         long deadline = SystemClock.elapsedRealtime() + 10_000;
         String lastRefusal = "No window observation";
+        StableWindow readiness = new StableWindow(previousWindow);
         do {
-            try (WindowSnapshot ignored = calculatorWindow()) { return; }
+            try (WindowSnapshot current = calculatorWindow()) {
+                if (readiness.observe(current.id, current.geometry, SystemClock.elapsedRealtime())) return;
+                lastRefusal = "Waiting for the new calculator window and platform geometry to stabilize";
+            }
             catch (AssertionError unavailable) {
                 lastRefusal = unavailable.getMessage();
-                SystemClock.sleep(100);
+                readiness.reset();
             }
+            SystemClock.sleep(50);
         } while (SystemClock.elapsedRealtime() < deadline);
         throw new AssertionError("Calculator did not become the unique unobscured focused window: " + lastRefusal);
     }
@@ -318,7 +341,8 @@ final class SmokeHarness {
                 require(isContainedInVisibleSystemBar(other.getType(), overlay, display, bars),
                         "Calculator is obscured by an unknown window: " + windowDiagnostic(other, overlay));
             }
-            WindowSnapshot result = new WindowSnapshot(focused.getId(), bounds, root);
+            String geometry = bounds.toShortString() + "/" + display.toShortString() + "/" + bars;
+            WindowSnapshot result = new WindowSnapshot(focused.getId(), bounds, root, geometry);
             root = null;
             return result;
         } finally {
@@ -429,9 +453,27 @@ final class SmokeHarness {
     private static String hex(byte[] bytes) { StringBuilder b = new StringBuilder(); for (byte value : bytes) b.append(String.format(java.util.Locale.ROOT, "%02x", value & 255)); return b.toString(); }
 
     static final class WindowSnapshot implements AutoCloseable {
-        final int id; final Rect bounds; final AccessibilityNodeInfo root;
-        WindowSnapshot(int id, Rect bounds, AccessibilityNodeInfo root) { this.id = id; this.bounds = new Rect(bounds); this.root = root; }
+        final int id; final Rect bounds; final AccessibilityNodeInfo root; final String geometry;
+        WindowSnapshot(int id, Rect bounds, AccessibilityNodeInfo root, String geometry) {
+            this.id = id; this.bounds = new Rect(bounds); this.root = root; this.geometry = geometry;
+        }
         @Override public void close() { root.recycle(); }
+    }
+
+    static final class StableWindow {
+        private final int previous;
+        private int id = -1;
+        private String geometry;
+        private long since;
+        StableWindow(int previous) { this.previous = previous; }
+        boolean observe(int currentId, String currentGeometry, long now) {
+            if (currentId == previous) { reset(); return false; }
+            if (currentId != id || !currentGeometry.equals(geometry)) {
+                id = currentId; geometry = currentGeometry; since = now; return false;
+            }
+            return now - since >= 600;
+        }
+        void reset() { id = -1; geometry = null; since = 0; }
     }
 
     static final class ServiceStateFailure extends AssertionError {

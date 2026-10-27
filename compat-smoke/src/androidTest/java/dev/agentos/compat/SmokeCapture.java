@@ -27,7 +27,9 @@ final class SmokeCapture {
             try (SmokeHarness.WindowSnapshot before = harness.calculatorWindow()) {
                 SmokeHarness.require(before.bounds.width() <= 4096 && before.bounds.height() <= 4096,
                         "Unexpected screenshot geometry");
-                WindowFlags flags = inspectedWindow(harness.shell("dumpsys -t 2 window windows"));
+                // visible-apps includes both DisplayContent focus and full visible
+                // Window attributes; the windows/all subcommands omit focus.
+                WindowFlags flags = inspectedWindow(harness.shell("dumpsys -t 2 window visible-apps"));
                 if (flags.secure) {
                     item.put("status", "blocked").put("reason", "calculator_window_is_secure");
                     return;
@@ -48,7 +50,7 @@ final class SmokeCapture {
                     return;
                 }
                 try (SmokeHarness.WindowSnapshot after = harness.calculatorWindow()) {
-                    WindowFlags current = inspectedWindow(harness.shell("dumpsys -t 2 window windows"));
+                    WindowFlags current = inspectedWindow(harness.shell("dumpsys -t 2 window visible-apps"));
                     if (before.id != after.id || !before.bounds.equals(after.bounds)
                             || current.secure || !flags.identity.equals(current.identity)) {
                         item.put("status", "blocked").put("reason", "window_changed_during_capture");
@@ -91,6 +93,10 @@ final class SmokeCapture {
     }
 
     private static WindowFlags inspectedWindow(String dump) throws CaptureRefused {
+        Matcher currentFocusFields = Pattern.compile("\\bmCurrentFocus=").matcher(dump);
+        int focusFields = 0;
+        while (currentFocusFields.find()) focusFields++;
+        if (focusFields != 1) throw new CaptureRefused("window_manager_focus_is_missing_or_ambiguous");
         Pattern focusPattern = Pattern.compile("mCurrentFocus=Window\\{([0-9a-fA-F]+)\\s+u0\\s+(org\\.fossify\\.math/[^}\\s]+)\\}");
         Matcher focus = focusPattern.matcher(dump);
         if (!focus.find()) throw new CaptureRefused("window_manager_did_not_confirm_calculator_focus");
@@ -133,6 +139,27 @@ final class SmokeCapture {
             throw new CaptureRefused("window_flags_have_unknown_format");
         }
         return new WindowFlags(token + "/" + component + "/" + flags, flags, secure);
+    }
+
+    static void verifyWindowParser() throws Exception {
+        // Parser-only strings, never image evidence. Exercise this on Android ICU.
+        String component = "org.fossify.math/org.fossify.math.activities.MainActivity";
+        String focus = "  mCurrentFocus=Window{abc u0 " + component + "}\n";
+        String windows = "  Window #0 Window{abc u0 " + component + "}:\n    mAttrs={ fl=0x100}\n";
+        String complete = "Display: mDisplayId=0\n" + focus + windows;
+        SmokeHarness.require(!inspectedWindow(complete).secure, "Visible app focus and attributes were not matched");
+        SmokeHarness.require(inspectedWindow(complete.replace("fl=0x100", "fl=0x2100")).secure,
+                "Numeric secure window flag was missed");
+        SmokeHarness.require(inspectedWindow(complete.replace("fl=0x100", "fl=SECURE")).secure,
+                "Named secure window flag was missed");
+        for (String rejected : new String[] {windows, complete + "mCurrentFocus=null\n",
+                complete.replace("Window #0 Window{abc", "Window #0 Window{def"),
+                complete.replace("org.fossify.math.activities.MainActivity", "org.fossify.math.activities.OtherActivity"),
+                complete.replace("fl=0x100", "unknown=0x100")}) {
+            boolean refused = false;
+            try { inspectedWindow(rejected); } catch (CaptureRefused expected) { refused = true; }
+            SmokeHarness.require(refused, "Missing, ambiguous, foreign or uninspectable window was accepted");
+        }
     }
 
     private static boolean hasVisibleCalculatorContent(Bitmap image, Rect bounds) {

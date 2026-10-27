@@ -70,7 +70,7 @@ public final class CalculatorCompatibilityInstrumentedTest {
 
     @Test public void calculatorCoreArithmeticWithAgentBoundAndIdle() throws Exception { exercise("idle"); }
 
-    private static void verifyPlatformParsers() {
+    private static void verifyPlatformParsers() throws Exception {
         // Run on each actual Android API's regex implementation, inside the existing
         // two-case probe; JVM compilation alone does not exercise Android ICU syntax.
         for (String dump : new String[] {"attributes:{id=0}", "User state[attributes:{id=0, currentUser=true}]}"}) {
@@ -114,6 +114,17 @@ public final class CalculatorCompatibilityInstrumentedTest {
         if (!SmokeHarness.isContainedInVisibleSystemBar(system, new Rect(0, 0, 8, 640), display, Insets.of(8, 0, 0, 0))) {
             throw new AssertionError("Platform side bar was rejected");
         }
+        SmokeHarness.StableWindow stability = new SmokeHarness.StableWindow(4);
+        if (stability.observe(4, "old", 0) || stability.observe(4, "old", 1000)) throw new AssertionError("Old launch window was reused");
+        if (stability.observe(5, "new", 1100) || stability.observe(5, "new", 1699)
+                || !stability.observe(5, "new", 1700)) throw new AssertionError("New window stability interval was not enforced");
+        if (stability.observe(5, "resizing", 1800) || stability.observe(5, "resizing", 2300)) {
+            throw new AssertionError("Changing window geometry was accepted too early");
+        }
+        stability.reset();
+        if (stability.observe(5, "resizing", 2400) || stability.observe(5, "resizing", 2999)
+                || !stability.observe(5, "resizing", 3000)) throw new AssertionError("Interrupted window observation kept stale readiness");
+        SmokeCapture.verifyWindowParser();
     }
 
     private void exercise(String state) throws Exception {

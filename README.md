@@ -25,11 +25,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Archive and independently audit all 32 official-app combinations: 26 passed, 6 Notes probe failures. All 32 Notes captures remain blocked; the 32 real PNGs are Calculator only. No broad app or physical-device acceptance.
+**本次更新：** 归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。
 
-**记录时间：** 2026-10-27T12:05:37Z
+**记录时间：** 2026-10-27T12:06:35Z
 
-[最近测试截图与清单](screenshots/third-party-40499117689-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40499117689)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40499116931-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40499116931)。通过、失败及未截图原因见清单。
 
 | 检查点 | 状态 |
 | --- | --- |

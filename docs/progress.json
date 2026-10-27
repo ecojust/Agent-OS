@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T02:12:21Z",
-  "note": "修复第三方应用探针重启时误读旧窗口与截图焦点诊断：等待新窗口和实际几何稳定，只读等待不重试算式操作；保留保护检查并添加解析反例。探针APK、仪器测试编译和lint通过，等待三API复测。",
+  "updated_at": "2026-10-27T02:13:26Z",
+  "note": "第二十二轮Android 11–17模拟器八档各98项，共784项全部通过，零失败/错误/跳过/未记录。776张真实截图、1592个文件逐项核验并归档；核心155项通过。仅代表模拟器执行器验证，真机与完整应用验收待完成。",
   "latest_evidence": {
-    "path": "screenshots/third-party-40436126982-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40436126982"
+    "path": "screenshots/40436233742-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40436233742"
   },
   "checkpoints": [
     {
@@ -62,8 +62,8 @@
     {
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
-      "status": "in_progress",
-      "evidence": "screenshots/40404297768-1/manifest.json",
+      "status": "complete",
+      "evidence": "screenshots/40436233742-1/manifest.json",
       "scope": "Eight x86_64 emulator API baselines with system animations at 1.0 and synthetic fixtures; not physical-device, third-party-app or performance acceptance."
     },
     {

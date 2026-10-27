@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "api": 30,
+  "testClass": "dev.agentos.app.ConfigurationLeaseControllerInstrumentedTest",
+  "testName": "savingConfigurationCancelsAQueuedTaskBeforeTheOldRemoteReadReturns",
+  "assertionResult": "pass",
+  "testResult": "pass",
+  "status": "pass",
+  "startedAt": 1793066778088,
+  "finishedAt": 1793066781526,
+  "captures": [
+    {
+      "stage": "configuration-save-cancelled-real-worker-queue",
+      "capturedAt": 1793066781003,
+      "foregroundPackage": "dev.agentos.fixture",
+      "status": "blocked",
+      "captureError": "capture_unavailable_or_blank_secure_surface_not_evidence"
+    },
+    {
+      "stage": "finished",
+      "capturedAt": 1793066781518,
+      "foregroundPackage": "dev.agentos.fixture",
+      "status": "blocked",
+      "captureError": "capture_unavailable_or_blank_secure_surface_not_evidence"
+    }
+  ]
+}

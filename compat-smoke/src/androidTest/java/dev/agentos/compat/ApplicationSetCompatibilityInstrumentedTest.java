@@ -193,48 +193,63 @@ public final class ApplicationSetCompatibilityInstrumentedTest {
             } else {
                 phase = "launch_notes";
                 actionObservations.put(harness.verifyServiceState(state, "before_launch"));
+                harness.notesDiagnosticStage(SmokeHarness.NotesStage.LAUNCH);
                 harness.launchTarget();
+                harness.notesDiagnosticStage(SmokeHarness.NotesStage.INITIAL_EDITOR);
                 harness.awaitNotesResource("text_note_view");
                 actionObservations.put(harness.verifyServiceState(state, "after_launch"));
                 passed(steps, phase, "PackageManager resolved the installed launcher alias and a real notes editor became visible");
+                harness.notesDiagnosticStage(SmokeHarness.NotesStage.INITIAL_CAPTURE);
                 SmokeCapture.capture(harness, directory, capturePrefix, "before", captures);
 
                 phase = "create_note";
                 actionObservations.put(harness.verifyServiceState(state, "before_create_note"));
+                harness.notesDiagnosticStage(SmokeHarness.NotesStage.OPEN_CREATE_DIALOG);
                 harness.notesCreateDialog();
+                harness.notesDiagnosticStage(SmokeHarness.NotesStage.SET_TITLE);
                 harness.notesSetText("locked_note_title", noteTitle(state));
+                harness.notesDiagnosticStage(SmokeHarness.NotesStage.SELECT_TEXT_TYPE);
                 harness.notesClick("type_text_note");
+                harness.notesDiagnosticStage(SmokeHarness.NotesStage.CONFIRM_CREATE);
                 harness.notesClick("android:id/button1");
+                harness.notesDiagnosticStage(SmokeHarness.NotesStage.CREATED_EDITOR);
                 harness.awaitNotesResource("text_note_view");
+                harness.notesDiagnosticStage(SmokeHarness.NotesStage.CREATED_TITLE);
                 harness.notesAssertTitle(noteTitle(state));
                 actionObservations.put(harness.verifyServiceState(state, "after_create_note"));
                 passed(steps, phase, "Created the state's uniquely titled plain-text note through the real native menu and dialog");
 
                 phase = "enter_note_body";
                 actionObservations.put(harness.verifyServiceState(state, "before_enter_note_body"));
+                harness.notesDiagnosticStage(SmokeHarness.NotesStage.SET_BODY);
                 harness.notesSetText("text_note_view", noteBody(state));
                 actionObservations.put(harness.verifyServiceState(state, "after_enter_note_body"));
                 passed(steps, phase, "The visible unprotected editor independently reflects the exact synthetic input");
 
                 phase = "save_note_by_background";
                 actionObservations.put(harness.verifyServiceState(state, "before_save_note"));
+                harness.notesDiagnosticStage(SmokeHarness.NotesStage.SAVE_BACKGROUND);
                 harness.notesBackgroundForSave();
                 actionObservations.put(harness.verifyServiceState(state, "after_save_note"));
                 passed(steps, phase, "Normal HOME navigation invokes the pinned app's default onPause autosave; no app data was written by the probe");
 
                 phase = "reopen_notes";
                 actionObservations.put(harness.verifyServiceState(state, "before_reopen"));
+                harness.notesDiagnosticStage(SmokeHarness.NotesStage.REOPEN);
                 harness.notesRestartInFreshProcess();
+                harness.notesDiagnosticStage(SmokeHarness.NotesStage.REOPENED_EDITOR);
                 harness.awaitNotesResource("text_note_view");
                 entry.getJSONObject("result").put("reopenedInFreshProcess", true);
                 actionObservations.put(harness.verifyServiceState(state, "after_reopen"));
                 passed(steps, phase, "The old notes process stopped and the installed launcher opened a different real process");
 
                 phase = "notes_persisted_result";
+                harness.notesDiagnosticStage(SmokeHarness.NotesStage.VERIFY_PERSISTED);
                 String actual = harness.notesAwaitText("text_note_view", noteBody(state));
                 String title = harness.notesAssertTitle(noteTitle(state));
                 entry.getJSONObject("result").put("actual", actual).put("titleActual", title).put("persistenceVerified", true);
                 passed(steps, phase, "After a fresh process start the visible editor and note title exactly match this state's synthetic note");
+                harness.notesDiagnosticStage(SmokeHarness.NotesStage.RESULT_CAPTURE);
                 SmokeCapture.capture(harness, directory, capturePrefix, "result", captures);
             }
 

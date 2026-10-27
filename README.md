@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Add progress walkthrough recording requirements and source-bound README video links. Three metadata checks pass; the first actual recording is pending, and compatibility checkpoints remain unchanged.
+**本次更新：** Add bounded Notes failure-stage and focused-window diagnostics without replaying writes or relaxing foreign-window rejection. Compatibility test APK builds; the last actual app probe remains 31/32, with one unresolved API30 failure.
 
-**记录时间：** 2026-10-27T13:50:40Z
+**记录时间：** 2026-10-27T13:53:35Z
 
 [最近测试截图与清单](screenshots/40512239862-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40512239862)。通过、失败及未截图原因见清单。
 

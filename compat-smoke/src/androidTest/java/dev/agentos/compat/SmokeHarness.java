@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.pm.Signature;
 import android.graphics.Insets;
 import android.graphics.Rect;
@@ -58,6 +59,28 @@ final class SmokeHarness {
     private String kernelQemu = "";
     private String bootQemu = "";
     private boolean dedicated;
+    enum NotesStage {
+        UNSET, LAUNCH, INITIAL_EDITOR, INITIAL_CAPTURE, OPEN_CREATE_DIALOG,
+        SET_TITLE, SELECT_TEXT_TYPE, CONFIRM_CREATE, CREATED_EDITOR, CREATED_TITLE,
+        SET_BODY, SAVE_BACKGROUND, REOPEN, REOPENED_EDITOR, VERIFY_PERSISTED, RESULT_CAPTURE
+    }
+    private NotesStage notesStage = NotesStage.UNSET;
+    private String lastNotesAction = "NONE";
+    private String lastNotesActionResult = "NOT_ATTEMPTED";
+    private int notesActionAttempts;
+
+    void notesDiagnosticStage(NotesStage stage) { notesStage = stage; }
+
+    private void notesActionAttempt(String action) {
+        lastNotesAction = action;
+        lastNotesActionResult = "SUBMISSION_UNKNOWN";
+        notesActionAttempts = Math.min(64, notesActionAttempts + 1);
+    }
+
+    private boolean notesActionResult(boolean accepted) {
+        lastNotesActionResult = accepted ? "ACCEPTED" : "REJECTED";
+        return accepted;
+    }
 
     SmokeHarness(Instrumentation instrumentation, Bundle arguments) {
         this(instrumentation, arguments, CALCULATOR_TARGET);
@@ -362,9 +385,15 @@ final class SmokeHarness {
                             + " display=" + focused.getDisplayId());
             root = focused.getRoot();
             if (root == null && target == NOTES_TARGET) throw new NotesObservationPending("application_root_not_published");
-            if (root != null && target == NOTES_TARGET && (root.getPackageName() == null || root.getPackageName().length() == 0))
+            CharSequence observedPackage = root == null ? null : root.getPackageName();
+            if (root != null && target == NOTES_TARGET && (observedPackage == null || observedPackage.length() == 0))
                 throw new NotesObservationPending("application_root_package_not_published");
-            require(root != null && target.packageName.contentEquals(root.getPackageName() == null ? "" : root.getPackageName()), "Focused package is not the verified frozen application");
+            if (root == null || !target.packageName.contentEquals(observedPackage == null ? "" : observedPackage)) {
+                // Preserve immediate refusal. These bounded diagnostics never
+                // authorize a foreign root or turn it into a readiness retry.
+                throw new AssertionError("Focused package is not the verified frozen application"
+                        + (target == NOTES_TARGET ? focusedPackageDiagnostic(focused, root, observedPackage) : ""));
+            }
             Rect bounds = new Rect(); focused.getBoundsInScreen(bounds);
             // The package has already been checked above. Empty geometry grants
             // no action; only reobserve this pending Notes publication.
@@ -401,6 +430,47 @@ final class SmokeHarness {
         } finally {
             if (root != null) root.recycle();
             recycle(windows);
+        }
+    }
+
+    /** Metadata from this rejected read only; never record package names or UI text. */
+    private String focusedPackageDiagnostic(AccessibilityWindowInfo window,
+            AccessibilityNodeInfo root, CharSequence observedPackage) {
+        Rect bounds = new Rect(); window.getBoundsInScreen(bounds);
+        int rootWindowId = root == null ? -1 : root.getWindowId();
+        String metadata = " windowId=" + window.getId() + " rootWindowId=" + rootWindowId
+                + " type=" + window.getType() + " display=" + window.getDisplayId()
+                + " layer=" + window.getLayer() + " focused=" + window.isFocused()
+                + " active=" + window.isActive() + " bounds=" + bounds.toShortString();
+        return "; packageClass=" + focusedPackageClass(observedPackage) + metadata
+                + " stage=" + notesStage + " lastAction=" + lastNotesAction
+                + " actionResult=" + lastNotesActionResult + " actionAttempts=" + notesActionAttempts;
+    }
+
+    private String focusedPackageClass(CharSequence observedPackage) {
+        if (observedPackage == null || observedPackage.length() == 0) return "EMPTY";
+        if (target.packageName.contentEquals(observedPackage)) return "EXPECTED";
+        try {
+            ServiceInfo ime = configuredSystemInputMethod();
+            if (ime != null && ime.packageName.contentEquals(observedPackage)) return "VERIFIED_DEFAULT_IME";
+            Intent homeIntent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
+            PackageManager packages = context.getPackageManager();
+            ResolveInfo resolvedHome = packages.resolveActivity(homeIntent, PackageManager.MATCH_DEFAULT_ONLY);
+            List<ResolveInfo> homes = packages.queryIntentActivities(homeIntent, PackageManager.MATCH_DEFAULT_ONLY);
+            ComponentName home = resolvedHome == null || resolvedHome.activityInfo == null ? null
+                    : new ComponentName(resolvedHome.activityInfo.packageName, resolvedHome.activityInfo.name);
+            if (home != null && homes != null && homes.size() <= 16 && home.getPackageName().contentEquals(observedPackage)) {
+                for (ResolveInfo candidate : homes) {
+                    if (candidate != null && candidate.activityInfo != null
+                            && home.equals(new ComponentName(candidate.activityInfo.packageName, candidate.activityInfo.name))) {
+                        return "RESOLVED_HOME";
+                    }
+                }
+            }
+            return "OTHER_NONEMPTY";
+        } catch (RuntimeException unavailable) {
+            // Diagnostics may be unavailable; the original refusal still wins.
+            return "IDENTITY_UNAVAILABLE";
         }
     }
 
@@ -512,8 +582,11 @@ final class SmokeHarness {
         require(dedicated && target == NOTES_TARGET && (key == KeyEvent.KEYCODE_BACK || key == KeyEvent.KEYCODE_HOME),
                 "Unexpected notes navigation key");
         long now = SystemClock.uptimeMillis();
-        require(automation.injectInputEvent(new KeyEvent(now, now, KeyEvent.ACTION_DOWN, key, 0), true), "Key down was rejected");
-        require(automation.injectInputEvent(new KeyEvent(now, SystemClock.uptimeMillis(), KeyEvent.ACTION_UP, key, 0), true), "Key up was rejected");
+        notesActionAttempt(key == KeyEvent.KEYCODE_BACK ? "KEY_BACK" : "KEY_HOME");
+        boolean down = automation.injectInputEvent(new KeyEvent(now, now, KeyEvent.ACTION_DOWN, key, 0), true);
+        if (!down) notesActionResult(false);
+        require(down, "Key down was rejected");
+        require(notesActionResult(automation.injectInputEvent(new KeyEvent(now, SystemClock.uptimeMillis(), KeyEvent.ACTION_UP, key, 0), true)), "Key up was rejected");
     }
 
     void notesCreateDialog() throws Exception {
@@ -529,7 +602,10 @@ final class SmokeHarness {
             wait.requireTime();
             require(ready.node.isClickable(), "Notes resource is not clickable");
             // The actual action is outside all observation retry loops.
-            require(ready.node.performAction(AccessibilityNodeInfo.ACTION_CLICK), "Notes resource rejected its click");
+            notesActionAttempt("new_note".equals(resource) ? "CLICK_NEW_NOTE"
+                    : "type_text_note".equals(resource) ? "CLICK_TEXT_TYPE"
+                    : "android:id/button1".equals(resource) ? "CLICK_CONFIRM" : "CLICK_OTHER");
+            require(notesActionResult(ready.node.performAction(AccessibilityNodeInfo.ACTION_CLICK)), "Notes resource rejected its click");
         }
         automation.waitForIdle(150, 5_000);
     }
@@ -542,7 +618,8 @@ final class SmokeHarness {
             require(ready.node.isEditable() && !ready.node.isPassword(), "Notes resource is not an unprotected editable field");
             Bundle data = new Bundle(); data.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text);
             wait.requireTime();
-            require(ready.node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, data), "Notes text action was rejected");
+            notesActionAttempt("locked_note_title".equals(resource) ? "SET_TITLE" : "SET_BODY");
+            require(notesActionResult(ready.node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, data)), "Notes text action was rejected");
         }
         // Verification shares the original deadline and one BACK allowance. It
         // may use that allowance if unused; it never resends the text action.

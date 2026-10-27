@@ -63,7 +63,7 @@ jobs:
       fail-fast: false
       max-parallel: 3
       matrix:
-        api: ['30', '35', '37.0']
+        api: ['30', '31', '32', '33', '34', '35', '36', '37.0']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -71,13 +71,15 @@ jobs:
           distribution: temurin
           java-version: '17'
       - name: Initialize a complete unverified result
-        run: python3 scripts/third_party_smoke.py prepare --api '${{ matrix.api }}' --output "$RUNNER_TEMP/third-party-evidence/api-${{ matrix.api }}"
+        run: python3 scripts/third_party_smoke_set.py prepare --api '${{ matrix.api }}' --output "$RUNNER_TEMP/third-party-evidence/api-${{ matrix.api }}"
       - uses: actions/download-artifact@v4
         with:
           name: third-party-probe-apks
           path: ${{ runner.temp }}/third-party-apks
-      - name: Fetch the frozen official application
-        run: python3 scripts/third_party_smoke.py download --output "$RUNNER_TEMP/calculator-1.4.0.apk"
+      - name: Fetch the two frozen official releases
+        run: |
+          python3 scripts/third_party_smoke_set.py download --app-id calculator-1.4.0 --output "$RUNNER_TEMP/calculator-1.4.0.apk"
+          python3 scripts/third_party_smoke_set.py download --app-id notes-1.7.0 --output "$RUNNER_TEMP/notes-1.7.0.apk"
       - name: Prepare Android SDK
         run: |
           sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
@@ -115,16 +117,16 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: |
             python3 scripts/configure_emulator_phone.py --avd-name agent-os-third-party --check
-            python3 scripts/third_party_smoke.py run --api '${{ matrix.api }}' --output "$RUNNER_TEMP/third-party-evidence/api-${{ matrix.api }}" --sdk-root "$ANDROID_HOME" --calculator-apk "$RUNNER_TEMP/calculator-1.4.0.apk" --agent-apk "$RUNNER_TEMP/third-party-apks/app/build/outputs/apk/debug/app-debug.apk" --probe-apk "$RUNNER_TEMP/third-party-apks/compat-smoke/build/outputs/apk/debug/compat-smoke-debug.apk" --test-apk "$RUNNER_TEMP/third-party-apks/compat-smoke/build/outputs/apk/androidTest/debug/compat-smoke-debug-androidTest.apk"
+            python3 scripts/third_party_smoke_set.py run --api '${{ matrix.api }}' --output "$RUNNER_TEMP/third-party-evidence/api-${{ matrix.api }}" --sdk-root "$ANDROID_HOME" --calculator-apk "$RUNNER_TEMP/calculator-1.4.0.apk" --notes-apk "$RUNNER_TEMP/notes-1.7.0.apk" --agent-apk "$RUNNER_TEMP/third-party-apks/app/build/outputs/apk/debug/app-debug.apk" --probe-apk "$RUNNER_TEMP/third-party-apks/compat-smoke/build/outputs/apk/debug/compat-smoke-debug.apk" --test-apk "$RUNNER_TEMP/third-party-apks/compat-smoke/build/outputs/apk/androidTest/debug/compat-smoke-debug-androidTest.apk"
       - name: Preserve failed and incomplete outcomes
         if: always()
         env:
           EMULATOR_OUTCOME: ${{ steps.instrumentation.outcome }}
-        run: python3 scripts/third_party_smoke.py finalize --api '${{ matrix.api }}' --output "$RUNNER_TEMP/third-party-evidence/api-${{ matrix.api }}" --outcome "${EMULATOR_OUTCOME:-unknown}"
+        run: python3 scripts/third_party_smoke_set.py finalize --api '${{ matrix.api }}' --output "$RUNNER_TEMP/third-party-evidence/api-${{ matrix.api }}" --outcome "${EMULATOR_OUTCOME:-unknown}"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: third-party-smoke-api-${{ matrix.api }}-attempt-${{ github.run_attempt }}
+          name: third-party-smoke-v2-api-${{ matrix.api }}-attempt-${{ github.run_attempt }}
           path: ${{ runner.temp }}/third-party-evidence/api-${{ matrix.api }}/
           if-no-files-found: error
           retention-days: 30

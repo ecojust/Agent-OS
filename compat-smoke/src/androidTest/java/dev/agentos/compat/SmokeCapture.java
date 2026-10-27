@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Captures only the verified external calculator on the dedicated synthetic device. */
+/** Captures only the verified frozen external application on the dedicated synthetic device. */
 final class SmokeCapture {
     private SmokeCapture() { }
 
@@ -23,15 +23,15 @@ final class SmokeCapture {
                 .put("secureFlagsCleared", false);
         Bitmap bitmap = null;
         try {
-            harness.verifyCalculatorIdentity();
-            try (SmokeHarness.WindowSnapshot before = harness.calculatorWindow()) {
+            harness.verifyTargetIdentity();
+            try (SmokeHarness.WindowSnapshot before = harness.appWindow(false)) {
                 SmokeHarness.require(before.bounds.width() <= 4096 && before.bounds.height() <= 4096,
                         "Unexpected screenshot geometry");
                 // visible-apps includes both DisplayContent focus and full visible
                 // Window attributes; the windows/all subcommands omit focus.
-                WindowFlags flags = inspectedWindow(harness.shell("dumpsys -t 2 window visible-apps"));
+                WindowFlags flags = inspectedWindow(harness.shell("dumpsys -t 2 window visible-apps"), harness.target);
                 if (flags.secure) {
-                    item.put("status", "blocked").put("reason", "calculator_window_is_secure");
+                    item.put("status", "blocked").put("reason", "application_window_is_secure");
                     return;
                 }
                 bitmap = harness.automation.takeScreenshot();
@@ -49,16 +49,16 @@ final class SmokeCapture {
                     item.put("status", "blocked").put("reason", "unexpected_screenshot_dimensions");
                     return;
                 }
-                try (SmokeHarness.WindowSnapshot after = harness.calculatorWindow()) {
-                    WindowFlags current = inspectedWindow(harness.shell("dumpsys -t 2 window visible-apps"));
+                try (SmokeHarness.WindowSnapshot after = harness.appWindow(false)) {
+                    WindowFlags current = inspectedWindow(harness.shell("dumpsys -t 2 window visible-apps"), harness.target);
                     if (before.id != after.id || !before.bounds.equals(after.bounds)
                             || current.secure || !flags.identity.equals(current.identity)) {
                         item.put("status", "blocked").put("reason", "window_changed_during_capture");
                         return;
                     }
-                    harness.verifyCalculatorIdentity();
+                    harness.verifyTargetIdentity();
                     if (!hasVisibleCalculatorContent(bitmap, before.bounds)) {
-                        item.put("status", "blocked").put("reason", "calculator_surface_is_blank_or_protected");
+                        item.put("status", "blocked").put("reason", "application_surface_is_blank_or_protected");
                         return;
                     }
                 }
@@ -93,19 +93,24 @@ final class SmokeCapture {
     }
 
     private static WindowFlags inspectedWindow(String dump) throws CaptureRefused {
+        return inspectedWindow(dump, SmokeHarness.CALCULATOR_TARGET);
+    }
+
+    private static WindowFlags inspectedWindow(String dump, SmokeHarness.Target app) throws CaptureRefused {
+        SmokeHarness.require(app == SmokeHarness.CALCULATOR_TARGET || app == SmokeHarness.NOTES_TARGET, "Unknown capture target");
         Matcher currentFocusFields = Pattern.compile("\\bmCurrentFocus=").matcher(dump);
         int focusFields = 0;
         while (currentFocusFields.find()) focusFields++;
         if (focusFields != 1) throw new CaptureRefused("window_manager_focus_is_missing_or_ambiguous");
-        Pattern focusPattern = Pattern.compile("mCurrentFocus=Window\\{([0-9a-fA-F]+)\\s+u0\\s+(org\\.fossify\\.math/[^}\\s]+)\\}");
+        Pattern focusPattern = Pattern.compile("mCurrentFocus=Window\\{([0-9a-fA-F]+)\\s+u0\\s+(" + Pattern.quote(app.packageName) + "/[^}\\s]+)\\}");
         Matcher focus = focusPattern.matcher(dump);
-        if (!focus.find()) throw new CaptureRefused("window_manager_did_not_confirm_calculator_focus");
+        if (!focus.find()) throw new CaptureRefused("window_manager_did_not_confirm_frozen_application_focus");
         String token = focus.group(1);
         String component = focus.group(2);
         if (focus.find()) throw new CaptureRefused("window_manager_focus_is_ambiguous");
-        if (!component.equals("org.fossify.math/org.fossify.math.activities.MainActivity")
-                && !component.equals("org.fossify.math/.activities.MainActivity")) {
-            throw new CaptureRefused("focused_activity_is_not_the_frozen_calculator_page");
+        if (!component.equals(app.packageName + "/" + app.packageName + ".activities.MainActivity")
+                && !component.equals(app.packageName + "/.activities.MainActivity")) {
+            throw new CaptureRefused("focused_activity_is_not_the_frozen_application_page");
         }
         Pattern header = Pattern.compile("(?m)^\\s*Window #\\d+ Window\\{" + Pattern.quote(token)
                 + "\\s+u0\\s+" + Pattern.quote(component) + "\\}:");
@@ -152,6 +157,11 @@ final class SmokeCapture {
                 "Numeric secure window flag was missed");
         SmokeHarness.require(inspectedWindow(complete.replace("fl=0x100", "fl=SECURE")).secure,
                 "Named secure window flag was missed");
+        String notes = complete.replace("org.fossify.math", "org.fossify.notes");
+        SmokeHarness.require(!inspectedWindow(notes, SmokeHarness.NOTES_TARGET).secure, "Pinned notes page was not matched");
+        boolean crossPackageRefused = false;
+        try { inspectedWindow(notes, SmokeHarness.CALCULATOR_TARGET); } catch (CaptureRefused expected) { crossPackageRefused = true; }
+        SmokeHarness.require(crossPackageRefused, "Calculator capture accepted the notes package");
         for (String rejected : new String[] {windows, complete + "mCurrentFocus=null\n",
                 complete.replace("Window #0 Window{abc", "Window #0 Window{def"),
                 complete.replace("org.fossify.math.activities.MainActivity", "org.fossify.math.activities.OtherActivity"),

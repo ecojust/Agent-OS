@@ -18,6 +18,11 @@ import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.view.Display;
+import android.view.KeyEvent;
+import android.view.inputmethod.InputMethodInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.ServiceInfo;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
@@ -43,6 +48,10 @@ final class SmokeHarness {
     static final String APK_SHA256 = "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed";
     static final String CERTIFICATE_SHA256 = "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292";
     private static final Pattern SERVICE_RECORD = Pattern.compile("ServiceRecord\\{[0-9a-fA-F]+ u0 dev\\.agentos\\.app/(?:\\.AgentAccessibilityService|dev\\.agentos\\.app\\.AgentAccessibilityService)(?: c:[A-Za-z][A-Za-z0-9_.]*)?\\}");
+    static final Target CALCULATOR_TARGET = new Target("calculator-1.4.0", CALCULATOR, "1.4.0", 10, APK_SHA256);
+    static final Target NOTES_TARGET = new Target("notes-1.7.0", "org.fossify.notes", "1.7.0", 13,
+            "5a56e0e39cc488e1f3b947d3801006d3b7450ec73c67f03195c64c5fd3b6bced");
+    final Target target;
     private final Context context;
     private final Bundle arguments;
     final UiAutomation automation;
@@ -51,6 +60,12 @@ final class SmokeHarness {
     private boolean dedicated;
 
     SmokeHarness(Instrumentation instrumentation, Bundle arguments) {
+        this(instrumentation, arguments, CALCULATOR_TARGET);
+    }
+
+    SmokeHarness(Instrumentation instrumentation, Bundle arguments, Target target) {
+        require(target == CALCULATOR_TARGET || target == NOTES_TARGET, "Unknown frozen application");
+        this.target = target;
         context = instrumentation.getTargetContext();
         this.arguments = new Bundle(arguments);
         automation = instrumentation.getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
@@ -60,13 +75,16 @@ final class SmokeHarness {
     }
 
     static void validateArguments(Bundle args) {
-        require("agent-os-third-party-smoke-v1".equals(args.getString("syntheticTestMarker")), "Dedicated smoke test marker is required");
-        require("agent-os-third-party-fresh-install-v1".equals(args.getString("freshInstallMarker")), "Fresh isolated installation marker is required");
+        boolean versionTwo = "agent-os-third-party-smoke-v2".equals(args.getString("syntheticTestMarker"));
+        require(versionTwo || "agent-os-third-party-smoke-v1".equals(args.getString("syntheticTestMarker")), "Dedicated smoke test marker is required");
+        require((versionTwo ? "agent-os-third-party-fresh-install-v2" : "agent-os-third-party-fresh-install-v1")
+                .equals(args.getString("freshInstallMarker")), "Fresh isolated installation marker is required");
+        if (versionTwo) require("calculator-1.4.0-notes-1.7.0-v2".equals(args.getString("sampleId")), "Unknown frozen application set");
         require(matches(args.getString("deviceSerial"), "emulator-[0-9]{1,6}"), "An emulator transport serial is required");
         require(matches(args.getString("sourceSha"), "[0-9a-f]{40}"), "A source SHA is required");
         require(matches(args.getString("runId"), "[1-9][0-9]{0,19}"), "A CI run ID is required");
         require(matches(args.getString("runAttempt"), "[1-9][0-9]{0,5}"), "A CI attempt is required");
-        require(matches(args.getString("expectedApi"), "30|35|37"), "Only the frozen smoke API samples are allowed");
+        require(matches(args.getString("expectedApi"), versionTwo ? "30|31|32|33|34|35|36|37" : "30|35|37"), "Only the frozen smoke API samples are allowed");
     }
 
     void requireDedicatedEmulator() throws Exception {
@@ -95,19 +113,24 @@ final class SmokeHarness {
     }
 
     JSONObject verifyCalculatorIdentity() throws Exception {
+        require(target == CALCULATOR_TARGET, "Calculator verifier cannot accept another application");
+        return verifyTargetIdentity();
+    }
+
+    JSONObject verifyTargetIdentity() throws Exception {
         require(dedicated, "Emulator guard has not passed");
-        PackageInfo info = context.getPackageManager().getPackageInfo(CALCULATOR, PackageManager.GET_SIGNING_CERTIFICATES);
-        require(CALCULATOR.equals(info.packageName), "Unexpected installed package");
-        require("1.4.0".equals(info.versionName) && info.getLongVersionCode() == 10, "Installed calculator version differs from frozen release");
+        PackageInfo info = context.getPackageManager().getPackageInfo(target.packageName, PackageManager.GET_SIGNING_CERTIFICATES);
+        require(target.packageName.equals(info.packageName), "Unexpected installed package");
+        require(target.versionName.equals(info.versionName) && info.getLongVersionCode() == target.versionCode, "Installed application version differs from frozen release");
         require(info.applicationInfo != null && info.applicationInfo.minSdkVersion == 26
-                && info.applicationInfo.targetSdkVersion == 36, "Installed calculator SDK identity differs");
+                && info.applicationInfo.targetSdkVersion == 36, "Installed application SDK identity differs");
         require(info.signingInfo != null && !info.signingInfo.hasMultipleSigners(), "Unexpected installed signing identity");
         Signature[] signers = info.signingInfo.getApkContentsSigners();
-        require(signers.length == 1 && CERTIFICATE_SHA256.equals(sha256(signers[0].toByteArray())), "Installed calculator certificate differs");
+        require(signers.length == 1 && CERTIFICATE_SHA256.equals(sha256(signers[0].toByteArray())), "Installed application certificate differs");
         require(info.splitNames == null || info.splitNames.length == 0, "Unexpected split package");
         String apkHash;
         try (InputStream input = new FileInputStream(info.applicationInfo.sourceDir)) { apkHash = digest(input, 12 * 1024 * 1024); }
-        require(APK_SHA256.equals(apkHash), "Installed calculator APK bytes differ from the frozen official release");
+        require(target.apkSha256.equals(apkHash), "Installed application APK bytes differ from the frozen official release");
         return new JSONObject().put("package", info.packageName).put("versionName", info.versionName)
                 .put("versionCode", Long.toString(info.getLongVersionCode())).put("certificateSha256", CERTIFICATE_SHA256)
                 .put("apkSha256", apkHash).put("minSdk", info.applicationInfo.minSdkVersion)
@@ -229,15 +252,20 @@ final class SmokeHarness {
     }
 
     void launchCalculator() throws Exception {
-        Intent intent = context.getPackageManager().getLaunchIntentForPackage(CALCULATOR);
-        require(intent != null && intent.getComponent() != null && CALCULATOR.equals(intent.getComponent().getPackageName()), "No valid installed calculator launcher");
-        int previousWindow = focusedCalculatorWindowId();
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        context.startActivity(intent);
-        awaitCalculatorPage(previousWindow);
+        require(target == CALCULATOR_TARGET, "Application launcher cannot select another application");
+        launchTarget();
     }
 
-    private int focusedCalculatorWindowId() {
+    void launchTarget() throws Exception {
+        Intent intent = context.getPackageManager().getLaunchIntentForPackage(target.packageName);
+        require(intent != null && intent.getComponent() != null && target.packageName.equals(intent.getComponent().getPackageName()), "No valid installed application launcher");
+        int previousWindow = focusedTargetWindowId();
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        context.startActivity(intent);
+        awaitTargetPage(previousWindow);
+    }
+
+    private int focusedTargetWindowId() {
         List<AccessibilityWindowInfo> windows = automation.getWindows();
         require(windows != null && windows.size() <= 64, "Pre-launch window inventory is unavailable");
         int previous = -1;
@@ -246,8 +274,8 @@ final class SmokeHarness {
                 if (!window.isFocused() || window.getDisplayId() != Display.DEFAULT_DISPLAY) continue;
                 AccessibilityNodeInfo root = window.getRoot();
                 try {
-                    if (root != null && CALCULATOR.contentEquals(root.getPackageName() == null ? "" : root.getPackageName())) {
-                        require(previous == -1, "More than one prior focused calculator window");
+                    if (root != null && target.packageName.contentEquals(root.getPackageName() == null ? "" : root.getPackageName())) {
+                        require(previous == -1, "More than one prior focused application window");
                         previous = window.getId();
                     }
                 } finally { if (root != null) root.recycle(); }
@@ -256,14 +284,14 @@ final class SmokeHarness {
         } finally { recycle(windows); }
     }
 
-    private void awaitCalculatorPage(int previousWindow) {
+    private void awaitTargetPage(int previousWindow) {
         long deadline = SystemClock.elapsedRealtime() + 10_000;
         String lastRefusal = "No window observation";
         StableWindow readiness = new StableWindow(previousWindow);
         do {
-            try (WindowSnapshot current = calculatorWindow()) {
+            try (WindowSnapshot current = appWindow(target == NOTES_TARGET)) {
                 if (readiness.observe(current.id, current.geometry, SystemClock.elapsedRealtime())) return;
-                lastRefusal = "Waiting for the new calculator window and platform geometry to stabilize";
+                lastRefusal = "Waiting for the new application window and platform geometry to stabilize";
             }
             catch (AssertionError unavailable) {
                 lastRefusal = unavailable.getMessage();
@@ -271,7 +299,7 @@ final class SmokeHarness {
             }
             SystemClock.sleep(50);
         } while (SystemClock.elapsedRealtime() < deadline);
-        throw new AssertionError("Calculator did not become the unique unobscured focused window: " + lastRefusal);
+        throw new AssertionError("Application did not become the unique unobscured focused window: " + lastRefusal);
     }
 
     void perform(String id, int action) throws Exception {
@@ -311,6 +339,12 @@ final class SmokeHarness {
     }
 
     WindowSnapshot calculatorWindow() {
+        require(target == CALCULATOR_TARGET, "Calculator window reader cannot select another application");
+        return appWindow(false);
+    }
+
+    WindowSnapshot appWindow(boolean allowInputMethod) {
+        require(!allowInputMethod || target == NOTES_TARGET, "Only the notes editing probe may inspect an IME");
         List<AccessibilityWindowInfo> windows = automation.getWindows();
         require(windows != null && windows.size() <= 64, "Window inventory is unavailable or truncated");
         AccessibilityWindowInfo focused = null;
@@ -324,31 +358,211 @@ final class SmokeHarness {
             require(focused != null && focused.getDisplayId() == Display.DEFAULT_DISPLAY
                     && focused.getType() == AccessibilityWindowInfo.TYPE_APPLICATION, "Focused window is not the default-display application");
             root = focused.getRoot();
-            require(root != null && CALCULATOR.contentEquals(root.getPackageName() == null ? "" : root.getPackageName()), "Focused package is not the verified calculator");
+            require(root != null && target.packageName.contentEquals(root.getPackageName() == null ? "" : root.getPackageName()), "Focused package is not the verified frozen application");
             Rect bounds = new Rect(); focused.getBoundsInScreen(bounds);
-            require(!bounds.isEmpty(), "Calculator window has no bounds");
+            require(!bounds.isEmpty(), "Application window has no bounds");
             WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
             require(manager != null, "Platform window metrics are unavailable");
             WindowMetrics metrics = manager.getCurrentWindowMetrics();
             Rect display = metrics.getBounds();
             Insets bars = metrics.getWindowInsets().getInsets(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
-            require(!display.isEmpty() && display.contains(bounds), "Calculator bounds differ from default-display metrics");
+            require(!display.isEmpty() && display.contains(bounds), "Application bounds differ from default-display metrics");
+            Rect inputMethod = new Rect();
             for (AccessibilityWindowInfo other : windows) {
                 if (other.getId() == focused.getId() || other.getDisplayId() != Display.DEFAULT_DISPLAY
                         || other.getLayer() < focused.getLayer()) continue;
                 Rect overlay = new Rect(); other.getBoundsInScreen(overlay);
                 if (!Rect.intersects(bounds, overlay)) continue;
+                if (allowInputMethod && other.getType() == AccessibilityWindowInfo.TYPE_INPUT_METHOD) {
+                    require(inputMethod.isEmpty() && verifiedSystemInputMethod(other, overlay, display), "Unexpected input-method window");
+                    inputMethod.set(overlay);
+                    continue;
+                }
                 require(isContainedInVisibleSystemBar(other.getType(), overlay, display, bars),
-                        "Calculator is obscured by an unknown window: " + windowDiagnostic(other, overlay));
+                        "Application is obscured by an unknown window: " + windowDiagnostic(other, overlay));
             }
             String geometry = bounds.toShortString() + "/" + display.toShortString() + "/" + bars;
-            WindowSnapshot result = new WindowSnapshot(focused.getId(), bounds, root, geometry);
+            WindowSnapshot result = new WindowSnapshot(focused.getId(), bounds, root, geometry, inputMethod);
             root = null;
             return result;
         } finally {
             if (root != null) root.recycle();
             recycle(windows);
         }
+    }
+
+    private boolean verifiedSystemInputMethod(AccessibilityWindowInfo window, Rect region, Rect display) {
+        if (target != NOTES_TARGET || region.isEmpty() || !display.contains(region)
+                || region.bottom != display.bottom || region.height() >= display.height()) return false;
+        String configured = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.DEFAULT_INPUT_METHOD);
+        ComponentName component = configured == null ? null : ComponentName.unflattenFromString(configured);
+        InputMethodManager manager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (component == null || manager == null) return false;
+        List<InputMethodInfo> enabled = manager.getEnabledInputMethodList();
+        if (enabled == null || enabled.size() > 16) return false;
+        ServiceInfo matched = null;
+        for (InputMethodInfo method : enabled) {
+            ServiceInfo service = method.getServiceInfo();
+            if (service != null && component.equals(new ComponentName(service.packageName, service.name))) {
+                if (matched != null) return false;
+                matched = service;
+            }
+        }
+        if (matched == null || !Manifest.permission.BIND_INPUT_METHOD.equals(matched.permission) || matched.applicationInfo == null
+                || (matched.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) return false;
+        AccessibilityNodeInfo root = window.getRoot();
+        try { return root != null && component.getPackageName().contentEquals(root.getPackageName() == null ? "" : root.getPackageName()); }
+        finally { if (root != null) root.recycle(); }
+    }
+
+    /** The sole IME-aware operation hides a verified system keyboard; it never clicks through it. */
+    void dismissNotesKeyboard() throws Exception {
+        require(target == NOTES_TARGET, "Notes helper used for another application");
+        try (WindowSnapshot window = appWindow(true)) {
+            if (window.inputMethod.isEmpty()) return;
+        }
+        sendKey(KeyEvent.KEYCODE_BACK);
+        long deadline = SystemClock.elapsedRealtime() + 5_000;
+        do {
+            try (WindowSnapshot window = appWindow(true)) {
+                if (window.inputMethod.isEmpty()) return;
+            }
+            SystemClock.sleep(50);
+        } while (SystemClock.elapsedRealtime() < deadline);
+        throw new AssertionError("Verified notes keyboard did not close");
+    }
+
+    private void sendKey(int key) {
+        require(dedicated && target == NOTES_TARGET && (key == KeyEvent.KEYCODE_BACK || key == KeyEvent.KEYCODE_HOME),
+                "Unexpected notes navigation key");
+        long now = SystemClock.uptimeMillis();
+        require(automation.injectInputEvent(new KeyEvent(now, now, KeyEvent.ACTION_DOWN, key, 0), true), "Key down was rejected");
+        require(automation.injectInputEvent(new KeyEvent(now, SystemClock.uptimeMillis(), KeyEvent.ACTION_UP, key, 0), true), "Key up was rejected");
+    }
+
+    void notesCreateDialog() throws Exception {
+        // The frozen release declares new_note as an always-visible toolbar action.
+        notesClick("new_note");
+        awaitNotesResource("locked_note_title");
+    }
+
+    void notesClick(String resource) throws Exception {
+        dismissNotesKeyboard();
+        awaitNotesResource(resource);
+        try (WindowSnapshot window = appWindow(false)) {
+            AccessibilityNodeInfo node = uniqueNode(window, resource);
+            try {
+                requireUsableNotesNode(window, node);
+                require(node.isClickable() && node.performAction(AccessibilityNodeInfo.ACTION_CLICK), "Notes resource rejected its click");
+            } finally { node.recycle(); }
+        }
+        automation.waitForIdle(150, 5_000);
+    }
+
+    void notesSetText(String resource, String text) throws Exception {
+        require("locked_note_title".equals(resource) || "text_note_view".equals(resource), "Unexpected notes text field");
+        require(text.length() <= 256, "Synthetic note is too large");
+        dismissNotesKeyboard();
+        awaitNotesResource(resource);
+        try (WindowSnapshot window = appWindow(false)) {
+            AccessibilityNodeInfo node = uniqueNode(window, resource);
+            try {
+                requireUsableNotesNode(window, node);
+                require(node.isEditable() && !node.isPassword(), "Notes resource is not an unprotected editable field");
+                Bundle data = new Bundle(); data.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text);
+                require(node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, data), "Notes text action was rejected");
+            } finally { node.recycle(); }
+        }
+        notesAwaitText(resource, text);
+    }
+
+    private void requireUsableNotesNode(WindowSnapshot window, AccessibilityNodeInfo node) {
+        require(node != null && node.isVisibleToUser() && node.isEnabled() && node.getWindowId() == window.id,
+                "Notes resource is not current, enabled and visible");
+        Rect bounds = new Rect(); node.getBoundsInScreen(bounds);
+        require(!bounds.isEmpty() && Rect.intersects(window.bounds, bounds) && window.inputMethod.isEmpty(),
+                "Notes resource is outside the unobscured application window");
+    }
+
+    void awaitNotesResource(String resource) throws Exception {
+        long deadline = SystemClock.elapsedRealtime() + 5_000;
+        String last = "Notes resource did not appear";
+        do {
+            try {
+                dismissNotesKeyboard();
+                try (WindowSnapshot window = appWindow(false)) {
+                    AccessibilityNodeInfo node = uniqueNode(window, resource);
+                    try { requireUsableNotesNode(window, node); return; }
+                    finally { node.recycle(); }
+                }
+            } catch (AssertionError pending) { last = pending.getMessage(); }
+            SystemClock.sleep(50);
+        } while (SystemClock.elapsedRealtime() < deadline);
+        throw new AssertionError(last);
+    }
+
+    String notesAwaitText(String resource, String expected) throws Exception {
+        long deadline = SystemClock.elapsedRealtime() + 5_000;
+        String actual = "";
+        do {
+            dismissNotesKeyboard();
+            try (WindowSnapshot window = appWindow(false)) {
+                AccessibilityNodeInfo node = uniqueNode(window, resource);
+                try {
+                    requireUsableNotesNode(window, node);
+                    actual = node.getText() == null ? "" : node.getText().toString();
+                    require(actual.length() <= 1024, "Unexpected notes text length");
+                    if (expected.equals(actual)) return actual;
+                } finally { node.recycle(); }
+            }
+            SystemClock.sleep(100);
+        } while (SystemClock.elapsedRealtime() < deadline);
+        throw new ResultMismatch(actual);
+    }
+
+    String notesAssertTitle(String expected) {
+        try (WindowSnapshot window = appWindow(false)) {
+            List<AccessibilityNodeInfo> found = window.root.findAccessibilityNodeInfosByText(expected);
+            int exact = 0;
+            try {
+                require(found != null && found.size() <= 32, "Notes title result is unavailable or ambiguous");
+                for (AccessibilityNodeInfo node : found) {
+                    if (node.isVisibleToUser() && node.getText() != null && expected.contentEquals(node.getText())) {
+                        requireUsableNotesNode(window, node); exact++;
+                    }
+                }
+            } finally { if (found != null) for (AccessibilityNodeInfo node : found) node.recycle(); }
+            require(exact == 1, "Created notes title is not uniquely visible");
+            return expected;
+        }
+    }
+
+    void notesBackgroundForSave() throws Exception {
+        dismissNotesKeyboard();
+        try (WindowSnapshot ignored = appWindow(false)) { /* Only navigate from the verified notes page. */ }
+        sendKey(KeyEvent.KEYCODE_HOME);
+        long deadline = SystemClock.elapsedRealtime() + 5_000;
+        while (focusedTargetWindowId() != -1) {
+            require(SystemClock.elapsedRealtime() < deadline, "Notes did not leave the foreground for normal save");
+            SystemClock.sleep(50);
+        }
+        // Wait for actual accessibility idle after normal onPause, not a fabricated DB write.
+        automation.waitForIdle(600, 5_000);
+    }
+
+    void notesRestartInFreshProcess() throws Exception {
+        require(target == NOTES_TARGET && focusedTargetWindowId() == -1, "Notes must first complete normal background navigation");
+        String before = shell("pidof " + target.packageName).trim();
+        require(before.matches("[1-9][0-9]*"), "Expected one live notes process before restart");
+        shell("am force-stop --user 0 " + target.packageName);
+        long deadline = SystemClock.elapsedRealtime() + 5_000;
+        while (!shell("pidof " + target.packageName).trim().isEmpty()) {
+            require(SystemClock.elapsedRealtime() < deadline, "Old notes process did not stop");
+            SystemClock.sleep(50);
+        }
+        launchTarget();
+        String after = shell("pidof " + target.packageName).trim();
+        require(after.matches("[1-9][0-9]*") && !after.equals(before), "Notes did not reopen in a fresh process");
     }
 
     static boolean isContainedInVisibleSystemBar(int type, Rect region, Rect display, Insets bars) {
@@ -378,18 +592,18 @@ final class SmokeHarness {
                 + " bounds=" + bounds.toShortString() + " title=" + title + " package=" + packageName;
     }
 
-    private static AccessibilityNodeInfo uniqueNode(WindowSnapshot window, String id) {
-        List<AccessibilityNodeInfo> found = window.root.findAccessibilityNodeInfosByViewId(CALCULATOR + ":id/" + id);
+    private AccessibilityNodeInfo uniqueNode(WindowSnapshot window, String id) {
+        List<AccessibilityNodeInfo> found = window.root.findAccessibilityNodeInfosByViewId(id.startsWith("android:id/") ? id : target.packageName + ":id/" + id);
         AccessibilityNodeInfo selected = null;
         try {
-            require(found != null && found.size() <= 16, "Missing or ambiguous calculator resource");
+            require(found != null && found.size() <= 16, "Missing or ambiguous application resource");
             for (AccessibilityNodeInfo node : found) {
                 if (!node.isVisibleToUser()) continue;
-                require(selected == null && node.getWindowId() == window.id, "Resource did not map to a unique current calculator window");
-                require(CALCULATOR.contentEquals(node.getPackageName() == null ? "" : node.getPackageName()), "Unexpected resource package");
+                require(selected == null && node.getWindowId() == window.id, "Resource did not map to a unique current application window");
+                require(target.packageName.contentEquals(node.getPackageName() == null ? "" : node.getPackageName()), "Unexpected resource package");
                 selected = AccessibilityNodeInfo.obtain(node);
             }
-            require(selected != null, "Visible calculator resource was not found");
+            require(selected != null, "Visible application resource was not found");
             AccessibilityNodeInfo result = selected; selected = null; return result;
         } finally {
             if (selected != null) selected.recycle();
@@ -452,10 +666,24 @@ final class SmokeHarness {
     }
     private static String hex(byte[] bytes) { StringBuilder b = new StringBuilder(); for (byte value : bytes) b.append(String.format(java.util.Locale.ROOT, "%02x", value & 255)); return b.toString(); }
 
+    static final class Target {
+        final String appId, packageName, versionName, apkSha256;
+        final long versionCode;
+        private Target(String appId, String packageName, String versionName, long versionCode, String apkSha256) {
+            this.appId = appId; this.packageName = packageName; this.versionName = versionName;
+            this.versionCode = versionCode; this.apkSha256 = apkSha256;
+        }
+    }
+
     static final class WindowSnapshot implements AutoCloseable {
         final int id; final Rect bounds; final AccessibilityNodeInfo root; final String geometry;
+        final Rect inputMethod;
         WindowSnapshot(int id, Rect bounds, AccessibilityNodeInfo root, String geometry) {
+            this(id, bounds, root, geometry, new Rect());
+        }
+        WindowSnapshot(int id, Rect bounds, AccessibilityNodeInfo root, String geometry, Rect inputMethod) {
             this.id = id; this.bounds = new Rect(bounds); this.root = root; this.geometry = geometry;
+            this.inputMethod = new Rect(inputMethod);
         }
         @Override public void close() { root.recycle(); }
     }

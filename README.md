@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Accept the bounded structured-window checkpoint from 144 existing verified records across eight APIs; publish the evidence mapping and retained limits. Token-limit and usage modules are committed with builds/lint passing; their device regressions are pending.
+**本次更新：** Add version-two real-app developer probes for official Calculator and Notes across eight APIs and two states. Official APK identity inspected; 74 Python checks plus probe APK and lint passed. All 32 device combinations remain pending; round 47 app tests continue.
 
-**记录时间：** 2026-10-27T11:13:37Z
+**记录时间：** 2026-10-27T11:22:05Z
 
 [最近测试截图与清单](screenshots/40489790843-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40489790843)。通过、失败及未截图原因见清单。
 

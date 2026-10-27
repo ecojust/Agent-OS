@@ -1,0 +1,45 @@
+{
+  "kind": "local-official-apk-preflight-observation",
+  "testedAt": "2026-10-27T11:00:44.123030+00:00",
+  "installed": false,
+  "uiTested": false,
+  "metadata": {
+    "package": "org.fossify.notes",
+    "versionCode": "13",
+    "versionName": "1.7.0",
+    "minSdk": 26,
+    "targetSdk": 36,
+    "abis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "x86",
+      "x86_64"
+    ],
+    "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+    "sha256": "5a56e0e39cc488e1f3b947d3801006d3b7450ec73c67f03195c64c5fd3b6bced",
+    "bytes": 9528948
+  },
+  "officialAssetId": 348354959,
+  "officialAssetUrl": "https://github.com/FossifyOrg/Notes/releases/download/1.7.0/notes-13-foss-release.apk",
+  "releaseSourceCommit": "786fc41f68d1aed8d82144a6de0127ed4dbe8b61",
+  "license": "GPL-3.0",
+  "licenseUrl": "https://github.com/FossifyOrg/Notes/blob/786fc41f68d1aed8d82144a6de0127ed4dbe8b61/LICENSE",
+  "sdkBuildTools": "35.0.0",
+  "commands": [
+    "apksigner verify --verbose --print-certs notes-13-foss-release.apk",
+    "aapt dump badging notes-13-foss-release.apk"
+  ],
+  "releaseAcceptance": false,
+  "files": [
+    {
+      "path": "apksigner.txt",
+      "bytes": 954,
+      "sha256": "16f90d22ed80f950db8508a195883c7e25e401925bbdf1b80e8b49d5fbcdad2e"
+    },
+    {
+      "path": "aapt-badging.txt",
+      "bytes": 6600,
+      "sha256": "8203416ddd1f424677cea80485d884c4f08f0365f3e207df8804065b1cf35607"
+    }
+  ]
+}

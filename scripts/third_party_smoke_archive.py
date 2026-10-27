@@ -121,9 +121,12 @@ def artifact_entries(value):
     return entries
 
 
-def eligible_artifacts(index, run):
+def eligible_artifacts(index, run, version=1):
     identity = verify_source(run)
-    pattern = re.compile(r"third-party-smoke-api-(30|35|37\.0)-attempt-" + str(identity["attempt"]))
+    require(type(version) is int and version in (1, 2), "unknown evidence version")
+    prefix = "third-party-smoke-api-" if version == 1 else "third-party-smoke-v2-api-"
+    labels = r"(30|35|37\.0)" if version == 1 else r"(30|31|32|33|34|35|36|37\.0)"
+    pattern = re.compile(prefix + labels + "-attempt-" + str(identity["attempt"]))
     selected = {}
     for item in artifact_entries(index):
         require(isinstance(item, dict), "invalid artifact metadata")
@@ -147,6 +150,16 @@ def eligible_artifacts(index, run):
         require(timestamp(run["run_started_at"]) <= timestamp(item.get("created_at")) <= timestamp(run["updated_at"]),
                 "artifact was not uploaded during the current source attempt")
         selected[label] = item
+    return selected
+
+
+def eligible_run_artifacts(index, run):
+    """Select one current-attempt evidence protocol, never mix old and new lanes."""
+    old, new = eligible_artifacts(index, run, 1), eligible_artifacts(index, run, 2)
+    require(not (old and new), "source attempt contains mixed evidence versions")
+    selected = new or old
+    ids = [item["id"] for item in selected.values()]
+    require(len(ids) == len(set(ids)), "artifact ID is reused across matrix lanes")
     return selected
 
 
@@ -361,7 +374,7 @@ def main(argv=None):
     parser.add_argument("--source-run-json", type=Path, required=True)
     parser.add_argument("--artifact-index", type=Path, required=True)
     parser.add_argument("--incoming", type=Path)
-    parser.add_argument("--sample", type=Path, default=Path("docs/validation/third-party-calculator-lock.json"))
+    parser.add_argument("--sample", type=Path)
     parser.add_argument("--repo", type=Path, default=Path.cwd())
     parser.add_argument("--output")
     parser.add_argument("--github-output", type=Path)
@@ -369,7 +382,7 @@ def main(argv=None):
     try:
         run, index = read_json(args.source_run_json), read_json(args.artifact_index)
         identity = verify_source(run)
-        artifacts = eligible_artifacts(index, run)
+        artifacts = eligible_run_artifacts(index, run)
         path = f"screenshots/third-party-{identity['runId']}-{identity['attempt']}"
         if args.command == "validate-source":
             result = {**identity, "evidencePath": path,
@@ -381,7 +394,18 @@ def main(argv=None):
                         stream.write(f"{key}={value}\n")
         else:
             require(args.incoming is not None, "archive requires --incoming")
-            result = archive(args.incoming, args.output or path, run, index, read_json(args.sample), args.repo)
+            # After the workflow checks out the exact source SHA, use its lock.
+            # Earlier sources retain their original script and version-1 default.
+            selected_sample = args.sample
+            if selected_sample is None:
+                newer = args.repo / "docs/validation/third-party-app-set-lock.json"
+                selected_sample = newer if newer.exists() else args.repo / "docs/validation/third-party-calculator-lock.json"
+            sample = read_json(selected_sample)
+            if type(sample.get("schemaVersion")) is int and sample["schemaVersion"] == 2:
+                from third_party_smoke_set_archive import archive as archive_set
+                result = archive_set(args.incoming, args.output or path, run, index, sample, args.repo)
+            else:
+                result = archive(args.incoming, args.output or path, run, index, sample, args.repo)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     except (ValueError, OSError) as exc:

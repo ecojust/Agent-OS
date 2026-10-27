@@ -5,6 +5,7 @@ import android.app.Instrumentation;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.SystemClock;
 import android.view.View;
@@ -28,6 +29,7 @@ import org.junit.runner.RunWith;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -217,6 +219,8 @@ public final class ImageReviewInstrumentedTest {
                 assertTrue(review.button(ImageReviewView.APPROVE).isEnabled());
                 assertEquals(ImageReviewSession.State.PRESENTED, review.session.state());
                 assertFalse(review.image.isClosed());
+                assertTrue(review.readinessDiagnostic(), review.nativeView().isReadyToPresent());
+                assertTrue(review.readinessDiagnostic(), review.dialog.getWindow().getDecorView().hasWindowFocus());
                 review.button(ImageReviewView.APPROVE).performClick();
             });
             assertEquals(1, review.approvals.get());
@@ -290,12 +294,47 @@ public final class ImageReviewInstrumentedTest {
 
         Button button(String tag) { return dialog.getWindow().getDecorView().findViewWithTag(tag); }
 
+        ImageReviewView nativeView() {
+            View content = dialog.getWindow().getDecorView().findViewWithTag(ImageReviewView.CONTENT);
+            return (ImageReviewView) content.getParent();
+        }
+
+        /** Synthetic host state only; no pixels, recipient details or other page content. */
+        String readinessDiagnostic() {
+            View decor = dialog.getWindow().getDecorView();
+            ImageView preview = decor.findViewWithTag(ImageReviewView.PREVIEW);
+            Rect visible = new Rect();
+            boolean hasVisibleRect = preview.getGlobalVisibleRect(visible);
+            return "Review state=" + session.state() + ", reason=" + session.reason()
+                    + ", showing=" + dialog.isShowing() + ", focused=" + decor.hasWindowFocus()
+                    + ", ready=" + nativeView().isReadyToPresent()
+                    + ", previewAttached=" + preview.isAttachedToWindow()
+                    + ", previewShown=" + preview.isShown() + ", previewLaidOut=" + preview.isLaidOut()
+                    + ", previewLayoutRequested=" + preview.isLayoutRequested()
+                    + ", previewVisibility=" + preview.getWindowVisibility()
+                    + ", previewSize=" + preview.getWidth() + "x" + preview.getHeight()
+                    + ", visibleRect=" + hasVisibleRect + ":" + visible.toShortString()
+                    + ", approvalEnabled=" + button(ImageReviewView.APPROVE).isEnabled();
+        }
+
         void awaitPresented() {
             long deadline = SystemClock.elapsedRealtime() + 10_000;
-            while (session.state() == ImageReviewSession.State.PREPARING && SystemClock.elapsedRealtime() < deadline) {
-                SystemClock.sleep(25);
+            AtomicBoolean ready = new AtomicBoolean();
+            AtomicReference<String> diagnostic = new AtomicReference<>();
+            while (!ready.get() && SystemClock.elapsedRealtime() < deadline) {
+                instrumentation.runOnMainSync(() -> {
+                    ImageReviewSession.State state = session.state();
+                    diagnostic.set(readinessDiagnostic());
+                    assertTrue(diagnostic.get(), state == ImageReviewSession.State.PREPARING
+                            || state == ImageReviewSession.State.PRESENTED);
+                    ready.set(state == ImageReviewSession.State.PRESENTED
+                            && dialog.getWindow().getDecorView().hasWindowFocus()
+                            && nativeView().isReadyToPresent()
+                            && button(ImageReviewView.APPROVE).isEnabled());
+                });
+                if (!ready.get()) SystemClock.sleep(25);
             }
-            assertEquals("Synthetic native preview never became presented", ImageReviewSession.State.PRESENTED, session.state());
+            assertTrue("Synthetic native preview never became ready: " + diagnostic.get(), ready.get());
         }
 
         void awaitDismissed() {

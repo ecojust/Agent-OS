@@ -101,7 +101,10 @@ final class ImageReviewView extends LinearLayout {
         preview = bitmap;
         image.setImageBitmap(bitmap);
         image.fit();
-        status.setText("请查看图片及模型接收方；可放大图片。");
+        // Finish text-driven layout before the host marks the actual preview presented.
+        // Changing this text after markPresented() can invalidate the image geometry
+        // while the approval button already appears enabled.
+        status.setText("本次确认 60 秒内有效；拒绝或离开后失效。");
     }
 
     boolean isReadyToPresent() {
@@ -118,7 +121,6 @@ final class ImageReviewView extends LinearLayout {
     void setPresented(boolean presented) {
         requireMain();
         approve.setEnabled(presented && preview != null);
-        if (presented) status.setText("本次确认 60 秒内有效；拒绝或离开后失效。");
     }
 
     void setApproved() {

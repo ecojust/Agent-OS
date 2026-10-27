@@ -4,11 +4,18 @@ import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.os.SystemClock;
+import android.os.Build;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.google.gson.JsonObject;
+
 import dev.agentos.core.ActionConfirmationPolicy;
+import dev.agentos.core.DisclosureGuard;
+import dev.agentos.core.LocalToolResult;
+import dev.agentos.core.ToolCatalog;
+import dev.agentos.core.ToolRequest;
 import dev.agentos.core.ImageWorkset;
 import dev.agentos.core.ModelSettings;
 import dev.agentos.core.RunControl;
@@ -19,6 +26,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -239,6 +247,202 @@ public final class TaskVisionQualificationInstrumentedTest {
                 worker.shutdown();
                 assertTrue("Competing real probe worker did not finish", worker.awaitTermination(10, TimeUnit.SECONDS));
             }
+        }
+    }
+
+    @Test public void legacyTypedAndStringScreenshotRequestsCannotForgeCaptureIdentityOrStartAnyWork() throws Exception {
+        try (Environment env = new Environment(LocalVisionProbeServer.Mode.VERIFIED, TaskBudget.DEFAULT)) {
+            SettingsStore.SavedSettings saved = new SettingsStore(env.context).load();
+            AndroidDeviceTools legacy = new AndroidDeviceTools(env.device.service,
+                    Collections.singleton(DeviceHarness.FIXTURE), saved.grants, saved.executionMode, env.lease,
+                    (description, active, epoch) -> { throw new AssertionError("A rejected image request asked for approval"); });
+            RunControl owner = env.device.control;
+            String revision = DeviceHarness.string(env.device.observe(), "revision");
+            assertActualScreenshotPermissionClosed(env);
+            CaptureQueueBaseline baseline = new CaptureQueueBaseline();
+            long bytes = ImageWorkset.process().reservedBytes();
+            assertFalse(legacy.availableTools().contains("take_screenshot"));
+            try (LocalToolResult rejected = legacy.execute(imageRequest(owner, "legacy-typed", revision), owner)) {
+                assertRejectedImage(rejected, "CAPABILITY_UNAVAILABLE");
+            }
+            JsonObject forgedArguments = imageArguments(revision);
+            forgedArguments.addProperty("taskId", owner.getTaskId());
+            forgedArguments.addProperty("callId", "not-a-local-request");
+            forgedArguments.addProperty("profileId", owner.getProfileId());
+            forgedArguments.addProperty("executionEpoch", owner.getExecutionEpoch());
+            // Supplying trusted request metadata as model arguments cannot turn
+            // either legacy overload into the request-aware image route.
+            assertRejectedMetadata(legacy.execute("take_screenshot", forgedArguments, owner), "CAPABILITY_UNAVAILABLE");
+            assertRejectedMetadata(legacy.execute("take_screenshot", forgedArguments, owner,
+                    owner.getExecutionEpoch()), "CAPABILITY_UNAVAILABLE");
+            try (LocalToolResult unknown = legacy.execute(new ToolRequest(ToolCatalog.PROTOCOL_VERSION,
+                    owner.getTaskId(), "unknown-image-tool", owner.getExecutionEpoch(), owner.getProfileId(),
+                    "capture_unregistered_page", imageArguments(revision)), owner)) {
+                assertRejectedImage(unknown, "INVALID_ARGUMENT");
+            }
+            if (Build.VERSION.SDK_INT < 34) assertUnsupportedWindowCapture(legacy, owner);
+            baseline.assertUnchanged();
+            assertEquals(bytes, ImageWorkset.process().reservedBytes());
+            assertEquals("No model request, including a probe, belongs to this legacy check", 0, env.server.requestCount());
+            assertEquals(0, owner.getDispatchAttempts());
+            assertFalse(owner.isCancelled()); assertFalse(owner.isPaused());
+            assertFalse(ImageReviewPresentationCoordinator.hasHost());
+            env.server.assertHealthy();
+            screenshots.capture(Build.VERSION.SDK_INT < 34
+                    ? "legacy-image-route-api-below-34-unsupported-zero-capture-work-and-http"
+                    : "legacy-image-route-permission-closed-zero-capture-work-and-http");
+        }
+    }
+
+    @Test public void actualTaskQualificationCannotOverrideClosedPermissionOrAcceptAnotherRequestOwner() throws Exception {
+        try (Environment env = new Environment(LocalVisionProbeServer.Mode.VERIFIED, TaskBudget.DEFAULT);
+             PerformanceTrace.Session trace = PerformanceTrace.startDiagnostics()) {
+            env.startRequested();
+            AgentController.State pending = env.awaitApproval(AgentController.VisualQualification.SYNTHETIC_VERIFIED);
+            long epoch = env.originalStartEpoch;
+            SavedVisionProbe.Verification verification = SavedVisionProbe.process().current(env.lease);
+            assertNotNull(verification);
+            assertTrue(verification.isCurrentFor(env.lease, env.owner, epoch));
+            assertActualScreenshotPermissionClosed(env);
+            // Read the original Controller holder/generation and ask its actual
+            // factory for the same closure; never write a field, fake a record,
+            // supply a constant-true qualification, or change a capability bit.
+            DisclosureGuard qualification = actualTaskQualification(env);
+            assertTrue(qualification.isCurrent(env.owner, epoch));
+            SettingsStore.SavedSettings saved = new SettingsStore(env.context).load();
+            AndroidDeviceTools qualified = new AndroidDeviceTools(env.device.service,
+                    Collections.singleton(DeviceHarness.FIXTURE), saved.grants, saved.executionMode, env.lease,
+                    (description, active, expectedEpoch) -> { throw new AssertionError("Unavailable capture requested approval"); },
+                    env.owner, epoch, qualification);
+            qualified.prepareVisualSupport();
+            assertTrue("The real diagnostic must remain current despite unavailable capture", qualification.isCurrent(env.owner, epoch));
+            assertFalse(qualified.availableTools().contains("take_screenshot"));
+            assertFalse(qualified.availableTools().contains("tap"));
+            assertFalse(qualified.availableTools().contains("swipe"));
+            // This case tests refusal before capture/page validation, not support
+            // for the synthetic fixture as a production visual page.
+            String revision = "not-consumed-by-unavailable-route";
+            CaptureQueueBaseline baseline = new CaptureQueueBaseline();
+            await("Completed synthetic HTTP payload still owned", () -> ImageWorkset.process().reservedBytes() == 0);
+            int requests = env.server.requestCount();
+            assertEquals(1, env.server.imageRequestCount());
+            try (LocalToolResult denied = qualified.execute(imageRequest(env.owner, "qualified-capability-closed", revision), env.owner)) {
+                assertRejectedImage(denied, "CAPABILITY_UNAVAILABLE");
+            }
+            RunControl foreign = new RunControl(env.lease.profileId);
+            try {
+                assertEquals("Identity check uses equal epochs, not an incidental stale-epoch rejection", epoch, foreign.getExecutionEpoch());
+                assertFalse(qualification.isCurrent(foreign, foreign.getExecutionEpoch()));
+                try (LocalToolResult wrongOwner = qualified.execute(imageRequest(env.owner, "foreign-owner", revision), foreign)) {
+                    assertRejectedImage(wrongOwner, "INVALID_ARGUMENT");
+                }
+                ToolRequest[] malformed = {
+                        new ToolRequest(ToolCatalog.PROTOCOL_VERSION + 1, env.owner.getTaskId(), "wrong-version", epoch,
+                                env.owner.getProfileId(), "take_screenshot", imageArguments(revision)),
+                        new ToolRequest(ToolCatalog.PROTOCOL_VERSION, foreign.getTaskId(), "wrong-task", epoch,
+                                env.owner.getProfileId(), "take_screenshot", imageArguments(revision)),
+                        new ToolRequest(ToolCatalog.PROTOCOL_VERSION, env.owner.getTaskId(), "wrong-profile", epoch,
+                                "unrelated-profile", "take_screenshot", imageArguments(revision)),
+                        new ToolRequest(ToolCatalog.PROTOCOL_VERSION, env.owner.getTaskId(), "not a valid local call id", epoch,
+                                env.owner.getProfileId(), "take_screenshot", imageArguments(revision))
+                };
+                for (ToolRequest request : malformed) try (LocalToolResult rejected = qualified.execute(request, env.owner)) {
+                    assertRejectedImage(rejected, "INVALID_ARGUMENT");
+                }
+                assertFalse(foreign.isCancelled()); assertEquals(0, foreign.getDispatchAttempts());
+            } finally { foreign.cancel(); }
+            if (Build.VERSION.SDK_INT < 34) assertUnsupportedWindowCapture(qualified, env.owner);
+            baseline.assertUnchanged();
+            assertEquals(0, ImageWorkset.process().reservedBytes());
+            assertEquals("Rejected captures must not send another probe or task request", requests, env.server.requestCount());
+            assertEquals(1, env.server.imageRequestCount());
+            assertEquals(pending.approvalId, env.controller.getState().approvalId);
+            assertTrue(qualification.isCurrent(env.owner, epoch));
+            assertFalse(ImageReviewPresentationCoordinator.hasHost());
+            env.assertStructuredOnlyAndNoDispatch(trace);
+            screenshots.capture(Build.VERSION.SDK_INT < 34
+                    ? "real-task-qualification-api-below-34-unsupported-zero-capture-work"
+                    : "real-task-qualification-does-not-open-permission-or-accept-foreign-identity");
+        }
+    }
+
+    private static ToolRequest imageRequest(RunControl owner, String callId, String revision) {
+        return new ToolRequest(ToolCatalog.PROTOCOL_VERSION, owner.getTaskId(), callId, owner.getExecutionEpoch(),
+                owner.getProfileId(), "take_screenshot", imageArguments(revision));
+    }
+
+    private static JsonObject imageArguments(String revision) {
+        JsonObject arguments = new JsonObject(); arguments.addProperty("expectedRevision", revision); return arguments;
+    }
+
+    private static void assertRejectedImage(LocalToolResult result, String code) throws Exception {
+        assertNotNull(result);
+        assertRejectedMetadata(result.getResult(), code);
+        // Read-only ownership check, with close in every caller even on assertion failure.
+        assertNull("Rejected result retained a native image owner", read(result, "image"));
+        assertFalse(result.getResult().has("imageDataUrl"));
+    }
+
+    private static void assertRejectedMetadata(JsonObject result, String code) {
+        assertNotNull(result);
+        assertEquals(code, result.get("code").getAsString());
+        for (String flag : new String[]{"ok", "submitted", "dispatchSubmitted", "dispatchAccepted"}) {
+            assertTrue(flag, result.has(flag) && result.get(flag).isJsonPrimitive()
+                    && result.getAsJsonPrimitive(flag).isBoolean());
+            assertFalse(flag, result.get(flag).getAsBoolean());
+        }
+    }
+
+    private static void assertActualScreenshotPermissionClosed(Environment env) {
+        env.main(() -> {
+            assertNotNull(env.device.service.getServiceInfo());
+            assertEquals(0, env.device.service.getServiceInfo().getCapabilities()
+                    & AccessibilityServiceInfo.CAPABILITY_CAN_TAKE_SCREENSHOT);
+            assertFalse(env.device.service.hasWindowCaptureCapability());
+        });
+    }
+
+    private static void assertUnsupportedWindowCapture(AndroidDeviceTools tools, RunControl owner) throws Exception {
+        try {
+            tools.checkWindowCaptureRequestCurrent(owner, owner.getExecutionEpoch());
+            fail("API below 34 must report unsupported before acquiring a native capture slot");
+        } catch (AndroidDeviceTools.WindowCaptureException unavailable) {
+            assertEquals(AndroidDeviceTools.WindowCaptureFailure.UNSUPPORTED_API, unavailable.code);
+        }
+    }
+
+    private static DisclosureGuard actualTaskQualification(Environment env) throws Exception {
+        Object lock = read(env.controller, "lock");
+        synchronized (lock) {
+            Object holder = read(env.controller, "taskVisual");
+            assertNotNull(holder);
+            assertSame(env.owner, read(holder, "owner"));
+            assertSame(env.lease, read(holder, "configuration"));
+            Method factory = AgentController.class.getDeclaredMethod("visualQualificationGuardFor", long.class, holder.getClass());
+            factory.setAccessible(true);
+            return (DisclosureGuard) factory.invoke(env.controller, (long) read(env.controller, "generation"), holder);
+        }
+    }
+
+    /** Counter-only reflection; no backend/worker replacement or native capability bypass. */
+    private static final class CaptureQueueBaseline {
+        final ThreadPoolExecutor worker;
+        final long admitted, completed;
+        CaptureQueueBaseline() throws Exception {
+            Field field = WindowBufferCapturer.class.getDeclaredField("WORKER"); field.setAccessible(true);
+            worker = (ThreadPoolExecutor) field.get(null);
+            assertFalse(WindowBufferCapturer.hasActiveCapture());
+            await("Prior native capture worker still active", () -> worker.getActiveCount() == 0 && worker.getQueue().isEmpty());
+            admitted = worker.getTaskCount(); completed = worker.getCompletedTaskCount();
+        }
+        void assertUnchanged() {
+            // Every production native submission runs on this fixed executor.
+            // Unchanged admission counts are stronger than sampling an empty slot
+            // after a short accidental capture could already have completed.
+            assertEquals("Rejected route admitted a native capture task", admitted, worker.getTaskCount());
+            assertEquals(completed, worker.getCompletedTaskCount());
+            assertEquals(0, worker.getActiveCount()); assertTrue(worker.getQueue().isEmpty());
+            assertFalse(WindowBufferCapturer.hasActiveCapture());
         }
     }
 

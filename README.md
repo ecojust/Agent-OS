@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Raise the evidence file-count ceiling to 8000 for the growing eight-API matrix while retaining 16 MiB per-file and 64 MiB total limits. Two new shared-budget regressions passed within 173 local script tests; no device-acceptance change.
+**本次更新：** Wire the original-task typed image adapter through fixed-page checks, platform capture, exact-image review and revocable one-request transfer. APK/test APK/lint passed; two new negative device tests await execution. Screenshot permission and the UI opt-in remain closed.
 
-**记录时间：** 2026-10-27T12:52:16Z
+**记录时间：** 2026-10-27T12:53:36Z
 
 [最近测试截图与清单](screenshots/40501804363-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40501804363)。通过、失败及未截图原因见清单。
 

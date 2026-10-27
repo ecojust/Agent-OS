@@ -340,7 +340,22 @@ public final class AgentController {
                 if (visual.requested) qualifyTaskVisual(session, visual);
                 active.checkCancelled();
                 AndroidDeviceTools tools = new AndroidDeviceTools(service, scope, saved.grants,
-                        executionMode, configurationLease, (description, run, epoch) -> requestApproval(session, description, run, epoch, configurationLease));
+                        executionMode, configurationLease, (description, run, epoch) -> requestApproval(session, description, run, epoch, configurationLease),
+                        active, visual.originalEpoch, visualQualificationGuardFor(session, visual));
+                try { tools.prepareVisualSupport(); }
+                catch (TaskControlException preparationStopped) {
+                    if (!"TASK_PAUSED".equals(preparationStopped.getCode())) throw preparationStopped;
+                    // A pause during the one APK check abandons visual support,
+                    // then enters the original runner's existing pause loop.
+                    active.checkCancelled();
+                    synchronized (lock) {
+                        requireVisualTaskLocked(session, visual);
+                        requireConfigurationLocked(configurationLease, active);
+                        active.checkCancelled();
+                        visual.state = VisualQualification.INVALIDATED;
+                        visual.verification = null;
+                    }
+                }
                 AgentRunner runner = new AgentRunner(settings, tools, new AgentRunner.Listener() {
                     @Override public void onStatus(String next) {
                         synchronized (lock) {
@@ -445,6 +460,19 @@ public final class AgentController {
             appendLogLocked(visualQualificationMessage(result));
         }
         publish();
+    }
+
+    private DisclosureGuard visualQualificationGuardFor(long session, TaskVisualQualification original) {
+        return (owner, epoch) -> {
+            synchronized (lock) {
+                return isCurrentLocked(session) && control == original.owner && taskVisual == original
+                        && owner == original.owner && epoch == original.originalEpoch && original.requested
+                        && original.state == VisualQualification.SYNTHETIC_VERIFIED && original.verification != null
+                        && !owner.isCancelled() && !owner.isPaused() && owner.getExecutionEpoch() == epoch
+                        && SettingsStore.isCurrent(original.configuration)
+                        && original.verification.isCurrentFor(original.configuration, owner, epoch);
+            }
+        };
     }
 
     private void requireVisualTaskLocked(long session, TaskVisualQualification visual) throws TaskControlException {

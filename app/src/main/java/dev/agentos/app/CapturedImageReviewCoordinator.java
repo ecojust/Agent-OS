@@ -13,6 +13,7 @@ import android.view.accessibility.AccessibilityWindowInfo;
 
 import com.google.gson.JsonObject;
 import dev.agentos.core.ImageReviewSession;
+import dev.agentos.core.DisclosureGuard;
 import dev.agentos.core.LocalToolResult;
 import dev.agentos.core.PngImage;
 import dev.agentos.core.RunControl;
@@ -94,6 +95,7 @@ final class CapturedImageReviewCoordinator {
         AndroidDeviceTools.CapturedReviewContext context;
         long finalDeadline;
         JsonObject metadata;
+        DisclosureGuard imageGuard;
         try {
             ImageReviewSession session = null;
             ShowTicket show = null;
@@ -135,7 +137,10 @@ final class CapturedImageReviewCoordinator {
                 }
                 awaitWindowPublicationRemoval(approval.window, original, control, context, finalDeadline);
                 checkFinal(original, control, context, finalDeadline);
-                captured.validateAfterReview(original, tools, control, context, finalDeadline);
+                DisclosureGuard finalWindowGuard = captured.validateAfterReview(original, tools, control, context, finalDeadline);
+                imageGuard = origin == Origin.PLATFORM ? tools.reviewedImageGuard(finalWindowGuard) : finalWindowGuard;
+                if (imageGuard == null || !imageGuard.isCurrent(control, original.executionEpoch))
+                    throw new ReviewException(Failure.CONTEXT_CHANGED);
                 checkFinal(original, control, context, finalDeadline);
                 metadata = metadata(captured, origin);
             } finally {
@@ -156,8 +161,9 @@ final class CapturedImageReviewCoordinator {
             checkFinal(original, control, context, finalDeadline);
             PngImage transferred = local;
             local = null;
-            output = LocalToolResult.withPng(metadata, transferred);
+            output = LocalToolResult.withPng(metadata, transferred, imageGuard);
             checkFinal(original, control, context, finalDeadline);
+            if (!imageGuard.isCurrent(control, original.executionEpoch)) throw new ReviewException(Failure.CONTEXT_CHANGED);
             LocalToolResult returned = output;
             output = null;
             return returned;

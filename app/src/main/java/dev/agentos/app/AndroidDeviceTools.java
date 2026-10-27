@@ -27,6 +27,7 @@ import dev.agentos.core.ActionConfirmationPolicy;
 import dev.agentos.core.CoordinateNodeResolver;
 import dev.agentos.core.DisclosureGuard;
 import dev.agentos.core.ImageReviewSession;
+import dev.agentos.core.LocalToolResult;
 import dev.agentos.core.RunControl;
 import dev.agentos.core.ToolCatalog;
 import dev.agentos.core.ToolHandler;
@@ -84,6 +85,11 @@ public final class AndroidDeviceTools implements ToolHandler {
     private ObservedBlockers lastObservedBlockers;
     private CoordinateNodeResolver.Binding lastObservedCoordinateBinding;
     private boolean denied;
+    private final RunControl visualOwner;
+    private final long visualEpoch;
+    private final DisclosureGuard visualQualification;
+    private SupportedVisualPagePolicy.VerifiedInstall visualInstall;
+    private boolean visualPrepared;
 
     public AndroidDeviceTools(AgentAccessibilityService service, Set<String> packages,
                               Map<String, SettingsStore.AppGrant> approvedGrants,
@@ -91,6 +97,17 @@ public final class AndroidDeviceTools implements ToolHandler {
                               ApprovalGate gate) throws IOException {
         this(service, packages, approvedGrants, executionMode,
                 boundConfiguration(service, configurationLease), configurationLease, gate);
+    }
+
+    /** Original task qualification only; ordinary constructors never enable a visual route. */
+    AndroidDeviceTools(AgentAccessibilityService service, Set<String> packages,
+                       Map<String, SettingsStore.AppGrant> approvedGrants,
+                       ActionConfirmationPolicy.Mode executionMode, SettingsStore.ConfigurationLease configurationLease,
+                       ApprovalGate gate, RunControl visualOwner, long visualEpoch,
+                       DisclosureGuard visualQualification) throws IOException {
+        this(service, packages, approvedGrants, executionMode, boundConfiguration(service, configurationLease),
+                configurationLease, gate, Objects.requireNonNull(visualOwner), visualEpoch,
+                Objects.requireNonNull(visualQualification));
     }
 
     /** Dedicated fixture entry point; every test must supply its configuration guard explicitly. */
@@ -124,6 +141,15 @@ public final class AndroidDeviceTools implements ToolHandler {
                                Map<String, SettingsStore.AppGrant> approvedGrants,
                                ActionConfirmationPolicy.Mode executionMode, BooleanSupplier configurationCurrent,
                                SettingsStore.ConfigurationLease configurationLease, ApprovalGate gate) throws IOException {
+        this(service, packages, approvedGrants, executionMode, configurationCurrent, configurationLease, gate,
+                null, -1, null);
+    }
+
+    private AndroidDeviceTools(AgentAccessibilityService service, Set<String> packages,
+                               Map<String, SettingsStore.AppGrant> approvedGrants,
+                               ActionConfirmationPolicy.Mode executionMode, BooleanSupplier configurationCurrent,
+                               SettingsStore.ConfigurationLease configurationLease, ApprovalGate gate,
+                               RunControl visualOwner, long visualEpoch, DisclosureGuard visualQualification) throws IOException {
         if (service == null) throw new IllegalArgumentException("请先开启 Agent 无障碍服务");
         this.service = service;
         SettingsStore.requirePersonalProfile(service);
@@ -139,15 +165,106 @@ public final class AndroidDeviceTools implements ToolHandler {
         confirmationPolicy = new ActionConfirmationPolicy(executionMode);
         this.configurationCurrent = Objects.requireNonNull(configurationCurrent);
         this.configurationLease = configurationLease;
+        this.visualOwner = visualOwner;
+        this.visualEpoch = visualEpoch;
+        this.visualQualification = visualQualification;
         service.watchPackages(allowedPackages);
     }
 
     @Override public Set<String> availableTools() {
-        // Display screenshots cannot reliably exclude unrelated windows within the M1 budget.
-        // Not advertised and no screenshot capability requested in accessibility metadata.
         Set<String> tools = new LinkedHashSet<>(ToolCatalog.basicTools());
-        tools.remove("take_screenshot"); tools.remove("tap"); tools.remove("swipe");
+        tools.remove("tap"); tools.remove("swipe");
+        if (visualInstall != null && isVisualQualificationCurrent()) tools.add("take_screenshot");
+        else tools.remove("take_screenshot");
         return Collections.unmodifiableSet(tools);
+    }
+
+    /** One worker preparation, before a capture deadline; no lookup in availableTools or HTTP. */
+    void prepareVisualSupport() throws Exception {
+        if (Looper.myLooper() == Looper.getMainLooper()) throw new IllegalStateException("Visual preparation requires a worker");
+        if (visualPrepared) throw new IllegalStateException("Visual preparation is single-use");
+        visualPrepared = true;
+        if (!isVisualQualificationCurrent() || !allowedPackages.contains(SupportedVisualPagePolicy.PACKAGE_NAME)) return;
+        requireCurrentConfiguration(visualOwner, visualEpoch);
+        try {
+            SupportedVisualPagePolicy.VerifiedInstall verified = SupportedVisualPagePolicy.verifyInstalled(service,
+                    grants.get(SupportedVisualPagePolicy.PACKAGE_NAME), visualOwner, visualEpoch, configurationLease);
+            requireCurrentConfiguration(visualOwner, visualEpoch);
+            if (isVisualQualificationCurrent()) visualInstall = verified;
+        } catch (SupportedVisualPagePolicy.Rejected rejected) {
+            // Revocation/budget/pause is never an ordinary unsupported-model fallback.
+            requireCurrentConfiguration(visualOwner, visualEpoch);
+            switch (rejected.reason) {
+                case UNSUPPORTED_API: case INSTALLATION_MISMATCH: case INSTALLATION_UNVERIFIABLE:
+                case INSTALLATION_CHANGED: return;
+                default: throw rejected;
+            }
+        }
+    }
+
+    /** Bounded pure-memory predicate. It is not page validation or capture permission. */
+    private boolean isVisualQualificationCurrent() {
+        if (visualOwner == null || visualQualification == null || Build.VERSION.SDK_INT < 34
+                || !service.hasWindowCaptureCapability() || !SettingsStore.isCurrent(configurationLease)
+                || visualOwner.isCancelled() || visualOwner.isPaused() || visualOwner.getExecutionEpoch() != visualEpoch) return false;
+        try { return visualQualification.isCurrent(visualOwner, visualEpoch); }
+        catch (RuntimeException invalid) { return false; }
+    }
+
+    private void requireVisualBinding(RunControl owner, long epoch) throws Exception {
+        if (visualOwner == null) return; // Existing internal lifecycle tests stay non-advertised.
+        if (owner != visualOwner || epoch != visualEpoch) throw captureFailure(WindowCaptureFailure.WRONG_OWNER);
+        requireCurrentConfiguration(owner, epoch);
+        if (visualInstall == null || !isVisualQualificationCurrent()) throw captureFailure(WindowCaptureFailure.VISUAL_UNAVAILABLE);
+    }
+
+    @Override public LocalToolResult execute(ToolRequest original, RunControl owner) throws Exception {
+        if (original == null || owner == null) throw new IllegalArgumentException("Original tool request required");
+        owner.checkExecutionEpoch(original.executionEpoch);
+        if (!"take_screenshot".equals(original.tool))
+            return LocalToolResult.metadata(execute(original.tool, original.getArguments(), owner, original.executionEpoch));
+        if (original.protocolVersion != ToolCatalog.PROTOCOL_VERSION || !owner.getTaskId().equals(original.taskId)
+                || !owner.getProfileId().equals(original.profileId) || original.callId == null
+                || !original.callId.matches("[A-Za-z0-9_.:-]{1,128}"))
+            return LocalToolResult.metadata(error("INVALID_ARGUMENT", "截图请求身份无效", "使用本次任务的原始请求"));
+        try {
+            ToolCatalog.validate(original.tool, original.getArguments());
+            if (denied) return LocalToolResult.metadata(error("APPROVAL_REJECTED", "本次任务已有被拒绝的动作", "结束本次任务，由用户重新发起"));
+            if (visualOwner == null || visualInstall == null)
+                return LocalToolResult.metadata(error("CAPABILITY_UNAVAILABLE", "本次任务未启用受支持页面截图", "继续结构化操作，或由用户接管"));
+            requireVisualBinding(owner, original.executionEpoch);
+            // Existing capture/review substeps hold the device gate only for their
+            // synchronous platform work, never while waiting for user approval.
+            try (WindowBufferCapturer.CaptureRequest request = new WindowBufferCapturer(this).start(original, owner);
+                 WindowBufferCapturer.CapturedWindow window = request.awaitAndClaim()) {
+                try (WindowPngConverter.CapturedPng captured = new WindowPngConverter().convertCaptured(window)) {
+                    // reviewPlatform consumes at entry; the outer idempotent owner
+                    // also covers failures while constructing its entry arguments.
+                    return CapturedImageReviewCoordinator.reviewPlatform(original, owner, this, captured);
+                }
+            }
+        } catch (InterruptedException interrupted) { throw interrupted; }
+        catch (CapturedImageReviewCoordinator.ReviewException review) {
+            if (review.failure == CapturedImageReviewCoordinator.Failure.APPROVAL_REJECTED) {
+                denied = true;
+                return LocalToolResult.metadata(error("APPROVAL_REJECTED", "用户拒绝发送本次图片", "结束本次任务，由用户重新发起"));
+            }
+            return LocalToolResult.metadata(error("CAPABILITY_UNAVAILABLE", "图片审阅未完成：" + review.failure.name(), "由用户核对，不重发旧图片"));
+        } catch (WindowCaptureException unavailable) {
+            return LocalToolResult.metadata(error(unavailable.code == WindowCaptureFailure.STALE_OBSERVATION
+                    ? "STALE_OBSERVATION" : "CAPABILITY_UNAVAILABLE", "截图条件不满足：" + unavailable.code.name(),
+                    "重新观察支持页面，或由用户接管"));
+        } catch (SupportedVisualPagePolicy.Rejected unsupported) {
+            requireCurrentConfiguration(owner, original.executionEpoch);
+            return LocalToolResult.metadata(error("CAPABILITY_UNAVAILABLE", "当前页面不支持图片观察：" + unsupported.reason.name(),
+                    "继续结构化操作，或由用户接管"));
+        } catch (WindowBufferCapturer.CaptureException capture) {
+            return LocalToolResult.metadata(error("CAPABILITY_UNAVAILABLE", "窗口截图失败：" + capture.code.name(), "由用户检查截图能力或接管"));
+        } catch (WindowPngConverter.ConversionException conversion) {
+            return LocalToolResult.metadata(error("CAPABILITY_UNAVAILABLE", "图片转换失败：" + conversion.code.name(), "继续结构化操作，或由用户接管"));
+        } catch (IllegalArgumentException invalid) {
+            return LocalToolResult.metadata(error("INVALID_ARGUMENT", "截图参数不符合本机契约", "按工具定义提供原观察版本"));
+        }
     }
 
     public static List<AppInfo> installedApps(Context context) {
@@ -274,7 +391,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         UNSUPPORTED_API, REAL_CONFIGURATION_REQUIRED, INVALID_ARGUMENT, WRONG_OWNER,
         STALE_OBSERVATION, DEVICE_BUSY, EXPIRED, ALREADY_USED, NOT_SUBMITTED, CONFIGURATION_CHANGED, UNAUTHORIZED_APP,
         INCOMPLETE_OBSERVATION, SENSITIVE_CONTENT, HIGH_IMPACT_CONTENT, OCCLUDED,
-        UNSUPPORTED_GEOMETRY, CONTROL_CHANGED, SERVICE_UNAVAILABLE, INTERNAL_CHECK_FAILED
+        UNSUPPORTED_GEOMETRY, CONTROL_CHANGED, SERVICE_UNAVAILABLE, INTERNAL_CHECK_FAILED, VISUAL_UNAVAILABLE
     }
 
     static final class WindowCaptureException extends Exception {
@@ -309,12 +426,14 @@ public final class AndroidDeviceTools implements ToolHandler {
         private final String nodeElementsDigest, contentAndActionsDigest;
         private final int observedNodeCount, observedObscurerCount;
         private final boolean observedTruncated;
-        private final Rect windowBounds, rootBounds, safeContent;
+        private final Rect windowBounds, rootBounds, safeContent, displayBounds;
+        private final SupportedVisualPagePolicy.Match visualPage;
         private final AtomicBoolean attempted = new AtomicBoolean();
         private volatile boolean submissionClaimed;
 
         private WindowCapturePermit(AndroidDeviceTools adapter, RunControl control, long epoch,
-                                    long deadline, Snapshot state, AgentAccessibilityService.ControlLease controls) {
+                                    long deadline, Snapshot state, AgentAccessibilityService.ControlLease controls,
+                                    SupportedVisualPagePolicy.Match visualPage) {
             this.adapter = adapter; this.control = control; this.service = adapter.service;
             configuration = adapter.configurationLease; grant = adapter.grants.get(state.packageName);
             taskId = control.getTaskId(); profileId = control.getProfileId(); executionEpoch = epoch;
@@ -328,7 +447,8 @@ public final class AndroidDeviceTools implements ToolHandler {
             observedNodeCount = state.elements.size(); observedObscurerCount = state.obscured.size();
             observedTruncated = state.truncated;
             windowBounds = new Rect(state.activeWindowBounds); rootBounds = new Rect(state.rootBounds);
-            safeContent = new Rect(state.safeContent); controlWindow = state.controlWindow; this.controls = controls;
+            safeContent = new Rect(state.safeContent); displayBounds = new Rect(state.displayBounds);
+            controlWindow = state.controlWindow; this.controls = controls; this.visualPage = visualPage;
         }
         Rect copyWindowBounds() { return new Rect(windowBounds); }
         Rect copyRootBounds() { return new Rect(rootBounds); }
@@ -349,18 +469,19 @@ public final class AndroidDeviceTools implements ToolHandler {
             // target tree, as well as again immediately before admitting capture.
             finalGuard(control, fixedEpoch, controls);
             requireCaptureContext(control, fixedEpoch, deadline);
-            try (Snapshot state = snapshot(control, fixedEpoch, PerformanceTrace.Stage.SNAPSHOT_OBSERVE)) {
+            try (Snapshot state = snapshotForCapture(control, fixedEpoch, controls, deadline)) {
                 requireCaptureState(state);
                 state.requireRevision(expectedRevision);
                 validateInstalledGrant(state.packageName);
                 requireFastGrant(state.packageName);
+                SupportedVisualPagePolicy.Match page = requireVisualPage(state);
                 state.verifyWindowUnchanged();
                 requireCaptureState(state);
                 requireCaptureControls(state.controlWindow, controls);
                 finalGuard(control, fixedEpoch, controls);
                 requireCaptureContext(control, fixedEpoch, deadline);
                 requireCaptureControls(state.controlWindow, controls);
-                return new WindowCapturePermit(this, control, fixedEpoch, deadline, state, controls);
+                return new WindowCapturePermit(this, control, fixedEpoch, deadline, state, controls, page);
             }
         } catch (DeviceException rejected) { throw captureFailure(rejected); }
         finally { service.endDeviceCall(); }
@@ -384,7 +505,7 @@ public final class AndroidDeviceTools implements ToolHandler {
             requireCaptureControls(permit.controlWindow, permit.controls);
             finalGuard(sameControl, sameEpoch, permit.controls);
             requireCaptureContext(sameControl, sameEpoch, permit.deadlineElapsedRealtimeMs);
-            try (Snapshot state = snapshot(sameControl, sameEpoch, PerformanceTrace.Stage.SNAPSHOT_OBSERVE)) {
+            try (Snapshot state = snapshotForCapture(sameControl, sameEpoch, permit.controls, permit.deadlineElapsedRealtimeMs)) {
                 // Reject a changed target as a stale permit before classifying
                 // the newly focused page. This still never skips content checks.
                 if (!permit.revision.equals(state.revision)) throw captureFailure(WindowCaptureFailure.STALE_OBSERVATION);
@@ -393,6 +514,7 @@ public final class AndroidDeviceTools implements ToolHandler {
                 requireCaptureState(state);
                 validateInstalledGrant(state.packageName);
                 requireFastGrant(state.packageName);
+                requireVisualPageMatch(permit, state);
                 state.verifyWindowUnchanged();
                 requireCaptureState(state);
                 requireCaptureMatch(permit, state);
@@ -428,6 +550,9 @@ public final class AndroidDeviceTools implements ToolHandler {
         owner.checkExecutionEpoch(fixedEpoch);
         if (!SettingsStore.isCurrent(configurationLease)) throw captureFailure(WindowCaptureFailure.CONFIGURATION_CHANGED);
         if (!service.isConnected()) throw captureFailure(WindowCaptureFailure.SERVICE_UNAVAILABLE);
+        if (visualOwner != null && (owner != visualOwner || fixedEpoch != visualEpoch
+                || visualInstall == null || !isVisualQualificationCurrent()))
+            throw captureFailure(WindowCaptureFailure.VISUAL_UNAVAILABLE);
     }
 
     /** Only immutable bindings and published in-memory state; safe for lightweight handoff checks. */
@@ -562,6 +687,8 @@ public final class AndroidDeviceTools implements ToolHandler {
                 requireReviewFinalVisualContext(context, deadlineElapsedRealtime, visualGeneration);
                 requireFastGrant(state.packageName);
                 requireReviewFinalVisualContext(context, deadlineElapsedRealtime, visualGeneration);
+                requireVisualPageMatch(historical, state);
+                requireReviewFinalVisualContext(context, deadlineElapsedRealtime, visualGeneration);
                 state.verifyWindowUnchanged();
                 requireCaptureState(state);
                 requireCaptureTargetMatch(historical, state);
@@ -652,13 +779,14 @@ public final class AndroidDeviceTools implements ToolHandler {
             requireCaptureControls(permit.controlWindow, permit.controls);
             finalGuard(sameControl, sameEpoch, permit.controls);
             requireCaptureContext(sameControl, sameEpoch, permit.deadlineElapsedRealtimeMs);
-            try (Snapshot state = snapshot(sameControl, sameEpoch, PerformanceTrace.Stage.SNAPSHOT_OBSERVE)) {
+            try (Snapshot state = snapshotForCapture(sameControl, sameEpoch, permit.controls, permit.deadlineElapsedRealtimeMs)) {
                 if (!permit.revision.equals(state.revision)) throw captureFailure(WindowCaptureFailure.STALE_OBSERVATION);
                 state.requireRevision(permit.revision);
                 requireCaptureMatch(permit, state);
                 requireCaptureState(state);
                 validateInstalledGrant(state.packageName);
                 requireFastGrant(state.packageName);
+                requireVisualPageMatch(permit, state);
                 state.verifyWindowUnchanged();
                 requireCaptureState(state);
                 requireCaptureMatch(permit, state);
@@ -694,6 +822,7 @@ public final class AndroidDeviceTools implements ToolHandler {
 
     private void requireCaptureContext(RunControl control, long epoch, long deadline) throws Exception {
         requireCurrentConfiguration(control, epoch);
+        requireVisualBinding(control, epoch);
         if (!SettingsStore.isCurrent(configurationLease)) cancelOriginal(control, epoch);
         if (!profileId.equals(control.getProfileId()) || !configurationLease.profileId.equals(profileId))
             throw captureFailure(WindowCaptureFailure.WRONG_OWNER);
@@ -727,18 +856,86 @@ public final class AndroidDeviceTools implements ToolHandler {
             throw captureFailure(WindowCaptureFailure.UNSUPPORTED_GEOMETRY);
     }
 
-    private void requireCaptureMatch(WindowCapturePermit permit, Snapshot state) throws WindowCaptureException {
+    private void requireCaptureMatch(WindowCapturePermit permit, Snapshot state) throws Exception {
         if (permit.controlWindow != state.controlWindow) throw captureFailure(WindowCaptureFailure.CONTROL_CHANGED);
         requireCaptureTargetMatch(permit, state);
     }
 
-    private void requireCaptureTargetMatch(WindowCapturePermit permit, Snapshot state) throws WindowCaptureException {
+    private void requireCaptureTargetMatch(WindowCapturePermit permit, Snapshot state) throws Exception {
         if (!permit.packageName.equals(state.packageName) || permit.grant != grants.get(state.packageName))
             throw captureFailure(WindowCaptureFailure.UNAUTHORIZED_APP);
         if (permit.windowId != state.windowId || permit.displayId != state.displayId || permit.windowType != state.windowType
                 || permit.rotation != state.rotation || !permit.windowSignature.equals(state.windowSignature)
                 || !permit.windowBounds.equals(state.activeWindowBounds) || !permit.rootBounds.equals(state.rootBounds)
-                || !permit.safeContent.equals(state.safeContent)) throw captureFailure(WindowCaptureFailure.STALE_OBSERVATION);
+                || !permit.safeContent.equals(state.safeContent) || !permit.displayBounds.equals(state.displayBounds))
+            throw captureFailure(WindowCaptureFailure.STALE_OBSERVATION);
+    }
+
+    private void requireVisualPageMatch(WindowCapturePermit permit, Snapshot state) throws Exception {
+        SupportedVisualPagePolicy.Match current = requireVisualPage(state);
+        if (permit.visualPage != null && (current == null || !permit.visualPage.policyId.equals(current.policyId)
+                || !permit.visualPage.fingerprint.equals(current.fingerprint)))
+            throw captureFailure(WindowCaptureFailure.STALE_OBSERVATION);
+    }
+
+    private Snapshot snapshotForCapture(RunControl owner, long epoch,
+            AgentAccessibilityService.ControlLease controls, long originalDeadline) throws Exception {
+        AgentAccessibilityService.OwnedControlWindowIdentity identity = service.getOwnedControlWindowIdentity();
+        requireCaptureControls(identity, controls);
+        return snapshotWithControls(owner, epoch, identity,
+                () -> requireCaptureContext(owner, epoch, originalDeadline));
+    }
+
+    private SupportedVisualPagePolicy.Match requireVisualPage(Snapshot state) throws Exception {
+        if (visualOwner == null) return null;
+        requireVisualBinding(state.control, state.epoch);
+        state.requireSnapshotCurrent();
+        SupportedVisualPagePolicy.requireCurrentInstall(service, grants.get(state.packageName), visualInstall,
+                state.control, state.epoch, configurationLease);
+        state.requireSnapshotCurrent();
+        return SupportedVisualPagePolicy.evaluate(visualInstall, state);
+    }
+
+    /**
+     * Read-only acceptance seam for an actual pinned installation. No capture,
+     * model qualification, screenshot permission or disclosure is granted here.
+     */
+    SupportedVisualPagePolicy.Match evaluateSupportedVisualPage(RunControl owner, long epoch,
+            String expectedRevision, SupportedVisualPagePolicy.VerifiedInstall installation) throws Exception {
+        requireCaptureEntry(owner, expectedRevision);
+        requireCurrentConfiguration(owner, epoch);
+        AgentAccessibilityService.ControlLease controls = acquireActionControls(owner, epoch);
+        if (!service.tryBeginDeviceCall()) throw captureFailure(WindowCaptureFailure.DEVICE_BUSY);
+        try {
+            finalGuard(owner, epoch, controls);
+            try (Snapshot state = snapshot(owner, epoch, PerformanceTrace.Stage.SNAPSHOT_OBSERVE)) {
+                state.requireRevision(expectedRevision);
+                requireCaptureState(state);
+                validateInstalledGrant(state.packageName);
+                SupportedVisualPagePolicy.requireCurrentInstall(service, grants.get(state.packageName), installation,
+                        owner, epoch, configurationLease);
+                state.requireSnapshotCurrent();
+                SupportedVisualPagePolicy.Match match = SupportedVisualPagePolicy.evaluate(installation, state);
+                state.verifyWindowUnchanged();
+                requireCaptureControls(state.controlWindow, controls);
+                finalGuard(owner, epoch, controls);
+                return match;
+            }
+        } catch (DeviceException rejected) { throw captureFailure(rejected); }
+        finally { service.endDeviceCall(); }
+    }
+
+    /** Called only by the actual platform-review route after its one final snapshot. */
+    DisclosureGuard reviewedImageGuard(DisclosureGuard finalWindowGuard) {
+        if (finalWindowGuard == null || visualInstall == null || !isVisualQualificationCurrent()) return null;
+        final RunControl originalOwner = visualOwner;
+        final long originalEpoch = visualEpoch;
+        final DisclosureGuard qualification = visualQualification;
+        final AgentAccessibilityService originalService = service;
+        final SettingsStore.ConfigurationLease originalConfiguration = configurationLease;
+        return (owner, epoch) -> owner == originalOwner && epoch == originalEpoch
+                && SettingsStore.isCurrent(originalConfiguration) && originalService.hasWindowCaptureCapability()
+                && qualification.isCurrent(owner, epoch) && finalWindowGuard.isCurrent(owner, epoch);
     }
 
     private static WindowCaptureException captureFailure(WindowCaptureFailure reason) {
@@ -1351,7 +1548,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         return focused;
     }
 
-    private final class Snapshot implements AutoCloseable {
+    private final class Snapshot implements AutoCloseable, SupportedVisualPagePolicy.SnapshotView {
         final RunControl control;
         final long epoch;
         final boolean readOnlyObservation;
@@ -1364,6 +1561,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         final Rect rootBounds = new Rect();
         final Rect activeWindowBounds = new Rect();
         final Rect safeContent = new Rect();
+        final Rect displayBounds = new Rect();
         final List<Rect> systemBars = new ArrayList<>();
         final List<Rect> obscured = new ArrayList<>();
         final JsonArray elements = new JsonArray();
@@ -1381,6 +1579,25 @@ public final class AndroidDeviceTools implements ToolHandler {
             this.controlWindow = controlWindow;
             this.extraGuard = extraGuard;
         }
+
+        @Override public String packageName() { return packageName; }
+        @Override public int windowId() { return windowId; }
+        @Override public int displayId() { return displayId; }
+        @Override public int windowType() { return windowType; }
+        @Override public int rotation() { return rotation; }
+        @Override public boolean scoped() { return scoped; }
+        @Override public boolean truncated() { return truncated; }
+        @Override public boolean sensitive() { return password; }
+        @Override public boolean highImpact() { return highImpactScreen; }
+        @Override public boolean ambiguousFocus() { return ambiguousCaptureFocus; }
+        @Override public boolean hasUnknownObscurer() { return !obscured.isEmpty(); }
+        @Override public Rect windowBounds() { return activeWindowBounds; }
+        @Override public Rect rootBounds() { return rootBounds; }
+        @Override public Rect safeContent() { return safeContent; }
+        @Override public Rect displayBounds() { return displayBounds; }
+        @Override public List<AccessibilityNodeInfo> ownedNodes() { return owned; }
+        @Override public Map<String, AccessibilityNodeInfo> visibleNodes() { return nodes; }
+        @Override public void checkCurrent() throws Exception { requireSnapshotCurrent(); }
 
         private void requireSnapshotCurrent() throws Exception {
             requireCurrentConfiguration(control, epoch);
@@ -1417,14 +1634,15 @@ public final class AndroidDeviceTools implements ToolHandler {
                 WindowManager wm = (WindowManager) service.getSystemService(Context.WINDOW_SERVICE);
                 if (wm == null) throw unavailable("显示几何信息不可用");
                 WindowMetrics metrics = wm.getCurrentWindowMetrics();
-                Rect displayBounds = metrics.getBounds();
+                displayBounds.set(metrics.getBounds());
                 Insets bars = metrics.getWindowInsets().getInsets(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
                 Insets safe = metrics.getWindowInsets().getInsets(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars() | WindowInsets.Type.displayCutout());
                 collectBarRegions(displayBounds, bars, systemBars);
                 safeContent.set(displayBounds.left + safe.left, displayBounds.top + safe.top,
                         displayBounds.right - safe.right, displayBounds.bottom - safe.bottom);
                 if (!safeContent.intersect(bounds) || safeContent.isEmpty()) throw unavailable("应用没有可验证的安全内容区域");
-                signature.append(":safe=").append(safeContent.toShortString());
+                signature.append(":safe=").append(safeContent.toShortString())
+                        .append(":display=").append(displayBounds.toShortString());
                 rotation = wm.getDefaultDisplay().getRotation();
                 signature.append(':').append(rotation);
                 for (AccessibilityWindowInfo window : windows) {
@@ -1490,7 +1708,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         void visit(AccessibilityNodeInfo node, String id, int depth) throws Exception {
             requireSnapshotCurrent();
             if (owned.size() > MAX_NODES || depth > 30 || SystemClock.elapsedRealtime() - started > 160) { truncated = true; return; }
-            boolean secret = sensitive(node);
+            boolean secret = AndroidDeviceTools.sensitive(node);
             if (secret) password = true;
             if (node.isVisibleToUser()) {
                 Rect box = new Rect(); node.getBoundsInScreen(box);

@@ -45,6 +45,7 @@ final class SecureImageReviewOverlay implements AutoCloseable {
         EXPLICIT, SHOW_FAILED, CONFIGURATION_WATCH, WINDOW_DETACHED, WINDOW_VISIBILITY,
         PREVIEW_NULL, PREVIEW_CONTEXT, PREVIEW_ATTACHMENT, PREDRAW_CONTEXT, PREDRAW_LAYOUT,
         VERIFY_REJECTED, VERIFY_CONTEXT, VERIFY_ERROR, VERIFY_POST_FAILED, VERIFY_QUEUE_REJECTED,
+        INITIAL_PUBLICATION_TIMEOUT,
         APPROVE_CONTEXT, APPROVE_LISTENER, USER_REJECTED, APPROVED_CONTEXT_CHANGED,
         REFRESH_CONTEXT, REFRESH_LAYOUT, WINDOW_REMOVED, TARGET_CONTENT_CHANGED,
         SERVICE_CONTROL_INVALIDATED, SERVICE_CONTROL_LAYOUT_REQUEST, SERVICE_CONTROL_LAYOUT_CHANGED,
@@ -58,8 +59,10 @@ final class SecureImageReviewOverlay implements AutoCloseable {
         GATED_CONTEXT, DEVICE_READY, APP_GRANT, FRESH_WINDOWS, WINDOW_COUNT,
         WINDOW_CONTEXT, REVIEW_WINDOW, CONTROL_WINDOW, FOCUSED_WINDOW, REQUIRED_WINDOW_COUNTS,
         TARGET_ROOT, TARGET_ROOT_IDENTITY, WINDOW_METRICS, UNKNOWN_OCCLUSION, FINAL_CONTEXT,
-        FINAL_DEVICE_READY, FINAL_READY_CONTEXT, VERIFIED
+        FINAL_DEVICE_READY, FINAL_READY_CONTEXT, INITIAL_PUBLICATION_PENDING, INITIAL_PUBLICATION_TIMEOUT, VERIFIED
     }
+    private enum Verification { VERIFIED, INITIAL_OWN_WINDOW_NOT_PUBLISHED, INVALID }
+
     /** Internal removal seam; actual attachment always decides whether admission can be released. */
     interface WindowRemover { void remove(WindowManager manager, View root); }
 
@@ -68,7 +71,7 @@ final class SecureImageReviewOverlay implements AutoCloseable {
         void onClosed(ImageReviewSession.State state, ImageReviewSession.Reason reason);
     }
 
-    private static final long CHECK_MS = 250, IDENTITY_WAIT_MS = 5_000;
+    private static final long CHECK_MS = 250, IDENTITY_WAIT_MS = 5_000, PUBLICATION_RECHECK_MS = 100;
     private static final int MAX_IDENTITY_WAITERS = 8;
     private static final ThreadPoolExecutor VERIFIER = new ThreadPoolExecutor(0, 1, 10,
             TimeUnit.SECONDS, new ArrayBlockingQueue<>(1), task -> {
@@ -97,6 +100,11 @@ final class SecureImageReviewOverlay implements AutoCloseable {
     private volatile ImageReviewSession.HostToken hostToken;
     private volatile boolean ended, closeRequested;
     private volatile long eventGeneration;
+    // Monotonic after main accepts a current, timely result. A superseded
+    // worker candidate cannot end the initial deadline or grant authority.
+    private volatile boolean metadataWasVerified;
+    private long initialPublicationDeadline, nextPublicationCheck;
+    private boolean waitingForInitialPublication;
     private final Object diagnosticLock = new Object();
     private volatile VerifyStage verifyStage = VerifyStage.NOT_STARTED;
     private volatile String windowDiagnostic = "not_read";
@@ -183,6 +191,7 @@ final class SecureImageReviewOverlay implements AutoCloseable {
         if (hostToken == null) throw new IllegalStateException("已有图片审阅正在进行。");
         shown = true;
         shownAt = SystemClock.elapsedRealtime();
+        initialPublicationDeadline = shownAt + Math.min(IDENTITY_WAIT_MS, Math.max(0, session.remainingMillis()));
         configurationWatch = configuration.watch(() -> close(CloseSource.CONFIGURATION_WATCH));
         if (!contextCurrent()) throw new IllegalStateException("图片审阅配置已改变。");
 
@@ -257,14 +266,21 @@ final class SecureImageReviewOverlay implements AutoCloseable {
 
     private void verifyWindow(AgentAccessibilityService.OwnedReviewWindowIdentity identity) {
         if (verificationPending || ended) return;
+        long now = SystemClock.elapsedRealtime();
+        if (!metadataWasVerified || waitingForInitialPublication) {
+            if (now >= initialPublicationDeadline) { close(CloseSource.INITIAL_PUBLICATION_TIMEOUT); return; }
+            if (now < nextPublicationCheck) return;
+            nextPublicationCheck = now + PUBLICATION_RECHECK_MS;
+        }
         verificationPending = true;
         long expectedEvents = eventGeneration;
+        boolean enforcePublicationDeadline = !metadataWasVerified || waitingForInitialPublication;
         try { VERIFIER.execute(() -> {
-            boolean valid = false;
-            try { valid = verifyMetadata(identity, expectedEvents); }
+            Verification valid = Verification.INVALID;
+            try { valid = verifyMetadata(identity, expectedEvents, enforcePublicationDeadline); }
             catch (Exception unavailable) { /* Only bounded lifecycle metadata is exposed to the host. */ }
             catch (Error failure) { close(CloseSource.VERIFY_ERROR); throw failure; }
-            boolean accepted = valid;
+            Verification accepted = valid;
             if (!main.post(() -> {
                 verificationPending = false;
                 if (ended || closeRequested) return;
@@ -272,9 +288,24 @@ final class SecureImageReviewOverlay implements AutoCloseable {
                 if (!service.isOwnedReviewWindowCurrent(identity) || expectedEvents != eventGeneration) {
                     root.invalidate(); return;
                 }
-                if (!accepted || !contextCurrent()) {
-                    close(accepted ? CloseSource.VERIFY_CONTEXT : CloseSource.VERIFY_REJECTED); return;
+                if (accepted == Verification.INVALID || !contextCurrent()) {
+                    close(accepted == Verification.INVALID ? CloseSource.VERIFY_REJECTED : CloseSource.VERIFY_CONTEXT); return;
                 }
+                if (accepted == Verification.INITIAL_OWN_WINDOW_NOT_PUBLISHED) {
+                    // No approval is enabled. The existing context tick requests
+                    // another draw; this fixed gate also prevents per-frame polling.
+                    if (metadataWasVerified || SystemClock.elapsedRealtime() >= initialPublicationDeadline) {
+                        close(CloseSource.INITIAL_PUBLICATION_TIMEOUT); return;
+                    }
+                    waitingForInitialPublication = true;
+                    nextPublicationCheck = SystemClock.elapsedRealtime() + PUBLICATION_RECHECK_MS;
+                    return;
+                }
+                if (enforcePublicationDeadline && SystemClock.elapsedRealtime() >= initialPublicationDeadline) {
+                    close(CloseSource.INITIAL_PUBLICATION_TIMEOUT); return;
+                }
+                waitingForInitialPublication = false;
+                metadataWasVerified = true;
                 verifiedWindow = identity; root.invalidate();
             })) close(CloseSource.VERIFY_POST_FAILED);
         }); } catch (RuntimeException | Error rejected) {
@@ -283,30 +314,31 @@ final class SecureImageReviewOverlay implements AutoCloseable {
     }
 
     /** Metadata only. The ordinary tool whitelist and final disclosure policy are intentionally untouched. */
-    private boolean verifyMetadata(AgentAccessibilityService.OwnedReviewWindowIdentity identity, long expectedEvents) throws Exception {
+    private Verification verifyMetadata(AgentAccessibilityService.OwnedReviewWindowIdentity identity, long expectedEvents,
+                                        boolean enforcePublicationDeadline) throws Exception {
         verifyStage = VerifyStage.START_CONTEXT;
         windowDiagnostic = "not_read"; windowCounts = "not_counted";
         checkWorkerContext(identity, expectedEvents);
         verifyStage = VerifyStage.CONFIGURATION_IDENTITY;
-        if (!validateConfigurationIdentity()) return false;
+        if (!validateConfigurationIdentity()) return Verification.INVALID;
         verifyStage = VerifyStage.CONFIGURATION_CONTEXT;
         checkWorkerContext(identity, expectedEvents);
         verifyStage = VerifyStage.DEVICE_GATE;
-        if (!service.tryBeginDeviceCall()) return false;
+        if (!service.tryBeginDeviceCall()) return Verification.INVALID;
         List<AccessibilityWindowInfo> windows = null;
         try {
             verifyStage = VerifyStage.GATED_CONTEXT;
             checkWorkerContext(identity, expectedEvents);
             verifyStage = VerifyStage.DEVICE_READY;
-            if (!service.isDeviceReady()) return false;
+            if (!service.isDeviceReady()) return Verification.INVALID;
             verifyStage = VerifyStage.APP_GRANT;
-            if (!SettingsStore.isGrantValid(service, verifiedGrant)) return false;
+            if (!SettingsStore.isGrantValid(service, verifiedGrant)) return Verification.INVALID;
             verifyStage = VerifyStage.FRESH_WINDOWS;
             windows = AndroidDeviceTools.freshWindows(service, () -> checkWorkerContext(identity, expectedEvents));
             try { windowDiagnostic = windowMetadata(windows, identity); }
             catch (RuntimeException | OutOfMemoryError diagnosticUnavailable) { windowDiagnostic = "unavailable"; }
             verifyStage = VerifyStage.WINDOW_COUNT;
-            if (windows == null || windows.isEmpty() || windows.size() > 40) return false;
+            if (windows == null || windows.isEmpty() || windows.size() > 40) return Verification.INVALID;
             int reviews = 0, focused = 0, controlCount = 0;
             AccessibilityWindowInfo target = null;
             CoordinateNodeResolver.Binding source = session.binding.observation;
@@ -321,38 +353,41 @@ final class SecureImageReviewOverlay implements AutoCloseable {
                     reviews++;
                     if (window.getType() != AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY
                             || window.getDisplayId() != Display.DEFAULT_DISPLAY || window.isFocused()
-                            || !bounds.equals(identity.copyBounds())) return false;
+                            || !bounds.equals(identity.copyBounds())) return Verification.INVALID;
                 }
                 if (window.getId() == controls.windowId) {
                     verifyStage = VerifyStage.CONTROL_WINDOW;
                     controlCount++;
                     if (window.getType() != AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY
                             || window.getDisplayId() != controls.displayId || window.isFocused()
-                            || !bounds.equals(controls.copyBounds()) || Rect.intersects(bounds, identity.copyBounds())) return false;
+                            || !bounds.equals(controls.copyBounds()) || Rect.intersects(bounds, identity.copyBounds())) return Verification.INVALID;
                 }
                 if (window.isFocused()) {
                     verifyStage = VerifyStage.FOCUSED_WINDOW;
                     focused++;
                     if (window.getId() != source.windowId || window.getDisplayId() != source.displayId
-                            || window.getType() != AccessibilityWindowInfo.TYPE_APPLICATION || !bounds.equals(targetBounds)) return false;
+                            || window.getType() != AccessibilityWindowInfo.TYPE_APPLICATION || !bounds.equals(targetBounds)) return Verification.INVALID;
                     target = window;
                 }
             }
             try { windowCounts = "review=" + reviews + ",control=" + controlCount + ",focused=" + focused; }
             catch (OutOfMemoryError diagnosticUnavailable) { windowCounts = "unavailable"; }
             verifyStage = VerifyStage.REQUIRED_WINDOW_COUNTS;
-            if (reviews != 1 || controlCount != 1 || focused != 1 || target == null) return false;
+            if (reviews > 1 || controlCount != 1 || focused != 1 || target == null
+                    || reviews == 0 && metadataWasVerified) return Verification.INVALID;
+            // Only initial absence can proceed to the remaining checks. It is
+            // not readiness until target root, unknown windows and final guards pass.
             verifyStage = VerifyStage.TARGET_ROOT;
             AccessibilityNodeInfo targetRoot = target.getRoot();
-            if (targetRoot == null) return false;
+            if (targetRoot == null) return Verification.INVALID;
             try {
                 verifyStage = VerifyStage.TARGET_ROOT_IDENTITY;
                 if (targetRoot.getWindowId() != source.windowId || !source.packageName.contentEquals(
-                        targetRoot.getPackageName() == null ? "" : targetRoot.getPackageName())) return false;
+                        targetRoot.getPackageName() == null ? "" : targetRoot.getPackageName())) return Verification.INVALID;
             } finally { targetRoot.recycle(); }
             verifyStage = VerifyStage.WINDOW_METRICS;
             WindowManager manager = service.getSystemService(WindowManager.class);
-            if (manager == null) return false;
+            if (manager == null) return Verification.INVALID;
             WindowMetrics metrics = manager.getCurrentWindowMetrics();
             Insets bars = metrics.getWindowInsets().getInsets(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
             Rect screen = metrics.getBounds();
@@ -364,7 +399,7 @@ final class SecureImageReviewOverlay implements AutoCloseable {
                 if (!Rect.intersects(other, targetBounds) && !Rect.intersects(other, identity.copyBounds())
                         && !Rect.intersects(other, controls.copyBounds())) continue;
                 if (window.getType() == AccessibilityWindowInfo.TYPE_SYSTEM && inVisibleBar(other, screen, bars)) continue;
-                return false;
+                return Verification.INVALID;
             }
             verifyStage = VerifyStage.FINAL_CONTEXT;
             checkWorkerContext(identity, expectedEvents);
@@ -372,8 +407,19 @@ final class SecureImageReviewOverlay implements AutoCloseable {
             boolean ready = service.isDeviceReady();
             verifyStage = VerifyStage.FINAL_READY_CONTEXT;
             checkWorkerContext(identity, expectedEvents);
-            verifyStage = ready ? VerifyStage.VERIFIED : VerifyStage.FINAL_DEVICE_READY;
-            return ready;
+            if (!ready) { verifyStage = VerifyStage.FINAL_DEVICE_READY; return Verification.INVALID; }
+            if (enforcePublicationDeadline && SystemClock.elapsedRealtime() >= initialPublicationDeadline) {
+                verifyStage = VerifyStage.INITIAL_PUBLICATION_TIMEOUT; return Verification.INVALID;
+            }
+            if (reviews == 0) {
+                // Still no published self window: all other original checks just
+                // passed, and main has never accepted a current verified result.
+                if (metadataWasVerified) return Verification.INVALID;
+                verifyStage = VerifyStage.INITIAL_PUBLICATION_PENDING;
+                return Verification.INITIAL_OWN_WINDOW_NOT_PUBLISHED;
+            }
+            verifyStage = VerifyStage.VERIFIED;
+            return Verification.VERIFIED;
         } finally {
             if (windows != null) for (AccessibilityWindowInfo window : windows) window.recycle();
             service.endDeviceCall();
@@ -499,6 +545,10 @@ final class SecureImageReviewOverlay implements AutoCloseable {
         boolean current = contextCurrent();
         if (!current || shown && !secureLayout()) {
             close(current ? CloseSource.REFRESH_LAYOUT : CloseSource.REFRESH_CONTEXT); return;
+        }
+        if (shown && (!metadataWasVerified || waitingForInitialPublication)
+                && SystemClock.elapsedRealtime() >= initialPublicationDeadline) {
+            close(CloseSource.INITIAL_PUBLICATION_TIMEOUT); return;
         }
         completeIdentityWaiters(refreshIdentity());
         if (verifiedWindow == null) root.invalidate();

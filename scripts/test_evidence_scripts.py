@@ -96,7 +96,7 @@ class EvidenceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             (root / "scripts").mkdir()
-            for name in ("run_android_tests.sh", "collect_android_evidence.py", "print_android_test_failures.py",
+            for name in ("run_android_tests.sh", "run_bounded_instrumentation.py", "collect_android_evidence.py", "print_android_test_failures.py",
                          "collect_performance_evidence.py"):
                 (root / "scripts" / name).write_bytes((SCRIPTS / name).read_bytes())
             (root / "bin").mkdir()

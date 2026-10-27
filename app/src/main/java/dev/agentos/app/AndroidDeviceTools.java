@@ -422,6 +422,23 @@ public final class AndroidDeviceTools implements ToolHandler {
         requireCaptureControls(permit.controlWindow, permit.controls);
     }
 
+    /** Pure identity check for a past capture, not permission to capture or disclose again. */
+    boolean ownsHistoricalWindowCapture(WindowCapturePermit permit, RunControl owner, long fixedEpoch) {
+        return permit != null && permit.adapter == this && permit.control == owner
+                && permit.executionEpoch == fixedEpoch && permit.service == service
+                && permit.configuration == configurationLease && configurationLease != null;
+    }
+
+    /**
+     * A successfully converted image can enter a separate review after the capture
+     * deadline. Keep the original context, but do not renew that deadline or reuse
+     * its old control geometry. The future disclosure path still needs fresh guards.
+     */
+    void checkHistoricalWindowCaptureContext(WindowCapturePermit permit, RunControl owner, long fixedEpoch) throws Exception {
+        requireWindowCaptureBinding(permit, owner, fixedEpoch);
+        checkWindowCaptureRequestCurrent(owner, fixedEpoch);
+    }
+
     /**
      * Revalidates a result against the original submitted permit on a worker.
      * No capture is retried, no deadline/revision is updated, and this check is

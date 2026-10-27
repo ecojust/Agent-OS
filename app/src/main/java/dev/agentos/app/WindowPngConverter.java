@@ -7,9 +7,12 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.hardware.HardwareBuffer;
 import android.os.Looper;
+import android.os.SystemClock;
 import dev.agentos.core.ImageAttachment;
 import dev.agentos.core.ImageWorkset;
 import dev.agentos.core.PngImage;
+import dev.agentos.core.RunControl;
+import dev.agentos.core.ToolRequest;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
@@ -32,17 +35,143 @@ final class WindowPngConverter {
     @FunctionalInterface interface PngEncoder { boolean encode(Bitmap software, OutputStream output) throws Exception; }
     private final SoftwareCopy copier;
     private final PngEncoder encoder;
+    private final boolean productionConversion;
 
     WindowPngConverter() {
         this(hardware -> hardware.copy(Bitmap.Config.ARGB_8888, false),
-                (software, output) -> software.compress(Bitmap.CompressFormat.PNG, 100, output));
+                (software, output) -> software.compress(Bitmap.CompressFormat.PNG, 100, output), true);
     }
-    private WindowPngConverter(SoftwareCopy copier, PngEncoder encoder) {
+    private WindowPngConverter(SoftwareCopy copier, PngEncoder encoder, boolean productionConversion) {
         this.copier = Objects.requireNonNull(copier); this.encoder = Objects.requireNonNull(encoder);
+        this.productionConversion = productionConversion;
     }
     /** Narrow worker allocation/encoding seams; all ownership, guards, and validation stay in convert. */
     static WindowPngConverter forTesting(SoftwareCopy copier, PngEncoder encoder) {
-        return new WindowPngConverter(copier, encoder);
+        return new WindowPngConverter(copier, encoder, false);
+    }
+
+    enum ReceiptFailure { MISSING_TYPED_REQUEST, WRONG_REQUEST, WRONG_OWNER, NON_PLATFORM_SOURCE,
+        NOT_SYNTHETIC_SOURCE, ALREADY_TRANSFERRED, CLOSED }
+    static final class ReceiptException extends Exception {
+        final ReceiptFailure code;
+        private ReceiptException(ReceiptFailure code) {
+            super("Captured PNG receipt rejected: " + code); this.code = code;
+        }
+    }
+
+    /**
+     * Historical association with one successful conversion, not screenshot or
+     * disclosure permission. Only the converter can mint this owner, and only
+     * after its existing cleanup and original five-second checks have passed.
+     */
+    static final class CapturedPng implements AutoCloseable {
+        final String captureId, taskId, profileId, configurationToken, packageName, revision, sha256;
+        final long executionEpoch, captureUptimeMillis, convertedElapsedRealtimeMillis,
+                originalCaptureDeadlineElapsedRealtimeMillis;
+        final int windowId, displayId, rotation, width, height, encodedBytes;
+        private final ToolRequest originalRequest;
+        private final AndroidDeviceTools.WindowCapturePermit historicalPermit;
+        private final boolean platformCapture;
+        private PngImage image;
+        private boolean transferred, closed;
+
+        private CapturedPng(WindowBufferCapturer.CapturedWindow source, PngImage image, boolean productionConversion)
+                throws ReceiptException {
+            ToolRequest request = source.originalRequest();
+            if (request == null) throw new ReceiptException(ReceiptFailure.MISSING_TYPED_REQUEST);
+            AndroidDeviceTools.WindowCapturePermit permit = source.permit;
+            if (!permit.taskId.equals(request.taskId) || !permit.profileId.equals(request.profileId)
+                    || permit.executionEpoch != request.executionEpoch
+                    || !permit.revision.equals(request.getArguments().get("expectedRevision").getAsString()))
+                throw new ReceiptException(ReceiptFailure.WRONG_REQUEST);
+            this.originalRequest = request; historicalPermit = permit;
+            platformCapture = source.isPlatformCapture() && productionConversion;
+            captureId = permit.captureId; taskId = permit.taskId; profileId = permit.profileId;
+            configurationToken = permit.configurationToken; packageName = permit.packageName; revision = permit.revision;
+            executionEpoch = permit.executionEpoch; windowId = permit.windowId; displayId = permit.displayId;
+            rotation = permit.rotation; captureUptimeMillis = source.metadata.uptimeTimestamp;
+            originalCaptureDeadlineElapsedRealtimeMillis = source.captureDeadlineElapsedRealtimeMillis();
+            convertedElapsedRealtimeMillis = SystemClock.elapsedRealtime();
+            width = image.width; height = image.height; encodedBytes = image.encodedBytes; sha256 = image.sha256;
+            this.image = image;
+        }
+
+        // ToolRequest itself is immutable; getArguments() already returns a copy.
+        ToolRequest getOriginalRequest() { return originalRequest; }
+        Rect copyWindowBounds() { return historicalPermit.copyWindowBounds(); }
+        Rect copyRootBounds() { return historicalPermit.copyRootBounds(); }
+        Rect copySafeContent() { return historicalPermit.copySafeContent(); }
+        boolean isPlatformCapture() { return platformCapture; }
+        synchronized boolean isTransferred() { return transferred; }
+        synchronized boolean isClosed() { return closed; }
+
+        /** Transfers once for local review only; fresh target/disclosure guards remain mandatory. */
+        PngImage claimForReview(ToolRequest expected, AndroidDeviceTools adapter, RunControl owner) throws Exception {
+            return claim(expected, adapter, owner, true);
+        }
+
+        /** Synthetic sources cannot use the production claim, and real sources cannot use this seam. */
+        PngImage claimForTesting(ToolRequest expected, AndroidDeviceTools adapter, RunControl owner) throws Exception {
+            return claim(expected, adapter, owner, false);
+        }
+
+        private synchronized PngImage claim(ToolRequest expected, AndroidDeviceTools adapter,
+                                            RunControl owner, boolean requirePlatform) throws Exception {
+            if (Looper.myLooper() == Looper.getMainLooper()) throw new IllegalStateException("PNG transfer requires a worker");
+            if (transferred) throw new ReceiptException(ReceiptFailure.ALREADY_TRANSFERRED);
+            if (closed || image == null) throw new ReceiptException(ReceiptFailure.CLOSED);
+            if (!sameRequest(originalRequest, expected)) throw new ReceiptException(ReceiptFailure.WRONG_REQUEST);
+            if (adapter == null || owner == null || !adapter.ownsHistoricalWindowCapture(historicalPermit, owner, executionEpoch))
+                throw new ReceiptException(ReceiptFailure.WRONG_OWNER);
+            if (platformCapture != requirePlatform) throw new ReceiptException(requirePlatform
+                    ? ReceiptFailure.NON_PLATFORM_SOURCE : ReceiptFailure.NOT_SYNTHETIC_SOURCE);
+            // Deliberately no old capture deadline or control-bar lease check:
+            // this is historical image ownership entering a new local review.
+            adapter.checkHistoricalWindowCaptureContext(historicalPermit, owner, executionEpoch);
+            PngImage result = image; image = null; transferred = true; return result;
+        }
+
+        private static boolean sameRequest(ToolRequest a, ToolRequest b) {
+            return b != null && a.protocolVersion == b.protocolVersion && a.executionEpoch == b.executionEpoch
+                    && Objects.equals(a.taskId, b.taskId) && Objects.equals(a.callId, b.callId)
+                    && Objects.equals(a.profileId, b.profileId) && Objects.equals(a.tool, b.tool)
+                    && Objects.equals(a.getArguments(), b.getArguments());
+        }
+
+        /** A failed claim keeps ownership here; the original caller closes it in its failure path. */
+        @Override public void close() {
+            PngImage released;
+            synchronized (this) { closed = true; released = image; image = null; }
+            if (released != null) released.close();
+        }
+    }
+
+    /**
+     * Consumes the source, reusing exactly the existing conversion/cleanup path.
+     * A caller cannot attach a new request or replace the PNG when minting a receipt.
+     */
+    CapturedPng convertCaptured(WindowBufferCapturer.CapturedWindow source) throws Exception {
+        if (Looper.myLooper() == Looper.getMainLooper()) throw new IllegalStateException("Window conversion requires a worker");
+        Objects.requireNonNull(source);
+        boolean conversionEntered = false;
+        PngImage image = null;
+        CapturedPng receipt = null;
+        try {
+            if (source.originalRequest() == null) throw new ReceiptException(ReceiptFailure.MISSING_TYPED_REQUEST);
+            conversionEntered = true;
+            image = convert(source);
+            source.checkConversionCurrent();
+            receipt = new CapturedPng(source, image, productionConversion);
+            image = null;
+            source.checkConversionCurrent();
+            CapturedPng completed = receipt; receipt = null; return completed;
+        } finally {
+            if (image != null) image.close();
+            if (receipt != null) receipt.close();
+            // convert owns cleanup once entered; never retry an uncertain native
+            // close or release its capture slot from this wrapper's failure path.
+            if (!conversionEntered) source.close();
+        }
     }
 
     /** Consumes source ownership. All native/software cleanup occurs on this same worker. */

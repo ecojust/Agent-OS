@@ -12,6 +12,8 @@ import android.os.SystemClock;
 
 import dev.agentos.core.ImageWorkset;
 import dev.agentos.core.RunControl;
+import dev.agentos.core.ToolCatalog;
+import dev.agentos.core.ToolRequest;
 import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -37,7 +39,7 @@ final class WindowBufferCapturer {
         void failure(int platformCode);
     }
     @FunctionalInterface interface Backend { void submit(int windowId, Callback callback) throws Exception; }
-    enum Failure { BUSY, TIMEOUT, ABANDONED, ALREADY_CLAIMED, PLATFORM_UNAVAILABLE, PLATFORM_FAILURE,
+    enum Failure { BUSY, TIMEOUT, ABANDONED, ALREADY_CLAIMED, INVALID_REQUEST, PLATFORM_UNAVAILABLE, PLATFORM_FAILURE,
         SUBMISSION_UNCERTAIN, BUDGET_EXCEEDED, INVALID_BUFFER, PROTOCOL_ERROR }
     static final class CaptureException extends Exception {
         final Failure code;
@@ -76,8 +78,29 @@ final class WindowBufferCapturer {
     }
 
     CaptureRequest start(RunControl owner, long fixedEpoch, String expectedRevision) throws Exception {
+        // Legacy raw/conversion tests have no original call identity. They can
+        // never be upgraded later into a typed captured-PNG receipt.
+        return startInternal(owner, fixedEpoch, expectedRevision, null);
+    }
+
+    CaptureRequest start(ToolRequest original, RunControl owner) throws Exception {
+        if (original == null || owner == null || original.protocolVersion != ToolCatalog.PROTOCOL_VERSION
+                || !"take_screenshot".equals(original.tool) || original.callId == null
+                || !original.callId.matches("[A-Za-z0-9_.:-]{1,128}")
+                || !owner.getTaskId().equals(original.taskId) || !owner.getProfileId().equals(original.profileId))
+            throw new CaptureException(Failure.INVALID_REQUEST);
+        com.google.gson.JsonObject arguments = original.getArguments();
+        try { ToolCatalog.validate(original.tool, arguments); }
+        catch (IllegalArgumentException invalid) { throw new CaptureException(Failure.INVALID_REQUEST, invalid); }
+        // ToolRequest is immutable and returns defensive argument copies. Retain
+        // this original identity from entry; conversion cannot supply a call ID.
+        return startInternal(owner, original.executionEpoch, arguments.get("expectedRevision").getAsString(), original);
+    }
+
+    private CaptureRequest startInternal(RunControl owner, long fixedEpoch, String expectedRevision,
+                                         ToolRequest original) throws Exception {
         tools.checkWindowCaptureRequestCurrent(owner, fixedEpoch);
-        CaptureRequest request = new CaptureRequest(owner, fixedEpoch, expectedRevision);
+        CaptureRequest request = new CaptureRequest(owner, fixedEpoch, expectedRevision, original);
         if (!SLOT.compareAndSet(null, request)) throw new CaptureException(Failure.BUSY);
         try { WORKER.execute(request::run); }
         catch (RuntimeException | Error rejected) {
@@ -121,6 +144,7 @@ final class WindowBufferCapturer {
         private final RunControl control;
         private final long epoch, requestDeadline = SystemClock.elapsedRealtime() + REQUEST_MS;
         private final String revision;
+        private final ToolRequest originalRequest;
         private volatile AndroidDeviceTools.WindowCapturePermit permit;
         private boolean abandoned, workerDone, submissionEntered, submissionReturned;
         private boolean receiving, resourceSettled = true, claimed, conversionHeld;
@@ -141,8 +165,9 @@ final class WindowBufferCapturer {
         private OwnedWindowBuffer owned;
         private CapturedWindow ready;
 
-        private CaptureRequest(RunControl control, long epoch, String revision) {
+        private CaptureRequest(RunControl control, long epoch, String revision, ToolRequest originalRequest) {
             this.control = control; this.epoch = epoch; this.revision = revision;
+            this.originalRequest = originalRequest;
         }
 
         private void checkCurrent() throws Exception {
@@ -397,7 +422,7 @@ final class WindowBufferCapturer {
         private final OwnedWindowBuffer owned;
         private final CaptureRequest request;
         private boolean conversionStarted;
-        CapturedWindow(CaptureRequest request, AndroidDeviceTools.WindowCapturePermit permit, RunControl control, long epoch,
+        private CapturedWindow(CaptureRequest request, AndroidDeviceTools.WindowCapturePermit permit, RunControl control, long epoch,
                        OwnedWindowBuffer owned, Metadata metadata, long deadline) {
             this.permit = permit; this.control = control; this.epoch = epoch; this.owned = owned; this.metadata = metadata;
             this.deadline = deadline; this.request = request;
@@ -414,6 +439,10 @@ final class WindowBufferCapturer {
         }
         /** Raw may already be closed during encoding; the original context/deadline still applies. */
         void checkConversionCurrent() throws Exception { requireWorker(); checkReadable(); }
+
+        ToolRequest originalRequest() { return request.originalRequest; }
+        boolean isPlatformCapture() { return platformBackend; }
+        long captureDeadlineElapsedRealtimeMillis() { return deadline; }
 
         OwnedWindowBuffer.ReadLease openRead() throws Exception {
             requireWorker();

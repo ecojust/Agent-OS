@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T11:12:52Z",
-  "note": "Add foreground task-usage reporting from original RunControl counters, freeze terminal statistics and isolate new tasks. Six real Controller/UI regressions compile; APKs and lint pass. Core267/267 passed; device validation for token limits and usage is pending.",
+  "updated_at": "2026-10-27T11:13:37Z",
+  "note": "Accept the bounded structured-window checkpoint from 144 existing verified records across eight APIs; publish the evidence mapping and retained limits. Token-limit and usage modules are committed with builds/lint passing; their device regressions are pending.",
   "latest_evidence": {
     "path": "screenshots/40489790843-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40489790843"
@@ -46,7 +46,9 @@
     {
       "id": "focused_windows",
       "name": "焦点窗口一致性与切换回归",
-      "status": "in_progress"
+      "status": "complete",
+      "evidence": "docs/validation/structured-windows.md",
+      "scope": "Current structured-operation contract using platform-reported input-focused windows, registered controls, reported blockers and final checks.18 named cases x8 emulators=144 passed within run40489790843. Mapping published after review; not predeclared acceptance. Unreported IME differences, OEM, rotation/multiwindow/PiP and visual gestures are excluded and remain unverified."
     },
     {
       "id": "capabilities",

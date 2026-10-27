@@ -21,13 +21,13 @@
 <!-- development-progress:start -->
 ## Development Progress
 
-![开发检查点：8/20，40%](docs/diagrams/development-progress.svg)
+![开发检查点：9/20，45%](docs/diagrams/development-progress.svg)
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Add foreground task-usage reporting from original RunControl counters, freeze terminal statistics and isolate new tasks. Six real Controller/UI regressions compile; APKs and lint pass. Core267/267 passed; device validation for token limits and usage is pending.
+**本次更新：** Accept the bounded structured-window checkpoint from 144 existing verified records across eight APIs; publish the evidence mapping and retained limits. Token-limit and usage modules are committed with builds/lint passing; their device regressions are pending.
 
-**记录时间：** 2026-10-27T11:12:52Z
+**记录时间：** 2026-10-27T11:13:37Z
 
 [最近测试截图与清单](screenshots/40489790843-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40489790843)。通过、失败及未截图原因见清单。
 
@@ -39,7 +39,7 @@
 | 模型网关与连接探测 | 已完成 |
 | 原生控制台与加密配置 | 已完成 |
 | 基础结构化设备操作 | 已完成 |
-| 焦点窗口一致性与切换回归 | 进行中 |
+| 焦点窗口一致性与切换回归 | 已完成 |
 | 设备能力与兼容性诊断 | 已完成 |
 | 逐次测试截图与证据归档 | 已完成 |
 | Android 11–17 API 行为矩阵 | 进行中 |

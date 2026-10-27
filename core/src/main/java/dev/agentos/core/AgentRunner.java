@@ -70,6 +70,15 @@ public final class AgentRunner {
             }
             @Override public JsonObject execute(String name, JsonObject arguments, RunControl active,
                                                 long requestEpoch) throws Exception {
+                JsonObject rejected = guard(name, arguments, active, requestEpoch);
+                return rejected != null ? rejected : tools.execute(name, arguments, active, requestEpoch);
+            }
+            @Override public LocalToolResult execute(ToolRequest request, RunControl active) throws Exception {
+                JsonObject rejected = guard(request.tool, request.getArguments(), active, request.executionEpoch);
+                return rejected != null ? LocalToolResult.metadata(rejected) : tools.execute(request, active);
+            }
+            private JsonObject guard(String name, JsonObject arguments, RunControl active,
+                                     long requestEpoch) throws TaskControlException {
                 active.checkExecutionEpoch(requestEpoch);
                 boolean imageOrWrite = "take_screenshot".equals(name) || ToolCatalog.isMutation(name);
                 // A point-to-node lookup still belongs to the original UI plan.
@@ -81,7 +90,7 @@ public final class AgentRunner {
                     return ToolDispatcher.error("STALE_OBSERVATION", "请求使用了过期界面版本，请根据最新观察重新规划。");
                 state.actualDeviceCall = true;
                 if ("observe".equals(name) || "wait".equals(name)) state.clearImage();
-                return tools.execute(name, arguments, active, requestEpoch);
+                return null;
             }
         };
         try (ToolDispatcher dispatcher = new ToolDispatcher(guarded)) {

@@ -84,6 +84,29 @@ public final class ImageAttachment implements AutoCloseable {
         }
     }
 
+    /**
+     * Takes the already validated PNG owner at entry, including every failure path.
+     * This only validates the local result contract; the platform adapter remains
+     * responsible for original-request capture/review and final disclosure guards.
+     */
+    static ImageAttachment fromOwnedPng(ToolRequest request, JsonObject result, PngImage owned) {
+        boolean transferred = false;
+        try {
+            if (owned == null || owned.isClosed() || !"take_screenshot".equals(request.tool)
+                    || !booleanTrue(result.get("ok")) || result.has("imageDataUrl")) throw invalid();
+            JsonObject data = result.has("data") && result.get("data").isJsonObject()
+                    ? result.getAsJsonObject("data") : null;
+            JsonObject arguments = request.getArguments();
+            String revision = arguments == null ? null : string(arguments.get("expectedRevision"));
+            if (data == null || revision == null || !revision.equals(string(data.get("revision")))) throw invalid();
+            checkDimensionMetadata(data, "width", owned.width);
+            checkDimensionMetadata(data, "height", owned.height);
+            ImageAttachment attachment = new ImageAttachment(request, revision, owned);
+            transferred = true;
+            return attachment;
+        } finally { if (!transferred && owned != null) owned.close(); }
+    }
+
     /** Transfers the same PNG owner once; the receiving request must close it even on failure. */
     synchronized PngImage consumePng(RunControl control, long epoch, String currentRevision) throws TaskControlException {
         try {

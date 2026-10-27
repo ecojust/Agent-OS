@@ -70,23 +70,29 @@ public final class ToolDispatcher implements AutoCloseable {
                     catch (IllegalArgumentException invalid) { return save(entry, envelope(request, error("INVALID_ARGUMENT", invalid.getMessage()))); }
                     control.checkExecutionEpoch(request.executionEpoch);
                     enteredHandler = true;
-                    result = handler.execute(request.tool, arguments.deepCopy(), control, request.executionEpoch);
-                    if (result == null || !result.has("ok") || !result.get("ok").isJsonPrimitive() || !result.get("ok").getAsJsonPrimitive().isBoolean())
-                        result = error(ToolCatalog.isMutation(request.tool) ? "OUTCOME_UNKNOWN" : "INVALID_RESULT", "执行器没有返回可核对的结果。");
-                    else {
-                        result = result.deepCopy();
-                        // Strip bytes before saving any ledger entry, including failures
-                        // and images attached to the wrong tool. Only the local screenshot
-                        // adapter can create a transient typed image for this request.
-                        JsonElement dataUrl = result.remove("imageDataUrl");
-                        if (dataUrl != null || "take_screenshot".equals(request.tool) && result.get("ok").getAsBoolean()) {
-                            try {
-                                image[0] = ImageAttachment.fromLocalResult(request, result, dataUrl);
-                                result.add("imageAttachment", image[0].metadata());
-                            } catch (IllegalArgumentException invalidImage) {
-                                result = error(ToolCatalog.isMutation(request.tool) ? "OUTCOME_UNKNOWN" : "INVALID_RESULT",
-                                        ToolCatalog.isMutation(request.tool) ? "写操作返回了无效附件，无法确认完整结果，不能自动重发。"
-                                                : "图像附件无效或超出当前预算，未发送到模型。");
+                    try (LocalToolResult local = handler.execute(request, control)) {
+                        result = local == null ? null : local.getResult();
+                        if (result == null || !result.has("ok") || !result.get("ok").isJsonPrimitive()
+                                || !result.get("ok").getAsJsonPrimitive().isBoolean()) {
+                            result = error(ToolCatalog.isMutation(request.tool) ? "OUTCOME_UNKNOWN" : "INVALID_RESULT",
+                                    "执行器没有返回可核对的结果。");
+                        } else {
+                            // Result JSON is defensive metadata. Strip legacy bytes before
+                            // any ledger save; typed owners never become JSON/data URLs.
+                            JsonElement dataUrl = result.remove("imageDataUrl");
+                            boolean typed = local.hasPngResult();
+                            if (typed || dataUrl != null || "take_screenshot".equals(request.tool) && result.get("ok").getAsBoolean()) {
+                                try {
+                                    if (typed) {
+                                        if (dataUrl != null) throw new IllegalArgumentException("不能混用图像结果类型。");
+                                        image[0] = ImageAttachment.fromOwnedPng(request, result, local.takePng());
+                                    } else image[0] = ImageAttachment.fromLocalResult(request, result, dataUrl);
+                                    result.add("imageAttachment", image[0].metadata());
+                                } catch (IllegalArgumentException invalidImage) {
+                                    result = error(ToolCatalog.isMutation(request.tool) ? "OUTCOME_UNKNOWN" : "INVALID_RESULT",
+                                            ToolCatalog.isMutation(request.tool) ? "写操作返回了无效附件，无法确认完整结果，不能自动重发。"
+                                                    : "图像附件无效或超出当前预算，未发送到模型。");
+                                }
                             }
                         }
                     }

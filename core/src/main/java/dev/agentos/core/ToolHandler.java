@@ -19,5 +19,17 @@ public interface ToolHandler {
         return execute(name, arguments, control);
     }
 
+    /**
+     * Complete original request identity for adapters with reviewed local images.
+     * Override this entry to return an existing PNG owner without a data URL. Do
+     * not assign a new epoch/call ID or treat the result type as disclosure consent.
+     * The default retains the existing text/data-URL adapter path.
+     */
+    default LocalToolResult execute(ToolRequest request, RunControl control) throws Exception {
+        control.checkExecutionEpoch(request.executionEpoch);
+        return LocalToolResult.metadata(execute(request.tool, request.getArguments(), control,
+                request.executionEpoch));
+    }
+
     default Set<String> availableTools() { return ToolCatalog.basicTools(); }
 }

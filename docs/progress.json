@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T05:34:51Z",
-  "note": "归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。",
+  "updated_at": "2026-10-27T05:36:44Z",
+  "note": "第三十二轮八档模拟器各127项，共1016项全部通过，含新增32次控制发布回归。1043张真实PNG、2091文件已逐个核验归档；已更新调试APK链接。历史输入法差异仍待定位，真实模型、真机及ROM未验收。",
   "latest_evidence": {
     "path": "screenshots/40455310038-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40455310038"
@@ -62,9 +62,9 @@
     {
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
-      "status": "in_progress",
-      "evidence": "screenshots/40449037769-1/manifest.json",
-      "scope": "Eight x86_64 emulator API baselines with system animations at 1.0 and synthetic fixtures; not physical-device, third-party-app or performance acceptance."
+      "status": "complete",
+      "evidence": "screenshots/40455310038-1/manifest.json",
+      "scope": "Eight x86_64 emulator API baselines at source 1b674f51970f71b6ed5c8e94c6c49c4192da321c with system animations at 1.0 and synthetic fixtures; not physical-device, third-party-app or performance acceptance. Historical intermittent IME window discrepancies remain under focused-window investigation."
     },
     {
       "id": "performance",

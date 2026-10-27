@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Preserve pre-cleanup walkthrough failure state and opt-in numeric rejection markers for local controls, owned-window metadata and observation revisions. Wait for the actual confirmation before recording its normal 1.2-second user pause. Tool outcomes and guards are unchanged. Debug/test APKs, lint and 13 performance-schema checks pass; exact rejection source awaits the next real run.
+**本次更新：** Archive the fifth real walkthrough attempt with 7 screenshots and a 150177-byte, 12.64-second MP4 independently decoded in full. Recording metadata handling works; the operation flow failed before any write, with three final snapshots rejected by owned-window checks. Keep this failed footage distinct from a successful walkthrough.
 
-**记录时间：** 2026-10-27T15:14:20Z
+**记录时间：** 2026-10-27T15:22:17Z
 
 [最近测试截图与清单](screenshots/40524418849-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40524418849)。通过、失败及未截图原因见清单。
 

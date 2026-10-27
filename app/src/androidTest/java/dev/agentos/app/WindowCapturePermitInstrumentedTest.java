@@ -54,12 +54,16 @@ public final class WindowCapturePermitInstrumentedTest {
             Rect copy = permit.copyWindowBounds(); copy.setEmpty();
             assertEquals(actual, permit.copyWindowBounds());
             assertFalse(permit.isAttempted()); assertFalse(permit.isSubmissionClaimed());
+            assertFailure(NOT_SUBMITTED, () -> env.tools.validateWindowCaptureResult(permit,
+                    env.device.control, permit.executionEpoch));
+            assertFalse("Post validation must not consume an unsubmitted permit", permit.isAttempted());
             AtomicInteger submissions = new AtomicInteger();
             env.tools.submitWindowCapture(permit, env.device.control, permit.executionEpoch, id -> {
                 assertEquals(permit.windowId, id); assertGateBusy(env.device);
                 assertTrue(permit.isAttempted()); assertTrue(permit.isSubmissionClaimed());
                 submissions.incrementAndGet();
             });
+            env.tools.validateWindowCaptureResult(permit, env.device.control, permit.executionEpoch);
             assertFailure(ALREADY_USED, () -> env.tools.submitWindowCapture(permit, env.device.control,
                     permit.executionEpoch, id -> submissions.incrementAndGet()));
             assertEquals(1, submissions.get()); assertGateFree(env.device);

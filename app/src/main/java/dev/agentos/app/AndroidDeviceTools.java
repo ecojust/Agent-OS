@@ -268,7 +268,7 @@ public final class AndroidDeviceTools implements ToolHandler {
     /** Internal preconditions only: neither a native capture nor permission to disclose pixels. */
     enum WindowCaptureFailure {
         UNSUPPORTED_API, REAL_CONFIGURATION_REQUIRED, INVALID_ARGUMENT, WRONG_OWNER,
-        STALE_OBSERVATION, DEVICE_BUSY, EXPIRED, ALREADY_USED, UNAUTHORIZED_APP,
+        STALE_OBSERVATION, DEVICE_BUSY, EXPIRED, ALREADY_USED, NOT_SUBMITTED, CONFIGURATION_CHANGED, UNAUTHORIZED_APP,
         INCOMPLETE_OBSERVATION, SENSITIVE_CONTENT, HIGH_IMPACT_CONTENT, OCCLUDED,
         UNSUPPORTED_GEOMETRY, CONTROL_CHANGED, SERVICE_UNAVAILABLE, INTERNAL_CHECK_FAILED
     }
@@ -394,6 +394,78 @@ public final class AndroidDeviceTools implements ToolHandler {
             }
         } catch (DeviceException rejected) { throw captureFailure(rejected); }
         finally { service.endDeviceCall(); }
+    }
+
+    /** Fixed service identity for the internal platform backend; this does not enable any capability. */
+    AgentAccessibilityService windowCaptureService() { return service; }
+
+    /**
+     * Lightweight waiting/reader check. No Binder, Views, storage, or cancellation
+     * hook runs here. This pre-permit check does not authorize a window or submit.
+     */
+    void checkWindowCaptureRequestCurrent(RunControl owner, long fixedEpoch) throws Exception {
+        if (Build.VERSION.SDK_INT < 34) throw captureFailure(WindowCaptureFailure.UNSUPPORTED_API);
+        if (owner == null) throw captureFailure(WindowCaptureFailure.INVALID_ARGUMENT);
+        if (configurationLease == null) throw captureFailure(WindowCaptureFailure.REAL_CONFIGURATION_REQUIRED);
+        if (!profileId.equals(owner.getProfileId()) || !configurationLease.profileId.equals(profileId))
+            throw captureFailure(WindowCaptureFailure.WRONG_OWNER);
+        owner.checkExecutionEpoch(fixedEpoch);
+        if (!SettingsStore.isCurrent(configurationLease)) throw captureFailure(WindowCaptureFailure.CONFIGURATION_CHANGED);
+        if (!service.isConnected()) throw captureFailure(WindowCaptureFailure.SERVICE_UNAVAILABLE);
+    }
+
+    /** Only immutable bindings and published in-memory state; safe for lightweight handoff checks. */
+    void checkWindowCaptureCurrent(WindowCapturePermit permit, RunControl sameControl, long sameEpoch) throws Exception {
+        requireWindowCaptureBinding(permit, sameControl, sameEpoch);
+        checkWindowCaptureRequestCurrent(sameControl, sameEpoch);
+        if (SystemClock.elapsedRealtime() >= permit.deadlineElapsedRealtimeMs) throw captureFailure(WindowCaptureFailure.EXPIRED);
+        requireCaptureControls(permit.controlWindow, permit.controls);
+    }
+
+    /**
+     * Revalidates a result against the original submitted permit on a worker.
+     * No capture is retried, no deadline/revision is updated, and this check is
+     * not image disclosure approval. The caller retains and must close its buffer
+     * on rejection, including DEVICE_BUSY; this method never takes image ownership.
+     */
+    void validateWindowCaptureResult(WindowCapturePermit permit, RunControl sameControl, long sameEpoch) throws Exception {
+        requireWindowCaptureBinding(permit, sameControl, sameEpoch);
+        if (!permit.submissionClaimed) throw captureFailure(WindowCaptureFailure.NOT_SUBMITTED);
+        requireCaptureEntry(sameControl, permit.revision);
+        if (!service.tryBeginDeviceCall()) throw captureFailure(WindowCaptureFailure.DEVICE_BUSY);
+        try {
+            requireCaptureObservation(sameControl, sameEpoch, permit.revision);
+            // The full worker path retains original-control cancellation for a
+            // revoked configuration, unlike the non-cancelling callback check.
+            requireCaptureContext(sameControl, sameEpoch, permit.deadlineElapsedRealtimeMs);
+            requireCaptureControls(permit.controlWindow, permit.controls);
+            finalGuard(sameControl, sameEpoch, permit.controls);
+            requireCaptureContext(sameControl, sameEpoch, permit.deadlineElapsedRealtimeMs);
+            try (Snapshot state = snapshot(sameControl, sameEpoch, PerformanceTrace.Stage.SNAPSHOT_OBSERVE)) {
+                if (!permit.revision.equals(state.revision)) throw captureFailure(WindowCaptureFailure.STALE_OBSERVATION);
+                state.requireRevision(permit.revision);
+                requireCaptureMatch(permit, state);
+                requireCaptureState(state);
+                validateInstalledGrant(state.packageName);
+                requireFastGrant(state.packageName);
+                state.verifyWindowUnchanged();
+                requireCaptureState(state);
+                requireCaptureMatch(permit, state);
+                requireCaptureControls(permit.controlWindow, permit.controls);
+                finalGuard(sameControl, sameEpoch, permit.controls);
+                requireCaptureContext(sameControl, sameEpoch, permit.deadlineElapsedRealtimeMs);
+                requireCaptureControls(permit.controlWindow, permit.controls);
+            }
+        } catch (DeviceException rejected) { throw captureFailure(rejected); }
+        finally { service.endDeviceCall(); }
+    }
+
+    private void requireWindowCaptureBinding(WindowCapturePermit permit, RunControl sameControl, long sameEpoch)
+            throws WindowCaptureException {
+        if (permit == null) throw captureFailure(WindowCaptureFailure.INVALID_ARGUMENT);
+        if (permit.adapter != this || permit.control != sameControl || permit.executionEpoch != sameEpoch
+                || permit.service != service || permit.configuration != configurationLease
+                || configurationLease == null) throw captureFailure(WindowCaptureFailure.WRONG_OWNER);
     }
 
     private void requireCaptureEntry(RunControl control, String expectedRevision) throws WindowCaptureException {

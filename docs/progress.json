@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T07:30:27Z",
-  "note": "归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。",
+  "updated_at": "2026-10-27T07:34:39Z",
+  "note": "前置许可模块第三十七轮1104项全部通过，完整证据已归档核验。异步原始缓冲模块完成：捕获槽与设备门分离、单次转交和读者排空，新增18项回归；主程序/testAPK/lint通过，开始新矩阵。生产截图与发送入口仍关闭。",
   "latest_evidence": {
     "path": "screenshots/40466558900-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40466558900"
@@ -63,8 +63,8 @@
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
       "status": "in_progress",
-      "evidence": "screenshots/40462539231-1/manifest.json",
-      "scope": "Eight x86_64 emulator API baselines at source 87c3a63d8675ac8b9f5e8c368eff6693d82ce519 with system animations at 1.0 and synthetic fixtures; not physical-device, third-party-app or performance acceptance. Test-only window capture passed on API34–37; API30–33 correctly unavailable. Production visual tools remain disabled; historical window discrepancies remain under investigation."
+      "evidence": "screenshots/40466558900-1/manifest.json",
+      "scope": "Last complete eight-emulator baseline: a93b47e6b23b2d6da2eb1fba4532a03de07c24c3, 1104 passed. New asynchronous buffer lifecycle is pending its own matrix. Test-only native window capture is verified on API34–37, with explicit unsupported paths on API30–33. No physical-device, model, third-party-app or performance acceptance; production visual tools remain disabled."
     },
     {
       "id": "performance",

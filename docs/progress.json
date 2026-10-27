@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T09:29:52Z",
-  "note": "归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。",
+  "updated_at": "2026-10-27T09:33:30Z",
+  "note": "完成内部图片审阅交接：实际确认、窗口移除、固定期限最终校验与单次PNG附件。新增8项集成测试编译/lint通过，设备待验证；上一源码八档1536项全通过，证据已归档，不开放生产截图。",
   "latest_evidence": {
     "path": "screenshots/40479584167-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40479584167"
@@ -63,8 +63,8 @@
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
       "status": "in_progress",
-      "evidence": "screenshots/40467959286-1/manifest.json",
-      "scope": "Last complete eight-emulator baseline remains dbda2bc2c8149abdd2c3150c610138ed2c9dcb3b (1248 passed). PNG converter run 40470814623 recorded 1300/1304 passed; four high-API large-window setup failures precede conversion. Its candidate display-ratio correction plus three shared-review and eight overlay regressions are pending the next matrix. Local APK/test builds and lint passed; core 239 tests passed. No physical-device, model, third-party-app or performance acceptance; production visual tools remain disabled."
+      "evidence": "screenshots/40479584167-1/manifest.json",
+      "scope": "Complete eight-emulator baseline 5f57e2e3ac9b57ed187b8d87f155b04068e4e2e8: 1536/1536 passed, no failures, skips or missing records. Real secure-overlay/removal tests and synthetic-source final snapshot checks are distinguished from low-API unsupported branches and the test-only native capture bridge. Core 255 tests passed. New internal review coordinator integration tests are compiled but await device execution. No physical-device, real-model, third-party-app or performance-budget acceptance; production visual tools remain disabled."
     },
     {
       "id": "performance",

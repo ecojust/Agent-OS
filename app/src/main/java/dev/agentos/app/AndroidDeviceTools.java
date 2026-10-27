@@ -456,6 +456,9 @@ public final class AndroidDeviceTools implements ToolHandler {
             this.binding = binding; configuration = historical.configuration;
         }
 
+        /** The original service only; this exposes no window or capture authorization. */
+        AgentAccessibilityService reviewService() { return adapter.service; }
+
         /** Lifecycle only, not a target-window/content check; safe for the core session supplier. */
         ImageReviewSession.Binding currentBinding() {
             try {

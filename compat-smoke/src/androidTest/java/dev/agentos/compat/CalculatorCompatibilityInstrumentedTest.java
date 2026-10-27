@@ -46,6 +46,7 @@ public final class CalculatorCompatibilityInstrumentedTest {
             SmokeHarness.validateArguments(arguments);
             report.put("source", SmokeHarness.source(arguments));
             persist();
+            verifyDeviceRegexParser();
             harness = new SmokeHarness(instrumentation, arguments);
             harness.requireDedicatedEmulator();
             report.put("device", harness.device()).put("dedicatedEmulatorVerified", true);
@@ -65,6 +66,17 @@ public final class CalculatorCompatibilityInstrumentedTest {
     @Test public void calculatorCoreArithmeticWithAgentDisabled() throws Exception { exercise("off"); }
 
     @Test public void calculatorCoreArithmeticWithAgentBoundAndIdle() throws Exception { exercise("idle"); }
+
+    private static void verifyDeviceRegexParser() {
+        // Run on each actual Android API's regex implementation, inside the existing
+        // two-case probe; JVM compilation alone does not exercise Android ICU syntax.
+        for (String dump : new String[] {"attributes:{id=0}", "User state[attributes:{id=0, currentUser=true}]}"}) {
+            if (!SmokeHarness.hasOwnerUserAttributes(dump)) throw new AssertionError("Owner-user dump parser rejected a supported boundary");
+        }
+        for (String dump : new String[] {"", "attributes:{id=01}", "attributes:{id=10}", "attributes:{id=0", "attributes:{id=0unexpected}"}) {
+            if (SmokeHarness.hasOwnerUserAttributes(dump)) throw new AssertionError("Owner-user dump parser accepted an incomplete or foreign user");
+        }
+    }
 
     private void exercise(String state) throws Exception {
         JSONObject entry = stateEntry(state);

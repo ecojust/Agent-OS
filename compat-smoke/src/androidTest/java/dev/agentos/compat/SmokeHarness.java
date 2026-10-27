@@ -167,7 +167,7 @@ final class SmokeHarness {
         String enabledDump = section(access, "Enabled services:", "Binding services:");
         String binding = section(access, "Binding services:", "Crashed services:");
         boolean parsed = bound != null && enabledDump != null && binding != null
-                && Pattern.compile("attributes:\\{id=0(?:,|})").matcher(access).find();
+                && hasOwnerUserAttributes(access);
         boolean record = SERVICE_RECORD.matcher(services).find();
         boolean connection = services.contains("ConnectionRecord{");
         boolean enabledTarget = COMPONENT.equals(enabled) || (AGENT + "/.AgentAccessibilityService").equals(enabled);
@@ -352,6 +352,11 @@ final class SmokeHarness {
         if (first < 0 || text.indexOf(start, first + start.length()) >= 0) return null;
         int last = text.indexOf(end, first + start.length());
         return last < 0 ? null : text.substring(first + start.length(), last).trim();
+    }
+
+    static boolean hasOwnerUserAttributes(String dump) {
+        // Android's ICU regex parser requires a literal closing brace to be escaped.
+        return Pattern.compile("attributes:\\{id=0(?:,|\\})").matcher(dump).find();
     }
 
     private static String matchingLines(String text, String... needles) {

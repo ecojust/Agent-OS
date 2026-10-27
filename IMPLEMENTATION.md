@@ -38,7 +38,7 @@
 | 原生界面 | 模型与应用配置、任务输入、状态与结果、完整动作确认、暂停/继续/停止、跟随系统深浅主题和字体缩放 |
 | 设备诊断 | 只读查询系统/API、ABI、内存、显示、WebView 和自身服务状态，支持主动复制；报告区分系统条件和未完成的机型验收 |
 | 性能诊断基础 | 默认关闭的有界数值记录器，区分主线程排队、回调、各阶段快照及停止状态应用；不记录页面文字、节点内容或模型数据，尚不代表性能预算通过 |
-| 合成图像探测发送守卫 | 新接口绑定调用者的原执行代次与发送配置守卫，复用原随机色块算法和HTTP检查点；5项新增真实回环HTTP核心回归通过，完整核心263项通过。阻塞IO不保证立即返回；Android保存配置记录另行验证，界面接线未完成 |
+| 合成图像探测发送守卫 | 新接口绑定调用者的原执行代次与发送配置守卫，复用原随机色块算法和HTTP检查点；5项新增真实回环HTTP核心回归通过，完整核心263项通过。阻塞IO不保证立即返回；Android界面的配置失效与保存交接已接通，验证范围见下述接线记录 |
 | 保存配置图像探测记录 | 直接读取真实保存版本，单次准入与旧记录撤销原子发布；只保留绑定配置、原探测代次和10分钟新鲜度的进程内诊断。新增8项真实存储/HTTP仪器测试在第四十五轮64/64通过；现已接原生诊断界面，新增界面回归在第四十六轮56/56通过，不授予任务能力或截图授权 |
 | 已保存配置探测界面 | 同一按钮区分实际保存配置与未保存草稿；记录绑定原请求，编辑、保存、离页、过期或后续探测后失效。7项真实界面/存储/HTTP回归在第四十六轮八档56/56通过，APK及lint通过；没有生产截图入口 |
 | 任务级图像资格基础 | Controller新增本次任务的显式诊断意图，原调用默认关闭；使用原任务、保存配置和初始代次进行一次真实合成图像测试，计原轮次与活动时间。失败继续结构化执行，暂停/替换/过期不继承资格；原6项真实HTTP回归在第四十九轮48/48通过，新增2项拒绝路径在第五十二/五十三轮各16/16通过。尚无用户视觉开关或截图工具开放 |
@@ -110,8 +110,11 @@ Windows 使用 `gradlew.bat`。默认 APK 输出到 `app/build/outputs/apk/debug
 在专用测试模拟器中执行真实交互测试：
 
 ```bash
-./gradlew :fixture:installDebug :app:connectedDebugAndroidTest
+./gradlew :fixture:installDebug :app:connectedDebugAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest,dev.agentos.app.DemoWalkthroughInstrumentedTest,dev.agentos.app.PinnedWindowDisclosureInstrumentedTest
 ```
+
+该命令与标准完整CI使用相同的固定排除项：专用固定页面、录像及原生截图披露验收各自由独立工作流准备应用和运行环境；普通debug构建没有截图权限，不能直接混跑这些专项。
 
 测试使用合成内容与独立 [fixture 应用](fixture/README.md)，临时启用执行服务后恢复测试前状态，不连接真实账号或模型。不要在日常使用的手机上随意运行会切换页面和服务状态的仪器测试。
 

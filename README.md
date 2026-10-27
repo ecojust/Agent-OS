@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Archive native capture acceptance after settled preparation: 7/8 passed with all four actual declines sending zero images; API36 approval timeout retained before review. All eight setup/cleanup checks passed. Independently verified 35 files/148589 bytes; production screenshot UI stays closed.
+**本次更新：** Archive the fourth actual walkthrough attempt: native display setup and three confirmations ran, but no verified write step completed; instrumentation failed and raw video probing also refused the recording. Preserve 13 payloads/181422 bytes including six real PNGs and first-failure diagnostics; no successful demo claimed.
 
-**记录时间：** 2026-10-27T14:56:57Z
+**记录时间：** 2026-10-27T15:03:46Z
 
 [最近测试截图与清单](screenshots/40524418849-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40524418849)。通过、失败及未截图原因见清单。
 

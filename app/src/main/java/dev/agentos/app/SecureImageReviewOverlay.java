@@ -157,6 +157,9 @@ final class SecureImageReviewOverlay implements AutoCloseable {
                 invalidateGeometry(true); super.onDetachedFromWindow();
                 if (shown && !cleanupComplete) main.post(() -> close(CloseSource.WINDOW_DETACHED));
             }
+            @Override protected void onVisibilityChanged(View changedView, int visibility) {
+                invalidateGeometry(false); super.onVisibilityChanged(changedView, visibility);
+            }
             @Override protected void onWindowVisibilityChanged(int visibility) {
                 invalidateGeometry(false); super.onWindowVisibilityChanged(visibility);
                 if (shown && visibility != VISIBLE && !ended) close(CloseSource.WINDOW_VISIBILITY);

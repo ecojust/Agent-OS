@@ -25,6 +25,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import dev.agentos.core.ActionConfirmationPolicy;
 import dev.agentos.core.CoordinateNodeResolver;
+import dev.agentos.core.DisclosureGuard;
 import dev.agentos.core.ImageReviewSession;
 import dev.agentos.core.RunControl;
 import dev.agentos.core.ToolCatalog;
@@ -523,7 +524,7 @@ public final class AndroidDeviceTools implements ToolHandler {
      * nor permission to send an image. The internal coordinator consumes the PNG,
      * fixes one deadline, and confirms host removal before calling this helper.
      */
-    void validateReviewedWindow(CapturedReviewContext context, long deadlineElapsedRealtime) throws Exception {
+    DisclosureGuard validateReviewedWindow(CapturedReviewContext context, long deadlineElapsedRealtime) throws Exception {
         requireReviewWorker();
         if (context == null || context.adapter != this) throw captureFailure(WindowCaptureFailure.WRONG_OWNER);
         WindowCapturePermit historical = context.historical;
@@ -541,8 +542,13 @@ public final class AndroidDeviceTools implements ToolHandler {
         try {
             finalGuard(owner, epoch, controls);
             requireReviewFinalContext(context, deadlineElapsedRealtime);
+            // The same event generation spans this one existing complete snapshot.
+            // A delivered change rejects the spent attempt; it never selects a new
+            // generation or performs a second tree read.
+            long visualGeneration = service.visualEventGeneration();
+            requireReviewFinalVisualContext(context, deadlineElapsedRealtime, visualGeneration);
             try (Snapshot state = snapshotWithControls(owner, epoch, controlWindow,
-                    () -> requireReviewFinalContext(context, deadlineElapsedRealtime))) {
+                    () -> requireReviewFinalVisualContext(context, deadlineElapsedRealtime, visualGeneration))) {
                 try { state.requireRevision(historical.revision); }
                 catch (DeviceException mismatch) {
                     if ("STALE_OBSERVATION".equals(mismatch.code))
@@ -551,20 +557,44 @@ public final class AndroidDeviceTools implements ToolHandler {
                 }
                 requireCaptureTargetMatch(historical, state);
                 requireCaptureState(state);
+                requireReviewFinalVisualContext(context, deadlineElapsedRealtime, visualGeneration);
                 validateInstalledGrant(state.packageName);
-                requireReviewFinalContext(context, deadlineElapsedRealtime);
+                requireReviewFinalVisualContext(context, deadlineElapsedRealtime, visualGeneration);
                 requireFastGrant(state.packageName);
-                requireReviewFinalContext(context, deadlineElapsedRealtime);
+                requireReviewFinalVisualContext(context, deadlineElapsedRealtime, visualGeneration);
                 state.verifyWindowUnchanged();
                 requireCaptureState(state);
                 requireCaptureTargetMatch(historical, state);
                 requireCaptureControls(state.controlWindow, controls);
+                requireReviewFinalVisualContext(context, deadlineElapsedRealtime, visualGeneration);
                 finalGuard(owner, epoch, controls);
-                requireReviewFinalContext(context, deadlineElapsedRealtime);
+                requireReviewFinalVisualContext(context, deadlineElapsedRealtime, visualGeneration);
                 requireCaptureControls(state.controlWindow, controls);
             }
+            // This closure owns only local revocation bindings. It proves neither
+            // user consent nor supported-page eligibility. The production route
+            // must compose its separate original task/policy/capability guard.
+            SettingsStore.ConfigurationLease originalConfiguration = context.configuration;
+            AgentAccessibilityService originalService = service;
+            DisclosureGuard guarded = (sameOwner, sameEpoch) -> {
+                if (sameOwner != owner || sameEpoch != epoch) return false;
+                synchronized (owner) {
+                    return !owner.isCancelled() && !owner.isPaused() && owner.getExecutionEpoch() == epoch
+                            && SettingsStore.isCurrent(originalConfiguration)
+                            && originalService.isVisualEventGenerationCurrent(visualGeneration);
+                }
+            };
+            requireReviewFinalVisualContext(context, deadlineElapsedRealtime, visualGeneration);
+            return guarded;
         } catch (DeviceException rejected) { throw captureFailure(rejected); }
         finally { service.endDeviceCall(); }
+    }
+
+    private void requireReviewFinalVisualContext(CapturedReviewContext context, long deadline, long visualGeneration)
+            throws Exception {
+        requireReviewFinalContext(context, deadline);
+        if (!service.isVisualEventGenerationCurrent(visualGeneration))
+            throw captureFailure(WindowCaptureFailure.STALE_OBSERVATION);
     }
 
     /** Failure-only bounded metadata, computed from the exact snapshot that was refused. */

@@ -8,6 +8,7 @@ import android.graphics.Rect;
 import android.hardware.HardwareBuffer;
 import android.os.Looper;
 import android.os.SystemClock;
+import dev.agentos.core.DisclosureGuard;
 import dev.agentos.core.ImageAttachment;
 import dev.agentos.core.ImageWorkset;
 import dev.agentos.core.PngImage;
@@ -141,7 +142,7 @@ final class WindowPngConverter {
          * to transmit. The same immutable context survives receipt close after
          * transfer, and owns no PNG or native resource.
          */
-        void validateAfterReview(ToolRequest expected, AndroidDeviceTools adapter, RunControl owner,
+        DisclosureGuard validateAfterReview(ToolRequest expected, AndroidDeviceTools adapter, RunControl owner,
                 AndroidDeviceTools.CapturedReviewContext context, long deadlineElapsedRealtime) throws Exception {
             if (Looper.myLooper() == Looper.getMainLooper()) throw new IllegalStateException("Final image checks require a worker");
             synchronized (this) {
@@ -154,7 +155,7 @@ final class WindowPngConverter {
                 finalCheckAttempted = true;
                 finalCheckDeadlineElapsedRealtimeMillis = deadlineElapsedRealtime;
             }
-            adapter.validateReviewedWindow(context, deadlineElapsedRealtime);
+            return adapter.validateReviewedWindow(context, deadlineElapsedRealtime);
         }
 
         synchronized boolean isFinalCheckAttempted() { return finalCheckAttempted; }

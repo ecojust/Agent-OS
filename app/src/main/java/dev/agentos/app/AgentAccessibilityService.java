@@ -1,6 +1,7 @@
 package dev.agentos.app;
 
 import android.accessibilityservice.AccessibilityService;
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.KeyguardManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -12,6 +13,7 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.hardware.display.DisplayManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -70,6 +72,11 @@ public final class AgentAccessibilityService extends AccessibilityService {
         }
 
         public Rect copyBounds() { return new Rect(left, top, right, bottom); }
+
+        private boolean sameRegistrationAndBounds(OwnedControlWindowIdentity other) {
+            return other != null && registration == other.registration
+                    && left == other.left && top == other.top && right == other.right && bottom == other.bottom;
+        }
 
         private boolean matches(WindowRegistration candidate, Rect bounds, long generation, long callbacks) {
             return registration == candidate && this.generation == generation && callbackGeneration == callbacks
@@ -164,16 +171,30 @@ public final class AgentAccessibilityService extends AccessibilityService {
     private long displayedCallbackGeneration = -1;
     private boolean stopNotifying;
     private Set<String> watchedPackages = Collections.emptySet();
+    private DisplayManager displayManager;
+    private final DisplayManager.DisplayListener visualDisplayListener = new DisplayManager.DisplayListener() {
+        @Override public void onDisplayAdded(int displayId) { invalidateVisualEvents(); }
+        @Override public void onDisplayRemoved(int displayId) { invalidateVisualEvents(); }
+        @Override public void onDisplayChanged(int displayId) { invalidateVisualEvents(); }
+    };
     private boolean receiverRegistered;
     private boolean packageReceiverRegistered;
     private volatile boolean connected;
+    // Written on main before handling a change; never retain an event or a source node.
+    // Saturation permanently rejects visual guards for this service instance.
+    private volatile long visualGeneration;
+    private volatile boolean windowCaptureCapability;
+    // These main-only geometry baselines survive cosmetic requestLayout, but never
+    // survive their actual attachment. They are not an event-ID exemption.
+    private OwnedControlWindowIdentity visualControlGeometry;
+    private OwnedReviewWindowIdentity visualReviewGeometry;
     private volatile ControlLease currentControlLease;
     private volatile OwnedControlWindowIdentity currentControlWindowIdentity;
     private volatile SecureImageReviewOverlay reviewHost;
     private volatile OwnedReviewWindowIdentity currentReviewWindowIdentity;
-    private WindowRegistration reviewWindowRegistration;
+    private volatile WindowRegistration reviewWindowRegistration;
     private long reviewGeneration, reviewAttachmentGeneration;
-    private WindowRegistration controlWindowRegistration;
+    private volatile WindowRegistration controlWindowRegistration;
     // Only the main thread writes generations. Workers read the published immutable lease.
     private long controlGeneration, connectionGeneration, callbackGeneration;
     private long controlAttachmentGeneration;
@@ -203,11 +224,33 @@ public final class AgentAccessibilityService extends AccessibilityService {
     public static AgentAccessibilityService getInstance() { return instance; }
 
     @Override protected void onServiceConnected() {
+        invalidateVisualEvents();
+        windowCaptureCapability = false;
         super.onServiceConnected();
         invalidateControlWindowRegistration(SecureImageReviewOverlay.CloseSource.SERVICE_CONNECTED);
         connectionGeneration++;
         connected = true;
         instance = this;
+        if (Build.VERSION.SDK_INT >= 34) {
+            try {
+                AccessibilityServiceInfo actual = getServiceInfo();
+                windowCaptureCapability = actual != null && (actual.getCapabilities()
+                        & AccessibilityServiceInfo.CAPABILITY_CAN_TAKE_SCREENSHOT) != 0;
+            } catch (RuntimeException unavailable) { windowCaptureCapability = false; }
+        }
+        try {
+            displayManager = (DisplayManager) getSystemService(DISPLAY_SERVICE);
+            if (displayManager == null) windowCaptureCapability = false;
+            else displayManager.registerDisplayListener(visualDisplayListener, main);
+        } catch (RuntimeException unavailable) {
+            // Structured operation remains usable; visual disclosure cannot claim
+            // display-change coverage without this service-lifetime subscription.
+            windowCaptureCapability = false;
+            if (displayManager != null) {
+                try { displayManager.unregisterDisplayListener(visualDisplayListener); }
+                catch (RuntimeException cleanupFailed) { /* Keep the reference for disconnect cleanup. */ }
+            }
+        }
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         filter.addAction(Intent.ACTION_USER_PRESENT);
@@ -226,6 +269,32 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     public boolean isConnected() { return connected && instance == this; }
+
+    /** Actual connected-service publication, not a manifest promise or a capture permit. */
+    public boolean hasWindowCaptureCapability() {
+        return Build.VERSION.SDK_INT >= 34 && isConnected() && windowCaptureCapability;
+    }
+
+    /** Pure memory: an image guard must also retain the exact service instance. */
+    public long visualEventGeneration() { return visualGeneration; }
+
+    /** No Views, platform calls, budget mutation or cancellation hooks run here. */
+    public boolean isVisualEventGenerationCurrent(long original) {
+        if (original < 0 || original == Long.MAX_VALUE || visualGeneration != original || !isConnected()) return false;
+        // showOverlay invalidates its action-layout publication even for a same-
+        // height text change. A request to lay out is not itself changed geometry.
+        // Actual layout/drag/visibility/attachment callbacks advance the generation;
+        // retain only the current real registration here, never a discovered ID.
+        WindowRegistration controls = controlWindowRegistration;
+        SecureImageReviewOverlay review = reviewHost;
+        WindowRegistration reviewWindow = reviewWindowRegistration;
+        return controls != null && (review == null || reviewWindow != null)
+                && visualGeneration == original && isConnected();
+    }
+
+    private void invalidateVisualEvents() {
+        if (visualGeneration != Long.MAX_VALUE) visualGeneration++;
+    }
 
     public boolean isDeviceReady() {
         KeyguardManager keyguard = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
@@ -283,6 +352,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
         try {
             created = new SecureImageReviewOverlay(this, session, originalControl,
                     originalEpoch, configuration, listener, decoder, windowRemover);
+            invalidateVisualEvents();
             reviewHost = created;
             created.show(); return created;
         } catch (RuntimeException | Error failed) {
@@ -355,15 +425,32 @@ public final class AgentAccessibilityService extends AccessibilityService {
         Rect bounds = new Rect(location[0], location[1], location[0] + root.getWidth(), location[1] + root.getHeight());
         OwnedReviewWindowIdentity current = currentReviewWindowIdentity;
         if (current != null && current.matches(owner, registration, bounds, reviewGeneration)) return current;
-        currentReviewWindowIdentity = new OwnedReviewWindowIdentity(owner, registration, bounds, reviewGeneration);
-        return currentReviewWindowIdentity;
+        OwnedReviewWindowIdentity next = new OwnedReviewWindowIdentity(owner, registration, bounds, reviewGeneration);
+        if (visualReviewGeometry != null && !visualReviewGeometry.sameRegistrationAndBounds(next)) invalidateVisualEvents();
+        visualReviewGeometry = next;
+        currentReviewWindowIdentity = next;
+        return next;
     }
 
     void invalidateReviewWindow(SecureImageReviewOverlay owner, boolean registrationLost) {
         if (reviewHost != owner) return;
+        // requestLayout may be cosmetic; an actual changed View frame is not.
+        // onLayout has already installed its new frame when it calls this method.
+        OwnedReviewWindowIdentity previous = visualReviewGeometry;
+        if (!registrationLost && previous != null) {
+            View root = owner.rootView();
+            int[] location = new int[2]; root.getLocationOnScreen(location);
+            if (!root.isAttachedToWindow() || !root.isShown()
+                    || previous.left != location[0] || previous.top != location[1]
+                    || previous.right != location[0] + root.getWidth()
+                    || previous.bottom != location[1] + root.getHeight()) invalidateVisualEvents();
+        }
         currentReviewWindowIdentity = null;
         reviewGeneration++;
-        if (registrationLost) { reviewWindowRegistration = null; reviewAttachmentGeneration++; }
+        if (registrationLost) {
+            invalidateVisualEvents(); visualReviewGeometry = null;
+            reviewWindowRegistration = null; reviewAttachmentGeneration++;
+        }
     }
 
     void finishImageReview(SecureImageReviewOverlay owner) {
@@ -397,6 +484,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
     public void setOverlayCallbacks(OverlayCallbacks value) {
         onMain(() -> {
             if (callbacks != value) {
+                if (value == null) invalidateVisualEvents();
                 invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_CALLBACKS);
                 callbackGeneration++;
                 callbacks = value;
@@ -418,15 +506,18 @@ public final class AgentAccessibilityService extends AccessibilityService {
                         && currentStatus.equals(nextStatus) && currentPaused == paused
                         && currentApproval.equals(nextApproval)) return;
                 invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_PUBLICATION);
+                boolean firstDisplay = overlay == null;
+                boolean statusChanged = !currentStatus.equals(nextStatus);
+                boolean pauseChanged = currentPaused != paused;
                 String previousApproval = currentApproval;
                 currentStatus = nextStatus;
                 currentPaused = paused;
                 currentApproval = nextApproval;
                 ensureOverlay();
-                statusView.setText("Agent · " + currentStatus);
-                pauseButton.setText(paused ? "继续" : "暂停");
+                if (firstDisplay || statusChanged) statusView.setText("Agent · " + currentStatus);
+                if (firstDisplay || pauseChanged) pauseButton.setText(paused ? "继续" : "暂停");
                 boolean waiting = approval != null && !approval.isEmpty();
-                approvalView.setText(waiting ? approval : "");
+                if (firstDisplay || !currentApproval.equals(previousApproval)) approvalView.setText(waiting ? approval : "");
                 approvalScroll.setVisibility(waiting ? View.VISIBLE : View.GONE);
                 approvalButtons.setVisibility(waiting ? View.VISIBLE : View.GONE);
                 if (!currentApproval.equals(previousApproval)) approvalScroll.scrollTo(0, 0);
@@ -489,6 +580,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     private void invalidateControlWindowRegistration(SecureImageReviewOverlay.CloseSource source) {
+        invalidateVisualEvents(); visualControlGeometry = null;
         invalidateControlLease(source);
         controlWindowRegistration = null;
         controlAttachmentGeneration++;
@@ -540,6 +632,8 @@ public final class AgentAccessibilityService extends AccessibilityService {
         if (previous != null && previous.matches(registration, bounds, controlGeneration, callbackGeneration)) return previous;
         if (previous != null) invalidateControlLease();
         OwnedControlWindowIdentity identity = new OwnedControlWindowIdentity(registration, bounds, controlGeneration, callbackGeneration);
+        if (visualControlGeometry != null && !visualControlGeometry.sameRegistrationAndBounds(identity)) invalidateVisualEvents();
+        visualControlGeometry = identity;
         currentControlWindowIdentity = identity;
         return identity;
     }
@@ -769,7 +863,10 @@ public final class AgentAccessibilityService extends AccessibilityService {
                 super.requestLayout();
             }
             @Override protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-                if (changed) invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_LAYOUT_CHANGED);
+                if (changed) {
+                    invalidateVisualEvents();
+                    invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_LAYOUT_CHANGED);
+                }
                 super.onLayout(changed, left, top, right, bottom);
             }
             @Override protected void onAttachedToWindow() {
@@ -780,7 +877,13 @@ public final class AgentAccessibilityService extends AccessibilityService {
                 invalidateControlWindowRegistration(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_DETACHED);
                 super.onDetachedFromWindow();
             }
+            @Override protected void onVisibilityChanged(View changedView, int visibility) {
+                invalidateVisualEvents();
+                invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_VISIBILITY);
+                super.onVisibilityChanged(changedView, visibility);
+            }
             @Override protected void onWindowVisibilityChanged(int visibility) {
+                invalidateVisualEvents();
                 invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_VISIBILITY);
                 super.onWindowVisibilityChanged(visibility);
             }
@@ -864,6 +967,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
                     startY = event.getRawY(); originalY = params.y; return true;
                 }
                 if (event.getActionMasked() == MotionEvent.ACTION_MOVE) {
+                    invalidateVisualEvents();
                     invalidateControlLease();
                     int height = manager.getCurrentWindowMetrics().getBounds().height();
                     params.y = Math.max(0, Math.min(Math.max(0, height - panel.getHeight() - dp(48)), originalY + Math.round(event.getRawY() - startY)));
@@ -917,6 +1021,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     private void stopFromDevice() {
+        invalidateVisualEvents();
         invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_DEVICE_STOP);
         if (stopNotifying) return;
         stopNotifying = true;
@@ -925,6 +1030,10 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
+        // Invalidate before review handling or the existing deferred readiness check.
+        // Unexpected event kinds are conservative too; no event source is queried.
+        if (event == null || !isCurrentOwnedCosmeticEvent(event)) invalidateVisualEvents();
+        if (event == null) return;
         SecureImageReviewOverlay review = reviewHost;
         if (review != null) review.onAccessibilityEvent(event.getEventType(), event.getWindowId(),
                 event.getEventType() == AccessibilityEvent.TYPE_WINDOWS_CHANGED ? event.getWindowChanges() : 0);
@@ -946,14 +1055,62 @@ public final class AgentAccessibilityService extends AccessibilityService {
         main.postDelayed(eventReadyCheck, EVENT_READY_CHECK_INTERVAL_MS);
     }
 
-    @Override public void onInterrupt() { stopFromDevice(); }
+    /** Explicit cosmetic allowlist, only for an actual current, stable owned attachment. */
+    private boolean isCurrentOwnedCosmeticEvent(AccessibilityEvent event) {
+        int type = event.getEventType();
+        if (type == AccessibilityEvent.TYPE_WINDOWS_CHANGED) {
+            if (event.getWindowChanges() != AccessibilityEvent.WINDOWS_CHANGE_TITLE) return false;
+        } else if (type == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) {
+            int safe = AccessibilityEvent.CONTENT_CHANGE_TYPE_TEXT | AccessibilityEvent.CONTENT_CHANGE_TYPE_CONTENT_DESCRIPTION;
+            int changes = event.getContentChangeTypes();
+            if (changes == 0 || (changes & ~safe) != 0) return false;
+        } else if (type != AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) return false;
+        int id = event.getWindowId();
+        if (id < 0 || !isConnected()) return false;
+        // A status publication can clear the action identity before preDraw has
+        // republished it. The same actual attachment and its previous measured
+        // bounds may identify a cosmetic event only after verifying the current
+        // View is laid out, not requesting layout, and still has those bounds.
+        OwnedControlWindowIdentity controls = visualControlGeometry;
+        if (controls != null && callbacks != null && controls.windowId == id && controls.registration == controlWindowRegistration
+                && controls.registration.attachmentGeneration == controlAttachmentGeneration
+                && isStableVisualAttachment(overlay, controls.registration, controls.copyBounds(), false)) return true;
+        OwnedReviewWindowIdentity review = visualReviewGeometry;
+        return review != null && reviewHost == review.owner && !review.owner.isEnded()
+                && review.windowId == id && review.registration == reviewWindowRegistration
+                && review.registration.attachmentGeneration == reviewAttachmentGeneration
+                && isStableVisualAttachment(review.owner.rootView(), review.registration, review.copyBounds(), true);
+    }
+
+    /** Main-only local View geometry. No root/window query, label or historical ID establishes ownership. */
+    private boolean isStableVisualAttachment(View view, WindowRegistration registration, Rect expected, boolean secure) {
+        if (view == null || !view.isAttachedToWindow() || !view.isShown() || !view.isLaidOut()
+                || view.isLayoutRequested() || registration.connectionGeneration != connectionGeneration
+                || view.getWindowToken() != registration.token) return false;
+        Display display = view.getDisplay();
+        if (display == null || display.getDisplayId() != registration.displayId
+                || !(view.getLayoutParams() instanceof WindowManager.LayoutParams)) return false;
+        WindowManager.LayoutParams params = (WindowManager.LayoutParams) view.getLayoutParams();
+        int required = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | (secure ? WindowManager.LayoutParams.FLAG_SECURE : 0);
+        if (params.type != WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY || (params.flags & required) != required) return false;
+        int[] location = new int[2]; view.getLocationOnScreen(location);
+        return view.getWidth() > 0 && view.getHeight() > 0 && expected.left == location[0] && expected.top == location[1]
+                && expected.right == location[0] + view.getWidth() && expected.bottom == location[1] + view.getHeight();
+    }
+
+    @Override public void onInterrupt() {
+        windowCaptureCapability = false;
+        stopFromDevice();
+    }
 
     @Override public void onLowMemory() {
+        invalidateVisualEvents();
         closeImageReview(SecureImageReviewOverlay.CloseSource.SERVICE_LOW_MEMORY); super.onLowMemory();
     }
 
     @Override public void onTrimMemory(int level) {
         if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) {
+            invalidateVisualEvents();
             closeImageReview(level == android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN
                     ? SecureImageReviewOverlay.CloseSource.SERVICE_UI_HIDDEN
                     : SecureImageReviewOverlay.CloseSource.SERVICE_TRIM_MEMORY);
@@ -962,6 +1119,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     @Override public void onConfigurationChanged(Configuration configuration) {
+        invalidateVisualEvents();
         invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONFIGURATION);
         super.onConfigurationChanged(configuration);
         if (overlay == null) return;
@@ -982,12 +1140,19 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     private void disconnect() {
+        windowCaptureCapability = false;
+        invalidateVisualEvents();
         invalidateControlWindowRegistration(SecureImageReviewOverlay.CloseSource.SERVICE_DISCONNECTED);
         connectionGeneration++;
         connected = false;
         if (instance == this) instance = null;
         stopFromDevice();
         callbacks = null;
+        if (displayManager != null) {
+            try { displayManager.unregisterDisplayListener(visualDisplayListener); }
+            catch (RuntimeException unavailable) { /* Disconnection still clears the other registrations below. */ }
+            finally { displayManager = null; }
+        }
         if (receiverRegistered) {
             try { unregisterReceiver(screenReceiver); } catch (IllegalArgumentException ignored) { }
             receiverRegistered = false;

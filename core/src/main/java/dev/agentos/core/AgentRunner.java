@@ -120,8 +120,12 @@ public final class AgentRunner {
                     JsonObject response;
                     ImageAttachment outgoing = state.takeImage();
                     JsonArray requestMessages = null;
-                    ModelRequestContext requestContext = new ModelRequestContext(control, epoch, disclosureGuard);
+                    ModelRequestContext requestContext;
                     try {
+                        // Keep composition/allocation inside the attachment's cleanup
+                        // scope. The condition follows this one image request only.
+                        requestContext = new ModelRequestContext(control, epoch, disclosureGuard,
+                                outgoing == null ? null : outgoing.imageGuard());
                         requestContext.check();
                         requestMessages = messages(task, history, state.latestObservation);
                         requestContext.check();

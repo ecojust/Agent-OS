@@ -7,17 +7,28 @@ final class ModelRequestContext {
     final RunControl control;
     final long epoch;
     private final DisclosureGuard guard;
+    private final DisclosureGuard imageGuard;
 
     ModelRequestContext(RunControl control, long epoch, DisclosureGuard guard) {
+        this(control, epoch, guard, null);
+    }
+
+    ModelRequestContext(RunControl control, long epoch, DisclosureGuard guard, DisclosureGuard imageGuard) {
         this.control = Objects.requireNonNull(control);
         this.epoch = epoch;
         this.guard = Objects.requireNonNull(guard);
+        this.imageGuard = imageGuard;
     }
 
     void check() throws TaskControlException {
+        checkGuard(guard, "配置已改变，已停止向原模型服务发送数据。");
+        if (imageGuard != null) checkGuard(imageGuard, "图像发送条件已失效，已停止向模型服务发送数据。");
+    }
+
+    private void checkGuard(DisclosureGuard condition, String message) throws TaskControlException {
         control.checkExecutionEpoch(epoch);
         boolean current;
-        try { current = guard.isCurrent(control, epoch); }
+        try { current = condition.isCurrent(control, epoch); }
         catch (RuntimeException invalidGuard) { current = false; }
         if (!current) {
             // Do not let a delayed old request cancel a resumed execution epoch.
@@ -25,7 +36,7 @@ final class ModelRequestContext {
             // then invokes it outside that monitor. Never wrap this in an outer lock.
             control.checkExecutionEpoch(epoch);
             if (!control.cancelIfExecutionEpoch(epoch)) control.checkExecutionEpoch(epoch);
-            throw new TaskControlException("TASK_STOPPED", "配置已改变，已停止向原模型服务发送数据。");
+            throw new TaskControlException("TASK_STOPPED", message);
         }
         control.checkExecutionEpoch(epoch);
     }

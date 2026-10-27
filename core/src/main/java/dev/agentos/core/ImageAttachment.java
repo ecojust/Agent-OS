@@ -17,13 +17,14 @@ public final class ImageAttachment implements AutoCloseable {
     public final String taskId, profileId, callId, revision;
     public final long executionEpoch;
     public final int width, height, encodedBytes;
+    private final DisclosureGuard imageGuard;
     private PngImage image;
     private boolean consumed;
 
-    private ImageAttachment(ToolRequest request, String revision, PngImage image) {
+    private ImageAttachment(ToolRequest request, String revision, PngImage image, DisclosureGuard imageGuard) {
         taskId = request.taskId; profileId = request.profileId; callId = request.callId;
         executionEpoch = request.executionEpoch; this.revision = revision;
-        this.image = image; encodedBytes = image.encodedBytes;
+        this.image = image; this.imageGuard = imageGuard; encodedBytes = image.encodedBytes;
         width = image.width; height = image.height;
     }
 
@@ -70,7 +71,7 @@ public final class ImageAttachment implements AutoCloseable {
             owned = PngImage.fromBytes(encoded, workset);
             checkDimensionMetadata(data, "width", owned.width);
             checkDimensionMetadata(data, "height", owned.height);
-            ImageAttachment attachment = new ImageAttachment(request, revision, owned);
+            ImageAttachment attachment = new ImageAttachment(request, revision, owned, null);
             transferred = true;
             return attachment;
         } catch (IOException | RuntimeException badImage) {
@@ -90,6 +91,11 @@ public final class ImageAttachment implements AutoCloseable {
      * responsible for original-request capture/review and final disclosure guards.
      */
     static ImageAttachment fromOwnedPng(ToolRequest request, JsonObject result, PngImage owned) {
+        return fromOwnedPng(request, result, owned, null);
+    }
+
+    static ImageAttachment fromOwnedPng(ToolRequest request, JsonObject result, PngImage owned,
+                                        DisclosureGuard imageGuard) {
         boolean transferred = false;
         try {
             if (owned == null || owned.isClosed() || !"take_screenshot".equals(request.tool)
@@ -101,11 +107,14 @@ public final class ImageAttachment implements AutoCloseable {
             if (data == null || revision == null || !revision.equals(string(data.get("revision")))) throw invalid();
             checkDimensionMetadata(data, "width", owned.width);
             checkDimensionMetadata(data, "height", owned.height);
-            ImageAttachment attachment = new ImageAttachment(request, revision, owned);
+            ImageAttachment attachment = new ImageAttachment(request, revision, owned, imageGuard);
             transferred = true;
             return attachment;
         } finally { if (!transferred && owned != null) owned.close(); }
     }
+
+    /** Local condition only, including after PNG transfer; never put it in metadata/history. */
+    DisclosureGuard imageGuard() { return imageGuard; }
 
     /** Transfers the same PNG owner once; the receiving request must close it even on failure. */
     synchronized PngImage consumePng(RunControl control, long epoch, String currentRevision) throws TaskControlException {

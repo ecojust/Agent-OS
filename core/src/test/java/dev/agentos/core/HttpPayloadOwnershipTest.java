@@ -21,6 +21,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Test;
@@ -210,6 +211,53 @@ public final class HttpPayloadOwnershipTest {
             io.release.countDown(); fixture.firstExited();
             assertArrayEquals(new byte[bytes.length], bytes); assertEquals(0, fixture.workset.reservedBytes());
             assertEquals(1, fixture.connections.size());
+        }
+    }
+
+    @Test(timeout = 8000) public void revokedQueuedImageOpensNoConnectionAndSettlesOnlyAtItsOwner() throws Exception {
+        Gate dequeued = new Gate();
+        try (Fixture fixture = new Fixture(dequeued, 30_000)) {
+            RunControl run = new RunControl(); AtomicBoolean permitted = new AtomicBoolean(true);
+            PngImage image = PngImage.fromBytes(PngImageTest.png(), fixture.workset);
+            ModelRequestContext context = new ModelRequestContext(run, run.getExecutionEpoch(),
+                    (owner, epoch) -> true, (owner, epoch) -> permitted.get());
+            HttpModelClient client = fixture.client(Mode.NORMAL, null, 4000);
+            try {
+                Future<JsonObject> pending = fixture.callers.submit(() -> client.request(SETTINGS,
+                        messages(), new JsonArray(), context, image));
+                dequeued.await(); assertTrue(image.isClosed()); assertTrue(fixture.workset.reservedBytes() > 0);
+                permitted.set(false);
+                // Invalidating a condition is not a cleanup owner or a polling thread.
+                assertEquals(0, fixture.connections.size()); assertFalse(pending.isDone());
+                dequeued.release.countDown();
+                assertTrue(failure(pending) instanceof TaskControlException); fixture.firstExited();
+                assertEquals(0, fixture.connections.size()); assertEquals(0, fixture.workset.reservedBytes());
+            } finally { run.cancel(); image.close(); }
+        }
+    }
+
+    @Test(timeout = 8000) public void imageGuardCancellationCannotEraseAnInFlightWireBuffer() throws Exception {
+        try (Fixture fixture = new Fixture(null, 30_000)) {
+            Gate io = new Gate(); RunControl run = new RunControl(); AtomicBoolean permitted = new AtomicBoolean(true);
+            PngImage image = PngImage.fromBytes(PngImageTest.png(), fixture.workset);
+            ModelRequestContext context = new ModelRequestContext(run, run.getExecutionEpoch(),
+                    (owner, epoch) -> true, (owner, epoch) -> permitted.get());
+            HttpModelClient client = fixture.client(Mode.WRITE_BLOCK, io, 4000);
+            try {
+                Future<JsonObject> pending = fixture.callers.submit(() -> client.request(SETTINGS,
+                        messages(), new JsonArray(), context, image));
+                io.await(); byte[] bytes = fixture.connections.get(0).buffer.get(), unchanged = bytes.clone();
+                assertTrue(image.isClosed()); assertEquals(bytes.length, fixture.workset.reservedBytes());
+                permitted.set(false);
+                // Explicitly exercise an existing context checkpoint. A bare flag
+                // change is not claimed to interrupt arbitrary blocked platform I/O.
+                assertEquals("TASK_STOPPED", assertThrows(TaskControlException.class, context::check).getCode());
+                assertTrue(failure(pending) instanceof TaskControlException);
+                assertEquals(bytes.length, fixture.workset.reservedBytes()); assertArrayEquals(unchanged, bytes);
+                io.release.countDown(); fixture.firstExited();
+                assertArrayEquals(new byte[bytes.length], bytes); assertEquals(0, fixture.workset.reservedBytes());
+                assertEquals(1, fixture.connections.size());
+            } finally { run.cancel(); image.close(); }
         }
     }
 

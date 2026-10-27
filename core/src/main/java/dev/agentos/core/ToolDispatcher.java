@@ -85,7 +85,7 @@ public final class ToolDispatcher implements AutoCloseable {
                                 try {
                                     if (typed) {
                                         if (dataUrl != null) throw new IllegalArgumentException("不能混用图像结果类型。");
-                                        image[0] = ImageAttachment.fromOwnedPng(request, result, local.takePng());
+                                        image[0] = ImageAttachment.fromOwnedPng(request, result, local.takePng(), local.imageGuard());
                                     } else image[0] = ImageAttachment.fromLocalResult(request, result, dataUrl);
                                     result.add("imageAttachment", image[0].metadata());
                                 } catch (IllegalArgumentException invalidImage) {

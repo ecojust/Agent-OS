@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
+import android.graphics.Insets;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,6 +18,9 @@ import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.view.Display;
+import android.view.WindowInsets;
+import android.view.WindowManager;
+import android.view.WindowMetrics;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 
@@ -300,12 +304,19 @@ final class SmokeHarness {
             require(root != null && CALCULATOR.contentEquals(root.getPackageName() == null ? "" : root.getPackageName()), "Focused package is not the verified calculator");
             Rect bounds = new Rect(); focused.getBoundsInScreen(bounds);
             require(!bounds.isEmpty(), "Calculator window has no bounds");
+            WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+            require(manager != null, "Platform window metrics are unavailable");
+            WindowMetrics metrics = manager.getCurrentWindowMetrics();
+            Rect display = metrics.getBounds();
+            Insets bars = metrics.getWindowInsets().getInsets(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+            require(!display.isEmpty() && display.contains(bounds), "Calculator bounds differ from default-display metrics");
             for (AccessibilityWindowInfo other : windows) {
                 if (other.getId() == focused.getId() || other.getDisplayId() != Display.DEFAULT_DISPLAY
                         || other.getLayer() < focused.getLayer()) continue;
                 Rect overlay = new Rect(); other.getBoundsInScreen(overlay);
                 if (!Rect.intersects(bounds, overlay)) continue;
-                require(isTrustedSystemBar(other, overlay, bounds), "Calculator is obscured by an unknown window: " + windowDiagnostic(other, overlay));
+                require(isContainedInVisibleSystemBar(other.getType(), overlay, display, bars),
+                        "Calculator is obscured by an unknown window: " + windowDiagnostic(other, overlay));
             }
             WindowSnapshot result = new WindowSnapshot(focused.getId(), bounds, root);
             root = null;
@@ -316,24 +327,17 @@ final class SmokeHarness {
         }
     }
 
-    private boolean isTrustedSystemBar(AccessibilityWindowInfo window, Rect bar, Rect app) {
-        if (window.getType() != AccessibilityWindowInfo.TYPE_SYSTEM) return false;
-        String title = window.getTitle() == null ? "" : window.getTitle().toString();
-        if (!isKnownSystemBarTitle(title)) return false;
-        AccessibilityNodeInfo root = window.getRoot();
-        try {
-            if (root != null && !"com.android.systemui".contentEquals(root.getPackageName() == null ? "" : root.getPackageName())) return false;
-        } finally { if (root != null) root.recycle(); }
-        int edge = Math.round(context.getResources().getDisplayMetrics().density * 96);
-        return (bar.height() <= edge && (bar.top <= app.top || bar.bottom >= app.bottom))
-                || (bar.width() <= edge && (bar.left <= app.left || bar.right >= app.right));
-    }
-
-    static boolean isKnownSystemBarTitle(String title) {
-        // AOSP's navigation bar uses accessibilityTitle=R.string.nav_bar;
-        // the default test locale resolves it to "Navigation bar", not its WM title.
-        return title.equals("StatusBar") || title.equals("NavigationBar")
-                || title.equals("NavigationBar0") || title.equals("Navigation bar");
+    static boolean isContainedInVisibleSystemBar(int type, Rect region, Rect display, Insets bars) {
+        // Match the product's platform-metrics policy. Titles and owner packages vary
+        // across system images; only SYSTEM windows wholly inside visible platform
+        // bar strips qualify. An IME, dialog, expanded shade or overlay still blocks.
+        if (type != AccessibilityWindowInfo.TYPE_SYSTEM || region.isEmpty() || display.isEmpty()
+                || !display.contains(region) || bars.left < 0 || bars.top < 0 || bars.right < 0 || bars.bottom < 0
+                || bars.left + bars.right >= display.width() || bars.top + bars.bottom >= display.height()) return false;
+        return (bars.top > 0 && new Rect(display.left, display.top, display.right, display.top + bars.top).contains(region))
+                || (bars.bottom > 0 && new Rect(display.left, display.bottom - bars.bottom, display.right, display.bottom).contains(region))
+                || (bars.left > 0 && new Rect(display.left, display.top, display.left + bars.left, display.bottom).contains(region))
+                || (bars.right > 0 && new Rect(display.right - bars.right, display.top, display.right, display.bottom).contains(region));
     }
 
     private static String windowDiagnostic(AccessibilityWindowInfo window, Rect bounds) {

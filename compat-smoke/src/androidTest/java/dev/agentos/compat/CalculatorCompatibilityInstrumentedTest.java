@@ -2,8 +2,11 @@ package dev.agentos.compat;
 
 import android.app.Instrumentation;
 import android.content.Context;
+import android.graphics.Insets;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.accessibility.AccessibilityWindowInfo;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -46,7 +49,7 @@ public final class CalculatorCompatibilityInstrumentedTest {
             SmokeHarness.validateArguments(arguments);
             report.put("source", SmokeHarness.source(arguments));
             persist();
-            verifyDeviceRegexParser();
+            verifyPlatformParsers();
             harness = new SmokeHarness(instrumentation, arguments);
             harness.requireDedicatedEmulator();
             report.put("device", harness.device()).put("dedicatedEmulatorVerified", true);
@@ -67,7 +70,7 @@ public final class CalculatorCompatibilityInstrumentedTest {
 
     @Test public void calculatorCoreArithmeticWithAgentBoundAndIdle() throws Exception { exercise("idle"); }
 
-    private static void verifyDeviceRegexParser() {
+    private static void verifyPlatformParsers() {
         // Run on each actual Android API's regex implementation, inside the existing
         // two-case probe; JVM compilation alone does not exercise Android ICU syntax.
         for (String dump : new String[] {"attributes:{id=0}", "User state[attributes:{id=0, currentUser=true}]}"}) {
@@ -92,11 +95,24 @@ public final class CalculatorCompatibilityInstrumentedTest {
                 "ServiceRecord{abc u0 dev.agentos.app/.AgentAccessibilityService"}) {
             if (SmokeHarness.hasAgentServiceRecord(dump)) throw new AssertionError("Service record parser accepted an unrelated or incomplete service");
         }
-        for (String title : new String[] {"StatusBar", "NavigationBar", "NavigationBar0", "Navigation bar"}) {
-            if (!SmokeHarness.isKnownSystemBarTitle(title)) throw new AssertionError("Known system bar title was not recognized");
+        Rect display = new Rect(0, 0, 320, 640);
+        Insets bars = Insets.of(0, 24, 0, 48);
+        int system = AccessibilityWindowInfo.TYPE_SYSTEM;
+        for (Rect region : new Rect[] {new Rect(0, 0, 320, 24), new Rect(0, 592, 320, 640)}) {
+            if (!SmokeHarness.isContainedInVisibleSystemBar(system, region, display, bars)) throw new AssertionError("Platform bar region was rejected");
         }
-        for (String title : new String[] {"", "Notification shade", "Navigation bar overlay", "Permission dialog"}) {
-            if (SmokeHarness.isKnownSystemBarTitle(title)) throw new AssertionError("Unknown system window title was accepted");
+        for (Rect region : new Rect[] {new Rect(), new Rect(0, 0, 320, 25), new Rect(0, 591, 320, 640),
+                new Rect(0, 24, 320, 592), new Rect(0, 0, 320, 640), new Rect(-1, 0, 320, 24)}) {
+            if (SmokeHarness.isContainedInVisibleSystemBar(system, region, display, bars)) throw new AssertionError("Unknown or oversized system region was accepted");
+        }
+        Rect top = new Rect(0, 0, 320, 24);
+        for (int type : new int[] {AccessibilityWindowInfo.TYPE_APPLICATION, AccessibilityWindowInfo.TYPE_INPUT_METHOD,
+                AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY}) {
+            if (SmokeHarness.isContainedInVisibleSystemBar(type, top, display, bars)) throw new AssertionError("Non-system overlay was accepted as a bar");
+        }
+        if (SmokeHarness.isContainedInVisibleSystemBar(system, top, display, Insets.NONE)) throw new AssertionError("Hidden system bars were accepted");
+        if (!SmokeHarness.isContainedInVisibleSystemBar(system, new Rect(0, 0, 8, 640), display, Insets.of(8, 0, 0, 0))) {
+            throw new AssertionError("Platform side bar was rejected");
         }
     }
 

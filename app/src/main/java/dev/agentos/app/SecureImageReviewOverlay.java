@@ -40,6 +40,26 @@ import java.util.concurrent.TimeUnit;
  * Ordinary AndroidDeviceTools still treats this separate window as an obstruction.
  */
 final class SecureImageReviewOverlay implements AutoCloseable {
+    /** Fixed lifecycle labels only; never store exception messages or window content. */
+    enum CloseSource {
+        EXPLICIT, SHOW_FAILED, CONFIGURATION_WATCH, WINDOW_DETACHED, WINDOW_VISIBILITY,
+        PREVIEW_NULL, PREVIEW_CONTEXT, PREVIEW_ATTACHMENT, PREDRAW_CONTEXT, PREDRAW_LAYOUT,
+        VERIFY_REJECTED, VERIFY_CONTEXT, VERIFY_ERROR, VERIFY_POST_FAILED, VERIFY_QUEUE_REJECTED,
+        APPROVE_CONTEXT, APPROVE_LISTENER, USER_REJECTED, APPROVED_CONTEXT_CHANGED,
+        REFRESH_CONTEXT, REFRESH_LAYOUT, WINDOW_REMOVED, TARGET_CONTENT_CHANGED,
+        SERVICE_CONTROL_INVALIDATED, SERVICE_CONTROL_LAYOUT_REQUEST, SERVICE_CONTROL_LAYOUT_CHANGED,
+        SERVICE_CONTROL_ATTACHED, SERVICE_CONTROL_DETACHED, SERVICE_CONTROL_VISIBILITY,
+        SERVICE_CONTROL_CALLBACKS, SERVICE_CONTROL_PUBLICATION, SERVICE_CONTROL_REMOVED, SERVICE_DEVICE_STOP,
+        SERVICE_LOW_MEMORY, SERVICE_UI_HIDDEN, SERVICE_TRIM_MEMORY,
+        SERVICE_CONFIGURATION, SERVICE_CONNECTED, SERVICE_DISCONNECTED
+    }
+    private enum VerifyStage {
+        NOT_STARTED, START_CONTEXT, CONFIGURATION_IDENTITY, CONFIGURATION_CONTEXT, DEVICE_GATE,
+        GATED_CONTEXT, DEVICE_READY, APP_GRANT, FRESH_WINDOWS, WINDOW_COUNT,
+        WINDOW_CONTEXT, REVIEW_WINDOW, CONTROL_WINDOW, FOCUSED_WINDOW, REQUIRED_WINDOW_COUNTS,
+        TARGET_ROOT, TARGET_ROOT_IDENTITY, WINDOW_METRICS, UNKNOWN_OCCLUSION, FINAL_CONTEXT,
+        FINAL_DEVICE_READY, FINAL_READY_CONTEXT, VERIFIED
+    }
     interface Listener {
         void onApproved(ImageReviewSession.ApprovalToken approval);
         void onClosed(ImageReviewSession.State state, ImageReviewSession.Reason reason);
@@ -72,6 +92,15 @@ final class SecureImageReviewOverlay implements AutoCloseable {
     private volatile ImageReviewSession.HostToken hostToken;
     private volatile boolean ended, closeRequested;
     private volatile long eventGeneration;
+    private final Object diagnosticLock = new Object();
+    private volatile VerifyStage verifyStage = VerifyStage.NOT_STARTED;
+    private volatile String windowDiagnostic = "not_read";
+    private volatile String windowCounts = "not_counted";
+    private volatile long shownAt = -1;
+    private CloseSource firstCloseSource;
+    private VerifyStage firstCloseVerifyStage;
+    private String firstCloseWindows, firstCloseCounts;
+    private long firstCloseElapsed = -1;
     private boolean shown, attached, verificationPending, cleanupComplete, finishing;
     private final Runnable deadline = this::onDeadline;
     private final ViewTreeObserver.OnPreDrawListener presented = this::onPreDraw;
@@ -105,11 +134,11 @@ final class SecureImageReviewOverlay implements AutoCloseable {
             }
             @Override protected void onDetachedFromWindow() {
                 invalidateGeometry(true); super.onDetachedFromWindow();
-                if (shown && !cleanupComplete) main.post(SecureImageReviewOverlay.this::close);
+                if (shown && !cleanupComplete) main.post(() -> close(CloseSource.WINDOW_DETACHED));
             }
             @Override protected void onWindowVisibilityChanged(int visibility) {
                 invalidateGeometry(false); super.onWindowVisibilityChanged(visibility);
-                if (shown && visibility != VISIBLE && !ended) close();
+                if (shown && visibility != VISIBLE && !ended) close(CloseSource.WINDOW_VISIBILITY);
             }
             @Override public boolean onFilterTouchEventForSecurity(MotionEvent event) {
                 if ((event.getFlags() & (MotionEvent.FLAG_WINDOW_IS_OBSCURED
@@ -141,7 +170,8 @@ final class SecureImageReviewOverlay implements AutoCloseable {
         hostToken = ImageReviewPresentationCoordinator.claim(this, session);
         if (hostToken == null) throw new IllegalStateException("已有图片审阅正在进行。");
         shown = true;
-        configurationWatch = configuration.watch(this::close);
+        shownAt = SystemClock.elapsedRealtime();
+        configurationWatch = configuration.watch(() -> close(CloseSource.CONFIGURATION_WATCH));
         if (!contextCurrent()) throw new IllegalStateException("图片审阅配置已改变。");
 
         WindowManager manager = service.getSystemService(WindowManager.class);
@@ -176,12 +206,12 @@ final class SecureImageReviewOverlay implements AutoCloseable {
         boolean transferred = false;
         try {
             if (isEnded() || !contextCurrent() || session.state() != ImageReviewSession.State.PREPARING || decoded == null) {
-                if (!ended) close();
+                if (!ended) close(decoded == null ? CloseSource.PREVIEW_NULL : CloseSource.PREVIEW_CONTEXT);
                 return;
             }
             reviewView.installPreview(decoded); transferred = true;
             root.requestLayout(); root.invalidate();
-        } catch (RuntimeException | OutOfMemoryError failedAttachment) { close(); }
+        } catch (RuntimeException | OutOfMemoryError failedAttachment) { close(CloseSource.PREVIEW_ATTACHMENT); }
         finally { if (!transferred && decoded != null) decoded.close(); }
     }
 
@@ -194,7 +224,10 @@ final class SecureImageReviewOverlay implements AutoCloseable {
 
     private boolean onPreDraw() {
         if (ended) return true;
-        if (!contextCurrent() || !secureLayout()) { close(); return true; }
+        boolean currentContext = contextCurrent();
+        if (!currentContext || !secureLayout()) {
+            close(currentContext ? CloseSource.PREDRAW_LAYOUT : CloseSource.PREDRAW_CONTEXT); return true;
+        }
         AgentAccessibilityService.OwnedReviewWindowIdentity identity = refreshIdentity();
         if (ended) return true;
         completeIdentityWaiters(identity);
@@ -218,7 +251,7 @@ final class SecureImageReviewOverlay implements AutoCloseable {
             boolean valid = false;
             try { valid = verifyMetadata(identity, expectedEvents); }
             catch (Exception unavailable) { /* Only bounded lifecycle metadata is exposed to the host. */ }
-            catch (Error failure) { close(); throw failure; }
+            catch (Error failure) { close(CloseSource.VERIFY_ERROR); throw failure; }
             boolean accepted = valid;
             if (!main.post(() -> {
                 verificationPending = false;
@@ -227,25 +260,40 @@ final class SecureImageReviewOverlay implements AutoCloseable {
                 if (!service.isOwnedReviewWindowCurrent(identity) || expectedEvents != eventGeneration) {
                     root.invalidate(); return;
                 }
-                if (!accepted || !contextCurrent()) { close(); return; }
+                if (!accepted || !contextCurrent()) {
+                    close(accepted ? CloseSource.VERIFY_CONTEXT : CloseSource.VERIFY_REJECTED); return;
+                }
                 verifiedWindow = identity; root.invalidate();
-            })) close();
+            })) close(CloseSource.VERIFY_POST_FAILED);
         }); } catch (RuntimeException | Error rejected) {
-            verificationPending = false; close(); throw rejected;
+            verificationPending = false; close(CloseSource.VERIFY_QUEUE_REJECTED); throw rejected;
         }
     }
 
     /** Metadata only. The ordinary tool whitelist and final disclosure policy are intentionally untouched. */
     private boolean verifyMetadata(AgentAccessibilityService.OwnedReviewWindowIdentity identity, long expectedEvents) throws Exception {
+        verifyStage = VerifyStage.START_CONTEXT;
+        windowDiagnostic = "not_read"; windowCounts = "not_counted";
         checkWorkerContext(identity, expectedEvents);
+        verifyStage = VerifyStage.CONFIGURATION_IDENTITY;
         if (!validateConfigurationIdentity()) return false;
+        verifyStage = VerifyStage.CONFIGURATION_CONTEXT;
         checkWorkerContext(identity, expectedEvents);
+        verifyStage = VerifyStage.DEVICE_GATE;
         if (!service.tryBeginDeviceCall()) return false;
         List<AccessibilityWindowInfo> windows = null;
         try {
+            verifyStage = VerifyStage.GATED_CONTEXT;
             checkWorkerContext(identity, expectedEvents);
-            if (!service.isDeviceReady() || !SettingsStore.isGrantValid(service, verifiedGrant)) return false;
+            verifyStage = VerifyStage.DEVICE_READY;
+            if (!service.isDeviceReady()) return false;
+            verifyStage = VerifyStage.APP_GRANT;
+            if (!SettingsStore.isGrantValid(service, verifiedGrant)) return false;
+            verifyStage = VerifyStage.FRESH_WINDOWS;
             windows = AndroidDeviceTools.freshWindows(service, () -> checkWorkerContext(identity, expectedEvents));
+            try { windowDiagnostic = windowMetadata(windows, identity); }
+            catch (RuntimeException | OutOfMemoryError diagnosticUnavailable) { windowDiagnostic = "unavailable"; }
+            verifyStage = VerifyStage.WINDOW_COUNT;
             if (windows == null || windows.isEmpty() || windows.size() > 40) return false;
             int reviews = 0, focused = 0, controlCount = 0;
             AccessibilityWindowInfo target = null;
@@ -253,39 +301,50 @@ final class SecureImageReviewOverlay implements AutoCloseable {
             Rect targetBounds = new Rect(source.windowBounds.left, source.windowBounds.top,
                     source.windowBounds.right, source.windowBounds.bottom);
             for (AccessibilityWindowInfo window : windows) {
+                verifyStage = VerifyStage.WINDOW_CONTEXT;
                 checkWorkerContext(identity, expectedEvents);
                 Rect bounds = new Rect(); window.getBoundsInScreen(bounds);
                 if (window.getId() == identity.windowId) {
+                    verifyStage = VerifyStage.REVIEW_WINDOW;
                     reviews++;
                     if (window.getType() != AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY
                             || window.getDisplayId() != Display.DEFAULT_DISPLAY || window.isFocused()
                             || !bounds.equals(identity.copyBounds())) return false;
                 }
                 if (window.getId() == controls.windowId) {
+                    verifyStage = VerifyStage.CONTROL_WINDOW;
                     controlCount++;
                     if (window.getType() != AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY
                             || window.getDisplayId() != controls.displayId || window.isFocused()
                             || !bounds.equals(controls.copyBounds()) || Rect.intersects(bounds, identity.copyBounds())) return false;
                 }
                 if (window.isFocused()) {
+                    verifyStage = VerifyStage.FOCUSED_WINDOW;
                     focused++;
                     if (window.getId() != source.windowId || window.getDisplayId() != source.displayId
                             || window.getType() != AccessibilityWindowInfo.TYPE_APPLICATION || !bounds.equals(targetBounds)) return false;
                     target = window;
                 }
             }
+            try { windowCounts = "review=" + reviews + ",control=" + controlCount + ",focused=" + focused; }
+            catch (OutOfMemoryError diagnosticUnavailable) { windowCounts = "unavailable"; }
+            verifyStage = VerifyStage.REQUIRED_WINDOW_COUNTS;
             if (reviews != 1 || controlCount != 1 || focused != 1 || target == null) return false;
+            verifyStage = VerifyStage.TARGET_ROOT;
             AccessibilityNodeInfo targetRoot = target.getRoot();
             if (targetRoot == null) return false;
             try {
+                verifyStage = VerifyStage.TARGET_ROOT_IDENTITY;
                 if (targetRoot.getWindowId() != source.windowId || !source.packageName.contentEquals(
                         targetRoot.getPackageName() == null ? "" : targetRoot.getPackageName())) return false;
             } finally { targetRoot.recycle(); }
+            verifyStage = VerifyStage.WINDOW_METRICS;
             WindowManager manager = service.getSystemService(WindowManager.class);
             if (manager == null) return false;
             WindowMetrics metrics = manager.getCurrentWindowMetrics();
             Insets bars = metrics.getWindowInsets().getInsets(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
             Rect screen = metrics.getBounds();
+            verifyStage = VerifyStage.UNKNOWN_OCCLUSION;
             for (AccessibilityWindowInfo window : windows) {
                 if (window.getId() == source.windowId || window.getId() == identity.windowId
                         || window.getId() == controls.windowId || window.getLayer() <= target.getLayer()) continue;
@@ -295,14 +354,43 @@ final class SecureImageReviewOverlay implements AutoCloseable {
                 if (window.getType() == AccessibilityWindowInfo.TYPE_SYSTEM && inVisibleBar(other, screen, bars)) continue;
                 return false;
             }
+            verifyStage = VerifyStage.FINAL_CONTEXT;
             checkWorkerContext(identity, expectedEvents);
+            verifyStage = VerifyStage.FINAL_DEVICE_READY;
             boolean ready = service.isDeviceReady();
+            verifyStage = VerifyStage.FINAL_READY_CONTEXT;
             checkWorkerContext(identity, expectedEvents);
+            verifyStage = ready ? VerifyStage.VERIFIED : VerifyStage.FINAL_DEVICE_READY;
             return ready;
         } finally {
             if (windows != null) for (AccessibilityWindowInfo window : windows) window.recycle();
             service.endDeviceCall();
         }
+    }
+
+    /** Bounded numeric metadata only, from the exact list already read by the verifier. */
+    private String windowMetadata(List<AccessibilityWindowInfo> windows,
+                                  AgentAccessibilityService.OwnedReviewWindowIdentity identity) {
+        CoordinateNodeResolver.Binding target = session.binding.observation;
+        StringBuilder text = new StringBuilder(1024);
+        text.append("count=").append(windows == null ? -1 : windows.size())
+                .append("; expectedReview=").append(identity.windowId).append('@').append(identity.copyBounds().toShortString())
+                .append("; expectedControl=").append(controls.windowId).append('@').append(controls.copyBounds().toShortString())
+                .append("; expectedTarget=").append(target.windowId).append('@')
+                .append('[').append(target.windowBounds.left).append(',').append(target.windowBounds.top)
+                .append(',').append(target.windowBounds.right).append(',').append(target.windowBounds.bottom).append(']');
+        if (windows != null) {
+            int count = Math.min(8, windows.size());
+            for (int i = 0; i < count; i++) {
+                AccessibilityWindowInfo window = windows.get(i);
+                Rect bounds = new Rect(); window.getBoundsInScreen(bounds);
+                text.append("; w=").append(window.getId()).append('/').append(window.getType())
+                        .append('/').append(window.getDisplayId()).append('/').append(window.isFocused() ? 1 : 0)
+                        .append('@').append(bounds.toShortString());
+            }
+            if (windows.size() > count) text.append("; omitted=").append(windows.size() - count);
+        }
+        return text.toString();
     }
 
     /** Validate displayable recipient and the saved grant once, without retaining credentials. */
@@ -363,21 +451,23 @@ final class SecureImageReviewOverlay implements AutoCloseable {
         requireMain();
         AgentAccessibilityService.OwnedReviewWindowIdentity identity = verifiedWindow;
         if (!contextCurrent() || !secureLayout() || root.isLayoutRequested()
-                || !service.isOwnedReviewWindowCurrent(identity) || !reviewView.isReadyToPresent()) { close(); return; }
+                || !service.isOwnedReviewWindowCurrent(identity) || !reviewView.isReadyToPresent()) {
+            close(CloseSource.APPROVE_CONTEXT); return;
+        }
         ImageReviewSession.ApprovalToken approved = session.approve(hostToken);
         if (approved == null) { refresh(); return; }
         approvedWindow = identity;
         reviewView.setApproved();
         try { if (listener != null) listener.onApproved(approved); }
-        catch (RuntimeException failedConsumer) { close(); return; }
+        catch (RuntimeException failedConsumer) { close(CloseSource.APPROVE_LISTENER); return; }
         refresh(); // An unconsumed token remains revocable until consumed or expired.
     }
 
-    private void reject() { session.reject(hostToken); close(); }
+    private void reject() { session.reject(hostToken); close(CloseSource.USER_REJECTED); }
 
     private void invalidateApprovedContext() {
         session.invalidate(ImageReviewSession.Reason.CONTEXT_CHANGED);
-        close();
+        close(CloseSource.APPROVED_CONTEXT_CHANGED);
     }
 
     /** Check actual geometry before publishing it to any waiter, including synchronous future continuations. */
@@ -394,7 +484,10 @@ final class SecureImageReviewOverlay implements AutoCloseable {
     void refresh() {
         requireMain();
         if (ended) return;
-        if (!contextCurrent() || shown && !secureLayout()) { close(); return; }
+        boolean current = contextCurrent();
+        if (!current || shown && !secureLayout()) {
+            close(current ? CloseSource.REFRESH_LAYOUT : CloseSource.REFRESH_CONTEXT); return;
+        }
         completeIdentityWaiters(refreshIdentity());
         if (verifiedWindow == null) root.invalidate();
     }
@@ -406,7 +499,7 @@ final class SecureImageReviewOverlay implements AutoCloseable {
         // still comes from this exact View's registered token/attachment, never a title.
         if (service.isRegisteredReviewWindow(this, windowId)) {
             if (type == AccessibilityEvent.TYPE_WINDOWS_CHANGED
-                    && (changes & AccessibilityEvent.WINDOWS_CHANGE_REMOVED) != 0) close();
+                    && (changes & AccessibilityEvent.WINDOWS_CHANGE_REMOVED) != 0) close(CloseSource.WINDOW_REMOVED);
             else if (approvedWindow != null && type == AccessibilityEvent.TYPE_WINDOWS_CHANGED
                     && (changes & (AccessibilityEvent.WINDOWS_CHANGE_BOUNDS | AccessibilityEvent.WINDOWS_CHANGE_FOCUSED
                     | AccessibilityEvent.WINDOWS_CHANGE_LAYER)) != 0) invalidateApprovedContext();
@@ -416,7 +509,7 @@ final class SecureImageReviewOverlay implements AutoCloseable {
         if (windowId == session.binding.observation.windowId && (type == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
                 || type == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED || type == AccessibilityEvent.TYPE_VIEW_SCROLLED
                 || type == AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED || type == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)) {
-            session.invalidate(ImageReviewSession.Reason.CONTEXT_CHANGED); close(); return;
+            session.invalidate(ImageReviewSession.Reason.CONTEXT_CHANGED); close(CloseSource.TARGET_CONTENT_CHANGED); return;
         }
         if (type == AccessibilityEvent.TYPE_WINDOWS_CHANGED || type == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             // A previously issued token must not remain consumable while an
@@ -453,12 +546,33 @@ final class SecureImageReviewOverlay implements AutoCloseable {
         }
     }
 
-    @Override public void close() {
+    @Override public void close() { close(CloseSource.EXPLICIT); }
+
+    void close(CloseSource source) {
+        synchronized (diagnosticLock) {
+            if (firstCloseSource == null) {
+                firstCloseSource = source;
+                firstCloseVerifyStage = verifyStage;
+                firstCloseWindows = windowDiagnostic;
+                firstCloseCounts = windowCounts;
+                firstCloseElapsed = shownAt < 0 ? -1 : SystemClock.elapsedRealtime() - shownAt;
+            }
+        }
         closeRequested = true;
         ImageReviewSession.HostToken claimed = hostToken;
         if (claimed != null) session.invalidateHost(claimed);
         if (Looper.myLooper() != Looper.getMainLooper()) { main.post(this::finishHost); return; }
         finishHost();
+    }
+
+    /** Failure-only package diagnostic; never reads Views, storage, window text or credentials. */
+    String diagnosticSummary() {
+        synchronized (diagnosticLock) {
+            return "reviewClose=" + firstCloseSource + "; afterShowMs=" + firstCloseElapsed
+                    + "; verifyStage=" + (firstCloseVerifyStage == null ? verifyStage : firstCloseVerifyStage)
+                    + "; " + (firstCloseCounts == null ? windowCounts : firstCloseCounts)
+                    + "; " + (firstCloseWindows == null ? windowDiagnostic : firstCloseWindows);
+        }
     }
 
     private void finishHost() {

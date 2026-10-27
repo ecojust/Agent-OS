@@ -555,16 +555,20 @@ public final class ImageReviewOverlayInstrumentedTest {
             finally { future.cancel(false); }
         }
         void awaitPresented() {
-            await(() -> {
-                AtomicBoolean ready = new AtomicBoolean();
-                env.main(() -> {
-                    assertFalse("Review ended before the real window was verified: " + session.reason(), host.isEnded());
-                    ready.set(session.state() == ImageReviewSession.State.PRESENTED
-                            && host.rootView().isAttachedToWindow() && !host.rootView().hasWindowFocus()
-                            && button(ImageReviewView.APPROVE).isEnabled());
-                });
-                return ready.get();
-            }, "The actual non-focusing review did not become presentable");
+            try {
+                await(() -> {
+                    AtomicBoolean ready = new AtomicBoolean();
+                    env.main(() -> {
+                        assertFalse("Review ended before the real window was verified: " + session.reason(), host.isEnded());
+                        ready.set(session.state() == ImageReviewSession.State.PRESENTED
+                                && host.rootView().isAttachedToWindow() && !host.rootView().hasWindowFocus()
+                                && button(ImageReviewView.APPROVE).isEnabled());
+                    });
+                    return ready.get();
+                }, "The actual non-focusing review did not become presentable");
+            } catch (AssertionError failed) {
+                throw new AssertionError(failed.getMessage() + "\n" + host.diagnosticSummary(), failed);
+            }
         }
         void awaitEnded() {
             await(() -> {

@@ -204,7 +204,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
 
     @Override protected void onServiceConnected() {
         super.onServiceConnected();
-        invalidateControlWindowRegistration();
+        invalidateControlWindowRegistration(SecureImageReviewOverlay.CloseSource.SERVICE_CONNECTED);
         connectionGeneration++;
         connected = true;
         instance = this;
@@ -277,7 +277,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
             reviewHost = created;
             created.show(); return created;
         } catch (RuntimeException | Error failed) {
-            if (created != null) created.close();
+            if (created != null) created.close(SecureImageReviewOverlay.CloseSource.SHOW_FAILED);
             else if (session != null && !ImageReviewPresentationCoordinator.isSessionOwnedByAnother(null, session))
                 session.invalidate(ImageReviewSession.Reason.HOST_LOST);
             throw failed;
@@ -363,9 +363,9 @@ public final class AgentAccessibilityService extends AccessibilityService {
         reviewHost = null;
     }
 
-    private void closeImageReview() {
+    private void closeImageReview(SecureImageReviewOverlay.CloseSource source) {
         SecureImageReviewOverlay host = reviewHost;
-        if (host != null) host.close();
+        if (host != null) host.close(source);
     }
 
     /** One device request per process, including replacement services and adapters. */
@@ -388,7 +388,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
     public void setOverlayCallbacks(OverlayCallbacks value) {
         onMain(() -> {
             if (callbacks != value) {
-                invalidateControlLease();
+                invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_CALLBACKS);
                 callbackGeneration++;
                 callbacks = value;
             }
@@ -408,7 +408,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
                         && callbacks != null && displayedCallbackGeneration == callbackGeneration
                         && currentStatus.equals(nextStatus) && currentPaused == paused
                         && currentApproval.equals(nextApproval)) return;
-                invalidateControlLease();
+                invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_PUBLICATION);
                 String previousApproval = currentApproval;
                 currentStatus = nextStatus;
                 currentPaused = paused;
@@ -465,14 +465,22 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     private void invalidateControlLease() {
-        closeImageReview();
+        invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_INVALIDATED);
+    }
+
+    private void invalidateControlLease(SecureImageReviewOverlay.CloseSource source) {
+        closeImageReview(source);
         currentControlLease = null;
         currentControlWindowIdentity = null;
         controlGeneration++;
     }
 
     private void invalidateControlWindowRegistration() {
-        invalidateControlLease();
+        invalidateControlWindowRegistration(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_INVALIDATED);
+    }
+
+    private void invalidateControlWindowRegistration(SecureImageReviewOverlay.CloseSource source) {
+        invalidateControlLease(source);
         controlWindowRegistration = null;
         controlAttachmentGeneration++;
     }
@@ -748,23 +756,23 @@ public final class AgentAccessibilityService extends AccessibilityService {
         if (manager == null) throw new IllegalStateException("悬浮控制不可用");
         LinearLayout panel = new LinearLayout(this) {
             @Override public void requestLayout() {
-                invalidateControlLease();
+                invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_LAYOUT_REQUEST);
                 super.requestLayout();
             }
             @Override protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-                if (changed) invalidateControlLease();
+                if (changed) invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_LAYOUT_CHANGED);
                 super.onLayout(changed, left, top, right, bottom);
             }
             @Override protected void onAttachedToWindow() {
-                invalidateControlWindowRegistration();
+                invalidateControlWindowRegistration(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_ATTACHED);
                 super.onAttachedToWindow();
             }
             @Override protected void onDetachedFromWindow() {
-                invalidateControlWindowRegistration();
+                invalidateControlWindowRegistration(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_DETACHED);
                 super.onDetachedFromWindow();
             }
             @Override protected void onWindowVisibilityChanged(int visibility) {
-                invalidateControlLease();
+                invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_VISIBILITY);
                 super.onWindowVisibilityChanged(visibility);
             }
         };
@@ -879,7 +887,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     private void removeOverlay() {
-        invalidateControlWindowRegistration();
+        invalidateControlWindowRegistration(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_REMOVED);
         main.removeCallbacks(eventReadyCheck);
         eventReadyCheckPending = false;
         if (overlay == null) return;
@@ -900,7 +908,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     private void stopFromDevice() {
-        invalidateControlLease();
+        invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_DEVICE_STOP);
         if (stopNotifying) return;
         stopNotifying = true;
         try { if (callbacks != null) callbacks.onStop(); }
@@ -931,15 +939,21 @@ public final class AgentAccessibilityService extends AccessibilityService {
 
     @Override public void onInterrupt() { stopFromDevice(); }
 
-    @Override public void onLowMemory() { closeImageReview(); super.onLowMemory(); }
+    @Override public void onLowMemory() {
+        closeImageReview(SecureImageReviewOverlay.CloseSource.SERVICE_LOW_MEMORY); super.onLowMemory();
+    }
 
     @Override public void onTrimMemory(int level) {
-        if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) closeImageReview();
+        if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) {
+            closeImageReview(level == android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN
+                    ? SecureImageReviewOverlay.CloseSource.SERVICE_UI_HIDDEN
+                    : SecureImageReviewOverlay.CloseSource.SERVICE_TRIM_MEMORY);
+        }
         super.onTrimMemory(level);
     }
 
     @Override public void onConfigurationChanged(Configuration configuration) {
-        invalidateControlLease();
+        invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONFIGURATION);
         super.onConfigurationChanged(configuration);
         if (overlay == null) return;
         String status = currentStatus, approval = currentApproval;
@@ -959,7 +973,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     private void disconnect() {
-        invalidateControlWindowRegistration();
+        invalidateControlWindowRegistration(SecureImageReviewOverlay.CloseSource.SERVICE_DISCONNECTED);
         connectionGeneration++;
         connected = false;
         if (instance == this) instance = null;

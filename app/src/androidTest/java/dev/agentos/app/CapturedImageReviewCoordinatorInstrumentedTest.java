@@ -181,22 +181,23 @@ public final class CapturedImageReviewCoordinatorInstrumentedTest {
                 }
             } finally { gate.release(); }
             env.main(() -> { }); gate.assertHealthy();
-            assertEquals(0, shown.calls.get()); assertNull(env.device.service.getOwnedReviewWindowIdentity());
+            shown.checkObserverFailure(); assertEquals(0, shown.calls.get());
+            assertNull(env.device.service.getOwnedReviewWindowIdentity());
             assertFalse(ImageReviewPresentationCoordinator.hasHost()); env.assertDrained();
         }
     }
 
-    @Test public void cancellingAfterTheActualHostWasPublishedClosesThatHostAfterTheMainCallbackReturns() throws Exception {
+    @Test public void cancellingAfterTheServiceReturnedAHostClosesOnlyThatHostAfterTheObserverReturns() throws Exception {
         try (Environment env = new Environment("CapturePatternActivity")) {
             if (unsupported(env)) return;
             Input input = env.input("coordinator-host-published-cancel"); Seen shown = new Seen(env); MainGate observerGate = new MainGate();
             CapturedImageReviewCoordinator.HostObserver observer = (host, session) -> { shown.onShown(host, session); observerGate.hold(); };
             Operation operation = env.review(input, observer, decoder(), WindowManager::removeViewImmediate);
             try {
-                observerGate.awaitEntered();
-                assertNotNull(shown.host); assertNotNull(shown.session);
-                // Observer is running on actual main after show returned; only
-                // thread-safe state is read here until its gate is released.
+                observerGate.awaitEntered(); shown.awaitObserved();
+                // The service returned its actual host, but layout/attachment is
+                // not asserted at that point. While main is held, inspect only
+                // the callback's published identity and thread-safe lifecycle.
                 env.device.control.cancel(); assertTask("TASK_STOPPED", operation.awaitFailure());
                 assertTrue(input.receipt.isClosed()); assertFalse(input.receipt.isFinalCheckAttempted());
                 assertFalse(shown.host.whenRemoved().isDone());
@@ -353,20 +354,39 @@ public final class CapturedImageReviewCoordinatorInstrumentedTest {
 
     private static final class Seen implements CapturedImageReviewCoordinator.HostObserver {
         final Environment env; final AtomicInteger calls = new AtomicInteger();
+        final AtomicReference<Throwable> observerFailure = new AtomicReference<>();
+        final CountDownLatch observed = new CountDownLatch(1);
         volatile SecureImageReviewOverlay host; volatile ImageReviewSession session;
         Seen(Environment env) { this.env = env; }
         @Override public void onShown(SecureImageReviewOverlay actual, ImageReviewSession current) {
-            assertEquals(Looper.getMainLooper(), Looper.myLooper()); assertEquals(1, calls.incrementAndGet());
-            assertTrue(actual.rootView().isAttachedToWindow()); session = current; host = actual;
+            try {
+                int count = calls.incrementAndGet();
+                assertEquals(Looper.getMainLooper(), Looper.myLooper()); assertEquals(1, count);
+                assertNotNull(actual); assertNotNull(current);
+                // WindowManager.addView/show returning does not prove attachment
+                // or presentation. Those stay mandatory in awaitPresented below.
+                session = current; host = actual;
+            } catch (RuntimeException | Error failed) {
+                // This callback runs asynchronously on the app main thread.
+                // Preserve failures for the instrumentation thread, not a crash
+                // that discards the remaining device-suite denominator.
+                observerFailure.compareAndSet(null, failed);
+            } finally { observed.countDown(); }
+        }
+        void checkObserverFailure() { rethrowUnchecked(observerFailure.get()); }
+        void awaitObserved() throws Exception {
+            assertTrue("Actual service did not return a review host", observed.await(6, TimeUnit.SECONDS));
+            checkObserverFailure(); assertEquals(1, calls.get()); assertNotNull(host); assertNotNull(session);
         }
         Button button(String tag) { return host.rootView().findViewWithTag(tag); }
         ImageView preview() { return host.rootView().findViewWithTag(ImageReviewView.PREVIEW); }
         ImageReviewView content() { return (ImageReviewView) ((ViewGroup) host.rootView()).getChildAt(0); }
         void click(String tag) { env.main(() -> { assertTrue(button(tag).isEnabled()); assertTrue(button(tag).performClick()); }); }
         void awaitPresented() throws Exception {
-            await(() -> host != null, "Actual service did not publish its review host");
+            awaitObserved();
             try {
                 await(() -> {
+                    checkObserverFailure();
                     AtomicBoolean ready = new AtomicBoolean();
                     env.main(() -> {
                         assertFalse("Actual review ended: " + session.reason(), host.isEnded());
@@ -403,6 +423,7 @@ public final class CapturedImageReviewCoordinatorInstrumentedTest {
             assertEquals(1, reviews); assertEquals(1, focused);
         }
         void assertRemoved() {
+            checkObserverFailure();
             env.main(() -> {
                 assertFalse(host.rootView().isAttachedToWindow()); assertNull(preview().getDrawable());
                 assertTrue(host.whenRemoved().isDone()); assertFalse(ImageReviewPresentationCoordinator.hasHost());
@@ -501,7 +522,16 @@ public final class CapturedImageReviewCoordinatorInstrumentedTest {
                 device.launch(fixture); observe(); bounds = focusedBounds(device);
             } catch (Exception | Error failed) { try { close(); } catch (Exception | Error cleanup) { failed.addSuppressed(cleanup); } throw failed; }
         }
-        void main(Runnable action) { device.instrumentation.runOnMainSync(action); }
+        void main(Runnable action) {
+            AtomicReference<Throwable> failure = new AtomicReference<>();
+            device.instrumentation.runOnMainSync(() -> {
+                try { action.run(); }
+                catch (RuntimeException | Error failed) { failure.set(failed); }
+            });
+            // runOnMainSync schedules a main Runnable; propagate its assertions
+            // on the instrumentation thread rather than terminating the process.
+            rethrowUnchecked(failure.get());
+        }
         JsonObject observe() throws Exception { return awaitObservation(tools, device.control, data -> FIXTURE.equals(string(data, "packageName"))); }
         Source source() {
             if (Build.VERSION.SDK_INT < 34) throw new IllegalStateException("Synthetic hardware input requires API 34");
@@ -631,6 +661,11 @@ public final class CapturedImageReviewCoordinatorInstrumentedTest {
         long deadline = SystemClock.elapsedRealtime() + 6_000;
         while (!condition.getAsBoolean() && SystemClock.elapsedRealtime() < deadline) SystemClock.sleep(20);
         assertTrue(message, condition.getAsBoolean());
+    }
+    private static void rethrowUnchecked(Throwable failure) {
+        if (failure instanceof Error) throw (Error) failure;
+        if (failure instanceof RuntimeException) throw (RuntimeException) failure;
+        if (failure != null) throw new AssertionError("Unexpected callback failure", failure);
     }
     private static Throwable append(Throwable first, Throwable next) { if (first == null) return next; if (first != next) first.addSuppressed(next); return first; }
 }

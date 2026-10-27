@@ -211,6 +211,7 @@ final class WindowBufferCapturer {
                     synchronized (lock) { submissionReturned = true; lock.notifyAll(); }
                 }
                 OwnedWindowBuffer source = awaitNative();
+                CapturedWindow result;
                 try (OwnedWindowBuffer.ReadLease reader = source.openRead()) {
                     checkCurrent(); checkNotAbandoned();
                     HardwareBuffer buffer = reader.buffer();
@@ -219,13 +220,15 @@ final class WindowBufferCapturer {
                     // queue post-validation behind its own blocking await.
                     tools.validateWindowCaptureResult(permit, control, epoch);
                     checkCurrent(); checkNotAbandoned();
-                    CapturedWindow result = new CapturedWindow(this, permit, control, epoch, source, metadata,
+                    result = new CapturedWindow(this, permit, control, epoch, source, metadata,
                             Math.min(requestDeadline, permit.deadlineElapsedRealtimeMs));
-                    synchronized (lock) {
-                        if (abandoned || failure != null) throw new CaptureException(Failure.ABANDONED);
-                        checkCurrent();
-                        ready = result; lock.notifyAll();
-                    }
+                }
+                // A claimed result must not retain our validator's read lease:
+                // an immediate converter may copy and release the raw owner.
+                synchronized (lock) {
+                    if (abandoned || failure != null) throw new CaptureException(Failure.ABANDONED);
+                    checkCurrent();
+                    ready = result; lock.notifyAll();
                 }
             } catch (Exception failed) { fail(failed); }
             catch (Error failed) { fail(failed); throw failed; }

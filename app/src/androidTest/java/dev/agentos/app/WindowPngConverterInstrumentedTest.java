@@ -217,10 +217,14 @@ public final class WindowPngConverterInstrumentedTest {
         // Only this case changes a global test setting. Save the exact prior
         // override, set before service/control Views are created, restore after
         // those Views and every capture resource are really closed.
-        try (DisplaySizeOverride display = new DisplaySizeOverride(900, 1600)) {
+        // Keep the dedicated 320x640 emulator's aspect ratio and use an
+        // integer enlargement. The previous 900x1600 override exposed a
+        // 900-versus-899 window-metadata disagreement before capture began.
+        // Actual bounds must still match exactly; no production guard is relaxed.
+        try (DisplaySizeOverride display = new DisplaySizeOverride(960, 1920)) {
             try (Environment env = new Environment()) {
-                assertEquals(1600, Math.max(env.bounds.width(), env.bounds.height()));
-                assertEquals(900, Math.min(env.bounds.width(), env.bounds.height()));
+                assertEquals(1920, Math.max(env.bounds.width(), env.bounds.height()));
+                assertEquals(960, Math.min(env.bounds.width(), env.bounds.height()));
                 assertArrayEquals(new int[]{1024, 1024}, WindowPngConverter.targetSize(16384, 16384));
                 assertArrayEquals(new int[]{1, 1280}, WindowPngConverter.targetSize(1, 100000));
                 assertArrayEquals(new int[]{37, 53}, WindowPngConverter.targetSize(37, 53));
@@ -228,7 +232,7 @@ public final class WindowPngConverterInstrumentedTest {
                 try (PngImage image = new WindowPngConverter().convert(env.capture(pattern))) {
                     int[] target = WindowPngConverter.targetSize(env.bounds.width(), env.bounds.height());
                     assertEquals(1280, Math.max(image.width, image.height));
-                    assertEquals(720, Math.min(image.width, image.height));
+                    assertEquals(640, Math.min(image.width, image.height));
                     assertTrue((long) image.width * image.height <= ImageAttachment.MAX_PIXELS);
                     assertPngColors(image, target[0], target[1]);
                 }

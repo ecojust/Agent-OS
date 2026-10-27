@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Reject explicitly visible IME states when the fresh accessibility inventory is incomplete, without inventing windows or retrying writes. Preserve the original keyboard case and verify real rejection/recovery branches. APK/test APK/lint passed in 41 seconds; device regression pending.
+**本次更新：** Archive the first fixed-page run exactly: 20/20 failed at initial basic-page recognition, no missing cases. Installation and production-service reads succeeded; native container actions/roles differ from the candidate assumptions. Verified 136 payloads, 40 test-only PNGs and 20 blocked standard captures; no screenshot capability enabled.
 
-**记录时间：** 2026-10-27T13:05:43Z
+**记录时间：** 2026-10-27T13:06:32Z
 
 [最近测试截图与清单](screenshots/40504724795-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40504724795)。通过、失败及未截图原因见清单。
 

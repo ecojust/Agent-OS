@@ -91,7 +91,7 @@ public final class CapturedImageReviewCoordinatorInstrumentedTest {
                 CompletableFuture<Void> cancelled = shown.host.whenRemoved();
                 assertTrue(cancelled.cancel(false)); assertFalse(independent.isDone());
                 shown.click(ImageReviewView.APPROVE);
-                try (LocalToolResult result = operation.takeSuccess()) {
+                try (LocalToolResult result = shown.takeSuccessWithWindowDiagnostic(operation)) {
                     independent.get(5, TimeUnit.SECONDS); shown.assertRemoved();
                     assertEquals(ImageReviewSession.State.CONSUMED, shown.session.state());
                     assertTrue(input.receipt.isTransferred()); assertTrue(input.receipt.isClosed());
@@ -309,19 +309,36 @@ public final class CapturedImageReviewCoordinatorInstrumentedTest {
             SecureImageReviewOverlay.WindowRemover remover = (manager, root) -> { manager.removeViewImmediate(root); removedGate.hold(); };
             try (Operation operation = env.review(input, shown, decoder(), remover)) {
                 shown.awaitPresented();
-                // The click runs on main; the coordinator worker subsequently
-                // posts actual removal, which stops before acknowledgement, not
-                // before detach. Keep click assertions on the test's sync path.
-                shown.click(ImageReviewView.APPROVE);
+                // Approval can wake the worker before the button callback's
+                // refresh returns. That refresh may remove the consumed host on
+                // this same main callback, so never synchronously wait for the
+                // click while the removal barrier needs this test to release it.
+                CompletableFuture<Void> approvalCallback = new CompletableFuture<>();
+                assertTrue(new Handler(Looper.getMainLooper()).post(() -> {
+                    try {
+                        Button button = shown.button(ImageReviewView.APPROVE);
+                        assertTrue(button.isEnabled()); assertTrue(button.performClick());
+                        approvalCallback.complete(null);
+                    } catch (RuntimeException | Error failure) {
+                        // Preserve main-thread assertions for the test thread.
+                        approvalCallback.completeExceptionally(failure);
+                    }
+                }));
                 try {
-                    removedGate.awaitEntered(); assertFalse(shown.host.whenRemoved().isDone());
+                    removedGate.awaitEntered(); removedGate.assertHealthy();
+                    assertFalse(shown.host.whenRemoved().isDone());
                     assertEquals(ImageReviewSession.State.CONSUMED, shown.session.state()); assertGateFree(env.device);
                     // This explicit synthetic test action is outside the agent's
                     // dispatcher and runs against the real fixture process. The
                     // production coordinator never gets a fake final snapshot.
                     incrementActualFixture(env, input.receipt.windowId);
                     assertEquals(0, env.device.control.getDispatchAttempts());
-                } finally { removedGate.release(); }
+                } finally {
+                    removedGate.release();
+                    // A failed click must fail this case, not crash the main
+                    // thread or disappear behind an unrelated STALE result.
+                    approvalCallback.get(3, TimeUnit.SECONDS);
+                }
                 Throwable failure = operation.awaitFailure();
                 assertTrue(String.valueOf(failure), failure instanceof AndroidDeviceTools.WindowCaptureException);
                 assertEquals(AndroidDeviceTools.WindowCaptureFailure.STALE_OBSERVATION,
@@ -357,6 +374,7 @@ public final class CapturedImageReviewCoordinatorInstrumentedTest {
         final AtomicReference<Throwable> observerFailure = new AtomicReference<>();
         final CountDownLatch observed = new CountDownLatch(1);
         volatile SecureImageReviewOverlay host; volatile ImageReviewSession session;
+        String verifiedWindowMetadata = "reviewWindow=not-yet-verified";
         Seen(Environment env) { this.env = env; }
         @Override public void onShown(SecureImageReviewOverlay actual, ImageReviewSession current) {
             try {
@@ -421,6 +439,18 @@ public final class CapturedImageReviewCoordinatorInstrumentedTest {
                 }
             } finally { for (AccessibilityWindowInfo window : windows) window.recycle(); }
             assertEquals(1, reviews); assertEquals(1, focused);
+            // Retain only numeric metadata already verified against the actual
+            // window list, so a failed final snapshot can identify this exact
+            // retired review without taking a replacement observation.
+            verifiedWindowMetadata = "reviewWindowId=" + identity.windowId + "; reviewDisplayId=" + identity.displayId
+                    + "; reviewBounds=" + identity.copyBounds().toShortString();
+        }
+        LocalToolResult takeSuccessWithWindowDiagnostic(Operation operation) throws Exception {
+            try { return operation.takeSuccess(); }
+            catch (AssertionError failure) {
+                throw new AssertionError(failure.getMessage() + "\n" + verifiedWindowMetadata
+                        + "\n" + (host == null ? "reviewHost=absent" : host.diagnosticSummary()), failure);
+            }
         }
         void assertRemoved() {
             checkObserverFailure();

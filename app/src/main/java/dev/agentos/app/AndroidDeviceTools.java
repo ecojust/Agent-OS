@@ -282,6 +282,9 @@ public final class AndroidDeviceTools implements ToolHandler {
         private WindowCaptureException(WindowCaptureFailure code, Throwable cause) {
             super("Internal window capture precondition failed: " + code, cause); this.code = code;
         }
+        private WindowCaptureException(WindowCaptureFailure code, String message, Throwable cause) {
+            super(message, cause); this.code = code;
+        }
     }
 
     @FunctionalInterface interface WindowCaptureSubmission { void submit(int windowId) throws Exception; }
@@ -300,6 +303,11 @@ public final class AndroidDeviceTools implements ToolHandler {
         private final AgentAccessibilityService.OwnedControlWindowIdentity controlWindow;
         private final AgentAccessibilityService.ControlLease controls;
         private final String windowSignature;
+        // Failure comparison only: no original nodes, text, JSON or content hash
+        // is emitted. These fixed digests outlive the already-owned snapshot.
+        private final String nodeElementsDigest, contentAndActionsDigest;
+        private final int observedNodeCount, observedObscurerCount;
+        private final boolean observedTruncated;
         private final Rect windowBounds, rootBounds, safeContent;
         private final AtomicBoolean attempted = new AtomicBoolean();
         private volatile boolean submissionClaimed;
@@ -314,6 +322,10 @@ public final class AndroidDeviceTools implements ToolHandler {
             windowId = state.windowId; displayId = state.displayId; windowType = state.windowType;
             rotation = state.rotation; uid = grant.uid; firstInstallTime = grant.firstInstallTime;
             deadlineElapsedRealtimeMs = deadline; windowSignature = state.windowSignature;
+            nodeElementsDigest = digest(state.elements.toString());
+            contentAndActionsDigest = digest(state.contentHashes.toString());
+            observedNodeCount = state.elements.size(); observedObscurerCount = state.obscured.size();
+            observedTruncated = state.truncated;
             windowBounds = new Rect(state.activeWindowBounds); rootBounds = new Rect(state.rootBounds);
             safeContent = new Rect(state.safeContent); controlWindow = state.controlWindow; this.controls = controls;
         }
@@ -531,7 +543,12 @@ public final class AndroidDeviceTools implements ToolHandler {
             requireReviewFinalContext(context, deadlineElapsedRealtime);
             try (Snapshot state = snapshotWithControls(owner, epoch, controlWindow,
                     () -> requireReviewFinalContext(context, deadlineElapsedRealtime))) {
-                state.requireRevision(historical.revision);
+                try { state.requireRevision(historical.revision); }
+                catch (DeviceException mismatch) {
+                    if ("STALE_OBSERVATION".equals(mismatch.code))
+                        throw reviewedRevisionFailure(historical, state, mismatch);
+                    throw mismatch;
+                }
                 requireCaptureTargetMatch(historical, state);
                 requireCaptureState(state);
                 validateInstalledGrant(state.packageName);
@@ -548,6 +565,30 @@ public final class AndroidDeviceTools implements ToolHandler {
             }
         } catch (DeviceException rejected) { throw captureFailure(rejected); }
         finally { service.endDeviceCall(); }
+    }
+
+    /** Failure-only bounded metadata, computed from the exact snapshot that was refused. */
+    private WindowCaptureException reviewedRevisionFailure(WindowCapturePermit original, Snapshot current,
+                                                            DeviceException cause) {
+        String diagnostic = "Reviewed capture revision mismatch (STALE_OBSERVATION)"
+                + "; packageSame=" + original.packageName.equals(current.packageName)
+                + "; windowsSame=" + original.windowSignature.equals(current.windowSignature)
+                + "; nodeElementsSame=" + original.nodeElementsDigest.equals(digest(current.elements.toString()))
+                + "; contentAndActionsSame=" + original.contentAndActionsDigest.equals(digest(current.contentHashes.toString()))
+                + "; nodes=" + original.observedNodeCount + "/" + current.elements.size()
+                + "; truncated=" + original.observedTruncated + "/" + current.truncated
+                + "; obscurers=" + original.observedObscurerCount + "/" + current.obscured.size()
+                + "; rootBoundsSame=" + original.rootBounds.equals(current.rootBounds)
+                + "; windowBoundsSame=" + original.windowBounds.equals(current.activeWindowBounds)
+                + "; safeBoundsSame=" + original.safeContent.equals(current.safeContent)
+                + "; expectedWindows=" + captureDiagnosticWindows(original.windowSignature)
+                + "; actualWindows=" + captureDiagnosticWindows(current.windowSignature);
+        return new WindowCaptureException(WindowCaptureFailure.STALE_OBSERVATION, diagnostic, cause);
+    }
+
+    /** Only platform IDs/types/layers/rectangles/rotation, never titles or node/root contents. */
+    private static String captureDiagnosticWindows(String signature) {
+        return signature.length() <= 1_000 ? signature : signature.substring(0, 1_000) + "[truncated]";
     }
 
     private void requireReviewFinalContext(CapturedReviewContext context, long deadline) throws Exception {

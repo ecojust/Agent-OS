@@ -25,11 +25,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Use pinned Ubuntu 24.04 and isolated official HTTPS package indexes for walkthrough tools after the measured Azure mirror timeout. Keep archive signatures, bounded download time and full video validation. Shell validation and 39 recorder/archive checks pass; real recording remains pending.
+**本次更新：** Archive native capture acceptance after settled preparation: 7/8 passed with all four actual declines sending zero images; API36 approval timeout retained before review. All eight setup/cleanup checks passed. Independently verified 35 files/148589 bytes; production screenshot UI stays closed.
 
-**记录时间：** 2026-10-27T14:55:49Z
+**记录时间：** 2026-10-27T14:56:57Z
 
-[最近测试截图与清单](screenshots/40521924977-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40521924977)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40524418849-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40524418849)。通过、失败及未截图原因见清单。
 
 **整体操作演示：** 正在接入真实操作录制，完成后提供小于 100 MB 的视频与对应源码记录；尚未录制的过程不以示意动画代替。
 

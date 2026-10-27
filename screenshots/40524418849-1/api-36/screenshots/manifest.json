@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "api": 36,
+  "runId": "1793112658094-49d6583c",
+  "scope": "Dedicated synthetic Android fixture and verified empty application UI only",
+  "jvmTests": "No UI; no screenshot is claimed for JVM tests",
+  "tests": [
+    {
+      "schemaVersion": 1,
+      "api": 36,
+      "testClass": "dev.agentos.app.PinnedWindowDisclosureInstrumentedTest",
+      "testName": "declinedActualWindowNeverReachesModel",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793112658101,
+      "finishedAt": 1793112664916,
+      "captures": [
+        {
+          "stage": "actual-native-window-review-protected-not-bypassed",
+          "capturedAt": 1793112664794,
+          "foregroundPackage": "org.fossify.math",
+          "status": "blocked",
+          "captureError": "foreground_is_not_an_approved_synthetic_test_screen"
+        },
+        {
+          "stage": "finished",
+          "capturedAt": 1793112664914,
+          "foregroundPackage": "org.fossify.math",
+          "status": "blocked",
+          "captureError": "foreground_is_not_an_approved_synthetic_test_screen"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "api": 36,
+      "testClass": "dev.agentos.app.PinnedWindowDisclosureInstrumentedTest",
+      "testName": "approvedActualWindowIsReviewedAndSentOnce",
+      "assertionResult": "fail",
+      "testResult": "fail",
+      "status": "fail",
+      "startedAt": 1793112664925,
+      "finishedAt": 1793112673048,
+      "failureClass": "AssertionError",
+      "captures": [
+        {
+          "stage": "failed",
+          "capturedAt": 1793112673046,
+          "foregroundPackage": "org.fossify.math",
+          "status": "blocked",
+          "captureError": "foreground_is_not_an_approved_synthetic_test_screen"
+        }
+      ]
+    }
+  ]
+}

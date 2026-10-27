@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T02:25:40Z",
-  "note": "新增任务预算值绑定模块：三种预算维度独立参与配置一致性比较，保留原毫秒预算边界；新增3项核心回归，158项全部实跑通过。预算设置界面与Android存储/执行接线继续实现，下一轮矩阵待验证。",
+  "updated_at": "2026-10-27T02:28:47Z",
+  "note": "任务预算加密存储模块已完成：旧配置缺失字段沿用默认而不写回；非法结构、数值和整秒范围拒绝并保留原文件，保存使旧许可失效。新增6项隔离Android存储回归已编译，APK与lint通过，实际模拟器待下一轮。",
   "latest_evidence": {
     "path": "screenshots/third-party-40437075663-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40437075663"

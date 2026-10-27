@@ -13,6 +13,7 @@ import android.security.keystore.KeyProperties;
 import android.util.Base64;
 
 import dev.agentos.core.ActionConfirmationPolicy;
+import dev.agentos.core.TaskBudget;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -155,6 +156,7 @@ public final class SettingsStore {
             settings.model = json.getString("model");
             settings.confirmEachAction = json.getBoolean("confirmEachAction");
             settings.executionMode = readExecutionMode(json);
+            settings.taskBudget = readTaskBudget(json);
             JSONArray grants = json.getJSONArray("grants");
             for (int i = 0; i < grants.length(); i++) {
                 JSONObject grant = grants.getJSONObject(i);
@@ -187,6 +189,38 @@ public final class SettingsStore {
         throw new IOException("已保存的执行模式无法识别；原配置尚未修改，请明确重置后重试。");
     }
 
+    private static TaskBudget readTaskBudget(JSONObject json) throws IOException, JSONException {
+        // Absence alone identifies a legacy document. Do not silently repair a
+        // present but malformed budget or rewrite old ciphertext while reading.
+        if (!json.has("taskBudget")) return TaskBudget.DEFAULT;
+        Object raw = json.get("taskBudget");
+        if (!(raw instanceof JSONObject)) throw invalidTaskBudget();
+        JSONObject budget = (JSONObject) raw;
+        if (budget.length() != 3 || !budget.has("maxModelRounds") || !budget.has("maxToolCalls")
+                || !budget.has("maxActiveMillis")) throw invalidTaskBudget();
+        long rounds = budgetInteger(budget, "maxModelRounds"), calls = budgetInteger(budget, "maxToolCalls");
+        long millis = budgetInteger(budget, "maxActiveMillis");
+        // Check long values before narrowing so overflow cannot create a smaller valid budget.
+        if (rounds < TaskBudget.MIN_MODEL_ROUNDS || rounds > TaskBudget.MAX_MODEL_ROUNDS
+                || calls < TaskBudget.MIN_TOOL_CALLS || calls > TaskBudget.MAX_TOOL_CALLS
+                || millis < 1_000 || millis > TaskBudget.MAX_ACTIVE_MILLIS || millis % 1_000 != 0) {
+            throw invalidTaskBudget();
+        }
+        return new TaskBudget((int) rounds, (int) calls, millis);
+    }
+
+    private static long budgetInteger(JSONObject budget, String key) throws IOException, JSONException {
+        Object raw = budget.get(key);
+        // JSONObject's numeric getters coerce strings and truncate doubles. Only
+        // integer JSON values are configuration authority, including whole seconds.
+        if (!(raw instanceof Integer) && !(raw instanceof Long)) throw invalidTaskBudget();
+        return ((Number) raw).longValue();
+    }
+
+    private static IOException invalidTaskBudget() {
+        return new IOException("任务预算格式或范围无效；原配置尚未修改，请检查配置后重试。");
+    }
+
     public ConfigurationLease save(SavedSettings settings) throws IOException {
         Mutation mutation = beginMutation(false);
         try {
@@ -209,6 +243,11 @@ public final class SettingsStore {
             // records an explicit local choice; an old false value grants no authority.
             json.put("confirmEachAction", true);
             json.put("executionMode", settings.executionMode.name());
+            JSONObject budget = new JSONObject();
+            budget.put("maxModelRounds", settings.taskBudget.maxModelRounds);
+            budget.put("maxToolCalls", settings.taskBudget.maxToolCalls);
+            budget.put("maxActiveMillis", settings.taskBudget.maxActiveMillis);
+            json.put("taskBudget", budget);
             JSONArray grants = new JSONArray();
             for (String packageName : settings.allowedPackages) {
                 AppGrant identity = settings.grants.get(packageName);
@@ -251,6 +290,9 @@ public final class SettingsStore {
         if (settings == null || settings.endpoint == null || settings.apiKey == null || settings.model == null
                 || settings.allowedPackages == null || settings.grants == null || settings.profileId == null
                 || settings.executionMode == null) throw new IOException("模型配置不完整。");
+        if (settings.taskBudget == null || settings.taskBudget.maxActiveMillis < 1_000
+                || settings.taskBudget.maxActiveMillis > TaskBudget.MAX_ACTIVE_MILLIS
+                || settings.taskBudget.maxActiveMillis % 1_000 != 0) throw invalidTaskBudget();
         if (settings.endpoint.length() > 2048 || settings.apiKey.length() > 8192 || settings.model.length() > 256
                 || settings.allowedPackages.size() > 500) throw new IOException("模型配置超出支持范围。");
         for (String packageName : settings.allowedPackages) {
@@ -623,6 +665,7 @@ public final class SettingsStore {
         /** Legacy storage compatibility only; never use this flag to authorize execution. */
         public boolean confirmEachAction = true;
         public ActionConfirmationPolicy.Mode executionMode = ActionConfirmationPolicy.Mode.CONFIRM_ALL;
+        public TaskBudget taskBudget = TaskBudget.DEFAULT;
         public Set<String> allowedPackages = new LinkedHashSet<>();
         public Map<String, AppGrant> grants = new LinkedHashMap<>();
     }

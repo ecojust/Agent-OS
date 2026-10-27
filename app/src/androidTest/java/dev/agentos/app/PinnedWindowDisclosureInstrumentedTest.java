@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -150,7 +149,7 @@ public final class PinnedWindowDisclosureInstrumentedTest {
             assertEquals(NativeWindowTaskScript.PACKAGE, launcher.getComponent().getPackageName());
             context.startActivity(launcher.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
             device.awaitUiIdle();
-            await("Actual Calculator did not reach its ordinary full window", this::calculatorVisible, 8_000);
+            awaitCalculatorSettled();
             // Original exported launcher and installed page only: no synthetic
             // screenshot backend or fixture page is substituted for this target.
             main(() -> {
@@ -164,27 +163,24 @@ public final class PinnedWindowDisclosureInstrumentedTest {
             persist();
         }
 
-        boolean calculatorVisible() throws Exception {
-            List<AccessibilityWindowInfo> windows = AndroidDeviceTools.freshWindows(device.service, () -> { });
-            try {
-                AccessibilityWindowInfo target = null;
-                for (AccessibilityWindowInfo window : windows) if (window.isFocused()) {
-                    if (target != null || window.getType() != AccessibilityWindowInfo.TYPE_APPLICATION || window.getDisplayId() != 0) return false;
-                    target = window;
+        private void awaitCalculatorSettled() {
+            // Keep the original preparation deadline. Seeing a full-size window
+            // and one visible key can precede the end of launch translations.
+            long deadline = SystemClock.elapsedRealtime() + 8_000, quietSince = -1;
+            String previous = null;
+            do {
+                String geometry = NativeWindowGeometryDiagnostic.readinessSignature(device.service, deadline);
+                long now = SystemClock.elapsedRealtime();
+                if (now >= deadline) break;
+                if (geometry == null) { previous = null; quietSince = -1; }
+                else if (!geometry.equals(previous)) { previous = geometry; quietSince = now; }
+                else if (now - quietSince >= 300) {
+                    report.addProperty("preTaskGeometrySettled", true);
+                    return;
                 }
-                if (target == null) return false;
-                AccessibilityNodeInfo root = target.getRoot(); if (root == null) return false;
-                try {
-                    if (!NativeWindowTaskScript.PACKAGE.contentEquals(root.getPackageName() == null ? "" : root.getPackageName())) return false;
-                    Rect bounds = new Rect(); target.getBoundsInScreen(bounds);
-                    // Fixed small emulator source, never a forged permit or a
-                    // transient display resize to bypass raw-buffer admission.
-                    if (bounds.width() != 320 || bounds.height() != 640) return false;
-                    List<AccessibilityNodeInfo> equals = root.findAccessibilityNodeInfosByViewId(NativeWindowTaskScript.PACKAGE + ":id/btn_equals");
-                    try { return equals != null && equals.size() == 1 && equals.get(0).isVisibleToUser(); }
-                    finally { if (equals != null) for (AccessibilityNodeInfo node : equals) node.recycle(); }
-                } finally { root.recycle(); }
-            } finally { if (windows != null) for (AccessibilityWindowInfo window : windows) window.recycle(); }
+                SystemClock.sleep(Math.min(40, deadline - now));
+            } while (SystemClock.elapsedRealtime() < deadline);
+            fail("Actual Calculator geometry did not settle within its original preparation deadline");
         }
 
         void exercise() throws Exception {

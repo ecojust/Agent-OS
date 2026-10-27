@@ -18,11 +18,15 @@ import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.List;
 
-/** Failure-only technical geometry: no node text, no screenshot, no predicate retry. */
+/** Test-only technical geometry: no node text, screenshot, or permission/predicate retry. */
 final class NativeWindowGeometryDiagnostic {
     private static final int MAX_NODES = 96, MAX_NODE_METADATA_BYTES = 24 * 1024;
+    private static final Pattern RECTANGLE = Pattern.compile("\\[(-?\\d+),(-?\\d+)\\]\\[(-?\\d+),(-?\\d+)\\]");
     private NativeWindowGeometryDiagnostic() { }
 
     static JsonObject fromObservation(JsonObject original) {
@@ -51,16 +55,62 @@ final class NativeWindowGeometryDiagnostic {
     }
 
     static JsonObject sample(AgentAccessibilityService service) {
+        return sample(service, SystemClock.elapsedRealtime() + 1_000,
+                "Independent later sample after returned capture error; not the rejected predicate Snapshot");
+    }
+
+    /** Geometry readiness only. No capture, model qualification, or policy permit is issued. */
+    static String readinessSignature(AgentAccessibilityService service, long preparationDeadline) {
+        JsonObject sampled = sample(service, Math.min(preparationDeadline, SystemClock.elapsedRealtime() + 1_000),
+                "Pre-start readiness sample; not a task observation or capture authorization");
+        if (SystemClock.elapsedRealtime() >= preparationDeadline || !sampled.has("status")
+                || !"sampled".equals(sampled.get("status").getAsString())
+                || sampled.get("metadataTruncated").getAsBoolean()) return null;
+        Rect display = rectangle(sampled.get("displayBounds").getAsString());
+        Rect window = rectangle(sampled.get("windowBounds").getAsString());
+        Rect root = rectangle(sampled.get("rootBounds").getAsString());
+        Rect safe = rectangle(sampled.get("safeContentBounds").getAsString());
+        int rotation = sampled.get("rotation").getAsInt(), windowId = sampled.get("windowId").getAsInt();
+        if (!new Rect(0, 0, 320, 640).equals(display) || !display.equals(window) || !window.equals(root)
+                || windowId < 0 || safe == null || safe.isEmpty() || !window.contains(safe) || (rotation != 0 && rotation != 2)) return null;
+        int formula = 0, result = 0, equals = 0;
+        List<String> nodes = new ArrayList<>(), windows = new ArrayList<>();
+        for (JsonElement value : sampled.getAsJsonArray("nodes")) {
+            JsonObject node = value.getAsJsonObject(); boolean visible = node.get("visible").getAsBoolean();
+            Rect box = rectangle(node.get("bounds").getAsString());
+            if (visible && (box == null || box.isEmpty() || !window.contains(box)
+                    || node.get("windowId").getAsInt() != windowId || node.get("sensitive").getAsBoolean())) return null;
+            if (visible) {
+                String id = node.get("viewId").getAsString();
+                boolean required = id.equals(NativeWindowTaskScript.PACKAGE + ":id/formula")
+                        || id.equals(NativeWindowTaskScript.PACKAGE + ":id/result")
+                        || id.equals(NativeWindowTaskScript.PACKAGE + ":id/btn_equals");
+                if (required && (!"android.widget.TextView".equals(node.get("role").getAsString()) || !safe.contains(box))) return null;
+                if (id.equals(NativeWindowTaskScript.PACKAGE + ":id/formula")) formula++;
+                if (id.equals(NativeWindowTaskScript.PACKAGE + ":id/result")) result++;
+                if (id.equals(NativeWindowTaskScript.PACKAGE + ":id/btn_equals")) equals++;
+            }
+            nodes.add(node.toString());
+        }
+        if (formula != 1 || result != 1 || equals != 1) return null;
+        for (JsonElement value : sampled.getAsJsonArray("windows")) windows.add(value.toString());
+        Collections.sort(windows); Collections.sort(nodes);
+        if (SystemClock.elapsedRealtime() >= preparationDeadline) return null;
+        return windowId + ":" + window.toShortString() + ":" + root.toShortString() + ":"
+                + display.toShortString() + ":" + safe.toShortString() + ":" + rotation + ":" + windows + ":" + nodes;
+    }
+
+    private static JsonObject sample(AgentAccessibilityService service, long deadline, String role) {
         JsonObject result = new JsonObject();
-        result.addProperty("sampleRole", "Independent later sample after returned capture error; not the rejected predicate Snapshot");
+        result.addProperty("sampleRole", role);
         result.addProperty("sampledAtElapsedRealtimeMillis", SystemClock.elapsedRealtime());
         if (Looper.myLooper() == Looper.getMainLooper()) { result.addProperty("status", "wrong_thread"); return result; }
         // Allocate tracking storage before acquiring the device gate. Child
         // registration then cannot grow the list while a native node is owned.
         List<AccessibilityWindowInfo> windows = null; List<AccessibilityNodeInfo> owned = new ArrayList<>(MAX_NODES);
         if (!service.tryBeginDeviceCall()) { result.addProperty("status", "device_gate_busy"); return result; }
-        long deadline = SystemClock.elapsedRealtime() + 1_000;
         try {
+            check(deadline);
             windows = AndroidDeviceTools.freshWindows(service, () -> check(deadline));
             check(deadline);
             if (windows == null || windows.size() > 40) throw new IOException("Window inventory unavailable");
@@ -131,6 +181,13 @@ final class NativeWindowGeometryDiagnostic {
     }
     private static void check(long deadline) throws IOException {
         if (SystemClock.elapsedRealtime() >= deadline) throw new IOException("Diagnostic deadline exceeded");
+    }
+    private static Rect rectangle(String value) {
+        Matcher match = RECTANGLE.matcher(value);
+        if (!match.matches()) return null;
+        try { return new Rect(Integer.parseInt(match.group(1)), Integer.parseInt(match.group(2)),
+                Integer.parseInt(match.group(3)), Integer.parseInt(match.group(4))); }
+        catch (NumberFormatException unavailable) { return null; }
     }
     private static String technical(CharSequence value) {
         String text = value == null ? "" : value.toString();

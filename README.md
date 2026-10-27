@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Archive the second native-window diagnostic run: 6/8 passed, all four decline paths verified; two approval failures preserve original changing-geometry evidence. Independently checked 34 files/143414 bytes. Ordinary screenshot opt-in remains closed.
+**本次更新：** Wait within the existing 8-second native test setup for exact window/root/display and node geometry to remain stable for 300 ms. This addresses the observed startup translations without relaxing production guards or replaying captures. Dedicated APK build and lint pass; new eight-case device run pending.
 
-**记录时间：** 2026-10-27T14:43:54Z
+**记录时间：** 2026-10-27T14:46:44Z
 
 [最近测试截图与清单](screenshots/40521924977-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40521924977)。通过、失败及未截图原因见清单。
 

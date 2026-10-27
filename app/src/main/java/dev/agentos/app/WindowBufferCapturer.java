@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.Looper;
 import android.os.SystemClock;
 
+import com.google.gson.JsonObject;
 import dev.agentos.core.ImageWorkset;
 import dev.agentos.core.RunControl;
 import dev.agentos.core.ToolCatalog;
@@ -41,10 +42,52 @@ final class WindowBufferCapturer {
     @FunctionalInterface interface Backend { void submit(int windowId, Callback callback) throws Exception; }
     enum Failure { BUSY, TIMEOUT, ABANDONED, ALREADY_CLAIMED, INVALID_REQUEST, PLATFORM_UNAVAILABLE, PLATFORM_FAILURE,
         SUBMISSION_UNCERTAIN, BUDGET_EXCEEDED, INVALID_BUFFER, PROTOCOL_ERROR }
+    // Fixed progress labels only. They never authorize work or replace lifecycle checks.
+    enum Phase { QUEUED, PREPARING, RESERVING, SUBMISSION_VALIDATION, SUBMITTING, WAITING_CALLBACK,
+        INSPECTING_BUFFER, POST_VALIDATING, READY, CLAIMED, CONVERSION_ADMISSION, COPYING, SCALING,
+        ENCODING, CONVERSION_CLEANUP, RECEIPT }
+
+    /** Immutable state at the original exception, not a later reconstruction of the platform. */
+    static final class Diagnostic {
+        final Phase phase;
+        final long elapsedMs, phaseElapsedMs, remainingMs, permitRemainingMs;
+        final boolean permitIssued, submissionEntered, submissionReturned, callbackObserved,
+                callbackReceiving, workerDone, postValidationEntered, conversionEntered;
+        private Diagnostic(Phase phase, long elapsedMs, long phaseElapsedMs, long remainingMs,
+                           long permitRemainingMs, boolean permitIssued, boolean submissionEntered,
+                           boolean submissionReturned, boolean callbackObserved, boolean callbackReceiving,
+                           boolean workerDone, boolean postValidationEntered, boolean conversionEntered) {
+            this.phase = phase; this.elapsedMs = elapsedMs; this.phaseElapsedMs = phaseElapsedMs;
+            this.remainingMs = remainingMs; this.permitRemainingMs = permitRemainingMs;
+            this.permitIssued = permitIssued; this.submissionEntered = submissionEntered;
+            this.submissionReturned = submissionReturned; this.callbackObserved = callbackObserved;
+            this.callbackReceiving = callbackReceiving; this.workerDone = workerDone;
+            this.postValidationEntered = postValidationEntered; this.conversionEntered = conversionEntered;
+        }
+        // A new fixed-shape object each time: no request/configuration IDs, geometry, text or pixels.
+        JsonObject toJson() {
+            JsonObject result = new JsonObject();
+            result.addProperty("phase", phase.name()); result.addProperty("elapsedMs", elapsedMs);
+            result.addProperty("phaseElapsedMs", phaseElapsedMs); result.addProperty("requestLimitMs", REQUEST_MS);
+            result.addProperty("remainingMs", remainingMs); result.addProperty("permitRemainingMs", permitRemainingMs);
+            result.addProperty("permitIssued", permitIssued); result.addProperty("submissionEntered", submissionEntered);
+            result.addProperty("submissionReturned", submissionReturned); result.addProperty("callbackObserved", callbackObserved);
+            result.addProperty("callbackReceiving", callbackReceiving); result.addProperty("workerDone", workerDone);
+            result.addProperty("postValidationEntered", postValidationEntered); result.addProperty("conversionEntered", conversionEntered);
+            return result;
+        }
+    }
     static final class CaptureException extends Exception {
         final Failure code;
-        CaptureException(Failure code) { super("Internal window capture failed: " + code); this.code = code; }
-        CaptureException(Failure code, Throwable cause) { super("Internal window capture failed: " + code, cause); this.code = code; }
+        final Diagnostic diagnostic;
+        CaptureException(Failure code) { this(code, (Diagnostic) null); }
+        CaptureException(Failure code, Throwable cause) { this(code, cause, null); }
+        private CaptureException(Failure code, Diagnostic diagnostic) {
+            super("Internal window capture failed: " + code); this.code = code; this.diagnostic = diagnostic;
+        }
+        private CaptureException(Failure code, Throwable cause, Diagnostic diagnostic) {
+            super("Internal window capture failed: " + code, cause); this.code = code; this.diagnostic = diagnostic;
+        }
     }
     WindowBufferCapturer(AndroidDeviceTools tools) {
         this.tools = Objects.requireNonNull(tools);
@@ -65,7 +108,7 @@ final class WindowBufferCapturer {
     }
     static boolean hasActiveCapture() { return SLOT.get() != null; }
 
-    private void requirePlatformCapability() throws CaptureException {
+    private void requirePlatformCapability(CaptureRequest request) throws CaptureException {
         // Called under B1's device gate but before submissionEntered. This is
         // the fixed production backend's check; test backends cannot fake it.
         AgentAccessibilityService service = tools.windowCaptureService();
@@ -73,8 +116,8 @@ final class WindowBufferCapturer {
             AccessibilityServiceInfo info = service.getServiceInfo();
             if (Build.VERSION.SDK_INT < 34 || !service.isConnected() || info == null
                     || (info.getCapabilities() & AccessibilityServiceInfo.CAPABILITY_CAN_TAKE_SCREENSHOT) == 0)
-                throw new CaptureException(Failure.PLATFORM_UNAVAILABLE);
-        } catch (RuntimeException unavailable) { throw new CaptureException(Failure.PLATFORM_UNAVAILABLE, unavailable); }
+                throw request.captureFailure(Failure.PLATFORM_UNAVAILABLE);
+        } catch (RuntimeException unavailable) { throw request.captureFailure(Failure.PLATFORM_UNAVAILABLE, unavailable); }
     }
 
     CaptureRequest start(RunControl owner, long fixedEpoch, String expectedRevision) throws Exception {
@@ -101,7 +144,7 @@ final class WindowBufferCapturer {
                                          ToolRequest original) throws Exception {
         tools.checkWindowCaptureRequestCurrent(owner, fixedEpoch);
         CaptureRequest request = new CaptureRequest(owner, fixedEpoch, expectedRevision, original);
-        if (!SLOT.compareAndSet(null, request)) throw new CaptureException(Failure.BUSY);
+        if (!SLOT.compareAndSet(null, request)) throw request.captureFailure(Failure.BUSY);
         try { WORKER.execute(request::run); }
         catch (RuntimeException | Error rejected) {
             request.fail(rejected);
@@ -142,7 +185,10 @@ final class WindowBufferCapturer {
     final class CaptureRequest implements AutoCloseable {
         private final Object lock = new Object();
         private final RunControl control;
-        private final long epoch, requestDeadline = SystemClock.elapsedRealtime() + REQUEST_MS;
+        private final long epoch, requestStarted = SystemClock.elapsedRealtime(), requestDeadline = requestStarted + REQUEST_MS;
+        private Phase phase = Phase.QUEUED;
+        private long phaseStarted = requestStarted;
+        private boolean postValidationEntered, conversionEntered;
         private final String revision;
         private final ToolRequest originalRequest;
         private volatile AndroidDeviceTools.WindowCapturePermit permit;
@@ -170,33 +216,58 @@ final class WindowBufferCapturer {
             this.originalRequest = originalRequest;
         }
 
+        private void recordPhase(Phase next) {
+            synchronized (lock) { phase = next; phaseStarted = SystemClock.elapsedRealtime(); }
+        }
+        private CaptureException captureFailure(Failure code) { return new CaptureException(code, failureSnapshot()); }
+        private CaptureException captureFailure(Failure code, Throwable cause) {
+            return new CaptureException(code, cause, failureSnapshot());
+        }
+        private Diagnostic failureSnapshot() {
+            synchronized (lock) {
+                long now = SystemClock.elapsedRealtime();
+                AndroidDeviceTools.WindowCapturePermit current = permit;
+                return new Diagnostic(phase, Math.max(0, now - requestStarted),
+                        Math.max(0, now - phaseStarted), Math.max(0, requestDeadline - now),
+                        current == null ? -1 : Math.max(0, current.deadlineElapsedRealtimeMs - now),
+                        current != null, submissionEntered, submissionReturned, terminal != 0, receiving,
+                        workerDone, postValidationEntered, conversionEntered);
+            }
+        }
+
         private void checkCurrent() throws Exception {
             tools.checkWindowCaptureRequestCurrent(control, epoch);
-            if (SystemClock.elapsedRealtime() >= requestDeadline) throw new CaptureException(Failure.TIMEOUT);
+            if (SystemClock.elapsedRealtime() >= requestDeadline) throw captureFailure(Failure.TIMEOUT);
             AndroidDeviceTools.WindowCapturePermit current = permit;
             if (current != null) tools.checkWindowCaptureCurrent(current, control, epoch);
         }
 
         private void run() {
             try {
+                recordPhase(Phase.PREPARING);
                 checkCurrent(); checkNotAbandoned();
                 permit = tools.prepareWindowCapture(control, epoch, revision);
                 checkCurrent(); checkNotAbandoned();
+                recordPhase(Phase.RESERVING);
                 Rect bounds = permit.copyWindowBounds();
                 long bytes = Math.multiplyExact(Math.multiplyExact((long) bounds.width(), bounds.height()), 8L);
-                if (bytes <= 0) throw new CaptureException(Failure.INVALID_BUFFER);
+                if (bytes <= 0) throw captureFailure(Failure.INVALID_BUFFER);
                 ImageWorkset.Reservation reserved;
                 try { reserved = ImageWorkset.process().reserve(bytes); }
-                catch (IllegalStateException exhausted) { throw new CaptureException(Failure.BUDGET_EXCEEDED, exhausted); }
+                catch (IllegalStateException exhausted) { throw captureFailure(Failure.BUDGET_EXCEEDED, exhausted); }
                 synchronized (lock) { capacity = reserved; resourceSettled = false; }
                 checkCurrent(); checkNotAbandoned();
                 try {
+                    recordPhase(Phase.SUBMISSION_VALIDATION);
                     tools.submitWindowCapture(permit, control, epoch, id -> {
-                        if (platformBackend) requirePlatformCapability();
+                        if (platformBackend) requirePlatformCapability(this);
                         // Capability lookup above may use Binder. Recheck the
                         // original epoch/configuration after it actually returns.
                         checkCurrent(); checkNotAbandoned();
-                        synchronized (lock) { submissionEntered = true; submissionUptime = SystemClock.uptimeMillis(); }
+                        synchronized (lock) {
+                            submissionEntered = true; submissionUptime = SystemClock.uptimeMillis();
+                            recordPhase(Phase.SUBMITTING);
+                        }
                         backend.submit(id, new Callback() {
                             @Override public void success(HardwareBuffer buffer, ColorSpace space, long time) { received(buffer, space, time); }
                             @Override public void failure(int code) { nativeFailure(code); }
@@ -205,12 +276,14 @@ final class WindowBufferCapturer {
                 } catch (Exception failure) {
                     boolean entered;
                     synchronized (lock) { entered = submissionEntered; }
-                    if (entered) throw new CaptureException(Failure.SUBMISSION_UNCERTAIN, failure);
+                    if (entered) throw captureFailure(Failure.SUBMISSION_UNCERTAIN, failure);
                     throw failure;
                 } finally {
                     synchronized (lock) { submissionReturned = true; lock.notifyAll(); }
                 }
+                recordPhase(Phase.WAITING_CALLBACK);
                 OwnedWindowBuffer source = awaitNative();
+                recordPhase(Phase.INSPECTING_BUFFER);
                 CapturedWindow result;
                 try (OwnedWindowBuffer.ReadLease reader = source.openRead()) {
                     checkCurrent(); checkNotAbandoned();
@@ -218,6 +291,7 @@ final class WindowBufferCapturer {
                     Metadata metadata = inspect(buffer);
                     // This worker resumes after submission returned; it does not
                     // queue post-validation behind its own blocking await.
+                    synchronized (lock) { postValidationEntered = true; recordPhase(Phase.POST_VALIDATING); }
                     tools.validateWindowCaptureResult(permit, control, epoch);
                     checkCurrent(); checkNotAbandoned();
                     result = new CapturedWindow(this, permit, control, epoch, source, metadata,
@@ -226,8 +300,9 @@ final class WindowBufferCapturer {
                 // A claimed result must not retain our validator's read lease:
                 // an immediate converter may copy and release the raw owner.
                 synchronized (lock) {
-                    if (abandoned || failure != null) throw new CaptureException(Failure.ABANDONED);
+                    if (abandoned || failure != null) throw captureFailure(Failure.ABANDONED);
                     checkCurrent();
+                    recordPhase(Phase.READY);
                     ready = result; lock.notifyAll();
                 }
             } catch (Exception failed) { fail(failed); }
@@ -243,7 +318,7 @@ final class WindowBufferCapturer {
                 checkCurrent(); checkNotAbandoned();
                 synchronized (lock) {
                     if (failure != null) throwFailure(failure);
-                    if (terminal == 2) throw new CaptureException(Failure.PLATFORM_FAILURE,
+                    if (terminal == 2) throw captureFailure(Failure.PLATFORM_FAILURE,
                             new IllegalStateException("Platform capture code " + platformCode));
                     if (terminal == 1 && !receiving && owned != null) return owned;
                     lock.wait(40);
@@ -265,7 +340,7 @@ final class WindowBufferCapturer {
                     || actualSpace.getModel() != ColorSpace.Model.RGB
                     || actualTime < before || actualTime > receivedAt
                     || Math.multiplyExact(Math.multiplyExact((long) width, height), pixelBytes) > (long) expected.width() * expected.height() * 8)
-                throw new CaptureException(Failure.INVALID_BUFFER);
+                throw captureFailure(Failure.INVALID_BUFFER);
             return new Metadata(width, height, format, layers, usage, actualSpace, actualTime);
         }
 
@@ -321,7 +396,7 @@ final class WindowBufferCapturer {
                     extraClosers--;
                     if (!confirmed) { unclosedExtra = true; if (failedExtra == null) failedExtra = extra; }
                 }
-                if (!confirmed) fail(new CaptureException(Failure.PROTOCOL_ERROR));
+                if (!confirmed) fail(captureFailure(Failure.PROTOCOL_ERROR));
                 tryReleaseSlot();
             }
         }
@@ -347,11 +422,11 @@ final class WindowBufferCapturer {
                 for (;;) {
                     checkCurrent();
                     synchronized (lock) {
-                        if (claimed) throw new CaptureException(Failure.ALREADY_CLAIMED);
+                        if (claimed) throw captureFailure(Failure.ALREADY_CLAIMED);
                         if (failure != null) throwFailure(failure);
-                        if (abandoned) throw new CaptureException(Failure.ABANDONED);
+                        if (abandoned) throw captureFailure(Failure.ABANDONED);
                         if (ready != null) {
-                            checkCurrent(); claimed = true; return ready;
+                            checkCurrent(); claimed = true; recordPhase(Phase.CLAIMED); return ready;
                         }
                         lock.wait(40);
                     }
@@ -363,7 +438,7 @@ final class WindowBufferCapturer {
         }
 
         private void checkNotAbandoned() throws CaptureException {
-            synchronized (lock) { if (abandoned) throw new CaptureException(Failure.ABANDONED); }
+            synchronized (lock) { if (abandoned) throw captureFailure(Failure.ABANDONED); }
         }
         private void fail(Throwable failed) {
             synchronized (lock) { if (failure == null) failure = failed; abandoned = true; lock.notifyAll(); }
@@ -437,9 +512,14 @@ final class WindowBufferCapturer {
                     throw new IllegalStateException("Captured window cannot enter another conversion.");
                 ConversionHold hold = new ConversionHold(request);
                 conversionStarted = true; request.conversionHeld = true;
+                request.conversionEntered = true; request.recordPhase(Phase.CONVERSION_ADMISSION);
                 return hold;
             }
         }
+        // Called only by the existing converter after it has acquired its conversion hold.
+        // This records progress; it does not renew the deadline or change ownership.
+        void recordConversionPhase(Phase next) { request.recordPhase(next); }
+
         /** Raw may already be closed during encoding; the original context/deadline still applies. */
         void checkConversionCurrent() throws Exception { requireWorker(); checkReadable(); }
 
@@ -463,7 +543,7 @@ final class WindowBufferCapturer {
         }
         private void checkReadable() throws Exception {
             tools.checkWindowCaptureCurrent(permit, control, epoch);
-            if (SystemClock.elapsedRealtime() >= deadline) throw new CaptureException(Failure.TIMEOUT);
+            if (SystemClock.elapsedRealtime() >= deadline) throw request.captureFailure(Failure.TIMEOUT);
         }
         @Override public void close() { owned.close(); }
         boolean isActuallyClosed() { return owned.isActuallyClosed(); }

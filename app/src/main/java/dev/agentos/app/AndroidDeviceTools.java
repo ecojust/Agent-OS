@@ -260,7 +260,9 @@ public final class AndroidDeviceTools implements ToolHandler {
             return LocalToolResult.metadata(error("CAPABILITY_UNAVAILABLE", "当前页面不支持图片观察：" + unsupported.diagnosticCode(),
                     "继续结构化操作，或由用户接管"));
         } catch (WindowBufferCapturer.CaptureException capture) {
-            return LocalToolResult.metadata(error("CAPABILITY_UNAVAILABLE", "窗口截图失败：" + capture.code.name(), "由用户检查截图能力或接管"));
+            JsonObject failure = error("CAPABILITY_UNAVAILABLE", "窗口截图失败：" + capture.code.name(), "由用户检查截图能力或接管");
+            if (capture.diagnostic != null) failure.add("captureDiagnostic", capture.diagnostic.toJson());
+            return LocalToolResult.metadata(failure);
         } catch (WindowPngConverter.ConversionException conversion) {
             return LocalToolResult.metadata(error("CAPABILITY_UNAVAILABLE", "图片转换失败：" + conversion.code.name(), "继续结构化操作，或由用户接管"));
         } catch (IllegalArgumentException invalid) {

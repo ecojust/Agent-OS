@@ -226,6 +226,7 @@ final class WindowPngConverter {
             if (source.originalRequest() == null) throw new ReceiptException(ReceiptFailure.MISSING_TYPED_REQUEST);
             conversionEntered = true;
             image = convert(source);
+            source.recordConversionPhase(WindowBufferCapturer.Phase.RECEIPT);
             source.checkConversionCurrent();
             receipt = new CapturedPng(source, image, productionConversion);
             image = null;
@@ -271,6 +272,7 @@ final class WindowPngConverter {
 
             // Admission precedes the explicit full-size software copy. Hardware
             // wrapping shares raw pixels; platform/driver overhead is not measured.
+            source.recordConversionPhase(WindowBufferCapturer.Phase.COPYING);
             resources.full.capacity = reserve(fullBytes);
             resources.wrapped.bitmap = Bitmap.wrapHardwareBuffer(raw, metadata.colorSpace);
             if (resources.wrapped.bitmap == null) throw new ConversionException(Failure.ALLOCATION_FAILED);
@@ -287,6 +289,7 @@ final class WindowPngConverter {
 
             int[] target = targetSize(metadata.width, metadata.height);
             if (target[0] != metadata.width || target[1] != metadata.height) {
+                source.recordConversionPhase(WindowBufferCapturer.Phase.SCALING);
                 resources.resized.capacity = reserve(pixelBytes(target[0], target[1]));
                 source.checkConversionCurrent();
                 resources.resized.bitmap = Bitmap.createBitmap(target[0], target[1], Bitmap.Config.ARGB_8888, true,
@@ -302,6 +305,7 @@ final class WindowPngConverter {
             }
             Bitmap finalBitmap = resources.resized.bitmap == null ? resources.full.bitmap : resources.resized.bitmap;
             source.checkConversionCurrent();
+            source.recordConversionPhase(WindowBufferCapturer.Phase.ENCODING);
             resources.encodedCapacity = reserve(ImageAttachment.MAX_ENCODED_BYTES);
             resources.encoded = new byte[ImageAttachment.MAX_ENCODED_BYTES];
             BoundedPngOutput output = new BoundedPngOutput(source, resources.encoded);
@@ -319,6 +323,7 @@ final class WindowPngConverter {
 
         // No return from inside the allocation scope: cleanup or hold failure
         // must close the final PNG rather than cancelling a pending return of it.
+        if (hold != null) source.recordConversionPhase(WindowBufferCapturer.Phase.CONVERSION_CLEANUP);
         failure = resources.cleanup(failure);
         if (hold != null && resources.isCleanupComplete()) {
             try { hold.close(); } catch (RuntimeException | Error failed) { failure = append(failure, failed); }

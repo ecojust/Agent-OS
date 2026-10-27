@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Added version-three third-party editing probe that preserves the default keyboard, requires fresh fully uncovered targets and forbids automatic BACK; 249 Python checks, probe APK build and lint pass. Historical v2 failure remains; 32 device combinations pending.
+**本次更新：** Added immutable original capture-failure stage snapshots without changing deadlines, permissions or resource ownership; core tests plus ordinary/internal APK and lint checks pass. Three strengthened lifecycle assertions and native API34–37 verification pending; earlier API36 timeout remains unresolved.
 
-**记录时间：** 2026-10-27T17:55:47Z
+**记录时间：** 2026-10-27T17:57:55Z
 
 [最近测试截图与清单](screenshots/40549230213-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40549230213)。通过、失败及未截图原因见清单。
 

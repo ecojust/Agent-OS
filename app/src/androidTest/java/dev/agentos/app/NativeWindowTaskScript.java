@@ -74,6 +74,9 @@ final class NativeWindowTaskScript implements LocalVisionProbeServer.WindowTaskR
                 failure.addProperty("error", message.substring(0, Math.min(180, message.length())));
                 failure.addProperty("receivedAtElapsedRealtimeMillis", android.os.SystemClock.elapsedRealtime());
                 failure.addProperty("imageUrlPresent", image != null);
+                // Keep the original request-local failure snapshot, not the later geometry sample.
+                if (metadata.has("captureDiagnostic"))
+                    failure.add("captureDiagnostic", metadata.getAsJsonObject("captureDiagnostic").deepCopy());
                 captureFailure = failure;
                 throw new IOException("Actual capture result failed: " + failure.get("code").getAsString()
                         + "; " + failure.get("error").getAsString());

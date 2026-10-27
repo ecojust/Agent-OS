@@ -133,13 +133,21 @@ public final class WindowBufferCapturerInstrumentedTest {
             backend.afterEntryFailure = new IOException("Synthetic uncertain submission");
             WindowBufferCapturer.CaptureRequest request = env.start(backend);
             backend.awaitEntered();
-            assertFailure(WindowBufferCapturer.Failure.SUBMISSION_UNCERTAIN, request::awaitAndClaim);
+            WindowBufferCapturer.CaptureException failed = assertFailure(
+                    WindowBufferCapturer.Failure.SUBMISSION_UNCERTAIN, request::awaitAndClaim);
+            assertSame("Original submission cause must survive diagnostics", backend.afterEntryFailure, failed.getCause());
+            WindowBufferCapturer.Diagnostic diagnostic = assertDiagnostic(failed, WindowBufferCapturer.Phase.SUBMITTING);
+            assertTrue(diagnostic.permitIssued); assertTrue(diagnostic.submissionEntered);
+            assertFalse(diagnostic.submissionReturned); assertFalse(diagnostic.callbackObserved);
+            assertFalse(diagnostic.postValidationEntered); assertFalse(diagnostic.conversionEntered);
+            JsonObject atFailure = diagnostic.toJson();
             await(request::isWorkerDone, "Failed worker did not finish");
             assertTrue(WindowBufferCapturer.hasActiveCapture());
             assertEquals(env.logicalBytes(), ImageWorkset.process().reservedBytes());
             env.observe();
             backend.callback.failure(71);
             env.awaitDrained(request);
+            assertEquals("Late callback/cleanup cannot rewrite original failure", atFailure, diagnostic.toJson());
             screenshots.capture("uncertain-submission-holds-slot-until-explicit-synthetic-failure-callback");
         }
     }
@@ -150,13 +158,21 @@ public final class WindowBufferCapturerInstrumentedTest {
             ControlledBackend backend = new ControlledBackend(false);
             WindowBufferCapturer.CaptureRequest request = env.start(backend);
             backend.awaitEntered();
-            assertFailure(WindowBufferCapturer.Failure.TIMEOUT, request::awaitAndClaim);
+            WindowBufferCapturer.CaptureException failed = assertFailure(WindowBufferCapturer.Failure.TIMEOUT, request::awaitAndClaim);
+            WindowBufferCapturer.Diagnostic diagnostic = assertDiagnostic(failed, WindowBufferCapturer.Phase.WAITING_CALLBACK);
+            assertTrue(diagnostic.permitIssued); assertTrue(diagnostic.submissionEntered);
+            assertTrue(diagnostic.submissionReturned); assertFalse(diagnostic.callbackObserved);
+            assertFalse(diagnostic.callbackReceiving); assertFalse(diagnostic.postValidationEntered);
+            assertFalse(diagnostic.conversionEntered); assertTrue(diagnostic.elapsedMs >= 5_000);
+            assertEquals(0, diagnostic.remainingMs);
+            JsonObject atFailure = diagnostic.toJson();
             await(request::isWorkerDone, "Expired worker did not finish");
             assertTrue(WindowBufferCapturer.hasActiveCapture());
             assertEquals(env.logicalBytes(), ImageWorkset.process().reservedBytes());
             env.observe();
             backend.callback.failure(72);
             env.awaitDrained(request);
+            assertEquals("Late callback/cleanup cannot rewrite original timeout", atFailure, diagnostic.toJson());
             screenshots.capture("missing-callback-expiry-keeps-slot-until-real-test-terminal-signal");
         }
     }
@@ -318,13 +334,20 @@ public final class WindowBufferCapturerInstrumentedTest {
                 assertTrue("The actual post-result root read did not enter the fixture barrier", blocked.getBoolean("claimed"));
                 assertFalse(blocked.getBoolean("returned")); assertFalse(blocked.getBoolean("expired"));
                 request.close();
-                assertFailure(WindowBufferCapturer.Failure.ABANDONED, request::awaitAndClaim);
+                WindowBufferCapturer.CaptureException failed = assertFailure(WindowBufferCapturer.Failure.ABANDONED, request::awaitAndClaim);
+                WindowBufferCapturer.Diagnostic diagnostic = assertDiagnostic(failed, WindowBufferCapturer.Phase.POST_VALIDATING);
+                assertTrue(diagnostic.permitIssued); assertTrue(diagnostic.submissionEntered);
+                assertTrue(diagnostic.submissionReturned); assertTrue(diagnostic.callbackObserved);
+                assertFalse(diagnostic.callbackReceiving); assertFalse(diagnostic.workerDone);
+                assertTrue(diagnostic.postValidationEntered); assertFalse(diagnostic.conversionEntered);
+                JsonObject atFailure = diagnostic.toJson();
                 assertFalse("The post worker still owns its native read lease", buffer.isClosed());
                 assertTrue(WindowBufferCapturer.hasActiveCapture()); assertGateBusy(env.device);
                 assertEquals(env.logicalBytes(), ImageWorkset.process().reservedBytes());
                 Bundle finished = barrier(env.device, "finish", token);
                 assertTrue(finished.getBoolean("returned")); assertFalse(finished.getBoolean("expired"));
                 env.awaitDrained(request); assertTrue(buffer.isClosed());
+                assertEquals("Post-validation return cannot rewrite original failure", atFailure, diagnostic.toJson());
                 screenshots.capture("caller-close-during-real-post-read-preserves-native-reader-until-return");
             } finally {
                 request.close(); env.device.control.cancel();
@@ -473,9 +496,34 @@ public final class WindowBufferCapturerInstrumentedTest {
         while (!condition.getAsBoolean() && SystemClock.elapsedRealtime() < deadline) SystemClock.sleep(20);
         assertTrue(message, condition.getAsBoolean());
     }
-    private static void assertFailure(WindowBufferCapturer.Failure code, CheckedAction action) throws Exception {
+    private static WindowBufferCapturer.CaptureException assertFailure(WindowBufferCapturer.Failure code, CheckedAction action) throws Exception {
         try { action.run(); fail("Expected capture failure " + code); }
-        catch (WindowBufferCapturer.CaptureException failure) { assertEquals(failure.toString(), code, failure.code); }
+        catch (WindowBufferCapturer.CaptureException failure) {
+            assertEquals(failure.toString(), code, failure.code); return failure;
+        }
+        throw new AssertionError("Unreachable");
+    }
+    private static WindowBufferCapturer.Diagnostic assertDiagnostic(WindowBufferCapturer.CaptureException failure,
+                                                                    WindowBufferCapturer.Phase phase) {
+        WindowBufferCapturer.Diagnostic diagnostic = failure.diagnostic;
+        assertNotNull("The original capture failure must carry its own snapshot", diagnostic);
+        assertEquals(phase, diagnostic.phase);
+        assertTrue(diagnostic.elapsedMs >= 0); assertTrue(diagnostic.phaseElapsedMs >= 0);
+        assertTrue(diagnostic.phaseElapsedMs <= diagnostic.elapsedMs);
+        assertTrue(diagnostic.remainingMs >= 0 && diagnostic.remainingMs <= 5_000);
+        assertTrue(diagnostic.permitRemainingMs >= -1 && diagnostic.permitRemainingMs <= 5_000);
+        JsonObject snapshot = diagnostic.toJson();
+        assertEquals("Only fixed diagnostic fields are exported", 14, snapshot.size());
+        assertEquals(5_000, snapshot.get("requestLimitMs").getAsLong());
+        for (java.util.Map.Entry<String, com.google.gson.JsonElement> entry : snapshot.entrySet()) {
+            assertTrue("Diagnostics must stay scalar", entry.getValue().isJsonPrimitive());
+            if (entry.getKey().equals("phase")) assertEquals(phase.name(), entry.getValue().getAsString());
+            else assertTrue("No request IDs, geometry, page text or pixels", entry.getValue().getAsJsonPrimitive().isBoolean()
+                    || entry.getValue().getAsJsonPrimitive().isNumber());
+        }
+        snapshot.addProperty("phase", "mutated-local-copy");
+        assertEquals("Serializing must not expose mutable diagnostic state", phase.name(), diagnostic.toJson().get("phase").getAsString());
+        return diagnostic;
     }
     private interface CheckedAction { void run() throws Exception; }
     private static Throwable append(Throwable first, Throwable next) { if (first == null) return next; first.addSuppressed(next); return first; }

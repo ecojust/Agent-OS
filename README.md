@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Archive the third walkthrough attempt faithfully: Ubuntu mirror downloads timed out before Android setup, so there are no UI actions, screenshots or video. The original report is retained; successful-demo status remains pending.
+**本次更新：** Use pinned Ubuntu 24.04 and isolated official HTTPS package indexes for walkthrough tools after the measured Azure mirror timeout. Keep archive signatures, bounded download time and full video validation. Shell validation and 39 recorder/archive checks pass; real recording remains pending.
 
-**记录时间：** 2026-10-27T14:55:03Z
+**记录时间：** 2026-10-27T14:55:49Z
 
 [最近测试截图与清单](screenshots/40521924977-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40521924977)。通过、失败及未截图原因见清单。
 

@@ -432,4 +432,31 @@ class DemoBoundaries(unittest.TestCase):
             if child.poll() is None: child.kill(); child.wait(timeout=2)
 
 
+
+    def test_installed_video_tools_are_reused_without_network_or_privilege(self):
+        helper = Path(__file__).with_name("ensure_demo_video_tools.sh")
+        with tempfile.TemporaryDirectory() as temp:
+            for name in ("ffmpeg", "ffprobe"):
+                file = Path(temp) / name; file.write_text("#!/bin/sh\nexit 0\n"); file.chmod(0o700)
+            # PATH has neither sudo nor apt-get; this must succeed without them.
+            result = subprocess.run(["/bin/bash", str(helper)], env={"PATH":temp}, capture_output=True, text=True)
+            self.assertEqual(0, result.returncode)
+            self.assertIn("Using installed", result.stdout)
+
+    def test_missing_video_tools_cannot_install_outside_trusted_workflow(self):
+        helper = Path(__file__).with_name("ensure_demo_video_tools.sh")
+        with tempfile.TemporaryDirectory() as temp:
+            result = subprocess.run(["/bin/bash", str(helper)], env={"PATH":temp}, capture_output=True, text=True)
+            self.assertNotEqual(0, result.returncode)
+            self.assertIn("restricted to the trusted Linux workflow", result.stderr)
+
+    def test_one_installed_video_tool_is_not_mistaken_for_both(self):
+        helper = Path(__file__).with_name("ensure_demo_video_tools.sh")
+        with tempfile.TemporaryDirectory() as temp:
+            file = Path(temp) / "ffmpeg"; file.write_text("#!/bin/sh\nexit 0\n"); file.chmod(0o700)
+            result = subprocess.run(["/bin/bash", str(helper)], env={"PATH":temp}, capture_output=True, text=True)
+            self.assertNotEqual(0, result.returncode)
+            self.assertNotIn("Using installed", result.stdout)
+
+
 if __name__ == "__main__": unittest.main()

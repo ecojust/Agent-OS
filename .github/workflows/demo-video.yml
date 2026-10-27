@@ -24,7 +24,7 @@ jobs:
   record-demo:
     name: record-demo (API 35)
     if: github.ref == 'refs/heads/master' && inputs.mode == 'test'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
@@ -40,13 +40,7 @@ jobs:
       - name: Verify recording and archive boundaries
         run: python3 -m unittest discover -s scripts -p 'test_demo_video.py'
       - name: Ensure video encoding tools are installed
-        run: |
-          if ! command -v ffmpeg >/dev/null || ! command -v ffprobe >/dev/null; then
-            sudo timeout 120s apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 update
-            sudo timeout 360s apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 install --no-install-recommends -y ffmpeg
-          fi
-          command -v ffmpeg
-          command -v ffprobe
+        run: bash scripts/ensure_demo_video_tools.sh
       - name: Prepare Android SDK
         run: |
           sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
@@ -97,7 +91,7 @@ jobs:
 
   archive-demo:
     if: github.ref == 'refs/heads/master' && inputs.mode == 'archive'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       contents: write
@@ -128,13 +122,7 @@ jobs:
           path: ${{ runner.temp }}/demo-incoming
       - name: Ensure archive video validation tools are installed
         if: steps.source.outputs.failed_source != 'true'
-        run: |
-          if ! command -v ffmpeg >/dev/null || ! command -v ffprobe >/dev/null; then
-            sudo timeout 120s apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 update
-            sudo timeout 360s apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 install --no-install-recommends -y ffmpeg
-          fi
-          command -v ffmpeg
-          command -v ffprobe
+        run: bash scripts/ensure_demo_video_tools.sh
       - name: Verify and archive original evidence
         run: |
           python3 scripts/demo_video.py archive --run "$RUNNER_TEMP/demo-run.json" --jobs "$RUNNER_TEMP/demo-jobs.json" --artifacts "$RUNNER_TEMP/demo-artifacts.json" --incoming "$RUNNER_TEMP/demo-incoming"

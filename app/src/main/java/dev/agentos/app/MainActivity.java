@@ -853,7 +853,7 @@ public final class MainActivity extends Activity implements AgentController.List
     private void explainAccessibility() {
         if (destroyed) return;
         new AlertDialog.Builder(this).setTitle("开启手机操作服务")
-                .setMessage("Agent OS 使用无障碍服务读取你授权的应用界面，并执行任务所需的点击、输入和滑动。相关界面文字会发送至你配置的模型服务。\n\n服务需由你在系统设置中手动开启。任务运行时会显示控制条；锁屏会停止任务，不会自行恢复。此服务用于自动化任务。")
+                .setMessage("Agent OS 使用无障碍服务读取你授权的应用界面，并执行节点点击、输入和结构化滚动。相关界面文字会发送至你配置的模型服务。\n\n默认逐步确认；选择连续导航后，仅启动已授权应用、滚动和回到桌面免逐次确认，点击、输入和返回仍需确认。截图外发和坐标手势尚未开放。\n\n服务需由你在系统设置中手动开启。任务运行时会显示控制条；锁屏会停止任务，不会自行恢复。此服务用于自动化任务。")
                 .setNegativeButton("取消", null)
                 .setPositiveButton("前往系统设置", (dialog, which) -> {
                     try { startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)); }

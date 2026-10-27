@@ -20,6 +20,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -210,7 +212,51 @@ final class TaskUsageTestHarness implements AutoCloseable {
         onMain(controller::stop);
     }
 
-    void settle() throws Exception { worker().submit(() -> { }).get(10, TimeUnit.SECONDS); }
+    void settle() throws Exception { drainWorker(worker()); }
+
+    /** Test-only drain: retry only a definitely rejected no-op, never a task or device action. */
+    static void drainWorker(ThreadPoolExecutor executor) throws Exception {
+        long started = System.nanoTime();
+        long allowance = TimeUnit.SECONDS.toNanos(10);
+        Future<?> barrier = null;
+        try {
+            while (true) {
+                if (Thread.interrupted()) throw new InterruptedException("Test worker drain interrupted");
+                if (executor.isShutdown()) throw new RejectedExecutionException("Test worker is shut down");
+                long remaining = allowance - (System.nanoTime() - started);
+                if (remaining <= 0) throw new TimeoutException("Real task worker did not drain within ten seconds");
+                if (barrier == null) {
+                    try { barrier = executor.submit(() -> { }); }
+                    catch (RejectedExecutionException full) {
+                        // The Controller uses AbortPolicy. Only this explicit rejection
+                        // proves the no-op was not accepted; do not inspect/remove tasks.
+                        if (executor.isShutdown()) throw full;
+                        remaining = allowance - (System.nanoTime() - started);
+                        if (remaining <= 0) throw new TimeoutException("Real task worker queue remained full");
+                        TimeUnit.NANOSECONDS.sleep(Math.min(remaining, TimeUnit.MILLISECONDS.toNanos(20)));
+                        continue;
+                    }
+                }
+                // Once accepted, wait only for this exact barrier. A short get also
+                // notices shutdown without renewing the original overall deadline.
+                if (executor.isShutdown()) throw new RejectedExecutionException("Test worker shut down during drain");
+                remaining = allowance - (System.nanoTime() - started);
+                if (remaining <= 0) throw new TimeoutException("Accepted test barrier exceeded the drain deadline");
+                try {
+                    barrier.get(Math.min(remaining, TimeUnit.MILLISECONDS.toNanos(50)), TimeUnit.NANOSECONDS);
+                } catch (TimeoutException stillRunning) {
+                    // Keep the same accepted future; no resubmission and no idle claim.
+                    continue;
+                }
+                if (executor.isShutdown()) throw new RejectedExecutionException("Test worker shut down before drain completed");
+                if (allowance - (System.nanoTime() - started) <= 0)
+                    throw new TimeoutException("Test barrier completed after the drain deadline");
+                return;
+            }
+        } finally {
+            if (barrier != null && !barrier.isDone()) barrier.cancel(false);
+        }
+    }
 
     ThreadPoolExecutor worker() throws Exception {
         Field field = AgentController.class.getDeclaredField("worker");

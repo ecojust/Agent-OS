@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Archive round 48: 1829/1832 passed, three usage-test drain races on APIs 36/37; no errors, skips or missing records. All 3749 payloads (36433748 bytes) independently verified. Task-owned image diagnostics are separately committed and await device regression.
+**本次更新：** Fix the test-only single-slot drain race observed in three round-48 usage cases, preserving the actual task queue. Accepted no-op waits share one fixed deadline; no device action is replayed. Test APK/lint passed. Next matrix also includes six compiled task-image qualification regressions.
 
-**记录时间：** 2026-10-27T11:45:48Z
+**记录时间：** 2026-10-27T11:48:36Z
 
 [最近测试截图与清单](screenshots/40496409142-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40496409142)。通过、失败及未截图原因见清单。
 

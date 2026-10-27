@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T11:45:48Z",
-  "note": "Archive round 48: 1829/1832 passed, three usage-test drain races on APIs 36/37; no errors, skips or missing records. All 3749 payloads (36433748 bytes) independently verified. Task-owned image diagnostics are separately committed and await device regression.",
+  "updated_at": "2026-10-27T11:48:36Z",
+  "note": "Fix the test-only single-slot drain race observed in three round-48 usage cases, preserving the actual task queue. Accepted no-op waits share one fixed deadline; no device action is replayed. Test APK/lint passed. Next matrix also includes six compiled task-image qualification regressions.",
   "latest_evidence": {
     "path": "screenshots/40496409142-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40496409142"

@@ -369,7 +369,7 @@ public final class TaskVisionQualificationInstrumentedTest {
         }
 
         private ThreadPoolExecutor executor() throws Exception { return (ThreadPoolExecutor) read(controller, "worker"); }
-        void settle() throws Exception { executor().submit(() -> { }).get(10, TimeUnit.SECONDS); }
+        void settle() throws Exception { TaskUsageTestHarness.drainWorker(executor()); }
 
         @Override public void close() throws Exception {
             try {

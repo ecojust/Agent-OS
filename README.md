@@ -25,11 +25,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Archived verified walkthrough of current functional source8843d9313: 13 completed stages, 22 actual screenshots, 431778-byte fully decoded video. Complete API, third-party-app and native-window evidence are separate and still being collected.
+**本次更新：** Archived native-window run40555508845: API34–37 approved/declined cases8/8; 36 payloads/4 PNG independently verified. Earlier API36 timeout did not recur but remains unexplained. Full Android matrix has failures under original-report investigation.
 
-**记录时间：** 2026-10-27T18:09:00Z
+**记录时间：** 2026-10-27T18:12:56Z
 
-[最近测试截图与清单](screenshots/40549230213-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40549230213)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40555508845-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40555508845)。通过、失败及未截图原因见清单。
 
 **整体操作演示：** [播放视频](screenshots/demos/40555512777-1/demo.mp4) · [录制与验证清单](screenshots/demos/40555512777-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40555512777)。
 录制版本：[`8843d9313`](https://github.com/ecojust/Agent-OS/commit/8843d9313a8304e68c49c222f92857da5d60c204)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。

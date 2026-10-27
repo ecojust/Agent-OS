@@ -1,0 +1,442 @@
+{
+  "schemaVersion": 1,
+  "kind": "pinned-window-disclosure-evidence",
+  "archivedAt": "2026-10-27T18:11:09.387012+00:00",
+  "sourceRun": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 40555508845,
+    "attempt": 1,
+    "commit": "8843d9313a8304e68c49c222f92857da5d60c204",
+    "event": "workflow_dispatch",
+    "branch": "master",
+    "workflow": ".github/workflows/pinned-window-disclosure.yml",
+    "conclusion": "success",
+    "url": "https://github.com/ecojust/Agent-OS/actions/runs/40555508845"
+  },
+  "expectedMatrixLabels": [
+    "34",
+    "35",
+    "36",
+    "37.0"
+  ],
+  "expectedCases": [
+    "approvedActualWindowIsReviewedAndSentOnce",
+    "declinedActualWindowNeverReachesModel"
+  ],
+  "expectedTestsPerApi": 2,
+  "expectedTests": 8,
+  "caseCounts": {
+    "passed": 8,
+    "failed": 0,
+    "unverified": 0
+  },
+  "apis": [
+    {
+      "apiLevel": 34,
+      "matrixLabel": "34",
+      "jobConclusion": "success",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40555508845/job/122372287637",
+      "captureStatus": "collected",
+      "status": "passed",
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 590,
+          "sha256": "e3e2ba5f4093e4d4792bd40173a76c0cc1b9769f0664a374ca15b1a6da25011f"
+        },
+        {
+          "path": "instrumentation.json",
+          "bytes": 1595,
+          "sha256": "e14db8e4b9895d065d73102cac6d540e0d4fa176fbe69cd37fbb6a08be6564b8"
+        },
+        {
+          "path": "pinned-window-disclosure/approvedActualWindowIsReviewedAndSentOnce-received.png",
+          "bytes": 23819,
+          "sha256": "ebb183a962007665e5e789159f7bba2787eafc1da8ebf994e4d7f4a29ce039db"
+        },
+        {
+          "path": "pinned-window-disclosure/approvedActualWindowIsReviewedAndSentOnce.case.json",
+          "bytes": 1224,
+          "sha256": "cf219f8738e55db22567ac138c2517e8922e06c34dc4fa819fb01142040394a6"
+        },
+        {
+          "path": "pinned-window-disclosure/declinedActualWindowNeverReachesModel.case.json",
+          "bytes": 970,
+          "sha256": "7bdc534b98d454d50db977c4b579588aca6b0f7fdb8258f039ead92a5d415338"
+        },
+        {
+          "path": "report.json",
+          "bytes": 6472,
+          "sha256": "86999c21285c373d0ff07619eb30808f38f8ce4cb268ff2c5b00f4dbb24abada"
+        },
+        {
+          "path": "screenshots/api-34-approvedActualWindowIsReviewedAndSentOnce-cadfdd8e.json",
+          "bytes": 815,
+          "sha256": "a933a4b97c7274ffcb784732b68bea16368ad66b4c7bc5c6a8292ea6786a6c97"
+        },
+        {
+          "path": "screenshots/api-34-declinedActualWindowNeverReachesModel-efc6c3fa.json",
+          "bytes": 811,
+          "sha256": "71d910aa5347b5d1fdc468aae936b339a2879dd153709f1570bbde28c505da01"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 2089,
+          "sha256": "cba29649a81c31afc57eb314ed2f40d0094801999a13695a750bfa02444b6b13"
+        }
+      ],
+      "verifiedReceivedPngs": [
+        "pinned-window-disclosure/approvedActualWindowIsReviewedAndSentOnce-received.png"
+      ],
+      "cases": [
+        {
+          "name": "approvedActualWindowIsReviewedAndSentOnce",
+          "status": "passed",
+          "disclosureCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-window-disclosure/approvedActualWindowIsReviewedAndSentOnce.case.json"
+        },
+        {
+          "name": "declinedActualWindowNeverReachesModel",
+          "status": "passed",
+          "disclosureCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-window-disclosure/declinedActualWindowNeverReachesModel.case.json"
+        }
+      ],
+      "driverStatus": "passed",
+      "actualSdkInt": 34,
+      "standardRecordedTests": 2,
+      "verifiedDownload": {
+        "package": "org.fossify.math",
+        "versionCode": "10",
+        "versionName": "1.4.0",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "abis": [
+          "arm64-v8a",
+          "armeabi-v7a",
+          "x86",
+          "x86_64"
+        ],
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "sizeBytes": 7047681
+      },
+      "artifactId": 12757552401,
+      "caseCounts": {
+        "passed": 2,
+        "failed": 0,
+        "unverified": 0
+      }
+    },
+    {
+      "apiLevel": 35,
+      "matrixLabel": "35",
+      "jobConclusion": "success",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40555508845/job/122372287553",
+      "captureStatus": "collected",
+      "status": "passed",
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 590,
+          "sha256": "c5a7c3e89c85db3f1f709ad99f3cec99d38e732b1492c339fc9f80f8d9662c73"
+        },
+        {
+          "path": "instrumentation.json",
+          "bytes": 1594,
+          "sha256": "39a555f3e73e5ebe5138b3330e7ae48a64e3ef9e99b1adce193848fa07859583"
+        },
+        {
+          "path": "pinned-window-disclosure/approvedActualWindowIsReviewedAndSentOnce-received.png",
+          "bytes": 23656,
+          "sha256": "447b13a0f925db5fbfc1c6a1550e0f61267cc5dfbc6604ea2a00b0791bf8b405"
+        },
+        {
+          "path": "pinned-window-disclosure/approvedActualWindowIsReviewedAndSentOnce.case.json",
+          "bytes": 1224,
+          "sha256": "87901e970e6415c9b162c891c1de1718afd8a1d8ba4939c2af389e4d6889c52a"
+        },
+        {
+          "path": "pinned-window-disclosure/declinedActualWindowNeverReachesModel.case.json",
+          "bytes": 970,
+          "sha256": "037935d0076a3adfad8ca1f7483850eea84352589eca4d5086bb3079fb05bc1e"
+        },
+        {
+          "path": "report.json",
+          "bytes": 6472,
+          "sha256": "4c196a977823c1a589e8cef406bf8a4609838b278984e227dcb7a6a44f4e6821"
+        },
+        {
+          "path": "screenshots/api-35-approvedActualWindowIsReviewedAndSentOnce-20fe7653.json",
+          "bytes": 815,
+          "sha256": "6ae3ccfcde2045167d81ca8460af5988b7835d4f685d21520be81a18e4747497"
+        },
+        {
+          "path": "screenshots/api-35-declinedActualWindowNeverReachesModel-e6fe280e.json",
+          "bytes": 811,
+          "sha256": "f6e49162662d2ac320e170fe0caa8ea81de5acc90e04eab4440c9e28d5a1a882"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 2089,
+          "sha256": "f3d108e8e7570ec50d9cd41fbc5e04290a98e87ad7d01b74b74893b88918c45d"
+        }
+      ],
+      "verifiedReceivedPngs": [
+        "pinned-window-disclosure/approvedActualWindowIsReviewedAndSentOnce-received.png"
+      ],
+      "cases": [
+        {
+          "name": "approvedActualWindowIsReviewedAndSentOnce",
+          "status": "passed",
+          "disclosureCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-window-disclosure/approvedActualWindowIsReviewedAndSentOnce.case.json"
+        },
+        {
+          "name": "declinedActualWindowNeverReachesModel",
+          "status": "passed",
+          "disclosureCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-window-disclosure/declinedActualWindowNeverReachesModel.case.json"
+        }
+      ],
+      "driverStatus": "passed",
+      "actualSdkInt": 35,
+      "standardRecordedTests": 2,
+      "verifiedDownload": {
+        "package": "org.fossify.math",
+        "versionCode": "10",
+        "versionName": "1.4.0",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "abis": [
+          "arm64-v8a",
+          "armeabi-v7a",
+          "x86",
+          "x86_64"
+        ],
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "sizeBytes": 7047681
+      },
+      "artifactId": 12757632857,
+      "caseCounts": {
+        "passed": 2,
+        "failed": 0,
+        "unverified": 0
+      }
+    },
+    {
+      "apiLevel": 36,
+      "matrixLabel": "36",
+      "jobConclusion": "success",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40555508845/job/122372287628",
+      "captureStatus": "collected",
+      "status": "passed",
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 590,
+          "sha256": "95df8a2b190c19d2e2f46736667eb475ea8a21c6bd442076057654e9343d33e3"
+        },
+        {
+          "path": "instrumentation.json",
+          "bytes": 1595,
+          "sha256": "89d14955d582cc73b40f087d2295038e877c7680afa350fc78279260a492baf7"
+        },
+        {
+          "path": "pinned-window-disclosure/approvedActualWindowIsReviewedAndSentOnce-received.png",
+          "bytes": 23656,
+          "sha256": "447b13a0f925db5fbfc1c6a1550e0f61267cc5dfbc6604ea2a00b0791bf8b405"
+        },
+        {
+          "path": "pinned-window-disclosure/approvedActualWindowIsReviewedAndSentOnce.case.json",
+          "bytes": 1224,
+          "sha256": "d5666537bba9ccb13efc362f27da6252545283065c30d70c5f473025c0bef065"
+        },
+        {
+          "path": "pinned-window-disclosure/declinedActualWindowNeverReachesModel.case.json",
+          "bytes": 970,
+          "sha256": "f1fb1ccdafc2bb4fb1a0e2e210cc699a63b6873ed4bea2cf5201d8a6e420e081"
+        },
+        {
+          "path": "report.json",
+          "bytes": 6472,
+          "sha256": "70b7d610dfb04976c74aad0d1e22f962b7b535b545da33dd9707a72651919a53"
+        },
+        {
+          "path": "screenshots/api-36-approvedActualWindowIsReviewedAndSentOnce-a69de83c.json",
+          "bytes": 815,
+          "sha256": "cc7dce74b965ba532293f4197b155956969d895c42318a995aae9f5fd10b66a9"
+        },
+        {
+          "path": "screenshots/api-36-declinedActualWindowNeverReachesModel-dc19cd62.json",
+          "bytes": 811,
+          "sha256": "773fe08964b723dd18daddf7da4fe9d1b64f09937359694d48460fa2e534181d"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 2089,
+          "sha256": "2151331509b0f2e8ecc26ce0d78e5e1069aeaedf018ba383447d1fae042d8c23"
+        }
+      ],
+      "verifiedReceivedPngs": [
+        "pinned-window-disclosure/approvedActualWindowIsReviewedAndSentOnce-received.png"
+      ],
+      "cases": [
+        {
+          "name": "approvedActualWindowIsReviewedAndSentOnce",
+          "status": "passed",
+          "disclosureCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-window-disclosure/approvedActualWindowIsReviewedAndSentOnce.case.json"
+        },
+        {
+          "name": "declinedActualWindowNeverReachesModel",
+          "status": "passed",
+          "disclosureCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-window-disclosure/declinedActualWindowNeverReachesModel.case.json"
+        }
+      ],
+      "driverStatus": "passed",
+      "actualSdkInt": 36,
+      "standardRecordedTests": 2,
+      "verifiedDownload": {
+        "package": "org.fossify.math",
+        "versionCode": "10",
+        "versionName": "1.4.0",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "abis": [
+          "arm64-v8a",
+          "armeabi-v7a",
+          "x86",
+          "x86_64"
+        ],
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "sizeBytes": 7047681
+      },
+      "artifactId": 12757961461,
+      "caseCounts": {
+        "passed": 2,
+        "failed": 0,
+        "unverified": 0
+      }
+    },
+    {
+      "apiLevel": 37,
+      "matrixLabel": "37.0",
+      "jobConclusion": "success",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40555508845/job/122372287479",
+      "captureStatus": "collected",
+      "status": "passed",
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 592,
+          "sha256": "27cda83c6577690ad9dc14e9213382a36da6b949c7e5cb08c5312728ad395978"
+        },
+        {
+          "path": "instrumentation.json",
+          "bytes": 1595,
+          "sha256": "b0697b564a6ddfe2bfee020cdee89b4037a45d13aa13b59aa7ba14822ebe57df"
+        },
+        {
+          "path": "pinned-window-disclosure/approvedActualWindowIsReviewedAndSentOnce-received.png",
+          "bytes": 24355,
+          "sha256": "225dce7ba79007ea26aa86ab4012ada41ef6a13bae60d457a0c172d363adff8b"
+        },
+        {
+          "path": "pinned-window-disclosure/approvedActualWindowIsReviewedAndSentOnce.case.json",
+          "bytes": 1224,
+          "sha256": "19b8e19ebe231e57cff73ae0840326d42e05811e051600afd42c2a0481200311"
+        },
+        {
+          "path": "pinned-window-disclosure/declinedActualWindowNeverReachesModel.case.json",
+          "bytes": 970,
+          "sha256": "7ada4dd06347d5c86b9f8da4da05b9f9a247794bf6981998deca4f0fc6a73bdd"
+        },
+        {
+          "path": "report.json",
+          "bytes": 6474,
+          "sha256": "ad36e1692775fcf5fd2977ccee3da1a346ad54c04ed7e6dd3bcb67d2834ea7e4"
+        },
+        {
+          "path": "screenshots/api-37-approvedActualWindowIsReviewedAndSentOnce-373ee9c8.json",
+          "bytes": 815,
+          "sha256": "66441f940eb3d8dbef91015c87d5b0fa678e0de51d1fa0d241a7fd43177efb5d"
+        },
+        {
+          "path": "screenshots/api-37-declinedActualWindowNeverReachesModel-261215ef.json",
+          "bytes": 811,
+          "sha256": "b09ec2161054d132cb6ec54dba4806226268bcbdd91bb19cb7b7a18a6c70a898"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 2089,
+          "sha256": "969c7e7edbb457b0696aa70c7287118698a43f1e7e5df4434d0656821b717ccc"
+        }
+      ],
+      "verifiedReceivedPngs": [
+        "pinned-window-disclosure/approvedActualWindowIsReviewedAndSentOnce-received.png"
+      ],
+      "cases": [
+        {
+          "name": "approvedActualWindowIsReviewedAndSentOnce",
+          "status": "passed",
+          "disclosureCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-window-disclosure/approvedActualWindowIsReviewedAndSentOnce.case.json"
+        },
+        {
+          "name": "declinedActualWindowNeverReachesModel",
+          "status": "passed",
+          "disclosureCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-window-disclosure/declinedActualWindowNeverReachesModel.case.json"
+        }
+      ],
+      "driverStatus": "passed",
+      "actualSdkInt": 37,
+      "standardRecordedTests": 2,
+      "verifiedDownload": {
+        "package": "org.fossify.math",
+        "versionCode": "10",
+        "versionName": "1.4.0",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "abis": [
+          "arm64-v8a",
+          "armeabi-v7a",
+          "x86",
+          "x86_64"
+        ],
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "sizeBytes": 7047681
+      },
+      "artifactId": 12758520200,
+      "caseCounts": {
+        "passed": 2,
+        "failed": 0,
+        "unverified": 0
+      }
+    }
+  ],
+  "junit": {
+    "status": "not_produced",
+    "reason": "Dedicated direct ADB class execution; original per-case records are retained"
+  },
+  "performanceDiagnostics": {
+    "status": "not_run",
+    "budgetAcceptance": false
+  },
+  "scope": "Internal visualAcceptance variant only: real production service and Controller, fixed Calculator 1.4.0, native window capture, actual same-PNG protected review, and local HTTP model-fixture delivery. Qualification uses a separate synthetic PNG challenge. Received PNG artifacts are approved HTTP payloads, not screenshots of the protected review UI. Normal debug/release capture permission remains closed. Not real-model, physical-device, general-application or physical-memory acceptance.",
+  "fileCount": 36,
+  "totalBytes": 153753
+}

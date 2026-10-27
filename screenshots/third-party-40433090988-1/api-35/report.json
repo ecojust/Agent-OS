@@ -1,0 +1,223 @@
+{
+  "schemaVersion": 1,
+  "kind": "third-party-app-smoke",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 40433090988,
+    "attempt": 1,
+    "commit": "47b75ca119bc25328c9c1b7880e528f2059de29b"
+  },
+  "matrixLabel": "35",
+  "device": {
+    "serial": "emulator-5554",
+    "apiLevel": 35,
+    "fingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
+    "abi": "x86_64",
+    "kernelQemu": "1",
+    "bootQemu": "1"
+  },
+  "app": {
+    "package": "org.fossify.math",
+    "versionName": "1.4.0",
+    "versionCode": "10",
+    "url": "https://github.com/FossifyOrg/Calculator/releases/download/1.4.0/calculator-10-foss-release.apk",
+    "sizeBytes": 7047681,
+    "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+    "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+    "minSdk": 26,
+    "targetSdk": 36,
+    "abis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "x86",
+      "x86_64"
+    ],
+    "license": "GPL-3.0"
+  },
+  "scope": {
+    "deviceKind": "dedicated_emulator",
+    "states": [
+      "off",
+      "idle"
+    ],
+    "operation": "Fresh installation and launcher startup; calculate 2 + 3 and independently read result 5.",
+    "data": "Synthetic arithmetic only; no accounts or user files.",
+    "executing": "unverified",
+    "upgrade": "unverified",
+    "physicalDevices": "unverified",
+    "releaseAcceptance": false
+  },
+  "status": "failed",
+  "actualInstalledIdentityVerified": true,
+  "driverSteps": [
+    {
+      "name": "device_preflight",
+      "status": "passed"
+    },
+    {
+      "name": "apk_verification",
+      "status": "passed"
+    },
+    {
+      "name": "fresh_install_precondition",
+      "status": "passed"
+    },
+    {
+      "name": "install_agent",
+      "status": "passed",
+      "sha256": "392a0f78062c0b59d197645a5a4daa48c8c1de2f35715c59f222c3ee1357cb3c"
+    },
+    {
+      "name": "install_calculator",
+      "status": "passed",
+      "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed"
+    },
+    {
+      "name": "install_probe",
+      "status": "passed",
+      "sha256": "8f4bafc8e9a42f85cdd1e67d32693d495891d5101a49cc6eb977013178b8e856"
+    },
+    {
+      "name": "install_probe_tests",
+      "status": "passed",
+      "sha256": "38babf79b524fbd7162e596a9c3b3f3b0fd875969e4cfa4b2343c775dd4fb514"
+    },
+    {
+      "name": "instrumentation",
+      "status": "failed"
+    },
+    {
+      "name": "collect_ui_results",
+      "status": "passed"
+    }
+  ],
+  "states": [
+    {
+      "state": "off",
+      "status": "failed",
+      "stage": "service_preparation",
+      "installedIdentityVerified": true,
+      "serviceState": "unknown",
+      "serviceObservations": [],
+      "serviceActionObservations": [],
+      "steps": [
+        {
+          "name": "installed_identity",
+          "status": "passed",
+          "details": "PackageManager identity and installed APK digest match the frozen official release"
+        },
+        {
+          "name": "service_preparation",
+          "status": "failed",
+          "details": "PatternSyntaxException: Syntax error in regexp pattern near index 23\nattributes:\\{id=0(?:,|})\n                       ^"
+        },
+        {
+          "name": "restore_service_settings",
+          "status": "failed",
+          "details": "PatternSyntaxException: Syntax error in regexp pattern near index 23\nattributes:\\{id=0(?:,|})\n                       ^"
+        }
+      ],
+      "captures": [
+        {
+          "stage": "failure",
+          "capturedAt": 1793064896255,
+          "secureFlagsCleared": false,
+          "status": "blocked",
+          "reason": "unverified_identity_window_or_obscuration",
+          "detail": "Focused package is not the verified calculator"
+        }
+      ],
+      "result": {
+        "expected": "5",
+        "actual": null,
+        "resourceId": "org.fossify.math:id/result"
+      },
+      "startedAt": 1793064896088,
+      "installedIdentity": {
+        "package": "org.fossify.math",
+        "versionName": "1.4.0",
+        "versionCode": "10",
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "apkSha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "uid": 10149
+      },
+      "error": "PatternSyntaxException: Syntax error in regexp pattern near index 23\nattributes:\\{id=0(?:,|})\n                       ^",
+      "cleanupError": "PatternSyntaxException: Syntax error in regexp pattern near index 23\nattributes:\\{id=0(?:,|})\n                       ^",
+      "finishedAt": 1793064896392
+    },
+    {
+      "state": "idle",
+      "status": "failed",
+      "stage": "service_preparation",
+      "installedIdentityVerified": true,
+      "serviceState": "unknown",
+      "serviceObservations": [],
+      "serviceActionObservations": [],
+      "steps": [
+        {
+          "name": "installed_identity",
+          "status": "passed",
+          "details": "PackageManager identity and installed APK digest match the frozen official release"
+        },
+        {
+          "name": "service_preparation",
+          "status": "failed",
+          "details": "PatternSyntaxException: Syntax error in regexp pattern near index 23\nattributes:\\{id=0(?:,|})\n                       ^"
+        },
+        {
+          "name": "restore_service_settings",
+          "status": "failed",
+          "details": "PatternSyntaxException: Syntax error in regexp pattern near index 23\nattributes:\\{id=0(?:,|})\n                       ^"
+        }
+      ],
+      "captures": [
+        {
+          "stage": "failure",
+          "capturedAt": 1793064895939,
+          "secureFlagsCleared": false,
+          "status": "blocked",
+          "reason": "unverified_identity_window_or_obscuration",
+          "detail": "Focused package is not the verified calculator"
+        }
+      ],
+      "result": {
+        "expected": "5",
+        "actual": null,
+        "resourceId": "org.fossify.math:id/result"
+      },
+      "startedAt": 1793064895735,
+      "installedIdentity": {
+        "package": "org.fossify.math",
+        "versionName": "1.4.0",
+        "versionCode": "10",
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "apkSha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "uid": 10149
+      },
+      "error": "PatternSyntaxException: Syntax error in regexp pattern near index 23\nattributes:\\{id=0(?:,|})\n                       ^",
+      "cleanupError": "PatternSyntaxException: Syntax error in regexp pattern near index 23\nattributes:\\{id=0(?:,|})\n                       ^",
+      "finishedAt": 1793064896069
+    }
+  ],
+  "emulatorVersion": "37.2.12",
+  "verifiedDownload": {
+    "package": "org.fossify.math",
+    "versionCode": "10",
+    "versionName": "1.4.0",
+    "minSdk": 26,
+    "targetSdk": 36,
+    "abis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "x86",
+      "x86_64"
+    ],
+    "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+    "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed"
+  },
+  "emulatorStepOutcome": "failure"
+}

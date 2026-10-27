@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T06:49:59Z",
-  "note": "归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。",
+  "updated_at": "2026-10-27T06:52:40Z",
+  "note": "第三十五轮API30–37八档模拟器1032项全部通过，1062张实际截图及2126个载荷文件完成双重哈希核验。测试桥在API34+真实捕获、像素与双端关闭通过，低版本确认不可用；生产截图仍未开放。已补充下一模块的异步捕获与设备操作分离设计。",
   "latest_evidence": {
     "path": "screenshots/40462539231-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40462539231"
@@ -62,9 +62,9 @@
     {
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
-      "status": "in_progress",
-      "evidence": "screenshots/40457724196-1/manifest.json",
-      "scope": "Eight x86_64 emulator API baselines at source 5a7cf8ae6ccbb57fe26d1e8bf4939d6415e39b4d with system animations at 1.0 and synthetic fixtures; not physical-device, third-party-app or performance acceptance. Historical intermittent IME window discrepancies remain under focused-window investigation."
+      "status": "complete",
+      "evidence": "screenshots/40462539231-1/manifest.json",
+      "scope": "Eight x86_64 emulator API baselines at source 87c3a63d8675ac8b9f5e8c368eff6693d82ce519 with system animations at 1.0 and synthetic fixtures; not physical-device, third-party-app or performance acceptance. Test-only window capture passed on API34–37; API30–33 correctly unavailable. Production visual tools remain disabled; historical window discrepancies remain under investigation."
     },
     {
       "id": "performance",

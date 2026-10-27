@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Archive actual API35 walkthrough evidence; local synthetic model, secure flags preserved
+**本次更新：** Require stable Notes target and two positive visible IME surface samples before the one allowed BACK; preserve original timeout and failure history. Probe APKs and lint pass; Android parser/runtime acceptance pending.
 
-**记录时间：** 2026-10-27T14:32:51Z
+**记录时间：** 2026-10-27T14:38:38Z
 
 [最近测试截图与清单](screenshots/40518542706-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40518542706)。通过、失败及未截图原因见清单。
 

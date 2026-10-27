@@ -406,6 +406,7 @@ final class SmokeHarness {
             Insets bars = metrics.getWindowInsets().getInsets(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
             require(!display.isEmpty() && display.contains(bounds), "Application bounds differ from default-display metrics");
             Rect inputMethod = new Rect();
+            int inputMethodId = -1;
             for (AccessibilityWindowInfo other : windows) {
                 if (other.getId() == focused.getId() || other.getDisplayId() != Display.DEFAULT_DISPLAY
                         || other.getLayer() < focused.getLayer()) continue;
@@ -417,6 +418,7 @@ final class SmokeHarness {
                     require(refusal == null, "Unexpected input-method window: " + refusal
                             + " region=" + overlay.toShortString() + " display=" + display.toShortString());
                     inputMethod.set(overlay);
+                    inputMethodId = other.getId();
                     continue;
                 }
                 require(isContainedInVisibleSystemBar(other.getType(), overlay, display, bars),
@@ -424,7 +426,7 @@ final class SmokeHarness {
             }
             if (!allowInputMethod && !inputMethod.isEmpty()) throw new NotesObservationPending("verified_input_method_present");
             String geometry = bounds.toShortString() + "/" + display.toShortString() + "/" + bars;
-            WindowSnapshot result = new WindowSnapshot(focused.getId(), bounds, root, geometry, inputMethod);
+            WindowSnapshot result = new WindowSnapshot(focused.getId(), bounds, root, geometry, inputMethod, inputMethodId);
             root = null;
             return result;
         } finally {
@@ -467,7 +469,15 @@ final class SmokeHarness {
                     }
                 }
             }
-            return "OTHER_NONEMPTY";
+            if (ime == null || home == null || homes == null || homes.isEmpty() || homes.size() > 16)
+                return "IDENTITY_UNAVAILABLE";
+            boolean resolvedHomeDeclared = false;
+            for (ResolveInfo candidate : homes) {
+                if (candidate != null && candidate.activityInfo != null
+                        && home.equals(new ComponentName(candidate.activityInfo.packageName, candidate.activityInfo.name)))
+                    resolvedHomeDeclared = true;
+            }
+            return resolvedHomeDeclared ? "OTHER_NONEMPTY" : "IDENTITY_UNAVAILABLE";
         } catch (RuntimeException unavailable) {
             // Diagnostics may be unavailable; the original refusal still wins.
             return "IDENTITY_UNAVAILABLE";
@@ -541,14 +551,34 @@ final class SmokeHarness {
                     if (!keyboard.inputMethod.isEmpty()) {
                         wait.pending("verified_input_method_present");
                         if (!wait.backSent) {
-                            wait.requireTime();
-                            wait.backSent = true;
-                            sendKey(KeyEvent.KEYCODE_BACK);
+                            // A published IME region can be entering or already
+                            // hiding. First establish the expected Notes page;
+                            // then require positive surface readiness, not the
+                            // negation of the capture parser's hidden predicate.
+                            String targetIdentity = notesKeyboardTarget(keyboard, resource);
+                            long now = SystemClock.elapsedRealtime();
+                            if (wait.backTargetStable(targetIdentity, now) && wait.takeBackSample(now)) {
+                                wait.requireTime();
+                                String shown = SmokeCapture.visibleNotesInputMethod(this);
+                                wait.requireTime();
+                                if (wait.backSurfaceStable(shown, SystemClock.elapsedRealtime())) {
+                                    try (WindowSnapshot current = appWindow(true)) {
+                                        wait.requireTime();
+                                        if (current.inputMethod.isEmpty())
+                                            throw new NotesObservationPending("input_method_disappeared_before_dismissal");
+                                        if (!targetIdentity.equals(notesKeyboardTarget(current, resource)))
+                                            throw new NotesObservationPending("notes_target_changed_before_keyboard_dismissal");
+                                    }
+                                    wait.requireTime();
+                                    if (wait.claimBack()) sendKey(KeyEvent.KEYCODE_BACK);
+                                }
+                            }
                         }
                         retryRead = true;
                         continue;
                     }
                 }
+                wait.clearBackReadiness();
                 wait.requireTime();
                 window = appWindow(false);
                 if (resource != null) {
@@ -568,6 +598,7 @@ final class SmokeHarness {
                 retryRead = true;
             } catch (NotesObservationPending pending) {
                 retryRead = true;
+                wait.clearBackReadiness();
                 wait.pending(pending.getMessage());
             } finally {
                 if (node != null) node.recycle();
@@ -576,6 +607,23 @@ final class SmokeHarness {
             }
         } while (SystemClock.elapsedRealtime() < wait.deadline);
         throw wait.timeout();
+    }
+
+    /** Read-only preparation: does not authorize a click through the IME. */
+    private String notesKeyboardTarget(WindowSnapshot window, String resource) {
+        require(!window.inputMethod.isEmpty() && window.inputMethodId >= 0, "Verified IME metadata is unavailable");
+        Rect bounds = new Rect();
+        if (resource != null) {
+            AccessibilityNodeInfo node = uniqueNode(window, resource);
+            try {
+                require(node.isEnabled() && node.isVisibleToUser() && !node.isPassword()
+                        && node.getWindowId() == window.id, "Notes dismissal target is not current and visible");
+                node.getBoundsInScreen(bounds);
+                require(!bounds.isEmpty() && Rect.intersects(window.bounds, bounds), "Notes dismissal target is outside the application");
+            } finally { node.recycle(); }
+        }
+        return window.id + "/" + window.geometry + "/" + window.inputMethodId
+                + "/" + window.inputMethod.toShortString() + "/" + bounds.toShortString();
     }
 
     private void sendKey(int key) {
@@ -832,12 +880,13 @@ final class SmokeHarness {
     static final class WindowSnapshot implements AutoCloseable {
         final int id; final Rect bounds; final AccessibilityNodeInfo root; final String geometry;
         final Rect inputMethod;
+        final int inputMethodId;
         WindowSnapshot(int id, Rect bounds, AccessibilityNodeInfo root, String geometry) {
-            this(id, bounds, root, geometry, new Rect());
+            this(id, bounds, root, geometry, new Rect(), -1);
         }
-        WindowSnapshot(int id, Rect bounds, AccessibilityNodeInfo root, String geometry, Rect inputMethod) {
+        WindowSnapshot(int id, Rect bounds, AccessibilityNodeInfo root, String geometry, Rect inputMethod, int inputMethodId) {
             this.id = id; this.bounds = new Rect(bounds); this.root = root; this.geometry = geometry;
-            this.inputMethod = new Rect(inputMethod);
+            this.inputMethod = new Rect(inputMethod); this.inputMethodId = inputMethodId;
         }
         @Override public void close() { root.recycle(); }
     }
@@ -854,6 +903,32 @@ final class SmokeHarness {
         boolean backSent;
         String identity, last = "target_not_stable";
         long since;
+        String backTarget, backSurface, lastBackVisibility = "NOT_SAMPLED";
+        long backTargetSince, backSurfaceSince, nextBackSample;
+        int backSamples;
+        boolean backTargetStable(String current, long now) {
+            if (!current.equals(backTarget)) {
+                backTarget = current; backTargetSince = now;
+                backSurface = null; backSurfaceSince = 0;
+                return false;
+            }
+            return now - backTargetSince >= 600;
+        }
+        boolean takeBackSample(long now) {
+            if (backSent || now < nextBackSample || backSamples >= 4) return false;
+            backSamples++; nextBackSample = now + 150; return true;
+        }
+        boolean backSurfaceStable(String current, long now) {
+            lastBackVisibility = current == null ? "NOT_READY" : "VISIBLE";
+            if (current == null) { backSurface = null; backSurfaceSince = 0; return false; }
+            if (!current.equals(backSurface)) { backSurface = current; backSurfaceSince = now; return false; }
+            return now - backSurfaceSince >= 150;
+        }
+        boolean claimBack() {
+            if (backSent) return false;
+            backSent = true; return true;
+        }
+        void clearBackReadiness() { backTarget = null; backSurface = null; backTargetSince = 0; backSurfaceSince = 0; }
         void pending(String reason) { identity = null; since = 0; last = reason; }
         boolean stable(String current) {
             long now = SystemClock.elapsedRealtime();
@@ -861,7 +936,29 @@ final class SmokeHarness {
             return now - since >= 600;
         }
         void requireTime() { if (SystemClock.elapsedRealtime() >= deadline) throw timeout(); }
-        AssertionError timeout() { return new AssertionError("Notes observation timed out: reason=" + last + " backSent=" + backSent); }
+        AssertionError timeout() { return new AssertionError("Notes observation timed out: reason=" + last + " backSent=" + backSent
+                + " imeSamples=" + backSamples + " lastImeSurface=" + lastBackVisibility); }
+    }
+
+    static void verifyNotesBackPreparation() {
+        // Pure data/time inputs, no input injection, app or screenshot evidence.
+        NotesWait wait = new NotesWait();
+        long originalDeadline = wait.deadline;
+        require(!wait.backTargetStable("page-ime-A", 0) && !wait.backTargetStable("page-ime-A", 599)
+                && wait.backTargetStable("page-ime-A", 600), "Keyboard dismissal skipped page stability");
+        require(wait.takeBackSample(600) && !wait.takeBackSample(749), "Keyboard surface reads were not bounded in time");
+        require(!wait.backSurfaceStable("surface-A", 600) && !wait.backSurfaceStable("surface-A", 749)
+                && wait.backSurfaceStable("surface-A", 750), "One surface read admitted BACK");
+        require(!wait.backSurfaceStable(null, 751) && !wait.backSurfaceStable("surface-A", 752), "Hidden/transitional surface kept old readiness");
+        require(!wait.backTargetStable("page-ime-B", 800) && !wait.backSurfaceStable("surface-A", 801), "New target reused old surface readiness");
+        require(wait.takeBackSample(900) && wait.takeBackSample(1050) && wait.takeBackSample(1200)
+                && !wait.takeBackSample(1400), "Keyboard surface sampling exceeded its original preparation bound");
+        wait.clearBackReadiness();
+        require(!wait.takeBackSample(1600), "Readiness reset renewed surface sample budget");
+        require(wait.claimBack() && !wait.claimBack(), "Keyboard dismissal was claimed twice");
+        wait.clearBackReadiness();
+        require(!wait.claimBack() && !wait.takeBackSample(1800), "Accepted or unknown BACK could be retried");
+        require(wait.deadline == originalDeadline, "Readiness changes renewed the original timeout");
     }
 
     /** Only these known incomplete reads are eligible for another observation. */

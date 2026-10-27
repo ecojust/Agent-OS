@@ -153,6 +153,30 @@ final class SmokeCapture {
 
     private static String inspectedHiddenInputMethod(String dump, int ownerUid, String packageName,
             JSONObject diagnostic) throws Exception {
+        InputMethodRecord record = inputMethodRecord(dump, ownerUid, packageName, diagnostic);
+        String matched = record.block;
+        if (!oneField(matched, "isOnScreen", "false") || !oneField(matched, "isVisible", "false")
+                || !oneField(matched, "isReadyForDisplay()", "false")
+                || !oneField(matched, "mEnterAnimationPending", "false")
+                || !absentOrFalse(matched, "mAnimatingExit"))
+            throw new CaptureRefused("input_method_is_visible_animating_or_unverified");
+        if (oneField(matched, "mHasSurface", "false")) {
+            // The observed no-surface cohort retains mLastHidden=false. That
+            // history flag cannot make a nonexistent, nonvisible surface shown.
+            // Still reject malformed history or any contradictory shown surface.
+            if (!(oneField(matched, "mLastHidden", "false") || oneField(matched, "mLastHidden", "true"))
+                    || !absentOrFalse(matched, "Surface: shown"))
+                throw new CaptureRefused("input_method_surface_is_visible_or_unverified");
+        } else if (!(oneField(matched, "mHasSurface", "true") && oneField(matched, "mLastHidden", "true")
+                && oneField(matched, "Surface: shown", "false"))) {
+            throw new CaptureRefused("input_method_surface_is_visible_or_unverified");
+        }
+        diagnostic.put("parseStage", "hidden_verified");
+        return record.identity;
+    }
+
+    private static InputMethodRecord inputMethodRecord(String dump, int ownerUid, String packageName,
+            JSONObject diagnostic) throws Exception {
         diagnostic.put("parseStage", "dump_header");
         if (!dump.startsWith("WINDOW MANAGER WINDOWS")) throw new CaptureRefused("input_method_window_dump_unavailable");
         Matcher selected = Pattern.compile("(?m)^[\\t ]*mInputMethodWindow=Window\\{([0-9a-fA-F]+)\\s+u0\\s+[^}]+\\}").matcher(dump);
@@ -186,24 +210,45 @@ final class SmokeCapture {
                 "mEnterAnimationPending", "mAnimatingExit", "mHasSurface", "Surface: shown"})
             fields.put(field, booleanFieldObservation(matched, field));
         diagnostic.put("parseStage", "visibility").put("fields", fields);
-        if (!oneField(matched, "isOnScreen", "false") || !oneField(matched, "isVisible", "false")
-                || !oneField(matched, "isReadyForDisplay()", "false")
-                || !oneField(matched, "mEnterAnimationPending", "false")
-                || !absentOrFalse(matched, "mAnimatingExit"))
-            throw new CaptureRefused("input_method_is_visible_animating_or_unverified");
-        if (oneField(matched, "mHasSurface", "false")) {
-            // The observed no-surface cohort retains mLastHidden=false. That
-            // history flag cannot make a nonexistent, nonvisible surface shown.
-            // Still reject malformed history or any contradictory shown surface.
-            if (!(oneField(matched, "mLastHidden", "false") || oneField(matched, "mLastHidden", "true"))
-                    || !absentOrFalse(matched, "Surface: shown"))
-                throw new CaptureRefused("input_method_surface_is_visible_or_unverified");
-        } else if (!(oneField(matched, "mHasSurface", "true") && oneField(matched, "mLastHidden", "true")
-                && oneField(matched, "Surface: shown", "false"))) {
-            throw new CaptureRefused("input_method_surface_is_visible_or_unverified");
+        return new InputMethodRecord(matched, token + "/" + ownerUid + "/" + packageName);
+    }
+
+    /** Positive, current IME readiness for the test's one BACK; never hidden-by-negation. */
+    static String visibleNotesInputMethod(SmokeHarness harness) throws Exception {
+        ServiceInfo ime = harness.configuredSystemInputMethod();
+        if (ime == null) throw new CaptureRefused("configured_system_input_method_unverified");
+        String identity = inspectedVisibleInputMethod(harness.shell("dumpsys -t 2 window -a windows"),
+                ime.applicationInfo.uid, ime.packageName);
+        return identity == null ? null : identity + "/" + ime.name;
+    }
+
+    private static String inspectedVisibleInputMethod(String dump, int ownerUid, String packageName) throws Exception {
+        InputMethodRecord record = inputMethodRecord(dump, ownerUid, packageName, new JSONObject());
+        String block = record.block;
+        for (String field : new String[] {"isOnScreen", "isVisible", "isReadyForDisplay()", "mLastHidden",
+                "mEnterAnimationPending", "mHasSurface"}) {
+            if (!(oneField(block, field, "true") || oneField(block, field, "false")))
+                throw new CaptureRefused("input_method_visibility_field_unverified");
         }
-        diagnostic.put("parseStage", "hidden_verified");
-        return token + "/" + ownerUid + "/" + packageName;
+        if (!(absentOrFalse(block, "mAnimatingExit") || oneField(block, "mAnimatingExit", "true")))
+            throw new CaptureRefused("input_method_exit_animation_unverified");
+        if (oneField(block, "mHasSurface", "true")) {
+            if (!(oneField(block, "Surface: shown", "true") || oneField(block, "Surface: shown", "false")))
+                throw new CaptureRefused("input_method_shown_surface_unverified");
+        } else if (!absentOrFalse(block, "Surface: shown")) {
+            throw new CaptureRefused("input_method_surface_state_conflicts");
+        }
+        if (oneField(block, "isOnScreen", "true") && oneField(block, "isVisible", "true")
+                && oneField(block, "isReadyForDisplay()", "true") && oneField(block, "mHasSurface", "true")
+                && oneField(block, "Surface: shown", "true") && oneField(block, "mLastHidden", "false")
+                && oneField(block, "mEnterAnimationPending", "false") && absentOrFalse(block, "mAnimatingExit"))
+            return record.identity;
+        return null; // Known boolean hidden/transition state: no authority to inject BACK.
+    }
+
+    private static final class InputMethodRecord {
+        final String block, identity;
+        InputMethodRecord(String block, String identity) { this.block = block; this.identity = identity; }
     }
 
     /** Counts and fixed enums only: never persist a raw field, title or dump. */
@@ -295,6 +340,7 @@ final class SmokeCapture {
         SmokeHarness.require(inspectedWindow(complete.replace("fl=0x100", "fl=SECURE")).secure,
                 "Named secure window flag was missed");
         verifyInputMethodWindowParser();
+        SmokeHarness.verifyNotesBackPreparation();
         String notes = complete.replace("org.fossify.math", "org.fossify.notes");
         SmokeHarness.require(!inspectedWindow(notes, SmokeHarness.NOTES_TARGET).secure, "Pinned notes page was not matched");
         boolean crossPackageRefused = false;
@@ -343,6 +389,29 @@ final class SmokeCapture {
                 .replace("mLastHidden=true", "mLastHidden=false").replace("Surface: shown=false", "Surface: shown=true");
         String observedRetainedShown = observedShown.replace("isVisible=true", "isVisible=false")
                 .replace("isReadyForDisplay()=true", "isReadyForDisplay()=false");
+        String visibleIdentity = inspectedVisibleInputMethod(observedShown, 10100, "com.android.inputmethod.latin");
+        SmokeHarness.require(visibleIdentity != null, "Observed shown cohort did not satisfy positive IME readiness");
+        for (String notReady : new String[] {ime, observedNoSurface, observedRetainedShown,
+                observedShown.replace("mEnterAnimationPending=false", "mEnterAnimationPending=true"),
+                observedShown + "mAnimatingExit=true\n", observedShown.replace("Surface: shown=true", "Surface: shown=false")}) {
+            SmokeHarness.require(inspectedVisibleInputMethod(notReady, 10100, "com.android.inputmethod.latin") == null,
+                    "Hidden or animating IME admitted BACK");
+        }
+        for (String malformed : new String[] {
+                observedShown.replace("isVisible=true", "isVisible=true isVisible=true"),
+                observedShown.replace("isVisible=true", "isVisible=unknown"),
+                observedShown.replace("isOnScreen=true\n", ""),
+                observedShown.replace("Surface: shown=true", "unknown=true"),
+                observedShown.replace("mOwnerUid=10100", "mOwnerUid=10101"),
+                observedShown.replace("mDisplayId=0", "mDisplayId=1"),
+                observedShown.replace("package=com.android.inputmethod.latin", "package=unrelated.application"),
+                observedShown + "mInputMethodWindow=Window{abc u0 InputMethod}\n",
+                observedShown + "mAnimatingExit=unknown\n"}) {
+            boolean refused = false;
+            try { inspectedVisibleInputMethod(malformed, 10100, "com.android.inputmethod.latin"); }
+            catch (CaptureRefused expected) { refused = true; }
+            SmokeHarness.require(refused, "Unverified IME metadata admitted a keyboard dismissal");
+        }
         for (String rejected : new String[] {
                 observedShown, observedRetainedShown,
                 observedNoSurface.replace("isOnScreen=false", "isOnScreen=true"),

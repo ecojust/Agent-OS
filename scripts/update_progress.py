@@ -50,6 +50,20 @@ def render(data):
         lines.extend([f"[最近测试截图与清单]({path}/) · [对应测试运行]({evidence['run_url']})。通过、失败及未截图原因见清单。", ""])
     else:
         lines.extend(["测试截图归档正在接入，尚无本轮截图；历史未采集的截图不补画、不冒充测试记录。", ""])
+    demo = data.get("latest_demo")
+    if demo:
+        path = demo["path"]
+        source = demo["source_sha"]
+        run_match = re.fullmatch(r"screenshots/demos/([1-9][0-9]*)-([1-9][0-9]*)", path)
+        if (not run_match or not re.fullmatch(r"[0-9a-f]{40}", source)
+                or demo.get("status") != "passed"
+                or demo["run_url"] != f"https://github.com/ecojust/Agent-OS/actions/runs/{run_match.group(1)}"):
+            raise ValueError("Latest demo must identify a verified walkthrough and its exact source/run")
+        lines.extend([
+            f"**整体操作演示：** [播放视频]({path}/demo.mp4) · [录制与验证清单]({path}/manifest.json) · [测试运行]({demo['run_url']})。",
+            f"录制版本：[`{source[:9]}`](https://github.com/ecojust/Agent-OS/commit/{source})。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。", ""])
+    else:
+        lines.extend(["**整体操作演示：** 正在接入真实操作录制，完成后提供小于 100 MB 的视频与对应源码记录；尚未录制的过程不以示意动画代替。", ""])
     lines.extend(["| 检查点 | 状态 |", "| --- | --- |"])
     for item in points:
         lines.append(f"| {single_line(item['name'])} | {LABELS[item['status']]} |")

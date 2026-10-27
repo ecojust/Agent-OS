@@ -1,0 +1,1007 @@
+{
+  "schemaVersion": 1,
+  "kind": "pinned-calculator-page-predicate-evidence",
+  "archivedAt": "2026-10-27T13:21:02.972580+00:00",
+  "sourceRun": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 40510053237,
+    "attempt": 1,
+    "commit": "ab82fd533f957051eda760fba1c61903d5cda119",
+    "event": "workflow_dispatch",
+    "branch": "master",
+    "workflow": ".github/workflows/pinned-calculator-page.yml",
+    "conclusion": "failure",
+    "url": "https://github.com/ecojust/Agent-OS/actions/runs/40510053237"
+  },
+  "expectedMatrixLabels": [
+    "34",
+    "35",
+    "36",
+    "37.0"
+  ],
+  "expectedCases": [
+    "ordinaryZeroAndComputedResultUseTheActualProductionSnapshot",
+    "actualOverflowMenuIsNotTheUnopenedToolbar",
+    "nonemptyHistoryIsRejectedAndReturningNeedsANewObservation",
+    "actualSettingsPageIsRejected",
+    "actualUnitConverterPageIsRejected"
+  ],
+  "expectedTestsPerApi": 5,
+  "expectedTests": 20,
+  "caseCounts": {
+    "passed": 15,
+    "failed": 5,
+    "unverified": 0
+  },
+  "apis": [
+    {
+      "apiLevel": 34,
+      "matrixLabel": "34",
+      "jobConclusion": "failure",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40510053237/job/122210223245",
+      "captureStatus": "collected",
+      "status": "failed",
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 853,
+          "sha256": "7bc9e2ecb66965f1a420625516275a6ca882b27daa232004efd61f3a0c2ca1ea"
+        },
+        {
+          "path": "instrumentation.json",
+          "bytes": 6348,
+          "sha256": "b14c1700cb2187ef70da89ef81e149b11e706653c2ec190560b1a0dc2259332a"
+        },
+        {
+          "path": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar-0.json",
+          "bytes": 13061,
+          "sha256": "24d0afc15671a87c9fa1d7c8a2e97c23093e5a8697228833add71e325d94da11"
+        },
+        {
+          "path": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar-1.png",
+          "bytes": 26481,
+          "sha256": "5bc9998452a0b7400203337147f39558082156041d850ee5bef7a9be76865011"
+        },
+        {
+          "path": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar-2.json",
+          "bytes": 3230,
+          "sha256": "0de2a67257a1ef64b9e79b66d15432cd4e1393899433d33a4408dee46c77ec74"
+        },
+        {
+          "path": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar.case.json",
+          "bytes": 1606,
+          "sha256": "5fe0f600bab0576c0fd6b19c32d8021603176b309079f284a5799b076b07a455"
+        },
+        {
+          "path": "pinned-page/actualSettingsPageIsRejected-0.json",
+          "bytes": 13060,
+          "sha256": "4ae351406d8e9ae2c2bd50229f72b190da031c6a4c59e9aa6ce05edd7fdf28f1"
+        },
+        {
+          "path": "pinned-page/actualSettingsPageIsRejected-1.png",
+          "bytes": 26481,
+          "sha256": "5bc9998452a0b7400203337147f39558082156041d850ee5bef7a9be76865011"
+        },
+        {
+          "path": "pinned-page/actualSettingsPageIsRejected-2.json",
+          "bytes": 12551,
+          "sha256": "a31dee7dd02313aa3e59cfb303f27f75f7a42b9ddf339b63a0633b50e42588b4"
+        },
+        {
+          "path": "pinned-page/actualSettingsPageIsRejected.case.json",
+          "bytes": 1553,
+          "sha256": "11fdd1a2563adf4c942226e4b079188f9d5580a03a8bd73d41676e1733cbe28f"
+        },
+        {
+          "path": "pinned-page/actualUnitConverterPageIsRejected-0.json",
+          "bytes": 13062,
+          "sha256": "b05c5d4e5e7bbd407087ffca7f42e1ee68f5fdd7c18bc6131fe364e1a1868458"
+        },
+        {
+          "path": "pinned-page/actualUnitConverterPageIsRejected-1.png",
+          "bytes": 26481,
+          "sha256": "5bc9998452a0b7400203337147f39558082156041d850ee5bef7a9be76865011"
+        },
+        {
+          "path": "pinned-page/actualUnitConverterPageIsRejected-2.json",
+          "bytes": 10815,
+          "sha256": "6a21b6b5d3a882ee2b4007ce322d567d9038331015410f8e63d1a080fef70017"
+        },
+        {
+          "path": "pinned-page/actualUnitConverterPageIsRejected.case.json",
+          "bytes": 1547,
+          "sha256": "acfd63718c3632dbe569acf516cdcc61f3c1f2eb02bb91a8dd44a5e8a006ce5c"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-0.json",
+          "bytes": 13075,
+          "sha256": "8613986f36f18163c5f4ae9257d1b0658cff79e6199685b412cedc1f2da27853"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-1.png",
+          "bytes": 27115,
+          "sha256": "b23f7aea126e3dda194f905001d54a6c0055c8193c6fbd5c2868ebb51046d2d9"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-2.json",
+          "bytes": 4657,
+          "sha256": "a45d088877c0572e437fc076432f5d7b8a8b504412e6a32f3982cc8dba366eda"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-3.json",
+          "bytes": 13098,
+          "sha256": "6bb5ebd1fb2a0a7152fe0b66cf228c799af7b01269edb515709f1573cec2877d"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-4.png",
+          "bytes": 27115,
+          "sha256": "b23f7aea126e3dda194f905001d54a6c0055c8193c6fbd5c2868ebb51046d2d9"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation.case.json",
+          "bytes": 2293,
+          "sha256": "c08123692fd4e11d66f9ca592caf4597031a1a65fc8b8527be62939de49d0fa6"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-0.json",
+          "bytes": 13056,
+          "sha256": "48998b3ad295cd33819a16746bf917f9ba585383142999a87b08080ddf8dfe37"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-1.png",
+          "bytes": 26453,
+          "sha256": "b8741fb06450a63e1ec41933a2e8e36e590ddb810056a7e99cef063a23625b1d"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-2.json",
+          "bytes": 13073,
+          "sha256": "bf6b0e742be0037c18f2c4c3e42af8dcd502b0ec3b1f9b1f69fc4974291b5ccd"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-3.png",
+          "bytes": 27115,
+          "sha256": "b23f7aea126e3dda194f905001d54a6c0055c8193c6fbd5c2868ebb51046d2d9"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot.case.json",
+          "bytes": 1800,
+          "sha256": "50510e42c5376bc7cfe7a7f076509d2de8236bafea6edf7f4e80c6709d5e60f5"
+        },
+        {
+          "path": "report.json",
+          "bytes": 3275,
+          "sha256": "07ce72a63126a5d6a963adb614f4d4058681a3dbbad02cbe7e1a137e298e3e55"
+        },
+        {
+          "path": "screenshots/api-34-actualOverflowMenuIsNotTheUnopenedToolbar-314112dd.json",
+          "bytes": 552,
+          "sha256": "b8c5dab27dbdb6ed78a3f8e6a9f120aa36504b161bf492d3ca2435e3a0190123"
+        },
+        {
+          "path": "screenshots/api-34-actualSettingsPageIsRejected-d116611f.json",
+          "bytes": 539,
+          "sha256": "94013abe716711c685f6174e1186ed1cc8f237bfc273253c5db5e28209428ddf"
+        },
+        {
+          "path": "screenshots/api-34-actualUnitConverterPageIsRejected-586fde1d.json",
+          "bytes": 578,
+          "sha256": "70de4274b25753c0c93f7b8f9e1a21e9de3d5af23a6bc47b421653919017d592"
+        },
+        {
+          "path": "screenshots/api-34-nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-892ba16c.json",
+          "bytes": 568,
+          "sha256": "4b27753b9bac0112d681bc0ac9bf0cab902212d923056e29a0a883a041e1accb"
+        },
+        {
+          "path": "screenshots/api-34-ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-50997811.json",
+          "bytes": 570,
+          "sha256": "59b0333810c32d88e5e33242dc8265e36a10adcafdcc61026bf3ce1b653a8a8e"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 3464,
+          "sha256": "07f3c53b617734b3b2b13b2920bc3452f88b5e147911a74fc7ee7f7ad2d53153"
+        }
+      ],
+      "verifiedPinnedImages": [
+        "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar-1.png",
+        "pinned-page/actualSettingsPageIsRejected-1.png",
+        "pinned-page/actualUnitConverterPageIsRejected-1.png",
+        "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-1.png",
+        "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-4.png",
+        "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-1.png",
+        "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-3.png"
+      ],
+      "cases": [
+        {
+          "name": "ordinaryZeroAndComputedResultUseTheActualProductionSnapshot",
+          "status": "passed",
+          "pageCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot.case.json"
+        },
+        {
+          "name": "actualOverflowMenuIsNotTheUnopenedToolbar",
+          "status": "passed",
+          "pageCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar.case.json"
+        },
+        {
+          "name": "nonemptyHistoryIsRejectedAndReturningNeedsANewObservation",
+          "status": "passed",
+          "pageCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation.case.json"
+        },
+        {
+          "name": "actualSettingsPageIsRejected",
+          "status": "passed",
+          "pageCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-page/actualSettingsPageIsRejected.case.json"
+        },
+        {
+          "name": "actualUnitConverterPageIsRejected",
+          "status": "failed",
+          "pageCaseStatus": "failed",
+          "standardTestResult": "fail",
+          "record": "pinned-page/actualUnitConverterPageIsRejected.case.json"
+        }
+      ],
+      "driverStatus": "failed",
+      "actualSdkInt": 34,
+      "standardRecordedTests": 5,
+      "verifiedDownload": {
+        "package": "org.fossify.math",
+        "versionCode": "10",
+        "versionName": "1.4.0",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "abis": [
+          "arm64-v8a",
+          "armeabi-v7a",
+          "x86",
+          "x86_64"
+        ],
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "sizeBytes": 7047681
+      },
+      "artifactId": 12736344488,
+      "caseCounts": {
+        "passed": 4,
+        "failed": 1,
+        "unverified": 0
+      }
+    },
+    {
+      "apiLevel": 35,
+      "matrixLabel": "35",
+      "jobConclusion": "failure",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40510053237/job/122210223351",
+      "captureStatus": "collected",
+      "status": "failed",
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 853,
+          "sha256": "c84635b5c1f6c3c556a4cfd4301630e33aa427c133abdacc85b42b5cd0f8b638"
+        },
+        {
+          "path": "instrumentation.json",
+          "bytes": 6190,
+          "sha256": "22a952dc190462706810c119bb82fd76bb50798629a5d2785f9789587e2d079b"
+        },
+        {
+          "path": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar-0.json",
+          "bytes": 13146,
+          "sha256": "604a3ebf07712c114694a1875ebe89a44283f5a15824f2b7315efd698837ad39"
+        },
+        {
+          "path": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar-1.png",
+          "bytes": 26752,
+          "sha256": "ddcd37ff408577411644ea009bc53244cd9ccb54224365d75da93d7b0d2c80f4"
+        },
+        {
+          "path": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar-2.json",
+          "bytes": 3315,
+          "sha256": "f768bec1069cf392a2fa1509bcbf9913ebe97cd28a6ef21445c5836d1f6d5f2e"
+        },
+        {
+          "path": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar.case.json",
+          "bytes": 1606,
+          "sha256": "931699d88b2a645bfec047e39db0a1cdb64d5b3bafa8b3bae5ef7924f3e369fd"
+        },
+        {
+          "path": "pinned-page/actualSettingsPageIsRejected-0.json",
+          "bytes": 13145,
+          "sha256": "8509f4b1c7013048b10f7d73c478be527497f30861ea4b98a7141951343c60e8"
+        },
+        {
+          "path": "pinned-page/actualSettingsPageIsRejected-1.png",
+          "bytes": 26752,
+          "sha256": "ddcd37ff408577411644ea009bc53244cd9ccb54224365d75da93d7b0d2c80f4"
+        },
+        {
+          "path": "pinned-page/actualSettingsPageIsRejected-2.json",
+          "bytes": 12641,
+          "sha256": "e7120c8e59db5b6514eadbf0a7c0f4027673fd72f98e88a5b10f94a6d3bfce10"
+        },
+        {
+          "path": "pinned-page/actualSettingsPageIsRejected.case.json",
+          "bytes": 1553,
+          "sha256": "cb26872e78f28ff6e39b8e30f54f26cb1675eb5a34d0b84bc2dc05a714269081"
+        },
+        {
+          "path": "pinned-page/actualUnitConverterPageIsRejected-0.json",
+          "bytes": 13147,
+          "sha256": "901d301e7d67310754d4f48a7d57aaae97d8d2ad3c6a01c7efa354bac1b80e3f"
+        },
+        {
+          "path": "pinned-page/actualUnitConverterPageIsRejected-1.png",
+          "bytes": 26752,
+          "sha256": "ddcd37ff408577411644ea009bc53244cd9ccb54224365d75da93d7b0d2c80f4"
+        },
+        {
+          "path": "pinned-page/actualUnitConverterPageIsRejected-2.json",
+          "bytes": 10901,
+          "sha256": "32ebeb15349c16a8f68ade01abb33578a084b6d35857f66787293298b8bfb232"
+        },
+        {
+          "path": "pinned-page/actualUnitConverterPageIsRejected.case.json",
+          "bytes": 1547,
+          "sha256": "0ad4febdf81fe9aa36ccca6b85e2bb112db1ea68ac4f18ada01fe4ba44e40f0a"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-0.json",
+          "bytes": 13160,
+          "sha256": "1e3eef56bb3c74f4d619ca38fde2b4deefc579fb6cebf52f1a6f8dcee8db4ea8"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-1.png",
+          "bytes": 27382,
+          "sha256": "6f763fd55cbecdbd428e76c186d0a3325348104bd4a321be37ece4f1100e2fc5"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-2.json",
+          "bytes": 4742,
+          "sha256": "f33ac64d8d589014e622660cb22511f59634f48efee90d7f4c8f416ae5444df4"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-3.json",
+          "bytes": 13183,
+          "sha256": "024c9cfa5346aa6cbf7e582ccedb5235b15d892b048a05bef235a8800e2a12e5"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-4.png",
+          "bytes": 27362,
+          "sha256": "0a400d7fc166401fa65a436b8db3c7944949270a7f2fbadb190e90531acb9963"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation.case.json",
+          "bytes": 2293,
+          "sha256": "ad7e566c026314690444015bdde8efb89fa01b12efea58bbf83898e23ce68cf0"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-0.json",
+          "bytes": 13141,
+          "sha256": "b166e9ac7614d71e78bd9c595be45e348f1065e7744d5cdf010e22d8c75296a5"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-1.png",
+          "bytes": 26726,
+          "sha256": "b8159b5c9da42dddcfc62296cee18b978c4eeba291acf85ffdb8516141f69943"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-2.json",
+          "bytes": 13158,
+          "sha256": "a29c915943594af8cf68746ac744930a067ad2d13f69aa3ddc0b6780f08390c4"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-3.png",
+          "bytes": 27382,
+          "sha256": "6f763fd55cbecdbd428e76c186d0a3325348104bd4a321be37ece4f1100e2fc5"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot.case.json",
+          "bytes": 1800,
+          "sha256": "19a155e4762ec22ebf88edd8bcd66e57d52fc6a2c07e5954ab381395cb9cd5ba"
+        },
+        {
+          "path": "report.json",
+          "bytes": 3275,
+          "sha256": "deb37442dd393f957aab01b918afcddebb28b492d98167f244571bb5f1d3c762"
+        },
+        {
+          "path": "screenshots/api-35-actualOverflowMenuIsNotTheUnopenedToolbar-9599f8d4.json",
+          "bytes": 552,
+          "sha256": "4174fc4ad948dbb431ce79343a903a3cd19467c0407cf9d96c36a629639babbd"
+        },
+        {
+          "path": "screenshots/api-35-actualSettingsPageIsRejected-1bda88f6.json",
+          "bytes": 539,
+          "sha256": "49fd8887c19ae7d0fe282746b627a9abffac0708b150cabf6bb42bda4eb926f6"
+        },
+        {
+          "path": "screenshots/api-35-actualUnitConverterPageIsRejected-112b6bc0.json",
+          "bytes": 578,
+          "sha256": "94d312fab8025e040b5b81aebe31d22afa438f90de8a98631aba084e87a5983c"
+        },
+        {
+          "path": "screenshots/api-35-nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-55d781b9.json",
+          "bytes": 568,
+          "sha256": "e9a161dc5a40eaec215113b1856cfc20b8d3aaf3da81853f5daa8bb01c80d470"
+        },
+        {
+          "path": "screenshots/api-35-ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-35dc85f8.json",
+          "bytes": 570,
+          "sha256": "fcc2d81c5e61ce3bf0a9003a7083311ff0885ee45a5d6915cbe786dec2b02aa5"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 3464,
+          "sha256": "89ffcf5c6dcaca4239e212c112818626ce6e2c9b0c513f2c41e92ec87fa5ac83"
+        }
+      ],
+      "verifiedPinnedImages": [
+        "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar-1.png",
+        "pinned-page/actualSettingsPageIsRejected-1.png",
+        "pinned-page/actualUnitConverterPageIsRejected-1.png",
+        "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-1.png",
+        "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-4.png",
+        "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-1.png",
+        "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-3.png"
+      ],
+      "cases": [
+        {
+          "name": "ordinaryZeroAndComputedResultUseTheActualProductionSnapshot",
+          "status": "passed",
+          "pageCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot.case.json"
+        },
+        {
+          "name": "actualOverflowMenuIsNotTheUnopenedToolbar",
+          "status": "passed",
+          "pageCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar.case.json"
+        },
+        {
+          "name": "nonemptyHistoryIsRejectedAndReturningNeedsANewObservation",
+          "status": "passed",
+          "pageCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation.case.json"
+        },
+        {
+          "name": "actualSettingsPageIsRejected",
+          "status": "passed",
+          "pageCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-page/actualSettingsPageIsRejected.case.json"
+        },
+        {
+          "name": "actualUnitConverterPageIsRejected",
+          "status": "failed",
+          "pageCaseStatus": "failed",
+          "standardTestResult": "fail",
+          "record": "pinned-page/actualUnitConverterPageIsRejected.case.json"
+        }
+      ],
+      "driverStatus": "failed",
+      "actualSdkInt": 35,
+      "standardRecordedTests": 5,
+      "verifiedDownload": {
+        "package": "org.fossify.math",
+        "versionCode": "10",
+        "versionName": "1.4.0",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "abis": [
+          "arm64-v8a",
+          "armeabi-v7a",
+          "x86",
+          "x86_64"
+        ],
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "sizeBytes": 7047681
+      },
+      "artifactId": 12736921503,
+      "caseCounts": {
+        "passed": 4,
+        "failed": 1,
+        "unverified": 0
+      }
+    },
+    {
+      "apiLevel": 36,
+      "matrixLabel": "36",
+      "jobConclusion": "failure",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40510053237/job/122210223342",
+      "captureStatus": "collected",
+      "status": "failed",
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 853,
+          "sha256": "3722c3cc8ef1867063c296462848f5b356c09ddb52b313b7a358966177f08bd4"
+        },
+        {
+          "path": "instrumentation.json",
+          "bytes": 9113,
+          "sha256": "c78a1edba7b8a064c068a8392e31aa5e0de7d6db44985520530d01e3eef11fb7"
+        },
+        {
+          "path": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar-0.json",
+          "bytes": 13146,
+          "sha256": "d4a780cfcb072fd0c2d9055d65ed41d71e00a8452e847f2d6bc6e6094095c137"
+        },
+        {
+          "path": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar-1.png",
+          "bytes": 26160,
+          "sha256": "bfc2cf883a2e6c50bd5283ccf0187544d5142eeb49db28f1e7ab6877a9cb7dba"
+        },
+        {
+          "path": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar-2.json",
+          "bytes": 3315,
+          "sha256": "1ab927ec2ab5dd0f6994e0de2b90d5658b030d01a414026715f220b7cfc3308b"
+        },
+        {
+          "path": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar.case.json",
+          "bytes": 1606,
+          "sha256": "1ca643d28c38c7308900d299fb12c6b923e84b54551cbb3b0bae71ff7dd4cc92"
+        },
+        {
+          "path": "pinned-page/actualSettingsPageIsRejected-0.json",
+          "bytes": 13145,
+          "sha256": "36fc6982175880c14fb89c9cde7c40333ebacff9f49a316fd83fa0ddb981cc50"
+        },
+        {
+          "path": "pinned-page/actualSettingsPageIsRejected-1.png",
+          "bytes": 26160,
+          "sha256": "bfc2cf883a2e6c50bd5283ccf0187544d5142eeb49db28f1e7ab6877a9cb7dba"
+        },
+        {
+          "path": "pinned-page/actualSettingsPageIsRejected-2.json",
+          "bytes": 12617,
+          "sha256": "13b897ef0fc4f98ccb676cabbbd166e6801ba4d75fdf529a307f2872c26d5ee4"
+        },
+        {
+          "path": "pinned-page/actualSettingsPageIsRejected.case.json",
+          "bytes": 1567,
+          "sha256": "6023f695cbd7921522ba72f1c543f878be562501b6633e189ce946eee25c82a3"
+        },
+        {
+          "path": "pinned-page/actualUnitConverterPageIsRejected-0.json",
+          "bytes": 13147,
+          "sha256": "4fa385ed984cf5f7bcec814086c71574f7a0ba3814634f6824df438f50bcfde7"
+        },
+        {
+          "path": "pinned-page/actualUnitConverterPageIsRejected-1.png",
+          "bytes": 26162,
+          "sha256": "43f0954221716d4df3a1feb99033ea06952f091e81a7f6b2d881aa565862ea09"
+        },
+        {
+          "path": "pinned-page/actualUnitConverterPageIsRejected-2.json",
+          "bytes": 10901,
+          "sha256": "ef275e503cc303d05c9565357b7f2de594bc6dbee8a3fbcc0675704f632c15de"
+        },
+        {
+          "path": "pinned-page/actualUnitConverterPageIsRejected.case.json",
+          "bytes": 1547,
+          "sha256": "714d72747886b5c79088a186cc99a13a25b9c6f12d8b6c15e3b89d414feefd19"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-0.json",
+          "bytes": 13160,
+          "sha256": "495b8ba55c88babeb5e5b9930bbb0fd2584f2e6d8940b5fb56e6aac071a97aa8"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-1.png",
+          "bytes": 26812,
+          "sha256": "57917b8f61500ab77048ddc0b8284e2ddc056d7f96417e990ef170840269390c"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-2.json",
+          "bytes": 4742,
+          "sha256": "2de2fe793fe86956d0cfc8d588350cb5e7dbcebf1b41603aefff98f245fda817"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-3.json",
+          "bytes": 4657,
+          "sha256": "3daf499ea8f0caf710294d06e77eb39e613c8d7cee97a49db9fb548fad8ae312"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation.case.json",
+          "bytes": 1995,
+          "sha256": "e9c3c88a688a5d37adbc0e3e6eca8940256cbd9a4fb3aea59bf8992a6fe9e2f5"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-0.json",
+          "bytes": 13141,
+          "sha256": "20a0d51963105609541cc344452ed881042d07aab5d576ca2dcb68d6aa2ce411"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-1.png",
+          "bytes": 26162,
+          "sha256": "43f0954221716d4df3a1feb99033ea06952f091e81a7f6b2d881aa565862ea09"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-2.json",
+          "bytes": 13158,
+          "sha256": "130244fcc2555e03c41dcf078e9d83e503955987cbce09da302d7a03014c0dee"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-3.png",
+          "bytes": 26812,
+          "sha256": "57917b8f61500ab77048ddc0b8284e2ddc056d7f96417e990ef170840269390c"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot.case.json",
+          "bytes": 1800,
+          "sha256": "95512457095b9034dad954662c3855a6814bd20682de39d5a0dfed9f0f832964"
+        },
+        {
+          "path": "report.json",
+          "bytes": 3275,
+          "sha256": "af2c6073c8b580292a5649428148c64e85d911aa4a13e627f5873c27f3f8b779"
+        },
+        {
+          "path": "screenshots/api-36-actualOverflowMenuIsNotTheUnopenedToolbar-d494e14d.json",
+          "bytes": 552,
+          "sha256": "4606a62aef5a6902c66be1131ba78fecbb85530e02d9da495a9455654f32ac45"
+        },
+        {
+          "path": "screenshots/api-36-actualSettingsPageIsRejected-74ae5517.json",
+          "bytes": 539,
+          "sha256": "09cc68b9b5500e09eb6eb1f607125eee520d80a9a19aad1bf59a525243f808b2"
+        },
+        {
+          "path": "screenshots/api-36-actualUnitConverterPageIsRejected-43a38021.json",
+          "bytes": 578,
+          "sha256": "ac66961fbca09b67d903f5d21c4281c830897e7655f24410e20c36b85e982f2e"
+        },
+        {
+          "path": "screenshots/api-36-nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-e5b3de6f.json",
+          "bytes": 602,
+          "sha256": "510918988c8fae263307efc58c74d9ad15b817abca204ffe79615d7ec143bc19"
+        },
+        {
+          "path": "screenshots/api-36-ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-176b6cad.json",
+          "bytes": 570,
+          "sha256": "3b96d8e7f8fdb7f455f55d4e44bf8fc6fc485e6178c8919372c7f19bc98ea832"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 3502,
+          "sha256": "80e5332151c7c96042df02d19db89a7db995a2d8081bab8d6e2d9c4c7f7bdaf0"
+        }
+      ],
+      "verifiedPinnedImages": [
+        "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar-1.png",
+        "pinned-page/actualSettingsPageIsRejected-1.png",
+        "pinned-page/actualUnitConverterPageIsRejected-1.png",
+        "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-1.png",
+        "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-1.png",
+        "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-3.png"
+      ],
+      "cases": [
+        {
+          "name": "ordinaryZeroAndComputedResultUseTheActualProductionSnapshot",
+          "status": "passed",
+          "pageCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot.case.json"
+        },
+        {
+          "name": "actualOverflowMenuIsNotTheUnopenedToolbar",
+          "status": "passed",
+          "pageCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar.case.json"
+        },
+        {
+          "name": "nonemptyHistoryIsRejectedAndReturningNeedsANewObservation",
+          "status": "failed",
+          "pageCaseStatus": "failed",
+          "standardTestResult": "fail",
+          "record": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation.case.json"
+        },
+        {
+          "name": "actualSettingsPageIsRejected",
+          "status": "passed",
+          "pageCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-page/actualSettingsPageIsRejected.case.json"
+        },
+        {
+          "name": "actualUnitConverterPageIsRejected",
+          "status": "failed",
+          "pageCaseStatus": "failed",
+          "standardTestResult": "fail",
+          "record": "pinned-page/actualUnitConverterPageIsRejected.case.json"
+        }
+      ],
+      "driverStatus": "failed",
+      "actualSdkInt": 36,
+      "standardRecordedTests": 5,
+      "verifiedDownload": {
+        "package": "org.fossify.math",
+        "versionCode": "10",
+        "versionName": "1.4.0",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "abis": [
+          "arm64-v8a",
+          "armeabi-v7a",
+          "x86",
+          "x86_64"
+        ],
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "sizeBytes": 7047681
+      },
+      "artifactId": 12737340963,
+      "caseCounts": {
+        "passed": 3,
+        "failed": 2,
+        "unverified": 0
+      }
+    },
+    {
+      "apiLevel": 37,
+      "matrixLabel": "37.0",
+      "jobConclusion": "failure",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40510053237/job/122210223662",
+      "captureStatus": "collected",
+      "status": "failed",
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 855,
+          "sha256": "80cdaed94ef6d22c62e61ca3ae51bb3f96aa62db53ba9af769f170c2d496d906"
+        },
+        {
+          "path": "instrumentation.json",
+          "bytes": 6190,
+          "sha256": "eca4daf7a8cc137f1d68b7c14ca657bee24fbcd5be469b98381b8973a9e31ec1"
+        },
+        {
+          "path": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar-0.json",
+          "bytes": 13061,
+          "sha256": "d3c927fb86b0cb74804dc298ec343d35cd53100f42e09dc4741b1d8e92d82ca8"
+        },
+        {
+          "path": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar-1.png",
+          "bytes": 26572,
+          "sha256": "f7da4726799a381b75603f4c296c72427e89f8625f2ddc2eebbc40642b06948e"
+        },
+        {
+          "path": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar-2.json",
+          "bytes": 3230,
+          "sha256": "79fba8b3fe1f232e4c86c89d06afa226605f09bfbbf367772c6d7972efbffc3e"
+        },
+        {
+          "path": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar.case.json",
+          "bytes": 1606,
+          "sha256": "5dd4667396c4153b343a0cc10d14d65514402d8db4e5b0827936e3169965a57a"
+        },
+        {
+          "path": "pinned-page/actualSettingsPageIsRejected-0.json",
+          "bytes": 13060,
+          "sha256": "61ffe8c1f3d47acfb835d26c840017c2c40c82e29ea72c6c74b4d70bd11826f5"
+        },
+        {
+          "path": "pinned-page/actualSettingsPageIsRejected-1.png",
+          "bytes": 26572,
+          "sha256": "f7da4726799a381b75603f4c296c72427e89f8625f2ddc2eebbc40642b06948e"
+        },
+        {
+          "path": "pinned-page/actualSettingsPageIsRejected-2.json",
+          "bytes": 12551,
+          "sha256": "aa34204188cb63534312919855c27dcadff9fbcda6fe17023660bb794ceae25d"
+        },
+        {
+          "path": "pinned-page/actualSettingsPageIsRejected.case.json",
+          "bytes": 1553,
+          "sha256": "89ced90031043c449ee123c6e457ff68332f8e5114b21cb9de8bea075c8a1d21"
+        },
+        {
+          "path": "pinned-page/actualUnitConverterPageIsRejected-0.json",
+          "bytes": 13062,
+          "sha256": "18949e2dda5ae7dce81247b956668dc7ac703e439e515e8d7bf639ae2a499a50"
+        },
+        {
+          "path": "pinned-page/actualUnitConverterPageIsRejected-1.png",
+          "bytes": 26572,
+          "sha256": "f7da4726799a381b75603f4c296c72427e89f8625f2ddc2eebbc40642b06948e"
+        },
+        {
+          "path": "pinned-page/actualUnitConverterPageIsRejected-2.json",
+          "bytes": 10815,
+          "sha256": "30b19ae40f9bcacb3876a2552fb1ee0abba55befc12232b69756149005b700e7"
+        },
+        {
+          "path": "pinned-page/actualUnitConverterPageIsRejected.case.json",
+          "bytes": 1547,
+          "sha256": "e4fb54ac31f08462718ccf4542d41222da755161d39d672c19ff0d10d76f13db"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-0.json",
+          "bytes": 13075,
+          "sha256": "70c3ea60d3c1fbd8d5915e8010983ecfcda78804d6fea43b4d6769b6abcdf695"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-1.png",
+          "bytes": 27250,
+          "sha256": "64068857d6e2cfcb7cc21c56d77493fd5cca99c1533bc24710a09f785f060480"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-2.json",
+          "bytes": 4657,
+          "sha256": "73fc64d6d6e6d6d4016d485ae9c4865ed4a45e1615d4921be66d74443623be13"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-3.json",
+          "bytes": 13098,
+          "sha256": "0e02883cfc10ded02269dc751e35d679d36ff34206d5bc0da6d7a0a7141ac0d7"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-4.png",
+          "bytes": 27217,
+          "sha256": "a8183145cd64ac162c2bd45909f4868d414795e037b9488e1ce87d3fb180da12"
+        },
+        {
+          "path": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation.case.json",
+          "bytes": 2293,
+          "sha256": "172ded028f2f53a3a37aa8f84acccf8a47acd9245ce216f2f1efc8258fba1b93"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-0.json",
+          "bytes": 13056,
+          "sha256": "59ecd58db827dbb773b618ecf7abe6c48828e2eeeb829f946c6ce34de58ba12e"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-1.png",
+          "bytes": 26576,
+          "sha256": "891de6b6a09ea7a19d6d384e4c228cb2429b4b9214e003c23ed25c8f3d41ce23"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-2.json",
+          "bytes": 13073,
+          "sha256": "740ba93dbd6249a9af0149fcf51b7650bef56841f7090023ee3c3ef339172335"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-3.png",
+          "bytes": 27250,
+          "sha256": "64068857d6e2cfcb7cc21c56d77493fd5cca99c1533bc24710a09f785f060480"
+        },
+        {
+          "path": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot.case.json",
+          "bytes": 1800,
+          "sha256": "53ea7adac3f4664ad86ede3f4f88451ced9183b48378d195065cc4e7935eab43"
+        },
+        {
+          "path": "report.json",
+          "bytes": 3277,
+          "sha256": "a8c069d7ed778a1d9c00206c277de32ac7c496a9f39cc0acb8ad3ffebcc9c061"
+        },
+        {
+          "path": "screenshots/api-37-actualOverflowMenuIsNotTheUnopenedToolbar-97be4acc.json",
+          "bytes": 552,
+          "sha256": "2e8763c87c3b9a6e4adf893cacf59361c2e8f4bd8bee02e4c320c3b438ff2e57"
+        },
+        {
+          "path": "screenshots/api-37-actualSettingsPageIsRejected-3bfe26b4.json",
+          "bytes": 539,
+          "sha256": "6bcfd62deb2dbe96a0e23ecbf7c2e0325f3f7798a2ae16e3b165512caf635317"
+        },
+        {
+          "path": "screenshots/api-37-actualUnitConverterPageIsRejected-06577499.json",
+          "bytes": 578,
+          "sha256": "9f152541c60040b4fef118a008820fd7e75bda52233eba43aa3111913b69dc42"
+        },
+        {
+          "path": "screenshots/api-37-nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-1f76c98c.json",
+          "bytes": 568,
+          "sha256": "75f92a2f6dded80c3e6a6256565ae84624e078f7842fdbad90a422be15cfec48"
+        },
+        {
+          "path": "screenshots/api-37-ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-ad8b7002.json",
+          "bytes": 570,
+          "sha256": "ef5ce9f580d26e1b0c51df378a028e7d6d0ea4839efff21f84efe12753f90138"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 3464,
+          "sha256": "4b3cb1b5fab891cd912a14f0fd7753b9cd68081227a4c5ff792075d7d025492e"
+        }
+      ],
+      "verifiedPinnedImages": [
+        "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar-1.png",
+        "pinned-page/actualSettingsPageIsRejected-1.png",
+        "pinned-page/actualUnitConverterPageIsRejected-1.png",
+        "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-1.png",
+        "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation-4.png",
+        "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-1.png",
+        "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot-3.png"
+      ],
+      "cases": [
+        {
+          "name": "ordinaryZeroAndComputedResultUseTheActualProductionSnapshot",
+          "status": "passed",
+          "pageCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot.case.json"
+        },
+        {
+          "name": "actualOverflowMenuIsNotTheUnopenedToolbar",
+          "status": "passed",
+          "pageCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar.case.json"
+        },
+        {
+          "name": "nonemptyHistoryIsRejectedAndReturningNeedsANewObservation",
+          "status": "passed",
+          "pageCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation.case.json"
+        },
+        {
+          "name": "actualSettingsPageIsRejected",
+          "status": "passed",
+          "pageCaseStatus": "passed",
+          "standardTestResult": "pass",
+          "record": "pinned-page/actualSettingsPageIsRejected.case.json"
+        },
+        {
+          "name": "actualUnitConverterPageIsRejected",
+          "status": "failed",
+          "pageCaseStatus": "failed",
+          "standardTestResult": "fail",
+          "record": "pinned-page/actualUnitConverterPageIsRejected.case.json"
+        }
+      ],
+      "driverStatus": "failed",
+      "actualSdkInt": 37,
+      "standardRecordedTests": 5,
+      "verifiedDownload": {
+        "package": "org.fossify.math",
+        "versionCode": "10",
+        "versionName": "1.4.0",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "abis": [
+          "arm64-v8a",
+          "armeabi-v7a",
+          "x86",
+          "x86_64"
+        ],
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "sizeBytes": 7047681
+      },
+      "artifactId": 12737516043,
+      "caseCounts": {
+        "passed": 4,
+        "failed": 1,
+        "unverified": 0
+      }
+    }
+  ],
+  "junit": {
+    "status": "not_produced",
+    "reason": "Dedicated direct ADB class execution; original per-case records are retained"
+  },
+  "performanceDiagnostics": {
+    "status": "not_run",
+    "budgetAcceptance": false
+  },
+  "scope": "Actual pinned Calculator 1.4.0 ordinary/alternate-page predicate on the production accessibility service. No production screenshot capability, buffer capture, review, disclosure, gestures or general application/device acceptance. Pinned UI images use test-only UiAutomation; standard protected/blocked records remain unchanged.",
+  "fileCount": 127,
+  "totalBytes": 1311335
+}

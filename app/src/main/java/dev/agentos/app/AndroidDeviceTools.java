@@ -234,7 +234,9 @@ public final class AndroidDeviceTools implements ToolHandler {
         JsonObject result;
         ObservedBlockers blockers;
         CoordinateNodeResolver.Binding coordinateBinding;
+        AgentAccessibilityService.OwnedControlWindowIdentity controlWindow;
         try (Snapshot state = snapshot(control, epoch, PerformanceTrace.Stage.SNAPSHOT_OBSERVE)) {
+            controlWindow = state.controlWindow;
             result = success(state.json());
             blockers = state.observedBlockers();
             // Unsupported coordinate geometry must not disable ordinary structured observation.
@@ -248,6 +250,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         // invalidates the completed snapshot before any content reaches the model.
         onMain(() -> { requireReady(control, epoch); return null; }, control, epoch, new Dispatch());
         requireCurrentConfiguration(control, epoch);
+        if (!service.isOwnedControlWindowCurrent(controlWindow)) throw stale();
         lastObservedRevision = result.getAsJsonObject("data").get("revision").getAsString();
         lastObservedEpoch = epoch;
         lastObservedBlockers = blockers;
@@ -558,6 +561,15 @@ public final class AndroidDeviceTools implements ToolHandler {
         finally { result.cancel(false); }
     }
 
+    private AgentAccessibilityService.OwnedControlWindowIdentity acquireControlWindow(RunControl control, long epoch) throws Exception {
+        requireCurrentConfiguration(control, epoch);
+        AgentAccessibilityService.OwnedControlWindowIdentity ready = service.getOwnedControlWindowIdentity();
+        if (ready != null) return ready;
+        CompletableFuture<AgentAccessibilityService.OwnedControlWindowIdentity> result = service.acquireOwnedControlWindowIdentity();
+        try { return await(result, control, epoch, MAIN_TIMEOUT_MS); }
+        finally { result.cancel(false); }
+    }
+
     /** Reads sealed node metadata only; the returned value has no Snapshot or node reference. */
     private MutationTarget mutationTarget(String name, JsonObject args, Snapshot state) throws DeviceException {
         Rect target;
@@ -716,8 +728,9 @@ public final class AndroidDeviceTools implements ToolHandler {
 
     private Snapshot buildSnapshot(RunControl control, long epoch, boolean readOnlyObservation) throws Exception {
         requireCurrentConfiguration(control, epoch);
+        AgentAccessibilityService.OwnedControlWindowIdentity controlWindow = acquireControlWindow(control, epoch);
         AccessibilityNodeInfo root = focusedRoot(control, epoch);
-        Snapshot state = new Snapshot(control, epoch, readOnlyObservation);
+        Snapshot state = new Snapshot(control, epoch, readOnlyObservation, controlWindow);
         state.owned.add(root);
         try {
             requireCurrentConfiguration(control, epoch);
@@ -737,6 +750,7 @@ public final class AndroidDeviceTools implements ToolHandler {
             state.snapshotJsonBytes = state.json().toString().getBytes(StandardCharsets.UTF_8).length;
             if (state.snapshotJsonBytes + 30 > MAX_BYTES) throw unavailable("界面快照超过字节预算");
             requireCurrentConfiguration(control, epoch);
+            if (!service.isOwnedControlWindowCurrent(controlWindow)) throw stale();
             return state;
         } catch (Exception failure) { state.close(); throw failure; }
     }
@@ -800,6 +814,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         final RunControl control;
         final long epoch;
         final boolean readOnlyObservation;
+        final AgentAccessibilityService.OwnedControlWindowIdentity controlWindow;
         String packageName, revision, windowSignature = "";
         int windowId, displayId = -1, windowType = -1;
         boolean scoped, password, truncated, highImpactScreen;
@@ -816,14 +831,17 @@ public final class AndroidDeviceTools implements ToolHandler {
         int snapshotJsonBytes;
         long started = SystemClock.elapsedRealtime();
 
-        Snapshot(RunControl control, long epoch, boolean readOnlyObservation) {
+        Snapshot(RunControl control, long epoch, boolean readOnlyObservation,
+                 AgentAccessibilityService.OwnedControlWindowIdentity controlWindow) {
             this.control = control; this.epoch = epoch; this.readOnlyObservation = readOnlyObservation;
+            this.controlWindow = controlWindow;
         }
 
         void inspectWindows() throws Exception {
             requireCurrentConfiguration(control, epoch);
             List<AccessibilityWindowInfo> windows = freshWindows(control, epoch);
             try {
+                verifyOwnedControlWindow(windows);
                 AccessibilityWindowInfo active = uniqueFocusedWindow(windows, control, epoch);
                 if (active.getId() != windowId) throw stale();
                 displayId = active.getDisplayId();
@@ -868,6 +886,7 @@ public final class AndroidDeviceTools implements ToolHandler {
                     signature.append('|').append(window.getId()).append(':').append(window.getType()).append(':').append(other.toShortString());
                     obscured.add(other);
                 }
+                if (!service.isOwnedControlWindowCurrent(controlWindow)) throw stale();
                 windowSignature = signature.toString();
             } finally { if (windows != null) recycleWindows(windows); }
         }
@@ -891,13 +910,25 @@ public final class AndroidDeviceTools implements ToolHandler {
             return false;
         }
 
+        private void verifyOwnedControlWindow(List<AccessibilityWindowInfo> windows) throws DeviceException {
+            if (!service.isOwnedControlWindowCurrent(controlWindow) || windows == null || windows.size() > 40) throw stale();
+            int matches = 0;
+            for (AccessibilityWindowInfo window : windows) {
+                if (window.getId() != controlWindow.windowId) continue;
+                matches++;
+                Rect actual = new Rect(); window.getBoundsInScreen(actual);
+                if (window.getType() != AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY
+                        || window.getDisplayId() != Display.DEFAULT_DISPLAY || window.getDisplayId() != controlWindow.displayId
+                        || window.isFocused() || actual.isEmpty() || !actual.equals(controlWindow.copyBounds())) throw stale();
+            }
+            if (matches != 1 || !service.isOwnedControlWindowCurrent(controlWindow)) throw stale();
+        }
+
         boolean isOurControl(AccessibilityWindowInfo window) {
-            if (window.getType() != AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY
-                    || !"Agent OS task controls".contentEquals(window.getTitle() == null ? "" : window.getTitle())) return false;
-            AccessibilityNodeInfo root = window.getRoot();
-            if (root == null) return false;
-            try { return service.getPackageName().contentEquals(root.getPackageName() == null ? "" : root.getPackageName()); }
-            finally { recycle(root); }
+            // inspectWindows has already checked the exact registered ID, type,
+            // display, focus and geometry in this fresh window list. Labels and
+            // another window's claimed package never establish ownership.
+            return window.getId() == controlWindow.windowId;
         }
 
         void visit(AccessibilityNodeInfo node, String id, int depth) throws InterruptedException {

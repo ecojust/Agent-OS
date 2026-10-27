@@ -14,15 +14,19 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.os.UserManager;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -37,6 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class AgentAccessibilityService extends AccessibilityService {
     private static final String USER_SWITCHED = "android.intent.action.USER_SWITCHED";
     private static final long EVENT_READY_CHECK_INTERVAL_MS = 100;
+    private static final long CONTROL_IDENTITY_TIMEOUT_MS = 5_000;
     public interface OverlayCallbacks {
         void onPauseResume();
         void onStop();
@@ -44,13 +49,55 @@ public final class AgentAccessibilityService extends AccessibilityService {
         default void onDevicePaused(String reason) { }
     }
 
+    /**
+     * Identifies this service's actual attached control View, never a discovered title
+     * or package name. Workers must compare it with a fresh platform window list too.
+     */
+    public static final class OwnedControlWindowIdentity {
+        public final int windowId, displayId;
+        private final WindowRegistration registration;
+        private final int left, top, right, bottom;
+        private final long generation, callbackGeneration;
+
+        private OwnedControlWindowIdentity(WindowRegistration registration, Rect bounds,
+                                           long generation, long callbackGeneration) {
+            this.registration = registration;
+            windowId = registration.windowId; displayId = registration.displayId;
+            left = bounds.left; top = bounds.top; right = bounds.right; bottom = bounds.bottom;
+            this.generation = generation; this.callbackGeneration = callbackGeneration;
+        }
+
+        public Rect copyBounds() { return new Rect(left, top, right, bottom); }
+
+        private boolean matches(WindowRegistration candidate, Rect bounds, long generation, long callbacks) {
+            return registration == candidate && this.generation == generation && callbackGeneration == callbacks
+                    && left == bounds.left && top == bounds.top && right == bounds.right && bottom == bounds.bottom;
+        }
+    }
+
+    /** Main-thread registration from the owned View only; never supplied by a caller. */
+    private static final class WindowRegistration {
+        final IBinder token;
+        final int windowId, displayId;
+        final long connectionGeneration, attachmentGeneration;
+
+        WindowRegistration(IBinder token, int windowId, int displayId, long connection, long attachment) {
+            this.token = token; this.windowId = windowId; this.displayId = displayId;
+            connectionGeneration = connection; attachmentGeneration = attachment;
+        }
+    }
+
     /** Immutable main-thread geometry. A worker must also validate the current lease and epoch. */
     public static final class ControlLease {
+        public final int windowId, displayId;
+        private final OwnedControlWindowIdentity windowIdentity;
         private final int left, top, right, bottom;
         private final long generation, connectionGeneration, callbackGeneration;
 
-        private ControlLease(Rect bounds, long generation, long connectionGeneration,
+        private ControlLease(OwnedControlWindowIdentity windowIdentity, Rect bounds, long generation, long connectionGeneration,
                              long callbackGeneration) {
+            this.windowIdentity = windowIdentity;
+            windowId = windowIdentity.windowId; displayId = windowIdentity.displayId;
             left = bounds.left; top = bounds.top; right = bounds.right; bottom = bounds.bottom;
             this.generation = generation;
             this.connectionGeneration = connectionGeneration;
@@ -65,8 +112,8 @@ public final class AgentAccessibilityService extends AccessibilityService {
         /** Pure value copy of this lease; does not query a View or current geometry. */
         public Rect copyBounds() { return new Rect(left, top, right, bottom); }
 
-        private boolean matches(Rect bounds, long generation, long connection, long callbacks) {
-            return this.generation == generation && connectionGeneration == connection
+        private boolean matches(OwnedControlWindowIdentity identity, Rect bounds, long generation, long connection, long callbacks) {
+            return windowIdentity == identity && this.generation == generation && connectionGeneration == connection
                     && callbackGeneration == callbacks && left == bounds.left && top == bounds.top
                     && right == bounds.right && bottom == bounds.bottom;
         }
@@ -92,8 +139,11 @@ public final class AgentAccessibilityService extends AccessibilityService {
     private boolean packageReceiverRegistered;
     private volatile boolean connected;
     private volatile ControlLease currentControlLease;
+    private volatile OwnedControlWindowIdentity currentControlWindowIdentity;
+    private WindowRegistration controlWindowRegistration;
     // Only the main thread writes generations. Workers read the published immutable lease.
     private long controlGeneration, connectionGeneration, callbackGeneration;
+    private long controlAttachmentGeneration;
     // A disconnected service can still have a platform call in flight. A replacement
     // service must share this gate; only the original worker releases it on return.
     private static final AtomicReference<Thread> DEVICE_CALL_OWNER = new AtomicReference<>();
@@ -121,7 +171,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
 
     @Override protected void onServiceConnected() {
         super.onServiceConnected();
-        invalidateControlLease();
+        invalidateControlWindowRegistration();
         connectionGeneration++;
         connected = true;
         instance = this;
@@ -158,7 +208,16 @@ public final class AgentAccessibilityService extends AccessibilityService {
 
     /** Does not touch Views or wait for the main thread. */
     public boolean isControlLeaseCurrent(ControlLease lease) {
-        return lease != null && currentControlLease == lease && connected && instance == this;
+        return lease != null && currentControlLease == lease && isOwnedControlWindowCurrent(lease.windowIdentity);
+    }
+
+    /** Pure-memory publication; absence never permits matching another window by its label. */
+    public OwnedControlWindowIdentity getOwnedControlWindowIdentity() {
+        return connected && instance == this ? currentControlWindowIdentity : null;
+    }
+
+    public boolean isOwnedControlWindowCurrent(OwnedControlWindowIdentity identity) {
+        return identity != null && currentControlWindowIdentity == identity && connected && instance == this;
     }
 
     /** One device request per process, including replacement services and adapters. */
@@ -229,6 +288,15 @@ public final class AgentAccessibilityService extends AccessibilityService {
 
     public void hideOverlay() { onMain(() -> { watchedPackages = Collections.emptySet(); removeOverlay(); }); }
 
+    /** Waits only for the actual owned View's platform registration and stable layout. */
+    public CompletableFuture<OwnedControlWindowIdentity> acquireOwnedControlWindowIdentity() {
+        CompletableFuture<OwnedControlWindowIdentity> result = new CompletableFuture<>();
+        ControlWindowWaiter waiter = new ControlWindowWaiter(result);
+        result.whenComplete((unused, failure) -> onMain(waiter::close));
+        onMain(waiter::start);
+        return result;
+    }
+
     /** Acquires actual compact control geometry before the final worker snapshot begins. */
     public CompletableFuture<ControlLease> acquireControlLease() {
         CompletableFuture<ControlLease> result = new CompletableFuture<>();
@@ -240,7 +308,131 @@ public final class AgentAccessibilityService extends AccessibilityService {
 
     private void invalidateControlLease() {
         currentControlLease = null;
+        currentControlWindowIdentity = null;
         controlGeneration++;
+    }
+
+    private void invalidateControlWindowRegistration() {
+        invalidateControlLease();
+        controlWindowRegistration = null;
+        controlAttachmentGeneration++;
+    }
+
+    /** Called on attachment or a bounded acquisition retry, never on every frame. */
+    private void readOwnedControlWindowRegistration() {
+        View panel = overlay;
+        if (!connected || instance != this || panel == null || !panel.isAttachedToWindow()) return;
+        IBinder token = panel.getWindowToken();
+        Display display = panel.getDisplay();
+        if (token == null || display == null || display.getDisplayId() != Display.DEFAULT_DISPLAY) return;
+        WindowRegistration current = controlWindowRegistration;
+        if (current != null && current.token == token && current.displayId == display.getDisplayId()
+                && current.connectionGeneration == connectionGeneration
+                && current.attachmentGeneration == controlAttachmentGeneration) return;
+        if (current != null) invalidateControlWindowRegistration();
+        AccessibilityNodeInfo ownNode = panel.createAccessibilityNodeInfo();
+        if (ownNode == null) return;
+        try {
+            int id = ownNode.getWindowId();
+            if (id < 0) return;
+            controlWindowRegistration = new WindowRegistration(token, id, display.getDisplayId(),
+                    connectionGeneration, controlAttachmentGeneration);
+        } finally { ownNode.recycle(); }
+    }
+
+    /** Main-thread local geometry only; an already registered View is not queried again. */
+    private OwnedControlWindowIdentity stableControlWindowIdentity() {
+        WindowRegistration registration = controlWindowRegistration;
+        if (!connected || instance != this || overlay == null || callbacks == null
+                || !overlay.isAttachedToWindow() || !overlay.isShown() || !overlay.isLaidOut()
+                || overlay.isLayoutRequested() || overlay.getWidth() <= 0 || overlay.getHeight() <= 0
+                || registration == null) {
+            if (currentControlWindowIdentity != null) invalidateControlLease();
+            return null;
+        }
+        Display display = overlay.getDisplay();
+        if (registration.token != overlay.getWindowToken() || display == null
+                || registration.displayId != display.getDisplayId()
+                || registration.connectionGeneration != connectionGeneration
+                || registration.attachmentGeneration != controlAttachmentGeneration) {
+            invalidateControlWindowRegistration();
+            return null;
+        }
+        Rect bounds = controlBounds();
+        if (bounds.isEmpty()) return null;
+        OwnedControlWindowIdentity previous = currentControlWindowIdentity;
+        if (previous != null && previous.matches(registration, bounds, controlGeneration, callbackGeneration)) return previous;
+        if (previous != null) invalidateControlLease();
+        OwnedControlWindowIdentity identity = new OwnedControlWindowIdentity(registration, bounds, controlGeneration, callbackGeneration);
+        currentControlWindowIdentity = identity;
+        return identity;
+    }
+
+    private final class ControlWindowWaiter implements ViewTreeObserver.OnPreDrawListener,
+            View.OnAttachStateChangeListener {
+        private final CompletableFuture<OwnedControlWindowIdentity> result;
+        private final Runnable poll = this::poll;
+        private View panel;
+        private ViewTreeObserver observer;
+        private long deadline;
+
+        ControlWindowWaiter(CompletableFuture<OwnedControlWindowIdentity> result) { this.result = result; }
+
+        void start() {
+            if (result.isDone()) return;
+            panel = overlay;
+            if (!connected || panel == null || callbacks == null || !panel.isAttachedToWindow()) {
+                result.completeExceptionally(new IllegalStateException("任务控制窗口尚未附着"));
+                return;
+            }
+            deadline = SystemClock.elapsedRealtime() + CONTROL_IDENTITY_TIMEOUT_MS;
+            observer = panel.getViewTreeObserver(); observer.addOnPreDrawListener(this);
+            panel.addOnAttachStateChangeListener(this);
+            poll();
+        }
+
+        private void poll() {
+            if (result.isDone()) return;
+            if (SystemClock.elapsedRealtime() >= deadline) {
+                result.completeExceptionally(new IllegalStateException("任务控制窗口身份未就绪"));
+                return;
+            }
+            if (!validAttachment()) return;
+            try { readOwnedControlWindowRegistration(); }
+            catch (RuntimeException unavailable) {
+                result.completeExceptionally(new IllegalStateException("无法读取任务控制窗口身份"));
+                return;
+            }
+            checkLayout();
+            if (!result.isDone()) main.postDelayed(poll, EVENT_READY_CHECK_INTERVAL_MS);
+        }
+
+        private boolean validAttachment() {
+            if (!connected || instance != AgentAccessibilityService.this || panel != overlay || callbacks == null
+                    || panel == null || !panel.isAttachedToWindow()) {
+                result.completeExceptionally(new IllegalStateException("任务控制窗口已改变"));
+                return false;
+            }
+            return true;
+        }
+
+        private void checkLayout() {
+            if (result.isDone() || !validAttachment()) return;
+            OwnedControlWindowIdentity identity = stableControlWindowIdentity();
+            if (identity != null) result.complete(identity);
+        }
+
+        @Override public boolean onPreDraw() { checkLayout(); return true; }
+        @Override public void onViewAttachedToWindow(View view) { checkLayout(); }
+        @Override public void onViewDetachedFromWindow(View view) {
+            result.completeExceptionally(new IllegalStateException("任务控制窗口已移除"));
+        }
+        void close() {
+            main.removeCallbacks(poll);
+            if (observer != null && observer.isAlive()) observer.removeOnPreDrawListener(this);
+            if (panel != null) panel.removeOnAttachStateChangeListener(this);
+            observer = null; panel = null;
+        }
     }
 
     /** Main thread only. Never replace a valid token merely because another frame was drawn. */
@@ -258,11 +450,12 @@ public final class AgentAccessibilityService extends AccessibilityService {
             if (currentControlLease != null) invalidateControlLease();
             return null;
         }
+        OwnedControlWindowIdentity identity = stableControlWindowIdentity();
+        if (identity == null) return null;
         ControlLease previous = currentControlLease;
-        if (previous != null && previous.matches(bounds, controlGeneration,
+        if (previous != null && previous.matches(identity, bounds, controlGeneration,
                 connectionGeneration, callbackGeneration)) return previous;
-        if (previous != null) invalidateControlLease();
-        ControlLease lease = new ControlLease(bounds, controlGeneration,
+        ControlLease lease = new ControlLease(identity, bounds, controlGeneration,
                 connectionGeneration, callbackGeneration);
         currentControlLease = lease;
         return lease;
@@ -271,6 +464,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
     private final class ControlLeaseWaiter implements ViewTreeObserver.OnPreDrawListener,
             View.OnAttachStateChangeListener {
         private final CompletableFuture<ControlLease> result;
+        private CompletableFuture<OwnedControlWindowIdentity> identityReady;
         private View panel;
         private ViewTreeObserver observer;
 
@@ -286,6 +480,12 @@ public final class AgentAccessibilityService extends AccessibilityService {
             observer = panel.getViewTreeObserver();
             observer.addOnPreDrawListener(this);
             panel.addOnAttachStateChangeListener(this);
+            identityReady = acquireOwnedControlWindowIdentity();
+            identityReady.whenComplete((identity, failure) -> onMain(() -> {
+                if (result.isDone()) return;
+                if (failure != null) result.completeExceptionally(new IllegalStateException("任务控制窗口身份不可用"));
+                else checkLayout();
+            }));
             checkLayout();
         }
 
@@ -305,6 +505,8 @@ public final class AgentAccessibilityService extends AccessibilityService {
             result.completeExceptionally(new IllegalStateException("任务控制条已移除"));
         }
         void close() {
+            if (identityReady != null) identityReady.cancel(false);
+            identityReady = null;
             if (observer != null && observer.isAlive()) observer.removeOnPreDrawListener(this);
             if (panel != null) panel.removeOnAttachStateChangeListener(this);
             observer = null;
@@ -395,11 +597,11 @@ public final class AgentAccessibilityService extends AccessibilityService {
                 super.onLayout(changed, left, top, right, bottom);
             }
             @Override protected void onAttachedToWindow() {
-                invalidateControlLease();
+                invalidateControlWindowRegistration();
                 super.onAttachedToWindow();
             }
             @Override protected void onDetachedFromWindow() {
-                invalidateControlLease();
+                invalidateControlWindowRegistration();
                 super.onDetachedFromWindow();
             }
             @Override protected void onWindowVisibilityChanged(int visibility) {
@@ -408,7 +610,10 @@ public final class AgentAccessibilityService extends AccessibilityService {
             }
         };
         panel.getViewTreeObserver().addOnPreDrawListener(() -> {
-            if (overlay == panel) stableControlLease();
+            if (overlay == panel) {
+                stableControlWindowIdentity();
+                stableControlLease();
+            }
             return true;
         });
         panel.setOrientation(LinearLayout.VERTICAL);
@@ -470,6 +675,11 @@ public final class AgentAccessibilityService extends AccessibilityService {
         params.setTitle("Agent OS task controls");
         manager.addView(panel, params);
         overlay = panel;
+        panel.post(() -> {
+            if (overlay != panel || !panel.isAttachedToWindow()) return;
+            try { readOwnedControlWindowRegistration(); stableControlWindowIdentity(); }
+            catch (RuntimeException unavailable) { invalidateControlWindowRegistration(); }
+        });
         statusView.setOnTouchListener(new View.OnTouchListener() {
             float startY;
             int originalY;
@@ -510,7 +720,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     private void removeOverlay() {
-        invalidateControlLease();
+        invalidateControlWindowRegistration();
         main.removeCallbacks(eventReadyCheck);
         eventReadyCheckPending = false;
         if (overlay == null) return;
@@ -538,6 +748,14 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
+        WindowRegistration registered = controlWindowRegistration;
+        if (registered != null && event.getEventType() == AccessibilityEvent.TYPE_WINDOWS_CHANGED
+                && event.getWindowId() == registered.windowId
+                && (event.getWindowChanges() & AccessibilityEvent.WINDOWS_CHANGE_REMOVED) != 0) {
+            // A native registration may disappear independently of a View callback.
+            // An old window ID cannot be reclaimed by matching a later window's text.
+            invalidateControlWindowRegistration();
+        }
         // Let the framework process every window-removal/focus event for its cache.
         // Only coalesce our own readiness queries; retain no event or node contents.
         // This deadline is not extended by later events, so continuous scrolling
@@ -571,7 +789,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
     }
 
     private void disconnect() {
-        invalidateControlLease();
+        invalidateControlWindowRegistration();
         connectionGeneration++;
         connected = false;
         if (instance == this) instance = null;

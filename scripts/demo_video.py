@@ -82,9 +82,11 @@ class RecorderStderr:
 
 
 def validate_diagnostics(value, source):
-    exact(value, ("schemaVersion", "kind", "source", "failures", "recorder"))
-    require(type(value["schemaVersion"]) is int and value["schemaVersion"] == 1
-            and value["kind"] == "agent-os-demo-recording-diagnostics" and matches_source(value["source"], source),
+    version = value.get("schemaVersion")
+    require(type(version) is int and version in (1, 2), "Unknown recording diagnostic version")
+    exact(value, ("schemaVersion", "kind", "source", "failures", "recorder", "probes") if version == 2
+          else ("schemaVersion", "kind", "source", "failures", "recorder"))
+    require(value["kind"] == "agent-os-demo-recording-diagnostics" and matches_source(value["source"], source),
             "Foreign recording diagnostics")
     require(isinstance(value["failures"], list) and len(value["failures"]) <= 8, "Too many recording failures")
     for item in value["failures"]:
@@ -101,6 +103,18 @@ def validate_diagnostics(value, source):
         require(recorder["started"] and isinstance(stderr["text"], str)
                 and len(stderr["text"].encode("utf-8")) <= MAX_RECORDER_STDERR * 3
                 and type(stderr["truncated"]) is bool and type(stderr["complete"]) is bool, "Invalid recorder stderr")
+    if version == 2:
+        require(isinstance(value["probes"], list) and len(value["probes"]) <= 2, "Too many video probes")
+        stages = []
+        for probe in value["probes"]:
+            exact(probe, ("stage", "status", "exitCode", "stdout"))
+            require(probe["stage"] in ("raw_probe", "encoded_probe")
+                    and probe["status"] in ("completed", "timed_out", "output_limit")
+                    and (probe["exitCode"] is None or type(probe["exitCode"]) is int and -128 <= probe["exitCode"] <= 255)
+                    and (probe["status"] != "completed" or probe["exitCode"] is not None)
+                    and isinstance(probe["stdout"], str) and len(probe["stdout"].encode()) <= 196608, "Invalid bounded video probe")
+            stages.append(probe["stage"])
+        require(stages in ([], ["raw_probe"], ["raw_probe", "encoded_probe"]), "Unexpected video probe order")
     return value
 
 
@@ -180,31 +194,83 @@ def file_record(path):
     return {"bytes": path.stat().st_size, "sha256": bounded.sha256_file(path)}
 
 
-def video_metadata(path, encoded=False, command=bounded.run_command):
+def capture_video_probe(command, callback):
+    """Bound both pipes of this fixed ffprobe command; retain only selected metadata stdout."""
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
+    output = bytearray(); status = "completed"; used = 0; deadline = time.monotonic() + 15
+    try:
+        with selectors.DefaultSelector() as selector:
+            selector.register(process.stdout, selectors.EVENT_READ, True)
+            selector.register(process.stderr, selectors.EVENT_READ, False)
+            while selector.get_map():
+                if time.monotonic() >= deadline:
+                    status = "timed_out"; break
+                for key, _ in selector.select(min(0.1, max(0, deadline - time.monotonic()))):
+                    chunk = os.read(key.fd, min(4096, 65536 - used + 1))
+                    if not chunk:
+                        selector.unregister(key.fileobj); continue
+                    available = 65536 - used
+                    if key.data: output.extend(chunk[:available])
+                    used += len(chunk)
+                    if used > 65536:
+                        status = "output_limit"; break
+                if status != "completed": break
+        if status == "completed":
+            try: process.wait(timeout=max(0.001, deadline - time.monotonic()))
+            except subprocess.TimeoutExpired: status = "timed_out"
+    finally:
+        if process.poll() is None:
+            process.kill()
+            try: process.wait(timeout=1)
+            except subprocess.TimeoutExpired: pass
+        process.stdout.close(); process.stderr.close()
+    evidence = {"status": status, "exitCode": process.poll(), "stdout": bytes(output).decode("utf-8", "replace")}
+    if callback is not None: callback(evidence)
+    require(status == "completed" and evidence["exitCode"] == 0, "Video probe did not complete successfully")
+    return bytes(output)
+
+
+def video_metadata(path, encoded=False, command=bounded.run_command, probe_callback=None):
     size = file_record(path)["bytes"]
     require(0 < size < (MAX_VIDEO if encoded else 70_000_000), "Video exceeds size budget")
-    raw = command(["ffprobe", "-v", "error", "-show_entries",
-                   "stream=codec_type,codec_name,pix_fmt,width,height:format=duration",
-                   "-of", "json", str(path)], timeout=15, binary=True, limit=64 * 1024)
+    args = ["ffprobe", "-v", "error", "-show_entries",
+            "stream=codec_type,codec_name,codec_tag_string,pix_fmt,width,height:format=duration", "-of", "json", str(path)]
+    raw = capture_video_probe(args, probe_callback) if command is bounded.run_command else command(
+        args, timeout=15, binary=True, limit=64 * 1024)
+    return {**file_record(path), **parse_video_probe(raw, encoded)}
+
+
+def parse_video_probe(raw, encoded):
     probe = bounded.parse_json(raw); streams = probe.get("streams", [])
-    require(len(streams) == 1 and streams[0].get("codec_type") == "video", "Expected one silent video stream")
-    stream = streams[0]
+    require(isinstance(streams, list) and all(isinstance(item, dict) for item in streams), "Invalid video streams")
+    videos = [item for item in streams if item.get("codec_type") == "video"]
+    require(len(videos) == 1, "Expected exactly one video stream")
+    if encoded:
+        require(len(streams) == 1, "Output must contain only one silent video stream")
+    else:
+        # API35 screenrecord writes two optional Winscope metadata tracks (MP4 mett).
+        # They carry timing, not sound/picture. The encoder explicitly maps only 0:v:0.
+        metadata = [item for item in streams if item.get("codec_type") != "video"]
+        require(len(metadata) <= 2 and all(item.get("codec_type") == "data"
+                and item.get("codec_tag_string") == "mett" for item in metadata), "Unexpected raw recording track")
+    stream = videos[0]
     require(all(type(stream.get(key)) is int and 64 <= stream[key] <= 4096 for key in ("width", "height")), "Invalid video dimensions")
     duration = str(probe.get("format", {}).get("duration", ""))
     require(re.fullmatch(r"[0-9]{1,3}(\.[0-9]{1,6})?", duration), "Invalid duration")
     duration_ms = round(float(duration) * 1000)
     require(500 <= duration_ms <= 125_000, "Recording duration outside budget")
+    require(stream.get("codec_name") == "h264", "Recording is not H.264")
     if encoded:
         require(stream.get("codec_name") == "h264" and stream.get("pix_fmt") == "yuv420p"
                 and stream["width"] % 2 == 0 and stream["height"] % 2 == 0, "Output is not portable H.264/yuv420p")
-    return {**file_record(path), "durationMs": duration_ms, "width": stream["width"], "height": stream["height"],
+    return {"durationMs": duration_ms, "width": stream["width"], "height": stream["height"],
             "codec": stream.get("codec_name"), "pixelFormat": stream.get("pix_fmt")}
 
 
-def compress(raw, output, command=bounded.run_command, stage_callback=lambda stage: None):
+def compress(raw, output, command=bounded.run_command, stage_callback=lambda stage: None, probe_callback=None):
     require(not output.exists() and not output.is_symlink(), "Do not overwrite evidence")
     stage_callback("raw_probe")
-    original = video_metadata(raw, command=command)
+    original = video_metadata(raw, command=command, probe_callback=probe_callback)
     try:
         stage_callback("video_encode")
         command(["ffmpeg", "-nostdin", "-v", "error", "-i", str(raw), "-map", "0:v:0", "-an",
@@ -212,7 +278,7 @@ def compress(raw, output, command=bounded.run_command, stage_callback=lambda sta
                  "-c:v", "libx264", "-preset", "medium", "-crf", "24", "-maxrate", "2500k", "-bufsize", "5000k",
                  "-pix_fmt", "yuv420p", "-map_metadata", "-1", "-movflags", "+faststart", str(output)], timeout=180, limit=64 * 1024)
         stage_callback("encoded_probe")
-        encoded = video_metadata(output, True, command)
+        encoded = video_metadata(output, True, command, probe_callback=probe_callback)
         stage_callback("encoded_policy")
         require(encoded["bytes"] <= 95_000_000 and abs(encoded["durationMs"] - original["durationMs"]) <= 250,
                 "Encoding exceeded target or changed duration")
@@ -287,11 +353,13 @@ def record(directory, source):
     require(report["source"] == source and report["status"] == "unverified", "Foreign or reused report")
     serial = None; recorder = None; recorder_pid = None; stderr_reader = None
     raw = directory / "raw.mp4"; stage = "device_preflight"
-    diagnostics = {"schemaVersion": 1, "kind": "agent-os-demo-recording-diagnostics", "source": source,
-                   "failures": [], "recorder": {"started": False, "exitCode": None, "stderr": None}}
+    diagnostics = {"schemaVersion": 2, "kind": "agent-os-demo-recording-diagnostics", "source": source,
+                   "failures": [], "probes": [], "recorder": {"started": False, "exitCode": None, "stderr": None}}
     def set_stage(value):
         nonlocal stage
         stage = value
+    def probed(value):
+        diagnostics["probes"].append({"stage": stage, **value})
     def failed(value, error=None, error_class=None):
         if len(diagnostics["failures"]) < 8:
             diagnostics["failures"].append({"stage": value, "errorClass": error_class if error is None else type(error).__name__})
@@ -387,7 +455,7 @@ def record(directory, source):
                 require(remote_bytes.isdigit() and 0 < int(remote_bytes) < 70_000_000, "Raw recording out of bounds")
                 stage = "raw_pull"
                 adb("pull", REMOTE, str(raw), timeout=20)
-                report["rawVideo"], report["video"] = compress(raw, directory / "demo.mp4", stage_callback=set_stage)
+                report["rawVideo"], report["video"] = compress(raw, directory / "demo.mp4", stage_callback=set_stage, probe_callback=probed)
                 if report["flow"]:
                     stage = "flow_coverage"
                     require(report["video"]["durationMs"] + 1500 >= flow["finishedElapsedMs"] - flow["startedElapsedMs"],
@@ -519,6 +587,14 @@ def inspect_bundle(directory, source, failed_source=False):
                     and diagnostics["recorder"]["stderr"] is not None
                     and diagnostics["recorder"]["stderr"]["complete"] is True
                     and diagnostics["recorder"]["exitCode"] is not None, "Missing successful recorder diagnostics")
+            if diagnostics["schemaVersion"] == 2:
+                probes = diagnostics["probes"]
+                require(len(probes) == 2 and all(item["status"] == "completed" and item["exitCode"] == 0 for item in probes),
+                        "Missing successful video probe evidence")
+                for probe, key, encoded in zip(probes, ("rawVideo", "video"), (False, True)):
+                    fields = parse_video_probe(probe["stdout"].encode(), encoded)
+                    require(isinstance(report[key], dict) and fields == {name: report[key].get(name) for name in fields},
+                            "Video probe metadata disagrees with the report")
     if report["instrumentation"]:
         instrument = bounded.read_json(directory / "instrumentation.json")
         require(instrument_case_passed(instrument) == report["instrumentationPassed"]

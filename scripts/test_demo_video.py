@@ -459,4 +459,53 @@ class DemoBoundaries(unittest.TestCase):
             self.assertNotIn("Using installed", result.stdout)
 
 
+
+    def test_raw_screenrecord_allows_only_bounded_mett_metadata_alongside_one_h264_video(self):
+        value = {"streams":[{"codec_type":"video","codec_name":"h264","pix_fmt":"yuv420p","width":320,"height":640},
+                            {"codec_type":"data","codec_tag_string":"mett"},
+                            {"codec_type":"data","codec_tag_string":"mett"}], "format":{"duration":"12.000000"}}
+        self.assertEqual(12000, demo.parse_video_probe(json.dumps(value).encode(), False)["durationMs"])
+        variants = []
+        x = copy.deepcopy(value); x["streams"][1] = {"codec_type":"audio"}; variants.append(x)
+        x = copy.deepcopy(value); x["streams"].append(copy.deepcopy(x["streams"][0])); variants.append(x)
+        x = copy.deepcopy(value); x["streams"].append({"codec_type":"data","codec_tag_string":"mett"}); variants.append(x)
+        x = copy.deepcopy(value); x["streams"][1]["codec_tag_string"] = "unknown"; variants.append(x)
+        x = copy.deepcopy(value); x["streams"][0]["codec_name"] = "hevc"; variants.append(x)
+        for invalid in variants:
+            with self.assertRaises(ValueError): demo.parse_video_probe(json.dumps(invalid).encode(), False)
+        with self.assertRaises(ValueError): demo.parse_video_probe(json.dumps(value).encode(), True)
+
+    def test_video_probe_retains_actual_selected_stdout_separately_from_stderr(self):
+        records = []
+        result = demo.capture_video_probe([sys.executable, "-c",
+            "import sys; sys.stdout.write('{\"streams\":[]}'); sys.stderr.write('diagnostic only')"], records.append)
+        self.assertEqual(b'{"streams":[]}', result)
+        self.assertEqual([{"status":"completed", "exitCode":0, "stdout":'{"streams":[]}'}], records)
+
+    def test_video_probe_failure_preserves_actual_exit_code_before_raising(self):
+        records = []
+        with self.assertRaises(ValueError):
+            demo.capture_video_probe([sys.executable, "-c", "import sys; print('{}'); sys.exit(7)"], records.append)
+        self.assertEqual(7, records[0]["exitCode"]); self.assertEqual("completed", records[0]["status"])
+        self.assertEqual("{}\n", records[0]["stdout"])
+
+    def test_video_probe_bounds_and_reaps_excessive_child_output(self):
+        records = []
+        with self.assertRaises(ValueError):
+            demo.capture_video_probe([sys.executable, "-c", "import os; os.write(1,b'x'*1000000)"], records.append)
+        self.assertEqual("output_limit", records[0]["status"])
+        self.assertLessEqual(len(records[0]["stdout"].encode()), 65536)
+        self.assertIsNotNone(records[0]["exitCode"])
+
+    def test_video_probe_diagnostics_reject_duplicate_stage_and_oversized_output(self):
+        value = {"schemaVersion":2,"kind":"agent-os-demo-recording-diagnostics","source":dict(SOURCE),"failures":[],
+                 "recorder":{"started":False,"exitCode":None,"stderr":None},
+                 "probes":[{"stage":"raw_probe","status":"completed","exitCode":0,"stdout":"{}"}]}
+        demo.validate_diagnostics(value, SOURCE)
+        invalid = copy.deepcopy(value); invalid["probes"].append(dict(invalid["probes"][0]))
+        with self.assertRaises(ValueError): demo.validate_diagnostics(invalid, SOURCE)
+        invalid = copy.deepcopy(value); invalid["probes"][0]["stdout"] = "x"*196609
+        with self.assertRaises(ValueError): demo.validate_diagnostics(invalid, SOURCE)
+
+
 if __name__ == "__main__": unittest.main()

@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Archive the fourth actual walkthrough attempt: native display setup and three confirmations ran, but no verified write step completed; instrumentation failed and raw video probing also refused the recording. Preserve 13 payloads/181422 bytes including six real PNGs and first-failure diagnostics; no successful demo claimed.
+**本次更新：** Handle Android 15 screenrecord time metadata tracks narrowly while keeping the exported walkthrough video single-track, H.264 and fully decoded. Preserve bounded original probe results and exit codes for diagnosis. All 44 recording/archive checks pass; successful actual walkthrough remains pending.
 
-**记录时间：** 2026-10-27T15:03:46Z
+**记录时间：** 2026-10-27T15:08:46Z
 
 [最近测试截图与清单](screenshots/40524418849-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40524418849)。通过、失败及未截图原因见清单。
 

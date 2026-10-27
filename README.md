@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Add bounded Notes failure-stage and focused-window diagnostics without replaying writes or relaxing foreign-window rejection. Compatibility test APK builds; the last actual app probe remains 31/32, with one unresolved API30 failure.
+**本次更新：** Implement a real API35 operation walkthrough with confirmation, input/save, navigation and pause/resume/stop. APK, test APK, fixture and lint passed; 22 recording/archive checks pass. Actual recording is pending; no real-model or phone acceptance is claimed.
 
-**记录时间：** 2026-10-27T13:53:35Z
+**记录时间：** 2026-10-27T13:58:55Z
 
 [最近测试截图与清单](screenshots/40512239862-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40512239862)。通过、失败及未截图原因见清单。
 
@@ -56,7 +56,7 @@
 | 机型 OTA 与失败启动恢复 | 待外部条件 |
 | 正式签名交付与维护验收 | 待外部条件 |
 
-依据：[进度源数据](docs/progress.json) · [实现与验证范围](IMPLEMENTATION.md) · [测试截图](screenshots/README.md)。
+依据：[进度源数据](docs/progress.json) · [实现与验证范围](IMPLEMENTATION.md) · [测试截图](screenshots/README.md) · [操作演示说明](docs/validation/operation-demo.md)。
 <!-- development-progress:end -->
 
 ## System Architecture

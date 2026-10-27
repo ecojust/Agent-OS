@@ -1,0 +1,143 @@
+name: Record and archive an actual walkthrough
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        type: choice
+        options: [test, archive]
+        default: test
+        required: true
+      source_run_id:
+        description: Completed test-mode run from this workflow (archive only)
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: demo-video-${{ inputs.mode == 'archive' && inputs.source_run_id || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  record-demo:
+    name: record-demo (API 35)
+    if: github.ref == 'refs/heads/master' && inputs.mode == 'test'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Initialize an unverified recording result
+        run: python3 scripts/demo_video.py prepare --output "$RUNNER_TEMP/demo-video-evidence"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Verify script boundaries and prepare tools
+        run: |
+          python3 -m unittest discover -s scripts -p 'test_demo_video.py'
+          command -v ffmpeg
+          command -v ffprobe
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
+          echo "$sdk_root/platform-tools" >> "$GITHUB_PATH"
+          printf 'y\n%.0s' {1..100} | "$sdk_root/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$sdk_root" 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Build the unchanged-permission app and fixed demo
+        run: ./gradlew --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest :fixture:assembleDebug
+      - name: Enable hardware virtualization
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Record actual actions on a dedicated API35 phone emulator
+        id: demo
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: '35'
+          arch: x86_64
+          target: default
+          avd-name: agent-os-demo
+          enable-hw-keyboard: false
+          pre-emulator-launch-script: python3 scripts/configure_emulator_phone.py --avd-name agent-os-demo
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb shell wm size 720x1440
+            adb shell wm density 320
+            adb install app/build/outputs/apk/debug/app-debug.apk
+            adb install -t app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb install -t fixture/build/outputs/apk/debug/fixture-debug.apk
+            python3 scripts/demo_video.py record --output "$RUNNER_TEMP/demo-video-evidence"
+      - name: Preserve failures and blocked screenshots
+        if: always()
+        env:
+          OUTCOME: ${{ steps.demo.outcome }}
+        run: python3 scripts/demo_video.py finalize --output "$RUNNER_TEMP/demo-video-evidence" --outcome "${OUTCOME:-unknown}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: demo-video-api-35-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/demo-video-evidence/
+          if-no-files-found: error
+          retention-days: 30
+
+  archive-demo:
+    if: github.ref == 'refs/heads/master' && inputs.mode == 'archive'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Select only the fixed trusted recording artifact
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+        run: |
+          [[ "$SOURCE_RUN_ID" =~ ^[1-9][0-9]{0,18}$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > "$RUNNER_TEMP/demo-run.json"
+          attempt=$(python3 -c 'import json,os; v=json.load(open(os.environ["RUNNER_TEMP"]+"/demo-run.json"))["run_attempt"]; assert type(v) is int and 0<v<1000000; print(v)')
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/attempts/$attempt/jobs?per_page=100" > "$RUNNER_TEMP/demo-jobs.json"
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/demo-artifacts.json"
+          python3 scripts/demo_video.py select --run "$RUNNER_TEMP/demo-run.json" --jobs "$RUNNER_TEMP/demo-jobs.json" --artifacts "$RUNNER_TEMP/demo-artifacts.json" --github-output "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        if: steps.source.outputs.artifact_id != ''
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.source.outputs.source_run }}
+          artifact-ids: ${{ steps.source.outputs.artifact_id }}
+          path: ${{ runner.temp }}/demo-incoming
+      - name: Verify and archive original evidence
+        run: |
+          command -v ffmpeg
+          command -v ffprobe
+          python3 scripts/demo_video.py archive --run "$RUNNER_TEMP/demo-run.json" --jobs "$RUNNER_TEMP/demo-jobs.json" --artifacts "$RUNNER_TEMP/demo-artifacts.json" --incoming "$RUNNER_TEMP/demo-incoming"
+          python3 scripts/update_progress.py --note 'Archive actual API35 walkthrough evidence; local synthetic model, secure flags preserved'
+          python3 scripts/update_progress.py --check
+      - name: Commit an immutable evidence branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN: ${{ steps.source.outputs.source_run }}
+          ATTEMPT: ${{ steps.source.outputs.attempt }}
+        run: |
+          branch="evidence/demo-$SOURCE_RUN-$ATTEMPT"
+          gh auth setup-git
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            echo 'Evidence already archived; it will not be overwritten.'
+            exit 1
+          fi
+          git switch -c "$branch"
+          git config user.name agent
+          git config user.email 30574854+ecojust@users.noreply.github.com
+          git add -- "screenshots/demos/$SOURCE_RUN-$ATTEMPT" README.md docs/progress.json docs/diagrams/development-progress.svg
+          git diff --cached --check
+          git commit -m "Archive actual walkthrough for run $SOURCE_RUN [skip ci]"
+          git push origin "HEAD:refs/heads/$branch"

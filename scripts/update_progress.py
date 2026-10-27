@@ -67,7 +67,7 @@ def render(data):
     lines.extend(["| 检查点 | 状态 |", "| --- | --- |"])
     for item in points:
         lines.append(f"| {single_line(item['name'])} | {LABELS[item['status']]} |")
-    lines.extend(["", "依据：[进度源数据](docs/progress.json) · [实现与验证范围](IMPLEMENTATION.md) · [测试截图](screenshots/README.md)。", END])
+    lines.extend(["", "依据：[进度源数据](docs/progress.json) · [实现与验证范围](IMPLEMENTATION.md) · [测试截图](screenshots/README.md) · [操作演示说明](docs/validation/operation-demo.md)。", END])
     return "\n".join(lines), svg
 
 

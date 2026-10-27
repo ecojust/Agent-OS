@@ -17,11 +17,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** Deterministic protocol fixture. It neither contacts nor evaluates a real language model. */
 final class LocalControllerModelServer implements AutoCloseable {
-    enum Scenario { SAVE_AND_COUNT, REJECT_CLICK, EXHAUST_ROUND_BUDGET, CONTINUOUS_NAVIGATION, QUALIFICATION_PENDING }
+    enum Scenario { SAVE_AND_COUNT, REJECT_CLICK, EXHAUST_ROUND_BUDGET, CONTINUOUS_NAVIGATION, QUALIFICATION_PENDING, DEMO_NAVIGATION, DEMO_CONTROL_PENDING }
     static final String SYNTHETIC_KEY = "controller-test-only-key";
     static final String MODEL = "synthetic-controller-model";
     static final String TEXT = "Controller integration sample";
@@ -51,6 +53,7 @@ final class LocalControllerModelServer implements AutoCloseable {
     private volatile int staleReplans;
     private volatile boolean finalStateObserved;
     private volatile String observedHomePackage = "";
+    private Set<String> demoInitialRows;
 
     LocalControllerModelServer(Scenario scenario) throws IOException {
         this(scenario, null);
@@ -104,6 +107,12 @@ final class LocalControllerModelServer implements AutoCloseable {
     boolean finalStateObserved() { return finalStateObserved; }
     int writePlanCount() { return writePlans; }
     int acceptedWriteCount() { return acceptedWrites; }
+    /** Only actual observation-verified steps, for the dedicated recorded walkthrough. */
+    int verifiedDemoSteps() {
+        if (scenario == Scenario.SAVE_AND_COUNT) return Math.min(phase, 3);
+        if (scenario == Scenario.DEMO_NAVIGATION) return Math.min(phase, 4);
+        throw new IllegalStateException("This fixture has no recorded step sequence");
+    }
     String expectedHomePackage() { return expectedHomePackage; }
     String observedHomePackage() { return observedHomePackage; }
 
@@ -215,6 +224,7 @@ final class LocalControllerModelServer implements AutoCloseable {
         safeToolResults = summarizeToolResults(request);
         lastReceivedRequestRound = round;
         if (scenario == Scenario.CONTINUOUS_NAVIGATION) return navigationResponse(request, observed, round);
+        if (scenario == Scenario.DEMO_NAVIGATION) return demoNavigationResponse(request, observed, round);
         require(DeviceHarness.FIXTURE.equals(observed.get("packageName").getAsString()), "Unexpected observed application");
         require(observed.get("scoped").getAsBoolean(), "Fixture was not actually authorized");
         if (scenario == Scenario.EXHAUST_ROUND_BUDGET) {
@@ -222,12 +232,13 @@ final class LocalControllerModelServer implements AutoCloseable {
             if (round > TaskBudget.DEFAULT.maxModelRounds) return tool("click", nodeArguments(observed, "increment"), round);
             return tool("observe", new JsonObject(), round);
         }
-        if (scenario == Scenario.QUALIFICATION_PENDING) {
+        if (scenario == Scenario.QUALIFICATION_PENDING || scenario == Scenario.DEMO_CONTROL_PENDING) {
             // Qualification tests never approve these plans and separately require
             // zero platform dispatches. A resumed epoch drops old chat history, so
             // this explicit scenario plans from each new real observation without
             // weakening the accepted/unknown-write replay checks in other scenarios.
-            require("Count: 0".equals(nodeText(observed, "counter_value")), "Unapproved qualification task changed the counter");
+            require((scenario == Scenario.DEMO_CONTROL_PENDING ? "Count: 1" : "Count: 0")
+                    .equals(nodeText(observed, "counter_value")), "Unapproved qualification task changed the counter");
             require(++writePlans <= 8, "Qualification fixture exceeded its bounded planning attempts");
             return tool("click", nodeArguments(observed, "increment"), round);
         }
@@ -290,6 +301,80 @@ final class LocalControllerModelServer implements AutoCloseable {
         require(++writePlans <= MAX_WRITE_PLANS, "Fixture write plans exceeded the task limit");
         pendingWriteCallId = "script-round-" + round;
         return tool(phase == 0 ? "type_text" : "click", args, round);
+    }
+
+    /** Dedicated demo plans still use real observations, ordinary tools and per-step confirmation. */
+    private JsonObject demoNavigationResponse(JsonObject request, JsonObject observed, int round) throws IOException {
+        require(round <= 24, "Recorded navigation exceeded its bounded request count");
+        require(DeviceHarness.FIXTURE.equals(DeviceHarness.string(observed, "packageName"))
+                && observed.get("scoped").getAsBoolean(), "Recorded navigation left the authorized fixture");
+        if (pendingWriteCallId != null && !pendingWriteAccepted) {
+            requireFreshObservationAfterResult(request, pendingWriteCallId);
+            JsonObject result = matchingResult(request, pendingWriteCallId);
+            if (definitelyUnsubmittedStale(result)) {
+                require(++staleReplans <= MAX_WRITE_REPLANS, "Recorded navigation exhausted safe replanning");
+                pendingWriteCallId = null;
+            } else {
+                require(flag(result, "ok", true) && flag(result, "submitted", true) && flag(result, "accepted", true)
+                                && optionalFlag(result, "dispatchSubmitted", true) && optionalFlag(result, "dispatchAccepted", true),
+                        "Recorded navigation will not replay an accepted or ambiguous write");
+                pendingWriteAccepted = true;
+                acceptedWrites++;
+            }
+        }
+        if (pendingWriteAccepted) {
+            boolean verified;
+            if (phase == 0) {
+                Set<String> rows = demoRows(observed);
+                rows.removeAll(demoInitialRows);
+                verified = !rows.isEmpty();
+            } else if (phase == 1 || phase == 3) {
+                verified = ("Saved: " + TEXT).equals(demoNodeText(observed, "saved_value"))
+                        && "Count: 1".equals(demoNodeText(observed, "counter_value"))
+                        && !demoNodeText(observed, "open_second").isEmpty();
+            } else verified = "Second page reached".equals(demoNodeText(observed, "second_marker"));
+            if (!verified) return refresh(round);
+            phase++; pendingWriteCallId = null; pendingWriteAccepted = false; refreshes = 0;
+        }
+        if (phase == 4) {
+            require(acceptedWrites == 4, "Recorded navigation needs exactly four accepted writes");
+            finalStateObserved = true;
+            JsonObject message = new JsonObject(); message.addProperty("role", "assistant");
+            message.addProperty("content", "Local synthetic demo observed scrolling and page navigation; saved data unchanged.");
+            return envelope(message);
+        }
+        require(phase >= 0 && phase < 4, "Unexpected recorded navigation phase");
+        JsonObject args; String tool;
+        if (phase <= 1) {
+            if (phase == 0 && demoInitialRows == null) demoInitialRows = demoRows(observed);
+            args = nodeArguments(observed, "fixture_scroll");
+            args.addProperty("direction", phase == 0 ? "forward" : "backward"); tool = "scroll";
+        } else if (phase == 2) {
+            args = nodeArguments(observed, "open_second"); tool = "click";
+        } else {
+            args = new JsonObject(); args.addProperty("expectedRevision", observed.get("revision").getAsString()); tool = "back";
+        }
+        require(++writePlans <= 4 + MAX_WRITE_REPLANS, "Recorded navigation exceeded its plan count");
+        pendingWriteCallId = "script-round-" + round;
+        return tool(tool, args, round);
+    }
+
+    private static String demoNodeText(JsonObject observed, String id) {
+        for (JsonElement entry : observed.getAsJsonArray("nodes")) {
+            JsonObject node = entry.getAsJsonObject();
+            if ((DeviceHarness.FIXTURE + ":id/" + id).equals(DeviceHarness.string(node, "viewId")))
+                return DeviceHarness.string(node, "text");
+        }
+        return "";
+    }
+
+    private static Set<String> demoRows(JsonObject observed) {
+        Set<String> rows = new HashSet<>();
+        for (JsonElement entry : observed.getAsJsonArray("nodes")) {
+            String text = DeviceHarness.string(entry.getAsJsonObject(), "text");
+            if (text.matches("Scrollable test row [0-9]{1,2}")) rows.add(text);
+        }
+        return rows;
     }
 
     /** Requires real HOME and relaunch observations; never replays an accepted or ambiguous write. */

@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
+import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -23,20 +23,31 @@ import java.util.concurrent.atomic.AtomicReference;
 /** Bounded, non-streaming model gateway. No transport error is silently retried. */
 final class HttpModelClient {
     static final int MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
-    private static final int MAX_REQUEST_BYTES = 4 * 1024 * 1024;
     private static final ThreadPoolExecutor NETWORK = executor("agent-model-network");
     private static final ThreadPoolExecutor CLOSER = executor("agent-model-close");
     private final long requestTimeoutMillis;
     private final ConnectionFactory connections;
+    private final ThreadPoolExecutor network;
+    private final Executor closer;
+    private final ImageWorkset workset;
 
     @FunctionalInterface interface ConnectionFactory { HttpURLConnection open(URL url) throws IOException; }
 
     HttpModelClient() { this(90_000); }
     HttpModelClient(long requestTimeoutMillis) { this(requestTimeoutMillis, url -> (HttpURLConnection) url.openConnection()); }
     HttpModelClient(long requestTimeoutMillis, ConnectionFactory connections) {
+        this(requestTimeoutMillis, connections, NETWORK, CLOSER, ImageWorkset.process());
+    }
+
+    /** Package-only seams for deterministic queue, blocking-I/O and ownership tests. */
+    HttpModelClient(long requestTimeoutMillis, ConnectionFactory connections, ThreadPoolExecutor network,
+                    Executor closer, ImageWorkset workset) {
         if (requestTimeoutMillis < 1 || requestTimeoutMillis > 90_000) throw new IllegalArgumentException();
         this.requestTimeoutMillis = requestTimeoutMillis;
         this.connections = java.util.Objects.requireNonNull(connections);
+        this.network = java.util.Objects.requireNonNull(network);
+        this.closer = java.util.Objects.requireNonNull(closer);
+        this.workset = java.util.Objects.requireNonNull(workset);
     }
 
     /** Package-only synthetic test helper; production requests always supply their bound context. */
@@ -53,50 +64,57 @@ final class HttpModelClient {
         body.add("tools", tools.deepCopy()); body.addProperty("tool_choice", "auto"); body.addProperty("stream", false);
         body.addProperty("max_tokens", settings.maxOutputTokens);
         context.check();
-        byte[] payload = body.toString().getBytes(StandardCharsets.UTF_8);
-        context.check();
-        if (payload.length > MAX_REQUEST_BYTES) throw new ModelException("CONTEXT_LIMIT", "任务上下文过大，已停止发送；请缩小任务范围。");
-        long remainingBudget = control.remainingActiveMillis();
-        long timeout = Math.max(1, Math.min(requestTimeoutMillis, remainingBudget));
-        AtomicReference<HttpURLConnection> connection = new AtomicReference<>();
-        FutureTask<JsonObject> work = new FutureTask<>(() -> exchange(settings, payload, context, connection));
-        Runnable abort = () -> {
-            work.cancel(true);
-            NETWORK.remove(work);
-            HttpURLConnection active = connection.get();
-            if (active != null) try { CLOSER.execute(active::disconnect); } catch (RejectedExecutionException ignored) { }
-        };
-        control.setCancelHook(abort);
+        OwnedRequestPayload payload = OwnedRequestPayload.encode(body, workset, context);
+        ModelNetworkWork ownedWork = null;
         try {
             context.check();
-            try { NETWORK.execute(work); }
-            catch (RejectedExecutionException busy) { throw new ModelException("NETWORK_BUSY", "上次网络请求尚在释放资源，请稍后重新开始任务。"); }
-            JsonObject result = work.get(timeout, TimeUnit.MILLISECONDS);
-            context.check();
-            return result;
-        } catch (CancellationException cancelled) {
-            context.check();
-            throw new ModelException("REQUEST_CANCELLED", "模型请求已取消。");
-        } catch (TimeoutException timedOut) {
-            abort.run();
-            context.check();
-            if (remainingBudget <= requestTimeoutMillis) throw new TaskControlException("BUDGET_EXCEEDED", "任务活动时间已达到上限。");
-            throw new ModelException("TIMEOUT", "模型请求已达到总时限，未自动重发；请检查服务后重新开始。");
-        } catch (ExecutionException failed) {
-            context.check();
-            Throwable cause = failed.getCause();
-            if (cause instanceof ModelException) throw (ModelException) cause;
-            if (cause instanceof TaskControlException) throw (TaskControlException) cause;
-            if (cause instanceof SocketTimeoutException) throw new ModelException("TIMEOUT", "模型连接或数据等待超时，未自动重发。");
-            throw new ModelException("NETWORK_ERROR", "无法完成模型请求，请检查地址、网络和证书；请求未自动重发。");
-        } catch (InterruptedException interrupted) {
-            abort.run(); throw interrupted;
+            long remainingBudget = control.remainingActiveMillis();
+            long timeout = Math.max(1, Math.min(requestTimeoutMillis, remainingBudget));
+            AtomicReference<HttpURLConnection> connection = new AtomicReference<>();
+            ModelNetworkWork work = new ModelNetworkWork(payload, () -> exchange(settings, payload, context, connection));
+            ownedWork = work;
+            Runnable abort = () -> {
+                // This hook may run on the UI thread. It never wipes a large buffer.
+                work.future.cancel(true);
+                network.remove(work);
+                HttpURLConnection active = connection.get();
+                if (active != null) try { closer.execute(active::disconnect); } catch (RejectedExecutionException ignored) { }
+            };
+            control.setCancelHook(abort);
+            try {
+                context.check();
+                try { network.execute(work); }
+                catch (RejectedExecutionException busy) { throw new ModelException("NETWORK_BUSY", "上次网络请求尚在释放资源，请稍后重新开始任务。"); }
+                JsonObject result = work.future.get(timeout, TimeUnit.MILLISECONDS);
+                context.check();
+                return result;
+            } catch (CancellationException cancelled) {
+                context.check();
+                throw new ModelException("REQUEST_CANCELLED", "模型请求已取消。");
+            } catch (TimeoutException timedOut) {
+                abort.run();
+                context.check();
+                if (remainingBudget <= requestTimeoutMillis) throw new TaskControlException("BUDGET_EXCEEDED", "任务活动时间已达到上限。");
+                throw new ModelException("TIMEOUT", "模型请求已达到总时限，未自动重发；请检查服务后重新开始。");
+            } catch (ExecutionException failed) {
+                context.check();
+                Throwable cause = failed.getCause();
+                if (cause instanceof ModelException) throw (ModelException) cause;
+                if (cause instanceof TaskControlException) throw (TaskControlException) cause;
+                if (cause instanceof SocketTimeoutException) throw new ModelException("TIMEOUT", "模型连接或数据等待超时，未自动重发。");
+                throw new ModelException("NETWORK_ERROR", "无法完成模型请求，请检查地址、网络和证书；请求未自动重发。");
+            } catch (InterruptedException interrupted) {
+                abort.run(); throw interrupted;
+            } finally {
+                control.setCancelHook(null);
+            }
         } finally {
-            control.setCancelHook(null);
+            if (ownedWork == null) payload.close();
+            else ownedWork.abandonIfPending();
         }
     }
 
-    private JsonObject exchange(ModelSettings settings, byte[] payload, ModelRequestContext context,
+    private JsonObject exchange(ModelSettings settings, OwnedRequestPayload payload, ModelRequestContext context,
                                 AtomicReference<HttpURLConnection> active) throws Exception {
         // Recheck on the network worker, even if this request spent time queued.
         context.check();
@@ -112,18 +130,14 @@ final class HttpModelClient {
             connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
             connection.setRequestProperty("Accept", "application/json");
             if (!settings.apiKey.isEmpty()) connection.setRequestProperty("Authorization", "Bearer " + settings.apiKey);
-            connection.setFixedLengthStreamingMode(payload.length);
+            connection.setFixedLengthStreamingMode(payload.length());
             context.check();
             // getOutputStream may already connect and send headers. A check after
             // it returns prevents a stale first body write; no local check can
             // retract headers or make the following transport operation atomic.
             try (OutputStream output = connection.getOutputStream()) {
                 context.check();
-                for (int offset = 0; offset < payload.length; offset += 8192) {
-                    context.check();
-                    output.write(payload, offset, Math.min(8192, payload.length - offset));
-                    context.check();
-                }
+                payload.writeTo(output, context);
             }
             context.check();
             int status = connection.getResponseCode();

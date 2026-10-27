@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T08:52:24Z",
-  "note": "控制器回归失败时输出固定状态分类、实际审批与请求计数、已接收结果码，保留最后结果可能尚未收到的限制；原成功断言与执行时限不变，构建和lint通过。",
+  "updated_at": "2026-10-27T08:53:25Z",
+  "note": "大窗口回归按平台投影运算改用799×1598，并核对真实View、注册身份和平台边界；保留超过1MP/1280边长、真实缩放及PNG溢出覆盖。测试包和lint通过，启动182项/API的完整矩阵；生产守卫未放宽。",
   "latest_evidence": {
     "path": "screenshots/40472931810-1/",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40472931810"

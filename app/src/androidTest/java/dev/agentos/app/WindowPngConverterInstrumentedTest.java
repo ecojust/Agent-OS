@@ -217,14 +217,25 @@ public final class WindowPngConverterInstrumentedTest {
         // Only this case changes a global test setting. Save the exact prior
         // override, set before service/control Views are created, restore after
         // those Views and every capture resource are really closed.
-        // Keep the dedicated 320x640 emulator's aspect ratio and use an
-        // integer enlargement. The previous 900x1600 override exposed a
-        // 900-versus-899 window-metadata disagreement before capture began.
-        // Actual bounds must still match exactly; no production guard is relaxed.
-        try (DisplaySizeOverride display = new DisplaySizeOverride(960, 1920)) {
+        // This size is derived for the fixed 320x640 / 160dpi test display,
+        // not a general device workaround. AOSP's float inverse projection and
+        // integer Region truncation can explain the CI 960->959 discrepancy;
+        // source arithmetic alone does not confirm the platform's root cause.
+        // At 799x1598 the derived inverse is 2.49687504768: the compact controls
+        // [189,12][609,102] project to [76,5][244,41] and back without changing
+        // integer bounds. Verify the actual View, registration and platform too.
+        // Keep automatic scaling; disabling it would crop the physical screen.
+        assertEquals("Large-window derivation requires the fixed 160dpi baseline", 160,
+                InstrumentationRegistry.getInstrumentation().getTargetContext().getResources()
+                        .getDisplayMetrics().densityDpi);
+        try (DisplaySizeOverride display = new DisplaySizeOverride(799, 1598)) {
+            assertEquals("Large-window derivation requires the fixed physical display", "320x640", display.originalPhysical);
             try (Environment env = new Environment()) {
-                assertEquals(1920, Math.max(env.bounds.width(), env.bounds.height()));
-                assertEquals(960, Math.min(env.bounds.width(), env.bounds.height()));
+                assertLargeWindowGeometry(env);
+                assertTrue("Real input must exceed the encoded pixel limit",
+                        (long) env.bounds.width() * env.bounds.height() > ImageAttachment.MAX_PIXELS);
+                assertTrue("Real input must exceed the encoded long-edge limit",
+                        Math.max(env.bounds.width(), env.bounds.height()) > ImageAttachment.MAX_EDGE);
                 assertArrayEquals(new int[]{1024, 1024}, WindowPngConverter.targetSize(16384, 16384));
                 assertArrayEquals(new int[]{1, 1280}, WindowPngConverter.targetSize(1, 100000));
                 assertArrayEquals(new int[]{37, 53}, WindowPngConverter.targetSize(37, 53));
@@ -246,6 +257,51 @@ public final class WindowPngConverterInstrumentedTest {
                 screenshots.capture("real-large-fixture-bounds-synthetic-pixels-resized-and-real-png-overflow-rejected");
             }
         }
+    }
+
+    /** Checks real registrations and Views; no title matching or geometry tolerance. */
+    private static void assertLargeWindowGeometry(Environment env) {
+        DeviceHarness device = env.device;
+        Rect expectedWindow = new Rect(0, 0, 799, 1598);
+        assertEquals("Actual focused capture window", expectedWindow, env.bounds);
+        AtomicReference<Rect> actualView = new AtomicReference<>();
+        AtomicReference<AgentAccessibilityService.OwnedControlWindowIdentity> registration = new AtomicReference<>();
+        device.instrumentation.runOnMainSync(() -> {
+            assertEquals("Control View density changed", 160, device.service.getResources().getDisplayMetrics().densityDpi);
+            actualView.set(device.service.controlBounds());
+            registration.set(device.service.getOwnedControlWindowIdentity());
+        });
+        AgentAccessibilityService.OwnedControlWindowIdentity identity = registration.get();
+        assertNotNull("Actual controls must have an attached window registration", identity);
+        Rect registered = identity.copyBounds();
+        String geometry = "view=" + actualView.get().toShortString() + ", registered=" + registered.toShortString();
+        assertEquals(geometry, new Rect(189, 12, 609, 102), actualView.get());
+        assertEquals(geometry, actualView.get(), registered);
+        assertTrue("Control registration changed before platform comparison", device.service.isOwnedControlWindowCurrent(identity));
+        // The case is API34+; a fresh public cache read must agree with the exact
+        // same registered window, rather than matching a discovered title.
+        if (Build.VERSION.SDK_INT >= 33) device.service.clearCache();
+        List<AccessibilityWindowInfo> windows = device.service.getWindows();
+        try {
+            int matchingControls = 0, focusedWindows = 0;
+            for (AccessibilityWindowInfo window : windows) {
+                Rect platform = new Rect(); window.getBoundsInScreen(platform);
+                if (window.getId() == identity.windowId) {
+                    matchingControls++;
+                    assertEquals(geometry + ", platform=" + platform.toShortString(), registered, platform);
+                    assertEquals(AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY, window.getType());
+                    assertEquals(identity.displayId, window.getDisplayId());
+                    assertFalse(window.isFocused());
+                }
+                if (window.isFocused()) {
+                    focusedWindows++;
+                    assertEquals("Actual focused platform window", expectedWindow, platform);
+                }
+            }
+            assertEquals("Exactly one actual registered control window", 1, matchingControls);
+            assertEquals("Exactly one actual focused target window", 1, focusedWindows);
+        } finally { for (AccessibilityWindowInfo window : windows) window.recycle(); }
+        assertTrue("Control registration changed during platform comparison", device.service.isOwnedControlWindowCurrent(identity));
     }
 
     private boolean unsupported(Environment env) throws Exception {

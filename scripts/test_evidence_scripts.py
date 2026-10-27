@@ -83,6 +83,32 @@ class EvidenceTests(unittest.TestCase):
             result = collector.junit_summary(root)
             self.assertEqual((3, 1, 1), (result["tests"], result["failures"], result["skipped"]))
 
+    def test_file_budget_is_shared_across_api_directories_and_rejects_next_file(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for label in ("30", "31"):
+                source = root / label
+                source.mkdir()
+                (source / "capture.json").write_text("{}")
+            budget = {"bytes": 0, "files": publisher.MAX_FILES - 1}
+            copied = publisher.copy_files(root / "30", root / "out30", budget)
+            self.assertEqual(1, len(copied))
+            self.assertEqual(publisher.MAX_FILES, budget["files"])
+            with self.assertRaisesRegex(ValueError, "archive budget"):
+                publisher.copy_files(root / "31", root / "out31", budget)
+            self.assertFalse((root / "out31/capture.json").exists())
+
+    def test_larger_file_count_does_not_relax_shared_byte_budget(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = root / "input"
+            source.mkdir()
+            (source / "capture.json").write_text("{}")
+            budget = {"bytes": publisher.MAX_TOTAL_BYTES - 1, "files": 0}
+            with self.assertRaisesRegex(ValueError, "archive budget"):
+                publisher.copy_files(source, root / "output", budget)
+            self.assertFalse((root / "output/capture.json").exists())
+
     def test_test_command_exit_is_preserved_when_capture_is_unavailable(self):
         self.check_test_exit("30", 30)
 

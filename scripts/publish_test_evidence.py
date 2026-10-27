@@ -14,7 +14,7 @@ import collect_performance_evidence as performance
 EXPECTED_MATRIX = [str(api) for api in range(30, 37)] + ["37.0"]
 MAX_FILE_BYTES = 16 * 1024 * 1024
 MAX_TOTAL_BYTES = 64 * 1024 * 1024
-MAX_FILES = 4000
+MAX_FILES = 8000
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
 

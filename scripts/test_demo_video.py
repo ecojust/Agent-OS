@@ -6,6 +6,8 @@ import os
 from pathlib import Path
 import subprocess
 import tempfile
+import sys
+import time
 import unittest
 from types import SimpleNamespace
 from unittest import mock
@@ -292,6 +294,142 @@ class DemoBoundaries(unittest.TestCase):
                         with self.assertRaises(RuntimeError): demo.archive(args)
                         probe.assert_called_once()
                 finally: os.chdir(previous)
+
+
+
+    def test_recorder_stderr_drains_real_child_but_retains_only_bounded_bytes(self):
+        child = subprocess.Popen([sys.executable, "-c", "import os; os.write(2,b'x'*100000)"],
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+        reader = demo.RecorderStderr(child.stderr)
+        try:
+            self.assertEqual(0, child.wait(timeout=5)); value = reader.finish()
+            self.assertEqual("x" * 8192, value["text"])
+            self.assertTrue(value["truncated"]); self.assertTrue(value["complete"])
+            self.assertFalse(reader.thread.is_alive()); self.assertTrue(child.stderr.closed)
+        finally:
+            if child.poll() is None: child.kill(); child.wait(timeout=2)
+            if reader.thread.is_alive(): reader.finish()
+
+    def test_recorder_stderr_cleanup_is_bounded_if_writer_is_still_alive(self):
+        child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(10)"],
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+        reader = demo.RecorderStderr(child.stderr)
+        try:
+            start = time.monotonic(); value = reader.finish()
+            self.assertLess(time.monotonic() - start, 1)
+            self.assertFalse(value["complete"]); self.assertFalse(reader.thread.is_alive())
+        finally:
+            child.kill(); child.wait(timeout=2)
+
+    def test_primary_start_failure_survives_secondary_collection_and_video_failures(self):
+        def command(args, **kwargs):
+            if args == ["adb", "devices"]: return "List of devices attached\nemulator-5554\tdevice\n"
+            if "getprop" in args:
+                return {"ro.kernel.qemu":"1", "ro.boot.qemu":"1", "ro.build.version.sdk":"35",
+                        "ro.product.cpu.abi":"x86_64", "sys.boot_completed":"1"}[args[-1]] + "\n"
+            if "exec-out" in args or "stat" in args: raise subprocess.TimeoutExpired("fixed-test-command", 5)
+            return ""
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp); demo.prepare(directory, SOURCE)
+            with mock.patch.object(demo.bounded, "run_command", side_effect=command), \
+                    mock.patch.object(demo.subprocess, "Popen", side_effect=PermissionError("do not record this message")), \
+                    mock.patch("collect_android_evidence.collect", side_effect=OSError("not persisted")):
+                self.assertFalse(demo.record(directory, SOURCE))
+            report = json.loads((directory / "report.json").read_text())
+            diagnostics = json.loads((directory / "recording-diagnostics.json").read_text())
+            self.assertEqual("recording_start", report["failureStage"])
+            self.assertEqual(["recording_start", "collect_flow", "collect_screenshots", "raw_stat"],
+                             [v["stage"] for v in diagnostics["failures"]])
+            self.assertEqual("PermissionError", diagnostics["failures"][0]["errorClass"])
+            self.assertNotIn("do not record", json.dumps(diagnostics))
+            self.assertEqual("failed", demo.inspect_bundle(directory, SOURCE, failed_source=True)[0]["status"])
+
+    def test_compression_diagnostics_distinguish_each_media_stage_without_relaxing_success(self):
+        cases = ("raw_probe", "video_encode", "encoded_probe", "encoded_policy", "video_decode")
+        for failure in cases:
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temp:
+                raw = Path(temp) / "raw.mp4"; output = Path(temp) / "demo.mp4"; raw.write_bytes(b"unit-only")
+                stages = []; good = {"durationMs":1000, "bytes":10}
+                def metadata(path, *args, **kwargs):
+                    if failure == "raw_probe" and path == raw or failure == "encoded_probe" and path == output:
+                        raise ValueError("not persisted")
+                    return dict(good, durationMs=2000) if failure == "encoded_policy" and path == output else good
+                def command(args, **kwargs):
+                    if stages[-1] == failure: raise subprocess.TimeoutExpired("fixed-test-command", 1)
+                    if stages[-1] == "video_encode": output.write_bytes(b"unit-only")
+                    return ""
+                with mock.patch.object(demo, "video_metadata", side_effect=metadata), self.assertRaises((ValueError, subprocess.TimeoutExpired)):
+                    demo.compress(raw, output, command, stages.append)
+                self.assertEqual(failure, stages[-1]); self.assertFalse(output.exists())
+
+    def test_diagnostic_schema_rejects_content_extra_fields_and_unbounded_stderr(self):
+        valid = {"schemaVersion":1, "kind":"agent-os-demo-recording-diagnostics", "source":dict(SOURCE),
+                 "failures":[{"stage":"video_decode", "errorClass":"ValueError"}],
+                 "recorder":{"started":True,"exitCode":0,"stderr":{"text":"bounded", "truncated":False,"complete":True}}}
+        demo.validate_diagnostics(valid, SOURCE)
+        for edit in (lambda v:v["failures"][0].update(message="secret"),
+                     lambda v:v["failures"][0].update(stage="arbitrary"),
+                     lambda v:v["recorder"]["stderr"].update(text="x"*24577),
+                     lambda v:v["source"].update(attempt=True)):
+            value = copy.deepcopy(valid); edit(value)
+            with self.assertRaises(ValueError): demo.validate_diagnostics(value, SOURCE)
+
+    def test_legacy_original_report_remains_strictly_readable(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp); report = demo.prepare(directory, SOURCE)
+            report.pop("diagnostics"); report.update(schemaVersion=1,status="failed",failureStage="environment")
+            demo.write_report(directory, report)
+            self.assertEqual(1, demo.inspect_bundle(directory, SOURCE, failed_source=True)[0]["schemaVersion"])
+            report["diagnostics"] = None; demo.write_report(directory, report)
+            with self.assertRaises(ValueError): demo.inspect_bundle(directory, SOURCE, failed_source=True)
+
+
+
+    def test_successful_archive_requires_complete_stderr_diagnostics(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp); report = demo.prepare(directory, SOURCE)
+            value = {"schemaVersion":1, "kind":"agent-os-demo-recording-diagnostics", "source":dict(SOURCE),
+                     "failures":[], "recorder":{"started":True,"exitCode":0,
+                     "stderr":{"text":"", "truncated":False,"complete":False}}}
+            path = directory / "recording-diagnostics.json"; path.write_text(json.dumps(value))
+            report.update(status="passed",failureStage=None,diagnostics=demo.file_record(path))
+            demo.write_report(directory, report)
+            with self.assertRaisesRegex(ValueError, "Missing successful recorder diagnostics"):
+                demo.inspect_bundle(directory, SOURCE)
+
+
+
+    def test_runner_failure_is_recorded_before_a_failing_force_stop_cleanup(self):
+        # Local child only to exercise real stdout/stderr ownership; no Android success is simulated.
+        child = subprocess.Popen([sys.executable, "-c", "import os,time; print(os.getpid(),flush=True); time.sleep(10)"],
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        def command(args, **kwargs):
+            if args == ["adb", "devices"]: return "List of devices attached\nemulator-5554\tdevice\n"
+            if "getprop" in args:
+                return {"ro.kernel.qemu":"1", "ro.boot.qemu":"1", "ro.build.version.sdk":"35",
+                        "ro.product.cpu.abi":"x86_64", "sys.boot_completed":"1"}[args[-1]] + "\n"
+            if "force-stop" in args: raise OSError("cleanup message must not replace the runner failure")
+            if "exec-out" in args or "stat" in args: raise ValueError("no synthetic UI capture")
+            if "kill" in args: child.terminate()
+            return ""
+        try:
+            with tempfile.TemporaryDirectory() as temp:
+                directory = Path(temp); demo.prepare(directory, SOURCE)
+                with mock.patch.object(demo.bounded, "run_command", side_effect=command), \
+                        mock.patch.object(demo.subprocess, "Popen", return_value=child), \
+                        mock.patch("run_bounded_instrumentation.bounded_capture", return_value=(
+                            b"INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: original\n",
+                            {"status":"timed_out", "exitCode":-9})), \
+                        mock.patch("collect_android_evidence.collect", side_effect=OSError("unavailable")):
+                    self.assertFalse(demo.record(directory, SOURCE))
+                report = json.loads((directory / "report.json").read_text())
+                diagnostics = json.loads((directory / "recording-diagnostics.json").read_text())
+                self.assertEqual("instrumentation", report["failureStage"])
+                self.assertEqual({"stage":"instrumentation", "errorClass":"java.lang.AssertionError"}, diagnostics["failures"][0])
+                self.assertEqual({"stage":"instrumentation_cleanup", "errorClass":"OSError"}, diagnostics["failures"][1])
+                demo.inspect_bundle(directory, SOURCE, failed_source=True)
+        finally:
+            if child.poll() is None: child.kill(); child.wait(timeout=2)
 
 
 if __name__ == "__main__": unittest.main()

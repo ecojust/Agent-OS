@@ -11,6 +11,7 @@ import selectors
 import shutil
 import subprocess
 import time
+import threading
 
 import third_party_smoke as bounded
 import third_party_smoke_archive as trusted
@@ -29,6 +30,78 @@ STAGES = ("ready", "text_entered", "text_saved", "counter_verified", "scrolled_d
           "scrolled_up", "second_page", "returned_to_fixture", "controls_waiting",
           "paused", "resumed", "stopped", "stale_approval_rejected")
 require = bounded.require
+MAX_RECORDER_STDERR = 8192
+DIAGNOSTIC_STAGES = ("device_preflight", "recording_start", "recording_stop", "recording_stderr",
+                     "instrumentation", "instrumentation_cleanup", "collect_flow", "collect_screenshots", "raw_stat", "raw_pull",
+                     "raw_probe", "video_encode", "encoded_probe", "encoded_policy", "video_decode", "flow_coverage")
+
+
+def failure_family(stage):
+    if stage in ("raw_stat", "raw_pull", "raw_probe", "video_encode", "encoded_probe", "encoded_policy", "video_decode", "flow_coverage"):
+        return "video_validation"
+    if stage == "instrumentation_cleanup": return "instrumentation"
+    return "recording_stop" if stage == "recording_stderr" else stage
+
+
+class RecorderStderr:
+    """Drain only this recorder's pipe; retain at most 8 KiB, never block its writer."""
+    def __init__(self, stream):
+        self.stream = stream; self.output = bytearray(); self.truncated = False; self.complete = False
+        self.stop = threading.Event()
+        os.set_blocking(stream.fileno(), False)
+        self.thread = threading.Thread(target=self._drain, name="demo-recorder-stderr", daemon=True)
+        self.thread.start()
+
+    def _drain(self):
+        try:
+            with selectors.DefaultSelector() as selector:
+                selector.register(self.stream, selectors.EVENT_READ)
+                while True:
+                    events = selector.select(0.05)
+                    if not events:
+                        if self.stop.is_set(): return
+                        continue
+                    chunk = os.read(self.stream.fileno(), 4096)
+                    if not chunk:
+                        self.complete = True; return
+                    available = MAX_RECORDER_STDERR - len(self.output)
+                    self.output.extend(chunk[:available])
+                    self.truncated |= len(chunk) > available
+                    if self.stop.is_set(): return
+        except (OSError, ValueError):
+            self.complete = False
+        finally:
+            self.stream.close()
+
+    def finish(self):
+        self.thread.join(0.2)
+        self.stop.set(); self.thread.join(0.2)
+        require(not self.thread.is_alive(), "Recorder stderr did not stop within its bound")
+        return {"text": bytes(self.output).decode("utf-8", "replace"),
+                "truncated": self.truncated, "complete": self.complete}
+
+
+def validate_diagnostics(value, source):
+    exact(value, ("schemaVersion", "kind", "source", "failures", "recorder"))
+    require(type(value["schemaVersion"]) is int and value["schemaVersion"] == 1
+            and value["kind"] == "agent-os-demo-recording-diagnostics" and matches_source(value["source"], source),
+            "Foreign recording diagnostics")
+    require(isinstance(value["failures"], list) and len(value["failures"]) <= 8, "Too many recording failures")
+    for item in value["failures"]:
+        exact(item, ("stage", "errorClass"))
+        require(item["stage"] in DIAGNOSTIC_STAGES and (item["errorClass"] is None
+                or isinstance(item["errorClass"], str) and re.fullmatch(r"[A-Za-z_$][A-Za-z0-9_.$]{0,159}", item["errorClass"])),
+                "Unsafe recording failure diagnostic")
+    recorder = value["recorder"]
+    exact(recorder, ("started", "exitCode", "stderr"))
+    require(type(recorder["started"]) is bool and (recorder["exitCode"] is None
+            or type(recorder["exitCode"]) is int and -128 <= recorder["exitCode"] <= 255), "Invalid recorder result")
+    if recorder["stderr"] is not None:
+        stderr = recorder["stderr"]; exact(stderr, ("text", "truncated", "complete"))
+        require(recorder["started"] and isinstance(stderr["text"], str)
+                and len(stderr["text"].encode("utf-8")) <= MAX_RECORDER_STDERR * 3
+                and type(stderr["truncated"]) is bool and type(stderr["complete"]) is bool, "Invalid recorder stderr")
+    return value
 
 
 def identity(env=None):
@@ -128,17 +201,22 @@ def video_metadata(path, encoded=False, command=bounded.run_command):
             "codec": stream.get("codec_name"), "pixelFormat": stream.get("pix_fmt")}
 
 
-def compress(raw, output, command=bounded.run_command):
+def compress(raw, output, command=bounded.run_command, stage_callback=lambda stage: None):
     require(not output.exists() and not output.is_symlink(), "Do not overwrite evidence")
+    stage_callback("raw_probe")
     original = video_metadata(raw, command=command)
     try:
+        stage_callback("video_encode")
         command(["ffmpeg", "-nostdin", "-v", "error", "-i", str(raw), "-map", "0:v:0", "-an",
                  "-vf", "scale=720:1280:force_original_aspect_ratio=decrease:force_divisible_by=2",
                  "-c:v", "libx264", "-preset", "medium", "-crf", "24", "-maxrate", "2500k", "-bufsize", "5000k",
                  "-pix_fmt", "yuv420p", "-map_metadata", "-1", "-movflags", "+faststart", str(output)], timeout=180, limit=64 * 1024)
+        stage_callback("encoded_probe")
         encoded = video_metadata(output, True, command)
+        stage_callback("encoded_policy")
         require(encoded["bytes"] <= 95_000_000 and abs(encoded["durationMs"] - original["durationMs"]) <= 250,
                 "Encoding exceeded target or changed duration")
+        stage_callback("video_decode")
         command(["ffmpeg", "-nostdin", "-v", "error", "-xerror", "-i", str(output), "-map", "0:v:0", "-f", "null", "-"], timeout=90, limit=64 * 1024)
         return original, encoded
     except Exception:
@@ -149,11 +227,11 @@ def compress(raw, output, command=bounded.run_command):
 def prepare(directory, source):
     directory = bounded.ensure_directory(directory)
     require(not (directory / "report.json").exists(), "Run evidence already exists")
-    report = {"schemaVersion": 1, "kind": "agent-os-demo-video", "source": source, "apiLevel": 35,
+    report = {"schemaVersion": 2, "kind": "agent-os-demo-video", "source": source, "apiLevel": 35,
               "status": "unverified", "recordingStatus": "not_recorded", "flowStatus": "unavailable",
               "instrumentationExitCode": None, "instrumentationPassed": False, "failureStage": "not_started",
               "secureFlagsPreserved": True, "externalModelUsed": False, "rawVideo": None, "video": None,
-              "flow": None, "screenshots": None, "screenshotsStatus": "not_collected", "instrumentation": None}
+              "flow": None, "screenshots": None, "screenshotsStatus": "not_collected", "instrumentation": None, "diagnostics": None}
     write_report(directory, report); return report
 
 
@@ -207,7 +285,18 @@ def stop_recorder(recorder, pid, adb):
 def record(directory, source):
     report = bounded.read_json(directory / "report.json")
     require(report["source"] == source and report["status"] == "unverified", "Foreign or reused report")
-    serial = None; recorder = None; recorder_pid = None; raw = directory / "raw.mp4"; stage = "device_preflight"
+    serial = None; recorder = None; recorder_pid = None; stderr_reader = None
+    raw = directory / "raw.mp4"; stage = "device_preflight"
+    diagnostics = {"schemaVersion": 1, "kind": "agent-os-demo-recording-diagnostics", "source": source,
+                   "failures": [], "recorder": {"started": False, "exitCode": None, "stderr": None}}
+    def set_stage(value):
+        nonlocal stage
+        stage = value
+    def failed(value, error=None, error_class=None):
+        if len(diagnostics["failures"]) < 8:
+            diagnostics["failures"].append({"stage": value, "errorClass": error_class if error is None else type(error).__name__})
+        if report["failureStage"] in (None, "not_started"):
+            report["failureStage"] = failure_family(value)
     def adb(*args, **kwargs):
         return bounded.run_command(["adb", "-s", serial, *args], **kwargs)
     try:
@@ -223,7 +312,9 @@ def record(directory, source):
         stage = "recording_start"
         recorder = subprocess.Popen(["adb", "-s", serial, "shell",
             "screenrecord --time-limit 120 --bit-rate 4000000 " + REMOTE + " & p=$!; echo $p; wait $p"],
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True)
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
+        diagnostics["recorder"]["started"] = True
+        stderr_reader = RecorderStderr(recorder.stderr)
         with selectors.DefaultSelector() as wait:
             wait.register(recorder.stdout, selectors.EVENT_READ)
             require(wait.select(8), "Recorder did not report ownership")
@@ -247,15 +338,30 @@ def record(directory, source):
         report["instrumentationPassed"] = instrument_case_passed(evidence)
         log = directory / "instrumentation.json"; log.write_text(json.dumps(evidence, indent=2) + "\n")
         report["instrumentation"] = file_record(log)
+        if report["instrumentationPassed"]: report["failureStage"] = None
+        else:
+            classes = re.findall(r"^INSTRUMENTATION_STATUS: stack=([A-Za-z_$][A-Za-z0-9_.$]{0,159})(?=:|$)", evidence["stdout"], re.M)
+            failed("instrumentation", error_class=classes[0] if classes else None)
+            # No inferred exception class when the original runner supplied none.
         if outcome["status"] != "completed":
+            stage = "instrumentation_cleanup"
             adb("shell", "am", "force-stop", "dev.agentos.app", timeout=5)
-        report["failureStage"] = None if report["instrumentationPassed"] else "instrumentation"
-    except (ValueError, OSError, subprocess.SubprocessError):
-        report["failureStage"] = stage
+    except (ValueError, OSError, subprocess.SubprocessError) as error:
+        failed(stage, error)
     finally:
         if recorder is not None:
-            if not stop_recorder(recorder, recorder_pid, adb) and report["failureStage"] is None:
-                report["failureStage"] = "recording_stop"
+            try:
+                if not stop_recorder(recorder, recorder_pid, adb): failed("recording_stop")
+            except (ValueError, OSError, subprocess.SubprocessError) as error:
+                failed("recording_stop", error)
+            diagnostics["recorder"]["exitCode"] = recorder.poll()
+            if stderr_reader is None and recorder.stderr is not None:
+                recorder.stderr.close()
+        if stderr_reader is not None:
+            try:
+                diagnostics["recorder"]["stderr"] = stderr_reader.finish()
+                if not diagnostics["recorder"]["stderr"]["complete"]: failed("recording_stderr")
+            except (ValueError, OSError) as error: failed("recording_stderr", error)
         if serial:
             try:
                 content = adb("exec-out", "run-as", "dev.agentos.app", "cat", "files/demo-video/flow-result.json",
@@ -263,8 +369,8 @@ def record(directory, source):
                 flow = validate_flow(bounded.parse_json(content), source)
                 (directory / "flow-result.json").write_bytes(content)
                 report["flow"] = file_record(directory / "flow-result.json"); report["flowStatus"] = flow["status"]
-            except Exception:
-                report["failureStage"] = "collect_flow"
+            except Exception as error:
+                failed("collect_flow", error)
             try:
                 from collect_android_evidence import collect
                 captures = collect(35, "35", 0 if report["instrumentationPassed"] else 1, directory)
@@ -273,19 +379,22 @@ def record(directory, source):
                 (directory / "capture.json").write_text(json.dumps(captures, indent=2) + "\n")
                 report["screenshots"] = file_record(directory / "capture.json")
                 report["screenshotsStatus"] = captures["captureStatus"]
-            except Exception:
-                report["failureStage"] = "collect_screenshots"
+            except Exception as error:
+                failed("collect_screenshots", error)
             try:
+                stage = "raw_stat"
                 remote_bytes = adb("shell", "stat", "-c", "%s", REMOTE, timeout=5).strip()
                 require(remote_bytes.isdigit() and 0 < int(remote_bytes) < 70_000_000, "Raw recording out of bounds")
+                stage = "raw_pull"
                 adb("pull", REMOTE, str(raw), timeout=20)
-                report["rawVideo"], report["video"] = compress(raw, directory / "demo.mp4")
+                report["rawVideo"], report["video"] = compress(raw, directory / "demo.mp4", stage_callback=set_stage)
                 if report["flow"]:
+                    stage = "flow_coverage"
                     require(report["video"]["durationMs"] + 1500 >= flow["finishedElapsedMs"] - flow["startedElapsedMs"],
                             "Recording ended before the flow")
                 report["recordingStatus"] = "recorded"
-            except Exception:
-                report["recordingStatus"] = "unavailable"; report["failureStage"] = "video_validation"
+            except Exception as error:
+                report["recordingStatus"] = "unavailable"; failed(stage, error)
                 report["video"] = None
                 failed_video = directory / "demo.mp4"
                 if failed_video.exists() and not failed_video.is_symlink(): failed_video.unlink()
@@ -297,6 +406,10 @@ def record(directory, source):
                 except Exception: pass
         report["status"] = "passed" if report["failureStage"] is None and report["instrumentationPassed"] and report["flowStatus"] == "passed" and report["recordingStatus"] == "recorded" and report["screenshotsStatus"] == "collected" else "failed"
         if report["status"] == "passed": report["failureStage"] = None
+        validate_diagnostics(diagnostics, source)
+        diagnostic_file = directory / "recording-diagnostics.json"
+        diagnostic_file.write_text(json.dumps(diagnostics, indent=2) + "\n")
+        report["diagnostics"] = file_record(diagnostic_file)
         write_report(directory, report)
     return report["status"] == "passed"
 
@@ -360,7 +473,7 @@ def inspect_bundle(directory, source, failed_source=False):
         if path.is_dir():
             require(relative.parts == ("screenshots",), "Unexpected evidence directory")
             continue
-        require(path.is_file() and (relative.as_posix() in ("report.json", "capture.json", "flow-result.json", "demo.mp4", "instrumentation.json")
+        require(path.is_file() and (relative.as_posix() in ("report.json", "capture.json", "flow-result.json", "demo.mp4", "instrumentation.json", "recording-diagnostics.json")
                 or len(relative.parts) == 2 and relative.parts[0] == "screenshots"
                 and re.fullmatch(r"[A-Za-z0-9_.-]+\.(png|json)", path.name)), "Unexpected evidence file")
         entry = {"path": relative.as_posix(), **file_record(path)}
@@ -374,10 +487,10 @@ def inspect_bundle(directory, source, failed_source=False):
                     and all(0 < int.from_bytes(header[start:start + 4], "big") <= 4096 for start in (16, 20)), "Invalid PNG")
         else: require(entry["bytes"] < MAX_VIDEO, "Video must be strictly under 100 MB")
     report = bounded.read_json(directory / "report.json")
-    expected = set(prepare_schema_keys())
+    require(type(report.get("schemaVersion")) is int and report["schemaVersion"] in (1, 2), "Unknown report version")
+    expected = set(prepare_schema_keys(report["schemaVersion"]))
     exact(report, expected)
-    require(report["schemaVersion"] == 1 and type(report["schemaVersion"]) is int
-            and report["kind"] == "agent-os-demo-video" and matches_source(report["source"], source)
+    require(report["kind"] == "agent-os-demo-video" and matches_source(report["source"], source)
             and type(report["apiLevel"]) is int and report["apiLevel"] == 35
             and report["secureFlagsPreserved"] is True and report["externalModelUsed"] is False,
             "Foreign or unsafe recording report")
@@ -391,10 +504,21 @@ def inspect_bundle(directory, source, failed_source=False):
             "recording_stop", "collect_flow", "collect_screenshots", "video_validation", "environment"), "Unsafe failure field")
     require(not failed_source or report["status"] == "failed", "Raw preservation requires an explicitly failed report")
     flow = None
-    for key, name in (("flow", "flow-result.json"), ("screenshots", "capture.json"), ("instrumentation", "instrumentation.json")):
+    for key, name in (("flow", "flow-result.json"), ("screenshots", "capture.json"), ("instrumentation", "instrumentation.json"),
+                      ("diagnostics", "recording-diagnostics.json")):
         path = directory / name
-        require((report[key] is not None) == path.exists(), "Report/file presence mismatch")
-        if report[key] is not None: require(report[key] == file_record(path), "Report/file hash mismatch")
+        require((report.get(key) is not None) == path.exists(), "Report/file presence mismatch")
+        if report.get(key) is not None: require(report[key] == file_record(path), "Report/file hash mismatch")
+    if report.get("diagnostics"):
+        diagnostics = validate_diagnostics(bounded.read_json(directory / "recording-diagnostics.json"), source)
+        if diagnostics["failures"]:
+            require(report["status"] == "failed" and report["failureStage"] == failure_family(diagnostics["failures"][0]["stage"]),
+                    "First recording failure was replaced")
+        if report["status"] == "passed":
+            require(not diagnostics["failures"] and diagnostics["recorder"]["started"]
+                    and diagnostics["recorder"]["stderr"] is not None
+                    and diagnostics["recorder"]["stderr"]["complete"] is True
+                    and diagnostics["recorder"]["exitCode"] is not None, "Missing successful recorder diagnostics")
     if report["instrumentation"]:
         instrument = bounded.read_json(directory / "instrumentation.json")
         require(instrument_case_passed(instrument) == report["instrumentationPassed"]
@@ -442,6 +566,7 @@ def inspect_bundle(directory, source, failed_source=False):
                           and f["path"] != "screenshots/manifest.json"]
             require(len(case_files) == 1 and bounded.read_json(directory / case_files[0]["path"]) == test, "Individual screenshot record mismatch")
     if report["status"] == "passed":
+        require(report["schemaVersion"] == 1 or report["diagnostics"] is not None, "Missing recording diagnostics")
         require(report["instrumentationPassed"] and report["instrumentationExitCode"] == 0
                 and report["flowStatus"] == "passed" and report["video"] and report["screenshotsStatus"] == "collected"
                 and report["failureStage"] is None, "Cannot promote incomplete evidence")
@@ -453,10 +578,11 @@ def inspect_bundle(directory, source, failed_source=False):
     return report, files
 
 
-def prepare_schema_keys():
-    return ("schemaVersion", "kind", "source", "apiLevel", "status", "recordingStatus", "flowStatus",
+def prepare_schema_keys(version=2):
+    base = ("schemaVersion", "kind", "source", "apiLevel", "status", "recordingStatus", "flowStatus",
             "instrumentationExitCode", "instrumentationPassed", "failureStage", "secureFlagsPreserved",
             "externalModelUsed", "rawVideo", "video", "flow", "screenshots", "screenshotsStatus", "instrumentation")
+    return base if version == 1 else (*base, "diagnostics")
 
 
 def archive(args):

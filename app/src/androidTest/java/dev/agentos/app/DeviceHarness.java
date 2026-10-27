@@ -216,7 +216,7 @@ final class DeviceHarness implements AutoCloseable {
             SystemClock.sleep(100);
         }
         fail("No stable matching fixture observation\n" + serverWindowDiagnostics()
-                + "\n" + windowDiagnostics() + "\nlast result: " + last);
+                + "\n" + ownedControlDiagnostics() + "\n" + windowDiagnostics() + "\nlast result: " + last);
         return null;
     }
 
@@ -595,6 +595,46 @@ final class DeviceHarness implements AutoCloseable {
             // is connected. The component list stays exact; service connection/disconnection
             // is the authoritative state, checked separately instead of racing the global flag.
         } finally { automation.dropShellPermissionIdentity(); }
+    }
+
+    /** Failure-only, bounded read of the actual View and current published identity; no acquisition or refresh. */
+    private static String ownedControlDiagnostics() {
+        java.util.concurrent.atomic.AtomicReference<String> value = new java.util.concurrent.atomic.AtomicReference<>();
+        java.util.concurrent.CountDownLatch finished = new java.util.concurrent.CountDownLatch(1);
+        android.os.Handler main = new android.os.Handler(android.os.Looper.getMainLooper());
+        Runnable sample = () -> {
+            try {
+                AgentAccessibilityService active = AgentAccessibilityService.getInstance();
+                if (active == null) { value.set("Owned controls: service_disconnected"); return; }
+                AgentAccessibilityService.OwnedControlWindowIdentity published = active.getOwnedControlWindowIdentity();
+                Rect view = active.controlBounds();
+                android.util.DisplayMetrics metrics = active.getResources().getDisplayMetrics();
+                value.set("Owned controls (best-effort failure sample): available=" + active.isControlAvailable()
+                        + " densityDpi=" + metrics.densityDpi
+                        + " resourcePixels=" + metrics.widthPixels + "x" + metrics.heightPixels
+                        + " viewBounds=" + view.toShortString()
+                        + " identityPresent=" + (published != null)
+                        + (published == null ? "" : " identityCurrent=" + active.isOwnedControlWindowCurrent(published)
+                        + " windowId=" + published.windowId + " displayId=" + published.displayId
+                        + " publishedBounds=" + published.copyBounds().toShortString()));
+            } catch (Throwable unavailable) {
+                value.set("Owned controls: read_unavailable " + unavailable.getClass().getSimpleName());
+            } finally { finished.countDown(); }
+        };
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) sample.run();
+        else {
+            if (!main.post(sample)) return "Owned controls: main_post_rejected";
+            try {
+                if (!finished.await(1, java.util.concurrent.TimeUnit.SECONDS)) {
+                    main.removeCallbacks(sample); return "Owned controls: sample_timeout";
+                }
+            } catch (InterruptedException interrupted) {
+                main.removeCallbacks(sample); Thread.currentThread().interrupt();
+                return "Owned controls: sample_interrupted";
+            }
+        }
+        String result = value.get();
+        return result == null ? "Owned controls: sample_unavailable" : result;
     }
 
     static String windowDiagnostics() {

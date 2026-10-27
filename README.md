@@ -25,11 +25,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Wait within the existing 8-second native test setup for exact window/root/display and node geometry to remain stable for 300 ms. This addresses the observed startup translations without relaxing production guards or replaying captures. Dedicated APK build and lint pass; new eight-case device run pending.
+**本次更新：** 归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。
 
-**记录时间：** 2026-10-27T14:46:44Z
+**记录时间：** 2026-10-27T14:54:12Z
 
-[最近测试截图与清单](screenshots/40521924977-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40521924977)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40524418849-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40524418849)。通过、失败及未截图原因见清单。
 
 **整体操作演示：** 正在接入真实操作录制，完成后提供小于 100 MB 的视频与对应源码记录；尚未录制的过程不以示意动画代替。
 

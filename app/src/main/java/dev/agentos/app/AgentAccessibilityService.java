@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
@@ -983,7 +984,11 @@ public final class AgentAccessibilityService extends AccessibilityService {
     private Button button(String text, Runnable action) {
         Button button = new Button(this);
         button.setText(text);
-        button.setTextColor(Color.WHITE);
+        int[][] enabledStates = { new int[] { -android.R.attr.state_enabled }, new int[0] };
+        button.setTextColor(new ColorStateList(enabledStates,
+                new int[] { Color.rgb(170, 180, 196), Color.WHITE }));
+        button.setBackgroundTintList(new ColorStateList(enabledStates,
+                new int[] { Color.rgb(48, 57, 73), Color.rgb(49, 87, 183) }));
         button.setTextSize(12);
         button.setAllCaps(false);
         button.setMinWidth(0);

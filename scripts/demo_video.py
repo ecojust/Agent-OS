@@ -340,7 +340,18 @@ def select_artifact(run, jobs, index):
     return source, job, artifact
 
 
-def inspect_bundle(directory, source):
+def declared_video_metadata(value, limit):
+    """Validate a source declaration without claiming these pixels were decoded here."""
+    exact(value, ("bytes", "sha256", "durationMs", "width", "height", "codec", "pixelFormat"))
+    require(nonnegative(value["bytes"]) and 0 < value["bytes"] < limit
+            and re.fullmatch(r"[0-9a-f]{64}", str(value["sha256"]))
+            and all(nonnegative(value[k]) for k in ("durationMs", "width", "height"))
+            and 500 <= value["durationMs"] <= 125_000
+            and all(64 <= value[k] <= 4096 and value[k] % 2 == 0 for k in ("width", "height"))
+            and value["codec"] == "h264" and value["pixelFormat"] == "yuv420p", "Invalid declared video metadata")
+
+
+def inspect_bundle(directory, source, failed_source=False):
     require(directory.is_dir() and not directory.is_symlink(), "Missing bundle")
     files = []; total = 0
     for path in sorted(directory.rglob("*")):
@@ -378,6 +389,7 @@ def inspect_bundle(directory, source):
             or type(report["instrumentationExitCode"]) is int and -128 <= report["instrumentationExitCode"] <= 255), "Invalid instrumentation result")
     require(report["failureStage"] in (None, "not_started", "device_preflight", "recording_start", "instrumentation",
             "recording_stop", "collect_flow", "collect_screenshots", "video_validation", "environment"), "Unsafe failure field")
+    require(not failed_source or report["status"] == "failed", "Raw preservation requires an explicitly failed report")
     flow = None
     for key, name in (("flow", "flow-result.json"), ("screenshots", "capture.json"), ("instrumentation", "instrumentation.json")):
         path = directory / name
@@ -402,9 +414,12 @@ def inspect_bundle(directory, source):
     video = directory / "demo.mp4"
     require((report["video"] is not None) == video.exists(), "Video presence mismatch")
     if report["video"]:
-        require(video_metadata(video, True) == report["video"] and report["recordingStatus"] == "recorded"
-                and report["rawVideo"] is not None and abs(report["rawVideo"]["durationMs"] - report["video"]["durationMs"]) <= 250,
-                "Video metadata mismatch")
+        declared_video_metadata(report["video"], MAX_VIDEO)
+        require(file_record(video) == {key: report["video"][key] for key in ("bytes", "sha256")}
+                and report["recordingStatus"] == "recorded" and report["rawVideo"] is not None
+                and abs(report["rawVideo"]["durationMs"] - report["video"]["durationMs"]) <= 250, "Video declaration/hash mismatch")
+        if not failed_source:
+            require(video_metadata(video, True) == report["video"], "Video metadata mismatch")
     test = None
     if report["screenshots"]:
         capture = bounded.read_json(directory / "capture.json")
@@ -454,9 +469,11 @@ def archive(args):
                 "jobConclusion": job["conclusion"], "apiLevel": 35, "status": "unavailable", "files": [],
                 "scope": "Dedicated emulator; preconfigured app; local synthetic HTTP model; secure flags preserved; no real-model or phone acceptance."}
     if artifact:
-        report, files = inspect_bundle(args.incoming, source)
+        failed_source = job["conclusion"] == "failure"
+        report, files = inspect_bundle(args.incoming, source, failed_source=failed_source)
         manifest.update(status="passed" if report["status"] == "passed" and job["conclusion"] == "success" else "failed",
-                        artifactId=artifact["id"], files=files, video=report["video"], flowStatus=report["flowStatus"])
+                        artifactId=artifact["id"], files=files, video=report["video"], flowStatus=report["flowStatus"],
+                        videoValidation="not_revalidated" if failed_source else "full_decode" if report["status"] == "passed" else "metadata_only")
         shutil.copytree(args.incoming, relative)
     else: relative.mkdir(parents=True)
     (relative / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
@@ -490,9 +507,9 @@ def main():
                 if report["failureStage"] in (None, "not_started"): report["failureStage"] = "environment"
             write_report(directory, report)
     elif args.mode == "select":
-        source, _, artifact = select_artifact(trusted.read_json(args.run), trusted.read_json(args.jobs), trusted.read_json(args.artifacts))
+        source, job, artifact = select_artifact(trusted.read_json(args.run), trusted.read_json(args.jobs), trusted.read_json(args.artifacts))
         with args.github_output.open("a") as stream:
-            stream.write(f"artifact_id={artifact['id'] if artifact else ''}\nsource_run={source['runId']}\nattempt={source['attempt']}\n")
+            stream.write(f"artifact_id={artifact['id'] if artifact else ''}\nsource_run={source['runId']}\nattempt={source['attempt']}\nfailed_source={'true' if job['conclusion'] == 'failure' else 'false'}\n")
     else: archive(args)
     return 0
 

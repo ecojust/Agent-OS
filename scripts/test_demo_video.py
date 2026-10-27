@@ -7,6 +7,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from types import SimpleNamespace
 from unittest import mock
 
 import demo_video as demo
@@ -208,6 +209,89 @@ class DemoBoundaries(unittest.TestCase):
                 self.assertFalse(demo.record(directory,SOURCE))
             report=json.loads((directory/"report.json").read_text())
             self.assertEqual("failed",report["status"]);self.assertEqual("device_preflight",report["failureStage"])
+
+
+    def failed_video_bundle(self, directory):
+        # Schema-boundary bytes only: they must never be called a decoded UI recording.
+        report = demo.prepare(directory, SOURCE)
+        video = directory / "demo.mp4"; video.write_bytes(b"unit-test-only-not-a-real-video")
+        metadata = dict(demo.file_record(video), durationMs=1000, width=720, height=1280,
+                        codec="h264", pixelFormat="yuv420p")
+        report.update(status="failed", failureStage="instrumentation", recordingStatus="recorded",
+                      video=metadata, rawVideo=dict(metadata))
+        demo.write_report(directory, report)
+        return report
+
+    def test_failed_raw_preservation_keeps_hash_but_does_not_claim_decode(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp); self.failed_video_bundle(directory)
+            with mock.patch.object(demo, "video_metadata", side_effect=AssertionError("must not probe")), \
+                    mock.patch.object(demo.bounded, "run_command", side_effect=AssertionError("must not decode")):
+                report, files = demo.inspect_bundle(directory, SOURCE, failed_source=True)
+            self.assertEqual("failed", report["status"])
+            self.assertEqual(demo.file_record(directory / "demo.mp4"),
+                             {k: report["video"][k] for k in ("bytes", "sha256")})
+            self.assertEqual({"report.json", "demo.mp4"}, {f["path"] for f in files})
+
+    def test_failed_raw_preservation_still_rejects_changed_bytes_and_unsafe_metadata(self):
+        for change in (lambda r: r["video"].update(sha256="b" * 64),
+                       lambda r: r["video"].update(width=721),
+                       lambda r: r["video"].update(durationMs=True),
+                       lambda r: r["video"].update(bytes=100_000_000),
+                       lambda r: r["video"].update(extra="arbitrary")):
+            with tempfile.TemporaryDirectory() as temp:
+                directory = Path(temp); report = self.failed_video_bundle(directory)
+                change(report); demo.write_report(directory, report)
+                with self.assertRaises(ValueError): demo.inspect_bundle(directory, SOURCE, failed_source=True)
+
+    def test_failed_source_cannot_preserve_passed_or_unverified_report_without_validation(self):
+        for status in ("passed", "unverified"):
+            with tempfile.TemporaryDirectory() as temp:
+                directory = Path(temp); report = self.failed_video_bundle(directory)
+                report["status"] = status; demo.write_report(directory, report)
+                with self.assertRaises(ValueError): demo.inspect_bundle(directory, SOURCE, failed_source=True)
+
+    def test_default_archive_path_still_requires_real_video_probe(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp); self.failed_video_bundle(directory)
+            with mock.patch.object(demo, "video_metadata", side_effect=RuntimeError("decoder unavailable")) as probe:
+                with self.assertRaises(RuntimeError): demo.inspect_bundle(directory, SOURCE)
+                probe.assert_called_once()
+
+    def archive_fixture(self, root, conclusion):
+        run, jobs, artifacts = provenance(); jobs["jobs"][0]["conclusion"] = conclusion
+        for name, value in (("run", run), ("jobs", jobs), ("artifacts", artifacts)):
+            (root / (name + ".json")).write_text(json.dumps(value))
+        incoming = root / "incoming"; incoming.mkdir(); self.failed_video_bundle(incoming)
+        (root / "docs").mkdir(); (root / "docs/progress.json").write_bytes(b'{"existing":true}\n')
+        return SimpleNamespace(run=root / "run.json", jobs=root / "jobs.json", artifacts=root / "artifacts.json", incoming=incoming)
+
+    def test_failed_source_archive_is_explicitly_failed_and_keeps_previous_progress(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); args = self.archive_fixture(root, "failure")
+            before = (root / "docs/progress.json").read_bytes(); previous = Path.cwd()
+            try:
+                os.chdir(root)
+                with mock.patch.object(demo, "video_metadata", side_effect=AssertionError("must not probe")):
+                    demo.archive(args)
+            finally: os.chdir(previous)
+            manifest = json.loads((root / "screenshots/demos/123-1/manifest.json").read_text())
+            self.assertEqual("failed", manifest["status"])
+            self.assertEqual("not_revalidated", manifest["videoValidation"])
+            self.assertEqual(before, (root / "docs/progress.json").read_bytes())
+            self.assertEqual((args.incoming / "demo.mp4").read_bytes(),
+                             (root / "screenshots/demos/123-1/demo.mp4").read_bytes())
+
+    def test_success_or_cancelled_source_does_not_activate_failed_raw_exception(self):
+        for conclusion in ("success", "cancelled", "timed_out"):
+            with tempfile.TemporaryDirectory() as temp:
+                root = Path(temp); args = self.archive_fixture(root, conclusion); previous = Path.cwd()
+                try:
+                    os.chdir(root)
+                    with mock.patch.object(demo, "video_metadata", side_effect=RuntimeError("decoder unavailable")) as probe:
+                        with self.assertRaises(RuntimeError): demo.archive(args)
+                        probe.assert_called_once()
+                finally: os.chdir(previous)
 
 
 if __name__ == "__main__": unittest.main()

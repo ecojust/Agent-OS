@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Report fixed geometry rejection details from the original screenshot validation without changing its conditions. Native test diagnostics retain planning geometry and a separately labeled later sample, and no longer mask pre-review errors in rejection cases. Acceptance APK/test/lint pass; previous actual results remain 4/8.
+**本次更新：** Preserve failed walkthrough recordings and original diagnostic files even when archive-side codec installation times out. Failed-only preservation remains marked failed/not revalidated; successful videos still require full decoding. All 28 archive checks pass, and the original second attempt is awaiting evidence retrieval.
 
-**记录时间：** 2026-10-27T14:31:24Z
+**记录时间：** 2026-10-27T14:31:57Z
 
 [最近测试截图与清单](screenshots/40518542706-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40518542706)。通过、失败及未截图原因见清单。
 

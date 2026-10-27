@@ -3,6 +3,7 @@ package dev.agentos.app;
 import android.Manifest;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Instrumentation;
+import android.app.Activity;
 import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.Context;
@@ -17,6 +18,9 @@ import android.view.Display;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
+import android.view.View;
+import android.view.WindowInsetsController;
+import android.view.inputmethod.InputMethodManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.view.accessibility.AccessibilityManager;
@@ -104,6 +108,58 @@ final class DeviceHarness implements AutoCloseable {
         // Instrumentation's main-thread idle only covers our own process. Fixture
         // activities and system window animations report through UiAutomation.
         automation.waitForIdle(500, 8_000);
+    }
+
+    /** Dismiss only this app's own editor, then prove that the actual launch origin is unobstructed. */
+    JsonObject hideOwnKeyboardAndObserve(Activity activity, AndroidDeviceTools executor, RunControl active) throws Exception {
+        assertEquals("Only the test-owned application Activity may dismiss its keyboard",
+                context.getPackageName(), activity.getPackageName());
+        // MainActivity binds encrypted settings asynchronously. Waiting only for
+        // its package/focus could race that later bind and its layout/IME changes.
+        await("The owned configuration screen did not finish loading", () -> {
+            boolean[] ready = {false};
+            instrumentation.runOnMainSync(() -> {
+                View save = activity.findViewById(R.id.save_settings);
+                View confirm = activity.findViewById(R.id.execution_mode_confirm_all);
+                View navigation = activity.findViewById(R.id.execution_mode_continuous_navigation);
+                ready[0] = save != null && save.isEnabled() && confirm != null && confirm.isEnabled()
+                        && navigation != null && navigation.isEnabled();
+            });
+            return ready[0];
+        });
+        instrumentation.runOnMainSync(() -> {
+            View focus = activity.getCurrentFocus();
+            View owner = focus == null ? activity.getWindow().getDecorView() : focus;
+            if (focus != null) focus.clearFocus();
+            InputMethodManager keyboard = activity.getSystemService(InputMethodManager.class);
+            if (keyboard != null) keyboard.hideSoftInputFromWindow(owner.getWindowToken(), 0);
+            WindowInsetsController insets = activity.getWindow().getInsetsController();
+            if (insets != null) insets.hide(WindowInsets.Type.ime());
+        });
+        try {
+            await("The owned Activity's keyboard did not finish hiding", () -> {
+                boolean[] hidden = {false};
+                instrumentation.runOnMainSync(() -> {
+                    WindowInsets insets = activity.getWindow().getDecorView().getRootWindowInsets();
+                    hidden[0] = insets != null && !insets.isVisible(WindowInsets.Type.ime());
+                });
+                return hidden[0];
+            });
+            awaitUiIdle();
+            JsonObject own = awaitObservation(executor, active,
+                    data -> context.getPackageName().equals(string(data, "packageName"))
+                            && data.get("focused").getAsBoolean() && !data.get("hasOcclusion").getAsBoolean());
+            assertEquals(focusedWindowId(service), own.get("windowId").getAsInt());
+            return own;
+        } catch (Exception | AssertionError failure) {
+            String[] insetsState = {"unavailable"};
+            instrumentation.runOnMainSync(() -> {
+                WindowInsets insets = activity.getWindow().getDecorView().getRootWindowInsets();
+                insetsState[0] = insets == null ? "missing" : "imeVisible=" + insets.isVisible(WindowInsets.Type.ime());
+            });
+            throw new AssertionError("The owned Activity was not ready for launch: " + insetsState[0]
+                    + "\n" + windowDiagnostics(), failure);
+        }
     }
 
     JsonObject observe() throws Exception {

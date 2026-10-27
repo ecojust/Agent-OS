@@ -14,10 +14,13 @@ import android.os.Build;
 import android.os.SystemClock;
 import android.view.Gravity;
 import android.view.WindowManager;
+import android.view.WindowInsets;
+import android.view.inputmethod.InputMethodManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.TextView;
+import android.widget.EditText;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -229,14 +232,57 @@ public final class DeviceToolsInstrumentedTest {
     }
 
     @Test public void initialObservationFromAgentScreenCanLaunchAnAuthorizedApp() throws Exception {
-        try (DeviceHarness device = new DeviceHarness()) {
+        try (DeviceHarness device = new DeviceHarness(); AutoCloseable keyboardPreference = device.enableSoftwareKeyboard()) {
             Activity activity = device.instrumentation.startActivitySync(new Intent(device.context, MainActivity.class)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             try {
                 device.instrumentation.waitForIdleSync();
                 device.awaitUiIdle();
-                JsonObject ownScreen = awaitObservation(device.tools, device.control,
-                        data -> device.context.getPackageName().equals(string(data, "packageName")));
+                // Reproduce the real task-entry state: an owned text editor with a
+                // genuinely visible system IME, rather than assuming idle means clear.
+                long deadline = SystemClock.elapsedRealtime() + 8_000;
+                boolean[] editorReady = {false};
+                do {
+                    device.instrumentation.runOnMainSync(() -> {
+                        EditText editor = activity.findViewById(R.id.task_prompt);
+                        editorReady[0] = editor != null && editor.isEnabled() && editor.hasWindowFocus();
+                    });
+                    if (!editorReady[0]) SystemClock.sleep(25);
+                } while (!editorReady[0] && SystemClock.elapsedRealtime() < deadline);
+                assertTrue("The owned task editor did not become ready", editorReady[0]);
+                device.instrumentation.runOnMainSync(() -> {
+                    EditText editor = activity.findViewById(R.id.task_prompt);
+                    editor.requestFocus();
+                    editor.post(() -> {
+                        if (!editor.isFocused() || !editor.hasWindowFocus()) return;
+                        InputMethodManager keyboard = activity.getSystemService(InputMethodManager.class);
+                        if (Build.VERSION.SDK_INT < 33 && keyboard != null) keyboard.isActive();
+                        if (activity.getWindow().getInsetsController() != null) activity.getWindow().getInsetsController().show(WindowInsets.Type.ime());
+                        if (keyboard != null) keyboard.showSoftInput(editor, 0);
+                    });
+                });
+                boolean[] visibleInsets = {false};
+                boolean imeWindow = false;
+                deadline = SystemClock.elapsedRealtime() + 5_000;
+                do {
+                    device.instrumentation.runOnMainSync(() -> {
+                        WindowInsets insets = activity.getWindow().getDecorView().getRootWindowInsets();
+                        visibleInsets[0] = insets != null && insets.isVisible(WindowInsets.Type.ime());
+                    });
+                    List<AccessibilityWindowInfo> windows = device.service.getWindows();
+                    try {
+                        imeWindow = false;
+                        for (AccessibilityWindowInfo window : windows) {
+                            if (window.getType() == AccessibilityWindowInfo.TYPE_INPUT_METHOD) imeWindow = true;
+                        }
+                    } finally { for (AccessibilityWindowInfo window : windows) window.recycle(); }
+                    if (!(visibleInsets[0] && imeWindow)) SystemClock.sleep(50);
+                } while (!(visibleInsets[0] && imeWindow) && SystemClock.elapsedRealtime() < deadline);
+                if (!(visibleInsets[0] && imeWindow)) {
+                    fail("The owned editor did not show a real IME: inset=" + visibleInsets[0] + ", window=" + imeWindow
+                            + "\n" + windowDiagnostics() + "\n" + device.keyboardDiagnostics());
+                }
+                JsonObject ownScreen = device.hideOwnKeyboardAndObserve(activity, device.tools, device.control);
                 assertFalse(ownScreen.get("scoped").getAsBoolean());
                 assertEquals(0, ownScreen.getAsJsonArray("nodes").size());
                 JsonObject arguments = new JsonObject();
@@ -246,6 +292,7 @@ public final class DeviceToolsInstrumentedTest {
                 JsonObject opened = device.observe();
                 assertEquals(FIXTURE, string(opened, "packageName"));
                 assertTrue(opened.get("scoped").getAsBoolean());
+                screenshots.capture("agent-launch-after-owned-keyboard-actually-dismissed");
             } finally { device.instrumentation.runOnMainSync(activity::finish); }
         }
     }

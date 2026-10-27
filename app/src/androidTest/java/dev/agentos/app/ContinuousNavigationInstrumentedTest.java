@@ -49,6 +49,7 @@ public final class ContinuousNavigationInstrumentedTest {
             Activity activity = device.instrumentation.startActivitySync(new Intent(device.context, MainActivity.class)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             try {
+                device.hideOwnKeyboardAndObserve(activity, tools, device.control);
                 plan(device, tools, "launch_app", data -> device.context.getPackageName().equals(string(data, "packageName")),
                         ignored -> launchArguments());
                 JsonObject opened = fixture(tools, device);
@@ -232,7 +233,7 @@ public final class ContinuousNavigationInstrumentedTest {
                 }
                 assertFalse("Controller did not finish: " + controller.getState().status, controller.getState().running);
                 server.assertHealthy();
-                assertEquals(2, server.acceptedWriteCount());
+                assertEquals("The server did not receive both accepted navigation results", 2, server.acceptedWriteCount());
                 assertTrue(server.writePlanCount() <= 2 + LocalControllerModelServer.MAX_WRITE_REPLANS);
                 assertTrue("Model report requires the observed result of every prior write", server.finalStateObserved());
                 assertEquals("HOME must be the actual resolved default launcher", server.expectedHomePackage(), server.observedHomePackage());
@@ -242,11 +243,61 @@ public final class ContinuousNavigationInstrumentedTest {
                 assertEquals("Saved: empty", actualFixtureText(device, "saved_value"));
                 assertEquals("执行已结束 · 模型报告待核对", controller.getState().status);
                 screenshots.capture("continuous-navigation-http-unconfirmed-observed-result");
+            } catch (Exception | AssertionError failure) {
+                // Preserve the running/stopped state and real windows before cleanup
+                // removes the overlay or changes the controller generation.
+                AssertionError diagnostic = new AssertionError("Real HTTP navigation failed: " + failure.getMessage()
+                        + "\n" + navigationDiagnostics(controller, server, trace), failure);
+                try { screenshots.capture("continuous-navigation-http-failure-before-cleanup"); }
+                catch (Throwable captureFailure) { diagnostic.addSuppressed(captureFailure); }
+                throw diagnostic;
             } finally {
                 device.instrumentation.runOnMainSync(() -> { controller.stop(); controller.clearCompletedTask(); });
                 device.instrumentation.waitForIdleSync();
             }
         }
+    }
+
+    private static String navigationDiagnostics(AgentController controller, LocalControllerModelServer server,
+                                                PerformanceTrace.Session trace) {
+        AgentController.State state = controller.getState();
+        StringBuilder text = new StringBuilder("Controller{running=").append(state.running)
+                .append(",paused=").append(state.paused).append(",pending=").append(!state.approvalId.isEmpty())
+                .append(",status=").append(bounded(state.status, 200))
+                .append(",summary=").append(bounded(state.summary, 1_000)).append("}\nHTTP{requests=")
+                .append(server.requestCount()).append(",writePlans=").append(server.writePlanCount())
+                .append(",acceptedResults=").append(server.acceptedWriteCount())
+                .append(",finalObserved=").append(server.finalStateObserved())
+                .append(",expectedHome=").append(bounded(server.expectedHomePackage(), 180))
+                .append(",observedHome=").append(bounded(server.observedHomePackage(), 180)).append('}');
+        for (int index = Math.max(0, state.log.size() - 12); index < state.log.size(); index++) {
+            text.append("\nlog: ").append(bounded(state.log.get(index), 240));
+        }
+        java.util.Map<PerformanceTrace.Stage, Integer> counts = new java.util.EnumMap<>(PerformanceTrace.Stage.class);
+        List<PerformanceTrace.Event> important = new java.util.ArrayList<>();
+        for (PerformanceTrace.Event event : trace.events()) {
+            counts.put(event.stage, counts.getOrDefault(event.stage, 0) + 1);
+            if (event.stage.name().startsWith("SNAPSHOT_") || event.stage == PerformanceTrace.Stage.DEVICE_DISPATCH_ATTEMPT
+                    || event.stage == PerformanceTrace.Stage.STOP_EPOCH_INVALIDATED) important.add(event);
+        }
+        text.append("\ntrace{overwritten=").append(trace.overwrittenCount()).append(",counts=").append(counts).append('}');
+        for (int index = Math.max(0, important.size() - 20); index < important.size(); index++) {
+            PerformanceTrace.Event event = important.get(index);
+            text.append("\ntrace: ").append(event.stage).append(" offsetMs=")
+                    .append((event.startNanos - trace.startedNanos) / 1_000_000)
+                    .append(" durationMs=").append(event.durationNanos / 1_000_000)
+                    .append(" epoch=").append(event.epoch).append(" nodes=").append(event.nodeCount)
+                    .append(" truncated=").append(event.truncated).append(" main=").append(event.mainThread)
+                    .append(" dispatchAttempts=").append(event.dispatchAttempts);
+        }
+        try { text.append('\n').append(bounded(windowDiagnostics(), 12_000)); }
+        catch (RuntimeException unavailable) { text.append("\nWindow diagnostics unavailable: ").append(unavailable.getClass().getSimpleName()); }
+        return text.toString();
+    }
+
+    private static String bounded(String value, int limit) {
+        if (value == null) return "null";
+        return value.length() <= limit ? value : value.substring(0, limit) + "[truncated]";
     }
 
     @Test public void navigationModeCannotEscalateAConfigurationSavedForConfirmation() throws Exception {

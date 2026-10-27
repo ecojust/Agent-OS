@@ -51,49 +51,94 @@ public final class NavigationObservationGuardInstrumentedTest {
             AndroidDeviceTools tools = guardedTools(device, settings, approvals);
             String marker = "Navigation guard: " + scenario;
             for (String tool : new String[]{"scroll", "home", "launch_app"}) {
-                JsonObject before = awaitObservation(tools, device.control,
-                        data -> FIXTURE.equals(string(data, "packageName")) && containsText(data, marker));
-                assertTrue(before.get("scoped").getAsBoolean());
-                assertFalse("The scenario must exercise observation content, not an unrelated overlay", before.get("hasOcclusion").getAsBoolean());
-                assertEquals("Only the deliberately oversized field may truncate this fixture", "truncated".equals(scenario),
-                        before.get("truncated").getAsBoolean());
-                JsonObject scroll = node(before, "fixture_scroll");
-                assertTrue("The rejected tool must have a real scrollable target", scroll.get("scrollable").getAsBoolean());
-                assertTrue(scroll.get("enabled").getAsBoolean());
-                if ("sensitive".equals(scenario)) {
-                    assertTrue(node(before, "password_field").get("password").getAsBoolean());
-                    assertFalse(before.toString().contains("synthetic-navigation-secret"));
-                    assertFalse(before.toString().contains("synthetic-private-navigation-description"));
-                } else if ("high-impact".equals(scenario)) {
-                    assertTrue(containsText(before, "Payment fixture — offline, no account or payment service"));
-                }
-                assertEquals(marker, actualFixtureText(device, "navigation_case_marker"));
-                assertEquals("Scroll changes: 0", actualFixtureText(device, "navigation_scroll_count"));
-                JsonObject args = new JsonObject();
-                if ("launch_app".equals(tool)) args.addProperty("packageName", FIXTURE);
-                else {
-                    args.addProperty("expectedRevision", string(before, "revision"));
-                    if ("scroll".equals(tool)) {
-                        args.addProperty("nodeId", string(scroll, "id"));
-                        args.addProperty("direction", "forward");
-                    }
-                }
-                JsonObject result = tools.execute(tool, args, device.control);
-                assertEquals(tool + " unexpectedly bypassed the observation guard: " + result, expectedCode, string(result, "code"));
-                assertFalseFlag(result, "ok");
-                assertFalseFlag(result, "submitted");
-                assertFalseFlag(result, "dispatchSubmitted");
-                assertEquals(0, approvals.get());
-                assertEquals(0, device.control.getDispatchAttempts());
-                assertFalse(device.control.isCancelled());
-                // Read independent platform nodes, not the tool result or its cached observation.
-                assertEquals(marker, actualFixtureText(device, "navigation_case_marker"));
-                assertEquals("Scroll changes: 0", actualFixtureText(device, "navigation_scroll_count"));
+                verifyRejectedTool(device, tools, approvals, scenario, marker, tool, expectedCode);
             }
             assertNoDispatch(trace);
             assertEquals(0, server.requestCount());
             screenshots.capture("continuous-navigation-rejects-" + scenario + "-observation");
         }
+    }
+
+    private static void verifyRejectedTool(DeviceHarness device, AndroidDeviceTools tools, AtomicInteger approvals,
+                                           String scenario, String marker, String tool, String expectedCode) throws Exception {
+        long epoch = device.control.getExecutionEpoch();
+        // At most three actual plans. Only an explicitly unsubmitted stale plan
+        // permits another real observation; stale alone never passes this test.
+        for (int attempt = 0; attempt < 3; attempt++) {
+            device.awaitUiIdle();
+            device.control.checkExecutionEpoch(epoch);
+            JsonObject before = awaitObservation(tools, device.control,
+                    data -> matchesRiskObservation(data, scenario, marker));
+            assertTrue(before.get("scoped").getAsBoolean());
+            assertFalse("The scenario must exercise observation content, not an unrelated overlay", before.get("hasOcclusion").getAsBoolean());
+            assertEquals("Only the deliberately oversized field may truncate this fixture", "truncated".equals(scenario),
+                    before.get("truncated").getAsBoolean());
+            JsonObject scroll = node(before, "fixture_scroll");
+            assertTrue("The rejected tool must have a real scrollable target", scroll.get("scrollable").getAsBoolean());
+            assertTrue(scroll.get("enabled").getAsBoolean());
+            if ("sensitive".equals(scenario)) {
+                assertTrue(node(before, "password_field").get("password").getAsBoolean());
+                assertFalse(before.toString().contains("synthetic-navigation-secret"));
+                assertFalse(before.toString().contains("synthetic-private-navigation-description"));
+            } else if ("high-impact".equals(scenario)) {
+                assertTrue(containsText(before, "Payment fixture — offline, no account or payment service"));
+            }
+            assertEquals(marker, actualFixtureText(device, "navigation_case_marker"));
+            assertEquals("Scroll changes: 0", actualFixtureText(device, "navigation_scroll_count"));
+            JsonObject args = new JsonObject();
+            if ("launch_app".equals(tool)) args.addProperty("packageName", FIXTURE);
+            else {
+                args.addProperty("expectedRevision", string(before, "revision"));
+                if ("scroll".equals(tool)) {
+                    args.addProperty("nodeId", string(scroll, "id"));
+                    args.addProperty("direction", "forward");
+                }
+            }
+            JsonObject result = tools.execute(tool, args, device.control, epoch);
+            assertFalseFlag(result, "ok");
+            assertFalseFlag(result, "submitted");
+            assertFalseFlag(result, "dispatchSubmitted");
+            assertFalseFlag(result, "dispatchAccepted");
+            assertEquals(0, approvals.get());
+            assertEquals(0, device.control.getDispatchAttempts());
+            device.control.checkExecutionEpoch(epoch);
+            // Read independent platform nodes, not the tool result or its cached observation.
+            assertEquals(marker, actualFixtureText(device, "navigation_case_marker"));
+            assertEquals("Scroll changes: 0", actualFixtureText(device, "navigation_scroll_count"));
+            if ("STALE_OBSERVATION".equals(string(result, "code"))) {
+                assertTrue("The expected risk guard was not reached within three fresh plans: " + result, attempt < 2);
+                continue;
+            }
+            assertEquals(tool + " unexpectedly bypassed the observation guard: " + result, expectedCode, string(result, "code"));
+            String expectedError = "sensitive".equals(scenario) ? "当前页面包含敏感字段，请由用户操作"
+                    : "truncated".equals(scenario) ? "当前观察不完整，无法连续导航，请由用户检查界面"
+                    : "当前页面涉及已知高影响操作，请由用户操作";
+            assertEquals("An unrelated failure cannot stand in for the intended risk guard", expectedError, string(result, "error"));
+            return;
+        }
+        throw new AssertionError("The expected risk guard was never reached");
+    }
+
+    private static boolean matchesRiskObservation(JsonObject data, String scenario, String marker) {
+        if (!FIXTURE.equals(string(data, "packageName")) || !containsText(data, marker)
+                || !data.get("scoped").getAsBoolean() || data.get("hasOcclusion").getAsBoolean()
+                || data.get("truncated").getAsBoolean() != "truncated".equals(scenario)) return false;
+        if ("high-impact".equals(scenario)) return containsText(data, "Payment fixture — offline, no account or payment service");
+        if ("sensitive".equals(scenario)) {
+            for (JsonElement item : data.getAsJsonArray("nodes")) {
+                JsonObject entry = item.getAsJsonObject();
+                if ((FIXTURE + ":id/password_field").equals(string(entry, "viewId"))
+                        && entry.get("password").getAsBoolean()) return true;
+            }
+            return false;
+        }
+        // The long field itself must be observed, not merely an unrelated time-budget truncation.
+        for (JsonElement item : data.getAsJsonArray("nodes")) {
+            JsonObject entry = item.getAsJsonObject();
+            if (string(entry, "text").startsWith("Long fixture field:")
+                    && entry.get("contentTruncated").getAsBoolean()) return true;
+        }
+        return false;
     }
 
     @Test public void anUnscopedSettingsWindowCannotBeReplacedByAnAutomaticLaunch() throws Exception {

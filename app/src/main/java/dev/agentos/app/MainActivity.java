@@ -557,14 +557,16 @@ public final class MainActivity extends Activity implements AgentController.List
                 try {
                     // Start is only invoked from this still-live Activity after the save succeeds.
                     hideCurrentResult = false;
-                    controller.start(model, goal, allowed, settings.executionMode, configurationLease);
-                    messageText.setVisibility(View.GONE);
                     View focus = getCurrentFocus();
                     if (focus != null) {
                         InputMethodManager keyboard = getSystemService(InputMethodManager.class);
                         if (keyboard != null) keyboard.hideSoftInputFromWindow(focus.getWindowToken(), 0);
                         focus.clearFocus();
                     }
+                    // Request dismissal before the worker starts observing. This is
+                    // asynchronous; the device's final obstruction guard still applies.
+                    controller.start(model, goal, allowed, settings.executionMode, configurationLease);
+                    messageText.setVisibility(View.GONE);
                 } catch (RuntimeException error) {
                     showMessage("任务未启动。请确认手机已解锁、操作服务已开启，且没有其他任务运行。", true);
                 }

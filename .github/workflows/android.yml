@@ -67,7 +67,9 @@ jobs:
     timeout-minutes: 35
     strategy:
       fail-fast: false
-      max-parallel: 3
+      # Each API has an isolated runner; keep the same matrix and test count
+      # while avoiding three sequential emulator batches during regression work.
+      max-parallel: 8
       matrix:
         api-level: ['30', '31', '32', '33', '34', '35', '36', '37.0']
     steps:

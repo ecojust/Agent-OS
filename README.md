@@ -25,14 +25,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Added immutable original capture-failure stage snapshots without changing deadlines, permissions or resource ownership; core tests plus ordinary/internal APK and lint checks pass. Three strengthened lifecycle assertions and native API34–37 verification pending; earlier API36 timeout remains unresolved.
+**本次更新：** Archived independently verified API35 walkthrough for a04fe812: 13 completed stages, 22 real screenshots and 418103-byte video. Newer task/capture diagnostics are in the running full matrix; this footage retains its original source.
 
-**记录时间：** 2026-10-27T17:57:55Z
+**记录时间：** 2026-10-27T18:04:54Z
 
 [最近测试截图与清单](screenshots/40549230213-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40549230213)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/40544423996-1/demo.mp4) · [录制与验证清单](screenshots/demos/40544423996-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40544423996)。
-录制版本：[`1a72395dc`](https://github.com/ecojust/Agent-OS/commit/1a72395dc85f795bd34057c8620d4eea472b28c7)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/40553639645-1/demo.mp4) · [录制与验证清单](screenshots/demos/40553639645-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40553639645)。
+录制版本：[`a04fe812f`](https://github.com/ecojust/Agent-OS/commit/a04fe812f6e6590943e8209baad1793a7d79db92)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 | 检查点 | 状态 |
 | --- | --- |

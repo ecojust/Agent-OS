@@ -20,6 +20,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -109,7 +110,7 @@ public final class SlowFinalReadInstrumentedTest {
         }
     }
 
-    @Test public void invalidatingOnlyTheControlLeaseDuringFinalReadRejectsAnOtherwiseUnchangedPlan() throws Exception {
+    @Test public void invalidatingTheControlOwnerDuringFinalReadRejectsAnOtherwiseUnchangedPlan() throws Exception {
         try (DeviceHarness device = new DeviceHarness();
              PerformanceTrace.Session trace = PerformanceTrace.startDiagnostics()) {
             device.launch("SlowActivity");
@@ -171,18 +172,23 @@ public final class SlowFinalReadInstrumentedTest {
                 assertFalse(device.control.isPaused());
                 assertFalse(device.control.isCancelled());
                 PerformanceTrace.Event finalRead = assertFinalSnapshotWasExercised(trace, completed.getLong("startedNanos"), epoch);
-                assertFalse("A truncated snapshot could explain a different revision", finalRead.truncated);
-                assertEquals(baseline.getAsJsonArray("nodes").size(), finalRead.nodeCount);
-                assertTrue("The final snapshot did not complete normally", finalRead.nodeCount > 0 && finalRead.snapshotJsonBytes > 0);
+                // Revoking callbacks now invalidates both the action lease and its
+                // owned-window identity. The resumed final read must not publish a
+                // completed snapshot; these sentinels do not identify a finer stage.
+                assertEquals("A revoked control owner must not yield a completed final snapshot", -1, finalRead.nodeCount);
+                assertEquals("No completed final snapshot may be serialized", -1, finalRead.snapshotJsonBytes);
+                int baselineBytes = baseline.toString().getBytes(StandardCharsets.UTF_8).length;
                 int preparations = 0;
                 for (PerformanceTrace.Event event : trace.events()) {
                     if (event.stage != PerformanceTrace.Stage.SNAPSHOT_PREPARE || event.epoch != epoch) continue;
                     preparations++;
                     assertFalse(event.truncated);
-                    assertEquals(event.nodeCount, finalRead.nodeCount);
-                    assertEquals(event.snapshotJsonBytes, finalRead.snapshotJsonBytes);
+                    assertTrue("The preparatory snapshot must be complete", event.nodeCount > 0 && event.snapshotJsonBytes > 0);
+                    assertEquals(baseline.getAsJsonArray("nodes").size(), event.nodeCount);
+                    assertEquals(baselineBytes, event.snapshotJsonBytes);
                 }
                 assertEquals(1, preparations);
+                assertEquals("No diagnostic events may be missing", 0, trace.overwrittenCount());
                 assertEquals("Count: 0", actualCounter(device));
 
                 // Restore only callbacks, with no tree/layout edits. Identical revision

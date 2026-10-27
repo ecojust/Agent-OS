@@ -178,9 +178,7 @@ public final class WindowCapturePermitInstrumentedTest {
                 Intent intent = new Intent().setComponent(new ComponentName(FIXTURE, FIXTURE + ".NavigationGuardActivity"))
                         .putExtra("scenario", scenarios[i]).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 env.device.context.startActivity(intent); env.device.instrumentation.waitForIdleSync(); env.device.awaitUiIdle();
-                JsonObject observed = observe(env); AndroidDeviceTools.WindowCaptureFailure reason = reasons[i];
-                assertFailure(reason, () -> env.tools.prepareWindowCapture(env.device.control,
-                        env.device.control.getExecutionEpoch(), string(observed, "revision")));
+                assertObservedRejection(env, reasons[i]);
             }
             env.device.launch("CapturePatternActivity");
             AndroidDeviceTools unscoped = configuredTools(env.device, env.settings.lease, false);
@@ -254,6 +252,30 @@ public final class WindowCapturePermitInstrumentedTest {
     private static AndroidDeviceTools.WindowCapturePermit prepare(Environment env) throws Exception {
         JsonObject observed = observe(env);
         return env.tools.prepareWindowCapture(env.device.control, env.device.control.getExecutionEpoch(), string(observed, "revision"));
+    }
+
+    /** Only read-only page classification: no permit or native submission is accepted on any attempt. */
+    private static void assertObservedRejection(Environment env, AndroidDeviceTools.WindowCaptureFailure expected) throws Exception {
+        long epoch = env.device.control.getExecutionEpoch();
+        for (int attempt = 0; attempt < 3; attempt++) {
+            env.device.control.checkExecutionEpoch(epoch);
+            JsonObject observed = observe(env);
+            try {
+                env.tools.prepareWindowCapture(env.device.control, epoch, string(observed, "revision"));
+                fail("A restricted page issued a capture permit instead of " + expected);
+            } catch (AndroidDeviceTools.WindowCaptureException actual) {
+                assertNoVisualCapabilityOrMutation(env);
+                env.device.control.checkExecutionEpoch(epoch);
+                // An actual window/input transition can interrupt the snapshot
+                // before it reaches the page rule. Discard the whole observation;
+                // do not reuse its revision or accept STALE as the rule's proof.
+                if (actual.code == STALE_OBSERVATION && attempt < 2) continue;
+                assertEquals("Fresh page classification attempt " + (attempt + 1) + ": " + actual,
+                        expected, actual.code);
+                return;
+            }
+        }
+        throw new AssertionError("Bounded read-only page classification did not finish");
     }
 
     private static void assertNoVisualCapabilityOrMutation(Environment env) {

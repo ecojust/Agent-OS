@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "kind": "third-party-smoke-lock",
+  "sampleId": "calculator-1.4.0",
+  "app": {
+    "package": "org.fossify.math",
+    "versionName": "1.4.0",
+    "versionCode": "10",
+    "url": "https://github.com/FossifyOrg/Calculator/releases/download/1.4.0/calculator-10-foss-release.apk",
+    "sizeBytes": 7047681,
+    "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+    "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+    "minSdk": 26,
+    "targetSdk": 36,
+    "abis": ["arm64-v8a", "armeabi-v7a", "x86", "x86_64"],
+    "license": "GPL-3.0"
+  },
+  "apis": [30, 35, 37],
+  "scope": {
+    "deviceKind": "dedicated_emulator",
+    "states": ["off", "idle"],
+    "operation": "Fresh installation and launcher startup; calculate 2 + 3 and independently read result 5.",
+    "data": "Synthetic arithmetic only; no accounts or user files.",
+    "executing": "unverified",
+    "upgrade": "unverified",
+    "physicalDevices": "unverified",
+    "releaseAcceptance": false
+  },
+  "sources": {
+    "release": "https://github.com/FossifyOrg/Calculator/releases/tag/1.4.0",
+    "license": "https://github.com/FossifyOrg/Calculator/blob/1.4.0/LICENSE",
+    "layout": "https://github.com/FossifyOrg/Calculator/blob/1.4.0/app/src/main/res/layout/view_calculator.xml"
+  }
+}

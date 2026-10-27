@@ -53,15 +53,22 @@ jobs:
             --jobs "$RUNNER_TEMP/inspection-jobs.json" --artifacts "$RUNNER_TEMP/inspection-artifacts.json" \
             --api-label "$API_LABEL" --github-output "$GITHUB_OUTPUT"
       - name: Download only the verified report
+        if: steps.report.outputs.report_available == 'true' && steps.report.outputs.artifact_id != ''
         uses: actions/download-artifact@v4
         with:
           github-token: ${{ github.token }}
           run-id: ${{ steps.source.outputs.run_id }}
           artifact-ids: ${{ steps.report.outputs.artifact_id }}
           path: ${{ runner.temp }}/inspection-report
-      - name: Print bounded JUnit diagnostics
+      - name: Print bounded JUnit or structured job progress
+        env:
+          GH_TOKEN: ${{ github.token }}
+          API_LABEL: ${{ inputs.api_label }}
         run: |
-          python3 scripts/inspect_android_job.py print --directory "$RUNNER_TEMP/inspection-report" > "$RUNNER_TEMP/inspection-summary.txt"
+          python3 scripts/inspect_android_job.py inspect \
+            --run "$RUNNER_TEMP/inspection-run.json" --repository "$GITHUB_REPOSITORY" \
+            --jobs "$RUNNER_TEMP/inspection-jobs.json" --artifacts "$RUNNER_TEMP/inspection-artifacts.json" \
+            --api-label "$API_LABEL" --directory "$RUNNER_TEMP/inspection-report" > "$RUNNER_TEMP/inspection-summary.txt"
           python3 - <<'PY'
           import os
           from pathlib import Path
@@ -70,5 +77,5 @@ jobs:
           text = (Path(os.environ['RUNNER_TEMP']) / 'inspection-summary.txt').read_text()[:64000]
           for index, start in enumerate(range(0, len(text), 8000), 1):
               message = text[start:start + 8000].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
-              print(f'::notice title=Android JUnit diagnostic {index}::{message}')
+              print(f'::notice title=Android job diagnostic {index}::{message}')
           PY

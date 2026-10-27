@@ -25,11 +25,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Archive the first fixed-page run exactly: 20/20 failed at initial basic-page recognition, no missing cases. Installation and production-service reads succeeded; native container actions/roles differ from the candidate assumptions. Verified 136 payloads, 40 test-only PNGs and 20 blocked standard captures; no screenshot capability enabled.
+**本次更新：** 归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。
 
-**记录时间：** 2026-10-27T13:06:32Z
+**记录时间：** 2026-10-27T13:08:43Z
 
-[最近测试截图与清单](screenshots/40504724795-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40504724795)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40507386749-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40507386749)。通过、失败及未截图原因见清单。
 
 | 检查点 | 状态 |
 | --- | --- |

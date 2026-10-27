@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 1,
+  "kind": "third-party-calculator-smoke",
+  "actualInstalledIdentityVerified": true,
+  "installedIdentityFailureSeen": false,
+  "states": [
+    {
+      "state": "off",
+      "status": "failed",
+      "stage": "launch_calculator",
+      "installedIdentityVerified": true,
+      "serviceState": "disabled",
+      "serviceObservations": [
+        {
+          "stage": "before",
+          "state": "disabled",
+          "verified": true,
+          "observedAt": 1793066342969,
+          "raw": {
+            "settingsEnabledServices": "",
+            "settingsAccessibilityEnabled": "0",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        }
+      ],
+      "serviceActionObservations": [
+        {
+          "stage": "before_launch",
+          "state": "disabled",
+          "verified": true,
+          "observedAt": 1793066342982,
+          "raw": {
+            "settingsEnabledServices": "",
+            "settingsAccessibilityEnabled": "0",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        }
+      ],
+      "steps": [
+        {
+          "name": "installed_identity",
+          "status": "passed",
+          "details": "PackageManager identity and installed APK digest match the frozen official release"
+        },
+        {
+          "name": "service_state_before",
+          "status": "passed",
+          "details": "Settings, accessibility binding and activity service records agree"
+        },
+        {
+          "name": "launch_calculator",
+          "status": "failed",
+          "details": "AssertionError: Calculator did not become the unique unobscured focused window: Calculator is obscured by an unknown window: id=3 type=3 layer=1 bounds=[0,0][320,24] title= package=com.android.systemui"
+        },
+        {
+          "name": "restore_service_settings",
+          "status": "passed",
+          "details": "Original accessibility component list restored and Agent service unbound; system owns the global accessibility flag"
+        }
+      ],
+      "captures": [
+        {
+          "stage": "failure",
+          "capturedAt": 1793066353094,
+          "secureFlagsCleared": false,
+          "status": "blocked",
+          "reason": "unverified_identity_window_or_obscuration",
+          "detail": "Calculator is obscured by an unknown window: id=3 type=3 layer=1 bounds=[0,0][320,24] title= package=com.android.systemui"
+        }
+      ],
+      "result": {
+        "expected": "5",
+        "actual": null,
+        "resourceId": "org.fossify.math:id\/result"
+      },
+      "startedAt": 1793066342921,
+      "installedIdentity": {
+        "package": "org.fossify.math",
+        "versionName": "1.4.0",
+        "versionCode": "10",
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "apkSha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "uid": 10131
+      },
+      "error": "AssertionError: Calculator did not become the unique unobscured focused window: Calculator is obscured by an unknown window: id=3 type=3 layer=1 bounds=[0,0][320,24] title= package=com.android.systemui",
+      "finishedAt": 1793066353137
+    },
+    {
+      "state": "idle",
+      "status": "failed",
+      "stage": "launch_calculator",
+      "installedIdentityVerified": true,
+      "serviceState": "bound_idle",
+      "serviceObservations": [
+        {
+          "stage": "before",
+          "state": "bound_idle",
+          "verified": true,
+          "observedAt": 1793066332803,
+          "raw": {
+            "settingsEnabledServices": "dev.agentos.app\/dev.agentos.app.AgentAccessibilityService",
+            "settingsAccessibilityEnabled": "1",
+            "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+            "accessibilityEnabledServices": "{{dev.agentos.app\/dev.agentos.app.AgentAccessibilityService}}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "* ServiceRecord{cdafeee u0 dev.agentos.app\/.AgentAccessibilityService}\napp=ProcessRecord{5d5daa2 2335:dev.agentos.app\/u0a130}\nConnectionRecord{b103684 u0 CR FGSA CAPS dev.agentos.app\/.AgentAccessibilityService:@94c5497}\nConnectionRecord{b103684 u0 CR FGSA CAPS dev.agentos.app\/.AgentAccessibilityService:@94c5497}\n* ConnectionRecord{b103684 u0 CR FGSA CAPS dev.agentos.app\/.AgentAccessibilityService:@94c5497}\n",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        }
+      ],
+      "serviceActionObservations": [
+        {
+          "stage": "before_launch",
+          "state": "bound_idle",
+          "verified": true,
+          "observedAt": 1793066332816,
+          "raw": {
+            "settingsEnabledServices": "dev.agentos.app\/dev.agentos.app.AgentAccessibilityService",
+            "settingsAccessibilityEnabled": "1",
+            "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+            "accessibilityEnabledServices": "{{dev.agentos.app\/dev.agentos.app.AgentAccessibilityService}}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "* ServiceRecord{cdafeee u0 dev.agentos.app\/.AgentAccessibilityService}\napp=ProcessRecord{5d5daa2 2335:dev.agentos.app\/u0a130}\nConnectionRecord{b103684 u0 CR FGSA CAPS dev.agentos.app\/.AgentAccessibilityService:@94c5497}\nConnectionRecord{b103684 u0 CR FGSA CAPS dev.agentos.app\/.AgentAccessibilityService:@94c5497}\n* ConnectionRecord{b103684 u0 CR FGSA CAPS dev.agentos.app\/.AgentAccessibilityService:@94c5497}\n",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        }
+      ],
+      "steps": [
+        {
+          "name": "installed_identity",
+          "status": "passed",
+          "details": "PackageManager identity and installed APK digest match the frozen official release"
+        },
+        {
+          "name": "service_state_before",
+          "status": "passed",
+          "details": "Settings, accessibility binding and activity service records agree"
+        },
+        {
+          "name": "launch_calculator",
+          "status": "failed",
+          "details": "AssertionError: Calculator did not become the unique unobscured focused window: Calculator is obscured by an unknown window: id=3 type=3 layer=1 bounds=[0,0][320,24] title= package=com.android.systemui"
+        },
+        {
+          "name": "restore_service_settings",
+          "status": "passed",
+          "details": "Original accessibility component list restored and Agent service unbound; system owns the global accessibility flag"
+        }
+      ],
+      "captures": [
+        {
+          "stage": "failure",
+          "capturedAt": 1793066342843,
+          "secureFlagsCleared": false,
+          "status": "blocked",
+          "reason": "unverified_identity_window_or_obscuration",
+          "detail": "Calculator is obscured by an unknown window: id=3 type=3 layer=1 bounds=[0,0][320,24] title= package=com.android.systemui"
+        }
+      ],
+      "result": {
+        "expected": "5",
+        "actual": null,
+        "resourceId": "org.fossify.math:id\/result"
+      },
+      "startedAt": 1793066332426,
+      "installedIdentity": {
+        "package": "org.fossify.math",
+        "versionName": "1.4.0",
+        "versionCode": "10",
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "apkSha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "uid": 10131
+      },
+      "error": "AssertionError: Calculator did not become the unique unobscured focused window: Calculator is obscured by an unknown window: id=3 type=3 layer=1 bounds=[0,0][320,24] title= package=com.android.systemui",
+      "finishedAt": 1793066342917
+    }
+  ],
+  "updatedAt": 1793066353137,
+  "source": {
+    "sha": "bc49e0561a85ed057223fb7c9ad271e0c48677e3",
+    "runId": "40435450893",
+    "attempt": "1",
+    "expectedApi": "30",
+    "deviceSerial": "emulator-5554"
+  },
+  "device": {
+    "sdkInt": 30,
+    "fingerprint": "Android\/sdk_phone_x86_64\/generic_x86_64:11\/RSR1.210722.013.A2\/10067904:userdebug\/test-keys",
+    "kernelQemu": "1",
+    "bootQemu": "",
+    "kind": "emulator",
+    "abi": "[x86_64, x86]"
+  },
+  "dedicatedEmulatorVerified": true
+}

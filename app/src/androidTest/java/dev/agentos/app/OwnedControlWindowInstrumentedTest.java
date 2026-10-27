@@ -272,7 +272,7 @@ public final class OwnedControlWindowInstrumentedTest {
             AgentAccessibilityService.ControlLease dragged = lease(service);
             assertEquals(compact.windowId, dragged.windowId);
             assertTrue("The drag must move the real control window", dragged.copyBounds().top > compact.copyBounds().top);
-            assertFreshRegisteredAfterDrag(device, dragged.windowId, dragged.displayId, dragged.copyBounds());
+            assertFreshRegisteredAfterDrag(device, dragged.windowId, dragged.displayId, dragged.copyBounds(), screenshots);
             assertNull("A later stable frame cannot reissue the old collapse", service.approvalCollapseFor(dragged));
             safeMain(device, () -> service.showOverlay("Collapse readiness", false, ""));
             assertSame(dragged, lease(service));
@@ -386,10 +386,23 @@ public final class OwnedControlWindowInstrumentedTest {
     }
 
     /** Only the completed real drag needs a cache-fresh registration observation. */
-    private static void assertFreshRegisteredAfterDrag(DeviceHarness device, int id, int displayId, Rect bounds) throws Exception {
+    private static void assertFreshRegisteredAfterDrag(DeviceHarness device, int id, int displayId, Rect bounds,
+                                                       ScreenshotEvidence screenshots) throws Exception {
         assertTrue("No device operation may overlap the drag registration read", device.service.tryBeginDeviceCall());
         try { assertRegistered(device, id, displayId, bounds, true); }
-        finally { device.service.endDeviceCall(); }
+        catch (AssertionError original) {
+            // The original five-second assertion has already failed. These sequential,
+            // read-only measurements cannot convert it to success or renew any identity.
+            String diagnostics;
+            try { diagnostics = OwnedControlDragDiagnostics.sample(device, id, displayId, bounds); }
+            catch (Throwable unavailable) {
+                original.addSuppressed(unavailable);
+                diagnostics = "Drag measurements unavailable: " + unavailable.getClass().getSimpleName();
+            }
+            try { screenshots.capture("drag-registration-failed-before-cleanup"); }
+            catch (Throwable captureFailure) { original.addSuppressed(captureFailure); }
+            throw new AssertionError(original.getMessage() + "\n" + diagnostics, original);
+        } finally { device.service.endDeviceCall(); }
     }
 
     /** Both genuine and look-alike windows satisfy this metadata; it is not proof of ownership. */

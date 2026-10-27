@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T16:07:18Z",
-  "note": "Archive round 55 without hiding the remaining issue: all 1,936 cases are present, 1,933 pass and the same three API30–32 post-drag checks still fail after a fresh-window read. All eight real-button approval cases pass. Independently verify 4,106 payloads and 2,138 screenshots; keep the drag issue open for focused platform diagnostics.",
+  "updated_at": "2026-10-27T16:15:35Z",
+  "note": "Add failure-only measurements for the unresolved legacy Android drag discrepancy: local View/layout parameters, actual root bounds, bounded native window fields and a screenshot before cleanup. Original assertions and execution guards are unchanged. Thirteen synthetic parser checks and the test APK build pass; actual diagnostic execution is pending.",
   "latest_evidence": {
     "path": "screenshots/40534427816-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40534427816"

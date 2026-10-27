@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Archive round 55 without hiding the remaining issue: all 1,936 cases are present, 1,933 pass and the same three API30–32 post-drag checks still fail after a fresh-window read. All eight real-button approval cases pass. Independently verify 4,106 payloads and 2,138 screenshots; keep the drag issue open for focused platform diagnostics.
+**本次更新：** Add failure-only measurements for the unresolved legacy Android drag discrepancy: local View/layout parameters, actual root bounds, bounded native window fields and a screenshot before cleanup. Original assertions and execution guards are unchanged. Thirteen synthetic parser checks and the test APK build pass; actual diagnostic execution is pending.
 
-**记录时间：** 2026-10-27T16:07:18Z
+**记录时间：** 2026-10-27T16:15:35Z
 
 [最近测试截图与清单](screenshots/40534427816-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40534427816)。通过、失败及未截图原因见清单。
 

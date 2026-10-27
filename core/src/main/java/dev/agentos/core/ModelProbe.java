@@ -25,7 +25,7 @@ public final class ModelProbe {
             messages.add(message("system", "这是一次合成协议测试，不包含真实用户任务、应用内容或设备操作。请只调用提供的无副作用测试工具，严格使用给定参数。"));
             messages.add(message("user", "调用 " + TOOL_NAME + " 一次，nonce 参数为：" + nonce + "。不要请求其他操作。"));
             control.consumeModelRound();
-            JsonObject response = client.request(settings, messages, definitions(nonce), control, epoch);
+            JsonObject response = client.request(settings, messages, definitions(nonce), ModelRequestContext.syntheticRequest(control, epoch));
             control.checkExecutionEpoch(epoch);
             if (verified(response, nonce)) {
                 return new Result(true, true, "连接与工具调用协议测试通过。此次仅验证合成请求，不代表图像能力或实际手机任务已通过。", "TOOL_CALLING_VERIFIED");

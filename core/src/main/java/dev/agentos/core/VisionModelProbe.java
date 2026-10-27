@@ -45,7 +45,7 @@ public final class VisionModelProbe {
             messages = messages(nonce, challenge.png);
             control.checkExecutionEpoch(epoch);
             control.consumeModelRound();
-            JsonObject response = client.request(settings, messages, definitions(nonce), control, epoch);
+            JsonObject response = client.request(settings, messages, definitions(nonce), ModelRequestContext.syntheticRequest(control, epoch));
             control.checkExecutionEpoch(epoch);
             boolean verified = verified(response, nonce, challenge.order);
             control.checkExecutionEpoch(epoch);

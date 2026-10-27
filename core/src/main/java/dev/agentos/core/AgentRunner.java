@@ -36,13 +36,31 @@ public final class AgentRunner {
     private final ToolHandler tools;
     private final Listener listener;
     private final HttpModelClient client;
-    public AgentRunner(ModelSettings settings, ToolHandler tools, Listener listener) { this(settings, tools, listener, new HttpModelClient()); }
+    private final DisclosureGuard disclosureGuard;
+    private final RunControl owner;
+    private final java.util.concurrent.atomic.AtomicBoolean started = new java.util.concurrent.atomic.AtomicBoolean();
+
+    public AgentRunner(ModelSettings settings, ToolHandler tools, Listener listener,
+                       RunControl owner, DisclosureGuard disclosureGuard) {
+        this(settings, tools, listener, new HttpModelClient(), java.util.Objects.requireNonNull(owner), disclosureGuard);
+    }
+
+    // Device-free same-package tests retain their concise construction; production
+    // callers must explicitly bind both the original task and its disclosure lease.
+    AgentRunner(ModelSettings settings, ToolHandler tools, Listener listener) { this(settings, tools, listener, new HttpModelClient()); }
     AgentRunner(ModelSettings settings, ToolHandler tools, Listener listener, HttpModelClient client) {
+        this(settings, tools, listener, client, null, ModelRequestContext.syntheticTestGuard());
+    }
+    AgentRunner(ModelSettings settings, ToolHandler tools, Listener listener, HttpModelClient client,
+                RunControl owner, DisclosureGuard disclosureGuard) {
         this.settings = java.util.Objects.requireNonNull(settings); this.tools = java.util.Objects.requireNonNull(tools);
-        this.listener = java.util.Objects.requireNonNull(listener); this.client = client;
+        this.listener = java.util.Objects.requireNonNull(listener); this.client = java.util.Objects.requireNonNull(client);
+        this.owner = owner; this.disclosureGuard = java.util.Objects.requireNonNull(disclosureGuard);
     }
 
     public void run(String task, RunControl control) {
+        if (control == null || owner != null && owner != control) throw new IllegalArgumentException("执行控制不属于本次任务。");
+        if (!started.compareAndSet(false, true)) throw new IllegalStateException("任务执行器不能重复使用。");
         TaskResult completion;
         State state = new State();
         ToolHandler guarded = new ToolHandler() {
@@ -93,10 +111,18 @@ public final class AgentRunner {
                     JsonObject response;
                     ImageAttachment outgoing = state.takeImage();
                     JsonArray requestMessages = null;
+                    ModelRequestContext requestContext = new ModelRequestContext(control, epoch, disclosureGuard);
                     try {
+                        requestContext.check();
                         requestMessages = messages(task, history, state.latestObservation);
-                        if (outgoing != null) requestMessages.add(imageMessage(outgoing.consumeDataUrl(control, epoch, state.revision)));
-                        response = client.request(settings, requestMessages, ToolCatalog.definitions(tools.availableTools()), control, epoch);
+                        requestContext.check();
+                        if (outgoing != null) {
+                            requestContext.check();
+                            requestMessages.add(imageMessage(outgoing.consumeDataUrl(control, epoch, state.revision)));
+                            requestContext.check();
+                        }
+                        response = client.request(settings, requestMessages, ToolCatalog.definitions(tools.availableTools()), requestContext);
+                        requestContext.check();
                     } finally {
                         if (outgoing != null) outgoing.close();
                         if (requestMessages != null) requestMessages.asList().clear();
@@ -107,6 +133,7 @@ public final class AgentRunner {
                     if (calls.isEmpty()) {
                         String content = string(message, "content", 12_000);
                         if (content == null || content.trim().isEmpty()) throw new ModelException("INVALID_RESPONSE", "模型没有返回工具请求或最终说明。");
+                        requestContext.check();
                         completion = new TaskResult(TaskResult.Kind.MODEL_REPORT, "模型报告（目标尚未由执行器验证）：\n" + scrub(content), "MODEL_REPORT");
                         break;
                     }

@@ -9,6 +9,7 @@ import android.os.SystemClock;
 
 import dev.agentos.core.AgentRunner;
 import dev.agentos.core.ActionConfirmationPolicy;
+import dev.agentos.core.DisclosureGuard;
 import dev.agentos.core.ModelSettings;
 import dev.agentos.core.RunControl;
 import dev.agentos.core.TaskControlException;
@@ -89,6 +90,21 @@ public final class AgentController {
     }
 
     private AgentController(Context context) { this.context = context.getApplicationContext(); }
+
+    /**
+     * The same factory binds production requests and package-level regression tests.
+     * This check must not decrypt settings, query Android, acquire the store lock or
+     * wait for invalidation listeners. The core request context cancels only its
+     * originating RunControl when the published lease is no longer current.
+     */
+    static DisclosureGuard disclosureGuardFor(RunControl owner, SettingsStore.ConfigurationLease lease) {
+        java.util.Objects.requireNonNull(owner, "owner");
+        java.util.Objects.requireNonNull(lease, "lease");
+        return (original, epoch) -> original == owner
+                && owner.getProfileId().equals(lease.profileId)
+                && epoch == owner.getExecutionEpoch()
+                && SettingsStore.isCurrent(lease);
+    }
 
     public static AgentController get(Context context) {
         if (instance == null) {
@@ -222,7 +238,7 @@ public final class AgentController {
                         finish(session, result, success);
                     }
                     @Override public void onResult(TaskResult result) { finish(session, result); }
-                });
+                }, active, disclosureGuardFor(active, configurationLease));
                 active.checkCancelled();
                 runner.run(task.trim(), active);
                 // A runner must finish exactly once. This fallback prevents stale UI on a faulty adapter.

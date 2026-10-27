@@ -5,8 +5,10 @@ import com.google.gson.JsonObject;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CancellationException;
@@ -25,25 +27,39 @@ final class HttpModelClient {
     private static final ThreadPoolExecutor NETWORK = executor("agent-model-network");
     private static final ThreadPoolExecutor CLOSER = executor("agent-model-close");
     private final long requestTimeoutMillis;
+    private final ConnectionFactory connections;
+
+    @FunctionalInterface interface ConnectionFactory { HttpURLConnection open(URL url) throws IOException; }
 
     HttpModelClient() { this(90_000); }
-    HttpModelClient(long requestTimeoutMillis) {
+    HttpModelClient(long requestTimeoutMillis) { this(requestTimeoutMillis, url -> (HttpURLConnection) url.openConnection()); }
+    HttpModelClient(long requestTimeoutMillis, ConnectionFactory connections) {
         if (requestTimeoutMillis < 1 || requestTimeoutMillis > 90_000) throw new IllegalArgumentException();
         this.requestTimeoutMillis = requestTimeoutMillis;
+        this.connections = java.util.Objects.requireNonNull(connections);
     }
 
-    JsonObject request(ModelSettings settings, JsonArray messages, JsonArray tools, RunControl control, long epoch)
+    /** Package-only synthetic test helper; production requests always supply their bound context. */
+    JsonObject requestSynthetic(ModelSettings settings, JsonArray messages, JsonArray tools, RunControl control, long epoch)
             throws ModelException, InterruptedException {
-        control.checkExecutionEpoch(epoch);
+        return request(settings, messages, tools, ModelRequestContext.syntheticRequest(control, epoch));
+    }
+
+    JsonObject request(ModelSettings settings, JsonArray messages, JsonArray tools, ModelRequestContext context)
+            throws ModelException, InterruptedException {
+        context.check();
+        RunControl control = context.control;
         JsonObject body = new JsonObject(); body.addProperty("model", settings.model); body.add("messages", messages.deepCopy());
         body.add("tools", tools.deepCopy()); body.addProperty("tool_choice", "auto"); body.addProperty("stream", false);
         body.addProperty("max_tokens", settings.maxOutputTokens);
+        context.check();
         byte[] payload = body.toString().getBytes(StandardCharsets.UTF_8);
+        context.check();
         if (payload.length > MAX_REQUEST_BYTES) throw new ModelException("CONTEXT_LIMIT", "任务上下文过大，已停止发送；请缩小任务范围。");
         long remainingBudget = control.remainingActiveMillis();
         long timeout = Math.max(1, Math.min(requestTimeoutMillis, remainingBudget));
         AtomicReference<HttpURLConnection> connection = new AtomicReference<>();
-        FutureTask<JsonObject> work = new FutureTask<>(() -> exchange(settings, payload, control, epoch, connection));
+        FutureTask<JsonObject> work = new FutureTask<>(() -> exchange(settings, payload, context, connection));
         Runnable abort = () -> {
             work.cancel(true);
             NETWORK.remove(work);
@@ -52,22 +68,22 @@ final class HttpModelClient {
         };
         control.setCancelHook(abort);
         try {
-            control.checkExecutionEpoch(epoch);
+            context.check();
             try { NETWORK.execute(work); }
             catch (RejectedExecutionException busy) { throw new ModelException("NETWORK_BUSY", "上次网络请求尚在释放资源，请稍后重新开始任务。"); }
             JsonObject result = work.get(timeout, TimeUnit.MILLISECONDS);
-            control.checkExecutionEpoch(epoch);
+            context.check();
             return result;
         } catch (CancellationException cancelled) {
-            control.checkExecutionEpoch(epoch);
+            context.check();
             throw new ModelException("REQUEST_CANCELLED", "模型请求已取消。");
         } catch (TimeoutException timedOut) {
             abort.run();
-            control.checkExecutionEpoch(epoch);
+            context.check();
             if (remainingBudget <= requestTimeoutMillis) throw new TaskControlException("BUDGET_EXCEEDED", "任务活动时间已达到上限。");
             throw new ModelException("TIMEOUT", "模型请求已达到总时限，未自动重发；请检查服务后重新开始。");
         } catch (ExecutionException failed) {
-            control.checkExecutionEpoch(epoch);
+            context.check();
             Throwable cause = failed.getCause();
             if (cause instanceof ModelException) throw (ModelException) cause;
             if (cause instanceof TaskControlException) throw (TaskControlException) cause;
@@ -80,12 +96,16 @@ final class HttpModelClient {
         }
     }
 
-    private JsonObject exchange(ModelSettings settings, byte[] payload, RunControl control, long epoch,
+    private JsonObject exchange(ModelSettings settings, byte[] payload, ModelRequestContext context,
                                 AtomicReference<HttpURLConnection> active) throws Exception {
-        control.checkExecutionEpoch(epoch);
-        HttpURLConnection connection = (HttpURLConnection) settings.completionUrl().openConnection();
+        // Recheck on the network worker, even if this request spent time queued.
+        context.check();
+        URL endpoint = settings.completionUrl();
+        context.check();
+        HttpURLConnection connection = connections.open(endpoint);
         active.set(connection);
         try {
+            context.check();
             connection.setInstanceFollowRedirects(false);
             connection.setConnectTimeout(10_000); connection.setReadTimeout(30_000);
             connection.setRequestMethod("POST"); connection.setDoOutput(true);
@@ -93,21 +113,40 @@ final class HttpModelClient {
             connection.setRequestProperty("Accept", "application/json");
             if (!settings.apiKey.isEmpty()) connection.setRequestProperty("Authorization", "Bearer " + settings.apiKey);
             connection.setFixedLengthStreamingMode(payload.length);
-            control.checkExecutionEpoch(epoch);
-            try (OutputStream output = connection.getOutputStream()) { output.write(payload); }
-            control.checkExecutionEpoch(epoch);
+            context.check();
+            // getOutputStream may already connect and send headers. A check after
+            // it returns prevents a stale first body write; no local check can
+            // retract headers or make the following transport operation atomic.
+            try (OutputStream output = connection.getOutputStream()) {
+                context.check();
+                for (int offset = 0; offset < payload.length; offset += 8192) {
+                    context.check();
+                    output.write(payload, offset, Math.min(8192, payload.length - offset));
+                    context.check();
+                }
+            }
+            context.check();
             int status = connection.getResponseCode();
+            context.check();
             if (status < 200 || status >= 300) throw statusError(status);
             long declared = connection.getContentLengthLong();
             if (declared > MAX_RESPONSE_BYTES) throw new ModelException("RESPONSE_LIMIT", "模型响应超过大小上限。");
             try (InputStream input = connection.getInputStream(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-                byte[] buffer = new byte[8192]; int read;
-                while ((read = input.read(buffer)) != -1) {
-                    control.checkExecutionEpoch(epoch);
+                byte[] buffer = new byte[8192];
+                while (true) {
+                    context.check();
+                    int read = input.read(buffer);
+                    context.check();
+                    if (read == -1) break;
                     if (output.size() + read > MAX_RESPONSE_BYTES) throw new ModelException("RESPONSE_LIMIT", "模型响应超过大小上限。");
                     output.write(buffer, 0, read);
                 }
-                try { return StrictJson.object(new String(output.toByteArray(), StandardCharsets.UTF_8)); }
+                try {
+                    context.check();
+                    JsonObject result = StrictJson.object(new String(output.toByteArray(), StandardCharsets.UTF_8));
+                    context.check();
+                    return result;
+                }
                 catch (IllegalArgumentException malformed) { throw new ModelException("INVALID_RESPONSE", "模型未返回有效的完整 JSON 响应。"); }
             }
         } finally { active.compareAndSet(connection, null); connection.disconnect(); }

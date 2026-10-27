@@ -32,7 +32,7 @@ public class HttpModelClientTest {
         try {
             ModelSettings settings=new ModelSettings("http://127.0.0.1:"+server.getAddress().getPort()+"/v1","secret","model");
             long start=System.nanoTime();
-            ModelException error=assertThrows(ModelException.class,()->new HttpModelClient(250).request(settings,new JsonArray(),new JsonArray(),control,control.getExecutionEpoch()));
+            ModelException error=assertThrows(ModelException.class,()->new HttpModelClient(250).requestSynthetic(settings,new JsonArray(),new JsonArray(),control,control.getExecutionEpoch()));
             assertEquals("TIMEOUT",error.code);assertEquals(1,requests.get());
             assertTrue("deadline must apply despite steady progress",TimeUnit.NANOSECONDS.toMillis(System.nanoTime()-start)<1500);
         } finally {finished.countDown();control.cancel();server.stop(0);worker.shutdownNow();}
@@ -45,7 +45,7 @@ public class HttpModelClientTest {
         RunControl control=new RunControl("personal-test",new TaskBudget(30,100,250));
         try {
             ModelSettings settings=new ModelSettings("http://127.0.0.1:"+server.getAddress().getPort()+"/v1","secret","model");
-            TaskControlException error=assertThrows(TaskControlException.class,()->new HttpModelClient(1000).request(settings,new JsonArray(),new JsonArray(),control,control.getExecutionEpoch()));
+            TaskControlException error=assertThrows(TaskControlException.class,()->new HttpModelClient(1000).requestSynthetic(settings,new JsonArray(),new JsonArray(),control,control.getExecutionEpoch()));
             assertEquals("BUDGET_EXCEEDED",error.getCode());
         } finally {release.countDown();control.cancel();server.stop(0);worker.shutdownNow();}
     }

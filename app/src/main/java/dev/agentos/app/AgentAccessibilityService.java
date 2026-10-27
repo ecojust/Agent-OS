@@ -265,6 +265,15 @@ public final class AgentAccessibilityService extends AccessibilityService {
     SecureImageReviewOverlay showImageReview(ImageReviewSession session, RunControl originalControl, long originalEpoch,
                                              SettingsStore.ConfigurationLease configuration,
                                              SecureImageReviewOverlay.Listener listener, ImagePreviewLoader.Decoder decoder) {
+        return showImageReview(session, originalControl, originalEpoch, configuration, listener,
+                decoder, WindowManager::removeViewImmediate);
+    }
+
+    /** Internal removal seam; successful cleanup still requires actual View detachment. */
+    SecureImageReviewOverlay showImageReview(ImageReviewSession session, RunControl originalControl, long originalEpoch,
+                                             SettingsStore.ConfigurationLease configuration,
+                                             SecureImageReviewOverlay.Listener listener, ImagePreviewLoader.Decoder decoder,
+                                             SecureImageReviewOverlay.WindowRemover windowRemover) {
         if (Looper.myLooper() != Looper.getMainLooper()) throw new IllegalStateException("Review must be shown on main");
         if (reviewHost != null) {
             if (!reviewHost.ownsSession(session)) session.invalidate(ImageReviewSession.Reason.HOST_LOST);
@@ -273,7 +282,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
         SecureImageReviewOverlay created = null;
         try {
             created = new SecureImageReviewOverlay(this, session, originalControl,
-                    originalEpoch, configuration, listener, decoder);
+                    originalEpoch, configuration, listener, decoder, windowRemover);
             reviewHost = created;
             created.show(); return created;
         } catch (RuntimeException | Error failed) {

@@ -132,6 +132,113 @@ public final class ImageReviewOverlayInstrumentedTest {
         }
     }
 
+    @Test public void removalWaitersAreIsolatedAndOldHostCannotReleaseAReplacement() throws Exception {
+        try (Environment env = new Environment("CapturePatternActivity", false);
+             Review review = env.review()) {
+            review.show(); review.awaitPresented();
+            AgentAccessibilityService.OwnedReviewWindowIdentity original = review.identity();
+            CompletableFuture<Void> cancelled = review.host.whenRemoved();
+            CompletableFuture<Void> manual = review.host.whenRemoved();
+            CompletableFuture<Void> acknowledgement = review.host.whenRemoved();
+            assertTrue(cancelled.cancel(false));
+            assertTrue(manual.complete(null));
+            assertFalse(acknowledgement.isDone());
+            env.main(() -> {
+                assertTrue(review.host.rootView().isAttachedToWindow());
+                assertFalse(review.host.isEnded());
+                assertNotNull(((ImageView) review.host.rootView().findViewWithTag(ImageReviewView.PREVIEW)).getDrawable());
+            });
+            CompletableFuture<Void> checked = acknowledgement.thenRun(() -> {
+                // close below executes on main, so this synchronous dependent can
+                // inspect actual detachment at the precise acknowledgement point.
+                assertFalse(review.host.rootView().isAttachedToWindow());
+                assertNull(((ImageView) review.host.rootView().findViewWithTag(ImageReviewView.PREVIEW)).getDrawable());
+                assertFalse(env.device.service.isOwnedReviewWindowCurrent(original));
+                assertFalse(env.device.service.isRegisteredReviewWindow(review.host, original.windowId));
+                assertFalse(ImageReviewPresentationCoordinator.hasHost());
+                assertEquals(1, review.closes.get());
+            });
+            env.main(review.host::close);
+            checked.get(5, TimeUnit.SECONDS);
+            assertTrue(cancelled.isCancelled());
+            assertTrue(review.host.whenRemoved().isDone());
+            assertEquals(1, review.closes.get());
+
+            try (Review replacement = env.review()) {
+                replacement.show(); replacement.awaitPresented();
+                AgentAccessibilityService.OwnedReviewWindowIdentity current = replacement.identity();
+                CompletableFuture<Void> nextAcknowledgement = replacement.host.whenRemoved();
+                assertFalse(nextAcknowledgement.isDone());
+                env.main(() -> {
+                    review.host.close();
+                    assertTrue(review.host.whenRemoved().isDone());
+                    assertFalse(replacement.host.isEnded());
+                    assertTrue(replacement.host.rootView().isAttachedToWindow());
+                    assertTrue(env.device.service.isOwnedReviewWindowCurrent(current));
+                    assertTrue(ImageReviewPresentationCoordinator.hasHost());
+                    assertFalse(nextAcknowledgement.isDone());
+                });
+                assertEquals(0, replacement.closes.get());
+                env.main(replacement.host::close);
+                nextAcknowledgement.get(5, TimeUnit.SECONDS);
+                assertEquals(1, replacement.closes.get());
+            }
+            assertNoCaptureOrNetwork(env);
+        }
+    }
+
+    @Test public void failedActualRemovalKeepsAcknowledgementAndAdmissionUntilSuccessfulRetry() throws Exception {
+        try (Environment env = new Environment("CapturePatternActivity", false);
+             Review review = env.review(); Review blocked = env.reviewFrom(review.binding)) {
+            AtomicBoolean failNextRemoval = new AtomicBoolean();
+            AtomicInteger attempts = new AtomicInteger();
+            review.showWithRemover((manager, root) -> {
+                attempts.incrementAndGet();
+                if (failNextRemoval.compareAndSet(true, false))
+                    throw new IllegalStateException("Synthetic first removal failure");
+                manager.removeViewImmediate(root);
+            });
+            review.awaitPresented();
+            AgentAccessibilityService.OwnedReviewWindowIdentity original = review.identity();
+            CompletableFuture<Void> acknowledgement = review.host.whenRemoved();
+            env.main(() -> {
+                assertEquals(0, attempts.get());
+                failNextRemoval.set(true);
+                review.host.close();
+                assertEquals(1, attempts.get());
+                assertTrue(review.host.isEnded());
+                assertTrue("A failed remove did not detach the actual View", review.host.rootView().isAttachedToWindow());
+                assertNull(((ImageView) review.host.rootView().findViewWithTag(ImageReviewView.PREVIEW)).getDrawable());
+                assertFalse(env.device.service.isOwnedReviewWindowCurrent(original));
+                assertFalse(acknowledgement.isDone());
+                assertEquals(0, review.closes.get());
+                assertTrue("The attached old host retains presentation admission", ImageReviewPresentationCoordinator.hasHost());
+                try {
+                    blocked.showOnMain((input, options) -> BitmapFactory.decodeStream(input, null, options));
+                    fail("The service admitted a replacement while the old View remained attached");
+                } catch (IllegalStateException expected) { }
+                assertTrue(blocked.image.isClosed());
+                assertFalse(acknowledgement.isDone());
+                assertTrue(ImageReviewPresentationCoordinator.hasHost());
+                // No synthetic detached flag: this call delegates to the actual
+                // WindowManager and must remove the same originally attached root.
+                review.host.close();
+                assertEquals(2, attempts.get());
+                assertFalse(review.host.rootView().isAttachedToWindow());
+                assertTrue(acknowledgement.isDone());
+                assertFalse(ImageReviewPresentationCoordinator.hasHost());
+                assertEquals(1, review.closes.get());
+            });
+            acknowledgement.get(5, TimeUnit.SECONDS);
+            assertTrue(review.host.whenRemoved().isDone());
+            try (Review next = env.review()) {
+                next.show(); next.awaitPresented();
+                assertFalse(next.host.whenRemoved().isDone());
+            }
+            assertNoCaptureOrNetwork(env);
+        }
+    }
+
     @Test public void externalWindowMetadataRevokesApprovalBeforeAnAsyncVerifierCanReturn() throws Exception {
         for (int eventType : new int[]{AccessibilityEvent.TYPE_WINDOWS_CHANGED,
                 AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED}) {
@@ -530,7 +637,13 @@ public final class ImageReviewOverlayInstrumentedTest {
 
         void show() { show((input, options) -> BitmapFactory.decodeStream(input, null, options)); }
         void show(ImagePreviewLoader.Decoder decoder) { env.main(() -> showOnMain(decoder)); }
+        void showWithRemover(SecureImageReviewOverlay.WindowRemover remover) {
+            env.main(() -> showOnMain((input, options) -> BitmapFactory.decodeStream(input, null, options), remover));
+        }
         void showOnMain(ImagePreviewLoader.Decoder decoder) {
+            showOnMain(decoder, WindowManager::removeViewImmediate);
+        }
+        void showOnMain(ImagePreviewLoader.Decoder decoder, SecureImageReviewOverlay.WindowRemover remover) {
             host = env.device.service.showImageReview(session, env.device.control, binding.observation.executionEpoch,
                     env.settings.lease, new SecureImageReviewOverlay.Listener() {
                         @Override public void onApproved(ImageReviewSession.ApprovalToken token) {
@@ -539,7 +652,7 @@ public final class ImageReviewOverlayInstrumentedTest {
                         @Override public void onClosed(ImageReviewSession.State state, ImageReviewSession.Reason reason) {
                             closes.incrementAndGet();
                         }
-                    }, decoder);
+                    }, decoder, remover);
             assertNotNull(host);
             assertFalse("No decoder or identity response has returned to main in this turn", button(ImageReviewView.APPROVE).isEnabled());
         }

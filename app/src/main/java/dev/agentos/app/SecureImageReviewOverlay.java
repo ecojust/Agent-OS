@@ -60,6 +60,9 @@ final class SecureImageReviewOverlay implements AutoCloseable {
         TARGET_ROOT, TARGET_ROOT_IDENTITY, WINDOW_METRICS, UNKNOWN_OCCLUSION, FINAL_CONTEXT,
         FINAL_DEVICE_READY, FINAL_READY_CONTEXT, VERIFIED
     }
+    /** Internal removal seam; actual attachment always decides whether admission can be released. */
+    interface WindowRemover { void remove(WindowManager manager, View root); }
+
     interface Listener {
         void onApproved(ImageReviewSession.ApprovalToken approval);
         void onClosed(ImageReviewSession.State state, ImageReviewSession.Reason reason);
@@ -78,6 +81,8 @@ final class SecureImageReviewOverlay implements AutoCloseable {
     private final long epoch;
     private final SettingsStore.ConfigurationLease configuration;
     private final ImagePreviewLoader.Decoder decoder;
+    private final WindowRemover windowRemover;
+    private final CompletableFuture<Void> removed = new CompletableFuture<>();
     private final Handler main = new Handler(Looper.getMainLooper());
     private final FrameLayout root;
     private final ImageReviewView reviewView;
@@ -115,11 +120,18 @@ final class SecureImageReviewOverlay implements AutoCloseable {
     SecureImageReviewOverlay(AgentAccessibilityService service, ImageReviewSession session,
                              RunControl control, long epoch, SettingsStore.ConfigurationLease configuration,
                              Listener listener, ImagePreviewLoader.Decoder decoder) {
+        this(service, session, control, epoch, configuration, listener, decoder, WindowManager::removeViewImmediate);
+    }
+
+    SecureImageReviewOverlay(AgentAccessibilityService service, ImageReviewSession session,
+                             RunControl control, long epoch, SettingsStore.ConfigurationLease configuration,
+                             Listener listener, ImagePreviewLoader.Decoder decoder, WindowRemover windowRemover) {
         requireMain();
         this.service = Objects.requireNonNull(service); this.session = Objects.requireNonNull(session);
         this.control = Objects.requireNonNull(control); this.epoch = epoch;
         this.configuration = Objects.requireNonNull(configuration);
         this.listener = Objects.requireNonNull(listener); this.decoder = Objects.requireNonNull(decoder);
+        this.windowRemover = Objects.requireNonNull(windowRemover);
         root = new FrameLayout(service) {
             @Override public void requestLayout() {
                 invalidateGeometry(false);
@@ -546,6 +558,13 @@ final class SecureImageReviewOverlay implements AutoCloseable {
         }
     }
 
+    /**
+     * A separate waiter for actual host cleanup. Cancelling or completing this
+     * dependent cannot alter cleanup or another waiter. This acknowledges our
+     * Drawable/preview owner and window, not RenderThread/GPU or pending decoder memory.
+     */
+    CompletableFuture<Void> whenRemoved() { return removed.thenApply(unused -> null); }
+
     @Override public void close() { close(CloseSource.EXPLICIT); }
 
     void close(CloseSource source) {
@@ -594,20 +613,26 @@ final class SecureImageReviewOverlay implements AutoCloseable {
         if (attached || root.isAttachedToWindow()) {
             try {
                 WindowManager manager = service.getSystemService(WindowManager.class);
-                if (manager != null) manager.removeViewImmediate(root);
+                if (manager != null) windowRemover.remove(manager, root);
             } catch (RuntimeException ignored) { }
         }
         // Do not admit a replacement while a failed remove still leaves our window
         // attached. A later detach/close can finish cleanup; the old image is cleared.
         if (root.isAttachedToWindow()) return;
         attached = false;
-        cleanupComplete = true;
         service.finishImageReview(this);
         ImageReviewPresentationCoordinator.release(this);
+        cleanupComplete = true;
         Listener closed = listener; listener = null;
-        if (closed != null) {
-            try { closed.onClosed(session.state(), session.reason()); }
-            catch (RuntimeException ignored) { }
+        try {
+            if (closed != null) {
+                try { closed.onClosed(session.state(), session.reason()); }
+                catch (RuntimeException ignored) { }
+            }
+        } finally {
+            // Exact service/shared owners are already released. Even a listener
+            // failure cannot undo that fact or strand acknowledgement of cleanup.
+            removed.complete(null);
         }
         } finally { finishing = false; }
     }

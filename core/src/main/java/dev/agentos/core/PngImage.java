@@ -46,6 +46,24 @@ public final class PngImage implements AutoCloseable {
         return fromBytes(source, ImageWorkset.process());
     }
 
+    /**
+     * Copies only the valid PNG range from a caller-owned fixed-capacity buffer.
+     * Prefix and unused suffix bytes are neither copied nor modified. Range and
+     * encoded-size checks precede reservations and allocation of the owned copy.
+     */
+    public static PngImage fromBytes(byte[] source, int offset, int length) {
+        return fromBytes(source, offset, length, ImageWorkset.process());
+    }
+
+    static PngImage fromBytes(byte[] source, int offset, int length, ImageWorkset workset) {
+        if (source == null || offset < 0 || length <= 0 || length > ImageAttachment.MAX_ENCODED_BYTES
+                || offset > source.length - length) {
+            throw new IllegalArgumentException("PNG range exceeds the source or supported encoded size.");
+        }
+        // The validated subtraction above guarantees offset + length cannot overflow.
+        return fromCopy(source, length, workset, value -> Arrays.copyOfRange(value, offset, offset + length));
+    }
+
     static PngImage fromBytes(byte[] source, ImageWorkset workset) {
         return fromBytes(source, workset, value -> value.clone());
     }
@@ -57,8 +75,12 @@ public final class PngImage implements AutoCloseable {
         if (source == null || source.length == 0 || source.length > ImageAttachment.MAX_ENCODED_BYTES) {
             throw new IllegalArgumentException("PNG exceeds the supported encoded size.");
         }
+        return fromCopy(source, source.length, workset, copier);
+    }
+
+    private static PngImage fromCopy(byte[] source, int length, ImageWorkset workset, ByteArrayCopier copier) {
         Objects.requireNonNull(workset, "workset"); Objects.requireNonNull(copier, "copier");
-        ImageWorkset.Reservation owned = workset.reserve(source.length);
+        ImageWorkset.Reservation owned = workset.reserve(length);
         byte[] copy = null;
         boolean transferred = false;
         try (ImageWorkset.Reservation scratch = workset.reserve(PngValidator.SCRATCH_BYTES)) {
@@ -67,7 +89,7 @@ public final class PngImage implements AutoCloseable {
                 copy = null; // A bad test copier must not make cleanup erase the caller's array.
                 throw new IllegalArgumentException("PNG requires an independent owned encoding.");
             }
-            if (copy == null || copy.length != source.length) {
+            if (copy == null || copy.length != length) {
                 throw new IllegalArgumentException("PNG copy has an invalid length.");
             }
             PngImage image = new PngImage(copy, PngValidator.validate(copy), owned);

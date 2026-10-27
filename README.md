@@ -25,11 +25,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Diagnose exact reviewed-window revision differences without new reads; fix asynchronous approval test barrier. Core 263 passed; APKs and lint passed; eight saved-probe device tests and final review handoff remain pending.
+**本次更新：** 归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。
 
-**记录时间：** 2026-10-27T10:15:10Z
+**记录时间：** 2026-10-27T10:28:53Z
 
-[最近测试截图与清单](screenshots/40483694927-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40483694927)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40487057153-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40487057153)。通过、失败及未截图原因见清单。
 
 | 检查点 | 状态 |
 | --- | --- |

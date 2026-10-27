@@ -25,13 +25,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Synchronize a real approval collapse with the published owned-window metadata under the original five-second budget. Pin one compact lease, retain other-window baseline and all final guards, never replay a write. Strengthen two existing real-control regressions without changing case counts. Debug/test APKs and lint pass; cross-API and walkthrough verification pending.
+**本次更新：** Archive the verified API35 operation walkthrough for source 7f47313b: all 13 required flow stages pass, with 3 confirmed edit actions, 4 navigation actions and zero dispatches during pause/stop checks. The actual 39.488-second video is 410,133 bytes and fully decoded; 22 screenshots and source checksums are retained. Local synthetic HTTP model only; eight-API regression is still running.
 
-**记录时间：** 2026-10-27T15:30:14Z
+**记录时间：** 2026-10-27T15:37:41Z
 
 [最近测试截图与清单](screenshots/40524418849-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40524418849)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** 正在接入真实操作录制，完成后提供小于 100 MB 的视频与对应源码记录；尚未录制的过程不以示意动画代替。
+**整体操作演示：** [播放视频](screenshots/demos/40531630013-1/demo.mp4) · [录制与验证清单](screenshots/demos/40531630013-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40531630013)。
+录制版本：[`7f47313b9`](https://github.com/ecojust/Agent-OS/commit/7f47313b949461458529bc972a36f11fa1b327be)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 | 检查点 | 状态 |
 | --- | --- |

@@ -99,6 +99,23 @@ public final class RunControl {
         }
         runHook(hook);
     }
+
+    /**
+     * Cancels only the original execution epoch, so a late guard cannot stop a
+     * resumed task. Call without an outer synchronized(control) block: the hook
+     * is detached atomically but must run after the control monitor is released.
+     * In-flight dispatch ownership remains with its worker until settlement.
+     */
+    public boolean cancelIfExecutionEpoch(long expectedEpoch) {
+        Runnable hook;
+        synchronized (this) {
+            if (cancelled || epoch != expectedEpoch) return false;
+            account(); cancelled = true; paused = false; epoch++; approvalWaits = 0;
+            hook = cancelHook; cancelHook = null; notifyAll();
+        }
+        runHook(hook);
+        return true;
+    }
     public void pause() {
         Runnable hook;
         synchronized (this) {

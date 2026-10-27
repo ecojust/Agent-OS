@@ -1635,14 +1635,41 @@ public final class AndroidDeviceTools implements ToolHandler {
                 if (wm == null) throw unavailable("显示几何信息不可用");
                 WindowMetrics metrics = wm.getCurrentWindowMetrics();
                 displayBounds.set(metrics.getBounds());
-                Insets bars = metrics.getWindowInsets().getInsets(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
-                Insets safe = metrics.getWindowInsets().getInsets(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars() | WindowInsets.Type.displayCutout());
+                WindowInsets windowInsets = metrics.getWindowInsets();
+                Insets bars = windowInsets.getInsets(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+                Insets safe = windowInsets.getInsets(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars() | WindowInsets.Type.displayCutout());
+                boolean imeVisible = windowInsets.isVisible(WindowInsets.Type.ime());
+                Insets imeInsets = windowInsets.getInsets(WindowInsets.Type.ime());
+                boolean imeReported = imeVisible || imeInsets.left > 0 || imeInsets.top > 0
+                        || imeInsets.right > 0 || imeInsets.bottom > 0;
+                if (imeReported) {
+                    boolean validImeWindow = false;
+                    for (AccessibilityWindowInfo window : windows) {
+                        requireSnapshotCurrent();
+                        if (window.getId() < 0 || window.getDisplayId() != Display.DEFAULT_DISPLAY
+                                || window.getType() != AccessibilityWindowInfo.TYPE_INPUT_METHOD) continue;
+                        Rect imeBounds = new Rect(); window.getBoundsInScreen(imeBounds);
+                        if (!imeBounds.isEmpty() && Rect.intersects(displayBounds, imeBounds)) {
+                            validImeWindow = true; break;
+                        }
+                    }
+                    requireSnapshotCurrent();
+                    // Positive public insets do not supply a real window identity
+                    // or authorize invented geometry. Refuse the incomplete read
+                    // before visiting nodes or publishing any observation.
+                    if (!validImeWindow) throw new IncompleteImeWindowException();
+                }
+                // False/zero is not proof of no IME: every actual reported window
+                // still passes through the unchanged occlusion logic below.
                 collectBarRegions(displayBounds, bars, systemBars);
                 safeContent.set(displayBounds.left + safe.left, displayBounds.top + safe.top,
                         displayBounds.right - safe.right, displayBounds.bottom - safe.bottom);
                 if (!safeContent.intersect(bounds) || safeContent.isEmpty()) throw unavailable("应用没有可验证的安全内容区域");
                 signature.append(":safe=").append(safeContent.toShortString())
-                        .append(":display=").append(displayBounds.toShortString());
+                        .append(":display=").append(displayBounds.toShortString())
+                        .append(":ime=").append(imeVisible).append(':').append(imeInsets.left)
+                        .append(',').append(imeInsets.top).append(',').append(imeInsets.right)
+                        .append(',').append(imeInsets.bottom);
                 rotation = wm.getDefaultDisplay().getRotation();
                 signature.append(':').append(rotation);
                 for (AccessibilityWindowInfo window : windows) {
@@ -1670,6 +1697,9 @@ public final class AndroidDeviceTools implements ToolHandler {
             boolean expectedScope = scoped;
             try { inspectWindows(); }
             catch (DeviceException changed) {
+                // Preserve this explicit incomplete-inventory rejection instead
+                // of making it a transient STALE result eligible for re-observe.
+                if (changed instanceof IncompleteImeWindowException) throw changed;
                 // This snapshot already had valid geometry; losing it during a
                 // second read is a transition, not permission to reuse old data.
                 if ("CAPABILITY_UNAVAILABLE".equals(changed.code)) throw stale();
@@ -1922,9 +1952,14 @@ public final class AndroidDeviceTools implements ToolHandler {
     private static DeviceException unavailable(String message) { return new DeviceException("CAPABILITY_UNAVAILABLE", message, "重新观察；无法可靠确认时由用户接管"); }
     private static DeviceException denied(String message) { return new DeviceException("PERMISSION_DENIED", message, "由用户核对授权，不使用其他工具绕过"); }
     private static DeviceException stale() { return new DeviceException("STALE_OBSERVATION", "界面或执行代次已变化，旧目标已失效", "重新 observe 后再规划动作"); }
-    private static final class DeviceException extends Exception {
+    private static class DeviceException extends Exception {
         final String code, next;
         DeviceException(String code, String message, String next) { super(message); this.code = code; this.next = next; }
+    }
+    private static final class IncompleteImeWindowException extends DeviceException {
+        IncompleteImeWindowException() {
+            super("CAPABILITY_UNAVAILABLE", "系统报告输入法可见但窗口信息不完整", "请由用户检查输入法窗口，确认界面后再操作");
+        }
     }
     private static final class Dispatch { volatile boolean started; }
     private static final class Prepared {

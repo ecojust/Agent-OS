@@ -1,6 +1,6 @@
 # First supported visual page: fixed Calculator basic arithmetic page
 
-Read-only audit, 2026-10-27. This document defines an implementable first policy; it does not enable capture, certify the production integration, or report a new device test. No main-tree source, build, Git history, or permission was changed.
+Source audit and implemented candidate, 2026-10-27. The internal adapter uses this policy, but the UI and service capture permission remain disabled. Build checks do not certify real-page or complete capture-to-model behavior.
 
 ## Decision and exact identity
 

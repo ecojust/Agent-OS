@@ -504,60 +504,161 @@ public final class DeviceToolsInstrumentedTest {
     @Test public void showingTheKeyboardDoesNotSwitchObservationToAnOldApplicationWindow() throws Exception {
         try (DeviceHarness device = new DeviceHarness(); AutoCloseable keyboardPreference = device.enableSoftwareKeyboard()) {
             device.launch("KeyboardActivity");
+            AtomicInteger approvals = new AtomicInteger();
+            device.tools = AndroidDeviceTools.forTesting(device.service, Collections.singleton(FIXTURE),
+                    Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), true, () -> true,
+                    (description, active, epoch) -> { approvals.incrementAndGet(); return true; });
             JsonObject before = device.observe();
             assertEquals("Keyboard visible: false", actualFixtureText(device, "keyboard_visible"));
             JsonObject clicked = device.tools.execute("click", nodeArguments(before, "show_keyboard"), device.control);
             assertTrue(clicked.toString(), clicked.get("ok").getAsBoolean());
+            assertEquals(1, approvals.get());
+            int acceptedApprovals = approvals.get();
+            long attempts = device.control.getDispatchAttempts();
             long deadline = SystemClock.elapsedRealtime() + 5_000;
-            boolean keyboard = false;
-            boolean visibleInset = false;
+            boolean keyboard = false, visibleInset = false, incompleteRefused = false;
             int observedOk = 0, observedStale = 0;
-            String lastObservationCode = "not_attempted", lastWindows = "not_read";
-            while (!(keyboard && visibleInset) && SystemClock.elapsedRealtime() < deadline) {
-                // Exercise the executor's authoritative observation path, including
-                // its platform cache refresh, rather than a stale test-only window read.
+            String lastObservationCode = "not_attempted", lastWindows = "not_read", previousCompleteRevision = "";
+            JsonObject observed = null;
+            while (observed == null && !incompleteRefused && SystemClock.elapsedRealtime() < deadline) {
+                // The rejection branch is selected only from this actual executor
+                // result. A later window/insets read cannot establish what existed
+                // at the earlier snapshot's own sampling instant.
                 JsonObject sample = device.tools.execute("observe", new JsonObject(), device.control);
-                boolean sampleOk = sample.get("ok").getAsBoolean();
+                boolean sampleOk = explicitBoolean(sample, "ok", true);
                 lastObservationCode = sampleOk ? "OK" : string(sample, "code");
+                if (SystemClock.elapsedRealtime() >= deadline) break;
+                if (isIncompleteImeRejection(sample)) {
+                    assertIncompleteImeRejection(sample);
+                    incompleteRefused = true;
+                    break; // No observe retry after the explicit user-check refusal.
+                }
                 if (sampleOk) observedOk++;
                 else if ("STALE_OBSERVATION".equals(lastObservationCode)) observedStale++;
-                assertTrue(sample.toString(), sample.get("ok").getAsBoolean()
-                        || "STALE_OBSERVATION".equals(string(sample, "code")));
+                assertTrue(sample.toString(), sampleOk || explicitBoolean(sample, "ok", false)
+                        && "STALE_OBSERVATION".equals(lastObservationCode));
                 keyboard = false;
                 List<AccessibilityWindowInfo> windows = device.service.getWindows();
                 try {
                     lastWindows = compactWindowMetadata(windows);
+                    Rect display = device.service.getSystemService(WindowManager.class).getCurrentWindowMetrics().getBounds();
                     for (AccessibilityWindowInfo window : windows) {
-                        if (window.getType() == AccessibilityWindowInfo.TYPE_INPUT_METHOD) keyboard = true;
+                        if (window.getId() < 0 || window.getType() != AccessibilityWindowInfo.TYPE_INPUT_METHOD
+                                || window.getDisplayId() != android.view.Display.DEFAULT_DISPLAY) continue;
+                        Rect bounds = new Rect(); window.getBoundsInScreen(bounds);
+                        if (!bounds.isEmpty() && Rect.intersects(display, bounds)) keyboard = true;
                     }
                 } finally { for (AccessibilityWindowInfo window : windows) window.recycle(); }
                 visibleInset = "Keyboard visible: true".equals(actualFixtureText(device, "keyboard_visible"));
-                if (!(keyboard && visibleInset)) SystemClock.sleep(50);
+                if (SystemClock.elapsedRealtime() >= deadline) break;
+                if (sampleOk && keyboard && visibleInset) {
+                    JsonObject data = sample.getAsJsonObject("data");
+                    String revision = string(data, "revision");
+                    if (!revision.isEmpty() && revision.equals(previousCompleteRevision)) observed = data;
+                    previousCompleteRevision = revision;
+                } else previousCompleteRevision = "";
+                if (observed == null) SystemClock.sleep(50);
             }
-            if (!(keyboard && visibleInset)) {
-                screenshots.capture("keyboard-not-visible");
-                fail("Keyboard visibility evidence did not agree: window=" + keyboard + ", visibleInset=" + visibleInset
-                        + "; observeOk=" + observedOk + ", observeStale=" + observedStale + ", lastCode=" + lastObservationCode
-                        + "\nLast loop service windows: " + lastWindows
+            if (incompleteRefused) {
+                // Corroborate that the real fixture entered the keyboard scenario
+                // within the same original five-second window. This later witness
+                // does not retrospectively claim an atomic window/insets sample.
+                do {
+                    visibleInset = "Keyboard visible: true".equals(actualFixtureText(device, "keyboard_visible"));
+                    if (visibleInset || SystemClock.elapsedRealtime() >= deadline) break;
+                    SystemClock.sleep(50);
+                } while (true);
+                assertTrue("Executor refused incomplete IME information, but the real fixture never reported the requested keyboard within five seconds",
+                        visibleInset && SystemClock.elapsedRealtime() < deadline);
+                screenshots.capture("ime-inventory-incomplete-explicitly-refused-no-observation-published");
+            } else if (observed != null) {
+                assertEquals(FIXTURE, string(observed, "packageName"));
+                assertTrue(observed.get("focused").getAsBoolean());
+                assertEquals(focusedWindowId(device.service), observed.get("windowId").getAsInt());
+                if (keyboardOverlapsObservedContent(device, observed)) {
+                    assertTrue("An overlapping keyboard must remain an obstruction", observed.get("hasOcclusion").getAsBoolean());
+                }
+                screenshots.capture("ime-inventory-complete-focused-editor-with-keyboard");
+            } else {
+                screenshots.capture("keyboard-neither-complete-inventory-nor-explicitly-refused");
+                fail("Keyboard had no verified complete or explicitly refused branch within five seconds: window=" + keyboard
+                        + ", visibleInset=" + visibleInset + "; observeOk=" + observedOk + ", observeStale=" + observedStale
+                        + ", lastCode=" + lastObservationCode + "\nLast loop service windows: " + lastWindows
                         + "\n" + device.keyboardWindowDiagnostics() + "\n" + device.keyboardDiagnostics());
             }
-            JsonObject observed = awaitObservation(device.tools, device.control,
-                    data -> data.has("windowId") && data.get("windowId").getAsInt() == focusedWindowId(device.service));
-            assertEquals(FIXTURE, string(observed, "packageName"));
-            assertTrue(observed.get("focused").getAsBoolean());
-            if (keyboardOverlapsObservedContent(device, observed)) {
-                assertTrue("An overlapping keyboard must remain an obstruction", observed.get("hasOcclusion").getAsBoolean());
-            }
-            long attempts = device.control.getDispatchAttempts();
+            assertEquals("Read-only observations must not dispatch actions", attempts, device.control.getDispatchAttempts());
+            assertEquals("Read-only observations must not request another approval", acceptedApprovals, approvals.get());
             JsonObject stale = device.tools.execute("click", nodeArguments(before, "show_keyboard"), device.control);
-            assertFalse(stale.get("ok").getAsBoolean());
-            assertEquals("STALE_OBSERVATION", string(stale, "code"));
+            boolean oldPlanIncompleteRefused = isIncompleteImeRejection(stale);
+            if (oldPlanIncompleteRefused) {
+                // This later read can be the first to encounter incomplete IME
+                // metadata even if the earlier observation had a complete list.
+                assertIncompleteImeRejection(stale);
+                screenshots.capture("ime-old-plan-incomplete-refused-before-approval");
+            } else {
+                // A previously missing window can be published before this one
+                // stale-plan attempt. No write is retried in either branch.
+                assertTrue(stale.toString(), explicitBoolean(stale, "ok", false));
+                assertEquals("STALE_OBSERVATION", string(stale, "code"));
+                assertTrue(stale.toString(), explicitBoolean(stale, "submitted", false));
+            }
             assertEquals("The pre-keyboard revision dispatched another action", attempts, device.control.getDispatchAttempts());
-            screenshots.capture("focused-editor-with-keyboard");
-            // BACK is the platform IME-dismiss action; ESC is not guaranteed to hide it.
+            assertEquals("The old plan must fail before approval", acceptedApprovals, approvals.get());
+            // This is an explicit test-user BACK action, not an Agent workaround
+            // or automatic retry of a refused plan. ESC need not dismiss an IME.
             device.shell("input keyevent 4");
-            device.withText("Keyboard visible: false");
+            JsonObject restored = awaitKeyboardHiddenAfterUserBack(device);
+            assertEquals(FIXTURE, string(restored, "packageName"));
+            assertTrue(restored.get("focused").getAsBoolean());
+            assertEquals(attempts, device.control.getDispatchAttempts()); assertEquals(acceptedApprovals, approvals.get());
+            screenshots.capture(oldPlanIncompleteRefused ? "ime-old-plan-refusal-recovered-after-user-back"
+                    : incompleteRefused ? "ime-refusal-recovered-after-user-back" : "ime-complete-path-recovered-after-user-back");
         }
+    }
+
+    private static boolean isIncompleteImeRejection(JsonObject result) {
+        return explicitBoolean(result, "ok", false) && "CAPABILITY_UNAVAILABLE".equals(string(result, "code"))
+                && "系统报告输入法可见但窗口信息不完整".equals(string(result, "error"));
+    }
+
+    private static void assertIncompleteImeRejection(JsonObject result) {
+        assertTrue(result.toString(), isIncompleteImeRejection(result));
+        assertEquals("请由用户检查输入法窗口，确认界面后再操作", string(result, "nextAction"));
+        assertFalse("A refused inventory cannot publish node data", result.has("data"));
+        assertFalse("A refused inventory cannot publish a new revision", result.has("revision"));
+        for (String field : new String[] {"submitted", "dispatchSubmitted", "dispatchAccepted"})
+            assertTrue(field + " must remain false: " + result, explicitBoolean(result, field, false));
+    }
+
+    private static JsonObject awaitKeyboardHiddenAfterUserBack(DeviceHarness device) throws Exception {
+        long deadline = SystemClock.elapsedRealtime() + 5_000;
+        String previous = "";
+        JsonObject last = null;
+        while (SystemClock.elapsedRealtime() < deadline) {
+            last = device.tools.execute("observe", new JsonObject(), device.control);
+            if (explicitBoolean(last, "ok", true)) {
+                JsonObject data = last.getAsJsonObject("data");
+                boolean hidden = false;
+                for (JsonElement entry : data.getAsJsonArray("nodes")) {
+                    JsonObject node = entry.getAsJsonObject();
+                    if ((FIXTURE + ":id/keyboard_visible").equals(string(node, "viewId"))
+                            && "Keyboard visible: false".equals(string(node, "text"))) hidden = true;
+                }
+                String revision = string(data, "revision");
+                boolean focused = FIXTURE.equals(string(data, "packageName")) && data.get("focused").getAsBoolean()
+                        && data.get("windowId").getAsInt() == focusedWindowId(device.service);
+                if (focused && hidden && !revision.isEmpty() && revision.equals(previous)
+                        && SystemClock.elapsedRealtime() < deadline) return data;
+                previous = focused && hidden ? revision : "";
+            } else {
+                if (isIncompleteImeRejection(last)) assertIncompleteImeRejection(last);
+                else assertTrue(last.toString(), explicitBoolean(last, "ok", false)
+                        && "STALE_OBSERVATION".equals(string(last, "code")));
+                previous = "";
+            }
+            SystemClock.sleep(50);
+        }
+        throw new AssertionError("The actual user BACK did not restore a stable focused fixture with the keyboard hidden: " + last);
     }
 
     private static boolean keyboardOverlapsObservedContent(DeviceHarness device, JsonObject observed) {

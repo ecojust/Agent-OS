@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。
+**本次更新：** Audit first native-window acceptance: 4/8 passed, with all four pre-review failures retained. API37 verified real capture, same-image review, one HTTP delivery and a following image-free request; rejection passed on API34/35/37. Normal app screenshot permission remains closed; 33 archived files were rehashed.
 
-**记录时间：** 2026-10-27T14:18:55Z
+**记录时间：** 2026-10-27T14:24:52Z
 
 [最近测试截图与清单](screenshots/40518542706-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40518542706)。通过、失败及未截图原因见清单。
 

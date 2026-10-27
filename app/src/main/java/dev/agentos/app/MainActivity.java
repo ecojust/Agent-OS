@@ -46,6 +46,7 @@ import dev.agentos.core.ModelSettings;
 import dev.agentos.core.ActionConfirmationPolicy;
 import dev.agentos.core.ModelProbe;
 import dev.agentos.core.RunControl;
+import dev.agentos.core.TaskBudget;
 import dev.agentos.core.VisionModelProbe;
 
 import java.io.IOException;
@@ -79,6 +80,8 @@ public final class MainActivity extends Activity implements AgentController.List
     private boolean storageDamaged;
     private boolean suppressModeChange;
     private boolean modelExpanded = true;
+    private boolean budgetExpanded, suppressBudgetChange;
+    private String[] budgetTexts = {"30", "100", "600"};
     private boolean hideCurrentResult;
     private boolean wasRunning;
     private SettingsStore store;
@@ -86,6 +89,10 @@ public final class MainActivity extends Activity implements AgentController.List
     private AgentController controller;
     private final Map<String, String> appLabels = new LinkedHashMap<>();
     private EditText endpointField, modelField, keyField, taskField;
+    private EditText budgetRounds, budgetTools, budgetSeconds;
+    private TextView budgetSummary;
+    private LinearLayout budgetFields;
+    private Button budgetToggle;
     private TextView serviceState, statusText, configSummary, scopeSummary, messageText, logText, summaryText, approvalText;
     private LinearLayout modelFields, approvalPanel, runningButtons;
     private LinearLayout taskFocusAnchor;
@@ -123,10 +130,15 @@ public final class MainActivity extends Activity implements AgentController.List
         final SettingsStore.SavedSettings settings;
         final String task;
         final boolean expanded;
-        UiDraft(SettingsStore.SavedSettings settings, String task, boolean expanded) {
+        final boolean budgetExpanded;
+        final String[] budgetTexts;
+        UiDraft(SettingsStore.SavedSettings settings, String task, boolean expanded,
+                boolean budgetExpanded, String[] budgetTexts) {
             this.settings = settings;
             this.task = task;
             this.expanded = expanded;
+            this.budgetExpanded = budgetExpanded;
+            this.budgetTexts = budgetTexts.clone();
         }
     }
 
@@ -181,7 +193,7 @@ public final class MainActivity extends Activity implements AgentController.List
     @Override public Object onRetainNonConfigurationInstance() {
         if (!ready || storageDamaged) return null;
         // Rotation retains these values in process memory only, never an instance-state file.
-        return new UiDraft(readDraft(), taskField.getText().toString(), modelExpanded);
+        return new UiDraft(readDraft(), taskField.getText().toString(), modelExpanded, budgetExpanded, budgetTexts);
     }
 
     @Override public void onChanged() {
@@ -337,6 +349,33 @@ public final class MainActivity extends Activity implements AgentController.List
         modeExplanation.setId(R.id.execution_mode_explanation);
         marginAdd(scope, modeExplanation, 4);
 
+        LinearLayout budget = card(content);
+        budgetToggle = button("任务预算 · 展开设置", R.drawable.ic_settings, false);
+        budgetToggle.setId(R.id.task_budget_toggle);
+        budgetToggle.setOnClickListener(view -> {
+            if (!canEditBudget()) return;
+            budgetExpanded = !budgetExpanded;
+            updateBudgetPanel();
+        });
+        configurationViews.add(budgetToggle);
+        budget.addView(budgetToggle, new LinearLayout.LayoutParams(-1, -2));
+        budgetSummary = text("", 14, R.color.agent_muted, false);
+        budgetSummary.setId(R.id.task_budget_summary);
+        marginAdd(budget, budgetSummary, 6);
+        boolean compactBudget = getResources().getConfiguration().screenWidthDp < 400
+                || getResources().getConfiguration().fontScale >= 1.3f;
+        budgetFields = compactBudget ? column() : row();
+        budgetFields.setId(R.id.task_budget_fields);
+        budgetRounds = budgetField(budgetFields, "模型轮次", R.id.task_budget_rounds);
+        budgetTools = budgetField(budgetFields, "工具调用", R.id.task_budget_tools);
+        budgetSeconds = budgetField(budgetFields, "活动时间（秒）", R.id.task_budget_seconds);
+        marginAdd(budget, budgetFields, 8);
+        TextView budgetExplanation = text("达到任一上限后任务停止。暂停和确认等待不计活动时间；次数不会因暂停而重置。", 12, R.color.agent_muted, false);
+        budgetExplanation.setId(R.id.task_budget_explanation);
+        marginAdd(budget, budgetExplanation, 6);
+        bindBudgetTexts(budgetTexts);
+        updateBudgetPanel();
+
         LinearLayout task = card(content);
         task.addView(sectionTitle("这次想完成什么？", R.drawable.ic_play));
         taskField = new EditText(this);
@@ -349,7 +388,7 @@ public final class MainActivity extends Activity implements AgentController.List
         taskField.setMaxLines(8);
         taskField.setFilters(new InputFilter[]{new InputFilter.LengthFilter(6000)});
         marginAdd(task, taskField, 12);
-        marginAdd(task, text("默认最多 30 轮模型请求、100 次工具调用、10 分钟活动时间。任务和界面内容不保存为历史文件。", 12, R.color.agent_muted, false), 10);
+        marginAdd(task, text("任务使用上方所选预算。任务和界面内容不保存为历史文件。", 12, R.color.agent_muted, false), 10);
 
         LinearLayout results = card(content);
         results.addView(sectionTitle("当前任务", R.drawable.ic_agent_os));
@@ -464,6 +503,12 @@ public final class MainActivity extends Activity implements AgentController.List
                         taskField.setText(retainedDraft.task);
                     }
                     bindDraft();
+                    if (retainedDraft != null && next.profileId.equals(retainedDraft.settings.profileId)) {
+                        budgetTexts = retainedDraft.budgetTexts.clone();
+                        budgetExpanded = retainedDraft.budgetExpanded;
+                        bindBudgetTexts(budgetTexts);
+                        updateBudgetPanel();
+                    }
                     modelExpanded = retainedDraft != null ? retainedDraft.expanded : next.endpoint.trim().isEmpty() || next.model.trim().isEmpty();
                     retainedDraft = null;
                     if (!revoked.isEmpty()) showMessage("有 " + revoked.size() + " 个应用的安装身份已变化，授权已取消。需要继续操作时，请重新选择这些应用。", true);
@@ -502,6 +547,10 @@ public final class MainActivity extends Activity implements AgentController.List
         modelField.setText(draft.model);
         keyField.setTransformationMethod(PasswordTransformationMethod.getInstance());
         bindExecutionMode();
+        budgetTexts = new String[]{String.valueOf(draft.taskBudget.maxModelRounds), String.valueOf(draft.taskBudget.maxToolCalls),
+                String.valueOf(draft.taskBudget.maxActiveMillis / 1000)};
+        bindBudgetTexts(budgetTexts);
+        updateBudgetPanel();
         refreshScopeSummary();
         configSummary.setText(draft.model.trim().isEmpty() ? "配置模型地址、名称和密钥" : "已保存模型 · " + draft.model);
     }
@@ -509,7 +558,15 @@ public final class MainActivity extends Activity implements AgentController.List
     private void saveConfiguration(boolean startTask) {
         if (!ready || busy || destroyed || modelProbe != null || controller.getState().running) return;
         if (storageDamaged) { showMessage("原配置无法读取。请先明确重置本机配置，再保存新的设置。", true); return; }
+        TaskBudget selectedBudget = readBudget(true);
+        if (selectedBudget == null) {
+            budgetExpanded = true;
+            updateBudgetPanel();
+            showMessage("请修正任务预算后再保存或开始。", true);
+            return;
+        }
         SettingsStore.SavedSettings settings = readDraft();
+        settings.taskBudget = selectedBudget;
         ModelSettings model = new ModelSettings(settings.endpoint, settings.apiKey, settings.model);
         try { model.validate(); }
         catch (IllegalArgumentException invalid) {
@@ -566,7 +623,7 @@ public final class MainActivity extends Activity implements AgentController.List
                     dismissOwnTaskKeyboard();
                     // Request dismissal before the worker starts observing. This is
                     // asynchronous; the device's final obstruction guard still applies.
-                    controller.start(model, goal, allowed, settings.executionMode, configurationLease);
+                    controller.start(model, goal, allowed, settings.executionMode, settings.taskBudget, configurationLease);
                     messageText.setVisibility(View.GONE);
                 } catch (RuntimeException error) {
                     showMessage("任务未启动。请确认手机已解锁、操作服务已开启，且没有其他任务运行。", true);
@@ -597,9 +654,92 @@ public final class MainActivity extends Activity implements AgentController.List
         copy.model = modelField.getText().toString().trim();
         copy.confirmEachAction = true;
         copy.executionMode = draft.executionMode;
+        copy.taskBudget = draft.taskBudget;
         copy.allowedPackages = new LinkedHashSet<>(draft.allowedPackages);
         copy.grants = new LinkedHashMap<>(draft.grants);
         return copy;
+    }
+
+    private boolean canEditBudget() {
+        return ready && !busy && !destroyed && !storageDamaged && modelProbe == null && !controller.getState().running;
+    }
+
+    private EditText budgetField(LinearLayout parent, String label, int id) {
+        LinearLayout cell = column();
+        cell.setPadding(0, 0, dp(8), 0);
+        cell.addView(text(label, 12, R.color.agent_muted, false));
+        EditText field = new EditText(this);
+        field.setId(id);
+        decorateField(field);
+        field.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        field.setSingleLine(true);
+        field.setSelectAllOnFocus(true);
+        field.setSaveEnabled(false);
+        field.setEnabled(false);
+        cell.addView(field, new LinearLayout.LayoutParams(-1, -2));
+        LinearLayout.LayoutParams cellLayout = parent.getOrientation() == LinearLayout.VERTICAL
+                ? new LinearLayout.LayoutParams(-1, -2) : new LinearLayout.LayoutParams(0, -2, 1);
+        if (parent.getOrientation() == LinearLayout.VERTICAL) cellLayout.bottomMargin = dp(6);
+        parent.addView(cell, cellLayout);
+        configurationViews.add(field);
+        field.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence text, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence text, int start, int before, int count) { }
+            @Override public void afterTextChanged(Editable text) {
+                if (suppressBudgetChange) return;
+                if (!canEditBudget()) { bindBudgetTexts(budgetTexts); return; }
+                field.setError(null);
+                budgetTexts = new String[]{budgetRounds.getText().toString(), budgetTools.getText().toString(), budgetSeconds.getText().toString()};
+                updateBudgetSummary();
+            }
+        });
+        return field;
+    }
+
+    private void bindBudgetTexts(String[] values) {
+        suppressBudgetChange = true;
+        try {
+            EditText[] fields = {budgetRounds, budgetTools, budgetSeconds};
+            for (int index = 0; index < fields.length; index++) {
+                if (fields[index] != null) { fields[index].setText(values[index]); fields[index].setError(null); }
+            }
+        } finally { suppressBudgetChange = false; }
+        updateBudgetSummary();
+    }
+
+    private TaskBudget readBudget(boolean reportErrors) {
+        Integer rounds = budgetValue(budgetRounds, TaskBudget.MAX_MODEL_ROUNDS, reportErrors);
+        Integer tools = budgetValue(budgetTools, TaskBudget.MAX_TOOL_CALLS, reportErrors);
+        Integer seconds = budgetValue(budgetSeconds, (int) (TaskBudget.MAX_ACTIVE_MILLIS / 1000), reportErrors);
+        return rounds == null || tools == null || seconds == null ? null : new TaskBudget(rounds, tools, seconds * 1000L);
+    }
+
+    private Integer budgetValue(EditText field, int maximum, boolean reportErrors) {
+        if (field == null) return null;
+        String raw = field.getText().toString().trim();
+        try {
+            if (raw.length() > 10 || !raw.matches("[0-9]+")) throw new NumberFormatException();
+            int value = Integer.parseInt(raw);
+            if (value < 1 || value > maximum) throw new NumberFormatException();
+            if (reportErrors) field.setError(null);
+            return value;
+        } catch (NumberFormatException invalid) {
+            if (reportErrors) field.setError("请输入 1–" + maximum + " 的整数");
+            return null;
+        }
+    }
+
+    private void updateBudgetSummary() {
+        if (budgetSummary == null) return;
+        TaskBudget value = readBudget(false);
+        budgetSummary.setText(value == null ? "预算待修正：请填写范围内的整数"
+                : value.maxModelRounds + " 轮模型 · " + value.maxToolCalls + " 次工具 · " + (value.maxActiveMillis / 1000) + " 秒活动");
+    }
+
+    private void updateBudgetPanel() {
+        budgetFields.setVisibility(budgetExpanded ? View.VISIBLE : View.GONE);
+        budgetToggle.setText(budgetExpanded ? "任务预算 · 收起设置" : "任务预算 · 展开设置");
+        updateBudgetSummary();
     }
 
     private void loadApps() {
@@ -724,7 +864,7 @@ public final class MainActivity extends Activity implements AgentController.List
     private void confirmReset() {
         if (store == null || busy || modelProbe != null || controller.getState().running) return;
         new AlertDialog.Builder(this).setTitle("重置本机配置？")
-                .setMessage("会删除本机保存的模型地址、密钥、模型名称和应用授权。此操作不会删除目标应用的数据，也不会删除已发送到模型服务的数据。")
+                .setMessage("会删除本机保存的模型地址、密钥、模型名称和应用授权，并重置执行模式和任务预算。此操作不会删除目标应用的数据，也不会删除已发送到模型服务的数据。")
                 .setNegativeButton("保留配置", null)
                 .setPositiveButton("删除并重新配置", (dialog, which) -> {
                     if (destroyed || controller.getState().running) return;

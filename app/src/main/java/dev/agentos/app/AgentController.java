@@ -12,6 +12,7 @@ import dev.agentos.core.ActionConfirmationPolicy;
 import dev.agentos.core.ModelSettings;
 import dev.agentos.core.RunControl;
 import dev.agentos.core.TaskControlException;
+import dev.agentos.core.TaskBudget;
 import dev.agentos.core.TaskResult;
 
 import java.text.SimpleDateFormat;
@@ -112,6 +113,12 @@ public final class AgentController {
 
     public void start(ModelSettings settings, String task, Set<String> allowedPackages,
                       ActionConfirmationPolicy.Mode executionMode, SettingsStore.ConfigurationLease configurationLease) {
+        start(settings, task, allowedPackages, executionMode, TaskBudget.DEFAULT, configurationLease);
+    }
+
+    public void start(ModelSettings settings, String task, Set<String> allowedPackages,
+                      ActionConfirmationPolicy.Mode executionMode, TaskBudget taskBudget,
+                      SettingsStore.ConfigurationLease configurationLease) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
             throw new IllegalStateException("请从任务界面启动。");
         }
@@ -120,6 +127,9 @@ public final class AgentController {
         if (!isUnlocked()) throw new IllegalStateException("请保持手机亮屏并解锁后再启动。");
         if (settings == null || executionMode == null || task == null || task.trim().isEmpty()) {
             throw new IllegalArgumentException("请填写模型设置和任务内容。");
+        }
+        if (taskBudget == null || taskBudget.maxActiveMillis < 1000 || taskBudget.maxActiveMillis % 1000 != 0) {
+            throw new IllegalArgumentException("任务活动时间须为 1–3600 秒的整数，请检查任务预算。");
         }
         settings.validate();
         SettingsStore.requirePersonalProfile(context);
@@ -133,7 +143,7 @@ public final class AgentController {
         scope.remove(context.getPackageName());
         if (scope.isEmpty()) throw new IllegalArgumentException("请至少选择一个允许操作的应用。");
 
-        final RunControl active = new RunControl(SettingsStore.currentProfileId(context));
+        final RunControl active = new RunControl(SettingsStore.currentProfileId(context), taskBudget);
         final long session;
         synchronized (lock) {
             if (control != null) throw new IllegalStateException("已有任务正在运行，请先停止。");
@@ -145,6 +155,9 @@ public final class AgentController {
             summary = "";
             status = "正在连接模型";
             appendLogLocked("任务已启动；允许操作 " + scope.size() + " 个应用。");
+            appendLogLocked("本次预算：" + taskBudget.maxModelRounds + " 轮模型请求、"
+                    + taskBudget.maxToolCalls + " 次工具调用、" + taskBudget.maxActiveMillis / 1000
+                    + " 秒活动时间；暂停和确认等待不计入活动时间。");
             appendLogLocked(executionMode == ActionConfirmationPolicy.Mode.CONTINUOUS_NAVIGATION
                     ? "连续导航：打开应用、滚动、回到桌面可连续执行；返回、点击和输入仍需确认。"
                     : "逐步确认：每次界面写操作都需确认。");
@@ -182,6 +195,11 @@ public final class AgentController {
                             "配置或授权已改变，请重新保存配置并选择允许的应用。", "CONFIGURATION_INVALID"));
                     return;
                 }
+                if (!taskBudget.equals(saved.taskBudget)) {
+                    finish(session, new TaskResult(TaskResult.Kind.FAILED,
+                            "任务预算已改变，请重新保存配置后启动。", "CONFIGURATION_INVALID"));
+                    return;
+                }
                 active.checkCancelled();
                 AndroidDeviceTools tools = new AndroidDeviceTools(service, scope, saved.grants,
                         executionMode, configurationLease, (description, run, epoch) -> requestApproval(session, description, run, epoch, configurationLease));
@@ -209,6 +227,12 @@ public final class AgentController {
                 runner.run(task.trim(), active);
                 // A runner must finish exactly once. This fallback prevents stale UI on a faulty adapter.
                 finish(session, "执行已结束，请检查目标应用中的实际结果。", false);
+            } catch (TaskControlException controlled) {
+                // Queueing and configuration reads consume the same active budget
+                // as execution. A budget stop is not a Java thread interruption.
+                TaskResult.Kind kind = "BUDGET_EXCEEDED".equals(controlled.getCode())
+                        ? TaskResult.Kind.BUDGET_EXCEEDED : TaskResult.Kind.STOPPED;
+                finish(session, new TaskResult(kind, controlled.getMessage(), controlled.getCode()));
             } catch (InterruptedException interrupted) {
                 finish(session, "任务已停止。", false);
                 Thread.currentThread().interrupt();

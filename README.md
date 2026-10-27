@@ -25,11 +25,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Wait for the exact approved review window to disappear from the platform table within the original deadline, then retain the single original revision check. APKs and lint passed. Full eight-API rerun pending for this fix and seven new saved-probe UI tests.
+**本次更新：** 归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。
 
-**记录时间：** 2026-10-27T10:36:23Z
+**记录时间：** 2026-10-27T10:49:26Z
 
-[最近测试截图与清单](screenshots/40487057153-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40487057153)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40489790843-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40489790843)。通过、失败及未截图原因见清单。
 
 | 检查点 | 状态 |
 | --- | --- |

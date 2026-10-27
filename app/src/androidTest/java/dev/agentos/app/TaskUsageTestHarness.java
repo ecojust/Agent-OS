@@ -1,12 +1,16 @@
 package dev.agentos.app;
 
 import android.app.Activity;
+import android.app.Instrumentation;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import dev.agentos.core.RunControl;
 import dev.agentos.core.TaskBudget;
@@ -36,21 +40,35 @@ final class TaskUsageTestHarness implements AutoCloseable {
 
     TaskUsageTestHarness(LocalControllerModelServer.Scenario scenario, TaskBudget budget) throws Exception {
         this.budget = budget;
-        device = new DeviceHarness();
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        Context context = instrumentation.getTargetContext();
+        controller = AgentController.get(context);
+        assertFalse("Usage tests must not replace an existing task", controller.getState().running);
         LocalControllerModelServer opened = null;
         ControllerTestSettings saved = null;
+        DeviceHarness attached = null;
         try {
-            opened = new LocalControllerModelServer(scenario);
-            saved = new ControllerTestSettings(device.context, opened);
-            server = opened; settings = saved;
-            controller = AgentController.get(device.context);
-            assertFalse("Usage tests must not replace an existing task", controller.getState().running);
+            // Drain the old worker (including its configuration-watch finally), then
+            // apply idle cleanup before DeviceHarness installs its ordinary controls.
+            // An idle Controller publication intentionally removes service callbacks.
             settle();
-            onMain(controller::clearCompletedTask);
-            SettingsStore store = new SettingsStore(device.context);
+            onMain(instrumentation, controller::clearCompletedTask);
+            instrumentation.waitForIdleSync();
+            opened = new LocalControllerModelServer(scenario);
+            saved = new ControllerTestSettings(context, opened);
+            server = opened; settings = saved;
+            SettingsStore store = new SettingsStore(context);
             SettingsStore.SavedSettings configuration = store.load();
             configuration.taskBudget = budget;
             lease = store.save(configuration);
+            // Both real saves can invalidate old configuration observers. Drain their
+            // main-thread notifications too; never repair callbacks after observation.
+            settle();
+            instrumentation.waitForIdleSync();
+            assertFalse(controller.getState().running);
+            assertNull(controller.getTaskUsage());
+            attached = new DeviceHarness();
+            device = attached;
             onMain(() -> device.service.showOverlay("正在连接模型", false, ""));
             device.service.whenControlsReadyForAction().get(5, TimeUnit.SECONDS);
             device.awaitUiIdle();
@@ -62,15 +80,17 @@ final class TaskUsageTestHarness implements AutoCloseable {
         } catch (Exception | AssertionError failure) {
             if (saved != null) try { saved.close(); } catch (Exception cleanup) { failure.addSuppressed(cleanup); }
             if (opened != null) try { opened.close(); } catch (Exception cleanup) { failure.addSuppressed(cleanup); }
-            try { device.close(); } catch (Exception cleanup) { failure.addSuppressed(cleanup); }
+            if (attached != null) try { attached.close(); } catch (Exception cleanup) { failure.addSuppressed(cleanup); }
             throw failure;
         }
     }
 
     /** Report main-thread assertion failures to JUnit rather than terminating the app process. */
-    void onMain(Runnable action) {
+    void onMain(Runnable action) { onMain(device.instrumentation, action); }
+
+    private static void onMain(Instrumentation instrumentation, Runnable action) {
         AtomicReference<Throwable> failure = new AtomicReference<>();
-        device.instrumentation.runOnMainSync(() -> {
+        instrumentation.runOnMainSync(() -> {
             try { action.run(); }
             catch (RuntimeException | AssertionError error) { failure.set(error); }
         });
@@ -100,12 +120,59 @@ final class TaskUsageTestHarness implements AutoCloseable {
             AgentController.TaskUsage usage = state.usage;
             return state.running && !state.approvalId.isEmpty() && usage != null && usage.consumed.approvalMillis >= 20;
         });
-        device.service.whenControlsReadyForAction().get(5, TimeUnit.SECONDS);
+        AgentController.State expected = controller.getState();
+        // An approval deliberately keeps the controls expanded. The compact-write
+        // readiness future cannot complete here and must not be used as a read guard.
+        await("This task's approval was not actually published in the control window",
+                () -> approvalWindowReady(expected));
+        java.util.concurrent.CompletableFuture<AgentAccessibilityService.OwnedControlWindowIdentity> ready =
+                device.service.acquireOwnedControlWindowIdentity();
+        try {
+            AgentAccessibilityService.OwnedControlWindowIdentity identity = ready.get(5, TimeUnit.SECONDS);
+            onMain(() -> {
+                assertTrue(approvalWindowReady(expected));
+                assertSame("The expanded approval must still own the acquired actual window identity",
+                        identity, device.service.getOwnedControlWindowIdentity());
+            });
+        } finally { ready.cancel(false); }
         device.instrumentation.waitForIdleSync();
         assertTrue(server.requestCount() >= 1 && server.requestCount() <= 1 + LocalControllerModelServer.MAX_WRITE_REPLANS);
         assertEquals(server.requestCount(), server.writePlanCount());
         assertEquals(0, server.acceptedWriteCount());
         return controller.getTaskUsage();
+    }
+
+    /** Reads actual presentation and callback ownership only; never acquires an action lease. */
+    private boolean approvalWindowReady(AgentController.State expected) {
+        AtomicBoolean ready = new AtomicBoolean();
+        Runnable inspect = () -> {
+            AgentController.State current = controller.getState();
+            assertTrue("The pending task ended before its approval was presented", current.running);
+            assertNotNull(current.usage);
+            assertEquals(expected.usage.taskId, current.usage.taskId);
+            assertEquals(expected.approvalId, current.approvalId);
+            try {
+                android.view.View panel = (android.view.View) readField(device.service, "overlay");
+                android.view.View scroll = (android.view.View) readField(device.service, "approvalScroll");
+                android.view.View buttons = (android.view.View) readField(device.service, "approvalButtons");
+                Object callbacks = readField(device.service, "callbacks");
+                RunControl callbackOwner = (RunControl) readField(controller, "overlayCallbackOwner");
+                ready.set(panel != null && panel.isAttachedToWindow() && panel.isShown()
+                        && panel.isLaidOut() && !panel.isLayoutRequested()
+                        && scroll != null && scroll.isShown() && buttons != null && buttons.isShown()
+                        && expected.approval.equals(readField(device.service, "currentApproval"))
+                        && callbacks != null && callbacks == readField(controller, "overlayCallbacks")
+                        && callbackOwner != null && expected.usage.taskId.equals(callbackOwner.getTaskId())
+                        && expected.approvalId.equals(readField(controller, "overlayCallbackApprovalId"))
+                        && readField(device.service, "displayedCallbackGeneration")
+                                .equals(readField(device.service, "callbackGeneration")));
+            } catch (Exception failure) { throw new AssertionError("Cannot read actual approval presentation", failure); }
+        };
+        // The final identity comparison runs in the same main-thread turn as this
+        // inspection. Other callers use onMain so assertions still return to JUnit.
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) inspect.run();
+        else onMain(inspect);
+        return ready.get();
     }
 
     void awaitPausedWorker() {

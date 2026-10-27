@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "kind": "agent-os-synthetic-controller-demo",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "190749138bf74e9be01fd9b9cbd926ea66c8288e",
+    "runId": 40529025323,
+    "attempt": 1
+  },
+  "device": {
+    "api": 35,
+    "emulator": true
+  },
+  "model": {
+    "kind": "local_synthetic_http",
+    "externalModelUsed": false
+  },
+  "startedAt": 1793114249280,
+  "startedElapsedMs": 38224,
+  "status": "failed",
+  "stages": [
+    {
+      "name": "ready",
+      "status": "passed",
+      "atElapsedMs": 4723,
+      "wallTimeMs": 1793114254003,
+      "controllerRunning": false,
+      "controllerPaused": false,
+      "pendingApproval": false,
+      "requestCount": 0,
+      "dispatchAttempts": 0,
+      "approvalOrdinal": 0
+    },
+    {
+      "name": "confirmation_waiting",
+      "status": "passed",
+      "atElapsedMs": 6411,
+      "wallTimeMs": 1793114255691,
+      "controllerRunning": true,
+      "controllerPaused": false,
+      "pendingApproval": true,
+      "requestCount": 1,
+      "dispatchAttempts": 0,
+      "approvalOrdinal": 1
+    },
+    {
+      "name": "confirmation_waiting",
+      "status": "passed",
+      "atElapsedMs": 7965,
+      "wallTimeMs": 1793114257245,
+      "controllerRunning": true,
+      "controllerPaused": false,
+      "pendingApproval": true,
+      "requestCount": 2,
+      "dispatchAttempts": 0,
+      "approvalOrdinal": 2
+    },
+    {
+      "name": "confirmation_waiting",
+      "status": "passed",
+      "atElapsedMs": 9493,
+      "wallTimeMs": 1793114258773,
+      "controllerRunning": true,
+      "controllerPaused": false,
+      "pendingApproval": true,
+      "requestCount": 3,
+      "dispatchAttempts": 0,
+      "approvalOrdinal": 3
+    },
+    {
+      "name": "confirmation_waiting",
+      "status": "failed",
+      "atElapsedMs": 11002,
+      "wallTimeMs": 1793114260282,
+      "controllerRunning": false,
+      "controllerPaused": false,
+      "pendingApproval": false,
+      "requestCount": 3,
+      "dispatchAttempts": 0,
+      "approvalOrdinal": 3
+    }
+  ],
+  "failure": {
+    "stage": "confirmation_waiting",
+    "errorClass": "java.lang.AssertionError"
+  },
+  "finishedAt": 1793114260328,
+  "finishedElapsedMs": 49272
+}

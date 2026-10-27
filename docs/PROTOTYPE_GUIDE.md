@@ -4,7 +4,7 @@
 
 ## 安装与配置
 
-1. 从 [Android checks](https://github.com/ecojust/Agent-OS/actions/workflows/android.yml) 中选择已完成的运行，下载 `agent-os-debug-<提交号>` 产物，解压后安装 APK。产物采用开发签名，通常保留 14 天，下载可能需要登录 GitHub。
+1. 优先使用[实现记录](../IMPLEMENTATION.md)中“最近完整通过的模拟器基线”所列调试 APK，解压后安装。也可在 [Android checks](https://github.com/ecojust/Agent-OS/actions/workflows/android.yml) 中查找相应提交的 `agent-os-debug-<提交号>` 产物；构建成功但设备测试仍在运行或失败的版本，不算完整通过。产物采用开发签名，通常保留 14 天，下载可能需要登录 GitHub。
 2. 打开 Agent OS，展开“模型连接”，填写兼容 Chat Completions 的模型服务地址、模型名称和密钥。密钥只在手机内填写，不需要提交到仓库。
 3. 点击“测试模型连接 / 工具调用”。“测试图像理解”是另一项可选测试，只上传临时生成的色块图，不读取手机屏幕；这两项结果分别显示。测试可以取消，修改连接字段会清除旧结果。本机或局域网 HTTP 地址会显示传输提示，需要核对地址后继续。
 4. 点击“选择应用”，选择这次允许读取和操作的应用。在“执行模式”中保留默认的“逐步确认”，或主动选择“连续导航”，再点击“保存模型与授权设置”。模式在保存或开始任务时生效；保存配置会使旧任务和旧动作确认失效。

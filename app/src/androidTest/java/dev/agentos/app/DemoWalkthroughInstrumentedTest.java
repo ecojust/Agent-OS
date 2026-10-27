@@ -438,7 +438,7 @@ public final class DemoWalkthroughInstrumentedTest {
     private void persistReport() throws Exception {
         File directory = new File(InstrumentationRegistry.getInstrumentation().getTargetContext().getFilesDir(), "demo-video");
         if (!directory.isDirectory() && !directory.mkdirs()) throw new java.io.IOException("Cannot create demo evidence directory");
-        byte[] bytes = new GsonBuilder().setPrettyPrinting().create().toJson(report).getBytes(StandardCharsets.UTF_8);
+        byte[] bytes = new GsonBuilder().serializeNulls().setPrettyPrinting().create().toJson(report).getBytes(StandardCharsets.UTF_8);
         if (bytes.length > 65_536) throw new java.io.IOException("Demo evidence exceeded its bounded report size");
         try (FileOutputStream output = new FileOutputStream(new File(directory, "flow-result.json"))) {
             output.write(bytes); output.getFD().sync();

@@ -63,12 +63,17 @@ public class ObservationRefreshTest {
 
     private static final class Events implements AgentRunner.Listener {
         final CountDownLatch retryWaiting = new CountDownLatch(1);
+        final CountDownLatch fourthRetryWaiting = new CountDownLatch(1);
         final CountDownLatch paused = new CountDownLatch(1);
+        final AtomicInteger retryWaits = new AtomicInteger();
         final AtomicInteger completions = new AtomicInteger();
         volatile TaskResult result;
 
         public void onStatus(String status) {
-            if ("等待界面焦点稳定".equals(status)) retryWaiting.countDown();
+            if ("等待界面焦点稳定".equals(status)) {
+                retryWaiting.countDown();
+                if (retryWaits.incrementAndGet() == 4) fourthRetryWaiting.countDown();
+            }
             if (status.startsWith("已暂停")) paused.countDown();
         }
         public void onStep(String step) { }
@@ -155,31 +160,36 @@ public class ObservationRefreshTest {
         }
     }
 
-    @Test(timeout = 4000) public void threeStaleAttemptsStopWithOriginalCodeBeforeCallingModel() throws Exception {
+    @Test(timeout = 5000) public void persistentStaleObservationsStopWithinSixAttemptsBeforeCallingModel() throws Exception {
         AtomicInteger observations = new AtomicInteger();
         Events events = new Events(); RunControl control = new RunControl();
         try (Server server = new Server()) {
+            long started = System.nanoTime();
             server.runner((name, args, active) -> {
                 assertEquals("observe", name); observations.incrementAndGet();
                 return error("STALE_OBSERVATION");
             }, events).run(GOAL, control);
             events.assertCompleted(TaskResult.Kind.FAILED, "STALE_OBSERVATION");
-            assertEquals(3, observations.get());
-            assertEquals(3, control.budgetSnapshot().toolCalls);
+            assertTrue("The attempt count must remain bounded even when the window has time left", observations.get() <= 6);
+            assertTrue("A transient focus change needs more than one immediate observation", observations.get() >= 2);
+            assertEquals(observations.get(), control.budgetSnapshot().toolCalls);
+            assertTrue("Persistent stale reads must end within the stability window plus scheduling tolerance",
+                    TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started) < 3000);
             assertEquals(0, control.budgetSnapshot().modelRounds);
             assertTrue(server.requests.isEmpty());
             server.assertHealthy();
         }
     }
 
-    @Test(timeout = 3000) public void elapsedRetryWindowPreventsAnotherReadEvenBeforeAttemptLimit() throws Exception {
+    @Test(timeout = 5000) public void elapsedRetryWindowPreventsAnotherReadEvenBeforeAttemptLimit() throws Exception {
         AtomicInteger observations = new AtomicInteger();
         Events events = new Events(); RunControl control = new RunControl();
         try (Server server = new Server()) {
             server.runner((name, args, active) -> {
                 assertEquals("observe", name); observations.incrementAndGet();
-                // Model an observation that returns after the 500 ms retry window.
-                new CountDownLatch(1).await(550, TimeUnit.MILLISECONDS);
+                // An in-flight platform query can finish after the two-second retry
+                // window, but its failure cannot admit another observation.
+                new CountDownLatch(1).await(2050, TimeUnit.MILLISECONDS);
                 return error("STALE_OBSERVATION");
             }, events).run(GOAL, control);
             events.assertCompleted(TaskResult.Kind.FAILED, "STALE_OBSERVATION");
@@ -223,6 +233,30 @@ public class ObservationRefreshTest {
             events.assertCompleted(TaskResult.Kind.STOPPED, "TASK_STOPPED");
             assertEquals(1, observations.get());
             assertEquals(1, control.budgetSnapshot().toolCalls);
+            assertEquals(0, control.budgetSnapshot().modelRounds);
+            assertTrue(server.requests.isEmpty());
+            server.assertHealthy();
+        } finally { control.cancel(); worker.shutdownNow(); }
+    }
+
+    @Test(timeout = 5000) public void cancellationAlsoInterruptsTheLongerLaterBackoffPromptly() throws Exception {
+        AtomicInteger observations = new AtomicInteger();
+        Events events = new Events(); RunControl control = new RunControl();
+        ExecutorService worker = Executors.newSingleThreadExecutor();
+        try (Server server = new Server()) {
+            Future<?> running = worker.submit(() -> server.runner((name, args, active) -> {
+                assertEquals("observe", name); observations.incrementAndGet(); return error("STALE_OBSERVATION");
+            }, events).run(GOAL, control));
+            assertTrue("The runner must reach the later, longer stability wait", events.fourthRetryWaiting.await(2, TimeUnit.SECONDS));
+            assertEquals(4, observations.get());
+            long stopped = System.nanoTime();
+            control.cancel();
+            running.get(350, TimeUnit.MILLISECONDS);
+            assertTrue("Stop must wake the wait instead of sleeping through its 500 ms delay",
+                    TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - stopped) < 400);
+            events.assertCompleted(TaskResult.Kind.STOPPED, "TASK_STOPPED");
+            assertEquals(4, observations.get());
+            assertEquals(4, control.budgetSnapshot().toolCalls);
             assertEquals(0, control.budgetSnapshot().modelRounds);
             assertTrue(server.requests.isEmpty());
             server.assertHealthy();
@@ -302,27 +336,36 @@ public class ObservationRefreshTest {
         }
     }
 
-    @Test public void retryingObservationAfterAMutationDoesNotReplayTheMutation() throws Exception {
+    @Test(timeout = 5000) public void observationCanSettleAfterHalfASecondWithoutReplayingTheAcceptedMutation() throws Exception {
         AtomicInteger observations = new AtomicInteger(); List<String> actions = new CopyOnWriteArrayList<>();
+        AtomicLong writeAcceptedAt = new AtomicLong();
         Events events = new Events(); RunControl control = new RunControl();
         try (Server server = new Server(index -> index == 0 ? clickReply() : finalReply())) {
             server.runner((name, args, active) -> {
                 actions.add(name);
                 if (name.equals("observe")) {
                     int count = observations.incrementAndGet();
-                    return count == 2 ? error("STALE_OBSERVATION") : observation(count == 1 ? "r1" : "after-click-r3");
+                    if (count == 1) return observation("r1");
+                    // A real focus transition can exceed the former 500 ms window.
+                    return System.nanoTime() - writeAcceptedAt.get() < TimeUnit.MILLISECONDS.toNanos(650)
+                            ? error("STALE_OBSERVATION") : observation("after-click-settled");
                 }
                 assertEquals("click", name);
                 active.markDispatchAttempt(active.getExecutionEpoch());
+                assertTrue("An accepted mutation must never be replayed", writeAcceptedAt.compareAndSet(0, System.nanoTime()));
                 JsonObject result = new JsonObject(); result.addProperty("ok", true); return result;
             }, events).run(GOAL, control);
             events.assertCompleted(TaskResult.Kind.MODEL_REPORT, "MODEL_REPORT");
-            assertEquals(Arrays.asList("observe", "click", "observe", "observe"), actions);
+            assertEquals("observe", actions.get(0));
+            assertEquals("click", actions.get(1));
+            for (int index = 2; index < actions.size(); index++) assertEquals("observe", actions.get(index));
+            assertTrue(observations.get() >= 3 && observations.get() <= 7);
             assertEquals(1, control.getDispatchAttempts());
-            assertEquals(4, control.budgetSnapshot().toolCalls);
+            assertEquals(observations.get() + 1, control.budgetSnapshot().toolCalls);
+            assertTrue("Focus waits must count toward the original activity budget", control.budgetSnapshot().activeMillis >= 650);
             assertEquals(2, control.budgetSnapshot().modelRounds);
             assertEquals(2, server.requests.size());
-            assertTrue(server.requests.get(1).contains("after-click-r3"));
+            assertTrue(server.requests.get(1).contains("after-click-settled"));
             server.assertHealthy();
         }
     }

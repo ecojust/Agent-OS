@@ -130,3 +130,9 @@ CPU、内存和启动预算通过多个配对批次测量，不用单次最优�
 - [Perfetto](https://perfetto.dev/docs/)
 - [Android 性能基准指标与版本条件](https://developer.android.com/topic/performance/benchmarking/macrobenchmark-metrics)
 - [dumpsys 内存诊断](https://developer.android.com/tools/dumpsys#meminfo)
+
+## 本次任务用量展示
+
+原生任务页面显示原执行控制对象的预算计数与单调时间：模型轮次、工具调用、活动时间、暂停时间、等待确认时间。计数包含观察及已计入预算的失败调用，不代表完成动作数或模型费用。停止、正常结束、配置失效和排队拒绝沿原结束路径冻结最终快照；新任务与显式清空独立处理，旧工作线程不能覆盖新任务数据。
+
+显示刷新只在主页面前台且存在未结束任务时安排一个至多每秒的回调；仅查询纯内存数字并更新统计View，不重复复制日志、发布控制状态、重排悬浮控制条或发出网络请求。结束后显示固定统计，离页移除回调。此实现不改变原计数或预算规则，也不构成真机性能验收。新增4项Controller与2项UI回归已编译，设备执行仍待验证。

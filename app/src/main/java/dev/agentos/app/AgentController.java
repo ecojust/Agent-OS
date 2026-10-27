@@ -35,6 +35,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class AgentController {
     public interface Listener { void onChanged(); }
 
+    /** Numeric task-budget accounting only; no prompt, model settings, response or credentials. */
+    public static final class TaskUsage {
+        public final String taskId;
+        public final boolean finished;
+        public final TaskBudget budget;
+        public final RunControl.BudgetSnapshot consumed;
+
+        private TaskUsage(RunControl owner, TaskBudget budget, boolean finished) {
+            this.taskId = owner.getTaskId();
+            this.finished = finished;
+            this.budget = budget;
+            this.consumed = owner.budgetSnapshot();
+        }
+    }
+
     public static final class State {
         public final String status;
         public final boolean running;
@@ -43,9 +58,11 @@ public final class AgentController {
         public final String approvalId;
         public final List<String> log;
         public final String summary;
+        /** Null before the first task or after explicit clearing. */
+        public final TaskUsage usage;
 
         State(String status, boolean running, boolean paused, String approval, String approvalId,
-              List<String> log, String summary) {
+              List<String> log, String summary, TaskUsage usage) {
             this.status = status;
             this.running = running;
             this.paused = paused;
@@ -53,6 +70,7 @@ public final class AgentController {
             this.approvalId = approvalId;
             this.log = Collections.unmodifiableList(new ArrayList<>(log));
             this.summary = summary;
+            this.usage = usage;
         }
     }
 
@@ -72,6 +90,8 @@ public final class AgentController {
     private long generation;
     private long stopGeneration = -1, stoppedEpoch = -1, stoppedDispatchAttempts = -1;
     private RunControl control;
+    private TaskBudget usageBudget;
+    private TaskUsage completedUsage;
     private SettingsStore.ConfigurationLease configuration;
     private PendingApproval pending;
     private String status = "准备就绪";
@@ -126,8 +146,24 @@ public final class AgentController {
             return new State(status, control != null && !control.isCancelled(),
                     control != null && control.isPaused(),
                     pending == null ? "" : pending.description,
-                    pending == null ? "" : pending.id, log, summary);
+                    pending == null ? "" : pending.id, log, summary, taskUsageLocked());
         }
+    }
+
+    /** Lightweight foreground polling: no log copy, publication, View, storage, Binder or network work. */
+    public TaskUsage getTaskUsage() {
+        synchronized (lock) { return taskUsageLocked(); }
+    }
+
+    private TaskUsage taskUsageLocked() {
+        return control == null ? completedUsage : new TaskUsage(control, usageBudget, false);
+    }
+
+    /** Call after cancellation has accounted the cutoff, before dropping the original owner. */
+    private void freezeUsageLocked(RunControl owner) {
+        if (control != owner || owner == null) return;
+        if (completedUsage == null || !completedUsage.taskId.equals(owner.getTaskId()))
+            completedUsage = new TaskUsage(owner, usageBudget, true);
     }
 
     public void addListener(Listener listener) { listeners.addIfAbsent(listener); }
@@ -171,6 +207,8 @@ public final class AgentController {
             if (control != null) throw new IllegalStateException("已有任务正在运行，请先停止。");
             session = ++generation;
             control = active;
+            usageBudget = taskBudget;
+            completedUsage = null;
             configuration = configurationLease;
             pending = null;
             log.clear();
@@ -302,6 +340,7 @@ public final class AgentController {
             stopTiming.finish();
             cancelled = control;
             cancelled.cancel();
+            freezeUsageLocked(cancelled);
             PerformanceTrace.mark(PerformanceTrace.Stage.STOP_EPOCH_INVALIDATED,
                     cancelled.getExecutionEpoch(), cancelled.getDispatchAttempts());
             control = null;
@@ -408,6 +447,7 @@ public final class AgentController {
     private void configurationInvalidatedLocked(RunControl active) {
         // Use the existing cancellation hook to abort transport; never replace it.
         active.cancel();
+        freezeUsageLocked(active);
         control = null;
         configuration = null;
         clearOverlayCallbacksLocked();
@@ -430,6 +470,7 @@ public final class AgentController {
         synchronized (lock) {
             if (!isCurrentLocked(session)) return;
             control.cancel();
+            freezeUsageLocked(control);
             control = null;
             configuration = null;
             clearOverlayCallbacksLocked();
@@ -507,6 +548,8 @@ public final class AgentController {
         synchronized (lock) {
             if (control != null) return;
             summary = ""; log.clear(); status = "准备就绪";
+            completedUsage = null;
+            usageBudget = null;
         }
         publish();
     }

@@ -98,6 +98,11 @@ public final class MainActivity extends Activity implements AgentController.List
     private LinearLayout modelFields, approvalPanel, runningButtons;
     private LinearLayout taskFocusAnchor;
     private ProgressBar progress;
+    private TaskUsageView taskUsageView;
+    private final Runnable taskUsageRefresh = () -> {
+        if (!this.resumed || destroyed || taskUsageView == null) return;
+        renderTaskUsage(controller.getTaskUsage(), true);
+    };
     private Button serviceButton, modelToggle, saveButton, resetButton, appsButton, startButton, pauseButton, stopButton, clearButton, allowButton, denyButton;
     private RadioGroup executionModes;
     private final List<View> configurationViews = new ArrayList<>();
@@ -188,10 +193,12 @@ public final class MainActivity extends Activity implements AgentController.List
         super.onResume();
         resumed = true;
         renderState();
+        renderTaskUsage(controller.getTaskUsage(), true);
     }
 
     @Override protected void onPause() {
         resumed = false;
+        main.removeCallbacks(taskUsageRefresh);
         dismissProbeTrustDialog();
         invalidateSavedProbe("已失效，请重新测试");
         renderProbeResult();
@@ -208,6 +215,7 @@ public final class MainActivity extends Activity implements AgentController.List
     }
 
     @Override protected void onDestroy() {
+        main.removeCallbacks(taskUsageRefresh);
         closeDeviceDiagnostics(true);
         cancelModelProbe("测试已取消。", false);
         invalidateSavedProbe("已失效，请重新测试");
@@ -440,6 +448,8 @@ public final class MainActivity extends Activity implements AgentController.List
         progress.setIndeterminateTintList(ColorStateList.valueOf(color(R.color.agent_primary)));
         progress.setVisibility(View.GONE);
         marginAdd(results, progress, 8);
+        taskUsageView = new TaskUsageView(this);
+        marginAdd(results, taskUsageView, 12);
 
         approvalPanel = column();
         approvalPanel.setPadding(dp(14), dp(12), dp(14), dp(12));
@@ -998,6 +1008,7 @@ public final class MainActivity extends Activity implements AgentController.List
                 ? "测试当前填写的图像理解" : "测试已保存配置的图像理解");
         renderProbeResult();
         AgentController.State state = controller.getState();
+        renderTaskUsage(state.usage, false);
         if (wasRunning && !state.running) taskField.setText("");
         wasRunning = state.running;
         boolean service = AgentAccessibilityService.getInstance() != null;
@@ -1056,6 +1067,19 @@ public final class MainActivity extends Activity implements AgentController.List
                 events.append(state.log.get(i));
             }
             logText.setText(events.toString());
+        }
+    }
+
+    /** Periodic refresh is isolated from renderState/publish and never republishes the control overlay. */
+    private void renderTaskUsage(AgentController.TaskUsage usage, boolean tick) {
+        if (taskUsageView == null || destroyed) return;
+        // Identity/terminal changes show immediately; ordinary same-task events
+        // leave the usage view to its single foreground one-second tick.
+        if (tick || !taskUsageView.showsIdentity(usage)) taskUsageView.render(usage);
+        if (!resumed || usage == null || usage.finished) {
+            main.removeCallbacks(taskUsageRefresh);
+        } else if (!main.hasCallbacks(taskUsageRefresh)) {
+            main.postDelayed(taskUsageRefresh, 1_000);
         }
     }
 

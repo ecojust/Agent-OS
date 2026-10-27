@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Add an encrypted per-response output token limit (128–8192, default2048) across tasks and model probes. Core267/267 and APK/test builds/lint passed; eight new real Android regressions await device execution. This is not a cumulative token or billing guarantee.
+**本次更新：** Add foreground task-usage reporting from original RunControl counters, freeze terminal statistics and isolate new tasks. Six real Controller/UI regressions compile; APKs and lint pass. Core267/267 passed; device validation for token limits and usage is pending.
 
-**记录时间：** 2026-10-27T11:07:33Z
+**记录时间：** 2026-10-27T11:12:52Z
 
 [最近测试截图与清单](screenshots/40489790843-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40489790843)。通过、失败及未截图原因见清单。
 

@@ -8,6 +8,7 @@ import android.graphics.Rect;
 import android.hardware.HardwareBuffer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcel;
 import android.os.ResultReceiver;
 import android.os.RemoteException;
 import android.os.SystemClock;
@@ -36,6 +37,8 @@ public final class CaptureBridgeClient implements AutoCloseable {
     private boolean closing, requested, opened;
     private Result accepted;
     private CompletableFuture<Result> pending;
+    private ResultReceiver localCallback;
+    private String receiverClassFromBridge;
 
     public CaptureBridgeClient(Context context, UiAutomation automation) throws Exception {
         this.context = context; this.automation = automation;
@@ -95,11 +98,21 @@ public final class CaptureBridgeClient implements AutoCloseable {
                 }
             }
         };
-        Bundle request = extras(); request.putString("requestId", requestId);
-        request.putInt("windowId", windowId); request.putParcelable("bounds", new Rect(bounds));
-        request.putParcelable("receiver", receiver);
+        synchronized (lock) { localCallback = receiver; }
         try {
-            call("capture", request);
+            // Bundle.writeParcelable otherwise writes the anonymous application
+            // subclass name. The remote SDK-only classloader must receive only a
+            // framework ResultReceiver backed by this retained local callback.
+            ResultReceiver proxy = frameworkProxy(receiver);
+            if (proxy.getClass() != ResultReceiver.class)
+                throw new IllegalStateException("Capture callback proxy is not the framework class");
+            Bundle request = extras(); request.putString("requestId", requestId);
+            request.putInt("windowId", windowId); request.putParcelable("bounds", new Rect(bounds));
+            request.putParcelable("receiver", proxy);
+            Bundle acknowledged = call("capture", request);
+            receiverClassFromBridge = acknowledged.getString("receiverClass");
+            if (!ResultReceiver.class.getName().equals(receiverClassFromBridge))
+                throw new IllegalStateException("Remote bridge did not receive the framework callback proxy");
             return completion.get(10, TimeUnit.SECONDS);
         } catch (Exception | Error failure) {
             // Closing marks the receiver stale before asking the remote service to
@@ -116,6 +129,16 @@ public final class CaptureBridgeClient implements AutoCloseable {
     public int ownedHandles() { return owned.get(); }
     public int closedHandles() { return closed.get(); }
     public int lateClosedHandles() { return lateClosed.get(); }
+    public String receiverClassFromBridge() { return receiverClassFromBridge; }
+
+    private static ResultReceiver frameworkProxy(ResultReceiver local) {
+        Parcel parcel = Parcel.obtain();
+        try {
+            local.writeToParcel(parcel, 0);
+            parcel.setDataPosition(0);
+            return ResultReceiver.CREATOR.createFromParcel(parcel);
+        } finally { parcel.recycle(); }
+    }
 
     private Bundle awaitStatus(Predicate<Bundle> condition, long timeout, String reason) throws Exception {
         long deadline = SystemClock.uptimeMillis() + timeout;
@@ -176,6 +199,9 @@ public final class CaptureBridgeClient implements AutoCloseable {
         try {
             if (opened) awaitStatus(value -> !value.getBoolean("connected"), 8_000, "Test capture service did not disconnect");
             if (owned.get() != 0) throw new AssertionError("Receiver handles remain owned: " + owned.get());
+            // Keep the local callback reachable through drain and disconnection;
+            // failed cleanup retains it so a late result still closes its handle.
+            if (failure == null) synchronized (lock) { localCallback = null; }
         } catch (Exception | Error error) { failure = append(failure, error); }
         finally {
             try { provider.close(); }

@@ -326,12 +326,17 @@ public final class DeviceToolsInstrumentedTest {
 
     @Test public void entersTextAndVerifiesTheActualSavedFixtureState() throws Exception {
         try (DeviceHarness device = new DeviceHarness()) {
-            JsonObject observed = device.observe();
-            JsonObject text = nodeArguments(observed, "edit_value");
-            text.addProperty("text", "Agent integration sample");
-            JsonObject typed = device.tools.execute("type_text", text, device.control);
+            long dispatches = device.control.getDispatchAttempts();
+            JsonObject typed = executePositivePlan(device, "type_text", "Count: 0", current -> {
+                assertEquals("Saved: empty", string(node(current, "saved_value"), "text"));
+                JsonObject text = nodeArguments(current, "edit_value");
+                text.addProperty("text", "Agent integration sample");
+                return text;
+            });
             assertTrue(typed.toString(), typed.get("ok").getAsBoolean());
             assertTrue(typed.get("dispatchAccepted").getAsBoolean());
+            assertEquals("Text input must reach dispatch exactly once", dispatches + 1,
+                    device.control.getDispatchAttempts());
             JsonObject clicked = executePositivePlan(device, "click", "Agent integration sample",
                     current -> nodeArguments(current, "save_value"));
             assertTrue(clicked.toString(), clicked.get("ok").getAsBoolean());

@@ -62,7 +62,10 @@ public final class CaptureBridgeProvider extends ContentProvider {
                 if (windowId < 0 || bounds == null || bounds.isEmpty() || bounds.width() > 8192
                         || bounds.height() > 8192 || receiver == null)
                     throw new IllegalArgumentException("Missing bounded real window metadata or receiver");
+                if (receiver.getClass() != ResultReceiver.class)
+                    throw new IllegalArgumentException("Only a framework ResultReceiver proxy may cross the test bridge");
                 result = CaptureBridgeService.capture(nonce, id, windowId, bounds, receiver);
+                result.putString("receiverClass", receiver.getClass().getName());
                 break;
             default: throw new UnsupportedOperationException("Unknown test bridge operation");
         }

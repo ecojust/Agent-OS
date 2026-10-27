@@ -10,6 +10,7 @@ import android.hardware.HardwareBuffer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Process;
+import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.view.Display;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -51,6 +52,8 @@ public final class WindowCaptureBridgeInstrumentedTest {
                 assertEquals(0, initial.getInt("platformCalls"));
                 long requestedAt = SystemClock.uptimeMillis();
                 try (CaptureBridgeClient.Result result = bridge.capture(window.id, window.bounds)) {
+                    assertEquals("The separate test process must decode the framework proxy, not our callback subclass",
+                            ResultReceiver.class.getName(), bridge.receiverClassFromBridge());
                     assertEquals(initial.getInt("bridgeUid"), result.metadata.getInt("senderUid"));
                     assertEquals(initial.getInt("bridgePid"), result.metadata.getInt("senderPid"));
                     if (Build.VERSION.SDK_INT < 34) {

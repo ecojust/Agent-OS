@@ -37,11 +37,18 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
-      - name: Verify script boundaries and prepare tools
+      - name: Verify recording and archive boundaries
+        run: python3 -m unittest discover -s scripts -p 'test_demo_video.py'
+      - name: Ensure video encoding tools are installed
         run: |
-          python3 -m unittest discover -s scripts -p 'test_demo_video.py'
+          if ! command -v ffmpeg >/dev/null || ! command -v ffprobe >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install --no-install-recommends -y ffmpeg
+          fi
           command -v ffmpeg
           command -v ffprobe
+      - name: Prepare Android SDK
+        run: |
           sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
           echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
           echo "$sdk_root/platform-tools" >> "$GITHUB_PATH"
@@ -116,6 +123,14 @@ jobs:
           artifact-ids: ${{ steps.source.outputs.artifact_id }}
           merge-multiple: true
           path: ${{ runner.temp }}/demo-incoming
+      - name: Ensure archive video validation tools are installed
+        run: |
+          if ! command -v ffmpeg >/dev/null || ! command -v ffprobe >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install --no-install-recommends -y ffmpeg
+          fi
+          command -v ffmpeg
+          command -v ffprobe
       - name: Verify and archive original evidence
         run: |
           command -v ffmpeg

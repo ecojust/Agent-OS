@@ -1,7 +1,7 @@
 name: Android checks
 # A fixed diagnostic label remains identifiable even when no emulator artifact exists.
 # Empty preserves GitHub's existing push/PR/full-dispatch display title.
-run-name: ${{ github.event_name == 'workflow_dispatch' && inputs.scope == 'owned-control-diagnostic' && 'Android checks [owned-control-diagnostic]' || '' }}
+run-name: ${{ github.event_name == 'workflow_dispatch' && (inputs.scope == 'owned-control-diagnostic' && 'Android checks [owned-control-diagnostic]' || inputs.scope == 'task-qualification-diagnostic' && 'Android checks [task-qualification-diagnostic]') || '' }}
 
 on:
   push:
@@ -10,11 +10,11 @@ on:
   workflow_dispatch:
     inputs:
       scope:
-        description: Full regression or the single owned-control diagnostic (not full acceptance)
+        description: Full regression or one fixed diagnostic (not full acceptance)
         required: true
         default: full
         type: choice
-        options: [full, owned-control-diagnostic]
+        options: [full, owned-control-diagnostic, task-qualification-diagnostic]
 
 permissions:
   contents: read

@@ -124,7 +124,7 @@ class EvidenceTests(unittest.TestCase):
         self.check_test_exit("30", 30, scope=collector.DIAGNOSTIC_SCOPE)
 
     def test_arbitrary_test_filters_and_unknown_scopes_do_not_start_devices_or_gradle(self):
-        for scope in ("SomeClass#someMethod", "owned-control-diagnostic --class AnotherClass", "future-scope"):
+        for scope in ("SomeClass#someMethod", "owned-control-diagnostic --class AnotherClass", "task-qualification-diagnostic --class AnotherClass", "future-scope"):
             with self.subTest(scope=scope):
                 self.check_test_exit("30", 30, scope=scope, expected_exit=2, invalid_scope=True)
 
@@ -181,8 +181,8 @@ class EvidenceTests(unittest.TestCase):
                 arguments = (root / "gradle-args.txt").read_text().splitlines()
                 selectors = [value for value in arguments if value.startswith("-Pandroid.testInstrumentationRunnerArguments.")]
                 self.assertEqual(1, len(selectors))
-                if scope == collector.DIAGNOSTIC_SCOPE:
-                    self.assertEqual("-Pandroid.testInstrumentationRunnerArguments.class=" + collector.DIAGNOSTIC_TEST, selectors[0])
+                if scope in collector.DIAGNOSTIC_SELECTIONS:
+                    self.assertEqual("-Pandroid.testInstrumentationRunnerArguments.class=" + collector.test_selection(scope), selectors[0])
                 else:
                     self.assertEqual("-Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest,dev.agentos.app.DemoWalkthroughInstrumentedTest,dev.agentos.app.PinnedWindowDisclosureInstrumentedTest", selectors[0])
                 self.assertEqual(["window_animation_scale=1.0", "transition_animation_scale=1.0",
@@ -239,23 +239,25 @@ class EvidenceTests(unittest.TestCase):
             collector.verify_capture_scope({}, collector.DIAGNOSTIC_SCOPE)
         collector.verify_capture_scope({}, "full")  # Original full captures remain readable.
 
-    def diagnostic_archive(self, lanes):
+    def diagnostic_archive(self, lanes, scope=collector.DIAGNOSTIC_SCOPE, artifact_scope=None, manifest_selection=None):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             (root / "incoming").mkdir()
             run = source_run()
-            run.update(event="workflow_dispatch", display_title=publisher.DIAGNOSTIC_TITLE)
+            run.update(event="workflow_dispatch", display_title=next(title for title, value in publisher.DIAGNOSTIC_TITLES.items() if value == scope))
+            artifact_scope = artifact_scope or scope
+            selection = collector.test_selection(artifact_scope)
             artifacts, jobs = [], []
-            test_class, method = collector.DIAGNOSTIC_TEST.split("#")
+            test_class, method = (manifest_selection or collector.test_selection(scope)).split("#")
             for label, status in lanes.items():
                 folder = root / f"incoming/screenshots-api-{label}-attempt-2"
                 (folder / "screenshots").mkdir(parents=True)
                 capture = {"schemaVersion": 1, "apiLevel": int(label.split('.')[0]), "matrixLabel": label,
                            "actualSdkInt": int(label.split('.')[0]), "gradleExitCode": int(status == "failed"),
-                           "executionScope": collector.DIAGNOSTIC_SCOPE, "testSelection": collector.DIAGNOSTIC_TEST,
+                           "executionScope": artifact_scope, "testSelection": selection,
                            "captureStatus": "collected", "junit": {"reports": 1, "tests": 1,
                            "failures": int(status == "failed"), "errors": 0, "skipped": int(status == "skipped"),
-                           "unreadableReports": 0, "selection": collector.DIAGNOSTIC_TEST,
+                           "unreadableReports": 0, "selection": selection,
                            "selectedTests": 1, "unexpectedTests": 0}}
                 tests = [] if status == "skipped" else [{"testClass": test_class, "testName": method,
                           "testResult": "fail" if status == "failed" else "pass", "captures": []}]
@@ -305,6 +307,92 @@ class EvidenceTests(unittest.TestCase):
             wrong["junit"]["unexpectedTests"] = 1
             with self.assertRaises(ValueError):
                 publisher.diagnostic_result(wrong, [], {"conclusion": "success"})
+
+    def test_task_qualification_shell_selects_only_its_fixed_case_and_preserves_failure(self):
+        self.check_test_exit("33", 33, scope=collector.QUALIFICATION_SCOPE)
+
+    def test_task_qualification_scope_requires_its_exact_manual_title_and_matching_capture(self):
+        run = source_run()
+        run["display_title"] = publisher.QUALIFICATION_TITLE
+        self.assertEqual("full", publisher.android_execution_scope(run))
+        run["event"] = "workflow_dispatch"
+        self.assertEqual(collector.QUALIFICATION_SCOPE, publisher.android_execution_scope(run))
+        run["display_title"] += " --class Other"
+        with self.assertRaises(ValueError):
+            publisher.android_execution_scope(run)
+        for record in ({}, {"executionScope": collector.DIAGNOSTIC_SCOPE,
+                            "testSelection": collector.DIAGNOSTIC_TEST},
+                       {"executionScope": collector.QUALIFICATION_SCOPE,
+                        "testSelection": collector.DIAGNOSTIC_TEST}):
+            with self.subTest(record=record), self.assertRaises(ValueError):
+                collector.verify_capture_scope(record, collector.QUALIFICATION_SCOPE)
+        self.assertEqual(collector.DIAGNOSTIC_TEST, collector.test_selection(collector.DIAGNOSTIC_SCOPE))
+        self.assertEqual("full-suite", collector.test_selection("full"))
+
+    def test_task_qualification_finalize_preserves_scope_without_reports_and_cannot_relabel(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            command = ["python3", str(SCRIPTS / "collect_android_evidence.py"), "finalize",
+                       "--matrix-label", "33", "--scope", collector.QUALIFICATION_SCOPE]
+            subprocess.run(command, cwd=root, check=True, capture_output=True, text=True)
+            path = root / "test-evidence/api-33/capture.json"
+            original = path.read_bytes()
+            record = json.loads(original)
+            self.assertEqual(collector.QUALIFICATION_TEST, record["testSelection"])
+            self.assertEqual(collector.QUALIFICATION_TEST, record["junit"]["selection"])
+            self.assertEqual(0, record["junit"]["selectedTests"])
+            for scope in ("full", collector.DIAGNOSTIC_SCOPE):
+                result = subprocess.run(command[:-1] + [scope], cwd=root, capture_output=True, text=True)
+                self.assertNotEqual(0, result.returncode)
+                self.assertEqual(original, path.read_bytes())
+
+    def test_task_qualification_archive_keeps_all_missing_and_mixed_lanes_in_its_eight_case_scope(self):
+        for lanes, counts in (({}, {"passed": 0, "failed": 0, "unverified": 8}),
+                              ({"30": "passed", "33": "failed", "37.0": "skipped"},
+                               {"passed": 1, "failed": 1, "unverified": 6})):
+            with self.subTest(lanes=lanes):
+                manifest, readme = self.diagnostic_archive(lanes, collector.QUALIFICATION_SCOPE)
+                self.assertEqual(collector.QUALIFICATION_SCOPE, manifest["executionScope"])
+                self.assertEqual(collector.QUALIFICATION_TEST, manifest["testSelection"])
+                self.assertEqual((1, 8), (manifest["expectedTestsPerApi"], manifest["expectedTests"]))
+                self.assertEqual(8, len(manifest["apis"]))
+                self.assertEqual(counts, manifest["diagnosticCaseCounts"])
+                self.assertFalse(manifest["fullSuiteAcceptance"])
+                self.assertIn("# Task Qualification Diagnostic Evidence", readme)
+                self.assertIn(collector.QUALIFICATION_TEST, readme)
+                self.assertIn("not counted as passed", readme)
+                self.assertNotIn(collector.DIAGNOSTIC_TEST, readme)
+
+    def test_task_qualification_archive_rejects_other_scope_and_wrong_manifest_case(self):
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.diagnostic_archive({"33": "passed"}, collector.QUALIFICATION_SCOPE,
+                                    artifact_scope=collector.DIAGNOSTIC_SCOPE)
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.diagnostic_archive({"33": "passed"}, collector.QUALIFICATION_SCOPE,
+                                    manifest_selection=collector.DIAGNOSTIC_TEST)
+
+    def test_task_qualification_original_xml_is_required_and_cannot_mix_cases_or_borrow_old_selection(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            test_class, method = collector.QUALIFICATION_TEST.split("#")
+            xml = root / "result.xml"
+            case = f'<testcase classname="{test_class}" name="{method}"/>'
+            xml.write_text('<testsuite>' + case + '</testsuite>')
+            capture = {"junit": collector.junit_summary(root, collector.QUALIFICATION_TEST), "gradleExitCode": 0}
+            tests = [{"testClass": test_class, "testName": method, "testResult": "pass"}]
+            job = {"conclusion": "success"}
+            self.assertEqual("passed", publisher.diagnostic_result(capture, tests, job, collector.QUALIFICATION_SCOPE))
+            self.assertEqual("unverified", publisher.diagnostic_result(capture, [], job, collector.QUALIFICATION_SCOPE))
+            with self.assertRaises(ValueError):
+                publisher.diagnostic_result(capture, tests, job, collector.DIAGNOSTIC_SCOPE)
+            old_class, old_method = collector.DIAGNOSTIC_TEST.split("#")
+            for body in (f'<testcase classname="{old_class}" name="{old_method}"/>',
+                         case + f'<testcase classname="{old_class}" name="{old_method}"/>',
+                         case + case):
+                xml.write_text('<testsuite>' + body + '</testsuite>')
+                capture["junit"] = collector.junit_summary(root, collector.QUALIFICATION_TEST)
+                with self.subTest(body=body), self.assertRaises(ValueError):
+                    publisher.diagnostic_result(capture, tests, job, collector.QUALIFICATION_SCOPE)
 
     def test_archive_keeps_missing_lanes_and_source_failure(self):
         with tempfile.TemporaryDirectory() as temp:

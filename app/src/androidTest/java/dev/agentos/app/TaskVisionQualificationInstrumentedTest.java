@@ -532,12 +532,77 @@ public final class TaskVisionQualificationInstrumentedTest {
         }
 
         AgentController.State awaitApproval(AgentController.VisualQualification expected) {
-            await("The real structured task did not reach its protected confirmation", () -> {
-                server.assertHealthy(); planner.assertHealthy();
-                AgentController.State state = controller.getState();
-                return state.running && !state.approvalId.isEmpty() && state.visualQualification == expected;
-            });
+            try {
+                await("The real structured task did not reach its protected confirmation", () -> {
+                    server.assertHealthy(); planner.assertHealthy();
+                    AgentController.State state = controller.getState();
+                    return state.running && !state.approvalId.isEmpty() && state.visualQualification == expected;
+                });
+            } catch (AssertionError original) {
+                // The original wait/condition has already failed. Read only bounded
+                // memory metadata before close() stops and clears the actual owner.
+                String diagnostic;
+                try { diagnostic = approvalFailureDiagnostic(expected); }
+                catch (RuntimeException unavailable) { diagnostic = "qualificationDiagnostic={unavailable=true}"; }
+                throw new AssertionError(original.getMessage() + "\n" + diagnostic, original);
+            }
             return controller.getState();
+        }
+
+        private String approvalFailureDiagnostic(AgentController.VisualQualification expected) {
+            // Sequential samples, not an atomic snapshot. No worker barrier, new
+            // observation, main-thread task, approval, cancellation or model request.
+            AgentController.State state = controller.getState();
+            RunControl originalOwner = owner;
+            StringBuilder result = new StringBuilder("qualificationDiagnostic={snapshot=sequential-memory-only,"
+                    + "sample=after-original-failure-before-cleanup,expected=" + expected
+                    + ",actual=" + state.visualQualification + ",matchesExpected=" + (state.visualQualification == expected)
+                    + ",visualRequested=" + state.visualRequested + ",running=" + state.running + ",paused=" + state.paused
+                    + ",approvalPending=" + !state.approvalId.isEmpty() + ",statusClass=" + qualificationStatusClass(state.status)
+                    + ",configurationCurrent=" + SettingsStore.isCurrent(lease) + ",usagePresent=" + (state.usage != null));
+            if (state.usage != null) result.append(",usageFinished=").append(state.usage.finished)
+                    .append(",usage=").append(budgetDiagnostic(state.usage.consumed));
+            result.append("}\noriginalTaskOwner={present=").append(originalOwner != null);
+            if (originalOwner != null) result.append(",startEpoch=").append(originalStartEpoch)
+                    .append(",currentEpoch=").append(originalOwner.getExecutionEpoch())
+                    .append(",cancelled=").append(originalOwner.isCancelled())
+                    .append(",paused=").append(originalOwner.isPaused())
+                    .append(",dispatchAttempts=").append(originalOwner.getDispatchAttempts())
+                    .append(",inFlightDispatch=").append(originalOwner.hasInFlightDispatch())
+                    .append(",usage=").append(budgetDiagnostic(originalOwner.budgetSnapshot()));
+            result.append("}\nactualHttp={requests=").append(server.requestCount())
+                    .append(",syntheticImages=").append(server.imageRequestCount())
+                    .append(",toolProbes=").append(server.toolRequestCount())
+                    .append(",taskRequests=").append(server.taskRequestCount()).append("}\n")
+                    // This planner does not bind HTTP. Its requests counter is not
+                    // the wire count; lastReceivedRequestRound describes routed plans.
+                    .append("plannerScope=planning-only-received-requests\n").append(planner.safeDiagnostics());
+            return result.length() <= 6_000 ? result.toString() : result.substring(0, 6_000) + " [capped]";
+        }
+
+        private static String budgetDiagnostic(RunControl.BudgetSnapshot usage) {
+            return "{modelRounds=" + usage.modelRounds + ",toolCalls=" + usage.toolCalls
+                    + ",activeMillis=" + usage.activeMillis + ",pausedMillis=" + usage.pausedMillis
+                    + ",approvalMillis=" + usage.approvalMillis + "}";
+        }
+
+        private static String qualificationStatusClass(String status) {
+            if (status == null || status.isEmpty()) return "EMPTY";
+            switch (status) {
+                case "准备就绪": return "READY";
+                case "正在检查本次任务的图像输入": return "CHECKING_TASK_IMAGE_INPUT";
+                case "正在连接模型": return "CONNECTING_MODEL";
+                case "等待确认（60 秒内有效）": return "WAITING_CONFIRMATION";
+                case "已暂停": return "PAUSED";
+                case "确认已过期，任务已暂停": case "确认超时，任务已暂停": return "APPROVAL_EXPIRED_PAUSED";
+                case "已停止": return "STOPPED";
+                case "执行失败": return "FAILED";
+                case "达到任务预算，已停止": return "BUDGET_EXCEEDED";
+                case "配置已改变，任务已停止": return "CONFIGURATION_CHANGED";
+                case "结果已验证": return "VERIFIED";
+                case "执行已结束 · 模型报告待核对": return "MODEL_REPORT";
+                default: return "OTHER"; // Never disclose arbitrary model/UI status text.
+            }
         }
 
         AgentController.State awaitStopped() throws Exception {

@@ -18,11 +18,17 @@ PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 DIAGNOSTIC_SCOPE = "owned-control-diagnostic"
 DIAGNOSTIC_TEST = "dev.agentos.app.OwnedControlWindowInstrumentedTest#changedPresentationAndCallbacksStillRevokeTheActualControlOwner"
 
+QUALIFICATION_SCOPE = "task-qualification-diagnostic"
+QUALIFICATION_TEST = "dev.agentos.app.TaskVisionQualificationInstrumentedTest#optedInTaskUsesItsOwnRealProbeAndResumeNeverRenewsTheOldQualification"
+DIAGNOSTIC_SELECTIONS = {DIAGNOSTIC_SCOPE: DIAGNOSTIC_TEST, QUALIFICATION_SCOPE: QUALIFICATION_TEST}
+
 
 def test_selection(scope: str) -> str:
-    if scope not in ("full", DIAGNOSTIC_SCOPE):
+    if scope == "full":
+        return "full-suite"
+    if scope not in DIAGNOSTIC_SELECTIONS:
         raise ValueError("unsupported execution scope")
-    return DIAGNOSTIC_TEST if scope == DIAGNOSTIC_SCOPE else "full-suite"
+    return DIAGNOSTIC_SELECTIONS[scope]
 
 
 def verify_capture_scope(record: dict, scope: str) -> None:
@@ -139,7 +145,7 @@ def main() -> None:
     parser.add_argument("--matrix-label")
     parser.add_argument("--exit-code", type=int, default=1)
     parser.add_argument("--step-outcome", default="unknown")
-    parser.add_argument("--scope", choices=("full", DIAGNOSTIC_SCOPE), default="full")
+    parser.add_argument("--scope", choices=("full", *DIAGNOSTIC_SELECTIONS), default="full")
     args = parser.parse_args()
     matrix_label = args.matrix_label or str(args.api)
     if not re.fullmatch(r"3[0-6]|37\.0", matrix_label):
@@ -164,7 +170,7 @@ def main() -> None:
         record["emulatorStepOutcome"] = args.step_outcome
     record.update({"executionScope": args.scope, "testSelection": test_selection(args.scope)})
     record["junit"] = junit_summary(Path("app/build/outputs/androidTest-results"),
-                                    DIAGNOSTIC_TEST if args.scope == DIAGNOSTIC_SCOPE else None)
+                                    DIAGNOSTIC_SELECTIONS.get(args.scope))
     record["screenshotCount"] = sum(name.endswith(".png") for name in record["files"])
     path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
     print(f"API {matrix_label}: {record['captureStatus']}, {record['screenshotCount']} screenshots; "

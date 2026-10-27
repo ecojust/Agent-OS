@@ -21,6 +21,9 @@ MAX_TOTAL_BYTES = 64 * 1024 * 1024
 MAX_FILES = 8000
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 DIAGNOSTIC_TITLE = "Android checks [owned-control-diagnostic]"
+QUALIFICATION_TITLE = "Android checks [task-qualification-diagnostic]"
+DIAGNOSTIC_TITLES = {DIAGNOSTIC_TITLE: android_evidence.DIAGNOSTIC_SCOPE,
+                     QUALIFICATION_TITLE: android_evidence.QUALIFICATION_SCOPE}
 
 
 def android_execution_scope(run: dict) -> str:
@@ -29,21 +32,25 @@ def android_execution_scope(run: dict) -> str:
     # runs and unchanged push/PR/full titles keep their existing full-suite scope.
     if run.get("event") == "workflow_dispatch":
         title = run.get("display_title", "")
-        if title == DIAGNOSTIC_TITLE:
-            return android_evidence.DIAGNOSTIC_SCOPE
+        if title in DIAGNOSTIC_TITLES:
+            return DIAGNOSTIC_TITLES[title]
         if title.startswith("Android checks ["):
             raise ValueError("unsupported Android diagnostic scope")
     return "full"
 
 
-def diagnostic_result(capture: dict, tests: list, job: dict | None) -> str:
-    """Only original exact-case evidence can pass the one-case diagnostic."""
+def diagnostic_result(capture: dict, tests: list, job: dict | None,
+                      scope: str = android_evidence.DIAGNOSTIC_SCOPE) -> str:
+    """Only original exact-case evidence can pass the selected fixed diagnostic."""
+    if scope not in android_evidence.DIAGNOSTIC_SELECTIONS:
+        raise ValueError("unsupported diagnostic scope")
+    selection = android_evidence.test_selection(scope)
     junit = capture.get("junit", {})
     fields = ("reports", "tests", "failures", "errors", "skipped", "unreadableReports",
               "selectedTests", "unexpectedTests")
     if (not isinstance(junit, dict)
             or any(type(junit.get(field)) is not int or junit[field] < 0 for field in fields)
-            or junit.get("selection") != android_evidence.DIAGNOSTIC_TEST
+            or junit.get("selection") != selection
             or junit["tests"] > 1 or junit["selectedTests"] != junit["tests"]
             or junit["unexpectedTests"] != 0
             or any(junit[field] > junit["tests"] for field in ("failures", "errors", "skipped"))
@@ -51,9 +58,9 @@ def diagnostic_result(capture: dict, tests: list, job: dict | None) -> str:
         raise ValueError("diagnostic evidence does not match the fixed one-case selection")
     for test in tests:
         if (not isinstance(test, dict)
-                or str(test.get("testClass", "")) + "#" + str(test.get("testName", "")) != android_evidence.DIAGNOSTIC_TEST
+                or str(test.get("testClass", "")) + "#" + str(test.get("testName", "")) != selection
                 or test.get("testResult") not in ("pass", "fail")):
-            raise ValueError("unexpected test in owned-control diagnostic evidence")
+            raise ValueError("unexpected test in fixed diagnostic evidence")
     if junit["failures"] or junit["errors"] or any(test["testResult"] == "fail" for test in tests):
         return "failed"
     if (junit["tests"] == 1 and junit["reports"] > 0 and junit["skipped"] == 0
@@ -223,7 +230,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         archive_pinned_page(args, run, run_id, attempt, profile)
         return
     execution_scope = android_execution_scope(run)
-    diagnostic = execution_scope == android_evidence.DIAGNOSTIC_SCOPE
+    diagnostic = execution_scope in android_evidence.DIAGNOSTIC_SELECTIONS
+    diagnostic_name = "Task Qualification" if execution_scope == android_evidence.QUALIFICATION_SCOPE else "Owned Control"
     output = Path("screenshots") / f"{run_id}-{attempt}"
     if output.exists():
         raise ValueError("this run's evidence directory already exists")
@@ -263,7 +271,7 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
             test_manifest = source / "screenshots" / "manifest.json"
             tests = read_json(test_manifest).get("tests", []) if test_manifest.exists() else []
             if diagnostic:
-                record["diagnosticResult"] = diagnostic_result(capture, tests, job)
+                record["diagnosticResult"] = diagnostic_result(capture, tests, job, execution_scope)
             actual_png = {item["path"] for item in png_files}
             tests_with_images = sum(any(capture.get("status") == "pass"
                                        and "screenshots/" + str(capture.get("png", "")) in actual_png
@@ -296,13 +304,13 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
                          "diagnosticCaseCounts": {status: sum(record["diagnosticResult"] == status for record in records)
                                                   for status in ("passed", "failed", "unverified")},
                          "fullSuiteAcceptance": False,
-                         "scope": "Fixed owned-control diagnostic only: one selected test per API. Other suite tests were not selected and receive no passing status; this cannot replace a full regression."})
+                         "scope": "Fixed " + diagnostic_name.lower().replace(" ", "-") + " diagnostic only: one selected test per API. Other suite tests were not selected and receive no passing status; this cannot replace a full regression."})
     (output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
-    lines = ["# " + ("Owned Control Diagnostic Evidence" if diagnostic else "Android Test Evidence"), "", f"Source run: {manifest['sourceRun']['url']}", "",
+    lines = ["# " + (diagnostic_name + " Diagnostic Evidence" if diagnostic else "Android Test Evidence"), "", f"Source run: {manifest['sourceRun']['url']}", "",
              f"Source commit: `{run['head_sha']}` · Attempt: {attempt}", "",
              "These screenshots show synthetic test scenarios. Missing screenshots and failed tests remain visible in the manifest.", ""]
     if diagnostic:
-        lines += [f"Execution scope: `{execution_scope}`. Only `{android_evidence.DIAGNOSTIC_TEST}` was selected.", "",
+        lines += [f"Execution scope: `{execution_scope}`. Only `{android_evidence.test_selection(execution_scope)}` was selected.", "",
                   "The diagnostic denominator is 8 cases (8 APIs × 1 test); missing, skipped and unexecuted cases remain unverified. "
                   "The rest of the normal suite was not run by this scope and is not counted as passed. A complete default matrix is still required for full regression acceptance.", "",
                   "| API | Diagnostic case result |", "| --- | --- |"]

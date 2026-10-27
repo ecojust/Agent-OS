@@ -19,8 +19,7 @@ import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
 import android.view.View;
-import android.view.WindowInsetsController;
-import android.view.inputmethod.InputMethodManager;
+import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.view.accessibility.AccessibilityManager;
@@ -114,6 +113,7 @@ final class DeviceHarness implements AutoCloseable {
     JsonObject hideOwnKeyboardAndObserve(Activity activity, AndroidDeviceTools executor, RunControl active) throws Exception {
         assertEquals("Only the test-owned application Activity may dismiss its keyboard",
                 context.getPackageName(), activity.getPackageName());
+        assertTrue("The task-keyboard flow belongs to the actual MainActivity", activity instanceof MainActivity);
         // MainActivity binds encrypted settings asynchronously. Waiting only for
         // its package/focus could race that later bind and its layout/IME changes.
         await("The owned configuration screen did not finish loading", () -> {
@@ -127,21 +127,13 @@ final class DeviceHarness implements AutoCloseable {
             });
             return ready[0];
         });
-        instrumentation.runOnMainSync(() -> {
-            View focus = activity.getCurrentFocus();
-            View owner = focus == null ? activity.getWindow().getDecorView() : focus;
-            if (focus != null) focus.clearFocus();
-            InputMethodManager keyboard = activity.getSystemService(InputMethodManager.class);
-            if (keyboard != null) keyboard.hideSoftInputFromWindow(owner.getWindowToken(), 0);
-            WindowInsetsController insets = activity.getWindow().getInsetsController();
-            if (insets != null) insets.hide(WindowInsets.Type.ime());
-        });
         try {
+            instrumentation.runOnMainSync(() -> ((MainActivity) activity).dismissOwnTaskKeyboard());
             await("The owned Activity's keyboard did not finish hiding", () -> {
                 boolean[] hidden = {false};
                 instrumentation.runOnMainSync(() -> {
                     WindowInsets insets = activity.getWindow().getDecorView().getRootWindowInsets();
-                    hidden[0] = insets != null && !insets.isVisible(WindowInsets.Type.ime());
+                    hidden[0] = ownRootHasFocus(activity) && insets != null && !insets.isVisible(WindowInsets.Type.ime());
                 });
                 return hidden[0];
             });
@@ -150,16 +142,42 @@ final class DeviceHarness implements AutoCloseable {
                     data -> context.getPackageName().equals(string(data, "packageName"))
                             && data.get("focused").getAsBoolean() && !data.get("hasOcclusion").getAsBoolean());
             assertEquals(focusedWindowId(service), own.get("windowId").getAsInt());
+            instrumentation.runOnMainSync(() -> {
+                assertTrue("An editor regained focus after dismissal", ownRootHasFocus(activity));
+                WindowInsets insets = activity.getWindow().getDecorView().getRootWindowInsets();
+                assertNotNull(insets);
+                assertFalse("The owned IME reopened before launch", insets.isVisible(WindowInsets.Type.ime()));
+            });
             return own;
         } catch (Exception | AssertionError failure) {
-            String[] insetsState = {"unavailable"};
-            instrumentation.runOnMainSync(() -> {
-                WindowInsets insets = activity.getWindow().getDecorView().getRootWindowInsets();
-                insetsState[0] = insets == null ? "missing" : "imeVisible=" + insets.isVisible(WindowInsets.Type.ime());
-            });
-            throw new AssertionError("The owned Activity was not ready for launch: " + insetsState[0]
+            throw new AssertionError("The owned Activity was not ready for launch: " + ownActivityDiagnostics(activity)
                     + "\n" + windowDiagnostics(), failure);
         }
+    }
+
+    private static boolean ownRootHasFocus(Activity activity) {
+        ViewGroup content = activity.findViewById(android.R.id.content);
+        View focus = activity.getCurrentFocus();
+        return content != null && content.getChildCount() == 1 && focus == content.getChildAt(0)
+                && focus.isFocused() && !focus.onCheckIsTextEditor();
+    }
+
+    /** No text values: capture current focus/IME/control geometry before a failed test cleans up. */
+    String ownActivityDiagnostics(Activity activity) {
+        String[] state = {"unavailable"};
+        instrumentation.runOnMainSync(() -> {
+            View focus = activity.getCurrentFocus();
+            WindowInsets insets = activity.getWindow().getDecorView().getRootWindowInsets();
+            state[0] = "own{destroyed=" + activity.isDestroyed() + ",windowFocus=" + activity.hasWindowFocus()
+                    + ",rootFocus=" + ownRootHasFocus(activity) + ",imeVisible="
+                    + (insets == null ? "missing" : insets.isVisible(WindowInsets.Type.ime()))
+                    + ",imeInsets=" + (insets == null ? "missing" : insets.getInsets(WindowInsets.Type.ime()))
+                    + ",focusClass=" + (focus == null ? "none" : focus.getClass().getSimpleName())
+                    + ",focusId=" + (focus == null ? -1 : focus.getId())
+                    + ",isTextEditor=" + (focus != null && focus.onCheckIsTextEditor())
+                    + ",controlAvailable=" + service.isControlAvailable() + ",controlBounds=" + service.controlBounds().toShortString() + "}";
+        });
+        return state[0];
     }
 
     JsonObject observe() throws Exception {

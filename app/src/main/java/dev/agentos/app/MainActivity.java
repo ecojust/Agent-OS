@@ -88,6 +88,7 @@ public final class MainActivity extends Activity implements AgentController.List
     private EditText endpointField, modelField, keyField, taskField;
     private TextView serviceState, statusText, configSummary, scopeSummary, messageText, logText, summaryText, approvalText;
     private LinearLayout modelFields, approvalPanel, runningButtons;
+    private LinearLayout taskFocusAnchor;
     private ProgressBar progress;
     private Button serviceButton, modelToggle, saveButton, resetButton, appsButton, startButton, pauseButton, stopButton, clearButton, allowButton, denyButton;
     private RadioGroup executionModes;
@@ -189,6 +190,10 @@ public final class MainActivity extends Activity implements AgentController.List
 
     private void buildInterface() {
         LinearLayout root = column();
+        taskFocusAnchor = root;
+        // Ending an edit must have a non-editor destination. Otherwise clearFocus
+        // can select another input and recreate the keyboard while a task starts.
+        root.setFocusableInTouchMode(true);
         root.setImportantForContentCapture(View.IMPORTANT_FOR_CONTENT_CAPTURE_NO_EXCLUDE_DESCENDANTS);
         root.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
         root.setBackgroundColor(color(R.color.agent_background));
@@ -415,6 +420,7 @@ public final class MainActivity extends Activity implements AgentController.List
         actions.addView(runningButtons);
         root.addView(actions, new LinearLayout.LayoutParams(-1, -2));
         setContentView(root);
+        root.requestFocus();
         watchModelConfiguration();
         updateModelPanel();
         renderState();
@@ -557,12 +563,7 @@ public final class MainActivity extends Activity implements AgentController.List
                 try {
                     // Start is only invoked from this still-live Activity after the save succeeds.
                     hideCurrentResult = false;
-                    View focus = getCurrentFocus();
-                    if (focus != null) {
-                        InputMethodManager keyboard = getSystemService(InputMethodManager.class);
-                        if (keyboard != null) keyboard.hideSoftInputFromWindow(focus.getWindowToken(), 0);
-                        focus.clearFocus();
-                    }
+                    dismissOwnTaskKeyboard();
                     // Request dismissal before the worker starts observing. This is
                     // asynchronous; the device's final obstruction guard still applies.
                     controller.start(model, goal, allowed, settings.executionMode, configurationLease);
@@ -573,6 +574,19 @@ public final class MainActivity extends Activity implements AgentController.List
                 renderState();
             });
         });
+    }
+
+    /** End this Activity's edit without transferring focus to another input. */
+    void dismissOwnTaskKeyboard() {
+        if (Looper.myLooper() != Looper.getMainLooper()) throw new IllegalStateException("Keyboard dismissal requires the UI thread");
+        View previous = getCurrentFocus();
+        if (taskFocusAnchor == null || !taskFocusAnchor.requestFocus() || !taskFocusAnchor.isFocused()) {
+            throw new IllegalStateException("The task screen could not leave its editor");
+        }
+        View tokenOwner = previous == null ? taskFocusAnchor : previous;
+        InputMethodManager keyboard = getSystemService(InputMethodManager.class);
+        if (keyboard != null) keyboard.hideSoftInputFromWindow(tokenOwner.getWindowToken(), 0);
+        if (getWindow().getInsetsController() != null) getWindow().getInsetsController().hide(WindowInsets.Type.ime());
     }
 
     private SettingsStore.SavedSettings readDraft() {

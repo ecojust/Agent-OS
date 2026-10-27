@@ -73,6 +73,16 @@ public final class ContinuousNavigationInstrumentedTest {
                 assertFalse(device.control.isPaused());
                 device.instrumentation.runOnMainSync(() -> assertTrue(device.service.isControlAvailable()));
                 screenshots.capture("continuous-navigation-real-home-without-confirmation");
+            } catch (TaskControlException paused) {
+                // Do not resume or replay a paused write. Record the windows while
+                // the owned Activity and its input/control state still exist.
+                AssertionError diagnostic = new AssertionError("Positive navigation stopped: " + paused.getCode()
+                        + "; paused=" + device.control.isPaused() + "; cancelled=" + device.control.isCancelled()
+                        + "; epoch=" + device.control.getExecutionEpoch() + "; dispatches=" + device.control.getDispatchAttempts()
+                        + "\n" + device.ownActivityDiagnostics(activity) + "\n" + bounded(windowDiagnostics(), 12_000), paused);
+                try { screenshots.capture("continuous-navigation-positive-pause-before-cleanup"); }
+                catch (Throwable captureFailure) { diagnostic.addSuppressed(captureFailure); }
+                throw diagnostic;
             } finally { device.instrumentation.runOnMainSync(activity::finish); }
         }
     }

@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "kind": "third-party-emulator-smoke-evidence",
+  "archivedAt": "2026-10-27T02:16:54.166622+00:00",
+  "sourceRun": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 40437075663,
+    "attempt": 1,
+    "commit": "f7fd7c907c5f34fe0a7d9bc2dcfb2e201ca40fd6",
+    "url": "https://github.com/ecojust/Agent-OS/actions/runs/40437075663",
+    "conclusion": "success",
+    "event": "workflow_dispatch",
+    "branch": "master"
+  },
+  "scope": {
+    "deviceKind": "dedicated_emulator",
+    "states": [
+      "off",
+      "idle"
+    ],
+    "executingStateValidated": false,
+    "upgradeValidated": false,
+    "physicalDeviceValidated": false,
+    "releaseAccepted": false,
+    "note": "Small fixed-version developer probe; not general application or phone compatibility acceptance."
+  },
+  "sampleId": "calculator-1.4.0",
+  "app": {
+    "package": "org.fossify.math",
+    "versionName": "1.4.0",
+    "versionCode": "10",
+    "url": "https://github.com/FossifyOrg/Calculator/releases/download/1.4.0/calculator-10-foss-release.apk",
+    "sizeBytes": 7047681,
+    "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+    "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+    "minSdk": 26,
+    "targetSdk": 36,
+    "abis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "x86",
+      "x86_64"
+    ],
+    "license": "GPL-3.0"
+  },
+  "expectedMatrixLabels": [
+    "30",
+    "35",
+    "37.0"
+  ],
+  "apis": [
+    {
+      "matrixLabel": "30",
+      "apiLevel": 30,
+      "status": "passed",
+      "reason": null,
+      "states": {
+        "off": "passed",
+        "idle": "passed"
+      },
+      "captureCounts": {
+        "captured": 4
+      },
+      "screenshotCount": 4,
+      "files": [
+        {
+          "path": "idle-before-0.png",
+          "bytes": 23004,
+          "sha256": "512326b9ec96779055f3c5910d0cdaf34c7128636552c9affcdb84e0b0b74a67"
+        },
+        {
+          "path": "idle-result-1.png",
+          "bytes": 23722,
+          "sha256": "76e4a5f7e142d01304abe872ca329dfe095056b3943ffe53a31055db46543a31"
+        },
+        {
+          "path": "instrumentation.json",
+          "bytes": 1591,
+          "sha256": "778c0a11d5de8c16babe4749f5548ab5b0e1308f170a46cf01491e69d335fa95"
+        },
+        {
+          "path": "off-before-0.png",
+          "bytes": 23004,
+          "sha256": "512326b9ec96779055f3c5910d0cdaf34c7128636552c9affcdb84e0b0b74a67"
+        },
+        {
+          "path": "off-result-1.png",
+          "bytes": 23722,
+          "sha256": "76e4a5f7e142d01304abe872ca329dfe095056b3943ffe53a31055db46543a31"
+        },
+        {
+          "path": "report.json",
+          "bytes": 38833,
+          "sha256": "95d94ccc18b88f49de40d6281c76cadefa55f21cdf947e6f44107ade7b29884e"
+        },
+        {
+          "path": "ui-results.json",
+          "bytes": 36546,
+          "sha256": "e8f08e9509d2fb58143690594a65c207b2b38059998198884264ef2f885539fe"
+        }
+      ],
+      "artifactId": 12704587989,
+      "device": {
+        "serial": "emulator-5554",
+        "apiLevel": 30,
+        "fingerprint": "Android/sdk_phone_x86_64/generic_x86_64:11/RSR1.210722.013.A2/10067904:userdebug/test-keys",
+        "abi": "x86_64",
+        "kernelQemu": "1",
+        "bootQemu": ""
+      },
+      "actualInstalledIdentityVerified": true
+    },
+    {
+      "matrixLabel": "35",
+      "apiLevel": 35,
+      "status": "passed",
+      "reason": null,
+      "states": {
+        "off": "passed",
+        "idle": "passed"
+      },
+      "captureCounts": {
+        "captured": 4
+      },
+      "screenshotCount": 4,
+      "files": [
+        {
+          "path": "idle-before-0.png",
+          "bytes": 23481,
+          "sha256": "9b8d472ef080319704234954da8d2ed3840560a23a5c23baafbaf8a5be91e46a"
+        },
+        {
+          "path": "idle-result-1.png",
+          "bytes": 24139,
+          "sha256": "f8fa4cfb34513fea7acec7155643100debf3d2cc5b6c334908e0c54196a4668b"
+        },
+        {
+          "path": "instrumentation.json",
+          "bytes": 1592,
+          "sha256": "d88dc66adb2bc1f9494dad9ce1cc88e4e121d7ca234265d2d688fb0e80008dff"
+        },
+        {
+          "path": "off-before-0.png",
+          "bytes": 23481,
+          "sha256": "9b8d472ef080319704234954da8d2ed3840560a23a5c23baafbaf8a5be91e46a"
+        },
+        {
+          "path": "off-result-1.png",
+          "bytes": 24139,
+          "sha256": "f8fa4cfb34513fea7acec7155643100debf3d2cc5b6c334908e0c54196a4668b"
+        },
+        {
+          "path": "report.json",
+          "bytes": 39639,
+          "sha256": "e99d24742dd8542a27910703f43d9563d46098d90eb83cbf2eeddbe7a20300e2"
+        },
+        {
+          "path": "ui-results.json",
+          "bytes": 37347,
+          "sha256": "24cc4b39f085602cf4ad9acd1c1e9bbea0b790fc29f7944729cdc8a75cde7e3e"
+        }
+      ],
+      "artifactId": 12704493462,
+      "device": {
+        "serial": "emulator-5554",
+        "apiLevel": 35,
+        "fingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
+        "abi": "x86_64",
+        "kernelQemu": "1",
+        "bootQemu": "1"
+      },
+      "actualInstalledIdentityVerified": true
+    },
+    {
+      "matrixLabel": "37.0",
+      "apiLevel": 37,
+      "status": "passed",
+      "reason": null,
+      "states": {
+        "off": "passed",
+        "idle": "passed"
+      },
+      "captureCounts": {
+        "captured": 4
+      },
+      "screenshotCount": 4,
+      "files": [
+        {
+          "path": "idle-before-0.png",
+          "bytes": 23474,
+          "sha256": "cb5ebcc2ff1d683bc05863a08acd5f5165a3e2701c92a6add8c9852509c7fa2c"
+        },
+        {
+          "path": "idle-result-1.png",
+          "bytes": 24151,
+          "sha256": "0aed2fded2fa4cd350268b3f435dbcbaabba2600fabc3a728023b95ba2d1b3c3"
+        },
+        {
+          "path": "instrumentation.json",
+          "bytes": 1592,
+          "sha256": "91b997ae395246c716fb1de7d257c78559d9d38c99b38c019e8c923abe010b04"
+        },
+        {
+          "path": "off-before-0.png",
+          "bytes": 23487,
+          "sha256": "8902b635b52050a29152574d5184d2e1071ea282adebe1f7604a7ffe8e2e7674"
+        },
+        {
+          "path": "off-result-1.png",
+          "bytes": 24164,
+          "sha256": "9f54a4d59570c43cbffdfe3b6721566c2834e9123b5cb20e3d2c868a2dc36b65"
+        },
+        {
+          "path": "report.json",
+          "bytes": 39644,
+          "sha256": "9be23ec38f1dfb4c29dd90d4a4b953b1b3e05117795f6c50ef8b57259c1c6858"
+        },
+        {
+          "path": "ui-results.json",
+          "bytes": 37350,
+          "sha256": "6fe8f601562496e04b4697ff325db5f3852679622460f26a787945774fa5badc"
+        }
+      ],
+      "artifactId": 12704388891,
+      "device": {
+        "serial": "emulator-5554",
+        "apiLevel": 37,
+        "fingerprint": "Android/sdk_phone64_x86_64/emu64x:17/CE2A.260420.051.A3/16571990:userdebug/test-keys",
+        "abi": "x86_64",
+        "kernelQemu": "1",
+        "bootQemu": "1"
+      },
+      "actualInstalledIdentityVerified": true
+    }
+  ],
+  "stateCounts": {
+    "passed": 6,
+    "failed": 0,
+    "unverified": 0
+  },
+  "allProbeStatesPassed": true,
+  "fileCount": 21,
+  "totalBytes": 518102,
+  "screenshotCount": 12
+}

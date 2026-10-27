@@ -1,0 +1,829 @@
+{
+  "schemaVersion": 1,
+  "kind": "third-party-app-smoke",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 40437075663,
+    "attempt": 1,
+    "commit": "f7fd7c907c5f34fe0a7d9bc2dcfb2e201ca40fd6"
+  },
+  "matrixLabel": "35",
+  "device": {
+    "serial": "emulator-5554",
+    "apiLevel": 35,
+    "fingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
+    "abi": "x86_64",
+    "kernelQemu": "1",
+    "bootQemu": "1"
+  },
+  "app": {
+    "package": "org.fossify.math",
+    "versionName": "1.4.0",
+    "versionCode": "10",
+    "url": "https://github.com/FossifyOrg/Calculator/releases/download/1.4.0/calculator-10-foss-release.apk",
+    "sizeBytes": 7047681,
+    "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+    "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+    "minSdk": 26,
+    "targetSdk": 36,
+    "abis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "x86",
+      "x86_64"
+    ],
+    "license": "GPL-3.0"
+  },
+  "scope": {
+    "deviceKind": "dedicated_emulator",
+    "states": [
+      "off",
+      "idle"
+    ],
+    "operation": "Fresh installation and launcher startup; calculate 2 + 3 and independently read result 5.",
+    "data": "Synthetic arithmetic only; no accounts or user files.",
+    "executing": "unverified",
+    "upgrade": "unverified",
+    "physicalDevices": "unverified",
+    "releaseAcceptance": false
+  },
+  "status": "passed",
+  "actualInstalledIdentityVerified": true,
+  "driverSteps": [
+    {
+      "name": "device_preflight",
+      "status": "passed"
+    },
+    {
+      "name": "apk_verification",
+      "status": "passed"
+    },
+    {
+      "name": "fresh_install_precondition",
+      "status": "passed"
+    },
+    {
+      "name": "install_agent",
+      "status": "passed",
+      "sha256": "f5d12d96122289d866dedc68a6703c4c88ff7161ca864af1cc3f03c0e3fd0409"
+    },
+    {
+      "name": "install_calculator",
+      "status": "passed",
+      "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed"
+    },
+    {
+      "name": "install_probe",
+      "status": "passed",
+      "sha256": "d70be2e55ae56e0692fe4cac9328b4208a467e6ec809c9d429dc2785a75b201c"
+    },
+    {
+      "name": "install_probe_tests",
+      "status": "passed",
+      "sha256": "5024d2d996cba5c4d04467de081ff76c114fa736fea75e6d8472628079be75b7"
+    },
+    {
+      "name": "instrumentation",
+      "status": "passed"
+    },
+    {
+      "name": "collect_ui_results",
+      "status": "passed"
+    }
+  ],
+  "states": [
+    {
+      "state": "off",
+      "status": "passed",
+      "stage": "complete",
+      "installedIdentityVerified": true,
+      "serviceState": "disabled",
+      "serviceObservations": [
+        {
+          "stage": "before",
+          "state": "disabled",
+          "verified": true,
+          "observedAt": 1793067340732,
+          "raw": {
+            "settingsEnabledServices": "",
+            "settingsAccessibilityEnabled": "0",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "after",
+          "state": "disabled",
+          "verified": true,
+          "observedAt": 1793067343282,
+          "raw": {
+            "settingsEnabledServices": "",
+            "settingsAccessibilityEnabled": "0",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        }
+      ],
+      "serviceActionObservations": [
+        {
+          "stage": "before_launch",
+          "state": "disabled",
+          "verified": true,
+          "observedAt": 1793067340758,
+          "raw": {
+            "settingsEnabledServices": "",
+            "settingsAccessibilityEnabled": "0",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "after_launch",
+          "state": "disabled",
+          "verified": true,
+          "observedAt": 1793067342282,
+          "raw": {
+            "settingsEnabledServices": "",
+            "settingsAccessibilityEnabled": "0",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "before_btn_clear",
+          "state": "disabled",
+          "verified": true,
+          "observedAt": 1793067342306,
+          "raw": {
+            "settingsEnabledServices": "",
+            "settingsAccessibilityEnabled": "0",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "after_btn_clear",
+          "state": "disabled",
+          "verified": true,
+          "observedAt": 1793067342488,
+          "raw": {
+            "settingsEnabledServices": "",
+            "settingsAccessibilityEnabled": "0",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "before_btn_2",
+          "state": "disabled",
+          "verified": true,
+          "observedAt": 1793067342604,
+          "raw": {
+            "settingsEnabledServices": "",
+            "settingsAccessibilityEnabled": "0",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "after_btn_2",
+          "state": "disabled",
+          "verified": true,
+          "observedAt": 1793067342641,
+          "raw": {
+            "settingsEnabledServices": "",
+            "settingsAccessibilityEnabled": "0",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "before_btn_plus",
+          "state": "disabled",
+          "verified": true,
+          "observedAt": 1793067342665,
+          "raw": {
+            "settingsEnabledServices": "",
+            "settingsAccessibilityEnabled": "0",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "after_btn_plus",
+          "state": "disabled",
+          "verified": true,
+          "observedAt": 1793067342853,
+          "raw": {
+            "settingsEnabledServices": "",
+            "settingsAccessibilityEnabled": "0",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "before_btn_3",
+          "state": "disabled",
+          "verified": true,
+          "observedAt": 1793067342877,
+          "raw": {
+            "settingsEnabledServices": "",
+            "settingsAccessibilityEnabled": "0",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "after_btn_3",
+          "state": "disabled",
+          "verified": true,
+          "observedAt": 1793067342928,
+          "raw": {
+            "settingsEnabledServices": "",
+            "settingsAccessibilityEnabled": "0",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "before_btn_equals",
+          "state": "disabled",
+          "verified": true,
+          "observedAt": 1793067342952,
+          "raw": {
+            "settingsEnabledServices": "",
+            "settingsAccessibilityEnabled": "0",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "after_btn_equals",
+          "state": "disabled",
+          "verified": true,
+          "observedAt": 1793067343139,
+          "raw": {
+            "settingsEnabledServices": "",
+            "settingsAccessibilityEnabled": "0",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        }
+      ],
+      "steps": [
+        {
+          "name": "installed_identity",
+          "status": "passed",
+          "details": "PackageManager identity and installed APK digest match the frozen official release"
+        },
+        {
+          "name": "service_state_before",
+          "status": "passed",
+          "details": "Settings, accessibility binding and activity service records agree"
+        },
+        {
+          "name": "launch_calculator",
+          "status": "passed",
+          "details": "Resolved the installed package launcher and observed its focused page"
+        },
+        {
+          "name": "clear_calculator",
+          "status": "passed",
+          "details": "Long-click C invokes the pinned release's reset action; result is 0 and formula is empty"
+        },
+        {
+          "name": "click_btn_2",
+          "status": "passed",
+          "details": "Unique visible resource target accepted the accessibility action"
+        },
+        {
+          "name": "click_btn_plus",
+          "status": "passed",
+          "details": "Unique visible resource target accepted the accessibility action"
+        },
+        {
+          "name": "click_btn_3",
+          "status": "passed",
+          "details": "Unique visible resource target accepted the accessibility action"
+        },
+        {
+          "name": "click_btn_equals",
+          "status": "passed",
+          "details": "Unique visible resource target accepted the accessibility action"
+        },
+        {
+          "name": "calculator_result",
+          "status": "passed",
+          "details": "Independent read of org.fossify.math:id/result equals 5"
+        },
+        {
+          "name": "installed_identity_after",
+          "status": "passed",
+          "details": "Installed calculator identity is unchanged after the UI case"
+        },
+        {
+          "name": "service_state_after",
+          "status": "passed",
+          "details": "The requested service state remains true after arithmetic and capture"
+        },
+        {
+          "name": "restore_service_settings",
+          "status": "passed",
+          "details": "Original accessibility component list restored and Agent service unbound; system owns the global accessibility flag"
+        }
+      ],
+      "captures": [
+        {
+          "stage": "before",
+          "capturedAt": 1793067342492,
+          "secureFlagsCleared": false,
+          "status": "captured",
+          "path": "off-before-0.png",
+          "sha256": "9b8d472ef080319704234954da8d2ed3840560a23a5c23baafbaf8a5be91e46a",
+          "bytes": 23481,
+          "width": 320,
+          "height": 640,
+          "windowId": 11,
+          "windowBounds": "[0,0][320,640]",
+          "windowFlags": "KEEP_SCREEN_ON LAYOUT_IN_SCREEN LAYOUT_INSET_DECOR SPLIT_TOUCH HARDWARE_ACCELERATED DRAWS_SYSTEM_BAR_BACKGROUNDS"
+        },
+        {
+          "stage": "result",
+          "capturedAt": 1793067343142,
+          "secureFlagsCleared": false,
+          "status": "captured",
+          "path": "off-result-1.png",
+          "sha256": "f8fa4cfb34513fea7acec7155643100debf3d2cc5b6c334908e0c54196a4668b",
+          "bytes": 24139,
+          "width": 320,
+          "height": 640,
+          "windowId": 11,
+          "windowBounds": "[0,0][320,640]",
+          "windowFlags": "KEEP_SCREEN_ON LAYOUT_IN_SCREEN LAYOUT_INSET_DECOR SPLIT_TOUCH HARDWARE_ACCELERATED DRAWS_SYSTEM_BAR_BACKGROUNDS"
+        }
+      ],
+      "result": {
+        "expected": "5",
+        "actual": "5",
+        "resourceId": "org.fossify.math:id/result"
+      },
+      "startedAt": 1793067340656,
+      "installedIdentity": {
+        "package": "org.fossify.math",
+        "versionName": "1.4.0",
+        "versionCode": "10",
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "apkSha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "uid": 10149
+      },
+      "finishedAt": 1793067343309
+    },
+    {
+      "state": "idle",
+      "status": "passed",
+      "stage": "complete",
+      "installedIdentityVerified": true,
+      "serviceState": "bound_idle",
+      "serviceObservations": [
+        {
+          "stage": "before",
+          "state": "bound_idle",
+          "verified": true,
+          "observedAt": 1793067337557,
+          "raw": {
+            "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+            "settingsAccessibilityEnabled": "1",
+            "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+            "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "* ServiceRecord{e4f5c39 u0 dev.agentos.app/.AgentAccessibilityService c:android}\napp=ProcessRecord{a82c530 2280:dev.agentos.app/u0a148}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n* ConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "after",
+          "state": "bound_idle",
+          "verified": true,
+          "observedAt": 1793067340606,
+          "raw": {
+            "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+            "settingsAccessibilityEnabled": "1",
+            "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+            "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "* ServiceRecord{e4f5c39 u0 dev.agentos.app/.AgentAccessibilityService c:android}\napp=ProcessRecord{a82c530 2280:dev.agentos.app/u0a148}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n* ConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        }
+      ],
+      "serviceActionObservations": [
+        {
+          "stage": "before_launch",
+          "state": "bound_idle",
+          "verified": true,
+          "observedAt": 1793067337603,
+          "raw": {
+            "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+            "settingsAccessibilityEnabled": "1",
+            "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+            "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "* ServiceRecord{e4f5c39 u0 dev.agentos.app/.AgentAccessibilityService c:android}\napp=ProcessRecord{a82c530 2280:dev.agentos.app/u0a148}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n* ConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "after_launch",
+          "state": "bound_idle",
+          "verified": true,
+          "observedAt": 1793067339398,
+          "raw": {
+            "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+            "settingsAccessibilityEnabled": "1",
+            "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+            "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "* ServiceRecord{e4f5c39 u0 dev.agentos.app/.AgentAccessibilityService c:android}\napp=ProcessRecord{a82c530 2280:dev.agentos.app/u0a148}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n* ConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "before_btn_clear",
+          "state": "bound_idle",
+          "verified": true,
+          "observedAt": 1793067339429,
+          "raw": {
+            "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+            "settingsAccessibilityEnabled": "1",
+            "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+            "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "* ServiceRecord{e4f5c39 u0 dev.agentos.app/.AgentAccessibilityService c:android}\napp=ProcessRecord{a82c530 2280:dev.agentos.app/u0a148}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n* ConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "after_btn_clear",
+          "state": "bound_idle",
+          "verified": true,
+          "observedAt": 1793067339613,
+          "raw": {
+            "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+            "settingsAccessibilityEnabled": "1",
+            "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+            "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "* ServiceRecord{e4f5c39 u0 dev.agentos.app/.AgentAccessibilityService c:android}\napp=ProcessRecord{a82c530 2280:dev.agentos.app/u0a148}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n* ConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "before_btn_2",
+          "state": "bound_idle",
+          "verified": true,
+          "observedAt": 1793067339850,
+          "raw": {
+            "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+            "settingsAccessibilityEnabled": "1",
+            "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+            "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "* ServiceRecord{e4f5c39 u0 dev.agentos.app/.AgentAccessibilityService c:android}\napp=ProcessRecord{a82c530 2280:dev.agentos.app/u0a148}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n* ConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "after_btn_2",
+          "state": "bound_idle",
+          "verified": true,
+          "observedAt": 1793067339895,
+          "raw": {
+            "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+            "settingsAccessibilityEnabled": "1",
+            "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+            "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "* ServiceRecord{e4f5c39 u0 dev.agentos.app/.AgentAccessibilityService c:android}\napp=ProcessRecord{a82c530 2280:dev.agentos.app/u0a148}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n* ConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "before_btn_plus",
+          "state": "bound_idle",
+          "verified": true,
+          "observedAt": 1793067339922,
+          "raw": {
+            "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+            "settingsAccessibilityEnabled": "1",
+            "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+            "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "* ServiceRecord{e4f5c39 u0 dev.agentos.app/.AgentAccessibilityService c:android}\napp=ProcessRecord{a82c530 2280:dev.agentos.app/u0a148}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n* ConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "after_btn_plus",
+          "state": "bound_idle",
+          "verified": true,
+          "observedAt": 1793067340104,
+          "raw": {
+            "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+            "settingsAccessibilityEnabled": "1",
+            "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+            "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "* ServiceRecord{e4f5c39 u0 dev.agentos.app/.AgentAccessibilityService c:android}\napp=ProcessRecord{a82c530 2280:dev.agentos.app/u0a148}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n* ConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "before_btn_3",
+          "state": "bound_idle",
+          "verified": true,
+          "observedAt": 1793067340130,
+          "raw": {
+            "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+            "settingsAccessibilityEnabled": "1",
+            "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+            "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "* ServiceRecord{e4f5c39 u0 dev.agentos.app/.AgentAccessibilityService c:android}\napp=ProcessRecord{a82c530 2280:dev.agentos.app/u0a148}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n* ConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "after_btn_3",
+          "state": "bound_idle",
+          "verified": true,
+          "observedAt": 1793067340178,
+          "raw": {
+            "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+            "settingsAccessibilityEnabled": "1",
+            "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+            "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "* ServiceRecord{e4f5c39 u0 dev.agentos.app/.AgentAccessibilityService c:android}\napp=ProcessRecord{a82c530 2280:dev.agentos.app/u0a148}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n* ConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "before_btn_equals",
+          "state": "bound_idle",
+          "verified": true,
+          "observedAt": 1793067340204,
+          "raw": {
+            "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+            "settingsAccessibilityEnabled": "1",
+            "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+            "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "* ServiceRecord{e4f5c39 u0 dev.agentos.app/.AgentAccessibilityService c:android}\napp=ProcessRecord{a82c530 2280:dev.agentos.app/u0a148}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n* ConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        },
+        {
+          "stage": "after_btn_equals",
+          "state": "bound_idle",
+          "verified": true,
+          "observedAt": 1793067340446,
+          "raw": {
+            "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+            "settingsAccessibilityEnabled": "1",
+            "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+            "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "* ServiceRecord{e4f5c39 u0 dev.agentos.app/.AgentAccessibilityService c:android}\napp=ProcessRecord{a82c530 2280:dev.agentos.app/u0a148}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\nConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n* ConnectionRecord{22ff283 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7ab9532 flags=0x2101001}\n",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        }
+      ],
+      "steps": [
+        {
+          "name": "installed_identity",
+          "status": "passed",
+          "details": "PackageManager identity and installed APK digest match the frozen official release"
+        },
+        {
+          "name": "service_state_before",
+          "status": "passed",
+          "details": "Settings, accessibility binding and activity service records agree"
+        },
+        {
+          "name": "launch_calculator",
+          "status": "passed",
+          "details": "Resolved the installed package launcher and observed its focused page"
+        },
+        {
+          "name": "clear_calculator",
+          "status": "passed",
+          "details": "Long-click C invokes the pinned release's reset action; result is 0 and formula is empty"
+        },
+        {
+          "name": "click_btn_2",
+          "status": "passed",
+          "details": "Unique visible resource target accepted the accessibility action"
+        },
+        {
+          "name": "click_btn_plus",
+          "status": "passed",
+          "details": "Unique visible resource target accepted the accessibility action"
+        },
+        {
+          "name": "click_btn_3",
+          "status": "passed",
+          "details": "Unique visible resource target accepted the accessibility action"
+        },
+        {
+          "name": "click_btn_equals",
+          "status": "passed",
+          "details": "Unique visible resource target accepted the accessibility action"
+        },
+        {
+          "name": "calculator_result",
+          "status": "passed",
+          "details": "Independent read of org.fossify.math:id/result equals 5"
+        },
+        {
+          "name": "installed_identity_after",
+          "status": "passed",
+          "details": "Installed calculator identity is unchanged after the UI case"
+        },
+        {
+          "name": "service_state_after",
+          "status": "passed",
+          "details": "The requested service state remains true after arithmetic and capture"
+        },
+        {
+          "name": "restore_service_settings",
+          "status": "passed",
+          "details": "Original accessibility component list restored and Agent service unbound; system owns the global accessibility flag"
+        }
+      ],
+      "captures": [
+        {
+          "stage": "before",
+          "capturedAt": 1793067339618,
+          "secureFlagsCleared": false,
+          "status": "captured",
+          "path": "idle-before-0.png",
+          "sha256": "9b8d472ef080319704234954da8d2ed3840560a23a5c23baafbaf8a5be91e46a",
+          "bytes": 23481,
+          "width": 320,
+          "height": 640,
+          "windowId": 9,
+          "windowBounds": "[0,0][320,640]",
+          "windowFlags": "KEEP_SCREEN_ON LAYOUT_IN_SCREEN LAYOUT_INSET_DECOR SPLIT_TOUCH HARDWARE_ACCELERATED DRAWS_SYSTEM_BAR_BACKGROUNDS"
+        },
+        {
+          "stage": "result",
+          "capturedAt": 1793067340450,
+          "secureFlagsCleared": false,
+          "status": "captured",
+          "path": "idle-result-1.png",
+          "sha256": "f8fa4cfb34513fea7acec7155643100debf3d2cc5b6c334908e0c54196a4668b",
+          "bytes": 24139,
+          "width": 320,
+          "height": 640,
+          "windowId": 9,
+          "windowBounds": "[0,0][320,640]",
+          "windowFlags": "KEEP_SCREEN_ON LAYOUT_IN_SCREEN LAYOUT_INSET_DECOR SPLIT_TOUCH HARDWARE_ACCELERATED DRAWS_SYSTEM_BAR_BACKGROUNDS"
+        }
+      ],
+      "result": {
+        "expected": "5",
+        "actual": "5",
+        "resourceId": "org.fossify.math:id/result"
+      },
+      "startedAt": 1793067337096,
+      "installedIdentity": {
+        "package": "org.fossify.math",
+        "versionName": "1.4.0",
+        "versionCode": "10",
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "apkSha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "uid": 10149
+      },
+      "finishedAt": 1793067340645
+    }
+  ],
+  "emulatorVersion": "37.2.12",
+  "verifiedDownload": {
+    "package": "org.fossify.math",
+    "versionCode": "10",
+    "versionName": "1.4.0",
+    "minSdk": 26,
+    "targetSdk": 36,
+    "abis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "x86",
+      "x86_64"
+    ],
+    "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+    "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed"
+  },
+  "emulatorStepOutcome": "success"
+}

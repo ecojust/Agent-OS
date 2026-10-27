@@ -1,6 +1,5 @@
 package dev.agentos.core;
 
-import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.zip.CRC32;
 import java.util.zip.DataFormatException;
@@ -20,7 +19,8 @@ final class PngValidator {
         for (int i = 0; i < signature.length; i++) if (bytes[i] != signature[i]) throw invalid();
         int offset = 8, width = 0, height = 0, channels = 0, metadataSeen = 0;
         boolean header = false, image = false, ended = false;
-        try (WipingBuffer compressed = new WipingBuffer(bytes.length)) {
+        Scanlines scanlines = null;
+        try {
         while (offset < bytes.length) {
             if (bytes.length - offset < 12) throw invalid();
             long lengthValue = unsignedInt(bytes, offset);
@@ -40,7 +40,8 @@ final class PngValidator {
                         || bytes[offset + 19] != 0 || bytes[offset + 20] != 0) throw invalid();
                 channels = color == 6 ? 4 : 3; header = true;
             } else if (type == 0x49444154) {
-                compressed.write(bytes, offset + 8, length); image = true;
+                if (scanlines == null) scanlines = new Scanlines(width, height, channels);
+                scanlines.accept(bytes, offset + 8, length); image = true;
             } else if (type == 0x49454e44) {
                 if (!image || length != 0 || offset + 12 != bytes.length) throw invalid();
                 ended = true;
@@ -63,40 +64,60 @@ final class PngValidator {
             offset += length + 12;
         }
         if (!ended || (long) width * height * channels > MAX_DECODED_BYTES) throw invalid();
-        byte[] deflated = compressed.toByteArray();
-        try { validateScanlines(deflated, width, height, channels); }
-        finally { Arrays.fill(deflated, (byte) 0); }
+        if (scanlines == null) throw invalid();
+        scanlines.finish();
         return new int[]{width, height};
-        }
+        } finally { if (scanlines != null) scanlines.close(); }
     }
 
-    /** Also clears compressed data retained by the stream when parsing fails partway through. */
-    private static final class WipingBuffer extends ByteArrayOutputStream {
-        WipingBuffer(int maximum) { super(maximum); }
-        @Override public synchronized void write(byte[] value, int offset, int length) {
-            // A fixed, input-bounded capacity avoids old growth buffers retaining image bytes.
-            if (length > buf.length - count) throw invalid();
-            super.write(value, offset, length);
-        }
-        @Override public synchronized void close() { Arrays.fill(buf, (byte) 0); reset(); }
-    }
+    /**
+     * Feeds validated IDAT slices directly from the caller's PNG. No concatenated
+     * compressed copy or full decoded image is allocated, even across chunk boundaries.
+     */
+    private static final class Scanlines implements AutoCloseable {
+        private final long rowBytes, expected;
+        private final byte[] chunk = new byte[8192];
+        // Allocate Java scratch first: if allocation fails, no native inflater
+        // has yet been created without a fully constructed owner to close it.
+        private final Inflater inflater = new Inflater();
+        private long total;
 
-    private static void validateScanlines(byte[] compressed, int width, int height, int channels) {
-        long rowBytes = (long) width * channels + 1;
-        long expected = rowBytes * height, total = 0;
-        Inflater inflater = new Inflater(); byte[] chunk = new byte[8192];
-        try {
-            inflater.setInput(compressed);
-            while (!inflater.finished()) {
-                int length = inflater.inflate(chunk);
-                if (length == 0 && inflater.finished()) break;
-                if (length == 0 || total + length > expected) throw invalid();
-                for (int i = 0; i < length; i++) if ((total + i) % rowBytes == 0 && (chunk[i] & 255) > 4) throw invalid();
-                total += length;
-            }
-            if (total != expected || inflater.getRemaining() != 0) throw invalid();
-        } catch (DataFormatException invalid) { throw invalid(); }
-        finally { Arrays.fill(chunk, (byte) 0); inflater.end(); }
+        Scanlines(int width, int height, int channels) {
+            rowBytes = (long) width * channels + 1;
+            expected = rowBytes * height;
+        }
+
+        void accept(byte[] source, int offset, int inputLength) {
+            // Empty IDAT chunks are legal, including after the completed zlib stream.
+            if (inputLength == 0) return;
+            if (inflater.finished() || !inflater.needsInput()) throw invalid();
+            inflater.setInput(source, offset, inputLength);
+            try {
+                while (!inflater.finished()) {
+                    int length = inflater.inflate(chunk);
+                    if (total + length > expected) throw invalid();
+                    for (int i = 0; i < length; i++) {
+                        if ((total + i) % rowBytes == 0 && (chunk[i] & 255) > 4) throw invalid();
+                    }
+                    total += length;
+                    if (length == 0 && !inflater.finished()) {
+                        if (inflater.needsDictionary() || !inflater.needsInput()) throw invalid();
+                        return; // The next IDAT may contain the rest of a header or scanline.
+                    }
+                }
+                // Reject trailing bytes in this slice; a later nonempty IDAT is also rejected.
+                if (inflater.getRemaining() != 0) throw invalid();
+            } catch (DataFormatException badStream) { throw invalid(); }
+        }
+
+        void finish() {
+            if (!inflater.finished() || total != expected || inflater.getRemaining() != 0) throw invalid();
+        }
+
+        @Override public void close() {
+            try { Arrays.fill(chunk, (byte) 0); }
+            finally { inflater.end(); }
+        }
     }
 
     private static int intValue(byte[] value, int offset) {

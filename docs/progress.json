@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T03:49:54Z",
-  "note": "Android执行器原型已分模块提交：模型配置与加密保存、授权设备操作、受限连续导航、暂停停止及任务预算。最新八档912项、核心168项和脚本131项通过，886张实际截图已归档；历史超时与失败保留，真机和刷机镜像尚未验收。",
+  "updated_at": "2026-10-27T04:02:30Z",
+  "note": "图片校验改为流式IDAT读取，去除两份整图压缩副本；新增12项核心回归，当前180项全部实跑通过，Android编译及lint通过。继续接入图片缓冲所有权与容量准入；新设备矩阵尚待复测，截图权限仍未开放。",
   "latest_evidence": {
     "path": "screenshots/40445249108-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40445249108"
@@ -62,7 +62,7 @@
     {
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
-      "status": "complete",
+      "status": "in_progress",
       "evidence": "screenshots/40445249108-1/manifest.json",
       "scope": "Eight x86_64 emulator API baselines with system animations at 1.0 and synthetic fixtures; not physical-device, third-party-app or performance acceptance."
     },

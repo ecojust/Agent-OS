@@ -1,10 +1,15 @@
 package dev.agentos.app;
 
 import android.graphics.BitmapFactory;
+import android.graphics.Insets;
+import android.graphics.Rect;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.view.WindowManager;
+import android.view.WindowInsets;
+import android.view.WindowMetrics;
+import android.view.accessibility.AccessibilityWindowInfo;
 
 import com.google.gson.JsonObject;
 import dev.agentos.core.ImageReviewSession;
@@ -14,6 +19,9 @@ import dev.agentos.core.RunControl;
 import dev.agentos.core.ToolRequest;
 
 import java.util.Objects;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -32,7 +40,8 @@ final class CapturedImageReviewCoordinator {
 
     enum Failure {
         WRONG_THREAD, CONTEXT_CHANGED, SHOW_FAILED, APPROVAL_REJECTED,
-        REVIEW_EXPIRED, HOST_CLOSED, REMOVAL_TIMEOUT, FINAL_CHECK_EXPIRED
+        REVIEW_EXPIRED, HOST_CLOSED, REMOVAL_TIMEOUT, FINAL_CHECK_EXPIRED,
+        WINDOW_PUBLICATION_CHANGED, DEVICE_BUSY
     }
 
     static final class ReviewException extends Exception {
@@ -107,10 +116,9 @@ final class CapturedImageReviewCoordinator {
                 show = new ShowTicket(original, control, context, session, observer, decoder, remover);
                 show.enqueue();
                 SecureImageReviewOverlay host = awaitReview(show.created, original, control, context, session);
-                ImageReviewSession.ApprovalToken approval = awaitReview(show.approved,
-                        original, control, context, session);
+                ApprovedReview approval = awaitReview(show.approved, original, control, context, session);
                 checkReview(original, control, context, session);
-                local = session.consume(approval);
+                local = session.consume(approval.token);
                 // This deadline is created once from actual local consume, before
                 // removal, and is never supplied by a model or renewed on failure.
                 finalDeadline = SystemClock.elapsedRealtime() + FINAL_MILLIS;
@@ -125,6 +133,7 @@ final class CapturedImageReviewCoordinator {
                     // releases its admission while the actual View is attached.
                     removed.cancel(false);
                 }
+                awaitWindowPublicationRemoval(approval.window, original, control, context, finalDeadline);
                 checkFinal(original, control, context, finalDeadline);
                 captured.validateAfterReview(original, tools, control, context, finalDeadline);
                 checkFinal(original, control, context, finalDeadline);
@@ -244,6 +253,169 @@ final class CapturedImageReviewCoordinator {
         }
     }
 
+    /**
+     * Actual View detachment does not synchronously remove its server-side
+     * accessibility window. Wait only for this approved host's exact metadata to
+     * disappear; never filter it out of, or retry, the following full snapshot.
+     */
+    private static void awaitWindowPublicationRemoval(AgentAccessibilityService.OwnedReviewWindowIdentity reviewed,
+            ToolRequest original, RunControl control, AndroidDeviceTools.CapturedReviewContext context,
+            long deadline) throws Exception {
+        requireWorker();
+        AgentAccessibilityService service = context.reviewService();
+        AgentAccessibilityService.OwnedControlWindowIdentity controls = service.getOwnedControlWindowIdentity();
+        if (reviewed == null || controls == null) throw new ReviewException(Failure.WINDOW_PUBLICATION_CHANGED);
+        Rect targetBounds = new Rect(context.binding.observation.windowBounds.left,
+                context.binding.observation.windowBounds.top, context.binding.observation.windowBounds.right,
+                context.binding.observation.windowBounds.bottom);
+        for (;;) {
+            checkPublicationContext(original, control, context, controls, deadline);
+            if (!service.tryBeginDeviceCall()) throw new ReviewException(Failure.DEVICE_BUSY);
+            List<AccessibilityWindowInfo> windows = null;
+            boolean pending;
+            Throwable readFailure = null;
+            try {
+                checkPublicationContext(original, control, context, controls, deadline);
+                boolean ready = service.isDeviceReady();
+                checkPublicationContext(original, control, context, controls, deadline);
+                if (!ready) throw new ReviewException(Failure.CONTEXT_CHANGED);
+                windows = AndroidDeviceTools.freshWindows(service,
+                        () -> checkPublicationContext(original, control, context, controls, deadline));
+                pending = removalWindowPresent(windows, reviewed, controls, context, targetBounds,
+                        original, control, deadline);
+                checkPublicationContext(original, control, context, controls, deadline);
+            } catch (Exception | Error failed) {
+                readFailure = failed;
+                throw failed;
+            } finally { finishWindowRead(service, windows, readFailure); }
+            checkPublicationContext(original, control, context, controls, deadline);
+            if (!pending) return;
+            // The gate covers real Binder work and cleanup, not this bounded
+            // interval. A late Binder return still retains its worker's gate and
+            // is rejected against the original deadline before any adoption.
+            Thread.sleep(Math.min(POLL_MILLIS, Math.max(1, deadline - SystemClock.elapsedRealtime())));
+        }
+    }
+
+    /** Cleanup has no cancellation checks and never stops at a malformed entry. */
+    private static void finishWindowRead(AgentAccessibilityService service,
+            List<AccessibilityWindowInfo> windows, Throwable primary) {
+        Throwable cleanup = null;
+        try {
+            if (windows != null) for (int index = 0, count = windows.size(); index < count; index++) {
+                try {
+                    AccessibilityWindowInfo window = windows.get(index);
+                    if (window != null) window.recycle();
+                } catch (RuntimeException | Error failed) {
+                    if (cleanup == null) cleanup = failed;
+                    else addCleanupFailure(cleanup, failed);
+                }
+            }
+        } catch (RuntimeException | Error failedIteration) {
+            if (cleanup == null) cleanup = failedIteration;
+            else addCleanupFailure(cleanup, failedIteration);
+        } finally {
+            try { service.endDeviceCall(); }
+            catch (RuntimeException | Error failedGateRelease) {
+                if (cleanup == null) cleanup = failedGateRelease;
+                else addCleanupFailure(cleanup, failedGateRelease);
+            }
+        }
+        if (cleanup == null) return;
+        if (primary != null) { addCleanupFailure(primary, cleanup); return; }
+        if (cleanup instanceof Error) throw (Error) cleanup;
+        throw (RuntimeException) cleanup;
+    }
+
+    private static void addCleanupFailure(Throwable primary, Throwable cleanup) {
+        if (primary == cleanup) return;
+        try { primary.addSuppressed(cleanup); }
+        catch (RuntimeException | Error unableToAttach) { /* Keep cleanup progressing and the original failure. */ }
+    }
+
+    private static void checkPublicationContext(ToolRequest original, RunControl control,
+            AndroidDeviceTools.CapturedReviewContext context,
+            AgentAccessibilityService.OwnedControlWindowIdentity controls, long deadline) throws Exception {
+        checkRemoval(original, control, context, deadline);
+        // The former host released actual admission before this helper starts.
+        // A new host can be preparing without a published window identity yet.
+        if (ImageReviewPresentationCoordinator.hasHost()
+                || !context.reviewService().isOwnedControlWindowCurrent(controls))
+            throw new ReviewException(Failure.WINDOW_PUBLICATION_CHANGED);
+    }
+
+    /** Reads platform metadata only; an exact historical match permits waiting, never disclosure. */
+    private static boolean removalWindowPresent(List<AccessibilityWindowInfo> windows,
+            AgentAccessibilityService.OwnedReviewWindowIdentity reviewed,
+            AgentAccessibilityService.OwnedControlWindowIdentity controls,
+            AndroidDeviceTools.CapturedReviewContext context, Rect targetBounds,
+            ToolRequest original, RunControl control, long deadline) throws Exception {
+        if (windows == null || windows.isEmpty() || windows.size() > 40)
+            throw new ReviewException(Failure.WINDOW_PUBLICATION_CHANGED);
+        int targetId = context.binding.observation.windowId, displayId = context.binding.observation.displayId;
+        if (reviewed.windowId == targetId || reviewed.windowId == controls.windowId
+                || reviewed.displayId != displayId || controls.displayId != displayId)
+            throw new ReviewException(Failure.WINDOW_PUBLICATION_CHANGED);
+        Rect reviewBounds = reviewed.copyBounds(), controlBounds = controls.copyBounds();
+        Set<Integer> ids = new HashSet<>();
+        int reviews = 0, controlCount = 0, focused = 0;
+        AccessibilityWindowInfo target = null;
+        for (AccessibilityWindowInfo window : windows) {
+            checkPublicationContext(original, control, context, controls, deadline);
+            if (window == null || window.getId() < 0 || !ids.add(window.getId()) || window.getDisplayId() != displayId)
+                throw new ReviewException(Failure.WINDOW_PUBLICATION_CHANGED);
+            Rect bounds = new Rect(); window.getBoundsInScreen(bounds);
+            if (window.getId() == reviewed.windowId) {
+                reviews++;
+                if (window.getType() != AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY
+                        || window.isFocused() || !bounds.equals(reviewBounds))
+                    throw new ReviewException(Failure.WINDOW_PUBLICATION_CHANGED);
+            }
+            if (window.getId() == controls.windowId) {
+                controlCount++;
+                if (window.getType() != AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY
+                        || window.isFocused() || !bounds.equals(controlBounds))
+                    throw new ReviewException(Failure.WINDOW_PUBLICATION_CHANGED);
+            }
+            if (window.isFocused()) {
+                focused++;
+                if (window.getId() != targetId || window.getType() != AccessibilityWindowInfo.TYPE_APPLICATION
+                        || !bounds.equals(targetBounds)) throw new ReviewException(Failure.WINDOW_PUBLICATION_CHANGED);
+                target = window;
+            }
+        }
+        if (focused != 1 || target == null || controlCount != 1 || reviews > 1)
+            throw new ReviewException(Failure.WINDOW_PUBLICATION_CHANGED);
+        WindowManager manager = context.reviewService().getSystemService(WindowManager.class);
+        if (manager == null) throw new ReviewException(Failure.WINDOW_PUBLICATION_CHANGED);
+        checkPublicationContext(original, control, context, controls, deadline);
+        WindowMetrics metrics = manager.getCurrentWindowMetrics();
+        checkPublicationContext(original, control, context, controls, deadline);
+        Rect screen = metrics.getBounds();
+        Insets bars = metrics.getWindowInsets().getInsets(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+        for (AccessibilityWindowInfo window : windows) {
+            checkPublicationContext(original, control, context, controls, deadline);
+            if (window.getId() == targetId || window.getId() == reviewed.windowId
+                    || window.getId() == controls.windowId || window.getLayer() <= target.getLayer()) continue;
+            Rect other = new Rect(); window.getBoundsInScreen(other);
+            if (!Rect.intersects(other, targetBounds) && !Rect.intersects(other, reviewBounds)
+                    && !Rect.intersects(other, controlBounds)) continue;
+            if (window.getType() == AccessibilityWindowInfo.TYPE_SYSTEM
+                    && SecureImageReviewOverlay.inVisibleBar(other, screen, bars)) continue;
+            throw new ReviewException(Failure.WINDOW_PUBLICATION_CHANGED);
+        }
+        return reviews == 1;
+    }
+
+    /** Immutable local handoff, published by the actual main-thread approval callback. */
+    private static final class ApprovedReview {
+        final ImageReviewSession.ApprovalToken token;
+        final AgentAccessibilityService.OwnedReviewWindowIdentity window;
+        ApprovedReview(ImageReviewSession.ApprovalToken token, AgentAccessibilityService.OwnedReviewWindowIdentity window) {
+            this.token = Objects.requireNonNull(token); this.window = Objects.requireNonNull(window);
+        }
+    }
+
     private static void checkRemoval(ToolRequest original, RunControl control,
             AndroidDeviceTools.CapturedReviewContext context, long deadline) throws Exception {
         checkContext(original, control, context);
@@ -269,7 +441,7 @@ final class CapturedImageReviewCoordinator {
         private final AtomicBoolean abandoned = new AtomicBoolean();
         private volatile SecureImageReviewOverlay host;
         final CompletableFuture<SecureImageReviewOverlay> created = new CompletableFuture<>();
-        final CompletableFuture<ImageReviewSession.ApprovalToken> approved = new CompletableFuture<>();
+        final CompletableFuture<ApprovedReview> approved = new CompletableFuture<>();
 
         ShowTicket(ToolRequest original, RunControl control, AndroidDeviceTools.CapturedReviewContext context,
                    ImageReviewSession session, HostObserver observer, ImagePreviewLoader.Decoder decoder,
@@ -307,7 +479,23 @@ final class CapturedImageReviewCoordinator {
         }
 
         @Override public void onApproved(ImageReviewSession.ApprovalToken approval) {
-            if (!abandoned.get() && approval != null) approved.complete(approval);
+            if (abandoned.get() || approval == null) return;
+            SecureImageReviewOverlay actual = host;
+            try {
+                AgentAccessibilityService.OwnedReviewWindowIdentity identity = actual == null ? null
+                        : actual.approvedWindowForRemoval(session, approval);
+                if (identity == null) {
+                    approved.completeExceptionally(new ReviewException(Failure.WINDOW_PUBLICATION_CHANGED));
+                    return;
+                }
+                approved.complete(new ApprovedReview(approval, identity));
+            } catch (RuntimeException | Error failedHandoff) {
+                try { approved.completeExceptionally(failedHandoff); }
+                catch (RuntimeException | Error failedCompletion) { addCleanupFailure(failedHandoff, failedCompletion); }
+                try { if (actual != null) actual.close(SecureImageReviewOverlay.CloseSource.APPROVE_LISTENER); }
+                catch (RuntimeException | Error failedClose) { addCleanupFailure(failedHandoff, failedClose); }
+                throw failedHandoff;
+            }
         }
 
         @Override public void onClosed(ImageReviewSession.State state, ImageReviewSession.Reason reason) {

@@ -97,6 +97,7 @@ final class SecureImageReviewOverlay implements AutoCloseable {
     private SettingsStore.AppGrant verifiedGrant;
     private volatile AgentAccessibilityService.OwnedReviewWindowIdentity verifiedWindow;
     private AgentAccessibilityService.OwnedReviewWindowIdentity approvedWindow;
+    private ImageReviewSession.ApprovalToken approvedToken;
     private volatile ImageReviewSession.HostToken hostToken;
     private volatile boolean ended, closeRequested;
     private volatile long eventGeneration;
@@ -468,7 +469,7 @@ final class SecureImageReviewOverlay implements AutoCloseable {
         return true;
     }
 
-    private static boolean inVisibleBar(Rect value, Rect screen, Insets bars) {
+    static boolean inVisibleBar(Rect value, Rect screen, Insets bars) {
         if (value.isEmpty()) return false;
         return bars.left > 0 && new Rect(screen.left, screen.top, screen.left + bars.left, screen.bottom).contains(value)
                 || bars.top > 0 && new Rect(screen.left, screen.top, screen.right, screen.top + bars.top).contains(value)
@@ -515,10 +516,20 @@ final class SecureImageReviewOverlay implements AutoCloseable {
         ImageReviewSession.ApprovalToken approved = session.approve(hostToken);
         if (approved == null) { refresh(); return; }
         approvedWindow = identity;
+        approvedToken = approved;
         reviewView.setApproved();
         try { if (listener != null) listener.onApproved(approved); }
         catch (RuntimeException failedConsumer) { close(CloseSource.APPROVE_LISTENER); return; }
         refresh(); // An unconsumed token remains revocable until consumed or expired.
+    }
+
+    /** Historical metadata for a negative removal wait only, never a window/action exemption. */
+    AgentAccessibilityService.OwnedReviewWindowIdentity approvedWindowForRemoval(
+            ImageReviewSession expectedSession, ImageReviewSession.ApprovalToken expectedApproval) {
+        requireMain();
+        if (expectedSession != session || expectedApproval == null || expectedApproval != approvedToken
+                || session.state() != ImageReviewSession.State.APPROVED) return null;
+        return approvedWindow;
     }
 
     private void reject() { session.reject(hostToken); close(CloseSource.USER_REJECTED); }

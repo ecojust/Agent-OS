@@ -25,11 +25,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Implement task-owned synthetic image qualification on the original task control, saved lease and budget; legacy task starts remain unchanged. APK/test APK/lint passed, six real-HTTP instrumented regressions compiled and await devices. No screenshot tool, permission or visual UI is enabled.
+**本次更新：** Archive round 48: 1829/1832 passed, three usage-test drain races on APIs 36/37; no errors, skips or missing records. All 3749 payloads (36433748 bytes) independently verified. Task-owned image diagnostics are separately committed and await device regression.
 
-**记录时间：** 2026-10-27T11:44:56Z
+**记录时间：** 2026-10-27T11:45:48Z
 
-[最近测试截图与清单](screenshots/40494541967-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40494541967)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40496409142-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40496409142)。通过、失败及未截图原因见清单。
 
 | 检查点 | 状态 |
 | --- | --- |

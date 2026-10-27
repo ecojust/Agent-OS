@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "kind": "pinned-window-disclosure",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "8843d9313a8304e68c49c222f92857da5d60c204",
+    "runId": 40555508845,
+    "attempt": 1
+  },
+  "matrixLabel": "35",
+  "buildVariant": "visualAcceptance",
+  "status": "passed",
+  "expectedTests": 2,
+  "scope": "Internal visualAcceptance variant only: real production service and Controller, fixed Calculator 1.4.0, native window capture, actual same-PNG protected review, and local HTTP model-fixture delivery. Qualification uses a separate synthetic PNG challenge. Received PNG artifacts are approved HTTP payloads, not screenshots of the protected review UI. Normal debug/release capture permission remains closed. Not real-model, physical-device, general-application or physical-memory acceptance.",
+  "cases": [
+    {
+      "name": "approvedActualWindowIsReviewedAndSentOnce",
+      "status": "passed",
+      "record": "pinned-window-disclosure/approvedActualWindowIsReviewedAndSentOnce.case.json"
+    },
+    {
+      "name": "declinedActualWindowNeverReachesModel",
+      "status": "passed",
+      "record": "pinned-window-disclosure/declinedActualWindowNeverReachesModel.case.json"
+    }
+  ],
+  "driverSteps": [
+    {
+      "name": "install_agent",
+      "status": "passed",
+      "sha256": "d2205de7c18a64ae7b6542b9a4aebd4a24c4e86c2603f218f8d32a074f4ec399"
+    },
+    {
+      "name": "install_fixture",
+      "status": "passed",
+      "sha256": "dc4676a2465f4ecb8ffe9b0ce55c322f6d8ec7e244a5386bc3c0682693ee1159"
+    },
+    {
+      "name": "install_tests",
+      "status": "passed",
+      "sha256": "547df74d0c9e54c3d894836ced2eeef96685ded453f976f9aec730ba2e1be663"
+    },
+    {
+      "name": "install_calculator",
+      "status": "passed",
+      "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed"
+    },
+    {
+      "name": "instrumentation",
+      "status": "passed"
+    }
+  ],
+  "apkVerification": {
+    "schemaVersion": 1,
+    "kind": "visual-acceptance-apk-permissions",
+    "sourceSha": "8843d9313a8304e68c49c222f92857da5d60c204",
+    "variants": {
+      "debug": {
+        "sha256": "78c6fd2cc851fefe6f1173ce38e4d2448d284c94b4f6621bff7657c6a7406604",
+        "bytes": 879812,
+        "serviceBinding": {
+          "service": "dev.agentos.app.AgentAccessibilityService",
+          "metadata": "android.accessibilityservice",
+          "resource": "xml/agent_accessibility_service",
+          "resourceId": "0x7f060000"
+        },
+        "resourcePaths": {
+          "res/xml/agent_accessibility_service.xml": "res/xml/agent_accessibility_service.xml"
+        },
+        "serviceResources": {
+          "res/xml/agent_accessibility_service.xml": {
+            "canTakeScreenshot": false,
+            "canPerformGestures": false,
+            "isAccessibilityTool": false
+          }
+        }
+      },
+      "release": {
+        "sha256": "7a9c43b251a46b3f4e12a93de7c332c80a89c551d194a7087dbf11f060cd61ad",
+        "bytes": 719425,
+        "serviceBinding": {
+          "service": "dev.agentos.app.AgentAccessibilityService",
+          "metadata": "android.accessibilityservice",
+          "resource": "xml/agent_accessibility_service",
+          "resourceId": "0x7f060000"
+        },
+        "resourcePaths": {
+          "res/xml/agent_accessibility_service.xml": "res/Nf.xml"
+        },
+        "serviceResources": {
+          "res/xml/agent_accessibility_service.xml": {
+            "canTakeScreenshot": false,
+            "canPerformGestures": false,
+            "isAccessibilityTool": false
+          }
+        }
+      },
+      "visualAcceptance": {
+        "sha256": "d2205de7c18a64ae7b6542b9a4aebd4a24c4e86c2603f218f8d32a074f4ec399",
+        "bytes": 880481,
+        "serviceBinding": {
+          "service": "dev.agentos.app.AgentAccessibilityService",
+          "metadata": "android.accessibilityservice",
+          "resource": "xml/agent_accessibility_service",
+          "resourceId": "0x7f060000"
+        },
+        "resourcePaths": {
+          "res/xml/agent_accessibility_service.xml": "res/xml/agent_accessibility_service.xml",
+          "res/xml-v34/agent_accessibility_service.xml": "res/xml-v34/agent_accessibility_service.xml"
+        },
+        "serviceResources": {
+          "res/xml/agent_accessibility_service.xml": {
+            "canTakeScreenshot": false,
+            "canPerformGestures": false,
+            "isAccessibilityTool": false
+          },
+          "res/xml-v34/agent_accessibility_service.xml": {
+            "canTakeScreenshot": true,
+            "canPerformGestures": false,
+            "isAccessibilityTool": false
+          }
+        }
+      },
+      "debugAndroidTest": {
+        "sha256": "547df74d0c9e54c3d894836ced2eeef96685ded453f976f9aec730ba2e1be663",
+        "bytes": 5703547,
+        "instrumentation": {
+          "runner": "androidx.test.runner.AndroidJUnitRunner",
+          "targetPackage": "dev.agentos.app"
+        }
+      },
+      "visualAcceptanceAndroidTest": {
+        "sha256": "547df74d0c9e54c3d894836ced2eeef96685ded453f976f9aec730ba2e1be663",
+        "bytes": 5703547,
+        "instrumentation": {
+          "runner": "androidx.test.runner.AndroidJUnitRunner",
+          "targetPackage": "dev.agentos.app"
+        }
+      }
+    }
+  },
+  "emulatorVersion": "37.2.12",
+  "device": {
+    "serial": "emulator-5554",
+    "api": 35,
+    "properties": {
+      "ro.kernel.qemu": "1",
+      "ro.boot.qemu": "1",
+      "ro.build.version.sdk": "35",
+      "ro.product.cpu.abi": "x86_64",
+      "sys.boot_completed": "1"
+    }
+  },
+  "animations": {
+    "window_animation_scale": "1.0",
+    "transition_animation_scale": "1.0",
+    "animator_duration_scale": "1.0"
+  },
+  "verifiedDownload": {
+    "package": "org.fossify.math",
+    "versionCode": "10",
+    "versionName": "1.4.0",
+    "minSdk": 26,
+    "targetSdk": 36,
+    "abis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "x86",
+      "x86_64"
+    ],
+    "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+    "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+    "sizeBytes": 7047681
+  },
+  "instrumentation": {
+    "selectedClass": "dev.agentos.app.PinnedWindowDisclosureInstrumentedTest",
+    "expectedTests": 2,
+    "exitCode": 0,
+    "passed": true,
+    "log": "instrumentation.json",
+    "bytes": 1594,
+    "sha256": "39a555f3e73e5ebe5138b3330e7ae48a64e3ef9e99b1adce193848fa07859583"
+  },
+  "emulatorStepOutcome": "success"
+}

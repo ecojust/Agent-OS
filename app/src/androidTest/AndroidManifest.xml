@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <queries>
+        <package android:name="dev.agentos.app" />
+        <package android:name="dev.agentos.fixture" />
+    </queries>
+    <application>
+        <service android:name="dev.agentos.app.capturetest.CaptureBridgeService"
+            android:exported="true" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/capture_bridge_accessibility_service" />
+        </service>
+        <!-- Test APK only. Every provider operation checks the actual target-app UID. -->
+        <provider android:name="dev.agentos.app.capturetest.CaptureBridgeProvider"
+            android:authorities="dev.agentos.app.test.windowcapture"
+            android:exported="true" android:grantUriPermissions="false"
+            tools:ignore="ExportedContentProvider" />
+    </application>
+</manifest>

@@ -6,6 +6,8 @@ The fixture contains editable text with an observable saved result, a click coun
 
 `CapturePatternActivity` supplies four opaque, deterministic color quadrants and a white center cross for forthcoming window-capture tests. The view draws edge to edge behind transparent system bars without changing their visibility or clearing any secure flag. Samples at one-quarter and three-quarters of the width and height identify the expected pixels independently of screenshot serialization. Its APK build and lint have passed; actual window-capture behavior is not yet verified, and the production service still has no screenshot capability.
 
+The test APK now supplies a separate, UID-restricted capture service/provider. A new smoke test will use the actual API34+ window capture method, transfer its real HardwareBuffer across processes, inspect this fixture's pixels, and close both handles independently. API30–33 must return unavailable without invoking display capture. APK compilation and packaged-manifest checks passed; device execution is still pending. The bridge is absent from the production APK and does not authorize production screenshot disclosure.
+
 On an unlocked test emulator with no screen-lock credential:
 
 ```sh

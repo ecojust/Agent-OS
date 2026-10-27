@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Archive the verified API35 operation walkthrough for source 7f47313b: all 13 required flow stages pass, with 3 confirmed edit actions, 4 navigation actions and zero dispatches during pause/stop checks. The actual 39.488-second video is 410,133 bytes and fully decoded; 22 screenshots and source checksums are retained. Local synthetic HTTP model only; eight-API regression is still running.
+**本次更新：** Correct only the post-drag test observation after original API30–32 failures: use the existing guarded fresh-window path within the same five-second deadline. Preserve exact geometry, owner invalidation and callback checks; production code and the 242-case denominator are unchanged. Test APK builds successfully; device revalidation pending.
 
-**记录时间：** 2026-10-27T15:37:41Z
+**记录时间：** 2026-10-27T15:47:07Z
 
 [最近测试截图与清单](screenshots/40524418849-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40524418849)。通过、失败及未截图原因见清单。
 

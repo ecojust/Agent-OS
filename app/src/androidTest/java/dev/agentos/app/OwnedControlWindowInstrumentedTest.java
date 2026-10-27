@@ -272,7 +272,7 @@ public final class OwnedControlWindowInstrumentedTest {
             AgentAccessibilityService.ControlLease dragged = lease(service);
             assertEquals(compact.windowId, dragged.windowId);
             assertTrue("The drag must move the real control window", dragged.copyBounds().top > compact.copyBounds().top);
-            assertRegistered(device, dragged.windowId, dragged.displayId, dragged.copyBounds());
+            assertFreshRegisteredAfterDrag(device, dragged.windowId, dragged.displayId, dragged.copyBounds());
             assertNull("A later stable frame cannot reissue the old collapse", service.approvalCollapseFor(dragged));
             safeMain(device, () -> service.showOverlay("Collapse readiness", false, ""));
             assertSame(dragged, lease(service));
@@ -385,34 +385,61 @@ public final class OwnedControlWindowInstrumentedTest {
         } finally { future.cancel(false); }
     }
 
+    /** Only the completed real drag needs a cache-fresh registration observation. */
+    private static void assertFreshRegisteredAfterDrag(DeviceHarness device, int id, int displayId, Rect bounds) throws Exception {
+        assertTrue("No device operation may overlap the drag registration read", device.service.tryBeginDeviceCall());
+        try { assertRegistered(device, id, displayId, bounds, true); }
+        finally { device.service.endDeviceCall(); }
+    }
+
     /** Both genuine and look-alike windows satisfy this metadata; it is not proof of ownership. */
     private static void assertRegistered(DeviceHarness device, int id, int displayId, Rect bounds) throws Exception {
+        assertRegistered(device, id, displayId, bounds, false);
+    }
+
+    private static void assertRegistered(DeviceHarness device, int id, int displayId, Rect bounds, boolean fresh) throws Exception {
         long deadline = SystemClock.elapsedRealtime() + 5_000;
         while (SystemClock.elapsedRealtime() < deadline) {
-            List<AccessibilityWindowInfo> windows = device.service.getWindows();
             try {
-                if (windows != null) for (AccessibilityWindowInfo window : windows) {
-                    if (window.getId() != id) continue;
-                    Rect actual = new Rect(); window.getBoundsInScreen(actual);
-                    if (actual.isEmpty() || !bounds.equals(actual)) continue;
-                    AccessibilityNodeInfo root = window.getRoot();
-                    if (root == null) continue;
-                    try {
-                        assertEquals(AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY, window.getType());
-                        assertEquals(displayId, window.getDisplayId());
-                        assertFalse("Task controls must not take the target's input focus", window.isFocused());
-                        assertEquals("Agent OS task controls", String.valueOf(window.getTitle()));
-                        assertEquals(device.service.getPackageName(), String.valueOf(root.getPackageName()));
-                        assertEquals(id, root.getWindowId());
-                        return;
-                    } finally { root.recycle(); }
-                }
-            } finally { if (windows != null) for (AccessibilityWindowInfo window : windows) window.recycle(); }
+                List<AccessibilityWindowInfo> windows = fresh
+                        ? AndroidDeviceTools.freshWindows(device.service, () -> requireRegistrationTime(deadline))
+                        : device.service.getWindows();
+                try {
+                    if (fresh) requireRegistrationTime(deadline);
+                    if (windows != null) for (AccessibilityWindowInfo window : windows) {
+                        if (window.getId() != id) continue;
+                        Rect actual = new Rect(); window.getBoundsInScreen(actual);
+                        if (actual.isEmpty() || !bounds.equals(actual)) continue;
+                        if (fresh) requireRegistrationTime(deadline);
+                        AccessibilityNodeInfo root = window.getRoot();
+                        if (root == null) continue;
+                        try {
+                            if (fresh) requireRegistrationTime(deadline);
+                            assertEquals(AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY, window.getType());
+                            assertEquals(displayId, window.getDisplayId());
+                            assertFalse("Task controls must not take the target's input focus", window.isFocused());
+                            assertEquals("Agent OS task controls", String.valueOf(window.getTitle()));
+                            assertEquals(device.service.getPackageName(), String.valueOf(root.getPackageName()));
+                            assertEquals(id, root.getWindowId());
+                            if (fresh) requireRegistrationTime(deadline);
+                            return;
+                        } finally { root.recycle(); }
+                    }
+                } finally { if (windows != null) for (AccessibilityWindowInfo window : windows) window.recycle(); }
+            } catch (RegistrationDeadlineExpired expired) {
+                break; // Same original timeout/failure, never accept a late read or extend the deadline.
+            }
             SystemClock.sleep(40);
         }
         fail("Real window did not register with id=" + id + " display=" + displayId + " bounds=" + bounds
                 + "\n" + windowDiagnostics());
     }
+
+    private static void requireRegistrationTime(long deadline) {
+        if (SystemClock.elapsedRealtime() >= deadline) throw new RegistrationDeadlineExpired();
+    }
+
+    private static final class RegistrationDeadlineExpired extends RuntimeException { }
 
     private static boolean incrementIsObscured(JsonObject data) {
         if (!FIXTURE.equals(string(data, "packageName")) || !data.get("focused").getAsBoolean()

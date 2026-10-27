@@ -64,6 +64,17 @@ public final class OwnedControlWindowInstrumentedTest {
             assertFalse(device.tools.availableTools().contains("tap"));
             assertFalse(device.tools.availableTools().contains("swipe"));
             screenshots.capture("real-owned-window-identity-and-lease-match");
+            try {
+                assertAccessibleStatus(device, "等待模型", false);
+                screenshots.capture("owned-control-status-exposes-current-waiting-state");
+                assertAccessibleStatus(device, "已暂停", true);
+                screenshots.capture("owned-control-status-exposes-current-paused-state");
+                assertEquals("Presentation checks must not operate the target app", 0, device.control.getDispatchAttempts());
+            } catch (Exception | AssertionError failure) {
+                try { screenshots.capture("owned-control-accessibility-failed-before-cleanup"); }
+                catch (Exception | Error captureFailure) { failure.addSuppressed(captureFailure); }
+                throw failure;
+            }
         }
     }
 
@@ -636,6 +647,81 @@ public final class OwnedControlWindowInstrumentedTest {
         if (failed instanceof Error) throw (Error) failed;
         if (failed instanceof RuntimeException) throw (RuntimeException) failed;
         if (failed != null) throw new AssertionError("Main-thread test action failed", failed);
+    }
+
+    /** Read the actual owned window's node semantics; this is not a screen-reader coexistence test. */
+    private static void assertAccessibleStatus(DeviceHarness device, String status, boolean paused) throws Exception {
+        AgentAccessibilityService service = device.service;
+        long deadline = SystemClock.elapsedRealtime() + 5_000;
+        safeMain(device, () -> service.showOverlay(status, paused, ""));
+        requireRegistrationTime(deadline);
+        CompletableFuture<AgentAccessibilityService.OwnedControlWindowIdentity> pending = service.acquireOwnedControlWindowIdentity();
+        AgentAccessibilityService.OwnedControlWindowIdentity owned;
+        try { owned = pending.get(Math.max(1, deadline - SystemClock.elapsedRealtime()), TimeUnit.MILLISECONDS); }
+        finally { pending.cancel(false); }
+        requireRegistrationTime(deadline);
+        String expectedText = "Agent · " + status;
+        String expectedDescription = expectedText + "，可拖动控制条";
+        int minimumHeight = Math.round(48 * service.getResources().getDisplayMetrics().density);
+        Rect actualTitle = new Rect();
+        safeMain(device, () -> {
+            requireRegistrationTime(deadline);
+            assertTrue(service.isOwnedControlWindowCurrent(owned));
+            TextView title = new ControlViews(service).title;
+            assertEquals(expectedText, title.getText().toString());
+            assertEquals(expectedDescription, String.valueOf(title.getContentDescription()));
+            assertEquals(View.ACCESSIBILITY_LIVE_REGION_POLITE, title.getAccessibilityLiveRegion());
+            int[] point = new int[2]; title.getLocationOnScreen(point);
+            actualTitle.set(point[0], point[1], point[0] + title.getWidth(), point[1] + title.getHeight());
+            assertTrue("The actual drag target must be at least 48 dp high", actualTitle.height() >= minimumHeight);
+            assertTrue(owned.copyBounds().contains(actualTitle));
+            // An equal publication must preserve the actual window owner;
+            // this does not measure a screen reader's eventual announcements.
+            service.showOverlay(new String(status), paused, "");
+            assertSame(owned, service.getOwnedControlWindowIdentity());
+        });
+        while (SystemClock.elapsedRealtime() < deadline) {
+            List<AccessibilityWindowInfo> windows = service.getWindows();
+            try {
+                requireRegistrationTime(deadline);
+                if (windows != null) for (AccessibilityWindowInfo window : windows) {
+                    if (window.getId() != owned.windowId) continue;
+                    assertEquals(AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY, window.getType());
+                    assertEquals(owned.displayId, window.getDisplayId());
+                    AccessibilityNodeInfo root = window.getRoot();
+                    if (root == null) continue;
+                    try {
+                        requireRegistrationTime(deadline);
+                        assertEquals(owned.windowId, root.getWindowId());
+                        List<AccessibilityNodeInfo> nodes = root.findAccessibilityNodeInfosByText(expectedText);
+                        try {
+                            requireRegistrationTime(deadline);
+                            int matching = 0;
+                            if (nodes != null) for (AccessibilityNodeInfo node : nodes) {
+                                if (!expectedText.equals(String.valueOf(node.getText()))
+                                        || !expectedDescription.equals(String.valueOf(node.getContentDescription()))) continue;
+                                assertEquals(owned.windowId, node.getWindowId());
+                                assertEquals(service.getPackageName(), String.valueOf(node.getPackageName()));
+                                assertTrue(node.isVisibleToUser());
+                                assertEquals(View.ACCESSIBILITY_LIVE_REGION_POLITE, node.getLiveRegion());
+                                Rect published = new Rect(); node.getBoundsInScreen(published);
+                                assertEquals("Published node bounds must match the actual drag View", actualTitle, published);
+                                assertTrue(published.height() >= minimumHeight);
+                                matching++;
+                            }
+                            assertTrue("The status must have only one matching accessible node", matching <= 1);
+                            if (matching == 1) {
+                                requireRegistrationTime(deadline);
+                                assertTrue(service.isOwnedControlWindowCurrent(owned));
+                                return;
+                            }
+                        } finally { if (nodes != null) for (AccessibilityNodeInfo node : nodes) node.recycle(); }
+                    } finally { root.recycle(); }
+                }
+            } finally { if (windows != null) for (AccessibilityWindowInfo window : windows) window.recycle(); }
+            SystemClock.sleep(40);
+        }
+        fail("The real owned control window did not publish its current accessible status within five seconds");
     }
 
     private static AgentAccessibilityService.OwnedControlWindowIdentity identity(AgentAccessibilityService service) throws Exception {

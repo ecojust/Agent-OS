@@ -602,7 +602,13 @@ public final class AgentAccessibilityService extends AccessibilityService {
                 if (collapsing != null) {
                     settlingApprovalCollapse = new SettlingApprovalCollapse(collapsing, callbacks, callbackGeneration);
                 }
-                if (firstDisplay || statusChanged) statusView.setText("Agent · " + currentStatus);
+                if (firstDisplay || statusChanged) {
+                    String displayedStatus = "Agent · " + currentStatus;
+                    statusView.setText(displayedStatus);
+                    // Preserve the visible state for screen readers as well as the
+                    // drag hint. Unchanged publications never request announcements.
+                    statusView.setContentDescription(displayedStatus + "，可拖动控制条");
+                }
                 if (firstDisplay || pauseChanged) pauseButton.setText(paused ? "继续" : "暂停");
                 boolean waiting = approval != null && !approval.isEmpty();
                 if (firstDisplay || !currentApproval.equals(previousApproval)) approvalView.setText(waiting ? approval : "");
@@ -1057,7 +1063,9 @@ public final class AgentAccessibilityService extends AccessibilityService {
         statusView.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         statusView.setMaxLines(2);
         statusView.setPadding(dp(2), dp(4), dp(2), dp(4));
-        statusView.setContentDescription("Agent 任务状态，可拖动控制条");
+        statusView.setMinHeight(dp(48));
+        statusView.setGravity(Gravity.CENTER_VERTICAL);
+        statusView.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
         panel.addView(statusView, new LinearLayout.LayoutParams(-1, -2));
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);

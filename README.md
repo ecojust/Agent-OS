@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Archive round 47: 1784/1832 passed, 48 usage-helper setup failures; no errors, skips or missing records. All 64 output-token cases passed. Independently verified all 3715 payloads (35387308 bytes). Corrected helper is under round 48 regression; prior full green baseline remains round 46.
+**本次更新：** Verify and document round 47: output-token cases 64/64 passed; usage cases 0/48 due to test initialization, retained in the full 1784/1832 result. All payload hashes and sizes independently rechecked. Round 48 tests the helper fixes without changing production behavior.
 
-**记录时间：** 2026-10-27T11:31:24Z
+**记录时间：** 2026-10-27T11:32:20Z
 
 [最近测试截图与清单](screenshots/40494541967-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40494541967)。通过、失败及未截图原因见清单。
 

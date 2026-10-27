@@ -355,12 +355,20 @@ final class SmokeHarness {
                 require(focused == null, "More than one focused window");
                 focused = window;
             }
-            require(focused != null && focused.getDisplayId() == Display.DEFAULT_DISPLAY
-                    && focused.getType() == AccessibilityWindowInfo.TYPE_APPLICATION, "Focused window is not the default-display application");
+            if (focused == null && target == NOTES_TARGET) throw new NotesObservationPending("focused_window_not_published");
+            require(focused != null, "Focused application window is missing");
+            require(focused.getDisplayId() == Display.DEFAULT_DISPLAY && focused.getType() == AccessibilityWindowInfo.TYPE_APPLICATION,
+                    "Focused window has unsupported metadata: id=" + focused.getId() + " type=" + focused.getType()
+                            + " display=" + focused.getDisplayId());
             root = focused.getRoot();
             if (root == null && target == NOTES_TARGET) throw new NotesObservationPending("application_root_not_published");
+            if (root != null && target == NOTES_TARGET && (root.getPackageName() == null || root.getPackageName().length() == 0))
+                throw new NotesObservationPending("application_root_package_not_published");
             require(root != null && target.packageName.contentEquals(root.getPackageName() == null ? "" : root.getPackageName()), "Focused package is not the verified frozen application");
             Rect bounds = new Rect(); focused.getBoundsInScreen(bounds);
+            // The package has already been checked above. Empty geometry grants
+            // no action; only reobserve this pending Notes publication.
+            if (bounds.isEmpty() && target == NOTES_TARGET) throw new NotesObservationPending("application_bounds_not_published");
             require(!bounds.isEmpty(), "Application window has no bounds");
             WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
             require(manager != null, "Platform window metrics are unavailable");
@@ -536,8 +544,8 @@ final class SmokeHarness {
             wait.requireTime();
             require(ready.node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, data), "Notes text action was rejected");
         }
-        // Verification shares the original deadline and BACK allowance; it may
-        // only reread, never resend input or repeat the keyboard dismissal.
+        // Verification shares the original deadline and one BACK allowance. It
+        // may use that allowance if unused; it never resends the text action.
         notesAwaitText(resource, text, wait);
     }
 

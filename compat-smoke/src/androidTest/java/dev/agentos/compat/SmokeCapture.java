@@ -188,13 +188,20 @@ final class SmokeCapture {
         diagnostic.put("parseStage", "visibility").put("fields", fields);
         if (!oneField(matched, "isOnScreen", "false") || !oneField(matched, "isVisible", "false")
                 || !oneField(matched, "isReadyForDisplay()", "false")
-                || !oneField(matched, "mLastHidden", "true")
                 || !oneField(matched, "mEnterAnimationPending", "false")
-                || Pattern.compile("\\bmAnimatingExit=true\\b").matcher(matched).find())
+                || !absentOrFalse(matched, "mAnimatingExit"))
             throw new CaptureRefused("input_method_is_visible_animating_or_unverified");
-        if (!oneField(matched, "mHasSurface", "false")
-                && !(oneField(matched, "mHasSurface", "true") && oneField(matched, "Surface: shown", "false")))
+        if (oneField(matched, "mHasSurface", "false")) {
+            // The observed no-surface cohort retains mLastHidden=false. That
+            // history flag cannot make a nonexistent, nonvisible surface shown.
+            // Still reject malformed history or any contradictory shown surface.
+            if (!(oneField(matched, "mLastHidden", "false") || oneField(matched, "mLastHidden", "true"))
+                    || !absentOrFalse(matched, "Surface: shown"))
+                throw new CaptureRefused("input_method_surface_is_visible_or_unverified");
+        } else if (!(oneField(matched, "mHasSurface", "true") && oneField(matched, "mLastHidden", "true")
+                && oneField(matched, "Surface: shown", "false"))) {
             throw new CaptureRefused("input_method_surface_is_visible_or_unverified");
+        }
         diagnostic.put("parseStage", "hidden_verified");
         return token + "/" + ownerUid + "/" + packageName;
     }
@@ -210,6 +217,11 @@ final class SmokeCapture {
             count++;
         }
         return new JSONObject().put("count", count).put("value", value);
+    }
+
+    private static boolean absentOrFalse(String block, String field) {
+        return !Pattern.compile("(?<![A-Za-z0-9_])" + Pattern.quote(field) + "=").matcher(block).find()
+                || oneField(block, field, "false");
     }
 
     private static boolean oneField(String block, String field, String expected) {
@@ -320,7 +332,27 @@ final class SmokeCapture {
         inspectedHiddenInputMethod(ime, 10100, "com.android.inputmethod.latin");
         inspectedHiddenInputMethod(ime.replace("mHasSurface=true", "mHasSurface=false")
                 .replace("    Surface: shown=false layer=0\n", ""), 10100, "com.android.inputmethod.latin");
+        // Parser-only reconstruction of the observed final cohorts, never PNG
+        // evidence: 12 no-surface samples versus 12 shown + 8 retained/shown.
+        String observedNoSurface = ime.replace("mHasSurface=true", "mHasSurface=false")
+                .replace("mLastHidden=true", "mLastHidden=false")
+                .replace("    Surface: shown=false layer=0\n", "");
+        inspectedHiddenInputMethod(observedNoSurface, 10100, "com.android.inputmethod.latin");
+        String observedShown = ime.replace("isOnScreen=false", "isOnScreen=true")
+                .replace("isVisible=false", "isVisible=true").replace("isReadyForDisplay()=false", "isReadyForDisplay()=true")
+                .replace("mLastHidden=true", "mLastHidden=false").replace("Surface: shown=false", "Surface: shown=true");
+        String observedRetainedShown = observedShown.replace("isVisible=true", "isVisible=false")
+                .replace("isReadyForDisplay()=true", "isReadyForDisplay()=false");
         for (String rejected : new String[] {
+                observedShown, observedRetainedShown,
+                observedNoSurface.replace("isOnScreen=false", "isOnScreen=true"),
+                observedNoSurface.replace("isVisible=false", "isVisible=true"),
+                observedNoSurface.replace("isReadyForDisplay()=false", "isReadyForDisplay()=true"),
+                observedNoSurface.replace("mEnterAnimationPending=false", "mEnterAnimationPending=true"),
+                observedNoSurface + "mAnimatingExit=true\n",
+                observedNoSurface + "mAnimatingExit=unknown\n",
+                observedNoSurface + "Surface: shown=true\n",
+                observedNoSurface.replace("mLastHidden=false", "mLastHidden=unknown"),
                 ime.replace("isOnScreen=false", "isOnScreen=true"),
                 ime.replace("isVisible=false", "isVisible=true"),
                 ime.replace("Surface: shown=false", "Surface: shown=true"),

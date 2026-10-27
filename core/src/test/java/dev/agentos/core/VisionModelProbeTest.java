@@ -14,6 +14,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -28,6 +29,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import static org.junit.Assert.*;
@@ -541,5 +544,154 @@ public class VisionModelProbeTest {
             if (!resume) assertEquals("stopping does not wait for the remote response", 1, release.getCount());
             assertOnlyModelRound(control); assertEquals(1, server.requests.size()); server.assertHealthy();
         } finally { release.countDown(); control.cancel(); worker.shutdownNow(); }
+    }
+
+    @Test public void explicitGuardUsesOriginalOwnerAndEpochForTheSameRealImageChallenge() throws Exception {
+        RunControl control = new RunControl(PRIVATE_PROFILE);
+        control.pause(); control.resume();
+        long originalEpoch = control.getExecutionEpoch();
+        Thread caller = Thread.currentThread();
+        AtomicBoolean checkedOnNetworkWorker = new AtomicBoolean();
+        try (Server server = new Server(request -> new Reply(validReply(request).toString()))) {
+            VisionModelProbe.Result result = new VisionModelProbe().test(server.settings(), control,
+                    originalEpoch, (owner, epoch) -> {
+                        assertSame(control, owner); assertEquals(originalEpoch, epoch);
+                        if (Thread.currentThread() != caller) checkedOnNetworkWorker.set(true);
+                        return true;
+                    });
+            assertTrue(result.connected); assertTrue(result.syntheticImageVerified);
+            assertEquals("SYNTHETIC_IMAGE_VERIFIED", result.code); assertRedacted(result);
+            assertTrue("The caller's guard must reach the actual network worker", checkedOnNetworkWorker.get());
+            assertOnlyModelRound(control); assertEquals(1, server.requests.size());
+            Request request = server.requests.get(0);
+            assertEquals("Bearer " + KEY, request.authorization);
+            for (String forbidden : List.of(PRIVATE_PROFILE, control.getTaskId(), "take_screenshot", KEY))
+                assertFalse("Only fixed synthetic content is sent", request.body.contains(forbidden));
+            server.assertHealthy();
+        } finally { control.cancel(); }
+    }
+
+    @Test public void explicitOldEpochAndInitiallyInvalidGuardNeverStartARequest() throws Exception {
+        try (Server server = new Server(request -> new Reply(validReply(request).toString()))) {
+            RunControl resumed = new RunControl();
+            long oldEpoch = resumed.getExecutionEpoch();
+            resumed.pause(); resumed.resume();
+            long currentEpoch = resumed.getExecutionEpoch();
+            AtomicInteger guardCalls = new AtomicInteger();
+            assertEquals("TASK_PAUSED", assertThrows(TaskControlException.class,
+                    () -> new VisionModelProbe().test(server.settings(), resumed, oldEpoch,
+                            (owner, epoch) -> { guardCalls.incrementAndGet(); return true; })).getCode());
+            assertEquals(0, guardCalls.get());
+            assertFalse(resumed.isCancelled()); resumed.checkExecutionEpoch(currentEpoch);
+            assertEquals(0, resumed.budgetSnapshot().modelRounds);
+            for (boolean throwing : new boolean[]{false, true}) {
+                RunControl invalid = new RunControl();
+                TaskControlException failure = assertThrows(TaskControlException.class,
+                        () -> new VisionModelProbe().test(server.settings(), invalid, invalid.getExecutionEpoch(),
+                                (owner, epoch) -> {
+                                    if (throwing) throw new IllegalStateException(KEY + SERVER_DETAIL);
+                                    return false;
+                                }));
+                assertEquals("TASK_STOPPED", failure.getCode()); assertTrue(invalid.isCancelled());
+                assertFalse(failure.getMessage().contains(KEY));
+                assertFalse(failure.getMessage().contains(SERVER_DETAIL));
+                assertEquals(0, invalid.budgetSnapshot().modelRounds);
+            }
+            assertTrue(server.requests.isEmpty()); server.assertHealthy(); resumed.cancel();
+        }
+    }
+
+    @Test public void savedGuardChangeDuringConnectionCreationPreventsHeadersAndImageFromBeingSent() throws Exception {
+        AtomicBoolean current = new AtomicBoolean(true);
+        AtomicInteger connectionCreations = new AtomicInteger();
+        RunControl control = new RunControl();
+        long originalEpoch = control.getExecutionEpoch();
+        try (Server server = new Server(request -> new Reply(validReply(request).toString()))) {
+            // URL.openConnection creates a handle but does not initiate network I/O.
+            // Flip the saved-configuration stand-in before the transport's next guard.
+            HttpModelClient client = new HttpModelClient(5000, url -> {
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connectionCreations.incrementAndGet(); current.set(false); return connection;
+            });
+            TaskControlException failure = assertThrows(TaskControlException.class,
+                    () -> new VisionModelProbe(client).test(server.settings(), control, originalEpoch,
+                            (owner, epoch) -> current.get()));
+            assertEquals("TASK_STOPPED", failure.getCode()); assertTrue(control.isCancelled());
+            assertEquals(1, connectionCreations.get()); assertOnlyModelRound(control);
+            assertTrue("No headers or image should reach the loopback service", server.requests.isEmpty());
+            server.assertHealthy();
+        } finally { control.cancel(); }
+    }
+
+    @Test(timeout = 8000) public void savedGuardInvalidationWithoutWatcherRejectsAnInFlightValidImageReply() throws Exception {
+        AtomicBoolean current = new AtomicBoolean(true);
+        CountDownLatch received = new CountDownLatch(1), releaseReply = new CountDownLatch(1);
+        ExecutorService worker = Executors.newSingleThreadExecutor();
+        RunControl control = new RunControl();
+        long originalEpoch = control.getExecutionEpoch();
+        try (Server server = new Server(request -> {
+            JsonObject response = validReply(request);
+            received.countDown();
+            assertTrue(releaseReply.await(5, TimeUnit.SECONDS));
+            return new Reply(response.toString());
+        })) {
+            Future<VisionModelProbe.Result> pending = worker.submit(() -> new VisionModelProbe().test(
+                    server.settings(), control, originalEpoch, (owner, epoch) -> current.get()));
+            assertTrue(received.await(3, TimeUnit.SECONDS));
+            assertFalse(control.isCancelled());
+            // Deliberately do not call control.cancel or any configuration watcher.
+            // The guard is checked at transport boundaries, not by polling a
+            // blocked I/O wait. Release the valid response and prove it cannot
+            // become an accepted diagnostic after its saved configuration changed.
+            current.set(false);
+            releaseReply.countDown();
+            ExecutionException stopped = assertThrows(ExecutionException.class,
+                    () -> pending.get(3, TimeUnit.SECONDS));
+            assertTrue(stopped.getCause() instanceof TaskControlException);
+            assertEquals("TASK_STOPPED", ((TaskControlException) stopped.getCause()).getCode());
+            assertTrue(control.isCancelled());
+            assertEquals("No retry or replacement model request", 1, server.requests.size());
+            assertOnlyModelRound(control); server.assertHealthy();
+        } finally {
+            releaseReply.countDown(); control.cancel(); worker.shutdownNow();
+            assertTrue(worker.awaitTermination(3, TimeUnit.SECONDS));
+        }
+    }
+
+    @Test public void explicitProbeGuardDelayedAcrossResumeCannotAdoptOrCancelTheNewEpoch() throws Exception {
+        for (boolean stillCurrent : new boolean[]{false, true}) {
+            CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
+            ExecutorService worker = Executors.newSingleThreadExecutor();
+            RunControl control = new RunControl();
+            long originalEpoch = control.getExecutionEpoch();
+            AtomicInteger replacementHook = new AtomicInteger();
+            try (Server server = new Server(request -> new Reply(validReply(request).toString()))) {
+                Future<VisionModelProbe.Result> pending = worker.submit(() -> new VisionModelProbe().test(
+                        server.settings(), control, originalEpoch, (owner, epoch) -> {
+                            entered.countDown();
+                            try { assertTrue(release.await(3, TimeUnit.SECONDS)); }
+                            catch (InterruptedException interrupted) {
+                                Thread.currentThread().interrupt(); throw new AssertionError(interrupted);
+                            }
+                            return stillCurrent;
+                        }));
+                assertTrue(entered.await(2, TimeUnit.SECONDS));
+                control.pause(); control.resume();
+                long resumedEpoch = control.getExecutionEpoch();
+                control.setCancelHook(replacementHook::incrementAndGet);
+                release.countDown();
+                ExecutionException rejected = assertThrows(ExecutionException.class,
+                        () -> pending.get(2, TimeUnit.SECONDS));
+                assertTrue(rejected.getCause() instanceof TaskControlException);
+                assertEquals("TASK_PAUSED", ((TaskControlException) rejected.getCause()).getCode());
+                assertFalse(control.isCancelled()); assertEquals(0, replacementHook.get());
+                control.checkExecutionEpoch(resumedEpoch);
+                assertEquals(0, control.budgetSnapshot().modelRounds);
+                assertTrue(server.requests.isEmpty()); server.assertHealthy();
+            } finally {
+                release.countDown(); control.cancel(); worker.shutdownNow();
+                assertTrue(worker.awaitTermination(3, TimeUnit.SECONDS));
+            }
+        }
     }
 }

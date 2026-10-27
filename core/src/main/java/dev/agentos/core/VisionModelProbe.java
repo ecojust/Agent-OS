@@ -34,21 +34,36 @@ public final class VisionModelProbe {
     /** Cancellation or an invalidated epoch is propagated, never presented as an ordinary failure. */
     public Result test(ModelSettings settings, RunControl control) throws InterruptedException {
         if (settings == null || control == null) throw new IllegalArgumentException("测试配置和执行控制不能为空。");
-        long epoch = control.getExecutionEpoch();
-        control.checkExecutionEpoch(epoch);
+        return test(settings, control, control.getExecutionEpoch(), ModelRequestContext.syntheticTestGuard());
+    }
+
+    /**
+     * Runs the same synthetic challenge bound to its original execution and a
+     * caller-owned disclosure guard. The guard must be a pure, bounded memory
+     * check; it is rechecked during generation and at the HTTP transport's
+     * existing checkpoints. It is not screenshot permission or page approval.
+     * No guard can retract bytes already sent or make a check atomic with I/O.
+     */
+    public Result test(ModelSettings settings, RunControl control, long originalEpoch,
+                       DisclosureGuard guard) throws InterruptedException {
+        if (settings == null || control == null || guard == null)
+            throw new IllegalArgumentException("测试配置、执行控制和发送守卫不能为空。");
+        ModelRequestContext context = new ModelRequestContext(control, originalEpoch, guard);
+        context.check();
         JsonArray messages = null;
         Challenge challenge = null;
         try {
             settings.validate();
             String nonce = UUID.randomUUID().toString();
-            challenge = challenge(control, epoch);
+            challenge = challenge(context);
+            context.check();
             messages = messages(nonce, challenge.png);
-            control.checkExecutionEpoch(epoch);
+            context.check();
             control.consumeModelRound();
-            JsonObject response = client.request(settings, messages, definitions(nonce), ModelRequestContext.syntheticRequest(control, epoch));
-            control.checkExecutionEpoch(epoch);
+            JsonObject response = client.request(settings, messages, definitions(nonce), context);
+            context.check();
             boolean verified = verified(response, nonce, challenge.order);
-            control.checkExecutionEpoch(epoch);
+            context.check();
             if (verified) return new Result(true, true,
                     "本次合成图片理解测试通过：模型正确返回了随机色块顺序。结果不代表真实界面理解、手机任务或截图权限已验证。",
                     "SYNTHETIC_IMAGE_VERIFIED");
@@ -56,10 +71,10 @@ public final class VisionModelProbe {
                     "服务已响应，但本次合成图片理解未通过校验。请检查模型是否支持图片输入与工具调用；不会据此开放截图或设备操作。",
                     "SYNTHETIC_IMAGE_UNVERIFIED");
         } catch (ModelException failed) {
-            control.checkExecutionEpoch(epoch);
+            context.check();
             return new Result(false, false, failed.getMessage(), failed.code);
         } catch (IllegalArgumentException invalid) {
-            control.checkExecutionEpoch(epoch);
+            context.check();
             return new Result(false, false, "模型配置无效，请检查服务地址、模型名称、密钥格式与 token 上限。", "INVALID_CONFIGURATION");
         } finally {
             if (messages != null) messages.asList().clear();
@@ -147,8 +162,8 @@ public final class VisionModelProbe {
         } catch (Exception malformed) { return false; }
     }
 
-    private static Challenge challenge(RunControl control, long epoch) throws TaskControlException, ModelException {
-        control.checkExecutionEpoch(epoch);
+    private static Challenge challenge(ModelRequestContext context) throws TaskControlException, ModelException {
+        context.check();
         int[] order = {0, 1, 2, 3, 4, 5, 6, 7};
         SecureRandom random = new SecureRandom();
         for (int index = order.length - 1; index > 0; index--) {
@@ -160,7 +175,7 @@ public final class VisionModelProbe {
         try {
             int offset = 0;
             for (int y = 0; y < HEIGHT; y++) {
-                control.checkExecutionEpoch(epoch); raw[offset++] = 0;
+                context.check(); raw[offset++] = 0;
                 for (int x = 0; x < WIDTH; x++) {
                     int localX = x % CELL, localY = y % CELL;
                     int color = localX < MARGIN || localX >= CELL - MARGIN || localY < MARGIN || localY >= CELL - MARGIN
@@ -171,7 +186,7 @@ public final class VisionModelProbe {
             deflater.setInput(raw); deflater.finish();
             ByteArrayOutputStream encoded = new ByteArrayOutputStream();
             while (!deflater.finished()) {
-                control.checkExecutionEpoch(epoch);
+                context.check();
                 int count = deflater.deflate(scratch);
                 if (count == 0 || encoded.size() + count > MAX_PNG_BYTES - 57) throw imageError();
                 encoded.write(scratch, 0, count);
@@ -183,7 +198,7 @@ public final class VisionModelProbe {
             header.write(8); header.write(2); header.write(0); header.write(0); header.write(0);
             writeChunk(png, "IHDR", header.toByteArray()); writeChunk(png, "IDAT", compressed); writeChunk(png, "IEND", new byte[0]);
             if (png.size() > MAX_PNG_BYTES) throw imageError();
-            control.checkExecutionEpoch(epoch);
+            context.check();
             return new Challenge(order, png.toByteArray());
         } finally {
             deflater.end(); Arrays.fill(raw, (byte) 0); Arrays.fill(scratch, (byte) 0);

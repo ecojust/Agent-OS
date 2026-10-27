@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T09:53:21Z",
-  "note": "合成图像探测新增原执行代次与发送守卫接口，复用既有算法和HTTP路径；新增5项核心回归，完整263项及Android构建/lint通过。无watch时仅承诺后续IO与结果检查拒绝旧配置，未开放截图。",
+  "updated_at": "2026-10-27T09:56:12Z",
+  "note": "实现真实保存配置的进程内合成图像探测记录：原子准入、原配置/代次绑定、10分钟诊断时限；8项真实存储/HTTP回归已编译，主程序和lint通过，设备执行待验证。不接UI、任务能力或截图授权。",
   "latest_evidence": {
     "path": "screenshots/40481719013-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40481719013"

@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /** Real loopback HTTP fixture; reads generated PNG pixels, never an actual device screenshot. */
 final class LocalVisionProbeServer implements AutoCloseable {
-    enum Mode { VERIFIED, UNVERIFIED, HELD_VERIFIED }
+    enum Mode { VERIFIED, UNVERIFIED, HELD_VERIFIED, VERIFIED_THEN_UNVERIFIED, HTTP_UNAUTHORIZED }
     static final String KEY = "vision-ui-synthetic-key";
     static final String MODEL = "vision-ui-synthetic-model";
     static final String PRIVATE_TASK = "PRIVATE_TASK_MUST_NOT_BE_SENT";
@@ -88,7 +88,8 @@ final class LocalVisionProbeServer implements AutoCloseable {
                 byte[] body = reply.toString().getBytes(StandardCharsets.UTF_8);
                 writing = true;
                 try {
-                    String header = "HTTP/1.1 200 OK\r\nContent-Type: application/json; charset=utf-8\r\n"
+                    String status = mode == Mode.HTTP_UNAUTHORIZED ? "401 Unauthorized" : "200 OK";
+                    String header = "HTTP/1.1 " + status + "\r\nContent-Type: application/json; charset=utf-8\r\n"
                             + "Connection: close\r\nContent-Length: " + body.length + "\r\n\r\n";
                     socket.getOutputStream().write(header.getBytes(StandardCharsets.US_ASCII));
                     socket.getOutputStream().write(body); socket.getOutputStream().flush();
@@ -158,7 +159,7 @@ final class LocalVisionProbeServer implements AutoCloseable {
             tools.incrementAndGet();
         }
         JsonObject message = new JsonObject(); message.addProperty("role", "assistant");
-        if (mode == Mode.UNVERIFIED) {
+        if (mode == Mode.UNVERIFIED || mode == Mode.VERIFIED_THEN_UNVERIFIED && requests.get() > 0) {
             message.addProperty("content", "Synthetic service response without a verified image answer.");
         } else {
             JsonObject invocation = new JsonObject(); invocation.addProperty("name", name);

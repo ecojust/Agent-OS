@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
@@ -18,7 +19,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import dev.agentos.core.CoordinateNodeResolver;
+import dev.agentos.core.ImageAttachment;
 import dev.agentos.core.ImageReviewSession;
+import dev.agentos.core.ImageWorkset;
 import dev.agentos.core.PngImage;
 import dev.agentos.core.RunControl;
 
@@ -27,8 +30,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -72,9 +78,17 @@ public final class ImageReviewInstrumentedTest {
             assertEquals(1, review.approvals.get());
             try (PngImage transferred = review.session.consume(review.approval.get())) {
                 assertNotNull(transferred);
-                byte[] actual = transferred.copyBytes();
-                try { assertArrayEquals(review.png, actual); }
-                finally { Arrays.fill(actual, (byte) 0); }
+                byte[] actual = new byte[transferred.encodedBytes]; // Test-owned comparison only.
+                try (PngImage.ReadLease reader = transferred.openRead()) {
+                    int offset = 0;
+                    while (offset < actual.length) {
+                        int count = reader.read(actual, offset, actual.length - offset);
+                        assertTrue("Reviewed PNG ended early", count > 0);
+                        offset += count;
+                    }
+                    assertEquals(-1, reader.read());
+                    assertArrayEquals(review.png, actual);
+                } finally { Arrays.fill(actual, (byte) 0); }
                 assertNull(review.session.consume(review.approval.get()));
             }
             review.awaitDismissed();
@@ -230,6 +244,174 @@ public final class ImageReviewInstrumentedTest {
         }
     }
 
+    @Test public void fullKnownBufferBudgetRejectsBeforeThePlatformDecoderIsCalled() throws Exception {
+        ImageWorkset workset = ImageWorkset.process();
+        AtomicInteger decodes = new AtomicInteger();
+        try (Review review = new Review((input, options) -> {
+            decodes.incrementAndGet();
+            return BitmapFactory.decodeStream(input, null, options);
+        })) {
+            try (ImageWorkset.Reservation occupied = workset.reserve(workset.limitBytes() - workset.reservedBytes())) {
+                review.show();
+                review.awaitDismissed();
+                assertEquals("Budget admission must precede BitmapFactory", 0, decodes.get());
+                assertTrue(review.image.isClosed());
+                assertEquals(0, review.approvals.get());
+                assertEquals(review.startingReservedBytes + occupied.bytes(), workset.reservedBytes());
+            }
+        }
+    }
+
+    @Test public void invalidatedOwnerKeepsAnInFlightReaderValidAndLatePixelsAreRecycled() throws Exception {
+        GatedDecoder decoder = new GatedDecoder();
+        try (Review review = new Review(decoder)) {
+            try {
+                review.show();
+                decoder.awaitEntered();
+                review.dialog.dismiss(); // Non-main invalidation must precede queued UI cleanup.
+                review.awaitDismissed();
+                assertTrue(review.image.isClosed());
+                assertTrue("The running reader and decoder must keep their reservations",
+                        ImageWorkset.process().reservedBytes() >= review.startingReservedBytes
+                                + review.image.encodedBytes + ImageAttachment.MAX_DECODED_BYTES);
+                decoder.release.countDown();
+                awaitReservedBytes(review.startingReservedBytes);
+                assertFalse(decoder.expired.get());
+                assertNotNull("Closing the owner corrupted a running decode", decoder.bitmap.get());
+                assertEquals(Color.GREEN, decoder.leftPixel.get());
+                assertEquals(Color.MAGENTA, decoder.rightPixel.get());
+                assertTrue("A late bitmap never attached to a renderer must be recycled", decoder.bitmap.get().isRecycled());
+                assertEquals(0, review.approvals.get());
+            } finally { decoder.release.countDown(); }
+        }
+    }
+
+    @Test public void decodedResultRemainsReservedUntilTheMainConsumerDiscardsIt() throws Exception {
+        GatedDecoder decoder = new GatedDecoder();
+        try (Review review = new Review(decoder)) {
+            try {
+                review.show();
+                decoder.awaitEntered();
+                review.instrumentation.runOnMainSync(() -> {
+                    // Hold only this synthetic callback while a 32x24 decode finishes;
+                    // the posted install/discard cannot run until this callback returns.
+                    decoder.release.countDown();
+                    awaitDecodedOnMain(decoder);
+                    long held = review.startingReservedBytes + review.image.encodedBytes
+                            + ImageAttachment.MAX_DECODED_BYTES;
+                    awaitReservedBytesOnMain(held);
+                    assertNotNull(decoder.bitmap.get());
+                    assertFalse(decoder.bitmap.get().isRecycled());
+                    review.dialog.dismiss();
+                    assertTrue(review.image.isClosed());
+                    assertEquals("The pending main consumer still owns the decoded bitmap",
+                            review.startingReservedBytes + ImageAttachment.MAX_DECODED_BYTES,
+                            ImageWorkset.process().reservedBytes());
+                    assertFalse(decoder.bitmap.get().isRecycled());
+                });
+                awaitReservedBytes(review.startingReservedBytes);
+                assertFalse(decoder.expired.get());
+                assertTrue(decoder.bitmap.get().isRecycled());
+                assertEquals(0, review.approvals.get());
+            } finally { decoder.release.countDown(); }
+        }
+    }
+
+    @Test public void clearingAnAttachedPreviewReleasesItsKnownOwnerWithoutRecyclingRendererPixels() throws Exception {
+        try (Review review = new Review()) {
+            review.show();
+            review.awaitPresented();
+            assertEquals(review.startingReservedBytes + review.image.encodedBytes + ImageAttachment.MAX_DECODED_BYTES,
+                    ImageWorkset.process().reservedBytes());
+            review.instrumentation.runOnMainSync(() -> {
+                ImageView view = review.dialog.getWindow().getDecorView().findViewWithTag(ImageReviewView.PREVIEW);
+                Bitmap exposed = ((BitmapDrawable) view.getDrawable()).getBitmap();
+                review.dialog.dismiss();
+                assertNull(view.getDrawable());
+                assertFalse("An exposed bitmap may still belong to RenderThread", exposed.isRecycled());
+                assertEquals(review.startingReservedBytes, ImageWorkset.process().reservedBytes());
+                // Returning owner quota is deliberately not proof of native/GPU release.
+                assertSecure(review.activity);
+            });
+            assertTrue(review.image.isClosed());
+            assertEquals(0, review.approvals.get());
+        }
+    }
+
+    @Test public void decoderFailureReturnsReservationsAndAdmitsTheNextRealPreview() throws Exception {
+        AtomicInteger decodes = new AtomicInteger();
+        try (Review failed = new Review((input, options) -> {
+            decodes.incrementAndGet();
+            throw new IllegalStateException("Synthetic platform decoder failure");
+        })) {
+            failed.show();
+            failed.awaitDismissed();
+            awaitReservedBytes(failed.startingReservedBytes);
+            assertEquals(1, decodes.get());
+            assertTrue(failed.image.isClosed());
+            assertEquals(0, failed.approvals.get());
+        }
+        try (Review next = new Review()) {
+            next.show();
+            next.awaitPresented();
+            assertFalse(next.image.isClosed());
+            assertEquals(ImageReviewSession.State.PRESENTED, next.session.state());
+        }
+    }
+
+    private static void awaitReservedBytes(long expected) {
+        long deadline = SystemClock.elapsedRealtime() + 5_000;
+        while (ImageWorkset.process().reservedBytes() != expected && SystemClock.elapsedRealtime() < deadline) {
+            SystemClock.sleep(10);
+        }
+        assertEquals("Known preview owners did not release their reservations", expected, ImageWorkset.process().reservedBytes());
+    }
+
+    private static void awaitReservedBytesOnMain(long expected) {
+        long deadline = SystemClock.elapsedRealtime() + 2_000;
+        while (ImageWorkset.process().reservedBytes() != expected && SystemClock.elapsedRealtime() < deadline) {
+            SystemClock.sleep(1);
+        }
+        assertEquals("Decoder did not finish its temporary work before the main callback", expected, ImageWorkset.process().reservedBytes());
+    }
+
+    private static void awaitDecodedOnMain(GatedDecoder decoder) {
+        try { assertTrue("Synthetic decode did not finish", decoder.decoded.await(2, TimeUnit.SECONDS)); }
+        catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); throw new AssertionError(interrupted); }
+    }
+
+    private static final class GatedDecoder implements SecureImageReviewDialog.PreviewDecoder {
+        final CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1), decoded = new CountDownLatch(1);
+        final AtomicBoolean expired = new AtomicBoolean();
+        final AtomicReference<Bitmap> bitmap = new AtomicReference<>();
+        final AtomicInteger leftPixel = new AtomicInteger(), rightPixel = new AtomicInteger();
+
+        @Override public Bitmap decode(InputStream input, BitmapFactory.Options options) {
+            entered.countDown();
+            try {
+                if (!release.await(10, TimeUnit.SECONDS)) {
+                    expired.set(true);
+                    throw new IllegalStateException("Synthetic decoder barrier expired");
+                }
+                Bitmap value = BitmapFactory.decodeStream(input, null, options);
+                bitmap.set(value);
+                if (value != null) {
+                    leftPixel.set(value.getPixel(4, 12));
+                    rightPixel.set(value.getPixel(28, 12));
+                }
+                return value;
+            } catch (InterruptedException interrupted) {
+                expired.set(true);
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Synthetic decoder interrupted", interrupted);
+            } finally { decoded.countDown(); }
+        }
+
+        void awaitEntered() throws Exception {
+            assertTrue("The actual decode worker did not start", entered.await(3, TimeUnit.SECONDS));
+        }
+    }
+
     private static void assertSecure(Activity activity) {
         assertTrue((activity.getWindow().getAttributes().flags & WindowManager.LayoutParams.FLAG_SECURE) != 0);
     }
@@ -260,6 +442,7 @@ public final class ImageReviewInstrumentedTest {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         final RunControl run = new RunControl("user:synthetic");
         final AtomicLong clock = new AtomicLong();
+        final long startingReservedBytes = ImageWorkset.process().reservedBytes();
         final byte[] png = syntheticPng();
         final PngImage image = PngImage.fromBytes(png);
         final ImageReviewSession.Binding binding = binding(run, "config-a");
@@ -268,9 +451,15 @@ public final class ImageReviewInstrumentedTest {
         final AtomicReference<ImageReviewSession.ApprovalToken> approval = new AtomicReference<>();
         final AtomicInteger approvals = new AtomicInteger(), closes = new AtomicInteger();
         final Activity activity;
+        final SecureImageReviewDialog.PreviewDecoder decoder;
         SecureImageReviewDialog dialog;
 
         Review() {
+            this((input, options) -> BitmapFactory.decodeStream(input, null, options));
+        }
+
+        Review(SecureImageReviewDialog.PreviewDecoder decoder) {
+            this.decoder = decoder;
             Intent intent = new Intent(instrumentation.getTargetContext(), MainActivity.class)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             activity = instrumentation.startActivitySync(intent);
@@ -284,7 +473,7 @@ public final class ImageReviewInstrumentedTest {
                         approval.set(value); approvals.incrementAndGet();
                     }
                     @Override public void onClosed(ImageReviewSession.State state) { closes.incrementAndGet(); }
-                });
+                }, decoder);
                 dialog.show();
                 // Decode completion cannot attach its result until this main callback returns.
                 assertFalse(button(ImageReviewView.APPROVE).isEnabled());
@@ -355,6 +544,12 @@ public final class ImageReviewInstrumentedTest {
             session.close();
             run.cancel();
             Arrays.fill(png, (byte) 0);
+            awaitReservedBytes(startingReservedBytes);
+            long deadline = SystemClock.elapsedRealtime() + 5_000;
+            while (SecureImageReviewDialog.isPreviewWorkPending() && SystemClock.elapsedRealtime() < deadline) {
+                SystemClock.sleep(10);
+            }
+            assertFalse("A pending preview consumer outlived test cleanup", SecureImageReviewDialog.isPreviewWorkPending());
         }
     }
 }

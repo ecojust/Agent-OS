@@ -31,6 +31,7 @@ final class ImageReviewView extends LinearLayout {
     private final Button approve;
     private final Button reject;
     private Bitmap preview;
+    private DecodedPreview previewOwner;
 
     ImageReviewView(Context context, ImageReviewSession.Binding binding,
                     Runnable onApprove, Runnable onReject) {
@@ -93,18 +94,25 @@ final class ImageReviewView extends LinearLayout {
         addView(actions, new LayoutParams(-1, -2));
     }
 
-    void installPreview(Bitmap bitmap) {
+    void installPreview(DecodedPreview owner) {
         requireMain();
-        if (preview != null || bitmap == null || bitmap.isRecycled() || bitmap.isMutable()) {
+        if (previewOwner != null || preview != null || owner == null) {
             throw new IllegalStateException("图片预览不可用。");
         }
-        preview = bitmap;
-        image.setImageBitmap(bitmap);
-        image.fit();
-        // Finish text-driven layout before the host marks the actual preview presented.
-        // Changing this text after markPresented() can invalidate the image geometry
-        // while the approval button already appears enabled.
-        status.setText("本次确认 60 秒内有效；拒绝或离开后失效。");
+        // Exposure is recorded before calling View code: even a failed attachment
+        // must not recycle pixels that a renderer might already reference.
+        preview = owner.exposeToRenderer();
+        previewOwner = owner;
+        boolean installed = false;
+        try {
+            image.setImageBitmap(preview);
+            image.fit();
+            // Finish text-driven layout before marking the actual preview presented.
+            status.setText("本次确认 60 秒内有效；拒绝或离开后失效。");
+            installed = true;
+        } finally {
+            if (!installed) clearPreview();
+        }
     }
 
     boolean isReadyToPresent() {
@@ -130,13 +138,19 @@ final class ImageReviewView extends LinearLayout {
         status.setText("已确认此图。离开此页会取消本次发送。");
     }
 
-    /** A displayed bitmap may still be referenced by RenderThread; release, never recycle it. */
+    /**
+     * A displayed bitmap may still be referenced by RenderThread. Release our
+     * known owner only after detaching; never claim this frees GPU/native memory.
+     */
     void clearPreview() {
         requireMain();
         approve.setEnabled(false);
         reject.setEnabled(false);
         image.setImageDrawable(null);
         preview = null;
+        DecodedPreview owned = previewOwner;
+        previewOwner = null;
+        if (owned != null) owned.close();
     }
 
     private TextView text(String value, int size, int color) {

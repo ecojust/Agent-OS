@@ -7,6 +7,7 @@ import java.util.zip.Inflater;
 
 /** Shared bounded single-frame PNG validation. Does not decode a full image or retain its input. */
 final class PngValidator {
+    static final int SCRATCH_BYTES = 8192;
     private static final int MAX_EDGE = ImageAttachment.MAX_EDGE;
     private static final int MAX_PIXELS = ImageAttachment.MAX_PIXELS;
     private static final int MAX_DECODED_BYTES = ImageAttachment.MAX_DECODED_BYTES;
@@ -76,7 +77,7 @@ final class PngValidator {
      */
     private static final class Scanlines implements AutoCloseable {
         private final long rowBytes, expected;
-        private final byte[] chunk = new byte[8192];
+        private final byte[] chunk = new byte[SCRATCH_BYTES];
         // Allocate Java scratch first: if allocation fails, no native inflater
         // has yet been created without a fully constructed owner to close it.
         private final Inflater inflater = new Inflater();

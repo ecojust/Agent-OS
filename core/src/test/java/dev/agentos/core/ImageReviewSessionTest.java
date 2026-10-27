@@ -1,7 +1,7 @@
 package dev.agentos.core;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -21,14 +21,16 @@ public final class ImageReviewSessionTest {
         final AtomicReference<Binding> current = new AtomicReference<>(binding);
         final PngImage image;
         final ImageReviewSession session;
-        Review() throws Exception {
-            image = PngImage.fromBytes(PngImageTest.png());
+        Review() throws Exception { this(ImageWorkset.process()); }
+        Review(ImageWorkset workset) throws Exception {
+            image = PngImage.fromBytes(PngImageTest.png(), workset);
             session = new ImageReviewSession(binding, image, run, current::get, clock::get);
         }
-        HostToken present() {
+        HostToken present() throws IOException {
             HostToken host = session.claimHost(); assertNotNull(host);
-            byte[] bytes = session.copyPngForPreview(host); assertNotNull(bytes);
-            Arrays.fill(bytes, (byte) 0);
+            try (PngImage.ReadLease stream = session.openPreviewRead(host)) {
+                assertNotNull(stream); assertEquals(137, stream.read());
+            }
             assertTrue(session.markPresented(host)); return host;
         }
         @Override public void close() { session.close(); }
@@ -81,9 +83,10 @@ public final class ImageReviewSessionTest {
             HostToken host = review.session.claimHost();
             assertNull(review.session.approve(host));
             assertFalse(review.session.markPresented(host));
-            byte[] preview = review.session.copyPngForPreview(host);
-            assertArrayEquals(PngImageTest.png(), preview); Arrays.fill(preview, (byte) 0);
-            assertNull(review.session.copyPngForPreview(host));
+            try (PngImage.ReadLease preview = review.session.openPreviewRead(host)) {
+                assertNotNull(preview); assertArrayEquals(PngImageTest.png(), preview.readAllBytes());
+            }
+            assertNull(review.session.openPreviewRead(host));
             assertTrue(review.session.markPresented(host));
             ApprovalToken approved = review.session.approve(host); assertNotNull(approved);
             assertNull(review.session.approve(host));
@@ -91,7 +94,7 @@ public final class ImageReviewSessionTest {
             assertEquals(State.CONSUMED, review.session.state());
             assertNull(review.session.consume(approved));
             review.session.close(); assertFalse(consumed.isClosed());
-            assertArrayEquals(PngImageTest.png(), consumed.copyBytes()); consumed.close();
+            try (PngImage owned = consumed) { assertArrayEquals(PngImageTest.png(), PngImageTest.read(owned)); }
         }
     }
 
@@ -160,7 +163,7 @@ public final class ImageReviewSessionTest {
     @Test public void unrelatedAndStaleHostCallbacksCannotPresentApproveOrInvalidateCurrentReview() throws Exception {
         try (Review first = new Review(); Review second = new Review()) {
             HostToken old = first.present(), current = second.present(); first.session.close();
-            assertNull(second.session.copyPngForPreview(old)); assertFalse(second.session.markPresented(old));
+            assertNull(second.session.openPreviewRead(old)); assertFalse(second.session.markPresented(old));
             assertNull(second.session.approve(old)); second.session.invalidateHost(old); second.session.reject(old);
             assertEquals(State.PRESENTED, second.session.state());
             assertNull(second.session.claimHost());
@@ -182,7 +185,7 @@ public final class ImageReviewSessionTest {
         try (Review review = new Review()) {
             HostToken host = review.session.claimHost(); review.session.reject(host);
             assertEquals(State.REJECTED, review.session.state()); assertTrue(review.image.isClosed());
-            assertNull(review.session.copyPngForPreview(host)); assertFalse(review.session.markPresented(host));
+            assertNull(review.session.openPreviewRead(host)); assertFalse(review.session.markPresented(host));
             assertNull(review.session.approve(host)); review.session.close();
         }
         try (Review review = new Review()) {
@@ -224,5 +227,62 @@ public final class ImageReviewSessionTest {
         assertThrows(IllegalArgumentException.class, () -> new Recipient("https://name:secret@model.example/v1", "vision-test"));
         assertThrows(IllegalArgumentException.class, () -> new Recipient("https://model.example/v1?key=secret", "vision-test"));
         assertThrows(IllegalArgumentException.class, () -> new Recipient("https://model.example/v1", "bad\nmodel"));
+    }
+
+    @Test public void invalidatedReviewDoesNotReclaimBytesStillHeldByItsDecoder() throws Exception {
+        byte[] png = PngImageTest.png();
+        for (int mode = 0; mode < 4; mode++) {
+            ImageWorkset workset = new ImageWorkset(png.length + PngValidator.SCRATCH_BYTES);
+            try (Review review = new Review(workset)) {
+                HostToken host = review.session.claimHost();
+                try (PngImage.ReadLease preview = review.session.openPreviewRead(host)) {
+                    assertNotNull(preview); assertEquals(png.length, workset.reservedBytes());
+                    if (mode == 0) { review.run.pause(); review.run.resume(); review.session.state(); }
+                    else if (mode == 1) { review.clock.addAndGet(TIMEOUT_MILLIS); review.session.expire(); }
+                    else if (mode == 2) review.session.invalidateHost(host);
+                    else review.session.reject(host);
+                    assertTrue(review.image.isClosed());
+                    assertFalse(review.session.markPresented(host)); assertNull(review.session.approve(host));
+                    assertNull(review.session.openPreviewRead(host));
+                    assertEquals(png.length, workset.reservedBytes());
+                    assertArrayEquals(png, preview.readAllBytes());
+                    assertEquals("invalidity and EOF do not close the decoder's lease", png.length, workset.reservedBytes());
+                }
+                assertEquals(0, workset.reservedBytes());
+            }
+        }
+    }
+
+    @Test public void approvedConsumptionTransfersOneOwnerWithoutCopyOrAdditionalReservation() throws Exception {
+        byte[] png = PngImageTest.png(); ImageWorkset workset = new ImageWorkset(png.length + PngValidator.SCRATCH_BYTES);
+        try (Review review = new Review(workset)) {
+            HostToken host = review.present(); assertEquals(png.length, workset.reservedBytes());
+            ApprovalToken approval = review.session.approve(host);
+            try (PngImage consumed = review.session.consume(approval)) {
+                assertSame(review.image, consumed); assertEquals(png.length, workset.reservedBytes());
+                review.session.close(); assertEquals(png.length, workset.reservedBytes());
+                try (PngImage.ReadLease stream = consumed.openRead()) {
+                    assertArrayEquals(png, stream.readAllBytes());
+                    assertEquals(png.length, workset.reservedBytes());
+                }
+            }
+            assertEquals(0, workset.reservedBytes());
+        }
+    }
+
+    @Test public void constructionErrorReleasesTransferredImageAndApprovalWait() throws Exception {
+        byte[] png = PngImageTest.png(); ImageWorkset workset = new ImageWorkset(png.length + PngValidator.SCRATCH_BYTES);
+        AtomicLong taskClock = new AtomicLong();
+        RunControl run = new RunControl("user:0", TaskBudget.DEFAULT, taskClock::get); Binding binding = binding(run);
+        PngImage image = PngImage.fromBytes(png, workset); AtomicInteger checks = new AtomicInteger();
+        AssertionError injected = new AssertionError("synthetic context supplier error");
+        assertSame(injected, assertThrows(AssertionError.class, () -> new ImageReviewSession(binding, image, run, () -> {
+            if (checks.incrementAndGet() == 2) { taskClock.set(10_000_000L); throw injected; }
+            return binding;
+        })));
+        assertEquals(2, checks.get()); assertTrue(image.isClosed()); assertEquals(0, workset.reservedBytes());
+        taskClock.set(20_000_000L);
+        assertEquals(10, run.budgetSnapshot().approvalMillis);
+        assertEquals("constructor failure must not leave the task waiting for approval", 10, run.budgetSnapshot().activeMillis);
     }
 }

@@ -133,7 +133,11 @@ public final class ImageReviewSession implements AutoCloseable {
                 // A pause racing the first check cannot establish a fresh approval wait.
                 checkCurrent();
             }
-        } catch (RuntimeException failure) { image.close(); throw failure; }
+        } catch (RuntimeException | Error failure) {
+            image.close();
+            if (accountingWait) { accountingWait = false; control.endApprovalWait(); }
+            throw failure;
+        }
     }
 
     /** A session has one host for its entire lifetime; replacement requires a new review. */
@@ -142,12 +146,12 @@ public final class ImageReviewSession implements AutoCloseable {
         host = new HostToken(); state = State.PREPARING; return host;
     }
 
-    /** Worker-only decode copy. The caller must wipe the returned array in finally. */
-    public synchronized byte[] copyPngForPreview(HostToken token) {
+    /** Worker-only decode lease. The caller must close it even if review is invalidated meanwhile. */
+    public synchronized PngImage.ReadLease openPreviewRead(HostToken token) {
         if (!checkCurrent() || token == null || token != host
                 || state != State.PREPARING || previewIssued) return null;
         previewIssued = true;
-        return image.copyBytes();
+        return image.openRead();
     }
 
     /** The secure host calls this only after successful decode, attach and actual layout. */

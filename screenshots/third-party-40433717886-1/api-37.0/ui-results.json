@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "kind": "third-party-calculator-smoke",
+  "actualInstalledIdentityVerified": true,
+  "installedIdentityFailureSeen": false,
+  "states": [
+    {
+      "state": "off",
+      "status": "failed",
+      "stage": "service_preparation",
+      "installedIdentityVerified": true,
+      "serviceState": "unknown",
+      "serviceObservations": [
+        {
+          "stage": "before",
+          "state": "disabled",
+          "verified": false,
+          "observedAt": 1793065283886,
+          "raw": {
+            "settingsEnabledServices": "''",
+            "settingsAccessibilityEnabled": "'0'",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        }
+      ],
+      "serviceActionObservations": [],
+      "steps": [
+        {
+          "name": "installed_identity",
+          "status": "passed",
+          "details": "PackageManager identity and installed APK digest match the frozen official release"
+        },
+        {
+          "name": "service_preparation",
+          "status": "failed",
+          "details": "ServiceStateFailure: Actual Agent service state did not match the frozen smoke state"
+        },
+        {
+          "name": "restore_service_settings",
+          "status": "failed",
+          "details": "AssertionError: Accessibility settings did not restore exactly"
+        }
+      ],
+      "captures": [
+        {
+          "stage": "failure",
+          "capturedAt": 1793065284086,
+          "secureFlagsCleared": false,
+          "status": "blocked",
+          "reason": "unverified_identity_window_or_obscuration",
+          "detail": "Focused package is not the verified calculator"
+        }
+      ],
+      "result": {
+        "expected": "5",
+        "actual": null,
+        "resourceId": "org.fossify.math:id\/result"
+      },
+      "startedAt": 1793065268844,
+      "installedIdentity": {
+        "package": "org.fossify.math",
+        "versionName": "1.4.0",
+        "versionCode": "10",
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "apkSha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "uid": 10157
+      },
+      "error": "ServiceStateFailure: Actual Agent service state did not match the frozen smoke state",
+      "cleanupError": "AssertionError: Accessibility settings did not restore exactly",
+      "finishedAt": 1793065284155
+    },
+    {
+      "state": "idle",
+      "status": "failed",
+      "stage": "service_preparation",
+      "installedIdentityVerified": true,
+      "serviceState": "unknown",
+      "serviceObservations": [
+        {
+          "stage": "before",
+          "state": "bound_idle",
+          "verified": false,
+          "observedAt": 1793065268561,
+          "raw": {
+            "settingsEnabledServices": null,
+            "settingsAccessibilityEnabled": "1",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        }
+      ],
+      "serviceActionObservations": [],
+      "steps": [
+        {
+          "name": "installed_identity",
+          "status": "passed",
+          "details": "PackageManager identity and installed APK digest match the frozen official release"
+        },
+        {
+          "name": "service_preparation",
+          "status": "failed",
+          "details": "ServiceStateFailure: Actual Agent service state did not match the frozen smoke state"
+        },
+        {
+          "name": "restore_service_settings",
+          "status": "failed",
+          "details": "AssertionError: Accessibility settings did not restore exactly"
+        }
+      ],
+      "captures": [
+        {
+          "stage": "failure",
+          "capturedAt": 1793065268762,
+          "secureFlagsCleared": false,
+          "status": "blocked",
+          "reason": "unverified_identity_window_or_obscuration",
+          "detail": "Focused package is not the verified calculator"
+        }
+      ],
+      "result": {
+        "expected": "5",
+        "actual": null,
+        "resourceId": "org.fossify.math:id\/result"
+      },
+      "startedAt": 1793065253453,
+      "installedIdentity": {
+        "package": "org.fossify.math",
+        "versionName": "1.4.0",
+        "versionCode": "10",
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "apkSha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "uid": 10157
+      },
+      "error": "ServiceStateFailure: Actual Agent service state did not match the frozen smoke state",
+      "cleanupError": "AssertionError: Accessibility settings did not restore exactly",
+      "finishedAt": 1793065268837
+    }
+  ],
+  "updatedAt": 1793065284155,
+  "source": {
+    "sha": "ac1578557cea784f94dd65db174de64228217d26",
+    "runId": "40433717886",
+    "attempt": "1",
+    "expectedApi": "37",
+    "deviceSerial": "emulator-5554"
+  },
+  "device": {
+    "sdkInt": 37,
+    "fingerprint": "Android\/sdk_phone64_x86_64\/emu64x:17\/CE2A.260420.051.A3\/16571990:userdebug\/test-keys",
+    "kernelQemu": "1",
+    "bootQemu": "1",
+    "kind": "emulator",
+    "abi": "[x86_64]"
+  },
+  "dedicatedEmulatorVerified": true
+}

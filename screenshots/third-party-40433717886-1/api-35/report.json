@@ -1,0 +1,259 @@
+{
+  "schemaVersion": 1,
+  "kind": "third-party-app-smoke",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 40433717886,
+    "attempt": 1,
+    "commit": "ac1578557cea784f94dd65db174de64228217d26"
+  },
+  "matrixLabel": "35",
+  "device": {
+    "serial": "emulator-5554",
+    "apiLevel": 35,
+    "fingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
+    "abi": "x86_64",
+    "kernelQemu": "1",
+    "bootQemu": "1"
+  },
+  "app": {
+    "package": "org.fossify.math",
+    "versionName": "1.4.0",
+    "versionCode": "10",
+    "url": "https://github.com/FossifyOrg/Calculator/releases/download/1.4.0/calculator-10-foss-release.apk",
+    "sizeBytes": 7047681,
+    "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+    "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+    "minSdk": 26,
+    "targetSdk": 36,
+    "abis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "x86",
+      "x86_64"
+    ],
+    "license": "GPL-3.0"
+  },
+  "scope": {
+    "deviceKind": "dedicated_emulator",
+    "states": [
+      "off",
+      "idle"
+    ],
+    "operation": "Fresh installation and launcher startup; calculate 2 + 3 and independently read result 5.",
+    "data": "Synthetic arithmetic only; no accounts or user files.",
+    "executing": "unverified",
+    "upgrade": "unverified",
+    "physicalDevices": "unverified",
+    "releaseAcceptance": false
+  },
+  "status": "failed",
+  "actualInstalledIdentityVerified": true,
+  "driverSteps": [
+    {
+      "name": "device_preflight",
+      "status": "passed"
+    },
+    {
+      "name": "apk_verification",
+      "status": "passed"
+    },
+    {
+      "name": "fresh_install_precondition",
+      "status": "passed"
+    },
+    {
+      "name": "install_agent",
+      "status": "passed",
+      "sha256": "987825ac67a6095f8cc90b11c34d8689336d5d971e337835fecbf723cda97550"
+    },
+    {
+      "name": "install_calculator",
+      "status": "passed",
+      "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed"
+    },
+    {
+      "name": "install_probe",
+      "status": "passed",
+      "sha256": "c95c96f6ad5584fc1052bb65b14f54ef47ad4807c6bc1e52a5bdfc3c855a214b"
+    },
+    {
+      "name": "install_probe_tests",
+      "status": "passed",
+      "sha256": "f6108ca4bbfdf8b6cdd84783e8a72fbebdd4b9e3b8c9e5b32b3b4c36196dadfd"
+    },
+    {
+      "name": "instrumentation",
+      "status": "failed"
+    },
+    {
+      "name": "collect_ui_results",
+      "status": "passed"
+    }
+  ],
+  "states": [
+    {
+      "state": "off",
+      "status": "failed",
+      "stage": "service_preparation",
+      "installedIdentityVerified": true,
+      "serviceState": "unknown",
+      "serviceObservations": [
+        {
+          "stage": "before",
+          "state": "disabled",
+          "verified": false,
+          "observedAt": 1793065283580,
+          "raw": {
+            "settingsEnabledServices": "''",
+            "settingsAccessibilityEnabled": "'0'",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        }
+      ],
+      "serviceActionObservations": [],
+      "steps": [
+        {
+          "name": "installed_identity",
+          "status": "passed",
+          "details": "PackageManager identity and installed APK digest match the frozen official release"
+        },
+        {
+          "name": "service_preparation",
+          "status": "failed",
+          "details": "ServiceStateFailure: Actual Agent service state did not match the frozen smoke state"
+        },
+        {
+          "name": "restore_service_settings",
+          "status": "failed",
+          "details": "AssertionError: Accessibility settings did not restore exactly"
+        }
+      ],
+      "captures": [
+        {
+          "stage": "failure",
+          "capturedAt": 1793065283780,
+          "secureFlagsCleared": false,
+          "status": "blocked",
+          "reason": "unverified_identity_window_or_obscuration",
+          "detail": "Focused package is not the verified calculator"
+        }
+      ],
+      "result": {
+        "expected": "5",
+        "actual": null,
+        "resourceId": "org.fossify.math:id/result"
+      },
+      "startedAt": 1793065268656,
+      "installedIdentity": {
+        "package": "org.fossify.math",
+        "versionName": "1.4.0",
+        "versionCode": "10",
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "apkSha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "uid": 10149
+      },
+      "error": "ServiceStateFailure: Actual Agent service state did not match the frozen smoke state",
+      "cleanupError": "AssertionError: Accessibility settings did not restore exactly",
+      "finishedAt": 1793065283865
+    },
+    {
+      "state": "idle",
+      "status": "failed",
+      "stage": "service_preparation",
+      "installedIdentityVerified": true,
+      "serviceState": "unknown",
+      "serviceObservations": [
+        {
+          "stage": "before",
+          "state": "bound_idle",
+          "verified": false,
+          "observedAt": 1793065268366,
+          "raw": {
+            "settingsEnabledServices": null,
+            "settingsAccessibilityEnabled": "1",
+            "accessibilityBoundServices": "{}",
+            "accessibilityEnabledServices": "{}",
+            "accessibilityBindingServices": "{}",
+            "activityServiceRecords": "",
+            "agentActivityAbsent": true,
+            "agentWindowsAbsent": true,
+            "freshInstallNoAgentActivityStarted": true
+          }
+        }
+      ],
+      "serviceActionObservations": [],
+      "steps": [
+        {
+          "name": "installed_identity",
+          "status": "passed",
+          "details": "PackageManager identity and installed APK digest match the frozen official release"
+        },
+        {
+          "name": "service_preparation",
+          "status": "failed",
+          "details": "ServiceStateFailure: Actual Agent service state did not match the frozen smoke state"
+        },
+        {
+          "name": "restore_service_settings",
+          "status": "failed",
+          "details": "AssertionError: Accessibility settings did not restore exactly"
+        }
+      ],
+      "captures": [
+        {
+          "stage": "failure",
+          "capturedAt": 1793065268567,
+          "secureFlagsCleared": false,
+          "status": "blocked",
+          "reason": "unverified_identity_window_or_obscuration",
+          "detail": "Focused package is not the verified calculator"
+        }
+      ],
+      "result": {
+        "expected": "5",
+        "actual": null,
+        "resourceId": "org.fossify.math:id/result"
+      },
+      "startedAt": 1793065253432,
+      "installedIdentity": {
+        "package": "org.fossify.math",
+        "versionName": "1.4.0",
+        "versionCode": "10",
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "apkSha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "uid": 10149
+      },
+      "error": "ServiceStateFailure: Actual Agent service state did not match the frozen smoke state",
+      "cleanupError": "AssertionError: Accessibility settings did not restore exactly",
+      "finishedAt": 1793065268649
+    }
+  ],
+  "emulatorVersion": "37.2.12",
+  "verifiedDownload": {
+    "package": "org.fossify.math",
+    "versionCode": "10",
+    "versionName": "1.4.0",
+    "minSdk": 26,
+    "targetSdk": 36,
+    "abis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "x86",
+      "x86_64"
+    ],
+    "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+    "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed"
+  },
+  "emulatorStepOutcome": "failure"
+}

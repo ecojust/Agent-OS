@@ -213,7 +213,7 @@ final class SmokeCapture {
         return new InputMethodRecord(matched, token + "/" + ownerUid + "/" + packageName);
     }
 
-    /** Positive, current IME readiness for the test's one BACK; never hidden-by-negation. */
+    /** Positive, current IME surface evidence for IME-coexisting editing; never hidden-by-negation. */
     static String visibleNotesInputMethod(SmokeHarness harness) throws Exception {
         ServiceInfo ime = harness.configuredSystemInputMethod();
         if (ime == null) throw new CaptureRefused("configured_system_input_method_unverified");
@@ -243,7 +243,7 @@ final class SmokeCapture {
                 && oneField(block, "Surface: shown", "true") && oneField(block, "mLastHidden", "false")
                 && oneField(block, "mEnterAnimationPending", "false") && absentOrFalse(block, "mAnimatingExit"))
             return record.identity;
-        return null; // Known boolean hidden/transition state: no authority to inject BACK.
+        return null; // Known boolean hidden/transition state: no authority for an IME-coexisting edit.
     }
 
     private static final class InputMethodRecord {
@@ -340,7 +340,7 @@ final class SmokeCapture {
         SmokeHarness.require(inspectedWindow(complete.replace("fl=0x100", "fl=SECURE")).secure,
                 "Named secure window flag was missed");
         verifyInputMethodWindowParser();
-        SmokeHarness.verifyNotesBackPreparation();
+        SmokeHarness.verifyNotesEditingPreparation();
         String notes = complete.replace("org.fossify.math", "org.fossify.notes");
         SmokeHarness.require(!inspectedWindow(notes, SmokeHarness.NOTES_TARGET).secure, "Pinned notes page was not matched");
         boolean crossPackageRefused = false;

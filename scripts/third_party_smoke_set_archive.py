@@ -20,7 +20,7 @@ APP_IDS = probe.APP_IDS
 
 
 def validate_report(report, label, identity, lock, files):
-    require(isinstance(report, dict) and type(report.get('schemaVersion')) is int and report['schemaVersion'] == 2
+    require(isinstance(report, dict) and type(report.get('schemaVersion')) is int and report['schemaVersion'] == 3
             and report.get('kind') == 'third-party-app-set-smoke', 'Invalid app-set report schema')
     require(report.get('source') == identity and all(type(report['source'].get(key)) is int for key in ('runId', 'attempt')),
             'Report source differs from trusted run')
@@ -95,8 +95,9 @@ def validate_report(report, label, identity, lock, files):
 def archive(incoming, output, run, artifact_index, sample, repo=None):
     identity = base.verify_source(run)
     probe.validate_lock(sample)
-    selected = base.eligible_artifacts(artifact_index, run, 2)
-    require(not base.eligible_artifacts(artifact_index, run, 1), 'Version-1 evidence cannot fill an app-set run')
+    selected = base.eligible_artifacts(artifact_index, run, 3)
+    require(not any(base.eligible_artifacts(artifact_index, run, version) for version in (1, 2)),
+            'Older evidence cannot fill a version-three app-set run')
     ids = [item['id'] for item in selected.values()]
     require(len(ids) == len(set(ids)), 'Artifact ID reused across app-set lanes')
     repo = Path(repo or Path.cwd()).resolve()
@@ -128,13 +129,14 @@ def archive(incoming, output, run, artifact_index, sample, repo=None):
         records.append(record); staged.append((label, files))
     counts = Counter(status for record in records for states in record['apps'].values() for status in states.values())
     require(sum(counts.values()) == 32, 'App-set denominator changed')
-    manifest = {'schemaVersion': 2, 'kind': 'third-party-emulator-app-set-evidence',
+    manifest = {'schemaVersion': 3, 'kind': 'third-party-emulator-app-set-evidence',
                 'archivedAt': datetime.now(timezone.utc).isoformat(),
                 'sourceRun': {**identity, 'url': f"https://github.com/{base.REPOSITORY}/actions/runs/{identity['runId']}",
                               'conclusion': run['conclusion'], 'event': 'workflow_dispatch', 'branch': 'master'},
                 'scope': {'deviceKind': 'dedicated_emulator', 'states': list(STATES), 'executingStateValidated': False,
                           'upgradeValidated': False, 'physicalDeviceValidated': False, 'releaseAccepted': False,
                           'note': 'Two exact application releases in off/idle states; not Agent execution, upgrades, a 50-app release pool or general phone compatibility.'},
+                'keyboardPolicy': probe.KEYBOARD_POLICY, 'navigationPolicy': probe.NAVIGATION_POLICY,
                 'sampleId': sample['sampleId'], 'lockSha256': probe.lock_digest(sample), 'apps': copy.deepcopy(sample['apps']),
                 'expectedMatrixLabels': list(LABELS), 'expectedCombinationCount': 32, 'apis': records,
                 'stateCounts': {name: counts[name] for name in ('passed', 'failed', 'unverified')},

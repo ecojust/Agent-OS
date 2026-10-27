@@ -1,7 +1,7 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "kind": "third-party-app-set-lock",
-  "sampleId": "calculator-1.4.0-notes-1.7.0-v2",
+  "sampleId": "calculator-1.4.0-notes-1.7.0-v3",
   "apps": [
     {
       "appId": "calculator-1.4.0",
@@ -72,11 +72,13 @@
       "off",
       "idle"
     ],
-    "operation": "Fresh install and normal UI: Calculator 2 + 3 = 5; Notes synthetic text saved by normal backgrounding and read after a new process launch.",
+    "operation": "Fresh install and ordinary UI editing: Calculator 2 + 3 = 5; Notes keeps its default keyboard, operates only fully visible uncovered targets, saves through one normal HOME and reads after a new process launch. No automatic BACK.",
     "data": "Synthetic arithmetic and distinct per-state note text only; no accounts or user files.",
     "executing": "unverified",
     "upgrade": "unverified",
     "physicalDevices": "unverified",
-    "releaseAcceptance": false
+    "releaseAcceptance": false,
+    "keyboardPolicy": "verified-system-ime-uncovered-targets",
+    "navigationPolicy": "no-automatic-back"
   }
 }

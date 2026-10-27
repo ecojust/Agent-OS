@@ -34,12 +34,14 @@ public final class ApplicationSetCompatibilityInstrumentedTest {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         Context context = instrumentation.getTargetContext();
         Bundle arguments = InstrumentationRegistry.getArguments();
-        directory = new File(context.getFilesDir(), "third-party-smoke-v2");
+        directory = new File(context.getFilesDir(), "third-party-smoke-v3");
         if (!directory.isDirectory() && !directory.mkdirs()) throw new IllegalStateException("Cannot create evidence directory");
         apps = new JSONArray().put(emptyApp(SmokeHarness.CALCULATOR_TARGET)).put(emptyApp(SmokeHarness.NOTES_TARGET));
-        report = new JSONObject().put("schemaVersion", 2)
+        report = new JSONObject().put("schemaVersion", 3)
                 .put("kind", "third-party-app-set-smoke")
-                .put("sampleId", "calculator-1.4.0-notes-1.7.0-v2")
+                .put("sampleId", "calculator-1.4.0-notes-1.7.0-v3")
+                .put("keyboardPolicy", "verified-system-ime-uncovered-targets")
+                .put("navigationPolicy", "no-automatic-back")
                 .put("apps", apps);
         persist();
         SmokeHarness guard = null;
@@ -47,8 +49,8 @@ public final class ApplicationSetCompatibilityInstrumentedTest {
             // Check explicit opt-in before connecting UiAutomation. Device properties are
             // then checked independently; argument strings do not prove an emulator.
             SmokeHarness.validateArguments(arguments);
-            SmokeHarness.require("agent-os-third-party-smoke-v2".equals(arguments.getString("syntheticTestMarker")),
-                    "The application-set probe requires its version-two sample");
+            SmokeHarness.require("agent-os-third-party-smoke-v3".equals(arguments.getString("syntheticTestMarker")),
+                    "The application-set probe requires its version-three editing sample");
             report.put("source", SmokeHarness.source(arguments));
             persist();
             verifyPlatformParsers();
@@ -297,6 +299,9 @@ public final class ApplicationSetCompatibilityInstrumentedTest {
                     else failure.addSuppressed(cleanup);
                 }
             }
+            if (target == SmokeHarness.NOTES_TARGET) {
+                entry.getJSONObject("result").put("automaticBackPolicy", "prohibited").put("homeAttempts", harness.notesHomeAttempts());
+            }
             entry.put("finishedAt", System.currentTimeMillis());
             boolean anyIdentityVerified = false;
             for (int i = 0; i < states.length(); i++) {
@@ -331,7 +336,8 @@ public final class ApplicationSetCompatibilityInstrumentedTest {
                 : new JSONObject().put("expected", noteBody(state)).put("actual", JSONObject.NULL)
                         .put("resourceId", target.packageName + ":id/text_note_view")
                         .put("titleExpected", noteTitle(state)).put("titleActual", JSONObject.NULL)
-                        .put("persistenceVerified", false).put("reopenedInFreshProcess", false);
+                        .put("persistenceVerified", false).put("reopenedInFreshProcess", false)
+                        .put("automaticBackPolicy", "prohibited").put("homeAttempts", 0);
         return new JSONObject().put("state", state).put("status", "unverified").put("stage", "not_run")
                 .put("cause", "test_has_not_executed").put("installedIdentityVerified", false)
                 .put("serviceState", "unknown").put("serviceObservations", new JSONArray())

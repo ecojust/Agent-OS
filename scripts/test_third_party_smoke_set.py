@@ -29,8 +29,8 @@ def source_run():
             "updated_at": "2026-10-27T09:10:00Z"}
 
 
-def artifact(label, attempt=2, version=2):
-    prefix = "third-party-smoke-v2" if version == 2 else "third-party-smoke"
+def artifact(label, attempt=2, version=3):
+    prefix = "third-party-smoke" if version == 1 else f"third-party-smoke-v{version}"
     return {"id": 200 + int(label.split(".")[0]), "name": f"{prefix}-api-{label}-attempt-{attempt}",
             "expired": False, "size_in_bytes": 4096, "created_at": "2026-10-27T09:05:00Z",
             "workflow_run": {"id": 123, "head_sha": SOURCE["commit"], "head_branch": "master",
@@ -55,7 +55,8 @@ def passed_state(entry, name, captures=True):
         title = f"Agent OS {name} sample"
         result = {"resourceId": "org.fossify.notes:id/text_note_view", "expected": body, "actual": body,
                   "titleExpected": title, "titleActual": title,
-                  "persistenceVerified": True, "reopenedInFreshProcess": True}
+                  "persistenceVerified": True, "reopenedInFreshProcess": True,
+                  "automaticBackPolicy": "prohibited", "homeAttempts": 1}
     else:
         raise AssertionError("The fixture cannot manufacture a pass for an unknown app")
     steps = ("installed_identity", "service_state_before", check, "installed_identity_after",
@@ -80,7 +81,8 @@ def ui_results(lock, label="35", passed=True, captures=False):
                                 {"state": name, "status": "unverified", "steps": [], "captures": [],
                                  "reason": "synthetic probe did not execute"} for name in STATES]})
     api = int(label.split(".")[0])
-    return {"schemaVersion": 2, "kind": "third-party-app-set-smoke", "sampleId": lock["sampleId"],
+    return {"schemaVersion": 3, "kind": "third-party-app-set-smoke", "sampleId": lock["sampleId"],
+            "keyboardPolicy": probe.KEYBOARD_POLICY, "navigationPolicy": probe.NAVIGATION_POLICY,
             "lockSha256": probe.lock_digest(lock), "matrixLabel": label,
             "source": {"sha": SOURCE["commit"], "runId": 123, "attempt": 2,
                        "expectedApi": api, "deviceSerial": "emulator-5554"},
@@ -128,15 +130,15 @@ class ThirdPartySmokeSetTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             probe.validate_ui_results(value, SOURCE, int(label.split(".")[0]), "emulator-5554", self.lock)
 
-    def test_v1_defaults_remain_six_states_and_v2_has_exactly_thirty_two(self):
+    def test_v1_defaults_remain_six_states_and_v3_has_exactly_thirty_two(self):
         old = v1_probe.load_lock()
         self.assertEqual(1, old["schemaVersion"])
         self.assertEqual([30, 35, 37], old["apis"])
         self.assertEqual({"30": 30, "35": 35, "37.0": 37}, v1_probe.APIS)
         self.assertEqual(("30", "35", "37.0"), v1_archive.LABELS)
-        self.assertEqual(2, self.lock["schemaVersion"])
+        self.assertEqual(3, self.lock["schemaVersion"])
         self.assertEqual("third-party-app-set-lock", self.lock["kind"])
-        self.assertEqual("calculator-1.4.0-notes-1.7.0-v2", self.lock["sampleId"])
+        self.assertEqual("calculator-1.4.0-notes-1.7.0-v3", self.lock["sampleId"])
         self.assertEqual(list(range(30, 38)), self.lock["apis"])
         self.assertEqual({label: int(label.split(".")[0]) for label in LABELS}, probe.APIS)
         self.assertEqual(["off", "idle"], self.lock["scope"]["states"])
@@ -152,9 +154,37 @@ class ThirdPartySmokeSetTests(unittest.TestCase):
         self.assertEqual((26, 36), (notes["minSdk"], notes["targetSdk"]))
         self.assertEqual(old["app"]["abis"], notes["abis"])
 
+    def test_v3_contract_cannot_relabel_v2_or_change_keyboard_navigation_rules(self):
+        for mutate in (lambda v: v.update(schemaVersion=2),
+                       lambda v: v.update(sampleId="calculator-1.4.0-notes-1.7.0-v2"),
+                       lambda v: v["scope"].pop("keyboardPolicy"),
+                       lambda v: v["scope"].update(navigationPolicy="repeat-back")):
+            value = copy.deepcopy(self.lock); mutate(value)
+            with self.assertRaises(ValueError): probe.validate_lock(value)
+        for key in ("keyboardPolicy", "navigationPolicy"):
+            for changed in (None, "old-profile"):
+                value = ui_results(self.lock); value[key] = changed
+                self.assert_ui_rejected(value)
+        for key, changed in (("automaticBackPolicy", "allowed"), ("automaticBackPolicy", False),
+                             ("automaticBackPolicy", 0), ("automaticBackPolicy", None), ("homeAttempts", 0),
+                             ("homeAttempts", 2), ("homeAttempts", True), ("homeAttempts", 1.0)):
+            value = ui_results(self.lock); value["apps"][1]["states"][0]["result"][key] = changed
+            self.assert_ui_rejected(value)
+        value = ui_results(self.lock); value["apps"][1]["states"][0]["result"].pop("automaticBackPolicy")
+        self.assert_ui_rejected(value)
+
+    def test_archive_source_routing_keeps_v1_v2_v3_distinct(self):
+        for version in (1, 2, 3):
+            item = artifact("35", version=version)
+            self.assertEqual({"35": item}, v1_archive.eligible_run_artifacts({"artifacts": [item]}, source_run()))
+        for left, right in ((1, 2), (1, 3), (2, 3)):
+            with self.assertRaises(ValueError):
+                v1_archive.eligible_run_artifacts({"artifacts": [artifact("30", version=left),
+                    artifact("35", version=right)]}, source_run())
+
     def test_lock_version_matrix_and_each_app_identity_are_frozen(self):
-        changes = [lambda v: v.update(schemaVersion=1), lambda v: v.update(schemaVersion=2.0),
-                   lambda v: v.update(schemaVersion="2"), lambda v: v.update(schemaVersion=True),
+        changes = [lambda v: v.update(schemaVersion=1), lambda v: v.update(schemaVersion=3.0),
+                   lambda v: v.update(schemaVersion="3"), lambda v: v.update(schemaVersion=True),
                    lambda v: v.update(kind="third-party-smoke-lock"), lambda v: v.update(sampleId="latest"),
                    lambda v: v["apis"].pop(), lambda v: v["apis"].append(38),
                    lambda v: v["apps"].pop(), lambda v: v["apps"].append(copy.deepcopy(v["apps"][0])),
@@ -197,7 +227,7 @@ class ThirdPartySmokeSetTests(unittest.TestCase):
         count = 0
         for label in LABELS:
             value = probe.empty_report(self.lock, SOURCE, label)
-            self.assertEqual((2, "third-party-app-set-smoke", label),
+            self.assertEqual((3, "third-party-app-set-smoke", label),
                              (value["schemaVersion"], value["kind"], value["matrixLabel"]))
             self.assertEqual(SOURCE, value["source"])
             self.assertEqual(self.lock["sampleId"], value["sampleId"])
@@ -226,7 +256,7 @@ class ThirdPartySmokeSetTests(unittest.TestCase):
             self.assertEqual(4, sum(len(app["states"]) for app in apps))
 
     def test_ui_source_device_versions_and_duplicate_app_state_are_rejected(self):
-        changes = [lambda v: v.update(schemaVersion=1), lambda v: v.update(schemaVersion=2.0),
+        changes = [lambda v: v.update(schemaVersion=1), lambda v: v.update(schemaVersion=3.0),
                    lambda v: v.update(kind="third-party-app-smoke"),
                    lambda v: v.update(sampleId="another-sample"),
                    lambda v: v["source"].update(sha="b" * 40), lambda v: v["source"].update(attempt=1),
@@ -365,7 +395,7 @@ class ThirdPartySmokeSetArchiveTests(unittest.TestCase):
 
     def test_no_artifacts_retains_all_thirty_two_unverified_combinations(self):
         result = self.run_archive(labels=())
-        self.assertEqual(2, result["schemaVersion"])
+        self.assertEqual(3, result["schemaVersion"])
         self.assertEqual({"passed": 0, "failed": 0, "unverified": 32}, result["stateCounts"])
         self.assertEqual(32, result["expectedCombinationCount"])
         self.assertEqual(8, len(result["apis"]))
@@ -422,10 +452,12 @@ class ThirdPartySmokeSetArchiveTests(unittest.TestCase):
         self.assertEqual({"passed": 4, "failed": 0, "unverified": 28}, result["stateCounts"])
         self.assertFalse(result["allProbeStatesPassed"])
 
-    def test_v1_old_attempt_and_expired_files_cannot_fill_v2_combinations(self):
+    def test_v1_old_attempt_and_expired_files_cannot_fill_v3_combinations(self):
         self.lane()
         # Current-attempt protocols must never be mixed or silently guessed.
         self.assert_rejected(index={"artifacts": [artifact("35", version=1)]})
+        self.assert_rejected(index={"artifacts": [artifact("35", version=2)]})
+        self.assert_rejected(index={"artifacts": [artifact("30"), artifact("35", version=2)]})
         self.assert_rejected(index={"artifacts": [artifact("30"), artifact("35", version=1)]})
         expired = artifact("30")
         expired["expired"] = True
@@ -461,7 +493,7 @@ class ThirdPartySmokeSetArchiveTests(unittest.TestCase):
 
     def test_schema_lane_sample_hash_and_locked_app_swaps_fail_before_copy(self):
         directory = self.lane()
-        mutations = [lambda v: v.update(schemaVersion=1), lambda v: v.update(schemaVersion=2.0),
+        mutations = [lambda v: v.update(schemaVersion=1), lambda v: v.update(schemaVersion=3.0),
                      lambda v: v.update(kind="third-party-app-smoke"), lambda v: v.update(matrixLabel="31"),
                      lambda v: v.update(sampleId="another-sample"), lambda v: v.update(lockSha256="0" * 64),
                      lambda v: v["source"].update(attempt=1), lambda v: v["source"].update(commit="b" * 40),

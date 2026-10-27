@@ -201,12 +201,22 @@ final class PinnedCalculatorPageHarness implements AutoCloseable {
 
     void openOverflow() throws Exception {
         try (Tree tree = new Tree()) {
-            AccessibilityNodeInfo toolbar = tree.id("main_toolbar", true);
-            Rect area = bounds(toolbar);
+            // The real service's 28-node tree folds away toolbar/appbar wrappers.
+            // Locate only the unique native overflow leaf after the actual known
+            // menu actions, not an arbitrary image or an assumed XML hierarchy.
+            AccessibilityNodeInfo history = tree.id("history", true), converter = tree.id("unit_converter", true);
+            AccessibilityNodeInfo settingsAction = tree.id("settings", false);
+            Rect row = bounds(history), preceding = bounds(settingsAction == null ? converter : settingsAction);
+            assertEquals(row.top, preceding.top); assertEquals(row.bottom, preceding.bottom);
             AccessibilityNodeInfo overflow = null;
             for (AccessibilityNodeInfo node : tree.nodes.values()) {
-                if (!node.isVisibleToUser() || !"android.widget.ImageButton".contentEquals(node.getClassName() == null ? "" : node.getClassName())
-                        || !area.contains(bounds(node)) || !node.isClickable()) continue;
+                Rect box = bounds(node);
+                if (!node.isVisibleToUser() || !"android.widget.ImageView".contentEquals(node.getClassName() == null ? "" : node.getClassName())
+                        || (node.getViewIdResourceName() != null && !node.getViewIdResourceName().isEmpty()) || node.getChildCount() != 0
+                        || !node.isClickable() || !node.isLongClickable() || !node.isEnabled() || node.isScrollable()
+                        || !"More options".contentEquals(node.getContentDescription() == null ? "" : node.getContentDescription())
+                        || box.left != preceding.right || box.right != tree.windowBounds.right
+                        || box.top != row.top || box.bottom != row.bottom) continue;
                 assertNull("Native toolbar overflow was not unique", overflow); overflow = node;
             }
             assertNotNull("Actual native overflow control missing", overflow);

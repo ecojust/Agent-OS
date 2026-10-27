@@ -178,7 +178,7 @@ final class SupportedVisualPagePolicy {
         }
         Node[] required = new Node[22];
         Node[] anchors = new Node[ANCHORS.length];
-        Node[] toolbar = new Node[4]; // history, converter, optional settings, optional overflow
+        Node[] toolbar = new Node[4]; // history, converter, optional settings, required native overflow
         int visibleCount = 0;
         for (AccessibilityNodeInfo node : owned) {
             snapshot.checkCurrent();
@@ -230,9 +230,15 @@ final class SupportedVisualPagePolicy {
                 putOnce(toolbar, menu, item);
                 continue;
             }
-            if (item.role.equals("android.widget.ImageButton") && item.id.isEmpty()) {
-                if (!node.isEnabled() || !node.isClickable() || !hasAction(node, AccessibilityNodeInfo.ACTION_CLICK)
-                        || node.isScrollable() || !empty(item.text) || empty(item.description)) throw rejected(Reason.UNKNOWN_CONTENT);
+            // This exact APK's native overflow button exposes ImageView, not
+            // ImageButton. No other image leaf is admitted; require its native
+            // tooltip/click contract here and its fixed menu-row position below.
+            if (item.role.equals("android.widget.ImageView") && item.id.isEmpty()) {
+                if (!node.isEnabled() || !node.isClickable() || !node.isLongClickable()
+                        || !hasAction(node, AccessibilityNodeInfo.ACTION_CLICK)
+                        || !hasAction(node, AccessibilityNodeInfo.ACTION_LONG_CLICK)
+                        || node.getChildCount() != 0 || node.isScrollable() || !empty(item.text)
+                        || empty(item.description) || !same(item.tooltip, item.description.toString())) throw rejected(Reason.UNKNOWN_CONTENT);
                 requireToolbarLabel(item);
                 putOnce(toolbar, 3, item);
                 continue;
@@ -241,8 +247,9 @@ final class SupportedVisualPagePolicy {
         }
         if (visibleCount != paths.size()) throw rejected(Reason.INCOMPLETE_SNAPSHOT);
         for (Node item : required) if (item == null) throw rejected(Reason.INVALID_KEYPAD);
-        // These two entries have showAsAction=always in this exact binary.
-        if (toolbar[0] == null || toolbar[1] == null) throw rejected(Reason.INVALID_KEYPAD);
+        // History/converter are always shown; About and More apps always require
+        // the native overflow in this exact binary.
+        if (toolbar[0] == null || toolbar[1] == null || toolbar[3] == null) throw rejected(Reason.INVALID_KEYPAD);
         requireLayout(snapshot, required, anchors, toolbar, visible);
         snapshot.checkCurrent();
         if (!SettingsStore.isCurrent(verified.configuration)) throw rejected(Reason.CONFIGURATION_CHANGED);
@@ -289,7 +296,12 @@ final class SupportedVisualPagePolicy {
 
     private static boolean anchorRole(int anchor, String role) {
         switch (anchor) {
-            case 0: return role.equals("android.view.ViewGroup") || role.equals("androidx.coordinatorlayout.widget.CoordinatorLayout");
+            case 0: return role.equals("android.view.ViewGroup") || role.equals("androidx.coordinatorlayout.widget.CoordinatorLayout")
+                    // The fixed main_coordinator's app-bar accessibility delegate
+                    // exposes ScrollView; requireContainer(false) still forbids
+                    // actual scrolling/clicking/text; the per-node pass still rejects
+                    // every unknown descendant.
+                    || role.equals("android.widget.ScrollView");
             case 1: return role.equals("android.widget.LinearLayout") || role.equals("com.google.android.material.appbar.AppBarLayout")
                     || role.equals("org.fossify.commons.views.MyAppBarLayout");
             case 2: return role.equals("android.view.ViewGroup") || role.equals("androidx.appcompat.widget.Toolbar")
@@ -361,6 +373,18 @@ final class SupportedVisualPagePolicy {
             descendantWhenExposed(appbar, item);
             descendantWhenExposed(coordinator, item);
         }
+        Node overflow = toolbar[3];
+        if (overflow != null) {
+            Node preceding = toolbar[2] == null ? toolbar[1] : toolbar[2];
+            // In this fixed ordinary LTR toolbar, the overflow is the final native
+            // leaf immediately after converter/settings, in the same action row.
+            // An unrelated ImageView elsewhere cannot masquerade as the overflow.
+            if (overflow.box.left != preceding.box.right
+                    || overflow.box.right != toolbarRegion.right
+                    || overflow.box.top != toolbar[0].box.top || overflow.box.bottom != toolbar[0].box.bottom
+                    || preceding.box.top != toolbar[0].box.top || preceding.box.bottom != toolbar[0].box.bottom)
+                throw rejected(Reason.UNKNOWN_CONTENT);
+        }
         for (int i = 0; i < toolbar.length; i++) for (int j = i + 1; j < toolbar.length; j++)
             if (toolbar[i] != null && toolbar[j] != null && Rect.intersects(toolbar[i].box, toolbar[j].box))
                 throw rejected(Reason.UNKNOWN_CONTENT);
@@ -386,7 +410,8 @@ final class SupportedVisualPagePolicy {
         for (AccessibilityNodeInfo.AccessibilityAction action : actions) {
             if (action == null) throw rejected(Reason.UNKNOWN_CONTENT);
             int id = action.getId();
-            if (id == AccessibilityNodeInfo.ACTION_FOCUS || id == AccessibilityNodeInfo.ACTION_CLEAR_FOCUS
+            if (id == AccessibilityNodeInfo.ACTION_SELECT || id == AccessibilityNodeInfo.ACTION_CLEAR_SELECTION
+                    || id == AccessibilityNodeInfo.ACTION_FOCUS || id == AccessibilityNodeInfo.ACTION_CLEAR_FOCUS
                     || id == AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS || id == AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS
                     || id == AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_ON_SCREEN.getId()) continue;
             if (scroll && (id == AccessibilityNodeInfo.ACTION_SCROLL_FORWARD || id == AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD

@@ -71,7 +71,8 @@ public final class ConfigurationGuardInstrumentedTest {
 
     private static AndroidDeviceTools tools(DeviceHarness device, SettingsStore.ConfigurationLease lease) throws IOException {
         return new AndroidDeviceTools(device.service, Collections.singleton(FIXTURE),
-                Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), true, lease,
+                Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)),
+                dev.agentos.core.ActionConfirmationPolicy.Mode.CONFIRM_ALL, lease,
                 (description, run, epoch) -> { fail("Read-only configuration checks must not request approval"); return false; });
     }
 

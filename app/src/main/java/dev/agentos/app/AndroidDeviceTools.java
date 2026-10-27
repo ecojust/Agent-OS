@@ -23,6 +23,7 @@ import android.view.accessibility.AccessibilityWindowInfo;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import dev.agentos.core.ActionConfirmationPolicy;
 import dev.agentos.core.CoordinateNodeResolver;
 import dev.agentos.core.RunControl;
 import dev.agentos.core.ToolCatalog;
@@ -66,6 +67,7 @@ public final class AndroidDeviceTools implements ToolHandler {
     private final Map<String, SettingsStore.AppGrant> grants = new LinkedHashMap<>();
     private final String profileId;
     private final ApprovalGate approvalGate;
+    private final ActionConfirmationPolicy confirmationPolicy;
     private final BooleanSupplier configurationCurrent;
     private final Handler main = new Handler(Looper.getMainLooper());
     private String lastObservedRevision;
@@ -76,9 +78,9 @@ public final class AndroidDeviceTools implements ToolHandler {
 
     public AndroidDeviceTools(AgentAccessibilityService service, Set<String> packages,
                               Map<String, SettingsStore.AppGrant> approvedGrants,
-                              boolean confirmEachAction, SettingsStore.ConfigurationLease configurationLease,
+                              ActionConfirmationPolicy.Mode executionMode, SettingsStore.ConfigurationLease configurationLease,
                               ApprovalGate gate) throws IOException {
-        this(service, packages, approvedGrants, confirmEachAction,
+        this(service, packages, approvedGrants, executionMode,
                 boundConfiguration(service, configurationLease), gate);
     }
 
@@ -87,7 +89,16 @@ public final class AndroidDeviceTools implements ToolHandler {
                                         Map<String, SettingsStore.AppGrant> approvedGrants,
                                         boolean confirmEachAction, BooleanSupplier configurationCurrent,
                                         ApprovalGate gate) throws IOException {
-        return new AndroidDeviceTools(service, packages, approvedGrants, confirmEachAction,
+        // Older fixture calls cannot opt into a new authorization mode via a boolean.
+        return forTesting(service, packages, approvedGrants, ActionConfirmationPolicy.Mode.CONFIRM_ALL,
+                configurationCurrent, gate);
+    }
+
+    static AndroidDeviceTools forTesting(AgentAccessibilityService service, Set<String> packages,
+                                        Map<String, SettingsStore.AppGrant> approvedGrants,
+                                        ActionConfirmationPolicy.Mode executionMode, BooleanSupplier configurationCurrent,
+                                        ApprovalGate gate) throws IOException {
+        return new AndroidDeviceTools(service, packages, approvedGrants, executionMode,
                 Objects.requireNonNull(configurationCurrent), gate);
     }
 
@@ -102,7 +113,7 @@ public final class AndroidDeviceTools implements ToolHandler {
 
     private AndroidDeviceTools(AgentAccessibilityService service, Set<String> packages,
                                Map<String, SettingsStore.AppGrant> approvedGrants,
-                               boolean confirmEachAction, BooleanSupplier configurationCurrent,
+                               ActionConfirmationPolicy.Mode executionMode, BooleanSupplier configurationCurrent,
                                ApprovalGate gate) throws IOException {
         if (service == null) throw new IllegalArgumentException("请先开启 Agent 无障碍服务");
         this.service = service;
@@ -116,6 +127,7 @@ public final class AndroidDeviceTools implements ToolHandler {
             grants.put(name, grant);
         }
         approvalGate = gate;
+        confirmationPolicy = new ActionConfirmationPolicy(executionMode);
         this.configurationCurrent = Objects.requireNonNull(configurationCurrent);
         service.watchPackages(allowedPackages);
     }
@@ -378,7 +390,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         String name = required(args, "packageName");
         validateInstalledGrant(name);
         String frozenDescription = "目标应用：" + appLabel(name) + "\n动作：打开应用\n包名：" + name;
-        approve(frozenDescription, control, epoch);
+        confirmAndAwaitControls("launch_app", frozenDescription, control, epoch);
         validateInstalledGrant(name);
         Intent intent = service.getPackageManager().getLaunchIntentForPackage(name);
         if (intent == null) throw unavailable("应用未提供启动入口");
@@ -387,6 +399,14 @@ public final class AndroidDeviceTools implements ToolHandler {
         // Keep the final read, nodes and platform call on this same worker. No
         // queued main-thread callback receives or outlives a recyclable Snapshot.
         try (Snapshot current = snapshot(control, epoch, PerformanceTrace.Stage.SNAPSHOT_FINAL_LAUNCH)) {
+            if (!current.obscured.isEmpty()) {
+                pauseForInterruption("当前窗口被其他窗口遮挡，请由用户检查后继续", control, epoch);
+            }
+            if (!confirmationPolicy.requiresConfirmation("launch_app") && !current.scoped
+                    && !isNavigationLaunchOrigin(current)) {
+                pauseForInterruption("当前前台不是已授权应用或桌面，请由用户检查后继续", control, epoch);
+            }
+            requireNavigationObservation("launch_app", current);
             // Do not reclaim focus after the user has moved away during model/approval work.
             if (lastObservedEpoch == epoch && lastObservedRevision != null
                     && !lastObservedRevision.equals(current.revision)) throw stale();
@@ -425,6 +445,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         // cancellation can release this snapshot before a queued main-thread callback ends.
         try (Snapshot state = snapshot(control, epoch, PerformanceTrace.Stage.SNAPSHOT_PREPARE)) {
             state.requireRevision(revision);
+            requireNavigationObservation(name, state);
             MutationTarget target = mutationTarget(name, args, state);
             onMain(() -> {
                 target.requireAccessible(control, epoch);
@@ -434,12 +455,13 @@ public final class AndroidDeviceTools implements ToolHandler {
             prepared = new Prepared(state.packageName, description(name, args, state));
         }
         validateInstalledGrant(prepared.packageName);
-        approve(prepared.description, control, epoch);
+        confirmAndAwaitControls(name, prepared.description, control, epoch);
         validateInstalledGrant(prepared.packageName);
         AgentAccessibilityService.ControlLease controls = acquireActionControls(control, epoch);
         boolean accepted;
         try (Snapshot state = snapshot(control, epoch, PerformanceTrace.Stage.SNAPSHOT_FINAL_MUTATION)) {
             state.requireRevision(revision);
+            requireNavigationObservation(name, state);
             mutationTarget(name, args, state).requireAccessible(control, epoch, controls);
             requireFastGrant(state.packageName);
             state.verifyWindowUnchanged();
@@ -491,16 +513,37 @@ public final class AndroidDeviceTools implements ToolHandler {
         }
     }
 
-    private void approve(String description, RunControl control, long epoch) throws Exception {
+    private boolean isNavigationLaunchOrigin(Snapshot state) {
+        if (state.windowType != AccessibilityWindowInfo.TYPE_APPLICATION) return false;
+        if (service.getPackageName().equals(state.packageName)) return true;
+        Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
+        ResolveInfo resolved = service.getPackageManager().resolveActivity(home, PackageManager.MATCH_DEFAULT_ONLY);
+        return resolved != null && resolved.activityInfo != null
+                && state.packageName.equals(resolved.activityInfo.packageName);
+    }
+
+    private void requireNavigationObservation(String tool, Snapshot state) throws DeviceException {
+        if (confirmationPolicy.requiresConfirmation(tool) || !state.scoped) return;
+        // These flags can only reject automation; they never establish that an
+        // arbitrary page or control is safe. Unscoped windows expose no UI data.
+        if (state.truncated) throw unavailable("当前观察不完整，无法连续导航，请由用户检查界面");
+        if (state.password) throw denied("当前页面包含敏感字段，请由用户操作");
+        if (state.highImpactScreen) throw unavailable("当前页面涉及已知高影响操作，请由用户操作");
+    }
+
+    private void confirmAndAwaitControls(String tool, String description, RunControl control, long epoch) throws Exception {
         requireCurrentConfiguration(control, epoch);
-        // M1 cannot establish consequences for arbitrary third-party controls. Keep a human
-        // gate on generic UI writes even when the preference permits proven ordinary tools.
-        if (approvalGate == null || !approvalGate.approve(description, control, epoch)) {
-            denied = true;
-            throw new DeviceException("USER_DENIED", "用户拒绝了此动作，本次任务不再执行写操作", "结束任务，由用户修改目标后重新发起");
+        // The immutable, locally saved mode only exempts the reviewed navigation names.
+        // Generic controls, input and back retain a human gate in either mode.
+        if (confirmationPolicy.requiresConfirmation(tool)) {
+            if (approvalGate == null || !approvalGate.approve(description, control, epoch)) {
+                denied = true;
+                throw new DeviceException("USER_DENIED", "用户拒绝了此动作，本次任务不再执行写操作", "结束任务，由用户修改目标后重新发起");
+            }
         }
         // A pause and resume invalidates this request, even if the old confirmation returns true.
         requireCurrentConfiguration(control, epoch);
+        // Navigation without a new approval must also wait for the actual controls.
         // Approval publication hides its views asynchronously. Wait for the real compact
         // layout before re-observing and checking target overlap, otherwise old expanded
         // bounds can reject a target that is now clear. Final scope/revision checks remain.
@@ -757,7 +800,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         final RunControl control;
         final long epoch;
         String packageName, revision, windowSignature = "";
-        int windowId, displayId = -1;
+        int windowId, displayId = -1, windowType = -1;
         boolean scoped, password, truncated, highImpactScreen;
         final Rect bounds = new Rect();
         final Rect safeContent = new Rect();
@@ -782,7 +825,8 @@ public final class AndroidDeviceTools implements ToolHandler {
                 if (active.getId() != windowId) throw stale();
                 displayId = active.getDisplayId();
                 if (displayId != Display.DEFAULT_DISPLAY) throw unavailable("坐标与窗口观察仅支持默认显示器");
-                if (active.getType() != AccessibilityWindowInfo.TYPE_APPLICATION) scoped = false;
+                windowType = active.getType();
+                if (windowType != AccessibilityWindowInfo.TYPE_APPLICATION) scoped = false;
                 obscured.clear();
                 systemBars.clear();
                 Rect activeBounds = new Rect(); active.getBoundsInScreen(activeBounds);

@@ -347,7 +347,7 @@ public final class AgentControllerInstrumentedTest {
 
     private static void start(DeviceHarness device, AgentController controller, ControllerTestSettings settings, String task) {
         device.instrumentation.runOnMainSync(() -> controller.start(settings.model, task,
-                Collections.singleton(DeviceHarness.FIXTURE), true, settings.lease));
+                Collections.singleton(DeviceHarness.FIXTURE), settings.executionMode, settings.lease));
         assertTrue("Controller did not enter a running state", controller.getState().running);
     }
 

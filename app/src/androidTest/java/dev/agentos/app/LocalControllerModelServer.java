@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /** Deterministic protocol fixture. It neither contacts nor evaluates a real language model. */
 final class LocalControllerModelServer implements AutoCloseable {
-    enum Scenario { SAVE_AND_COUNT, REJECT_CLICK, EXHAUST_ROUND_BUDGET }
+    enum Scenario { SAVE_AND_COUNT, REJECT_CLICK, EXHAUST_ROUND_BUDGET, CONTINUOUS_NAVIGATION }
     static final String SYNTHETIC_KEY = "controller-test-only-key";
     static final String MODEL = "synthetic-controller-model";
     static final String TEXT = "Controller integration sample";
@@ -27,6 +27,7 @@ final class LocalControllerModelServer implements AutoCloseable {
     static final int MAX_WRITE_PLANS = 3 + MAX_WRITE_REPLANS;
     static final int MAX_SCENARIO_REQUESTS = 4 + MAX_WRITE_REPLANS + 3 * 3;
     private final Scenario scenario;
+    private final String expectedHomePackage;
     private final ServerSocket server;
     private final Thread worker;
     private final AtomicInteger requests = new AtomicInteger();
@@ -45,9 +46,23 @@ final class LocalControllerModelServer implements AutoCloseable {
     private volatile int acceptedWrites;
     private volatile int staleReplans;
     private volatile boolean finalStateObserved;
+    private volatile String observedHomePackage = "";
 
     LocalControllerModelServer(Scenario scenario) throws IOException {
+        this(scenario, null);
+    }
+
+    LocalControllerModelServer(Scenario scenario, String expectedHomePackage) throws IOException {
+        if (scenario == Scenario.CONTINUOUS_NAVIGATION) {
+            if (expectedHomePackage == null || expectedHomePackage.isEmpty()
+                    || DeviceHarness.FIXTURE.equals(expectedHomePackage) || "dev.agentos.app".equals(expectedHomePackage)) {
+                throw new IllegalArgumentException("Navigation fixture requires the device's resolved default HOME package");
+            }
+        } else if (expectedHomePackage != null) {
+            throw new IllegalArgumentException("Only the navigation scenario accepts a default HOME package");
+        }
         this.scenario = scenario;
+        this.expectedHomePackage = expectedHomePackage;
         server = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"));
         worker = new Thread(this::serve, "controller-protocol-fixture");
         worker.setDaemon(true);
@@ -59,6 +74,8 @@ final class LocalControllerModelServer implements AutoCloseable {
     boolean finalStateObserved() { return finalStateObserved; }
     int writePlanCount() { return writePlans; }
     int acceptedWriteCount() { return acceptedWrites; }
+    String expectedHomePackage() { return expectedHomePackage; }
+    String observedHomePackage() { return observedHomePackage; }
 
     void assertHealthy() {
         Throwable problem = failure;
@@ -149,6 +166,7 @@ final class LocalControllerModelServer implements AutoCloseable {
         JsonObject observed = latestObservation(request);
         safeObservation = summarizeObservation(observed);
         safeToolResults = summarizeToolResults(request);
+        if (scenario == Scenario.CONTINUOUS_NAVIGATION) return navigationResponse(request, observed, round);
         require(DeviceHarness.FIXTURE.equals(observed.get("packageName").getAsString()), "Unexpected observed application");
         require(observed.get("scoped").getAsBoolean(), "Fixture was not actually authorized");
         if (scenario == Scenario.EXHAUST_ROUND_BUDGET) {
@@ -215,6 +233,79 @@ final class LocalControllerModelServer implements AutoCloseable {
         require(++writePlans <= MAX_WRITE_PLANS, "Fixture write plans exceeded the task limit");
         pendingWriteCallId = "script-round-" + round;
         return tool(phase == 0 ? "type_text" : "click", args, round);
+    }
+
+    /** Requires real HOME and relaunch observations; never replays an accepted or ambiguous write. */
+    private JsonObject navigationResponse(JsonObject request, JsonObject observed, int round) throws IOException {
+        if (pendingWriteCallId != null && !pendingWriteAccepted) {
+            requireFreshObservationAfterResult(request, pendingWriteCallId);
+            JsonObject result = matchingResult(request, pendingWriteCallId);
+            if (definitelyUnsubmittedStale(result)) {
+                require(++staleReplans <= MAX_WRITE_REPLANS, "Navigation stale plans exceeded the replan limit");
+                pendingWriteCallId = null;
+            } else {
+                require(flag(result, "ok", true) && flag(result, "submitted", true) && flag(result, "accepted", true)
+                                && optionalFlag(result, "dispatchSubmitted", true) && optionalFlag(result, "dispatchAccepted", true),
+                        "Navigation result is neither definitely accepted nor definitely unsubmitted stale");
+                pendingWriteAccepted = true;
+                acceptedWrites++;
+            }
+        }
+        if (pendingWriteAccepted) {
+            boolean actual = phase == 0 ? isUnscopedLauncher(observed)
+                    : DeviceHarness.FIXTURE.equals(DeviceHarness.string(observed, "packageName"))
+                            && observed.get("scoped").getAsBoolean()
+                            && "Count: 0".equals(nodeText(observed, "counter_value"));
+            if (!actual) return refresh(round);
+            if (phase == 0) observedHomePackage = DeviceHarness.string(observed, "packageName");
+            phase++;
+            pendingWriteCallId = null;
+            pendingWriteAccepted = false;
+            refreshes = 0;
+        }
+        if (phase == 2) {
+            require(acceptedWrites == 2, "Navigation must observe exactly two accepted writes");
+            require(DeviceHarness.FIXTURE.equals(DeviceHarness.string(observed, "packageName"))
+                    && "Count: 0".equals(nodeText(observed, "counter_value")), "Navigation final state changed unexpectedly");
+            finalStateObserved = true;
+            phase++;
+            JsonObject message = new JsonObject(); message.addProperty("role", "assistant");
+            message.addProperty("content", "Synthetic navigation observed: launcher then authorized fixture, counter unchanged.");
+            return envelope(message);
+        }
+        require(phase == 0 || phase == 1, "Unexpected extra navigation planning round");
+        JsonObject args = new JsonObject();
+        if (phase == 0) {
+            require(DeviceHarness.FIXTURE.equals(DeviceHarness.string(observed, "packageName"))
+                    && observed.get("scoped").getAsBoolean(), "HOME must begin at the authorized fixture");
+            require("Count: 0".equals(nodeText(observed, "counter_value")), "Navigation must not change fixture data");
+            args.addProperty("expectedRevision", observed.get("revision").getAsString());
+        } else {
+            require(isUnscopedLauncher(observed), "Relaunch must use a fresh unscoped launcher observation");
+            args.addProperty("packageName", DeviceHarness.FIXTURE);
+        }
+        require(++writePlans <= 2 + MAX_WRITE_REPLANS, "Navigation plans exceeded the task limit");
+        pendingWriteCallId = "script-round-" + round;
+        return tool(phase == 0 ? "home" : "launch_app", args, round);
+    }
+
+    private boolean isUnscopedLauncher(JsonObject observed) {
+        return expectedHomePackage.equals(DeviceHarness.string(observed, "packageName"))
+                && !observed.get("scoped").getAsBoolean() && observed.getAsJsonArray("nodes").isEmpty();
+    }
+
+    private static void requireFreshObservationAfterResult(JsonObject request, String callId) throws IOException {
+        int resultIndex = -1, observationIndex = -1;
+        JsonArray messages = request.getAsJsonArray("messages");
+        for (int index = 0; index < messages.size(); index++) {
+            JsonObject message = messages.get(index).getAsJsonObject();
+            if ("tool".equals(DeviceHarness.string(message, "role"))
+                    && callId.equals(DeviceHarness.string(message, "tool_call_id"))) resultIndex = index;
+            if ("user".equals(DeviceHarness.string(message, "role"))
+                    && DeviceHarness.string(message, "content").startsWith("最新本机观察")) observationIndex = index;
+        }
+        require(resultIndex >= 0 && observationIndex > resultIndex,
+                "Navigation planning requires a new observation after the previous write result");
     }
 
     private static JsonObject matchingResult(JsonObject request, String callId) throws IOException {

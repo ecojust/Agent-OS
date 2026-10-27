@@ -3,6 +3,7 @@ package dev.agentos.app;
 import android.content.Context;
 import android.content.SharedPreferences;
 import dev.agentos.core.ModelSettings;
+import dev.agentos.core.ActionConfirmationPolicy;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
@@ -12,9 +13,16 @@ final class ControllerTestSettings implements AutoCloseable {
     private final SharedPreferences preferences;
     private final Map<String, ?> original;
     final ModelSettings model;
+    final ActionConfirmationPolicy.Mode executionMode;
     final SettingsStore.ConfigurationLease lease;
 
     ControllerTestSettings(Context context, LocalControllerModelServer server) throws IOException {
+        this(context, server, ActionConfirmationPolicy.Mode.CONFIRM_ALL);
+    }
+
+    ControllerTestSettings(Context context, LocalControllerModelServer server,
+                           ActionConfirmationPolicy.Mode executionMode) throws IOException {
+        this.executionMode = executionMode;
         String profile = SettingsStore.currentProfileId(context);
         preferences = context.getSharedPreferences("agent_settings_secure_" + profile.replace(':', '_'), Context.MODE_PRIVATE);
         original = preferences.getAll();
@@ -27,6 +35,7 @@ final class ControllerTestSettings implements AutoCloseable {
             saved.apiKey = model.apiKey;
             saved.model = model.model;
             saved.confirmEachAction = true;
+            saved.executionMode = executionMode;
             saved.allowedPackages.add(DeviceHarness.FIXTURE);
             saved.grants.put(DeviceHarness.FIXTURE, SettingsStore.captureGrant(context, DeviceHarness.FIXTURE));
             lease = store.save(saved);

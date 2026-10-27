@@ -8,6 +8,7 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 
 import dev.agentos.core.AgentRunner;
+import dev.agentos.core.ActionConfirmationPolicy;
 import dev.agentos.core.ModelSettings;
 import dev.agentos.core.RunControl;
 import dev.agentos.core.TaskControlException;
@@ -110,14 +111,14 @@ public final class AgentController {
     public void removeListener(Listener listener) { listeners.remove(listener); }
 
     public void start(ModelSettings settings, String task, Set<String> allowedPackages,
-                      boolean confirmEachAction, SettingsStore.ConfigurationLease configurationLease) {
+                      ActionConfirmationPolicy.Mode executionMode, SettingsStore.ConfigurationLease configurationLease) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
             throw new IllegalStateException("请从任务界面启动。");
         }
         AgentAccessibilityService service = AgentAccessibilityService.getInstance();
         if (service == null) throw new IllegalStateException("请先在系统设置中启用 Agent OS 无障碍服务。");
         if (!isUnlocked()) throw new IllegalStateException("请保持手机亮屏并解锁后再启动。");
-        if (settings == null || task == null || task.trim().isEmpty()) {
+        if (settings == null || executionMode == null || task == null || task.trim().isEmpty()) {
             throw new IllegalArgumentException("请填写模型设置和任务内容。");
         }
         settings.validate();
@@ -144,6 +145,9 @@ public final class AgentController {
             summary = "";
             status = "正在连接模型";
             appendLogLocked("任务已启动；允许操作 " + scope.size() + " 个应用。");
+            appendLogLocked(executionMode == ActionConfirmationPolicy.Mode.CONTINUOUS_NAVIGATION
+                    ? "连续导航：打开应用、滚动、回到桌面可连续执行；返回、点击和输入仍需确认。"
+                    : "逐步确认：每次界面写操作都需确认。");
         }
         final SettingsStore.Registration configurationWatch = configurationLease.watch(
                 () -> configurationInvalidated(session, active));
@@ -173,14 +177,14 @@ public final class AgentController {
                         || !settings.endpoint.equals(saved.endpoint.trim())
                         || !settings.model.equals(saved.model.trim())
                         || !settings.apiKey.equals(saved.apiKey.trim())
-                        || confirmEachAction != saved.confirmEachAction) {
+                        || executionMode != saved.executionMode) {
                     finish(session, new TaskResult(TaskResult.Kind.FAILED,
                             "配置或授权已改变，请重新保存配置并选择允许的应用。", "CONFIGURATION_INVALID"));
                     return;
                 }
                 active.checkCancelled();
                 AndroidDeviceTools tools = new AndroidDeviceTools(service, scope, saved.grants,
-                        confirmEachAction, configurationLease, (description, run, epoch) -> requestApproval(session, description, run, epoch, configurationLease));
+                        executionMode, configurationLease, (description, run, epoch) -> requestApproval(session, description, run, epoch, configurationLease));
                 AgentRunner runner = new AgentRunner(settings, tools, new AgentRunner.Listener() {
                     @Override public void onStatus(String next) {
                         synchronized (lock) {

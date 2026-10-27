@@ -66,7 +66,7 @@ public final class SlowFinalReadInstrumentedTest {
                  });
                  FinalReadProbe probe = new FinalReadProbe(device, () -> held.start(same))) {
                 AndroidDeviceTools tools = new AndroidDeviceTools(device.service, Collections.singleton(FIXTURE),
-                        Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), true, settings.lease,
+                        Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), settings.executionMode, settings.lease,
                         (description, control, requestEpoch) -> {
                             assertEquals(epoch, requestEpoch);
                             assertEquals(1, approvals.incrementAndGet());

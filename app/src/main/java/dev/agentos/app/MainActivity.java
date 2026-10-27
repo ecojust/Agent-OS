@@ -36,12 +36,14 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.ScrollView;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import dev.agentos.core.ModelSettings;
+import dev.agentos.core.ActionConfirmationPolicy;
 import dev.agentos.core.ModelProbe;
 import dev.agentos.core.RunControl;
 import dev.agentos.core.VisionModelProbe;
@@ -75,7 +77,7 @@ public final class MainActivity extends Activity implements AgentController.List
     private boolean ready;
     private boolean busy;
     private boolean storageDamaged;
-    private boolean suppressSwitch;
+    private boolean suppressModeChange;
     private boolean modelExpanded = true;
     private boolean hideCurrentResult;
     private boolean wasRunning;
@@ -88,7 +90,7 @@ public final class MainActivity extends Activity implements AgentController.List
     private LinearLayout modelFields, approvalPanel, runningButtons;
     private ProgressBar progress;
     private Button serviceButton, modelToggle, saveButton, resetButton, appsButton, startButton, pauseButton, stopButton, clearButton, allowButton, denyButton;
-    private Switch confirmSwitch;
+    private RadioGroup executionModes;
     private final List<View> configurationViews = new ArrayList<>();
     private String boundApprovalId = "";
     private String acceptedHttpEndpoint = "";
@@ -307,26 +309,28 @@ public final class MainActivity extends Activity implements AgentController.List
         configurationViews.add(appsButton);
         marginAdd(scope, appsButton, 8);
         marginAdd(scope, text("仅限当前个人资料。应用重新安装或身份变化后，需要重新授权。", 12, R.color.agent_muted, false), 8);
-        confirmSwitch = new Switch(this);
-        confirmSwitch.setId(R.id.confirm_actions);
-        confirmSwitch.setText("逐步确认");
-        confirmSwitch.setTextSize(16);
-        confirmSwitch.setTextColor(color(R.color.agent_text));
-        confirmSwitch.setMinHeight(dp(48));
-        confirmSwitch.setChecked(true);
-        confirmSwitch.setEnabled(false);
-        confirmSwitch.setContentDescription("逐步确认已开启，当前原型固定启用");
-        confirmSwitch.setPadding(0, dp(8), 0, dp(8));
-        confirmSwitch.setOnCheckedChangeListener((view, checked) -> {
-            if (suppressSwitch) return;
-            // This prototype deliberately has no unconfirmed UI-write path.
-            suppressSwitch = true;
-            confirmSwitch.setChecked(true);
-            suppressSwitch = false;
-            draft.confirmEachAction = true;
+        marginAdd(scope, text("执行模式", 15, R.color.agent_text, true), 14);
+        executionModes = new RadioGroup(this);
+        executionModes.setId(R.id.confirm_actions);
+        executionModes.setOrientation(RadioGroup.VERTICAL);
+        executionModes.setSaveEnabled(false);
+        addExecutionMode("逐步确认（默认）", R.id.execution_mode_confirm_all);
+        addExecutionMode("连续导航", R.id.execution_mode_continuous_navigation);
+        executionModes.check(R.id.execution_mode_confirm_all);
+        executionModes.setOnCheckedChangeListener((group, checkedId) -> {
+            if (suppressModeChange) return;
+            if (!ready || busy || storageDamaged || modelProbe != null || controller.getState().running
+                    || checkedId != R.id.execution_mode_confirm_all && checkedId != R.id.execution_mode_continuous_navigation) {
+                bindExecutionMode();
+                return;
+            }
+            draft.executionMode = checkedId == R.id.execution_mode_continuous_navigation
+                    ? ActionConfirmationPolicy.Mode.CONTINUOUS_NAVIGATION : ActionConfirmationPolicy.Mode.CONFIRM_ALL;
         });
-        marginAdd(scope, confirmSwitch, 10);
-        marginAdd(scope, text("当前原型固定开启：所有界面操作都先由你确认。拒绝后不会换另一种方式绕过该动作。", 12, R.color.agent_muted, false), 0);
+        marginAdd(scope, executionModes, 4);
+        TextView modeExplanation = text("逐步确认会先确认所有界面操作。连续导航仅允许打开已授权应用、滚动和回到桌面免逐次确认；返回、点击和输入仍须确认。\n由你在本机选择，保存或开始任务后生效，模型不能更改。拒绝后不会换另一种方式绕过该动作。", 12, R.color.agent_muted, false);
+        modeExplanation.setId(R.id.execution_mode_explanation);
+        marginAdd(scope, modeExplanation, 4);
 
         LinearLayout task = card(content);
         task.addView(sectionTitle("这次想完成什么？", R.drawable.ic_play));
@@ -464,15 +468,34 @@ public final class MainActivity extends Activity implements AgentController.List
         });
     }
 
+    private void addExecutionMode(String label, int id) {
+        RadioButton option = new RadioButton(this);
+        option.setId(id);
+        option.setText(label);
+        option.setTextSize(16);
+        option.setTextColor(color(R.color.agent_text));
+        option.setButtonTintList(ColorStateList.valueOf(color(R.color.agent_primary)));
+        option.setMinHeight(dp(48));
+        option.setSaveEnabled(false);
+        option.setEnabled(false);
+        executionModes.addView(option, new RadioGroup.LayoutParams(-1, -2));
+        // Disabling a RadioGroup alone does not disable its individual choices.
+        configurationViews.add(option);
+    }
+
+    private void bindExecutionMode() {
+        suppressModeChange = true;
+        executionModes.check(draft.executionMode == ActionConfirmationPolicy.Mode.CONTINUOUS_NAVIGATION
+                ? R.id.execution_mode_continuous_navigation : R.id.execution_mode_confirm_all);
+        suppressModeChange = false;
+    }
+
     private void bindDraft() {
         endpointField.setText(draft.endpoint);
         keyField.setText(draft.apiKey);
         modelField.setText(draft.model);
         keyField.setTransformationMethod(PasswordTransformationMethod.getInstance());
-        suppressSwitch = true;
-        draft.confirmEachAction = true;
-        confirmSwitch.setChecked(true);
-        suppressSwitch = false;
+        bindExecutionMode();
         refreshScopeSummary();
         configSummary.setText(draft.model.trim().isEmpty() ? "配置模型地址、名称和密钥" : "已保存模型 · " + draft.model);
     }
@@ -534,7 +557,7 @@ public final class MainActivity extends Activity implements AgentController.List
                 try {
                     // Start is only invoked from this still-live Activity after the save succeeds.
                     hideCurrentResult = false;
-                    controller.start(model, goal, allowed, settings.confirmEachAction, configurationLease);
+                    controller.start(model, goal, allowed, settings.executionMode, configurationLease);
                     messageText.setVisibility(View.GONE);
                     View focus = getCurrentFocus();
                     if (focus != null) {
@@ -557,6 +580,7 @@ public final class MainActivity extends Activity implements AgentController.List
         copy.apiKey = keyField.getText().toString().trim();
         copy.model = modelField.getText().toString().trim();
         copy.confirmEachAction = true;
+        copy.executionMode = draft.executionMode;
         copy.allowedPackages = new LinkedHashSet<>(draft.allowedPackages);
         copy.grants = new LinkedHashMap<>(draft.grants);
         return copy;

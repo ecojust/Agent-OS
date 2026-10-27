@@ -168,7 +168,7 @@ public final class ConfigurationLeaseControllerInstrumentedTest {
                     device.instrumentation.runOnMainSync(() -> {
                         controller.stop();
                         controller.start(settings.model, "Queued synthetic task must never outlive its configuration.",
-                                Collections.singleton(DeviceHarness.FIXTURE), true, settings.lease);
+                                Collections.singleton(DeviceHarness.FIXTURE), settings.executionMode, settings.lease);
                     });
                     assertTrue("The replacement task must be queued, not rejected", controller.getState().running);
                     assertHeld(blocked.call("status"));
@@ -235,7 +235,7 @@ public final class ConfigurationLeaseControllerInstrumentedTest {
     private static void start(DeviceHarness device, AgentController controller, ControllerTestSettings settings) {
         device.instrumentation.runOnMainSync(() -> controller.start(settings.model,
                 "Prepare one synthetic counter click and wait for confirmation.",
-                Collections.singleton(DeviceHarness.FIXTURE), true, settings.lease));
+                Collections.singleton(DeviceHarness.FIXTURE), settings.executionMode, settings.lease));
         assertTrue("Controller did not start", controller.getState().running);
     }
 

@@ -12,6 +12,8 @@ import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.util.Base64;
 
+import dev.agentos.core.ActionConfirmationPolicy;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -152,6 +154,7 @@ public final class SettingsStore {
             settings.apiKey = json.getString("apiKey");
             settings.model = json.getString("model");
             settings.confirmEachAction = json.getBoolean("confirmEachAction");
+            settings.executionMode = readExecutionMode(json);
             JSONArray grants = json.getJSONArray("grants");
             for (int i = 0; i < grants.length(); i++) {
                 JSONObject grant = grants.getJSONObject(i);
@@ -169,6 +172,19 @@ public final class SettingsStore {
             // Do not expose provider errors, ciphertext, or secrets in UI/log output.
             throw new IOException("无法解密已保存的配置。请重新填写并保存；原配置尚未修改。");
         }
+    }
+
+    private static ActionConfirmationPolicy.Mode readExecutionMode(JSONObject json) throws IOException, JSONException {
+        // Older builds ignored confirmEachAction=false. Never reinterpret that value
+        // as permission for a newly introduced unconfirmed navigation path.
+        if (!json.has("executionMode")) return ActionConfirmationPolicy.Mode.CONFIRM_ALL;
+        Object raw = json.get("executionMode");
+        if (raw instanceof String) {
+            for (ActionConfirmationPolicy.Mode mode : ActionConfirmationPolicy.Mode.values()) {
+                if (mode.name().equals(raw)) return mode;
+            }
+        }
+        throw new IOException("已保存的执行模式无法识别；原配置尚未修改，请明确重置后重试。");
     }
 
     public ConfigurationLease save(SavedSettings settings) throws IOException {
@@ -189,7 +205,10 @@ public final class SettingsStore {
             json.put("endpoint", settings.endpoint);
             json.put("apiKey", settings.apiKey);
             json.put("model", settings.model);
-            json.put("confirmEachAction", settings.confirmEachAction);
+            // Keep the legacy field restrictive for older readers. Only executionMode
+            // records an explicit local choice; an old false value grants no authority.
+            json.put("confirmEachAction", true);
+            json.put("executionMode", settings.executionMode.name());
             JSONArray grants = new JSONArray();
             for (String packageName : settings.allowedPackages) {
                 AppGrant identity = settings.grants.get(packageName);
@@ -230,7 +249,8 @@ public final class SettingsStore {
 
     private static void validate(SavedSettings settings) throws IOException {
         if (settings == null || settings.endpoint == null || settings.apiKey == null || settings.model == null
-                || settings.allowedPackages == null || settings.grants == null || settings.profileId == null) throw new IOException("模型配置不完整。");
+                || settings.allowedPackages == null || settings.grants == null || settings.profileId == null
+                || settings.executionMode == null) throw new IOException("模型配置不完整。");
         if (settings.endpoint.length() > 2048 || settings.apiKey.length() > 8192 || settings.model.length() > 256
                 || settings.allowedPackages.size() > 500) throw new IOException("模型配置超出支持范围。");
         for (String packageName : settings.allowedPackages) {
@@ -600,7 +620,9 @@ public final class SettingsStore {
         public String endpoint = "";
         public String apiKey = "";
         public String model = "";
+        /** Legacy storage compatibility only; never use this flag to authorize execution. */
         public boolean confirmEachAction = true;
+        public ActionConfirmationPolicy.Mode executionMode = ActionConfirmationPolicy.Mode.CONFIRM_ALL;
         public Set<String> allowedPackages = new LinkedHashSet<>();
         public Map<String, AppGrant> grants = new LinkedHashMap<>();
     }

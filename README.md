@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Archive all round-54 evidence for source 7f47313b: 1933/1936 passed, three post-drag registration failures on API30–32, no missing cases. The actual-button approval regression passes on every API. Independently verify all 4,106 payload hashes and retain 2,138 real screenshots; the test-only correction is running in a separate verification round.
+**本次更新：** Document the independently checked eight-API performance diagnostics: final snapshots and dispatch markers stayed on worker threads; three small-fixture reads hit the traversal budget and triggered fresh observation. Preserve short-sample, emulator and test-process limits; do not claim physical-device or performance-budget acceptance. The test-only drag correction is still in regression.
 
-**记录时间：** 2026-10-27T15:49:00Z
+**记录时间：** 2026-10-27T15:55:07Z
 
 [最近测试截图与清单](screenshots/40531636963-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40531636963)。通过、失败及未截图原因见清单。
 

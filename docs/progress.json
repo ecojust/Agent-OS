@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T12:11:16Z",
-  "note": "Implement guarded image handoff through the original request context; all 282 core tests passed, including 15 new ownership and real-HTTP cases. Android screenshot tools remain disabled. GitHub authorization expired after the previous pushed modules; subsequent publication and round49 evidence audit await restored access.",
+  "updated_at": "2026-10-27T12:14:19Z",
+  "note": "Independently audit round49 at source5060f597: 1880/1880 Android emulator cases passed; 3922 payloads and 2010 real PNGs verified, protected captures retained. Task usage and original-task image checks each passed 48/48. GitHub access restored; later guarded-image module has 282 passing local core tests.",
   "latest_evidence": {
-    "path": "screenshots/third-party-40499117689-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40499117689"
+    "path": "screenshots/40499116931-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40499116931"
   },
   "checkpoints": [
     {
@@ -65,8 +65,8 @@
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
       "status": "in_progress",
-      "evidence": "screenshots/40489790843-1/manifest.json",
-      "scope": "Complete eight-emulator baseline a0b7e49b976aa080f768cf44f385f2cf4d070aee: 1720/1720 passed, no failures, skips or missing records. Saved-probe UI: 56/56; internal review coordinator: 32 high-API real secure-host/synthetic-source cases and 32 low-API unsupported branches. Native capture bridge is separate. Local core reports: 263/263; CI core task succeeded but cloud per-test reports were inaccessible. No physical-device, real-model, third-party-app or performance-budget acceptance; production visual tools remain disabled."
+      "evidence": "screenshots/40499116931-1/manifest.json",
+      "scope": "Complete eight-emulator baseline 5060f59793cd4a793a00d8f99d88d658fe2746d2: 1880/1880 passed; no failures, skips or missing records. Task usage 48/48, original-task image qualification 48/48 and output limits 64/64. Local core was 267 at that source; later guarded-image module passes 282 locally. Not physical-device, real-model, broad-app or performance-budget acceptance; production visual tools remain disabled."
     },
     {
       "id": "performance",

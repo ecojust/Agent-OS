@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "api": 33,
+  "testClass": "dev.agentos.app.DeviceToolsInstrumentedTest",
+  "testName": "ordinarySystemBarsDoNotPreventBackOrHome",
+  "assertionResult": "pass",
+  "testResult": "pass",
+  "status": "pass",
+  "startedAt": 1793102058108,
+  "finishedAt": 1793102061684,
+  "captures": [
+    {
+      "stage": "before-home",
+      "capturedAt": 1793102060543,
+      "foregroundPackage": "dev.agentos.fixture",
+      "status": "pass",
+      "png": "api-33-ordinarySystemBarsDoNotPreventBackOrHome-e3ff3b43-before-home-0.png",
+      "width": 320,
+      "height": 640,
+      "secureWindowTemporarilyCleared": false
+    },
+    {
+      "stage": "finished",
+      "capturedAt": 1793102061677,
+      "foregroundPackage": "com.android.launcher3",
+      "status": "blocked",
+      "captureError": "foreground_is_not_an_approved_synthetic_test_screen"
+    }
+  ]
+}

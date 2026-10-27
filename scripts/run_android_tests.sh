@@ -97,6 +97,7 @@ python3 scripts/run_bounded_instrumentation.py --matrix-label "$matrix_label" \
   --termination-grace-seconds "${ANDROID_TEST_TERMINATE_GRACE_SECONDS:-10}" \
   -- ./gradlew --no-daemon \
   -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true \
+  -Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest \
   :fixture:installDebug :app:connectedDebugAndroidTest &
 instrumentation_pid=$!
 wait "$instrumentation_pid"

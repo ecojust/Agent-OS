@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Wire the original-task typed image adapter through fixed-page checks, platform capture, exact-image review and revocable one-request transfer. APK/test APK/lint passed; two new negative device tests await execution. Screenshot permission and the UI opt-in remain closed.
+**本次更新：** Add a separate fixed-APK page-predicate workflow: five actual pages across API34–37, preserving failed/blocked/missing evidence. APK/test APK/lint and all 173 script tests passed locally; the dedicated 20-case device run is pending. Default Android tests explicitly exclude this separate class.
 
-**记录时间：** 2026-10-27T12:53:36Z
+**记录时间：** 2026-10-27T12:54:04Z
 
 [最近测试截图与清单](screenshots/40501804363-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40501804363)。通过、失败及未截图原因见清单。
 

@@ -25,11 +25,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Archive the actual diagnostic app probe: 30/32 passed, with Notes/off failures on API30 and API32 retained. Independently checked 66 files and 42 PNGs; window metadata narrows the failure stage but does not establish its cause. Native-window and walkthrough runs remain separate.
+**本次更新：** 归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。
 
-**记录时间：** 2026-10-27T14:15:51Z
+**记录时间：** 2026-10-27T14:18:55Z
 
-[最近测试截图与清单](screenshots/third-party-40516231812-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40516231812)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40518542706-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40518542706)。通过、失败及未截图原因见清单。
 
 **整体操作演示：** 正在接入真实操作录制，完成后提供小于 100 MB 的视频与对应源码记录；尚未录制的过程不以示意动画代替。
 

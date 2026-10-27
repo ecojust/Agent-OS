@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Document audited round-51 scope: service-generation cases 40/40 passed, including 16 low-API unsupported checks; retain the single API31 IME inventory failure and its positive inset evidence. Full positive visual capture and real-device acceptance remain pending.
+**本次更新：** Archive the fourth fixed-app probe unchanged: 31/32 passed, with one API30 Notes creation failure on a verified foreign focused root. All 66 payloads and 42 PNGs were independently hash-checked; 22 blocked captures remain. No real-device or general application-compatibility claim.
 
-**记录时间：** 2026-10-27T12:56:39Z
+**记录时间：** 2026-10-27T12:57:59Z
 
 [最近测试截图与清单](screenshots/40504724795-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40504724795)。通过、失败及未截图原因见清单。
 

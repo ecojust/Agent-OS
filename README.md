@@ -25,11 +25,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Use the established native emulator geometry for the actual walkthrough, retain original initialization failure evidence, and preserve first recording errors with bounded diagnostics. Android test APK build and 36 recorder/archive checks pass; new real recording pending.
+**本次更新：** Archive the second native-window diagnostic run: 6/8 passed, all four decline paths verified; two approval failures preserve original changing-geometry evidence. Independently checked 34 files/143414 bytes. Ordinary screenshot opt-in remains closed.
 
-**记录时间：** 2026-10-27T14:42:52Z
+**记录时间：** 2026-10-27T14:43:54Z
 
-[最近测试截图与清单](screenshots/40518542706-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40518542706)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40521924977-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40521924977)。通过、失败及未截图原因见清单。
 
 **整体操作演示：** 正在接入真实操作录制，完成后提供小于 100 MB 的视频与对应源码记录；尚未录制的过程不以示意动画代替。
 

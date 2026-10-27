@@ -178,8 +178,8 @@ public final class ResolveNodeAtInstrumentedTest {
     }
 
     private static AndroidDeviceTools tools(DeviceHarness device, AtomicInteger approvals) throws Exception {
-        return new AndroidDeviceTools(device.service, Collections.singleton(FIXTURE),
-                Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), true,
+        return AndroidDeviceTools.forTesting(device.service, Collections.singleton(FIXTURE),
+                Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), true, () -> true,
                 (description, control, epoch) -> { approvals.incrementAndGet(); return true; });
     }
 

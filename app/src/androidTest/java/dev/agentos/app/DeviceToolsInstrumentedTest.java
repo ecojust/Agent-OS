@@ -125,8 +125,8 @@ public final class DeviceToolsInstrumentedTest {
         try (DeviceHarness device = new DeviceHarness()) {
             device.launch("SlowActivity");
             AtomicInteger approvals = new AtomicInteger();
-            AndroidDeviceTools tools = new AndroidDeviceTools(device.service, Collections.singleton(FIXTURE),
-                    Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), true,
+            AndroidDeviceTools tools = AndroidDeviceTools.forTesting(device.service, Collections.singleton(FIXTURE),
+                    Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), true, () -> true,
                     (description, control, requestEpoch) -> { approvals.incrementAndGet(); return true; });
             ExecutorService worker = Executors.newSingleThreadExecutor();
             AtomicBoolean pauseOnRead = new AtomicBoolean();
@@ -260,8 +260,8 @@ public final class DeviceToolsInstrumentedTest {
             assertTrue(observed.getAsJsonArray("nodes").size() <= 300);
             assertTrue(observed.toString().getBytes(StandardCharsets.UTF_8).length <= 64 * 1024);
 
-            AndroidDeviceTools unscoped = new AndroidDeviceTools(device.service, Collections.emptySet(),
-                    Collections.emptyMap(), false, (description, active, requestEpoch) -> true);
+            AndroidDeviceTools unscoped = AndroidDeviceTools.forTesting(device.service, Collections.emptySet(),
+                    Collections.emptyMap(), false, () -> true, (description, active, requestEpoch) -> true);
             JsonObject result = unscoped.execute("observe", new JsonObject(), device.control);
             assertTrue(result.get("ok").getAsBoolean());
             JsonObject data = result.getAsJsonObject("data");
@@ -629,9 +629,9 @@ public final class DeviceToolsInstrumentedTest {
             assertTrue(password.get("password").getAsBoolean());
             assertEquals("Password writes: 0", actualFixtureText(device, "password_changes"));
             AtomicInteger approvals = new AtomicInteger();
-            AndroidDeviceTools tools = new AndroidDeviceTools(device.service, Collections.singleton(FIXTURE),
+            AndroidDeviceTools tools = AndroidDeviceTools.forTesting(device.service, Collections.singleton(FIXTURE),
                     Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)),
-                    true, (description, active, requestEpoch) -> { approvals.incrementAndGet(); return true; });
+                    true, () -> true, (description, active, requestEpoch) -> { approvals.incrementAndGet(); return true; });
             long dispatches = device.control.getDispatchAttempts();
             JsonObject arguments = nodeArguments(observed, "password_field");
             arguments.addProperty("text", "must-not-be-written");
@@ -670,9 +670,9 @@ public final class DeviceToolsInstrumentedTest {
 
     @Test public void screenshotUnavailableIsReportedWithoutInvokingApproval() throws Exception {
         try (DeviceHarness device = new DeviceHarness()) {
-            AndroidDeviceTools tools = new AndroidDeviceTools(device.service, Collections.singleton(FIXTURE),
+            AndroidDeviceTools tools = AndroidDeviceTools.forTesting(device.service, Collections.singleton(FIXTURE),
                     Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)),
-                    false, (description, active, requestEpoch) -> { fail("Unsupported capture must not ask for approval"); return false; });
+                    false, () -> true, (description, active, requestEpoch) -> { fail("Unsupported capture must not ask for approval"); return false; });
             JsonObject args = new JsonObject();
             args.addProperty("expectedRevision", string(device.observe(), "revision"));
             JsonObject result = tools.execute("take_screenshot", args, device.control);
@@ -703,9 +703,9 @@ public final class DeviceToolsInstrumentedTest {
         try (DeviceHarness device = new DeviceHarness()) {
             device.launch("SecondActivity");
             AtomicInteger approvals = new AtomicInteger();
-            AndroidDeviceTools tools = new AndroidDeviceTools(device.service, Collections.singleton(FIXTURE),
+            AndroidDeviceTools tools = AndroidDeviceTools.forTesting(device.service, Collections.singleton(FIXTURE),
                     Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)),
-                    true, (description, active, requestEpoch) -> { approvals.incrementAndGet(); return true; });
+                    true, () -> true, (description, active, requestEpoch) -> { approvals.incrementAndGet(); return true; });
             JsonObject before = awaitObservation(tools, device.control,
                     data -> "Second page reached".equals(string(node(data, "second_marker"), "text")));
             assertEquals("Second page reached", actualFixtureText(device, "second_marker"));

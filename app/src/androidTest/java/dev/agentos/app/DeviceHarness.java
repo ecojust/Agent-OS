@@ -78,8 +78,8 @@ final class DeviceHarness implements AutoCloseable {
                 service.showOverlay("Integration test", false, "");
             });
             instrumentation.waitForIdleSync();
-            tools = new AndroidDeviceTools(service, Collections.singleton(FIXTURE),
-                    Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(context, FIXTURE)), false,
+            tools = AndroidDeviceTools.forTesting(service, Collections.singleton(FIXTURE),
+                    Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(context, FIXTURE)), false, () -> true,
                     (description, active, requestEpoch) -> true);
             launch("FixtureActivity");
         } catch (Throwable error) {

@@ -29,6 +29,82 @@ import static org.junit.Assert.*;
 public final class ConfigurationLeaseControllerInstrumentedTest {
     @Rule public final ScreenshotEvidence screenshots = new ScreenshotEvidence();
 
+    @Test public void publishedInvalidationRejectsAPendingApprovalBeforeItsListenerRunsAndCannotApproveANewTask() throws Exception {
+        verifyPublishedInvalidation(false);
+    }
+
+    @Test public void publishedInvalidationPreventsResumeBeforeItsListenerRuns() throws Exception {
+        verifyPublishedInvalidation(true);
+    }
+
+    private void verifyPublishedInvalidation(boolean pauseBeforeSave) throws Exception {
+        try (DeviceHarness device = new DeviceHarness();
+             LocalControllerModelServer server = new LocalControllerModelServer(LocalControllerModelServer.Scenario.REJECT_CLICK);
+             ControllerTestSettings settings = new ControllerTestSettings(device.context, server);
+             PerformanceTrace.Session trace = PerformanceTrace.startDiagnostics()) {
+            AgentController controller = AgentController.get(device.context);
+            SettingsStore store = new SettingsStore(device.context);
+            SettingsStore.SavedSettings same = store.load();
+            try (HeldConfigurationInvalidation held = new HeldConfigurationInvalidation(store, settings.lease)) {
+                // Registration precedes start(), so the real controller's listener
+                // cannot run before we explicitly release this first observer.
+                start(device, controller, settings);
+                AgentController.State pending = awaitApproval(controller, server);
+                if (pauseBeforeSave) {
+                    device.instrumentation.runOnMainSync(controller::pauseResume);
+                    assertTrue(controller.getState().paused);
+                    assertTrue(controller.getState().approvalId.isEmpty());
+                }
+                int requests = server.requestCount();
+                held.start(same);
+                held.awaitPublished();
+                assertTrue("The cancellation listener must not have run yet", controller.getState().running);
+                assertEquals(pauseBeforeSave, controller.getState().paused);
+                if (!pauseBeforeSave) assertEquals(pending.approvalId, controller.getState().approvalId);
+                device.instrumentation.runOnMainSync(() -> {
+                    if (pauseBeforeSave) controller.pauseResume();
+                    else controller.approve(pending.approvalId, true);
+                });
+                held.assertHeld();
+                assertFalse(controller.getState().running);
+                assertTrue(controller.getState().approvalId.isEmpty());
+                assertEquals("配置已改变，任务已停止", controller.getState().status);
+                device.instrumentation.runOnMainSync(() -> controller.approve(pending.approvalId, true));
+                assertFalse("Old approval restarted an invalidated task", controller.getState().running);
+                assertFalse(server.receivedAnotherRequest(requests, 250));
+                assertEquals(0, server.acceptedWriteCount());
+                assertNoDeviceDispatch(trace);
+                assertEquals("Count: 0", actualCounter(device));
+                held.finish();
+                screenshots.capture(pauseBeforeSave ? "configuration-published-resume-rejected-before-listener"
+                        : "configuration-published-pending-approval-rejected-before-listener");
+                if (!pauseBeforeSave) {
+                    try (LocalControllerModelServer replacementServer = new LocalControllerModelServer(LocalControllerModelServer.Scenario.REJECT_CLICK);
+                         ControllerTestSettings replacement = new ControllerTestSettings(device.context, replacementServer)) {
+                        try {
+                            start(device, controller, replacement);
+                            AgentController.State current = awaitApproval(controller, replacementServer);
+                            assertNotEquals(pending.approvalId, current.approvalId);
+                            int replacementRequests = replacementServer.requestCount();
+                            device.instrumentation.runOnMainSync(() -> controller.approve(pending.approvalId, true));
+                            assertTrue("An old callback stopped the replacement task", controller.getState().running);
+                            assertEquals(current.approvalId, controller.getState().approvalId);
+                            assertFalse(replacementServer.receivedAnotherRequest(replacementRequests, 250));
+                            assertEquals(0, replacementServer.acceptedWriteCount());
+                            assertNoDeviceDispatch(trace);
+                            assertEquals("Count: 0", actualCounter(device));
+                            replacementServer.assertHealthy();
+                        } finally { clear(device, controller); }
+                    }
+                }
+                server.assertHealthy();
+            } catch (Exception | AssertionError failure) {
+                captureFailure(failure);
+                throw failure;
+            } finally { clear(device, controller); }
+        }
+    }
+
     @Test public void savingConfigurationInvalidatesPendingApprovalAndLateApprovalCannotWrite() throws Exception {
         try (DeviceHarness device = new DeviceHarness();
              LocalControllerModelServer server = new LocalControllerModelServer(LocalControllerModelServer.Scenario.REJECT_CLICK);

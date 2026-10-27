@@ -40,12 +40,14 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BooleanSupplier;
 
 /** A scoped Android adapter. It never treats an accepted dispatch as task completion. */
 public final class AndroidDeviceTools implements ToolHandler {
@@ -64,6 +66,7 @@ public final class AndroidDeviceTools implements ToolHandler {
     private final Map<String, SettingsStore.AppGrant> grants = new LinkedHashMap<>();
     private final String profileId;
     private final ApprovalGate approvalGate;
+    private final BooleanSupplier configurationCurrent;
     private final Handler main = new Handler(Looper.getMainLooper());
     private String lastObservedRevision;
     private long lastObservedEpoch = -1;
@@ -73,7 +76,34 @@ public final class AndroidDeviceTools implements ToolHandler {
 
     public AndroidDeviceTools(AgentAccessibilityService service, Set<String> packages,
                               Map<String, SettingsStore.AppGrant> approvedGrants,
-                              boolean confirmEachAction, ApprovalGate gate) throws IOException {
+                              boolean confirmEachAction, SettingsStore.ConfigurationLease configurationLease,
+                              ApprovalGate gate) throws IOException {
+        this(service, packages, approvedGrants, confirmEachAction,
+                boundConfiguration(service, configurationLease), gate);
+    }
+
+    /** Dedicated fixture entry point; every test must supply its configuration guard explicitly. */
+    static AndroidDeviceTools forTesting(AgentAccessibilityService service, Set<String> packages,
+                                        Map<String, SettingsStore.AppGrant> approvedGrants,
+                                        boolean confirmEachAction, BooleanSupplier configurationCurrent,
+                                        ApprovalGate gate) throws IOException {
+        return new AndroidDeviceTools(service, packages, approvedGrants, confirmEachAction,
+                Objects.requireNonNull(configurationCurrent), gate);
+    }
+
+    private static BooleanSupplier boundConfiguration(AgentAccessibilityService service,
+                                                       SettingsStore.ConfigurationLease lease) throws IOException {
+        if (service == null || lease == null || !SettingsStore.isCurrent(lease)
+                || !lease.profileId.equals(SettingsStore.currentProfileId(service))) {
+            throw new IOException("配置许可不可用，请重新保存配置后启动任务");
+        }
+        return () -> SettingsStore.isCurrent(lease);
+    }
+
+    private AndroidDeviceTools(AgentAccessibilityService service, Set<String> packages,
+                               Map<String, SettingsStore.AppGrant> approvedGrants,
+                               boolean confirmEachAction, BooleanSupplier configurationCurrent,
+                               ApprovalGate gate) throws IOException {
         if (service == null) throw new IllegalArgumentException("请先开启 Agent 无障碍服务");
         this.service = service;
         SettingsStore.requirePersonalProfile(service);
@@ -86,6 +116,7 @@ public final class AndroidDeviceTools implements ToolHandler {
             grants.put(name, grant);
         }
         approvalGate = gate;
+        this.configurationCurrent = Objects.requireNonNull(configurationCurrent);
         service.watchPackages(allowedPackages);
     }
 
@@ -122,7 +153,7 @@ public final class AndroidDeviceTools implements ToolHandler {
     @Override public JsonObject execute(String name, JsonObject arguments, RunControl control,
                                         long requestEpoch) throws Exception {
         long epoch = requestEpoch;
-        control.checkExecutionEpoch(epoch);
+        requireCurrentConfiguration(control, epoch);
         if (Looper.myLooper() == Looper.getMainLooper()) throw new IllegalStateException("设备工具必须在工作线程调用");
         JsonObject args = arguments == null ? new JsonObject() : arguments.deepCopy();
         Dispatch dispatch = new Dispatch();
@@ -139,16 +170,21 @@ public final class AndroidDeviceTools implements ToolHandler {
             ToolCatalog.validate(name, args);
             if (denied && ToolCatalog.isMutation(name)) return error("PERMISSION_DENIED", "本次任务已有被拒绝的动作，不能改用其他工具继续写操作", "结束任务，由用户修改目标后重新发起");
             onMain(() -> { requireReady(control, epoch); return null; }, control, epoch, dispatch);
+            JsonObject result;
             switch (name) {
-                case "list_apps": return listApps();
-                case "observe": return observation(control, epoch);
-                case "resolve_node_at": return resolveNodeAt(args, control, epoch);
-                case "wait": return waitForScreen(args, control, epoch);
-                case "launch_app": return launch(args, control, epoch, dispatch);
+                case "list_apps": result = listApps(); break;
+                case "observe": result = observation(control, epoch); break;
+                case "resolve_node_at": result = resolveNodeAt(args, control, epoch); break;
+                case "wait": result = waitForScreen(args, control, epoch); break;
+                case "launch_app": result = launch(args, control, epoch, dispatch); break;
                 case "click": case "type_text": case "scroll":
-                case "back": case "home": return mutate(name, args, control, epoch, dispatch);
+                case "back": case "home": result = mutate(name, args, control, epoch, dispatch); break;
                 default: return error("CAPABILITY_UNAVAILABLE", "未提供该设备工具", "使用已报告的工具能力");
             }
+            // An invalidated configuration cannot publish a completed read while its
+            // cancellation listener is still waiting to run on another thread.
+            requireCurrentConfiguration(control, epoch);
+            return result;
         } catch (InterruptedException stopped) {
             throw stopped;
         } catch (IllegalArgumentException invalid) {
@@ -199,7 +235,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         // A screen lock, permission loss or stop while the remote tree was queried
         // invalidates the completed snapshot before any content reaches the model.
         onMain(() -> { requireReady(control, epoch); return null; }, control, epoch, new Dispatch());
-        control.checkExecutionEpoch(epoch);
+        requireCurrentConfiguration(control, epoch);
         lastObservedRevision = result.getAsJsonObject("data").get("revision").getAsString();
         lastObservedEpoch = epoch;
         lastObservedBlockers = blockers;
@@ -278,7 +314,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         if (!state.obscured.isEmpty()) flags.add(CoordinateNodeResolver.ObservationFlag.UNKNOWN_OCCLUSION);
         List<CoordinateNodeResolver.Node> nodes = new ArrayList<>();
         for (Map.Entry<String, AccessibilityNodeInfo> entry : state.nodes.entrySet()) {
-            state.control.checkExecutionEpoch(state.epoch);
+            requireCurrentConfiguration(state.control, state.epoch);
             AccessibilityNodeInfo node = entry.getValue();
             Rect box = new Rect(); node.getBoundsInScreen(box);
             EnumSet<CoordinateNodeResolver.NodeFlag> properties = EnumSet.noneOf(CoordinateNodeResolver.NodeFlag.class);
@@ -332,7 +368,7 @@ public final class AndroidDeviceTools implements ToolHandler {
     private JsonObject waitForScreen(JsonObject args, RunControl control, long epoch) throws Exception {
         long end = SystemClock.elapsedRealtime() + integer(args, "milliseconds", 500);
         while (SystemClock.elapsedRealtime() < end) {
-            control.checkExecutionEpoch(epoch);
+            requireCurrentConfiguration(control, epoch);
             Thread.sleep(Math.min(40, Math.max(1, end - SystemClock.elapsedRealtime())));
         }
         return observation(control, epoch);
@@ -359,13 +395,14 @@ public final class AndroidDeviceTools implements ToolHandler {
             finalGuard(control, epoch, controls);
             try (RunControl.DispatchTicket ticket = control.beginDispatch(epoch)) {
                 ticket.checkExecutionEpoch();
+                requireCurrentConfiguration(control, epoch);
                 if (!service.isControlLeaseCurrent(controls)) throw stale();
                 PerformanceTrace.mark(PerformanceTrace.Stage.DEVICE_DISPATCH_ATTEMPT, epoch, control.getDispatchAttempts());
                 dispatch.started = true;
                 service.startActivity(intent);
             }
         }
-        control.checkExecutionEpoch(epoch);
+        requireCurrentConfiguration(control, epoch);
         return accepted("已向系统请求打开应用；必须重新 observe 确认实际前台应用");
     }
 
@@ -379,7 +416,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         // an ordinary stale result before the target guard is reached.
         ObservedBlockers blockers = lastObservedBlockers;
         if (blockers != null && blockers.rejects(name, args, revision, control, epoch)) {
-            control.checkExecutionEpoch(epoch);
+            requireCurrentConfiguration(control, epoch);
             pauseForInterruption("所引用观察中的目标被其他窗口遮挡，请由用户检查后继续", control, epoch);
         }
         Prepared prepared;
@@ -393,7 +430,7 @@ public final class AndroidDeviceTools implements ToolHandler {
                 target.requireAccessible(control, epoch);
                 return null;
             }, control, epoch, dispatch);
-            control.checkExecutionEpoch(epoch);
+            requireCurrentConfiguration(control, epoch);
             prepared = new Prepared(state.packageName, description(name, args, state));
         }
         validateInstalledGrant(prepared.packageName);
@@ -413,6 +450,7 @@ public final class AndroidDeviceTools implements ToolHandler {
             // finish. Recheck observed cancellation immediately before entering it.
             try (RunControl.DispatchTicket ticket = control.beginDispatch(epoch)) {
                 ticket.checkExecutionEpoch();
+                requireCurrentConfiguration(control, epoch);
                 if (!service.isControlLeaseCurrent(controls)) throw stale();
                 PerformanceTrace.mark(PerformanceTrace.Stage.DEVICE_DISPATCH_ATTEMPT, epoch, control.getDispatchAttempts());
                 dispatch.started = true;
@@ -424,7 +462,7 @@ public final class AndroidDeviceTools implements ToolHandler {
             result.addProperty("submitted", true); result.addProperty("dispatchSubmitted", true);
             result.addProperty("accepted", false); return result;
         }
-        control.checkExecutionEpoch(epoch);
+        requireCurrentConfiguration(control, epoch);
         return accepted("系统已接受动作；必须重新 observe 验证目标，不能据此认定任务完成");
     }
 
@@ -454,7 +492,7 @@ public final class AndroidDeviceTools implements ToolHandler {
     }
 
     private void approve(String description, RunControl control, long epoch) throws Exception {
-        control.checkExecutionEpoch(epoch);
+        requireCurrentConfiguration(control, epoch);
         // M1 cannot establish consequences for arbitrary third-party controls. Keep a human
         // gate on generic UI writes even when the preference permits proven ordinary tools.
         if (approvalGate == null || !approvalGate.approve(description, control, epoch)) {
@@ -462,7 +500,7 @@ public final class AndroidDeviceTools implements ToolHandler {
             throw new DeviceException("USER_DENIED", "用户拒绝了此动作，本次任务不再执行写操作", "结束任务，由用户修改目标后重新发起");
         }
         // A pause and resume invalidates this request, even if the old confirmation returns true.
-        control.checkExecutionEpoch(epoch);
+        requireCurrentConfiguration(control, epoch);
         // Approval publication hides its views asynchronously. Wait for the real compact
         // layout before re-observing and checking target overlap, otherwise old expanded
         // bounds can reject a target that is now clear. Final scope/revision checks remain.
@@ -519,7 +557,7 @@ public final class AndroidDeviceTools implements ToolHandler {
 
         void requireAccessible(RunControl control, long epoch) throws Exception {
             if (Looper.myLooper() != Looper.getMainLooper()) throw new IllegalStateException("Control geometry requires the main thread");
-            control.checkExecutionEpoch(epoch);
+            requireCurrentConfiguration(control, epoch);
             if (obscured) pauseForInterruption(interruption, control, epoch);
             if (protectsControl && Rect.intersects(bounds, service.controlBounds())) {
                 throw unavailable("目标被任务控制条遮挡，请先拖动控制条再重新观察");
@@ -527,7 +565,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         }
 
         void requireAccessible(RunControl control, long epoch, AgentAccessibilityService.ControlLease controls) throws Exception {
-            control.checkExecutionEpoch(epoch);
+            requireCurrentConfiguration(control, epoch);
             if (!service.isControlLeaseCurrent(controls)) throw stale();
             if (obscured) pauseForInterruption(interruption, control, epoch);
             if (protectsControl && controls.intersects(bounds)) {
@@ -573,8 +611,18 @@ public final class AndroidDeviceTools implements ToolHandler {
         throw unavailable("当前观察中没有可滚动节点");
     }
 
-    private void requireReady(RunControl control, long epoch) throws Exception {
+    private void requireCurrentConfiguration(RunControl control, long epoch) throws InterruptedException {
         control.checkExecutionEpoch(epoch);
+        // This is a volatile in-memory lease check, not a disk read or a controller
+        // callback. Publishing invalidation must suffice before listeners execute.
+        if (!configurationCurrent.getAsBoolean()) {
+            control.cancel();
+            control.checkCancelled();
+        }
+    }
+
+    private void requireReady(RunControl control, long epoch) throws Exception {
+        requireCurrentConfiguration(control, epoch);
         boolean personal;
         try { SettingsStore.requirePersonalProfile(service); personal = true; } catch (IllegalStateException wrongProfile) { personal = false; }
         if (!personal || !profileId.equals(SettingsStore.currentProfileId(service)) || !profileId.equals(control.getProfileId())) {
@@ -587,7 +635,7 @@ public final class AndroidDeviceTools implements ToolHandler {
     private void finalGuard(RunControl control, long epoch, AgentAccessibilityService.ControlLease controls) throws Exception {
         // All system queries here are worker-side. The immutable lease is the only
         // control geometry crossing threads; never inspect an Android View here.
-        control.checkExecutionEpoch(epoch);
+        requireCurrentConfiguration(control, epoch);
         try { SettingsStore.requirePersonalProfile(service); }
         catch (IllegalStateException wrongProfile) { control.cancel(); control.checkCancelled(); }
         if (!profileId.equals(SettingsStore.currentProfileId(service)) || !profileId.equals(control.getProfileId())
@@ -595,7 +643,7 @@ public final class AndroidDeviceTools implements ToolHandler {
             control.cancel(); control.checkCancelled();
         }
         if (!service.isControlLeaseCurrent(controls)) throw stale();
-        control.checkExecutionEpoch(epoch);
+        requireCurrentConfiguration(control, epoch);
     }
 
     private void validateInstalledGrant(String packageName) throws DeviceException {
@@ -624,12 +672,12 @@ public final class AndroidDeviceTools implements ToolHandler {
     }
 
     private Snapshot buildSnapshot(RunControl control, long epoch) throws Exception {
-        control.checkExecutionEpoch(epoch);
+        requireCurrentConfiguration(control, epoch);
         AccessibilityNodeInfo root = focusedRoot(control, epoch);
         Snapshot state = new Snapshot(control, epoch);
         state.owned.add(root);
         try {
-            control.checkExecutionEpoch(epoch);
+            requireCurrentConfiguration(control, epoch);
             state.packageName = root.getPackageName() == null ? "" : root.getPackageName().toString();
             state.scoped = allowedPackages.contains(state.packageName) && !state.packageName.equals(service.getPackageName());
             root.getBoundsInScreen(state.bounds);
@@ -645,7 +693,7 @@ public final class AndroidDeviceTools implements ToolHandler {
             state.revision = digest(structural);
             state.snapshotJsonBytes = state.json().toString().getBytes(StandardCharsets.UTF_8).length;
             if (state.snapshotJsonBytes + 30 > MAX_BYTES) throw unavailable("界面快照超过字节预算");
-            control.checkExecutionEpoch(epoch);
+            requireCurrentConfiguration(control, epoch);
             return state;
         } catch (Exception failure) { state.close(); throw failure; }
     }
@@ -658,7 +706,7 @@ public final class AndroidDeviceTools implements ToolHandler {
             AccessibilityNodeInfo root = focused.getRoot();
             if (root == null) throw stale();
             try {
-                control.checkExecutionEpoch(epoch);
+                requireCurrentConfiguration(control, epoch);
                 if (root.getWindowId() != focused.getId()) throw stale();
                 return root;
             } catch (Exception failure) { recycle(root); throw failure; }
@@ -666,7 +714,7 @@ public final class AndroidDeviceTools implements ToolHandler {
     }
 
     private List<AccessibilityWindowInfo> freshWindows(RunControl control, long epoch) throws Exception {
-        control.checkExecutionEpoch(epoch);
+        requireCurrentConfiguration(control, epoch);
         // Cache invalidation events can lag a completed navigation or IME transition.
         // Query a fresh window list at every authoritative read, including the last
         // write guard. Keep prefetching enabled within each individual tree read.
@@ -680,10 +728,10 @@ public final class AndroidDeviceTools implements ToolHandler {
             if (current == null) throw unavailable("无障碍服务配置暂不可用");
             service.setServiceInfo(current);
         }
-        control.checkExecutionEpoch(epoch);
+        requireCurrentConfiguration(control, epoch);
         List<AccessibilityWindowInfo> windows = service.getWindows();
         try {
-            control.checkExecutionEpoch(epoch);
+            requireCurrentConfiguration(control, epoch);
             return windows;
         } catch (Exception interrupted) {
             if (windows != null) recycleWindows(windows);
@@ -691,12 +739,12 @@ public final class AndroidDeviceTools implements ToolHandler {
         }
     }
 
-    private static AccessibilityWindowInfo uniqueFocusedWindow(List<AccessibilityWindowInfo> windows,
+    private AccessibilityWindowInfo uniqueFocusedWindow(List<AccessibilityWindowInfo> windows,
                                                                  RunControl control, long epoch) throws Exception {
         if (windows == null || windows.isEmpty() || windows.size() > 40) throw stale();
         AccessibilityWindowInfo focused = null;
         for (AccessibilityWindowInfo window : windows) {
-            control.checkExecutionEpoch(epoch);
+            requireCurrentConfiguration(control, epoch);
             if (window.getDisplayId() != Display.DEFAULT_DISPLAY || !window.isFocused()) continue;
             if (focused != null) throw stale();
             focused = window;
@@ -727,7 +775,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         Snapshot(RunControl control, long epoch) { this.control = control; this.epoch = epoch; }
 
         void inspectWindows() throws Exception {
-            control.checkExecutionEpoch(epoch);
+            requireCurrentConfiguration(control, epoch);
             List<AccessibilityWindowInfo> windows = freshWindows(control, epoch);
             try {
                 AccessibilityWindowInfo active = uniqueFocusedWindow(windows, control, epoch);
@@ -754,7 +802,7 @@ public final class AndroidDeviceTools implements ToolHandler {
                 signature.append(":safe=").append(safeContent.toShortString());
                 signature.append(':').append(wm.getDefaultDisplay().getRotation());
                 for (AccessibilityWindowInfo window : windows) {
-                    control.checkExecutionEpoch(epoch);
+                    requireCurrentConfiguration(control, epoch);
                     if (window.getId() == windowId || window.getLayer() <= active.getLayer()) continue;
                     Rect other = new Rect(); window.getBoundsInScreen(other);
                     if (!Rect.intersects(bounds, other)) continue;
@@ -801,7 +849,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         }
 
         void visit(AccessibilityNodeInfo node, String id, int depth) throws InterruptedException {
-            control.checkExecutionEpoch(epoch);
+            requireCurrentConfiguration(control, epoch);
             if (owned.size() > MAX_NODES || depth > 30 || SystemClock.elapsedRealtime() - started > 160) { truncated = true; return; }
             boolean secret = sensitive(node);
             if (secret) password = true;
@@ -835,7 +883,7 @@ public final class AndroidDeviceTools implements ToolHandler {
             // A sensitive container can expose values through its descendants; omit the subtree.
             if (secret) return;
             for (int index = 0; index < node.getChildCount(); index++) {
-                control.checkExecutionEpoch(epoch);
+                requireCurrentConfiguration(control, epoch);
                 if (owned.size() >= MAX_NODES || byteCount > MAX_BYTES - 1800 || SystemClock.elapsedRealtime() - started > 160) { truncated = true; break; }
                 AccessibilityNodeInfo child = node.getChild(index);
                 if (child != null) { owned.add(child); visit(child, id + "." + index, depth + 1); }
@@ -909,11 +957,11 @@ public final class AndroidDeviceTools implements ToolHandler {
     }
 
     private void pauseForInterruption(String message, RunControl control, long epoch) throws Exception {
-        control.pause(); service.notifyDevicePaused(message); control.checkExecutionEpoch(epoch);
+        control.pause(); service.notifyDevicePaused(message); requireCurrentConfiguration(control, epoch);
     }
 
     private <T> T onMain(Callable<T> action, RunControl control, long epoch, Dispatch dispatch) throws Exception {
-        control.checkExecutionEpoch(epoch);
+        requireCurrentConfiguration(control, epoch);
         CompletableFuture<T> result = new CompletableFuture<>();
         PerformanceTrace.Span queuedTiming = PerformanceTrace.begin(PerformanceTrace.Stage.MAIN_QUEUE);
         Runnable queued = () -> {
@@ -929,10 +977,10 @@ public final class AndroidDeviceTools implements ToolHandler {
         finally { result.cancel(false); main.removeCallbacks(queued); }
     }
 
-    private static <T> T await(CompletableFuture<T> future, RunControl control, long epoch, long timeout) throws Exception {
+    private <T> T await(CompletableFuture<T> future, RunControl control, long epoch, long timeout) throws Exception {
         long deadline = SystemClock.elapsedRealtime() + timeout;
         while (true) {
-            control.checkExecutionEpoch(epoch);
+            requireCurrentConfiguration(control, epoch);
             long left = deadline - SystemClock.elapsedRealtime();
             if (left <= 0) throw new DeviceException("TIMEOUT", "设备未在规定时间内返回结果", "先观察或交由用户核对；写操作不能自动重试");
             try { return future.get(Math.min(40, left), TimeUnit.MILLISECONDS); }

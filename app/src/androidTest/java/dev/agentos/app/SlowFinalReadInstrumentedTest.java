@@ -49,6 +49,66 @@ public final class SlowFinalReadInstrumentedTest {
         verifyInterruptedFinalRead(true);
     }
 
+    @Test public void publishedConfigurationInvalidationRejectsAnApprovedFinalReadBeforeItsCancelListenerRuns() throws Exception {
+        try (DeviceHarness device = new DeviceHarness();
+             LocalControllerModelServer server = new LocalControllerModelServer(LocalControllerModelServer.Scenario.REJECT_CLICK);
+             ControllerTestSettings settings = new ControllerTestSettings(device.context, server);
+             PerformanceTrace.Session trace = PerformanceTrace.startDiagnostics()) {
+            device.launch("SlowActivity");
+            SettingsStore store = new SettingsStore(device.context);
+            SettingsStore.SavedSettings same = store.load();
+            JsonObject arguments = nodeArguments(device.observe(), "increment");
+            long epoch = device.control.getExecutionEpoch();
+            AtomicInteger approvals = new AtomicInteger(), cancellationNotifications = new AtomicInteger();
+            try (HeldConfigurationInvalidation held = new HeldConfigurationInvalidation(store, settings.lease);
+                 SettingsStore.Registration cancellation = settings.lease.watch(() -> {
+                     cancellationNotifications.incrementAndGet(); device.control.cancel();
+                 });
+                 FinalReadProbe probe = new FinalReadProbe(device, () -> held.start(same))) {
+                AndroidDeviceTools tools = new AndroidDeviceTools(device.service, Collections.singleton(FIXTURE),
+                        Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), true, settings.lease,
+                        (description, control, requestEpoch) -> {
+                            assertEquals(epoch, requestEpoch);
+                            assertEquals(1, approvals.incrementAndGet());
+                            assertFalse(probe.call("arm").getBoolean("claimed"));
+                            return true;
+                        });
+                probe.operation = new FutureTask<>(() -> tools.execute("click", arguments, device.control, epoch));
+                probe.worker.execute(probe.operation);
+                assertTrue("The actual final root read never reached the barrier", probe.heartbeat.await(2, TimeUnit.SECONDS));
+                held.awaitPublished();
+                assertTrue(probe.mainThread.get());
+                assertTrue(probe.inFlight.get());
+                assertEquals(0, cancellationNotifications.get());
+                assertFalse("Cancellation must still be waiting behind the first observer", device.control.isCancelled());
+                Bundle blocked = probe.call("status");
+                assertTrue(blocked.getBoolean("claimed"));
+                assertFalse(blocked.getBoolean("returned"));
+                assertFalse(blocked.getBoolean("released"));
+                assertFalse(blocked.getBoolean("expired"));
+                Bundle completed = probe.call("finish");
+                assertTrue(completed.getBoolean("returned"));
+                assertFalse(completed.getBoolean("expired"));
+                assertInterrupted(probe.operation, "TASK_STOPPED");
+                held.assertHeld();
+                assertEquals("The final read must reject before cancellation notification", 0, cancellationNotifications.get());
+                assertTrue(device.control.isCancelled());
+                assertEquals(1, approvals.get());
+                assertEquals(0, device.control.getDispatchAttempts());
+                assertFinalSnapshotWasExercised(trace, completed.getLong("startedNanos"), epoch);
+                assertEquals("Count: 0", actualCounter(device));
+                assertEquals(0, trace.overwrittenCount());
+                for (PerformanceTrace.Event event : trace.events()) {
+                    assertNotEquals(PerformanceTrace.Stage.DEVICE_DISPATCH_ATTEMPT, event.stage);
+                }
+                held.finish();
+                assertEquals(1, cancellationNotifications.get());
+                assertEquals(0, server.requestCount());
+                screenshots.capture("configuration-invalid-before-cancel-notification-final-read-rejected");
+            }
+        }
+    }
+
     @Test public void invalidatingOnlyTheControlLeaseDuringFinalReadRejectsAnOtherwiseUnchangedPlan() throws Exception {
         try (DeviceHarness device = new DeviceHarness();
              PerformanceTrace.Session trace = PerformanceTrace.startDiagnostics()) {
@@ -68,8 +128,8 @@ public final class SlowFinalReadInstrumentedTest {
             long dispatches = device.control.getDispatchAttempts();
             AtomicInteger approvals = new AtomicInteger();
             try (FinalReadProbe probe = new FinalReadProbe(device, () -> device.service.setOverlayCallbacks(null))) {
-                AndroidDeviceTools tools = new AndroidDeviceTools(device.service, Collections.singleton(FIXTURE),
-                        Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), true,
+                AndroidDeviceTools tools = AndroidDeviceTools.forTesting(device.service, Collections.singleton(FIXTURE),
+                        Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), true, () -> true,
                         (description, control, requestEpoch) -> {
                             assertEquals(epoch, requestEpoch);
                             assertEquals(1, approvals.incrementAndGet());
@@ -145,8 +205,8 @@ public final class SlowFinalReadInstrumentedTest {
             long dispatches = device.control.getDispatchAttempts();
             AtomicInteger approvals = new AtomicInteger();
             try (FinalReadProbe probe = new FinalReadProbe(device, stop)) {
-                AndroidDeviceTools tools = new AndroidDeviceTools(device.service, Collections.singleton(FIXTURE),
-                        Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), true,
+                AndroidDeviceTools tools = AndroidDeviceTools.forTesting(device.service, Collections.singleton(FIXTURE),
+                        Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), true, () -> true,
                         (description, control, requestEpoch) -> {
                             assertEquals(epoch, requestEpoch);
                             assertEquals(1, approvals.incrementAndGet());

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T01:17:44Z",
-  "note": "新增独立连续导航确认策略及八项回归，完整核心154/154通过；仅显式白名单导航可豁免确认，Android模式配置与接线仍在实现。",
+  "updated_at": "2026-10-27T01:23:00Z",
+  "note": "修复配置失效通知前的执行竞争窗口：生产设备工具直接复核配置许可；新增四项真实配置/控制器回归已编译，主程序与lint通过，设备矩阵待运行。",
   "latest_evidence": {
     "path": "screenshots/40404297768-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40404297768"
@@ -62,7 +62,7 @@
     {
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
-      "status": "complete",
+      "status": "in_progress",
       "evidence": "screenshots/40404297768-1/manifest.json",
       "scope": "Eight x86_64 emulator API baselines with system animations at 1.0 and synthetic fixtures; not physical-device, third-party-app or performance acceptance."
     },

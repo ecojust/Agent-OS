@@ -180,7 +180,7 @@ public final class AgentController {
                 }
                 active.checkCancelled();
                 AndroidDeviceTools tools = new AndroidDeviceTools(service, scope, saved.grants,
-                        confirmEachAction, (description, run, epoch) -> requestApproval(session, description, run, epoch, configurationLease));
+                        confirmEachAction, configurationLease, (description, run, epoch) -> requestApproval(session, description, run, epoch, configurationLease));
                 AgentRunner runner = new AgentRunner(settings, tools, new AgentRunner.Listener() {
                     @Override public void onStatus(String next) {
                         synchronized (lock) {

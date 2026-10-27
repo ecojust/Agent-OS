@@ -52,8 +52,8 @@ public final class InFlightDeviceActionInstrumentedTest {
             assertEquals(0, device.control.getDispatchAttempts());
             AtomicInteger approvals = new AtomicInteger();
             try (ActionProbe probe = new ActionProbe(device)) {
-                AndroidDeviceTools tools = new AndroidDeviceTools(device.service, Collections.singleton(FIXTURE),
-                        Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), true,
+                AndroidDeviceTools tools = AndroidDeviceTools.forTesting(device.service, Collections.singleton(FIXTURE),
+                        Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), true, () -> true,
                         (description, control, requestEpoch) -> {
                             assertEquals(epoch, requestEpoch);
                             assertEquals(1, approvals.incrementAndGet());
@@ -87,8 +87,8 @@ public final class InFlightDeviceActionInstrumentedTest {
                 // A new adapter/task must not bypass the service's cross-task gate.
                 // Its construction watches the same package but never replaces controls.
                 RunControl replacement = new RunControl(SettingsStore.currentProfileId(device.context));
-                AndroidDeviceTools nextTools = new AndroidDeviceTools(device.service, Collections.singleton(FIXTURE),
-                        Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), true,
+                AndroidDeviceTools nextTools = AndroidDeviceTools.forTesting(device.service, Collections.singleton(FIXTURE),
+                        Collections.singletonMap(FIXTURE, SettingsStore.captureGrant(device.context, FIXTURE)), true, () -> true,
                         (description, control, requestEpoch) -> { fail("A busy read must not request approval"); return false; });
                 JsonObject busy = nextTools.execute("observe", new JsonObject(), replacement, replacement.getExecutionEpoch());
                 assertFalse(busy.toString(), busy.get("ok").getAsBoolean());

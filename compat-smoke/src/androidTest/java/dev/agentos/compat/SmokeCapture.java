@@ -24,9 +24,11 @@ final class SmokeCapture {
         JSONObject item = new JSONObject().put("stage", stage).put("capturedAt", System.currentTimeMillis())
                 .put("secureFlagsCleared", false);
         Bitmap bitmap = null;
+        JSONArray imeObservations = new JSONArray();
+        if (harness.target == SmokeHarness.NOTES_TARGET) item.put("inputMethodObservations", imeObservations);
         try {
             harness.verifyTargetIdentity();
-            String hiddenIme = awaitHiddenNotesInputMethod(harness);
+            String hiddenIme = awaitHiddenNotesInputMethod(harness, imeObservations);
             try (SmokeHarness.WindowSnapshot before = harness.appWindow(false)) {
                 SmokeHarness.require(before.bounds.width() <= 4096 && before.bounds.height() <= 4096,
                         "Unexpected screenshot geometry");
@@ -60,7 +62,7 @@ final class SmokeCapture {
                         return;
                     }
                     harness.verifyTargetIdentity();
-                    if (hiddenIme != null && !hiddenIme.equals(hiddenNotesInputMethod(harness))) {
+                    if (hiddenIme != null && !hiddenIme.equals(hiddenNotesInputMethod(harness, imeObservations, "after_capture", 1, SystemClock.elapsedRealtime()))) {
                         item.put("status", "blocked").put("reason", "input_method_changed_during_capture");
                         return;
                     }
@@ -99,9 +101,10 @@ final class SmokeCapture {
         }
     }
 
-    private static String awaitHiddenNotesInputMethod(SmokeHarness harness) throws Exception {
+    private static String awaitHiddenNotesInputMethod(SmokeHarness harness, JSONArray observations) throws Exception {
         if (harness.target != SmokeHarness.NOTES_TARGET) return null;
-        long deadline = SystemClock.elapsedRealtime() + 5_000;
+        long started = SystemClock.elapsedRealtime();
+        long deadline = started + 5_000;
         String stable = null, last = "input_method_hidden_state_unverified";
         // Read-only, at most four bounded dumps; never press BACK from capture.
         // WMS state is not a SurfaceFlinger presentation fence. Two separated
@@ -109,7 +112,7 @@ final class SmokeCapture {
         // eliminate, a new surface appearing between observations.
         for (int attempt = 0; attempt < 4 && SystemClock.elapsedRealtime() < deadline; attempt++) {
             try {
-                String current = hiddenNotesInputMethod(harness);
+                String current = hiddenNotesInputMethod(harness, observations, "before_capture", attempt + 1, started);
                 if (SystemClock.elapsedRealtime() >= deadline)
                     throw new CaptureRefused("input_method_hidden_state_timed_out");
                 if (current.equals(stable)) return current;
@@ -123,37 +126,66 @@ final class SmokeCapture {
         throw new CaptureRefused(last);
     }
 
-    private static String hiddenNotesInputMethod(SmokeHarness harness) throws Exception {
-        ServiceInfo ime = harness.configuredSystemInputMethod();
-        if (ime == null) throw new CaptureRefused("configured_system_input_method_unverified");
-        String identity = inspectedHiddenInputMethod(harness.shell("dumpsys -t 2 window -a windows"),
-                ime.applicationInfo.uid, ime.packageName);
-        return identity + "/" + ime.name;
+    private static String hiddenNotesInputMethod(SmokeHarness harness, JSONArray observations,
+            String phase, int attempt, long started) throws Exception {
+        if (observations.length() >= 5) throw new CaptureRefused("input_method_diagnostic_limit");
+        JSONObject diagnostic = new JSONObject().put("phase", phase).put("attempt", attempt).put("status", "unverified");
+        try {
+            ServiceInfo ime = harness.configuredSystemInputMethod();
+            if (ime == null) throw new CaptureRefused("configured_system_input_method_unverified");
+            String identity = inspectedHiddenInputMethod(harness.shell("dumpsys -t 2 window -a windows"),
+                    ime.applicationInfo.uid, ime.packageName, diagnostic);
+            diagnostic.put("status", "predicates_satisfied");
+            return identity + "/" + ime.name;
+        } catch (CaptureRefused refusal) {
+            diagnostic.put("status", "blocked").put("reason", refusal.getMessage());
+            throw refusal;
+        } finally {
+            diagnostic.put("elapsedMillis", Math.max(0, SystemClock.elapsedRealtime() - started));
+            observations.put(diagnostic);
+        }
     }
 
     /** Narrow Notes evidence check, not a general window parser or an action permission. */
-    private static String inspectedHiddenInputMethod(String dump, int ownerUid, String packageName) throws CaptureRefused {
+    private static String inspectedHiddenInputMethod(String dump, int ownerUid, String packageName) throws Exception {
+        return inspectedHiddenInputMethod(dump, ownerUid, packageName, new JSONObject());
+    }
+
+    private static String inspectedHiddenInputMethod(String dump, int ownerUid, String packageName,
+            JSONObject diagnostic) throws Exception {
+        diagnostic.put("parseStage", "dump_header");
         if (!dump.startsWith("WINDOW MANAGER WINDOWS")) throw new CaptureRefused("input_method_window_dump_unavailable");
         Matcher selected = Pattern.compile("(?m)^[\\t ]*mInputMethodWindow=Window\\{([0-9a-fA-F]+)\\s+u0\\s+[^}]+\\}").matcher(dump);
         if (!selected.find()) throw new CaptureRefused("input_method_window_reference_unavailable");
         String token = selected.group(1);
+        diagnostic.put("parseStage", "window_reference").put("selectedToken", token.substring(0, Math.min(32, token.length())));
         if (selected.find()) throw new CaptureRefused("input_method_window_reference_ambiguous");
         String[] records = dump.split("(?m)(?=^[\\t ]*Window #[0-9]+ )");
         String matched = null;
-        int inputMethods = 0;
+        int inputMethods = 0, recordIndex = 0, matchedIndex = -1;
         for (String record : records) {
+            int index = recordIndex++;
             if (!record.trim().startsWith("Window #")) continue;
             if (!Pattern.compile("\\bty=(?:INPUT_METHOD|2011)\\b").matcher(record).find()) continue;
             inputMethods++;
             if (Pattern.compile("^[\\t ]*Window #[0-9]+ Window\\{" + Pattern.quote(token)
-                    + "\\s+u0\\s+[^}]+\\}:").matcher(record).find()) matched = record;
+                    + "\\s+u0\\s+[^}]+\\}:").matcher(record).find()) { matched = record; matchedIndex = index; }
         }
+        diagnostic.put("parseStage", "window_record").put("inputMethodRecordCount", inputMethods)
+                .put("recordIndex", matchedIndex).put("recordEnd", matchedIndex == records.length - 1 ? "dump_end" : "next_window");
         if (inputMethods != 1 || matched == null) throw new CaptureRefused("input_method_window_record_missing_or_ambiguous");
-        if (!oneField(matched, "mOwnerUid", Integer.toString(ownerUid))
-                || !oneField(matched, "mDisplayId", "0")
-                || !Pattern.compile("(?m)^[\\t ]*mOwnerUid=" + ownerUid
-                        + "[\\t ]+[^\\r\\n]*\\bpackage=" + Pattern.quote(packageName) + "(?:[\\t ]|$)").matcher(matched).find())
-            throw new CaptureRefused("input_method_window_identity_mismatch");
+        boolean ownerMatches = oneField(matched, "mOwnerUid", Integer.toString(ownerUid));
+        boolean displayMatches = oneField(matched, "mDisplayId", "0");
+        boolean packageMatches = Pattern.compile("(?m)^[\\t ]*mOwnerUid=" + ownerUid
+                        + "[\\t ]+[^\\r\\n]*\\bpackage=" + Pattern.quote(packageName) + "(?:[\\t ]|$)").matcher(matched).find();
+        diagnostic.put("parseStage", "identity").put("ownerUid", ownerUid)
+                .put("ownerMatches", ownerMatches).put("displayMatches", displayMatches).put("packageMatches", packageMatches);
+        if (!ownerMatches || !displayMatches || !packageMatches) throw new CaptureRefused("input_method_window_identity_mismatch");
+        JSONObject fields = new JSONObject();
+        for (String field : new String[] {"isOnScreen", "isVisible", "isReadyForDisplay()", "mLastHidden",
+                "mEnterAnimationPending", "mAnimatingExit", "mHasSurface", "Surface: shown"})
+            fields.put(field, booleanFieldObservation(matched, field));
+        diagnostic.put("parseStage", "visibility").put("fields", fields);
         if (!oneField(matched, "isOnScreen", "false") || !oneField(matched, "isVisible", "false")
                 || !oneField(matched, "isReadyForDisplay()", "false")
                 || !oneField(matched, "mLastHidden", "true")
@@ -163,7 +195,21 @@ final class SmokeCapture {
         if (!oneField(matched, "mHasSurface", "false")
                 && !(oneField(matched, "mHasSurface", "true") && oneField(matched, "Surface: shown", "false")))
             throw new CaptureRefused("input_method_surface_is_visible_or_unverified");
+        diagnostic.put("parseStage", "hidden_verified");
         return token + "/" + ownerUid + "/" + packageName;
+    }
+
+    /** Counts and fixed enums only: never persist a raw field, title or dump. */
+    private static JSONObject booleanFieldObservation(String block, String field) throws Exception {
+        Matcher matcher = Pattern.compile("(?<![A-Za-z0-9_])" + Pattern.quote(field) + "=([^\\s]+)").matcher(block);
+        int count = 0;
+        String value = "MISSING";
+        while (matcher.find()) {
+            String current = "true".equals(matcher.group(1)) ? "TRUE" : "false".equals(matcher.group(1)) ? "FALSE" : "OTHER";
+            value = count == 0 ? current : value.equals(current) ? value : "CONFLICT";
+            count++;
+        }
+        return new JSONObject().put("count", count).put("value", value);
     }
 
     private static boolean oneField(String block, String field, String expected) {
@@ -263,6 +309,14 @@ final class SmokeCapture {
                 + "    Surface: shown=false layer=0\n"
                 + "    isOnScreen=false\n    isVisible=false\n"
                 + "  mInputMethodWindow=Window{abc u0 InputMethod}\n";
+        JSONObject missing = booleanFieldObservation("", "isVisible");
+        SmokeHarness.require(missing.getInt("count") == 0 && "MISSING".equals(missing.getString("value")), "Missing predicate diagnostic changed");
+        JSONObject repeated = booleanFieldObservation("isVisible=false isVisible=false", "isVisible");
+        SmokeHarness.require(repeated.getInt("count") == 2 && "FALSE".equals(repeated.getString("value")), "Duplicate predicate diagnostic changed");
+        JSONObject conflict = booleanFieldObservation("isVisible=false isVisible=true", "isVisible");
+        SmokeHarness.require(conflict.getInt("count") == 2 && "CONFLICT".equals(conflict.getString("value")), "Conflicting predicate diagnostic changed");
+        JSONObject other = booleanFieldObservation("isVisible=untrusted-field-value", "isVisible");
+        SmokeHarness.require("OTHER".equals(other.getString("value")) && !other.toString().contains("untrusted-field-value"), "Raw predicate data leaked into the diagnostic");
         inspectedHiddenInputMethod(ime, 10100, "com.android.inputmethod.latin");
         inspectedHiddenInputMethod(ime.replace("mHasSurface=true", "mHasSurface=false")
                 .replace("    Surface: shown=false layer=0\n", ""), 10100, "com.android.inputmethod.latin");

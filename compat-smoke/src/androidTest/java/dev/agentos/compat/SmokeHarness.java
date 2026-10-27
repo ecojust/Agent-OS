@@ -358,6 +358,7 @@ final class SmokeHarness {
             require(focused != null && focused.getDisplayId() == Display.DEFAULT_DISPLAY
                     && focused.getType() == AccessibilityWindowInfo.TYPE_APPLICATION, "Focused window is not the default-display application");
             root = focused.getRoot();
+            if (root == null && target == NOTES_TARGET) throw new NotesObservationPending("application_root_not_published");
             require(root != null && target.packageName.contentEquals(root.getPackageName() == null ? "" : root.getPackageName()), "Focused package is not the verified frozen application");
             Rect bounds = new Rect(); focused.getBoundsInScreen(bounds);
             require(!bounds.isEmpty(), "Application window has no bounds");
@@ -373,7 +374,7 @@ final class SmokeHarness {
                         || other.getLayer() < focused.getLayer()) continue;
                 Rect overlay = new Rect(); other.getBoundsInScreen(overlay);
                 if (!Rect.intersects(bounds, overlay)) continue;
-                if (allowInputMethod && other.getType() == AccessibilityWindowInfo.TYPE_INPUT_METHOD) {
+                if (target == NOTES_TARGET && other.getType() == AccessibilityWindowInfo.TYPE_INPUT_METHOD) {
                     require(inputMethod.isEmpty(), "More than one input-method window");
                     String refusal = systemInputMethodRefusal(other, overlay, display);
                     require(refusal == null, "Unexpected input-method window: " + refusal
@@ -384,6 +385,7 @@ final class SmokeHarness {
                 require(isContainedInVisibleSystemBar(other.getType(), overlay, display, bars),
                         "Application is obscured by an unknown window: " + windowDiagnostic(other, overlay));
             }
+            if (!allowInputMethod && !inputMethod.isEmpty()) throw new NotesObservationPending("verified_input_method_present");
             String geometry = bounds.toShortString() + "/" + display.toShortString() + "/" + bars;
             WindowSnapshot result = new WindowSnapshot(focused.getId(), bounds, root, geometry, inputMethod);
             root = null;
@@ -401,8 +403,10 @@ final class SmokeHarness {
         if (service == null) return "configured_system_identity_unverified";
         AccessibilityNodeInfo root = window.getRoot();
         try {
-            if (root == null || !service.packageName.contentEquals(root.getPackageName() == null ? "" : root.getPackageName()))
-                return "root_package_mismatch";
+            if (root == null) throw new NotesObservationPending("input_method_root_not_published");
+            if (root.getPackageName() == null || root.getPackageName().length() == 0)
+                throw new NotesObservationPending("input_method_root_package_not_published");
+            if (!service.packageName.contentEquals(root.getPackageName())) return "foreign_root_package";
         } finally { if (root != null) root.recycle(); }
         // Accessibility reports a touchable region, which can translate during
         // the IME animation and need not include the navigation bar. This
@@ -440,21 +444,60 @@ final class SmokeHarness {
         return matched;
     }
 
-    /** The sole IME-aware operation hides a verified system keyboard; it never clicks through it. */
+    /** At most one verified-keyboard BACK within the original bounded preparation. */
     void dismissNotesKeyboard() throws Exception {
+        try (NotesTarget ignored = awaitNotesTarget(null, new NotesWait())) { /* Strictly unobscured stable window. */ }
+    }
+
+    private NotesTarget awaitNotesTarget(String resource, NotesWait wait) throws Exception {
         require(target == NOTES_TARGET, "Notes helper used for another application");
-        try (WindowSnapshot window = appWindow(true)) {
-            if (window.inputMethod.isEmpty()) return;
-        }
-        sendKey(KeyEvent.KEYCODE_BACK);
-        long deadline = SystemClock.elapsedRealtime() + 5_000;
         do {
-            try (WindowSnapshot window = appWindow(true)) {
-                if (window.inputMethod.isEmpty()) return;
+            wait.requireTime();
+            WindowSnapshot window = null;
+            AccessibilityNodeInfo node = null;
+            boolean retryRead = false;
+            try {
+                // This snapshot can only identify a keyboard to dismiss. It is
+                // never used as the source of a click, input action or capture.
+                try (WindowSnapshot keyboard = appWindow(true)) {
+                    if (!keyboard.inputMethod.isEmpty()) {
+                        wait.pending("verified_input_method_present");
+                        if (!wait.backSent) {
+                            wait.requireTime();
+                            wait.backSent = true;
+                            sendKey(KeyEvent.KEYCODE_BACK);
+                        }
+                        retryRead = true;
+                        continue;
+                    }
+                }
+                wait.requireTime();
+                window = appWindow(false);
+                if (resource != null) {
+                    wait.requireTime();
+                    node = uniqueNode(window, resource);
+                    requireUsableNotesNode(window, node);
+                }
+                Rect nodeBounds = new Rect();
+                if (node != null) node.getBoundsInScreen(nodeBounds);
+                String identity = window.id + "/" + window.geometry + "/" + nodeBounds.toShortString();
+                if (wait.stable(identity)) {
+                    wait.requireTime();
+                    NotesTarget ready = new NotesTarget(window, node);
+                    window = null; node = null;
+                    return ready;
+                }
+                retryRead = true;
+            } catch (NotesObservationPending pending) {
+                retryRead = true;
+                wait.pending(pending.getMessage());
+            } finally {
+                if (node != null) node.recycle();
+                if (window != null) window.close();
+                if (retryRead && SystemClock.elapsedRealtime() < wait.deadline) SystemClock.sleep(50);
             }
-            SystemClock.sleep(50);
-        } while (SystemClock.elapsedRealtime() < deadline);
-        throw new AssertionError("Verified notes keyboard did not close");
+        } while (SystemClock.elapsedRealtime() < wait.deadline);
+        throw wait.timeout();
     }
 
     private void sendKey(int key) {
@@ -468,18 +511,17 @@ final class SmokeHarness {
     void notesCreateDialog() throws Exception {
         // The frozen release declares new_note as an always-visible toolbar action.
         notesClick("new_note");
-        awaitNotesResource("locked_note_title");
+        // The following title-input preparation waits for the new dialog itself;
+        // do not independently dismiss its keyboard twice before that action.
     }
 
     void notesClick(String resource) throws Exception {
-        dismissNotesKeyboard();
-        awaitNotesResource(resource);
-        try (WindowSnapshot window = appWindow(false)) {
-            AccessibilityNodeInfo node = uniqueNode(window, resource);
-            try {
-                requireUsableNotesNode(window, node);
-                require(node.isClickable() && node.performAction(AccessibilityNodeInfo.ACTION_CLICK), "Notes resource rejected its click");
-            } finally { node.recycle(); }
+        NotesWait wait = new NotesWait();
+        try (NotesTarget ready = awaitNotesTarget(resource, wait)) {
+            wait.requireTime();
+            require(ready.node.isClickable(), "Notes resource is not clickable");
+            // The actual action is outside all observation retry loops.
+            require(ready.node.performAction(AccessibilityNodeInfo.ACTION_CLICK), "Notes resource rejected its click");
         }
         automation.waitForIdle(150, 5_000);
     }
@@ -487,18 +529,16 @@ final class SmokeHarness {
     void notesSetText(String resource, String text) throws Exception {
         require("locked_note_title".equals(resource) || "text_note_view".equals(resource), "Unexpected notes text field");
         require(text.length() <= 256, "Synthetic note is too large");
-        dismissNotesKeyboard();
-        awaitNotesResource(resource);
-        try (WindowSnapshot window = appWindow(false)) {
-            AccessibilityNodeInfo node = uniqueNode(window, resource);
-            try {
-                requireUsableNotesNode(window, node);
-                require(node.isEditable() && !node.isPassword(), "Notes resource is not an unprotected editable field");
-                Bundle data = new Bundle(); data.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text);
-                require(node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, data), "Notes text action was rejected");
-            } finally { node.recycle(); }
+        NotesWait wait = new NotesWait();
+        try (NotesTarget ready = awaitNotesTarget(resource, wait)) {
+            require(ready.node.isEditable() && !ready.node.isPassword(), "Notes resource is not an unprotected editable field");
+            Bundle data = new Bundle(); data.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text);
+            wait.requireTime();
+            require(ready.node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, data), "Notes text action was rejected");
         }
-        notesAwaitText(resource, text);
+        // Verification shares the original deadline and BACK allowance; it may
+        // only reread, never resend input or repeat the keyboard dismissal.
+        notesAwaitText(resource, text, wait);
     }
 
     private void requireUsableNotesNode(WindowSnapshot window, AccessibilityNodeInfo node) {
@@ -510,43 +550,30 @@ final class SmokeHarness {
     }
 
     void awaitNotesResource(String resource) throws Exception {
-        long deadline = SystemClock.elapsedRealtime() + 5_000;
-        String last = "Notes resource did not appear";
-        do {
-            try {
-                dismissNotesKeyboard();
-                try (WindowSnapshot window = appWindow(false)) {
-                    AccessibilityNodeInfo node = uniqueNode(window, resource);
-                    try { requireUsableNotesNode(window, node); return; }
-                    finally { node.recycle(); }
-                }
-            } catch (AssertionError pending) { last = pending.getMessage(); }
-            SystemClock.sleep(50);
-        } while (SystemClock.elapsedRealtime() < deadline);
-        throw new AssertionError(last);
+        try (NotesTarget ignored = awaitNotesTarget(resource, new NotesWait())) { /* Readiness only. */ }
     }
 
     String notesAwaitText(String resource, String expected) throws Exception {
-        long deadline = SystemClock.elapsedRealtime() + 5_000;
+        return notesAwaitText(resource, expected, new NotesWait());
+    }
+
+    private String notesAwaitText(String resource, String expected, NotesWait wait) throws Exception {
         String actual = "";
         do {
-            dismissNotesKeyboard();
-            try (WindowSnapshot window = appWindow(false)) {
-                AccessibilityNodeInfo node = uniqueNode(window, resource);
-                try {
-                    requireUsableNotesNode(window, node);
-                    actual = node.getText() == null ? "" : node.getText().toString();
-                    require(actual.length() <= 1024, "Unexpected notes text length");
-                    if (expected.equals(actual)) return actual;
-                } finally { node.recycle(); }
+            try (NotesTarget ready = awaitNotesTarget(resource, wait)) {
+                actual = ready.node.getText() == null ? "" : ready.node.getText().toString();
+                require(actual.length() <= 1024, "Unexpected notes text length");
+                wait.requireTime();
+                if (expected.equals(actual)) return actual;
             }
-            SystemClock.sleep(100);
-        } while (SystemClock.elapsedRealtime() < deadline);
+            if (SystemClock.elapsedRealtime() < wait.deadline) SystemClock.sleep(50);
+        } while (SystemClock.elapsedRealtime() < wait.deadline);
         throw new ResultMismatch(actual);
     }
 
     String notesAssertTitle(String expected) {
         long deadline = SystemClock.elapsedRealtime() + 5_000;
+        String last = "exact_title_not_published";
         do {
             try (WindowSnapshot window = appWindow(false)) {
                 List<AccessibilityNodeInfo> found = window.root.findAccessibilityNodeInfosByText(expected);
@@ -564,19 +591,24 @@ final class SmokeHarness {
                     return expected;
                 }
                 require(exact == 0, "Created notes title is ambiguous: exact=" + exact);
+                last = "exact_title_not_published";
+            } catch (NotesObservationPending pending) {
+                last = pending.getMessage();
             }
             // Creation publishes the database-backed pager title asynchronously.
             // Wait only for its exact text; never replay the create action, hide
             // an unknown window, accept a different title or drop uniqueness.
             if (SystemClock.elapsedRealtime() < deadline) SystemClock.sleep(50);
         } while (SystemClock.elapsedRealtime() < deadline);
-        throw new AssertionError("Created notes title did not become uniquely visible within 5000ms: exact=0");
+        throw new AssertionError("Created notes title did not become uniquely visible within 5000ms: " + last);
     }
 
     void notesBackgroundForSave() throws Exception {
-        dismissNotesKeyboard();
-        try (WindowSnapshot ignored = appWindow(false)) { /* Only navigate from the verified notes page. */ }
-        sendKey(KeyEvent.KEYCODE_HOME);
+        NotesWait wait = new NotesWait();
+        try (NotesTarget ready = awaitNotesTarget(null, wait)) {
+            wait.requireTime();
+            sendKey(KeyEvent.KEYCODE_HOME);
+        }
         long deadline = SystemClock.elapsedRealtime() + 5_000;
         while (focusedTargetWindowId() != -1) {
             require(SystemClock.elapsedRealtime() < deadline, "Notes did not leave the foreground for normal save");
@@ -639,6 +671,7 @@ final class SmokeHarness {
                 require(target.packageName.contentEquals(node.getPackageName() == null ? "" : node.getPackageName()), "Unexpected resource package");
                 selected = AccessibilityNodeInfo.obtain(node);
             }
+            if (selected == null && target == NOTES_TARGET) throw new NotesObservationPending("exact_resource_not_published");
             require(selected != null, "Visible application resource was not found");
             AccessibilityNodeInfo result = selected; selected = null; return result;
         } finally {
@@ -722,6 +755,33 @@ final class SmokeHarness {
             this.inputMethod = new Rect(inputMethod);
         }
         @Override public void close() { root.recycle(); }
+    }
+
+    private static final class NotesTarget implements AutoCloseable {
+        final WindowSnapshot window;
+        final AccessibilityNodeInfo node;
+        NotesTarget(WindowSnapshot window, AccessibilityNodeInfo node) { this.window = window; this.node = node; }
+        @Override public void close() { if (node != null) node.recycle(); window.close(); }
+    }
+
+    private static final class NotesWait {
+        final long deadline = SystemClock.elapsedRealtime() + 5_000;
+        boolean backSent;
+        String identity, last = "target_not_stable";
+        long since;
+        void pending(String reason) { identity = null; since = 0; last = reason; }
+        boolean stable(String current) {
+            long now = SystemClock.elapsedRealtime();
+            if (!current.equals(identity)) { identity = current; since = now; last = "target_not_stable"; return false; }
+            return now - since >= 600;
+        }
+        void requireTime() { if (SystemClock.elapsedRealtime() >= deadline) throw timeout(); }
+        AssertionError timeout() { return new AssertionError("Notes observation timed out: reason=" + last + " backSent=" + backSent); }
+    }
+
+    /** Only these known incomplete reads are eligible for another observation. */
+    private static final class NotesObservationPending extends AssertionError {
+        NotesObservationPending(String reason) { super(reason); }
     }
 
     static final class StableWindow {

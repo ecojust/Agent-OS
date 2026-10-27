@@ -263,6 +263,7 @@ public final class DeviceToolsInstrumentedTest {
                 });
                 boolean[] visibleInsets = {false};
                 boolean imeWindow = false;
+                String lastOwnWindows = "not_read";
                 deadline = SystemClock.elapsedRealtime() + 5_000;
                 do {
                     device.instrumentation.runOnMainSync(() -> {
@@ -271,6 +272,7 @@ public final class DeviceToolsInstrumentedTest {
                     });
                     List<AccessibilityWindowInfo> windows = device.service.getWindows();
                     try {
+                        lastOwnWindows = compactWindowMetadata(windows);
                         imeWindow = false;
                         for (AccessibilityWindowInfo window : windows) {
                             if (window.getType() == AccessibilityWindowInfo.TYPE_INPUT_METHOD) imeWindow = true;
@@ -279,8 +281,12 @@ public final class DeviceToolsInstrumentedTest {
                     if (!(visibleInsets[0] && imeWindow)) SystemClock.sleep(50);
                 } while (!(visibleInsets[0] && imeWindow) && SystemClock.elapsedRealtime() < deadline);
                 if (!(visibleInsets[0] && imeWindow)) {
-                    fail("The owned editor did not show a real IME: inset=" + visibleInsets[0] + ", window=" + imeWindow
-                            + "\n" + windowDiagnostics() + "\n" + device.keyboardDiagnostics());
+                    // Capture while the actual owned Activity is still foreground.
+                    // Its protected window may block capture; never clear FLAG_SECURE.
+                    screenshots.capture("owned-keyboard-visibility-mismatch");
+                    fail("Owned editor keyboard visibility evidence did not agree: inset=" + visibleInsets[0] + ", window=" + imeWindow
+                            + "\nLast loop service windows: " + lastOwnWindows
+                            + "\n" + device.keyboardWindowDiagnostics() + "\n" + device.keyboardDiagnostics());
                 }
                 JsonObject ownScreen = device.hideOwnKeyboardAndObserve(activity, device.tools, device.control);
                 assertFalse(ownScreen.get("scoped").getAsBoolean());

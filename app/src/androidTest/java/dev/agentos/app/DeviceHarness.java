@@ -369,6 +369,19 @@ final class DeviceHarness implements AutoCloseable {
         } catch (RuntimeException unavailable) {
             result.append("\nUiAutomation unavailable: ").append(unavailable.getClass().getSimpleName());
         }
+        try {
+            WindowManager manager = service.getSystemService(WindowManager.class);
+            if (manager == null) result.append("\nservice WindowManager currentMetrics unavailable");
+            else {
+                WindowMetrics metrics = manager.getCurrentWindowMetrics();
+                WindowInsets insets = metrics.getWindowInsets();
+                result.append("\nservice WindowManager currentMetrics bounds=").append(metrics.getBounds().toShortString())
+                        .append(" imeVisible=").append(insets.isVisible(WindowInsets.Type.ime()))
+                        .append(" imeInsets=").append(insets.getInsets(WindowInsets.Type.ime()));
+            }
+        } catch (RuntimeException unavailable) {
+            result.append("\nservice WindowManager currentMetrics unavailable: ").append(unavailable.getClass().getSimpleName());
+        }
         String selected = null;
         int selectedUid = -1;
         try {
@@ -431,14 +444,15 @@ final class DeviceHarness implements AutoCloseable {
             int imeRecords = 0, fixtureRecords = 0, associatedImeRecords = 0;
             if (windowManager) {
                 Pattern owner = Pattern.compile("\\bmOwnerUid=" + selectedUid + "\\b");
-                Matcher targets = Pattern.compile("(?m)^[\\t ]*(m?(?:ImeLayeringTarget|ImeInputTarget|ImeControlTarget|InputMethodWindow)|imeLayeringTarget|imeInputTarget|imeControlTarget)=(.*)$").matcher(dump);
+                Matcher targets = Pattern.compile("(?m)^[\\t ]*(m?(?:ImeLayeringTarget|ImeInputTarget|ImeControlTarget|InputMethodWindow)|imeLayeringTarget|imeInputTarget|imeControlTarget)(?:[\\t ]*=[\\t ]*|[\\t ]+in display#[\\t ]+([0-9]+)[\\t ]+)(.*)$").matcher(dump);
                 int targetCount = 0;
                 while (targetCount < 4 && targets.find()) {
                     targetCount++;
-                    Matcher token = Pattern.compile("Window\\{[0-9a-fA-F]+").matcher(targets.group(2));
+                    Matcher token = Pattern.compile("Window\\{[0-9a-fA-F]+").matcher(targets.group(3));
                     result.append("\n  ").append(targets.group(1)).append('=')
-                            .append(token.find() ? token.group() : targets.group(2).trim().equals("null") ? "null" : "unparsed")
-                            .append(targets.group(2).contains(FIXTURE) ? " fixture" : "");
+                            .append(token.find() ? token.group() : targets.group(3).trim().equals("null") ? "null" : "unparsed")
+                            .append(targets.group(3).contains(FIXTURE) ? " fixture" : "");
+                    if (targets.group(2) != null) result.append(" display=").append(targets.group(2));
                 }
                 if (targetCount == 0) result.append(" [IME target references absent from bounded dump]");
                 String[] blocks = dump.split("(?m)(?=^[\\t ]*Window #[0-9]+ )");
@@ -459,6 +473,22 @@ final class DeviceHarness implements AutoCloseable {
                     Matcher identity = Pattern.compile("Window #[0-9]+|Window\\{[0-9a-fA-F]+").matcher(header);
                     while (identity.find()) selected.append(' ').append(identity.group());
                     int recordLimit = selected.length() + 800;
+                    // The final visibility predicates and actual touch region can
+                    // occur after long geometry dumps. Read them first from this
+                    // bounded record; HAS_DRAWN alone does not mean isVisible.
+                    Matcher visibility = Pattern.compile("\\b(?:isVisible|isOnScreen|mClientVisible|clientVisible)=(?:true|false)\\b").matcher(block);
+                    int visibilityFields = 0;
+                    while (visibilityFields < 4 && visibility.find()) {
+                        selected.append(' ').append(visibility.group());
+                        visibilityFields++;
+                    }
+                    if (visibilityFields == 0) selected.append(" visibilityPredicates=not_reported");
+                    Matcher touchable = Pattern.compile("(?m)^[\\t ]*(?:touchable region|touchableRegion)=(.*)$").matcher(block);
+                    if (touchable.find()) {
+                        String region = touchable.group(1).trim();
+                        selected.append(" touchableRegion=").append(region, 0, Math.min(region.length(), 240));
+                        if (region.length() > 240) truncated = true;
+                    } else selected.append(" touchableRegion=not_reported");
                     for (String raw : lines) {
                         String line = raw.trim();
                         // Only window registration, geometry, type and visibility;

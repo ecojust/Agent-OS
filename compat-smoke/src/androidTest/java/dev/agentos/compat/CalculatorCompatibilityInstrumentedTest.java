@@ -92,6 +92,12 @@ public final class CalculatorCompatibilityInstrumentedTest {
                 "ServiceRecord{abc u0 dev.agentos.app/.AgentAccessibilityService"}) {
             if (SmokeHarness.hasAgentServiceRecord(dump)) throw new AssertionError("Service record parser accepted an unrelated or incomplete service");
         }
+        for (String title : new String[] {"StatusBar", "NavigationBar", "NavigationBar0", "Navigation bar"}) {
+            if (!SmokeHarness.isKnownSystemBarTitle(title)) throw new AssertionError("Known system bar title was not recognized");
+        }
+        for (String title : new String[] {"", "Notification shade", "Navigation bar overlay", "Permission dialog"}) {
+            if (SmokeHarness.isKnownSystemBarTitle(title)) throw new AssertionError("Unknown system window title was accepted");
+        }
     }
 
     private void exercise(String state) throws Exception {

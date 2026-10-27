@@ -236,11 +236,15 @@ final class SmokeHarness {
 
     private void awaitCalculatorPage() {
         long deadline = SystemClock.elapsedRealtime() + 10_000;
+        String lastRefusal = "No window observation";
         do {
             try (WindowSnapshot ignored = calculatorWindow()) { return; }
-            catch (AssertionError unavailable) { SystemClock.sleep(100); }
+            catch (AssertionError unavailable) {
+                lastRefusal = unavailable.getMessage();
+                SystemClock.sleep(100);
+            }
         } while (SystemClock.elapsedRealtime() < deadline);
-        throw new AssertionError("Calculator did not become the unique unobscured focused window");
+        throw new AssertionError("Calculator did not become the unique unobscured focused window: " + lastRefusal);
     }
 
     void perform(String id, int action) throws Exception {
@@ -301,7 +305,7 @@ final class SmokeHarness {
                         || other.getLayer() < focused.getLayer()) continue;
                 Rect overlay = new Rect(); other.getBoundsInScreen(overlay);
                 if (!Rect.intersects(bounds, overlay)) continue;
-                require(isTrustedSystemBar(other, overlay, bounds), "Calculator is obscured by an unknown window");
+                require(isTrustedSystemBar(other, overlay, bounds), "Calculator is obscured by an unknown window: " + windowDiagnostic(other, overlay));
             }
             WindowSnapshot result = new WindowSnapshot(focused.getId(), bounds, root);
             root = null;
@@ -315,8 +319,7 @@ final class SmokeHarness {
     private boolean isTrustedSystemBar(AccessibilityWindowInfo window, Rect bar, Rect app) {
         if (window.getType() != AccessibilityWindowInfo.TYPE_SYSTEM) return false;
         String title = window.getTitle() == null ? "" : window.getTitle().toString();
-        boolean knownTitle = title.equals("StatusBar") || title.equals("NavigationBar") || title.equals("NavigationBar0");
-        if (!knownTitle) return false;
+        if (!isKnownSystemBarTitle(title)) return false;
         AccessibilityNodeInfo root = window.getRoot();
         try {
             if (root != null && !"com.android.systemui".contentEquals(root.getPackageName() == null ? "" : root.getPackageName())) return false;
@@ -324,6 +327,27 @@ final class SmokeHarness {
         int edge = Math.round(context.getResources().getDisplayMetrics().density * 96);
         return (bar.height() <= edge && (bar.top <= app.top || bar.bottom >= app.bottom))
                 || (bar.width() <= edge && (bar.left <= app.left || bar.right >= app.right));
+    }
+
+    static boolean isKnownSystemBarTitle(String title) {
+        // AOSP's navigation bar uses accessibilityTitle=R.string.nav_bar;
+        // the default test locale resolves it to "Navigation bar", not its WM title.
+        return title.equals("StatusBar") || title.equals("NavigationBar")
+                || title.equals("NavigationBar0") || title.equals("Navigation bar");
+    }
+
+    private static String windowDiagnostic(AccessibilityWindowInfo window, Rect bounds) {
+        // Metadata only, on the guarded synthetic device. No node text or screen pixels.
+        String title = window.getTitle() == null ? "" : window.getTitle().toString();
+        if (title.length() > 80) title = title.substring(0, 80);
+        String packageName = "[no root]";
+        AccessibilityNodeInfo root = window.getRoot();
+        try {
+            if (root != null) packageName = root.getPackageName() == null ? "[no package]" : root.getPackageName().toString();
+        } finally { if (root != null) root.recycle(); }
+        if (packageName.length() > 120) packageName = packageName.substring(0, 120);
+        return "id=" + window.getId() + " type=" + window.getType() + " layer=" + window.getLayer()
+                + " bounds=" + bounds.toShortString() + " title=" + title + " package=" + packageName;
     }
 
     private static AccessibilityNodeInfo uniqueNode(WindowSnapshot window, String id) {

@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Archive all 32 third-party combinations after bounded keyboard preparation: 31 passed, one API31 Notes/off timeout retained. Eight Android parser preflights completed; independently verified 68 files/2658851 bytes and 44 actual PNGs. Not broad app compatibility acceptance.
+**本次更新：** Archive the third walkthrough attempt faithfully: Ubuntu mirror downloads timed out before Android setup, so there are no UI actions, screenshots or video. The original report is retained; successful-demo status remains pending.
 
-**记录时间：** 2026-10-27T14:53:48Z
+**记录时间：** 2026-10-27T14:55:03Z
 
 [最近测试截图与清单](screenshots/40521924977-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40521924977)。通过、失败及未截图原因见清单。
 

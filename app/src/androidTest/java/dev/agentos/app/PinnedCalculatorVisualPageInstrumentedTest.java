@@ -76,7 +76,7 @@ public final class PinnedCalculatorVisualPageInstrumentedTest {
             env.resetNormally();
             env.accept("before-converter", env.stableRevision());
             env.clickId("unit_converter", AccessibilityNodeInfo.ACTION_CLICK);
-            env.awaitTree("actual converter picker page", tree -> tree.id("unit_converter_picker_toolbar", false) != null && tree.id("unit_types_grid", false) != null
+            env.awaitTree("actual converter picker page", tree -> tree.hasVisibleUnitCategoryInGrid()
                     && tree.id("btn_equals", false) == null);
             env.requireFocusedActivity("UnitConverterPickerActivity");
             env.refuse("converter", env.stableRevision());

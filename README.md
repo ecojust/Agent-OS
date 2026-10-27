@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。
+**本次更新：** Preserve the second pinned-page result: 15/20 passed, four converter readiness failures and one unresolved history guard failure. Correct only test readiness using actual exposed nodes and bounded stable dialog geometry; keep final rejection rules and original error causes. APK/test APK/lint passed in 29 seconds.
 
-**记录时间：** 2026-10-27T13:21:03Z
+**记录时间：** 2026-10-27T13:27:40Z
 
 [最近测试截图与清单](screenshots/40510053237-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40510053237)。通过、失败及未截图原因见清单。
 

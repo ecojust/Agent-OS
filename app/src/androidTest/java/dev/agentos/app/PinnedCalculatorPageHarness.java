@@ -239,15 +239,30 @@ final class PinnedCalculatorPageHarness implements AutoCloseable {
         try {
             long deadline = SystemClock.elapsedRealtime() + 8_000;
             int retries = 0;
+            String settledGeometry = null;
+            long quietSince = -1;
             clickId("history", AccessibilityNodeInfo.ACTION_CLICK);
             do {
                 check();
                 boolean ordinary = false;
                 try (Tree tree = new Tree()) {
                     AccessibilityNodeInfo list = tree.id("history_list", false);
-                    if (list != null && list.isVisibleToUser() && list.getChildCount() > 0) return;
-                    ordinary = tree.id("btn_equals", false) != null;
-                } catch (NotReady transition) { /* Actual popup is still being published. */ }
+                    if (list != null && list.isVisibleToUser() && list.getChildCount() > 0) {
+                        // A visible dialog may still be animating or retain the old
+                        // application window. This is preparation, before observe
+                        // and the single final predicate, within the original limit.
+                        String geometry = tree.windowGeometrySignature() + ":list=" + bounds(list).toShortString();
+                        long now = SystemClock.elapsedRealtime();
+                        if (!geometry.equals(settledGeometry)) {
+                            settledGeometry = geometry; quietSince = now;
+                        } else if (now - quietSince >= 300 && now < deadline) return;
+                    } else {
+                        settledGeometry = null; quietSince = -1;
+                        ordinary = tree.id("btn_equals", false) != null;
+                    }
+                } catch (NotReady transition) {
+                    settledGeometry = null; quietSince = -1;
+                }
                 if (ordinary && retries < 2 && emptyHistory.compareAndSet(true, false)) {
                     retries++; clickId("history", AccessibilityNodeInfo.ACTION_CLICK);
                 }
@@ -320,19 +335,21 @@ final class PinnedCalculatorPageHarness implements AutoCloseable {
             tools.evaluateSupportedVisualPage(device.control, epoch, revision, installed);
             fail("Actual alternate page unexpectedly matched the fixed basic-page policy");
         } catch (SupportedVisualPagePolicy.Rejected rejected) {
-            assertTrue("Installation/configuration/API failures are not page refusal evidence",
-                    rejected.reason == SupportedVisualPagePolicy.Reason.UNKNOWN_CONTENT
+            boolean pageRefusal = rejected.reason == SupportedVisualPagePolicy.Reason.UNKNOWN_CONTENT
                     || rejected.reason == SupportedVisualPagePolicy.Reason.INVALID_KEYPAD
                     || rejected.reason == SupportedVisualPagePolicy.Reason.UNSUPPORTED_GEOMETRY
                     || rejected.reason == SupportedVisualPagePolicy.Reason.SENSITIVE_CONTENT
-                    || rejected.reason == SupportedVisualPagePolicy.Reason.UNSUPPORTED_FORMAT);
+                    || rejected.reason == SupportedVisualPagePolicy.Reason.UNSUPPORTED_FORMAT;
+            if (!pageRefusal) throw new AssertionError(
+                    "Installation/configuration/API failures are not page refusal evidence: " + rejected.reason, rejected);
             outcome(stage, "rejected", rejected.reason.name());
         } catch (AndroidDeviceTools.WindowCaptureException rejected) {
-            assertTrue("Stale/busy/timeout/context failures must not pass a page negative",
-                    rejected.code == AndroidDeviceTools.WindowCaptureFailure.OCCLUDED
+            boolean pageRefusal = rejected.code == AndroidDeviceTools.WindowCaptureFailure.OCCLUDED
                     || rejected.code == AndroidDeviceTools.WindowCaptureFailure.UNSUPPORTED_GEOMETRY
                     || rejected.code == AndroidDeviceTools.WindowCaptureFailure.SENSITIVE_CONTENT
-                    || rejected.code == AndroidDeviceTools.WindowCaptureFailure.HIGH_IMPACT_CONTENT);
+                    || rejected.code == AndroidDeviceTools.WindowCaptureFailure.HIGH_IMPACT_CONTENT;
+            if (!pageRefusal) throw new AssertionError(
+                    "Stale/busy/timeout/context failures must not pass a page negative: " + rejected.code, rejected);
             outcome(stage, "rejected", rejected.code.name());
         }
         assertNoVisualCapability();
@@ -485,6 +502,36 @@ final class PinnedCalculatorPageHarness implements AutoCloseable {
             }
             if (required) assertNotNull("Required pinned resource missing: " + local, found);
             return found;
+        }
+        boolean hasVisibleUnitCategoryInGrid() {
+            AccessibilityNodeInfo grid = id("unit_types_grid", false);
+            if (grid == null || !"androidx.recyclerview.widget.RecyclerView".contentEquals(
+                    grid.getClassName() == null ? "" : grid.getClassName())) return false;
+            String prefix = null;
+            for (Map.Entry<String, AccessibilityNodeInfo> entry : nodes.entrySet()) {
+                if (entry.getValue() == grid) { prefix = entry.getKey() + "."; break; }
+            }
+            if (prefix == null) return false;
+            // Category labels intentionally repeat the resource ID. Do not use
+            // id(), which must retain its unique-ID assertion for other controls.
+            for (Map.Entry<String, AccessibilityNodeInfo> entry : nodes.entrySet()) {
+                AccessibilityNodeInfo node = entry.getValue();
+                if (entry.getKey().startsWith(prefix) && node.isVisibleToUser() && node.getChildCount() == 0
+                        && (PACKAGE + ":id/unit_label").equals(node.getViewIdResourceName())
+                        && "android.widget.TextView".contentEquals(node.getClassName() == null ? "" : node.getClassName())
+                        && node.getText() != null && node.getText().length() > 0) return true;
+            }
+            return false;
+        }
+        String windowGeometrySignature() {
+            List<String> actual = new ArrayList<>();
+            for (AccessibilityWindowInfo window : windows) {
+                Rect box = new Rect(); window.getBoundsInScreen(box);
+                actual.add(window.getId() + ":" + window.getDisplayId() + ":" + window.getType() + ":"
+                        + window.getLayer() + ":" + window.isFocused() + ":" + box.toShortString());
+            }
+            Collections.sort(actual);
+            return windowId + ":" + windowBounds.toShortString() + ":" + rootBounds.toShortString() + ":" + actual;
         }
         boolean textEquals(String local, String expected) {
             AccessibilityNodeInfo node = id(local, false);

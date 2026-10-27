@@ -1,5 +1,6 @@
 package dev.agentos.compat;
 
+import android.Manifest;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
@@ -14,6 +15,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.view.Display;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
@@ -36,7 +38,7 @@ final class SmokeHarness {
     static final String COMPONENT = AGENT + "/" + AGENT + ".AgentAccessibilityService";
     static final String APK_SHA256 = "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed";
     static final String CERTIFICATE_SHA256 = "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292";
-    private static final Pattern SERVICE_RECORD = Pattern.compile("ServiceRecord\\{[^}\\r\\n]*dev\\.agentos\\.app/(?:\\.AgentAccessibilityService|dev\\.agentos\\.app\\.AgentAccessibilityService)\\}");
+    private static final Pattern SERVICE_RECORD = Pattern.compile("ServiceRecord\\{[0-9a-fA-F]+ u0 dev\\.agentos\\.app/(?:\\.AgentAccessibilityService|dev\\.agentos\\.app\\.AgentAccessibilityService)(?: c:[A-Za-z][A-Za-z0-9_.]*)?\\}");
     private final Context context;
     private final Bundle arguments;
     final UiAutomation automation;
@@ -110,8 +112,9 @@ final class SmokeHarness {
 
     String readSecure(String key) throws Exception {
         require("enabled_accessibility_services".equals(key) || "accessibility_enabled".equals(key), "Unexpected setting key");
-        String value = shell("settings get secure " + key).trim();
-        return "null".equals(value) ? null : value;
+        automation.adoptShellPermissionIdentity(Manifest.permission.WRITE_SECURE_SETTINGS);
+        try { return Settings.Secure.getString(context.getContentResolver(), key); }
+        finally { automation.dropShellPermissionIdentity(); }
     }
 
     void requireCleanServiceBaseline(String original) {
@@ -129,15 +132,24 @@ final class SmokeHarness {
         writeSecure("enabled_accessibility_services", services);
         writeSecure("accessibility_enabled", enabled);
         awaitServiceState("off", "restored");
-        require(equal(services, readSecure("enabled_accessibility_services"))
-                && equal(enabled, readSecure("accessibility_enabled")), "Accessibility settings did not restore exactly");
+        require(equal(services, readSecure("enabled_accessibility_services")), "Accessibility component list did not restore exactly");
     }
 
     private void writeSecure(String key, String value) throws Exception {
         require(dedicated, "Emulator guard has not passed");
         require("enabled_accessibility_services".equals(key) || "accessibility_enabled".equals(key), "Unexpected setting key");
-        if (value == null) shell("settings delete secure " + key);
-        else shell("settings put secure " + key + " " + quote(value));
+        // UiAutomation executes argv, not shell syntax: quotes would become part
+        // of component IDs and empty values. The provider preserves all three.
+        automation.adoptShellPermissionIdentity(Manifest.permission.WRITE_SECURE_SETTINGS);
+        try {
+            require(Settings.Secure.putString(context.getContentResolver(), key, value), "Could not write secure test setting");
+            if (Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES.equals(key)) {
+                require(equal(value, Settings.Secure.getString(context.getContentResolver(), key)),
+                        "Secure accessibility component round-trip mismatch");
+            }
+            // The system recomputes ACCESSIBILITY_ENABLED while UiAutomation is
+            // connected; actual bound/unbound service evidence is checked separately.
+        } finally { automation.dropShellPermissionIdentity(); }
     }
 
     JSONObject awaitServiceState(String state, String stage) throws Exception {
@@ -168,7 +180,7 @@ final class SmokeHarness {
         String binding = section(access, "Binding services:", "Crashed services:");
         boolean parsed = bound != null && enabledDump != null && binding != null
                 && hasOwnerUserAttributes(access);
-        boolean record = SERVICE_RECORD.matcher(services).find();
+        boolean record = hasAgentServiceRecord(services);
         boolean connection = services.contains("ConnectionRecord{");
         boolean enabledTarget = COMPONENT.equals(enabled) || (AGENT + "/.AgentAccessibilityService").equals(enabled);
         boolean noAgentActivity = !activities.contains(AGENT + "/") && !activities.contains(AGENT + ".MainActivity");
@@ -359,6 +371,11 @@ final class SmokeHarness {
         return Pattern.compile("attributes:\\{id=0(?:,|\\})").matcher(dump).find();
     }
 
+    static boolean hasAgentServiceRecord(String dump) {
+        // Recent platform versions append an optional calling-package field.
+        return SERVICE_RECORD.matcher(dump).find();
+    }
+
     private static String matchingLines(String text, String... needles) {
         StringBuilder result = new StringBuilder();
         for (String line : text.split("\\r?\\n")) {
@@ -373,7 +390,6 @@ final class SmokeHarness {
     private static int count(String text, String needle) { if (text == null) return 0; int n = 0, i = 0; while ((i = text.indexOf(needle, i)) >= 0) { n++; i += needle.length(); } return n; }
     private static boolean equal(String a, String b) { return a == null ? b == null : a.equals(b); }
     private static boolean matches(String value, String expression) { return value != null && value.matches(expression); }
-    private static String quote(String value) { return "'" + value.replace("'", "'\"'\"'") + "'"; }
     static void require(boolean condition, String message) { if (!condition) throw new AssertionError(message); }
     static void recycle(List<AccessibilityWindowInfo> windows) { if (windows != null) for (AccessibilityWindowInfo window : windows) window.recycle(); }
     static String sha256(byte[] bytes) throws Exception { return hex(MessageDigest.getInstance("SHA-256").digest(bytes)); }

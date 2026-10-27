@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T01:44:33Z",
-  "note": "归档第二轮官方应用探针：六态在测试辅助器配置服务阶段失败，定位到命令引号被作为设置值保存；安装身份验证通过、算术未执行，原始失败与截图受阻记录全部保留。",
+  "updated_at": "2026-10-27T01:48:12Z",
+  "note": "修复独立应用探针的服务配置与跨版本绑定识别：改用Android设置接口并逐次回读，支持新版ServiceRecord格式；测试APK和lint通过，继续在三档专用模拟器重跑，前两轮失败记录保留。",
   "latest_evidence": {
     "path": "screenshots/third-party-40433717886-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40433717886"

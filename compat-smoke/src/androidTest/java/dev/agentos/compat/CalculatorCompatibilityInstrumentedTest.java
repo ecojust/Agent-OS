@@ -76,6 +76,22 @@ public final class CalculatorCompatibilityInstrumentedTest {
         for (String dump : new String[] {"", "attributes:{id=01}", "attributes:{id=10}", "attributes:{id=0", "attributes:{id=0unexpected}"}) {
             if (SmokeHarness.hasOwnerUserAttributes(dump)) throw new AssertionError("Owner-user dump parser accepted an incomplete or foreign user");
         }
+        for (String dump : new String[] {
+                "ServiceRecord{abc u0 dev.agentos.app/.AgentAccessibilityService}",
+                "ServiceRecord{abc u0 dev.agentos.app/dev.agentos.app.AgentAccessibilityService c:android}",
+                "ServiceRecord{abc u0 dev.agentos.app/.AgentAccessibilityService c:com.android.shell}"}) {
+            if (!SmokeHarness.hasAgentServiceRecord(dump)) throw new AssertionError("Service record parser rejected a supported platform format");
+        }
+        for (String dump : new String[] {
+                "ServiceRecord{abc u0 other.app/.AgentAccessibilityService}",
+                "ServiceRecord{abc u0 other.dev.agentos.app/.AgentAccessibilityService}",
+                "ServiceRecord{abc u10 dev.agentos.app/.AgentAccessibilityService}",
+                "ServiceRecord{abc u0 dev.agentos.app/.OtherService}",
+                "ServiceRecord{abc u0 dev.agentos.app/.AgentAccessibilityServiceExtra}",
+                "ServiceRecord{abc u0 dev.agentos.app/.AgentAccessibilityService c:}",
+                "ServiceRecord{abc u0 dev.agentos.app/.AgentAccessibilityService"}) {
+            if (SmokeHarness.hasAgentServiceRecord(dump)) throw new AssertionError("Service record parser accepted an unrelated or incomplete service");
+        }
     }
 
     private void exercise(String state) throws Exception {
@@ -167,7 +183,7 @@ public final class CalculatorCompatibilityInstrumentedTest {
             if (settingsRead) {
                 try {
                     harness.restoreServiceSettings(originalServices, originalEnabled);
-                    passed(steps, "restore_service_settings", "Original accessibility settings restored");
+                    passed(steps, "restore_service_settings", "Original accessibility component list restored and Agent service unbound; system owns the global accessibility flag");
                 } catch (Throwable cleanup) {
                     entry.put("status", "failed").put("cleanupError", safeError(cleanup));
                     steps.put(new JSONObject().put("name", "restore_service_settings").put("status", "failed")

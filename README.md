@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。
+**本次更新：** Record audited round53: 1936/1936 passed and all4097 payload hashes verified. Seven APIs exercised actual incomplete-IME refusal, one the complete path; eight recovered fresh observation after user BACK. Preserve transient/animation limits and prior failures. Dedicated page readiness rerun remains separate.
 
-**记录时间：** 2026-10-27T13:28:53Z
+**记录时间：** 2026-10-27T13:33:42Z
 
 [最近测试截图与清单](screenshots/40510031737-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40510031737)。通过、失败及未截图原因见清单。
 

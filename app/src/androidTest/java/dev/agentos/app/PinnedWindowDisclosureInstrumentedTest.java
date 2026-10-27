@@ -58,7 +58,10 @@ public final class PinnedWindowDisclosureInstrumentedTest {
         Environment env = new Environment(name.getMethodName(), decline);
         Throwable failure = null;
         try { env.prepare(); env.exercise(); }
-        catch (Exception | Error error) { failure = error; }
+        catch (Exception | Error error) {
+            failure = error;
+            try { env.failureEvidence(); } catch (Exception | Error diagnostic) { failure.addSuppressed(diagnostic); }
+        }
         finally {
             try { env.close(); } catch (Exception | Error cleanup) { if (failure == null) failure = cleanup; else failure.addSuppressed(cleanup); }
             try { env.finish(failure); } catch (Exception | Error evidence) { if (failure == null) failure = evidence; else failure.addSuppressed(evidence); }
@@ -338,6 +341,19 @@ public final class PinnedWindowDisclosureInstrumentedTest {
             try { if (device != null) device.close(); } catch (Exception | Error error) { failure = add(failure, error); }
             try { main(controller::clearCompletedTask); } catch (Exception | Error error) { failure = add(failure, error); }
             rethrow(failure);
+        }
+        void failureEvidence() throws Exception {
+            if (script != null) {
+                JsonObject planned = script.planningGeometry, rejected = script.captureFailure;
+                if (planned != null) report.add("originalPlanningGeometry", planned.deepCopy());
+                if (rejected != null) report.add("actualCaptureFailure", rejected.deepCopy());
+                if (rejected != null && device != null) {
+                    // This later diagnostic is not the rejected Snapshot and
+                    // cannot turn a failed predicate into a successful retry.
+                    report.add("independentFailureGeometry", NativeWindowGeometryDiagnostic.sample(device.service));
+                }
+            }
+            persist();
         }
         private void retainObservedHttpEvidence() throws Exception {
             // Preserve a real approved payload even when a later assertion failed.

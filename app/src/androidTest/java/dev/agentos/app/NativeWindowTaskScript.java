@@ -29,6 +29,7 @@ final class NativeWindowTaskScript implements LocalVisionProbeServer.WindowTaskR
     volatile int originalWindowId;
     volatile String receivedHash;
     volatile int receivedBytes;
+    volatile JsonObject planningGeometry, captureFailure;
 
     NativeWindowTaskScript(boolean decline, File receivedFile) { this.decline = decline; this.receivedFile = receivedFile; }
 
@@ -59,18 +60,25 @@ final class NativeWindowTaskScript implements LocalVisionProbeServer.WindowTaskR
             JsonObject observed = latestObservation(request);
             require(PACKAGE.equals(text(observed, "packageName")) && observed.get("scoped").getAsBoolean(), "Wrong actual target observation");
             originalRevision = text(observed, "revision"); originalWindowId = observed.get("windowId").getAsInt();
+            planningGeometry = NativeWindowGeometryDiagnostic.fromObservation(observed);
             require(!originalRevision.isEmpty(), "Actual revision missing");
             JsonObject args = new JsonObject(); args.addProperty("expectedRevision", originalRevision);
             return tool("take_screenshot", CAPTURE_CALL, args);
         }
-        require(!decline, "A declined image task must stop without another model request");
         if (round == 2) {
             JsonObject metadata = captureMetadata(request);
             if (!metadata.has("ok") || !metadata.get("ok").getAsBoolean()) {
                 String code = text(metadata, "code"), message = text(metadata, "error");
-                throw new IOException("Actual capture result failed: " + code.substring(0, Math.min(80, code.length()))
-                        + "; " + message.substring(0, Math.min(180, message.length())));
+                JsonObject failure = new JsonObject();
+                failure.addProperty("code", code.substring(0, Math.min(80, code.length())));
+                failure.addProperty("error", message.substring(0, Math.min(180, message.length())));
+                failure.addProperty("receivedAtElapsedRealtimeMillis", android.os.SystemClock.elapsedRealtime());
+                failure.addProperty("imageUrlPresent", image != null);
+                captureFailure = failure;
+                throw new IOException("Actual capture result failed: " + failure.get("code").getAsString()
+                        + "; " + failure.get("error").getAsString());
             }
+            require(!decline, "A declined image task must stop without another model request");
             Reviewed expected = reviewed.get();
             require(expected != null && expected.removed.isDone() && !expected.removed.isCompletedExceptionally(), "HTTP image preceded actual host removal");
             require(expected.revision.equals(originalRevision) && expected.windowId == originalWindowId, "Reviewed target identity changed");
@@ -82,6 +90,7 @@ final class NativeWindowTaskScript implements LocalVisionProbeServer.WindowTaskR
             require(deviceImages.incrementAndGet() == 1, "Device image repeated");
             return tool("observe", "native-window-following-observe", new JsonObject());
         }
+        require(!decline, "A declined image task must stop without another model request");
         require(round == 3 && deviceImages.get() == 1 && image == null, "Image persisted or unexpected task round");
         require(!request.toString().contains("data:image/") && !request.toString().contains("imageDataUrl"), "Encoded image leaked into history");
         imageFreeFollowingRequests.incrementAndGet();

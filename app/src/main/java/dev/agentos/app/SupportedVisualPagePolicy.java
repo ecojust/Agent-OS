@@ -67,9 +67,22 @@ final class SupportedVisualPagePolicy {
         UNKNOWN_CONTENT, INVALID_KEYPAD, UNSUPPORTED_FORMAT
     }
 
+    /** Fixed technical tags from the same rejected snapshot; never UI text or coordinates. */
+    enum GeometryDetail {
+        MISSING_OR_EMPTY_BOUNDS, WINDOW_DISPLAY_MISMATCH, ROOT_WINDOW_MISMATCH,
+        INVALID_SAFE_CONTENT, NON_PORTRAIT_WINDOW, INVALID_WINDOW_ID, NON_DEFAULT_DISPLAY,
+        NON_APPLICATION_WINDOW, UNSUPPORTED_ROTATION, VISIBLE_NODE_EMPTY, VISIBLE_NODE_OUTSIDE_WINDOW
+    }
+
     static final class Rejected extends Exception {
         final Reason reason;
-        private Rejected(Reason reason) { super("Unsupported visual page: " + reason); this.reason = reason; }
+        final GeometryDetail geometryDetail;
+        private Rejected(Reason reason) { this(reason, null); }
+        private Rejected(Reason reason, GeometryDetail detail) {
+            super("Unsupported visual page: " + reason + (detail == null ? "" : "/" + detail.name()));
+            this.reason = reason; this.geometryDetail = detail;
+        }
+        String diagnosticCode() { return reason.name() + (geometryDetail == null ? "" : "/" + geometryDetail.name()); }
     }
 
     /** No path, certificate array, node, user display text or mutable platform object escapes. */
@@ -191,7 +204,8 @@ final class SupportedVisualPagePolicy {
                     || !same(node.getPackageName(), PACKAGE_NAME)) throw rejected(Reason.INCOMPLETE_SNAPSHOT);
             visibleCount++;
             Node item = new Node(node, path);
-            if (item.box.isEmpty() || !snapshot.windowBounds().contains(item.box)) throw rejected(Reason.UNSUPPORTED_GEOMETRY);
+            if (item.box.isEmpty()) throw geometryRejected(GeometryDetail.VISIBLE_NODE_EMPTY);
+            if (!snapshot.windowBounds().contains(item.box)) throw geometryRejected(GeometryDetail.VISIBLE_NODE_OUTSIDE_WINDOW);
             if (!empty(node.getError()) || !empty(node.getHintText()) || !empty(node.getPaneTitle())
                     || !empty(node.getStateDescription())) throw rejected(Reason.UNKNOWN_CONTENT);
             if (item.id.equals(PREFIX + "formula") || item.id.equals(PREFIX + "result")) {
@@ -258,13 +272,19 @@ final class SupportedVisualPagePolicy {
 
     private static void requireGeometry(SnapshotView snapshot) throws Rejected {
         Rect window = snapshot.windowBounds(), root = snapshot.rootBounds(), safe = snapshot.safeContent(), display = snapshot.displayBounds();
-        if (window == null || root == null || safe == null || display == null || window.isEmpty()
-                || !window.equals(display) || !root.equals(window) || safe.isEmpty() || !window.contains(safe)
-                || window.width() >= window.height() || snapshot.windowId() < 0
-                || snapshot.displayId() != Display.DEFAULT_DISPLAY
-                || snapshot.windowType() != AccessibilityWindowInfo.TYPE_APPLICATION
-                || (snapshot.rotation() != Surface.ROTATION_0 && snapshot.rotation() != Surface.ROTATION_180))
-            throw rejected(Reason.UNSUPPORTED_GEOMETRY);
+        // Preserve the original predicate and short-circuit order. A fixed tag
+        // explains which original geometry condition refused this same snapshot.
+        if (window == null || root == null || safe == null || display == null || window.isEmpty())
+            throw geometryRejected(GeometryDetail.MISSING_OR_EMPTY_BOUNDS);
+        if (!window.equals(display)) throw geometryRejected(GeometryDetail.WINDOW_DISPLAY_MISMATCH);
+        if (!root.equals(window)) throw geometryRejected(GeometryDetail.ROOT_WINDOW_MISMATCH);
+        if (safe.isEmpty() || !window.contains(safe)) throw geometryRejected(GeometryDetail.INVALID_SAFE_CONTENT);
+        if (window.width() >= window.height()) throw geometryRejected(GeometryDetail.NON_PORTRAIT_WINDOW);
+        if (snapshot.windowId() < 0) throw geometryRejected(GeometryDetail.INVALID_WINDOW_ID);
+        if (snapshot.displayId() != Display.DEFAULT_DISPLAY) throw geometryRejected(GeometryDetail.NON_DEFAULT_DISPLAY);
+        if (snapshot.windowType() != AccessibilityWindowInfo.TYPE_APPLICATION) throw geometryRejected(GeometryDetail.NON_APPLICATION_WINDOW);
+        if (snapshot.rotation() != Surface.ROTATION_0 && snapshot.rotation() != Surface.ROTATION_180)
+            throw geometryRejected(GeometryDetail.UNSUPPORTED_ROTATION);
     }
 
     private static void requireNativeText(Node item, Rect safe) throws Rejected {
@@ -565,4 +585,5 @@ final class SupportedVisualPagePolicy {
         if (Looper.myLooper() == Looper.getMainLooper()) throw rejected(Reason.WRONG_THREAD);
     }
     private static Rejected rejected(Reason reason) { return new Rejected(reason); }
+    private static Rejected geometryRejected(GeometryDetail detail) { return new Rejected(Reason.UNSUPPORTED_GEOMETRY, detail); }
 }

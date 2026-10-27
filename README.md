@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Preserve the explicit failure:null field in successful walkthrough reports so strict evidence validation can read them. Verified with the actual Gson library and rebuilt the test APK. This fixes report serialization only; the recording failure is still being diagnosed from its original evidence.
+**本次更新：** Report fixed geometry rejection details from the original screenshot validation without changing its conditions. Native test diagnostics retain planning geometry and a separately labeled later sample, and no longer mask pre-review errors in rejection cases. Acceptance APK/test/lint pass; previous actual results remain 4/8.
 
-**记录时间：** 2026-10-27T14:27:58Z
+**记录时间：** 2026-10-27T14:31:24Z
 
 [最近测试截图与清单](screenshots/40518542706-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40518542706)。通过、失败及未截图原因见清单。
 

@@ -256,7 +256,7 @@ public final class AndroidDeviceTools implements ToolHandler {
                     "重新观察支持页面，或由用户接管"));
         } catch (SupportedVisualPagePolicy.Rejected unsupported) {
             requireCurrentConfiguration(owner, original.executionEpoch);
-            return LocalToolResult.metadata(error("CAPABILITY_UNAVAILABLE", "当前页面不支持图片观察：" + unsupported.reason.name(),
+            return LocalToolResult.metadata(error("CAPABILITY_UNAVAILABLE", "当前页面不支持图片观察：" + unsupported.diagnosticCode(),
                     "继续结构化操作，或由用户接管"));
         } catch (WindowBufferCapturer.CaptureException capture) {
             return LocalToolResult.metadata(error("CAPABILITY_UNAVAILABLE", "窗口截图失败：" + capture.code.name(), "由用户检查截图能力或接管"));

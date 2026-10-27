@@ -36,11 +36,27 @@ public final class ImageWorkset {
     /** Only the owner that obtained this token may release its capacity. */
     public static final class Reservation implements AutoCloseable {
         private final ImageWorkset owner;
-        private final long bytes;
+        private long bytes;
         private boolean closed;
 
         private Reservation(ImageWorkset owner, long bytes) { this.owner = owner; this.bytes = bytes; }
-        public long bytes() { return bytes; }
+        public long bytes() { synchronized (owner) { return bytes; } }
+
+        /**
+         * Reduces a conservative reservation after its actual known capacity has
+         * been verified. This changes accounting only: it neither resizes nor
+         * erases a buffer, and says nothing about native stride or GPU memory.
+         * A released token cannot be revived and a live token cannot grow.
+         */
+        public void reduceTo(long nextBytes) {
+            synchronized (owner) {
+                if (closed) throw new IllegalStateException("Image payload reservation has been released.");
+                if (nextBytes <= 0 || nextBytes > bytes)
+                    throw new IllegalArgumentException("Image payload reservation may only reduce to a positive capacity.");
+                owner.reserved -= bytes - nextBytes;
+                bytes = nextBytes;
+            }
+        }
 
         @Override public void close() {
             synchronized (owner) {

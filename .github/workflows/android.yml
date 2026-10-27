@@ -10,7 +10,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: android-${{ github.workflow }}-${{ github.ref }}
+  # Explicit manual verification must not cancel an older run before evidence collection.
+  group: ${{ github.event_name == 'workflow_dispatch' && format('android-manual-{0}', github.run_id) || format('android-{0}-{1}', github.workflow, github.ref) }}
   cancel-in-progress: true
 
 jobs:

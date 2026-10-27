@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-27T07:01:42Z",
-  "note": "核心按执行代次取消模块完成：旧检查不能取消恢复后的任务，取消钩子在锁外执行，在途系统调用仍由原线程结算。新增6项回归，完整核心229项实跑通过；Android接线在下一模块进行，最新设备基线仍为第三十五轮。",
+  "updated_at": "2026-10-27T07:05:14Z",
+  "note": "内部捕获前置许可模块完成：真实配置、原任务和完整窗口绑定，固定期限、单次尝试与提交前新鲜校验；共享取消限定原代次。主程序、仪器测试和lint通过，9项新增设备回归待八档验证，生产截图权限及工具保持关闭。",
   "latest_evidence": {
     "path": "screenshots/40462539231-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40462539231"
@@ -62,7 +62,7 @@
     {
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
-      "status": "complete",
+      "status": "in_progress",
       "evidence": "screenshots/40462539231-1/manifest.json",
       "scope": "Eight x86_64 emulator API baselines at source 87c3a63d8675ac8b9f5e8c368eff6693d82ce519 with system animations at 1.0 and synthetic fixtures; not physical-device, third-party-app or performance acceptance. Test-only window capture passed on API34–37; API30–33 correctly unavailable. Production visual tools remain disabled; historical window discrepancies remain under investigation."
     },

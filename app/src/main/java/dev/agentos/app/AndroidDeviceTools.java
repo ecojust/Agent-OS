@@ -43,11 +43,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 
 /** A scoped Android adapter. It never treats an accepted dispatch as task completion. */
@@ -62,6 +64,7 @@ public final class AndroidDeviceTools implements ToolHandler {
 
     private static final int MAX_NODES = 300, MAX_FIELD = 160, MAX_BYTES = 64 * 1024;
     private static final long MAIN_TIMEOUT_MS = 5000;
+    private static final long CAPTURE_PERMIT_MS = 5000;
     private final AgentAccessibilityService service;
     private final Set<String> allowedPackages;
     private final Map<String, SettingsStore.AppGrant> grants = new LinkedHashMap<>();
@@ -69,9 +72,11 @@ public final class AndroidDeviceTools implements ToolHandler {
     private final ApprovalGate approvalGate;
     private final ActionConfirmationPolicy confirmationPolicy;
     private final BooleanSupplier configurationCurrent;
+    private final SettingsStore.ConfigurationLease configurationLease;
     private final Handler main = new Handler(Looper.getMainLooper());
     private String lastObservedRevision;
     private long lastObservedEpoch = -1;
+    private RunControl lastObservedControl;
     private ObservedBlockers lastObservedBlockers;
     private CoordinateNodeResolver.Binding lastObservedCoordinateBinding;
     private boolean denied;
@@ -81,7 +86,7 @@ public final class AndroidDeviceTools implements ToolHandler {
                               ActionConfirmationPolicy.Mode executionMode, SettingsStore.ConfigurationLease configurationLease,
                               ApprovalGate gate) throws IOException {
         this(service, packages, approvedGrants, executionMode,
-                boundConfiguration(service, configurationLease), gate);
+                boundConfiguration(service, configurationLease), configurationLease, gate);
     }
 
     /** Dedicated fixture entry point; every test must supply its configuration guard explicitly. */
@@ -99,7 +104,7 @@ public final class AndroidDeviceTools implements ToolHandler {
                                         ActionConfirmationPolicy.Mode executionMode, BooleanSupplier configurationCurrent,
                                         ApprovalGate gate) throws IOException {
         return new AndroidDeviceTools(service, packages, approvedGrants, executionMode,
-                Objects.requireNonNull(configurationCurrent), gate);
+                Objects.requireNonNull(configurationCurrent), null, gate);
     }
 
     private static BooleanSupplier boundConfiguration(AgentAccessibilityService service,
@@ -114,7 +119,7 @@ public final class AndroidDeviceTools implements ToolHandler {
     private AndroidDeviceTools(AgentAccessibilityService service, Set<String> packages,
                                Map<String, SettingsStore.AppGrant> approvedGrants,
                                ActionConfirmationPolicy.Mode executionMode, BooleanSupplier configurationCurrent,
-                               ApprovalGate gate) throws IOException {
+                               SettingsStore.ConfigurationLease configurationLease, ApprovalGate gate) throws IOException {
         if (service == null) throw new IllegalArgumentException("请先开启 Agent 无障碍服务");
         this.service = service;
         SettingsStore.requirePersonalProfile(service);
@@ -129,6 +134,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         approvalGate = gate;
         confirmationPolicy = new ActionConfirmationPolicy(executionMode);
         this.configurationCurrent = Objects.requireNonNull(configurationCurrent);
+        this.configurationLease = configurationLease;
         service.watchPackages(allowedPackages);
     }
 
@@ -253,9 +259,214 @@ public final class AndroidDeviceTools implements ToolHandler {
         if (!service.isOwnedControlWindowCurrent(controlWindow)) throw stale();
         lastObservedRevision = result.getAsJsonObject("data").get("revision").getAsString();
         lastObservedEpoch = epoch;
+        lastObservedControl = control;
         lastObservedBlockers = blockers;
         lastObservedCoordinateBinding = coordinateBinding;
         return result;
+    }
+
+    /** Internal preconditions only: neither a native capture nor permission to disclose pixels. */
+    enum WindowCaptureFailure {
+        UNSUPPORTED_API, REAL_CONFIGURATION_REQUIRED, INVALID_ARGUMENT, WRONG_OWNER,
+        STALE_OBSERVATION, DEVICE_BUSY, EXPIRED, ALREADY_USED, UNAUTHORIZED_APP,
+        INCOMPLETE_OBSERVATION, SENSITIVE_CONTENT, HIGH_IMPACT_CONTENT, OCCLUDED,
+        UNSUPPORTED_GEOMETRY, CONTROL_CHANGED, SERVICE_UNAVAILABLE, INTERNAL_CHECK_FAILED
+    }
+
+    static final class WindowCaptureException extends Exception {
+        final WindowCaptureFailure code;
+        private WindowCaptureException(WindowCaptureFailure code, String message) { super(message); this.code = code; }
+        private WindowCaptureException(WindowCaptureFailure code, Throwable cause) {
+            super("Internal window capture precondition failed: " + code, cause); this.code = code;
+        }
+    }
+
+    @FunctionalInterface interface WindowCaptureSubmission { void submit(int windowId) throws Exception; }
+
+    /** No nodes, page content, mutable geometry, or externally constructible authorization. */
+    static final class WindowCapturePermit {
+        final String captureId = UUID.randomUUID().toString();
+        final String taskId, profileId, configurationToken, packageName, revision;
+        final long executionEpoch, deadlineElapsedRealtimeMs, firstInstallTime;
+        final int windowId, displayId, windowType, rotation, uid;
+        private final AndroidDeviceTools adapter;
+        private final RunControl control;
+        private final AgentAccessibilityService service;
+        private final SettingsStore.ConfigurationLease configuration;
+        private final SettingsStore.AppGrant grant;
+        private final AgentAccessibilityService.OwnedControlWindowIdentity controlWindow;
+        private final AgentAccessibilityService.ControlLease controls;
+        private final String windowSignature;
+        private final Rect windowBounds, rootBounds, safeContent;
+        private final AtomicBoolean attempted = new AtomicBoolean();
+        private volatile boolean submissionClaimed;
+
+        private WindowCapturePermit(AndroidDeviceTools adapter, RunControl control, long epoch,
+                                    long deadline, Snapshot state, AgentAccessibilityService.ControlLease controls) {
+            this.adapter = adapter; this.control = control; this.service = adapter.service;
+            configuration = adapter.configurationLease; grant = adapter.grants.get(state.packageName);
+            taskId = control.getTaskId(); profileId = control.getProfileId(); executionEpoch = epoch;
+            configurationToken = configuration.configurationToken;
+            packageName = state.packageName; revision = state.revision;
+            windowId = state.windowId; displayId = state.displayId; windowType = state.windowType;
+            rotation = state.rotation; uid = grant.uid; firstInstallTime = grant.firstInstallTime;
+            deadlineElapsedRealtimeMs = deadline; windowSignature = state.windowSignature;
+            windowBounds = new Rect(state.activeWindowBounds); rootBounds = new Rect(state.rootBounds);
+            safeContent = new Rect(state.safeContent); controlWindow = state.controlWindow; this.controls = controls;
+        }
+        Rect copyWindowBounds() { return new Rect(windowBounds); }
+        Rect copyRootBounds() { return new Rect(rootBounds); }
+        Rect copySafeContent() { return new Rect(safeContent); }
+        boolean isAttempted() { return attempted.get(); }
+        boolean isSubmissionClaimed() { return submissionClaimed; }
+    }
+
+    WindowCapturePermit prepareWindowCapture(RunControl control, long fixedEpoch, String expectedRevision) throws Exception {
+        long deadline = SystemClock.elapsedRealtime() + CAPTURE_PERMIT_MS;
+        requireCaptureEntry(control, expectedRevision);
+        if (!service.tryBeginDeviceCall()) throw captureFailure(WindowCaptureFailure.DEVICE_BUSY);
+        try {
+            requireCaptureObservation(control, fixedEpoch, expectedRevision);
+            requireCaptureContext(control, fixedEpoch, deadline);
+            AgentAccessibilityService.ControlLease controls = acquireCaptureControls(control, fixedEpoch, deadline);
+            // Reuse the real profile/unlocked-device guard before reading any
+            // target tree, as well as again immediately before admitting capture.
+            finalGuard(control, fixedEpoch, controls);
+            requireCaptureContext(control, fixedEpoch, deadline);
+            try (Snapshot state = snapshot(control, fixedEpoch, PerformanceTrace.Stage.SNAPSHOT_OBSERVE)) {
+                requireCaptureState(state);
+                state.requireRevision(expectedRevision);
+                validateInstalledGrant(state.packageName);
+                requireFastGrant(state.packageName);
+                state.verifyWindowUnchanged();
+                requireCaptureState(state);
+                requireCaptureControls(state.controlWindow, controls);
+                finalGuard(control, fixedEpoch, controls);
+                requireCaptureContext(control, fixedEpoch, deadline);
+                requireCaptureControls(state.controlWindow, controls);
+                return new WindowCapturePermit(this, control, fixedEpoch, deadline, state, controls);
+            }
+        } catch (DeviceException rejected) { throw captureFailure(rejected); }
+        finally { service.endDeviceCall(); }
+    }
+
+    void submitWindowCapture(WindowCapturePermit permit, RunControl sameControl, long sameEpoch,
+                             WindowCaptureSubmission backend) throws Exception {
+        if (permit == null) throw captureFailure(WindowCaptureFailure.INVALID_ARGUMENT);
+        // A foreign adapter/task must not burn another owner's unused permit or
+        // cancel its current task. Only the original binding can start an attempt.
+        if (permit.adapter != this || permit.control != sameControl || permit.executionEpoch != sameEpoch
+                || permit.service != service || permit.configuration != configurationLease
+                || configurationLease == null) throw captureFailure(WindowCaptureFailure.WRONG_OWNER);
+        if (!permit.attempted.compareAndSet(false, true)) throw captureFailure(WindowCaptureFailure.ALREADY_USED);
+        requireCaptureEntry(sameControl, permit.revision);
+        if (backend == null) throw captureFailure(WindowCaptureFailure.INVALID_ARGUMENT);
+        if (!service.tryBeginDeviceCall()) throw captureFailure(WindowCaptureFailure.DEVICE_BUSY);
+        try {
+            requireCaptureObservation(sameControl, sameEpoch, permit.revision);
+            requireCaptureContext(sameControl, sameEpoch, permit.deadlineElapsedRealtimeMs);
+            requireCaptureControls(permit.controlWindow, permit.controls);
+            finalGuard(sameControl, sameEpoch, permit.controls);
+            requireCaptureContext(sameControl, sameEpoch, permit.deadlineElapsedRealtimeMs);
+            try (Snapshot state = snapshot(sameControl, sameEpoch, PerformanceTrace.Stage.SNAPSHOT_OBSERVE)) {
+                // Reject a changed target as a stale permit before classifying
+                // the newly focused page. This still never skips content checks.
+                if (!permit.revision.equals(state.revision)) throw captureFailure(WindowCaptureFailure.STALE_OBSERVATION);
+                state.requireRevision(permit.revision);
+                requireCaptureMatch(permit, state);
+                requireCaptureState(state);
+                validateInstalledGrant(state.packageName);
+                requireFastGrant(state.packageName);
+                state.verifyWindowUnchanged();
+                requireCaptureState(state);
+                requireCaptureMatch(permit, state);
+                requireCaptureControls(permit.controlWindow, permit.controls);
+                finalGuard(sameControl, sameEpoch, permit.controls);
+                // Slow platform checks cannot extend the original five-second
+                // lease. Re-read only the original task/configuration here.
+                requireCaptureContext(sameControl, sameEpoch, permit.deadlineElapsedRealtimeMs);
+                requireCaptureControls(permit.controlWindow, permit.controls);
+                permit.submissionClaimed = true;
+                // This is a local internal submission seam, not a public tool.
+                // The same worker owns the device gate until submit actually
+                // returns, including cancellation and synchronous exceptions.
+                backend.submit(permit.windowId);
+            }
+        } catch (DeviceException rejected) { throw captureFailure(rejected); }
+        finally { service.endDeviceCall(); }
+    }
+
+    private void requireCaptureEntry(RunControl control, String expectedRevision) throws WindowCaptureException {
+        if (Build.VERSION.SDK_INT < 34) throw captureFailure(WindowCaptureFailure.UNSUPPORTED_API);
+        if (Looper.myLooper() == Looper.getMainLooper() || control == null || expectedRevision == null || expectedRevision.isEmpty())
+            throw captureFailure(WindowCaptureFailure.INVALID_ARGUMENT);
+        if (configurationLease == null) throw captureFailure(WindowCaptureFailure.REAL_CONFIGURATION_REQUIRED);
+    }
+
+    private void requireCaptureObservation(RunControl control, long epoch, String revision) throws WindowCaptureException {
+        if (lastObservedControl != null && lastObservedControl != control) throw captureFailure(WindowCaptureFailure.WRONG_OWNER);
+        if (lastObservedControl == null || lastObservedEpoch != epoch || !revision.equals(lastObservedRevision))
+            throw captureFailure(WindowCaptureFailure.STALE_OBSERVATION);
+    }
+
+    private void requireCaptureContext(RunControl control, long epoch, long deadline) throws Exception {
+        requireCurrentConfiguration(control, epoch);
+        if (!SettingsStore.isCurrent(configurationLease)) cancelOriginal(control, epoch);
+        if (!profileId.equals(control.getProfileId()) || !configurationLease.profileId.equals(profileId))
+            throw captureFailure(WindowCaptureFailure.WRONG_OWNER);
+        if (SystemClock.elapsedRealtime() >= deadline) throw captureFailure(WindowCaptureFailure.EXPIRED);
+        if (!service.isConnected()) throw captureFailure(WindowCaptureFailure.SERVICE_UNAVAILABLE);
+    }
+
+    private AgentAccessibilityService.ControlLease acquireCaptureControls(RunControl control, long epoch, long deadline) throws Exception {
+        requireCaptureContext(control, epoch, deadline);
+        CompletableFuture<AgentAccessibilityService.ControlLease> result = service.acquireControlLease();
+        try { return await(result, control, epoch, Math.max(1, deadline - SystemClock.elapsedRealtime())); }
+        finally { result.cancel(false); }
+    }
+
+    private void requireCaptureControls(AgentAccessibilityService.OwnedControlWindowIdentity identity,
+                                        AgentAccessibilityService.ControlLease controls) throws WindowCaptureException {
+        if (!service.isOwnedControlWindowCurrent(identity) || !service.isControlLeaseCurrent(controls)
+                || controls.windowId != identity.windowId || controls.displayId != identity.displayId
+                || !controls.copyBounds().equals(identity.copyBounds())) throw captureFailure(WindowCaptureFailure.CONTROL_CHANGED);
+    }
+
+    private void requireCaptureState(Snapshot state) throws WindowCaptureException {
+        if (!state.scoped) throw captureFailure(WindowCaptureFailure.UNAUTHORIZED_APP);
+        if (state.truncated) throw captureFailure(WindowCaptureFailure.INCOMPLETE_OBSERVATION);
+        if (state.password) throw captureFailure(WindowCaptureFailure.SENSITIVE_CONTENT);
+        if (state.highImpactScreen) throw captureFailure(WindowCaptureFailure.HIGH_IMPACT_CONTENT);
+        if (!state.obscured.isEmpty()) throw captureFailure(WindowCaptureFailure.OCCLUDED);
+        if (state.displayId != Display.DEFAULT_DISPLAY || state.windowType != AccessibilityWindowInfo.TYPE_APPLICATION
+                || state.ambiguousCaptureFocus || state.activeWindowBounds.isEmpty() || state.rootBounds.isEmpty()
+                || !state.rootBounds.contains(state.activeWindowBounds) || state.safeContent.isEmpty())
+            throw captureFailure(WindowCaptureFailure.UNSUPPORTED_GEOMETRY);
+    }
+
+    private void requireCaptureMatch(WindowCapturePermit permit, Snapshot state) throws WindowCaptureException {
+        if (permit.controlWindow != state.controlWindow) throw captureFailure(WindowCaptureFailure.CONTROL_CHANGED);
+        if (!permit.packageName.equals(state.packageName) || permit.grant != grants.get(state.packageName))
+            throw captureFailure(WindowCaptureFailure.UNAUTHORIZED_APP);
+        if (permit.windowId != state.windowId || permit.displayId != state.displayId || permit.windowType != state.windowType
+                || permit.rotation != state.rotation || !permit.windowSignature.equals(state.windowSignature)
+                || !permit.windowBounds.equals(state.activeWindowBounds) || !permit.rootBounds.equals(state.rootBounds)
+                || !permit.safeContent.equals(state.safeContent)) throw captureFailure(WindowCaptureFailure.STALE_OBSERVATION);
+    }
+
+    private static WindowCaptureException captureFailure(WindowCaptureFailure reason) {
+        return new WindowCaptureException(reason, "Internal window capture precondition failed: " + reason);
+    }
+    private static WindowCaptureException captureFailure(DeviceException cause) {
+        WindowCaptureFailure code;
+        switch (cause.code) {
+            case "STALE_OBSERVATION": code = WindowCaptureFailure.STALE_OBSERVATION; break;
+            case "PERMISSION_DENIED": code = WindowCaptureFailure.UNAUTHORIZED_APP; break;
+            case "TIMEOUT": code = WindowCaptureFailure.EXPIRED; break;
+            case "CAPABILITY_UNAVAILABLE": code = WindowCaptureFailure.SERVICE_UNAVAILABLE; break;
+            default: code = WindowCaptureFailure.INTERNAL_CHECK_FAILED;
+        }
+        return new WindowCaptureException(code, cause);
     }
 
     private JsonObject resolveNodeAt(JsonObject args, RunControl control, long epoch) throws Exception {
@@ -671,9 +882,15 @@ public final class AndroidDeviceTools implements ToolHandler {
         // This is a volatile in-memory lease check, not a disk read or a controller
         // callback. Publishing invalidation must suffice before listeners execute.
         if (!configurationCurrent.getAsBoolean()) {
-            control.cancel();
-            control.checkCancelled();
+            cancelOriginal(control, epoch);
         }
+    }
+
+    private static void cancelOriginal(RunControl control, long epoch) throws InterruptedException {
+        // The atomic transition releases RunControl's monitor before any cancel
+        // hook runs. An old request must never cancel a later resumed generation.
+        control.cancelIfExecutionEpoch(epoch);
+        control.checkExecutionEpoch(epoch);
     }
 
     private void requireReady(RunControl control, long epoch) throws Exception {
@@ -681,10 +898,10 @@ public final class AndroidDeviceTools implements ToolHandler {
         boolean personal;
         try { SettingsStore.requirePersonalProfile(service); personal = true; } catch (IllegalStateException wrongProfile) { personal = false; }
         if (!personal || !profileId.equals(SettingsStore.currentProfileId(service)) || !profileId.equals(control.getProfileId())) {
-            control.cancel(); control.checkCancelled();
+            cancelOriginal(control, epoch);
         }
-        if (!service.isConnected() || !service.isDeviceReady()) { control.cancel(); control.checkCancelled(); }
-        if (!service.isControlAvailable()) { control.cancel(); control.checkCancelled(); }
+        if (!service.isConnected() || !service.isDeviceReady()) cancelOriginal(control, epoch);
+        if (!service.isControlAvailable()) cancelOriginal(control, epoch);
     }
 
     private void finalGuard(RunControl control, long epoch, AgentAccessibilityService.ControlLease controls) throws Exception {
@@ -692,10 +909,10 @@ public final class AndroidDeviceTools implements ToolHandler {
         // control geometry crossing threads; never inspect an Android View here.
         requireCurrentConfiguration(control, epoch);
         try { SettingsStore.requirePersonalProfile(service); }
-        catch (IllegalStateException wrongProfile) { control.cancel(); control.checkCancelled(); }
+        catch (IllegalStateException wrongProfile) { cancelOriginal(control, epoch); }
         if (!profileId.equals(SettingsStore.currentProfileId(service)) || !profileId.equals(control.getProfileId())
                 || !service.isConnected() || !service.isDeviceReady()) {
-            control.cancel(); control.checkCancelled();
+            cancelOriginal(control, epoch);
         }
         if (!service.isControlLeaseCurrent(controls)) throw stale();
         requireCurrentConfiguration(control, epoch);
@@ -737,6 +954,7 @@ public final class AndroidDeviceTools implements ToolHandler {
             state.packageName = root.getPackageName() == null ? "" : root.getPackageName().toString();
             state.scoped = allowedPackages.contains(state.packageName) && !state.packageName.equals(service.getPackageName());
             root.getBoundsInScreen(state.bounds);
+            state.rootBounds.set(state.bounds);
             state.windowId = root.getWindowId();
             state.inspectWindows();
             if (state.scoped) {
@@ -816,9 +1034,11 @@ public final class AndroidDeviceTools implements ToolHandler {
         final boolean readOnlyObservation;
         final AgentAccessibilityService.OwnedControlWindowIdentity controlWindow;
         String packageName, revision, windowSignature = "";
-        int windowId, displayId = -1, windowType = -1;
-        boolean scoped, password, truncated, highImpactScreen;
+        int windowId, displayId = -1, windowType = -1, rotation = -1;
+        boolean scoped, password, truncated, highImpactScreen, ambiguousCaptureFocus;
         final Rect bounds = new Rect();
+        final Rect rootBounds = new Rect();
+        final Rect activeWindowBounds = new Rect();
         final Rect safeContent = new Rect();
         final List<Rect> systemBars = new ArrayList<>();
         final List<Rect> obscured = new ArrayList<>();
@@ -851,6 +1071,10 @@ public final class AndroidDeviceTools implements ToolHandler {
                 obscured.clear();
                 systemBars.clear();
                 Rect activeBounds = new Rect(); active.getBoundsInScreen(activeBounds);
+                activeWindowBounds.set(activeBounds);
+                int focusedCount = 0;
+                for (AccessibilityWindowInfo window : windows) if (window.isFocused()) focusedCount++;
+                ambiguousCaptureFocus = focusedCount != 1;
                 // A newly focused application may still report a zero-sized window
                 // during entry animation. Publish nothing; only observe may use the
                 // runner's existing bounded refresh. Write validation stays unchanged.
@@ -870,7 +1094,8 @@ public final class AndroidDeviceTools implements ToolHandler {
                         displayBounds.right - safe.right, displayBounds.bottom - safe.bottom);
                 if (!safeContent.intersect(bounds) || safeContent.isEmpty()) throw unavailable("应用没有可验证的安全内容区域");
                 signature.append(":safe=").append(safeContent.toShortString());
-                signature.append(':').append(wm.getDefaultDisplay().getRotation());
+                rotation = wm.getDefaultDisplay().getRotation();
+                signature.append(':').append(rotation);
                 for (AccessibilityWindowInfo window : windows) {
                     requireCurrentConfiguration(control, epoch);
                     if (window.getId() == windowId || window.getLayer() <= active.getLayer()) continue;

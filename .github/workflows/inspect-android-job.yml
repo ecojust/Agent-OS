@@ -75,7 +75,8 @@ jobs:
           # Keep diagnostics available through the GitHub Checks API when the
           # artifact/log storage endpoint is unavailable to a local developer.
           text = (Path(os.environ['RUNNER_TEMP']) / 'inspection-summary.txt').read_text()[:64000]
-          for index, start in enumerate(range(0, len(text), 8000), 1):
-              message = text[start:start + 8000].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+          # Checks truncates long annotations; keep each diagnostic chunk below its limit.
+          for index, start in enumerate(range(0, len(text), 1800), 1):
+              message = text[start:start + 1800].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
               print(f'::notice title=Android job diagnostic {index}::{message}')
           PY

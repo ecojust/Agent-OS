@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "kind": "third-party-calculator-smoke",
+  "actualInstalledIdentityVerified": true,
+  "installedIdentityFailureSeen": false,
+  "states": [
+    {
+      "state": "off",
+      "status": "failed",
+      "stage": "service_preparation",
+      "installedIdentityVerified": true,
+      "serviceState": "unknown",
+      "serviceObservations": [],
+      "serviceActionObservations": [],
+      "steps": [
+        {
+          "name": "installed_identity",
+          "status": "passed",
+          "details": "PackageManager identity and installed APK digest match the frozen official release"
+        },
+        {
+          "name": "service_preparation",
+          "status": "failed",
+          "details": "PatternSyntaxException: Syntax error in regexp pattern near index 23\nattributes:\\{id=0(?:,|})\n                       ^"
+        },
+        {
+          "name": "restore_service_settings",
+          "status": "failed",
+          "details": "PatternSyntaxException: Syntax error in regexp pattern near index 23\nattributes:\\{id=0(?:,|})\n                       ^"
+        }
+      ],
+      "captures": [
+        {
+          "stage": "failure",
+          "capturedAt": 1793064925968,
+          "secureFlagsCleared": false,
+          "status": "blocked",
+          "reason": "unverified_identity_window_or_obscuration",
+          "detail": "Focused package is not the verified calculator"
+        }
+      ],
+      "result": {
+        "expected": "5",
+        "actual": null,
+        "resourceId": "org.fossify.math:id\/result"
+      },
+      "startedAt": 1793064925695,
+      "installedIdentity": {
+        "package": "org.fossify.math",
+        "versionName": "1.4.0",
+        "versionCode": "10",
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "apkSha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "uid": 10157
+      },
+      "error": "PatternSyntaxException: Syntax error in regexp pattern near index 23\nattributes:\\{id=0(?:,|})\n                       ^",
+      "cleanupError": "PatternSyntaxException: Syntax error in regexp pattern near index 23\nattributes:\\{id=0(?:,|})\n                       ^",
+      "finishedAt": 1793064926108
+    },
+    {
+      "state": "idle",
+      "status": "failed",
+      "stage": "service_preparation",
+      "installedIdentityVerified": true,
+      "serviceState": "unknown",
+      "serviceObservations": [],
+      "serviceActionObservations": [],
+      "steps": [
+        {
+          "name": "installed_identity",
+          "status": "passed",
+          "details": "PackageManager identity and installed APK digest match the frozen official release"
+        },
+        {
+          "name": "service_preparation",
+          "status": "failed",
+          "details": "PatternSyntaxException: Syntax error in regexp pattern near index 23\nattributes:\\{id=0(?:,|})\n                       ^"
+        },
+        {
+          "name": "restore_service_settings",
+          "status": "failed",
+          "details": "PatternSyntaxException: Syntax error in regexp pattern near index 23\nattributes:\\{id=0(?:,|})\n                       ^"
+        }
+      ],
+      "captures": [
+        {
+          "stage": "failure",
+          "capturedAt": 1793064925557,
+          "secureFlagsCleared": false,
+          "status": "blocked",
+          "reason": "unverified_identity_window_or_obscuration",
+          "detail": "Focused package is not the verified calculator"
+        }
+      ],
+      "result": {
+        "expected": "5",
+        "actual": null,
+        "resourceId": "org.fossify.math:id\/result"
+      },
+      "startedAt": 1793064925338,
+      "installedIdentity": {
+        "package": "org.fossify.math",
+        "versionName": "1.4.0",
+        "versionCode": "10",
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "apkSha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "uid": 10157
+      },
+      "error": "PatternSyntaxException: Syntax error in regexp pattern near index 23\nattributes:\\{id=0(?:,|})\n                       ^",
+      "cleanupError": "PatternSyntaxException: Syntax error in regexp pattern near index 23\nattributes:\\{id=0(?:,|})\n                       ^",
+      "finishedAt": 1793064925681
+    }
+  ],
+  "updatedAt": 1793064926108,
+  "source": {
+    "sha": "47b75ca119bc25328c9c1b7880e528f2059de29b",
+    "runId": "40433090988",
+    "attempt": "1",
+    "expectedApi": "37",
+    "deviceSerial": "emulator-5554"
+  },
+  "device": {
+    "sdkInt": 37,
+    "fingerprint": "Android\/sdk_phone64_x86_64\/emu64x:17\/CE2A.260420.051.A3\/16571990:userdebug\/test-keys",
+    "kernelQemu": "1",
+    "bootQemu": "1",
+    "kind": "emulator",
+    "abi": "[x86_64]"
+  },
+  "dedicatedEmulatorVerified": true
+}

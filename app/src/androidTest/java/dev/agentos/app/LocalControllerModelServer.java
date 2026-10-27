@@ -38,10 +38,11 @@ final class LocalControllerModelServer implements AutoCloseable {
     private volatile String protocolStage = "listening";
     private volatile String safeObservation = "not observed";
     private volatile String safeToolResults = "none";
-    private int phase;
-    private int refreshes;
-    private String pendingWriteCallId;
-    private boolean pendingWriteAccepted;
+    private volatile int lastReceivedRequestRound;
+    private volatile int phase;
+    private volatile int refreshes;
+    private volatile String pendingWriteCallId;
+    private volatile boolean pendingWriteAccepted;
     private volatile int writePlans;
     private volatile int acceptedWrites;
     private volatile int staleReplans;
@@ -76,6 +77,22 @@ final class LocalControllerModelServer implements AutoCloseable {
     int acceptedWriteCount() { return acceptedWrites; }
     String expectedHomePackage() { return expectedHomePackage; }
     String observedHomePackage() { return observedHomePackage; }
+
+    /** Read-only, bounded synthetic diagnostics; no request body, UI text, or credentials. */
+    String safeDiagnostics() {
+        String value = "server={snapshot=best-effort,scope=received-requests-only,"
+                + "finalExecutionResultMayBeAbsent=true,stage=" + protocolStage
+                + ",phase=" + phaseName() + ",requests=" + requests.get()
+                + ",lastReceivedRequestRound=" + lastReceivedRequestRound
+                + ",writePlans=" + writePlans + ",acceptedWrites=" + acceptedWrites
+                + ",staleReplans=" + staleReplans + ",refreshes=" + refreshes
+                + ",pendingWrite=" + (pendingWriteCallId != null)
+                + ",pendingWriteAccepted=" + pendingWriteAccepted
+                + ",finalStateObserved=" + finalStateObserved
+                + ",protocolFailed=" + (failure != null) + "}\n"
+                + "receivedObservation=" + safeObservation + "\nreceivedToolResults=" + safeToolResults;
+        return value.length() <= 4000 ? value : value.substring(0, 4000) + " [capped]";
+    }
 
     void assertHealthy() {
         Throwable problem = failure;
@@ -166,6 +183,7 @@ final class LocalControllerModelServer implements AutoCloseable {
         JsonObject observed = latestObservation(request);
         safeObservation = summarizeObservation(observed);
         safeToolResults = summarizeToolResults(request);
+        lastReceivedRequestRound = round;
         if (scenario == Scenario.CONTINUOUS_NAVIGATION) return navigationResponse(request, observed, round);
         require(DeviceHarness.FIXTURE.equals(observed.get("packageName").getAsString()), "Unexpected observed application");
         require(observed.get("scoped").getAsBoolean(), "Fixture was not actually authorized");
@@ -418,7 +436,8 @@ final class LocalControllerModelServer implements AutoCloseable {
         // model requests, Authorization headers, arbitrary UI text, or key material.
         StringBuilder result = new StringBuilder();
         for (String key : new String[]{"windowId", "focused", "scoped", "hasOcclusion", "truncated"}) {
-            result.append(key).append('=').append(observed.has(key) ? observed.get(key) : "missing").append(' ');
+            result.append(key).append('=').append("windowId".equals(key)
+                    ? diagnosticInteger(observed, key) : diagnosticBoolean(observed, key)).append(' ');
         }
         for (String id : new String[]{"edit_value", "saved_value", "counter_value"}) {
             result.append(id).append('{');
@@ -434,7 +453,7 @@ final class LocalControllerModelServer implements AutoCloseable {
                         : "[obscured]".equals(value) ? "obscured" : "other-length-" + value.length();
                 result.append("text=").append(classification);
                 for (String key : new String[]{"obscured", "enabled", "focused", "editable"}) {
-                    result.append(',').append(key).append('=').append(item.has(key) ? item.get(key) : "missing");
+                    result.append(',').append(key).append('=').append(diagnosticBoolean(item, key));
                 }
             } catch (IOException missing) { result.append("missing"); }
             result.append("} ");
@@ -453,17 +472,51 @@ final class LocalControllerModelServer implements AutoCloseable {
                 JsonObject tool = JsonParser.parseString(message.get("content").getAsString()).getAsJsonObject();
                 String callId = DeviceHarness.string(message, "tool_call_id");
                 result.append("{call=").append(callId.matches("script-round-[0-9]+(?:-wait|-observe)?") ? callId : "other");
-                result.append(",ok=").append(tool.has("ok") ? tool.get("ok") : "missing");
+                result.append(",ok=").append(diagnosticBoolean(tool, "ok"));
                 String code = DeviceHarness.string(tool, "code");
-                // Codes are protocol identifiers, never free-form error descriptions.
-                result.append(",code=").append(code.matches("[A-Z_]{0,80}") ? code : "nonstandard");
-                for (String flag : new String[]{"submitted", "accepted"}) {
-                    if (tool.has(flag)) result.append(',').append(flag).append('=').append(tool.get(flag).getAsBoolean());
+                result.append(",code=").append(diagnosticCode(code));
+                for (String flag : new String[]{"submitted", "accepted", "dispatchSubmitted", "dispatchAccepted"}) {
+                    result.append(',').append(flag).append('=').append(diagnosticBoolean(tool, flag));
                 }
                 result.append("} ");
             } catch (RuntimeException malformed) { result.append("{unreadable-result} "); }
         }
         return result.length() == 0 ? "none" : result.toString();
+    }
+
+    private static String diagnosticBoolean(JsonObject object, String key) {
+        JsonElement value = object.get(key);
+        if (value == null) return "missing";
+        if (value.isJsonNull()) return "null";
+        return value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean()
+                ? Boolean.toString(value.getAsBoolean()) : "invalid";
+    }
+
+    private static String diagnosticInteger(JsonObject object, String key) {
+        JsonElement value = object.get(key);
+        if (value == null) return "missing";
+        if (value.isJsonNull()) return "null";
+        if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) return "invalid";
+        String number = value.getAsString();
+        if (!number.matches("-?[0-9]{1,10}")) return "invalid";
+        long integer = Long.parseLong(number);
+        return integer >= Integer.MIN_VALUE && integer <= Integer.MAX_VALUE
+                ? Long.toString(integer) : "invalid";
+    }
+
+    private static String diagnosticCode(String code) {
+        switch (code) {
+            case "": return "none";
+            case "STALE_OBSERVATION": case "OUTCOME_UNKNOWN": case "PERMISSION_DENIED":
+            case "USER_DENIED": case "APPROVAL_REJECTED": case "APPROVAL_EXPIRED":
+            case "TASK_STOPPED": case "TASK_PAUSED": case "BUDGET_EXCEEDED":
+            case "INVALID_ARGUMENT": case "INVALID_RESULT": case "CAPABILITY_UNAVAILABLE":
+            case "DEVICE_ERROR": case "TIMEOUT": case "IN_PROGRESS": case "UNSUPPORTED_VERSION":
+            case "BLOCKED_TARGET": case "SENSITIVE_CONTENT": case "HIGH_IMPACT_CONTENT":
+            case "INCOMPLETE_OBSERVATION": case "CONFIGURATION_INVALID":
+                return code;
+            default: return "other";
+        }
     }
 
     private static String safeMessage(String message) {

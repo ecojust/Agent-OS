@@ -18,12 +18,16 @@ import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.*;
@@ -41,11 +45,11 @@ public final class AgentControllerInstrumentedTest {
              LocalControllerModelServer server = new LocalControllerModelServer(LocalControllerModelServer.Scenario.SAVE_AND_COUNT);
              ControllerTestSettings settings = new ControllerTestSettings(device.context, server)) {
             AgentController controller = AgentController.get(device.context);
+            Set<String> approved = new HashSet<>();
             try {
                 Rect input = inputBounds(device);
                 assertFalse("The input must be below the compact controls", controlsIntersect(device, input));
                 start(device, controller, settings, "Use the synthetic fixture to save the sample text and increment its counter once.");
-                Set<String> approved = new HashSet<>();
                 long deadline = SystemClock.elapsedRealtime() + 30_000;
                 while (controller.getState().running && SystemClock.elapsedRealtime() < deadline) {
                     server.assertHealthy();
@@ -82,7 +86,9 @@ public final class AgentControllerInstrumentedTest {
                 catch (Throwable evidenceFailure) { failure.addSuppressed(evidenceFailure); }
                 try { failure.addSuppressed(new AssertionError(DeviceHarness.windowDiagnostics())); }
                 catch (Throwable diagnosticFailure) { failure.addSuppressed(diagnosticFailure); }
-                throw failure;
+                // Instrumentation may omit suppressed exceptions from JUnit XML.
+                // Put only fixed classifications and safe protocol fields in its message.
+                throw new AssertionError(controllerFailureDiagnostic(controller, server, approved.size()), failure);
             } finally { clear(device, controller); }
         }
     }
@@ -100,6 +106,13 @@ public final class AgentControllerInstrumentedTest {
             assertEquals("edit_value-r2", retryArgs.get("nodeId").getAsString());
             assertEquals(2, server.writePlanCount());
             assertEquals(0, server.acceptedWriteCount());
+            String diagnostic = server.safeDiagnostics();
+            assertTrue(diagnostic.contains("lastReceivedRequestRound=2"));
+            assertTrue(diagnostic.contains("scope=received-requests-only"));
+            assertTrue(diagnostic.contains("finalExecutionResultMayBeAbsent=true"));
+            assertTrue(diagnostic.contains("code=STALE_OBSERVATION"));
+            assertTrue(diagnostic.contains("dispatchSubmitted=false,dispatchAccepted=false"));
+            assertFalse(diagnostic.contains(LocalControllerModelServer.SYNTHETIC_KEY));
 
             // An accepted action can take time to appear; an unchanged observation
             // permits bounded reads only, never another text or counter write.
@@ -175,6 +188,93 @@ public final class AgentControllerInstrumentedTest {
                 assertEquals(2, server.writePlanCount());
                 assertFalse(server.finalStateObserved());
             }
+        }
+
+        assertEquals("FAILED", controllerStatusClass("执行失败"));
+        assertEquals("OTHER", controllerStatusClass(LocalControllerModelServer.SYNTHETIC_KEY));
+        assertEquals("THREE_INVALID_TURNS", controllerSummaryClass("模型连续三轮未提供可执行的有效操作，任务已停止。"));
+        assertEquals("OTHER", controllerSummaryClass(LocalControllerModelServer.SYNTHETIC_KEY));
+        try (LocalControllerModelServer server = new LocalControllerModelServer(LocalControllerModelServer.Scenario.SAVE_AND_COUNT)) {
+            JsonObject first = singlePlan(server.respond(planningRequest(syntheticObservation("r1", false, false, 0), null, null), 1));
+            JsonObject observation = syntheticObservation("r2", false, false, 0);
+            observation.addProperty("windowId", LocalControllerModelServer.SYNTHETIC_KEY);
+            observation.addProperty("focused", LocalControllerModelServer.SYNTHETIC_KEY);
+            JsonObject malformed = new JsonObject();
+            malformed.addProperty("ok", false);
+            malformed.addProperty("code", LocalControllerModelServer.SYNTHETIC_KEY);
+            malformed.addProperty("submitted", LocalControllerModelServer.SYNTHETIC_KEY);
+            malformed.add("dispatchAccepted", new JsonObject());
+            assertThrows(IOException.class, () -> server.respond(planningRequest(observation, planId(first), malformed), 2));
+            String diagnostic = server.safeDiagnostics();
+            assertTrue(diagnostic.contains("windowId=invalid focused=invalid"));
+            assertTrue(diagnostic.contains("code=other,submitted=invalid"));
+            assertTrue(diagnostic.contains("dispatchAccepted=invalid"));
+            assertFalse("Diagnostic metadata must not echo arbitrary strings", diagnostic.contains(LocalControllerModelServer.SYNTHETIC_KEY));
+            assertTrue(diagnostic.length() <= 4009);
+        }
+    }
+
+    private static String controllerFailureDiagnostic(AgentController controller,
+                                                      LocalControllerModelServer server, int approvals) {
+        // Diagnostic-only: do not extend the original 30-second execution deadline,
+        // stop the task, retry a plan, or change the failing assertion into success.
+        String workerState = diagnosticWorkerBarrier(controller);
+        AgentController.State state = controller.getState();
+        return "Controller fixture assertion failed; inspect the original cause.\n"
+                + "controller={running=" + state.running + ",paused=" + state.paused
+                + ",approvalPending=" + !state.approvalId.isEmpty() + ",approvals=" + approvals
+                + ",status=" + controllerStatusClass(state.status)
+                + ",summaryClass=" + controllerSummaryClass(state.summary)
+                + ",worker=" + workerState + "}\n" + server.safeDiagnostics();
+    }
+
+    private static String diagnosticWorkerBarrier(AgentController controller) {
+        if (controller.getState().running) return "not-awaited-task-running";
+        Future<?> barrier = null;
+        try {
+            Field field = AgentController.class.getDeclaredField("worker");
+            field.setAccessible(true);
+            ThreadPoolExecutor worker = (ThreadPoolExecutor) field.get(controller);
+            barrier = worker.submit(() -> { });
+            barrier.get(2, TimeUnit.SECONDS);
+            return "settled";
+        } catch (TimeoutException timeout) {
+            return "barrier-timeout";
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            return "barrier-interrupted";
+        } catch (Exception unavailable) {
+            return "barrier-unavailable";
+        } finally {
+            // Cancel only our harmless queued no-op; never cancel the controller worker.
+            if (barrier != null && !barrier.isDone()) barrier.cancel(false);
+        }
+    }
+
+    private static String controllerStatusClass(String status) {
+        if (status == null || status.isEmpty()) return "EMPTY";
+        switch (status) {
+            case "执行失败": return "FAILED";
+            case "已停止": return "STOPPED";
+            case "达到任务预算，已停止": return "BUDGET_EXCEEDED";
+            case "配置已改变，任务已停止": return "CONFIGURATION_CHANGED";
+            case "结果已验证": return "VERIFIED";
+            case "执行已结束 · 模型报告待核对": return "MODEL_REPORT";
+            case "准备就绪": return "READY";
+            default: return "OTHER";
+        }
+    }
+
+    private static String controllerSummaryClass(String summary) {
+        if (summary == null || summary.isEmpty()) return "EMPTY";
+        switch (summary) {
+            case "模型连续三轮未提供可执行的有效操作，任务已停止。": return "THREE_INVALID_TURNS";
+            case "操作可能已提交但结果未知；任务已停止，请手动核对，未自动重发。": return "OUTCOME_UNKNOWN";
+            case "你已拒绝该动作，任务已结束，不会改用其他方式执行。": return "USER_DENIED";
+            case "配置或授权已改变，请重新保存配置并选择允许的应用。": return "CONFIGURATION_INVALID";
+            case "任务预算已改变，请重新保存配置后启动。": return "BUDGET_CHANGED";
+            case "任务执行中断；请检查当前界面后重新开始。": return "INTERNAL_ERROR";
+            default: return "OTHER";
         }
     }
 

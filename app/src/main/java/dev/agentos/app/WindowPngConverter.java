@@ -51,7 +51,8 @@ final class WindowPngConverter {
     }
 
     enum ReceiptFailure { MISSING_TYPED_REQUEST, WRONG_REQUEST, WRONG_OWNER, NON_PLATFORM_SOURCE,
-        NOT_SYNTHETIC_SOURCE, ALREADY_TRANSFERRED, CLOSED }
+        NOT_SYNTHETIC_SOURCE, ALREADY_TRANSFERRED, CLOSED, NOT_TRANSFERRED, WRONG_REVIEW_CONTEXT,
+        FINAL_CHECK_ALREADY_ATTEMPTED }
     static final class ReceiptException extends Exception {
         final ReceiptFailure code;
         private ReceiptException(ReceiptFailure code) {
@@ -74,6 +75,9 @@ final class WindowPngConverter {
         private final boolean platformCapture;
         private PngImage image;
         private boolean transferred, closed;
+        private AndroidDeviceTools.CapturedReviewContext reviewContext;
+        private boolean finalCheckAttempted;
+        private long finalCheckDeadlineElapsedRealtimeMillis;
 
         private CapturedPng(WindowBufferCapturer.CapturedWindow source, PngImage image, boolean productionConversion)
                 throws ReceiptException {
@@ -105,6 +109,57 @@ final class WindowPngConverter {
         synchronized boolean isTransferred() { return transferred; }
         synchronized boolean isClosed() { return closed; }
 
+        /** Prepare once from the original saved configuration, without holding this monitor during I/O. */
+        AndroidDeviceTools.CapturedReviewContext prepareReviewContext(ToolRequest expected,
+                AndroidDeviceTools adapter, RunControl owner) throws Exception {
+            if (Looper.myLooper() == Looper.getMainLooper()) throw new IllegalStateException("Review context requires a worker");
+            synchronized (this) {
+                requireOriginalBinding(expected, adapter, owner);
+                requireUntransferred();
+                if (reviewContext != null) {
+                    adapter.checkHistoricalWindowCaptureContext(historicalPermit, owner, executionEpoch);
+                    return reviewContext;
+                }
+            }
+            AndroidDeviceTools.CapturedReviewContext prepared = adapter.prepareCapturedReviewContext(
+                    historicalPermit, originalRequest, owner);
+            synchronized (this) {
+                // close/transfer/config changes while storage was being read must
+                // not publish a context for an image that this receipt no longer owns.
+                requireOriginalBinding(expected, adapter, owner);
+                requireUntransferred();
+                adapter.checkHistoricalWindowCaptureContext(historicalPermit, owner, executionEpoch);
+                if (reviewContext == null) reviewContext = prepared;
+                return reviewContext;
+            }
+        }
+
+        /**
+         * One read-only final check after local ownership transfer. The future
+         * coordinator must independently consume a real review and await actual
+         * host removal; this method alone establishes neither fact nor permission
+         * to transmit. The same immutable context survives receipt close after
+         * transfer, and owns no PNG or native resource.
+         */
+        void validateAfterReview(ToolRequest expected, AndroidDeviceTools adapter, RunControl owner,
+                AndroidDeviceTools.CapturedReviewContext context, long deadlineElapsedRealtime) throws Exception {
+            if (Looper.myLooper() == Looper.getMainLooper()) throw new IllegalStateException("Final image checks require a worker");
+            synchronized (this) {
+                requireOriginalBinding(expected, adapter, owner);
+                if (!transferred) throw new ReceiptException(closed ? ReceiptFailure.CLOSED : ReceiptFailure.NOT_TRANSFERRED);
+                if (context == null || context != reviewContext) throw new ReceiptException(ReceiptFailure.WRONG_REVIEW_CONTEXT);
+                if (finalCheckAttempted) throw new ReceiptException(ReceiptFailure.FINAL_CHECK_ALREADY_ATTEMPTED);
+                // A correctly bound attempt is spent even if the device is busy,
+                // context expired, or the supplied local deadline is invalid.
+                finalCheckAttempted = true;
+                finalCheckDeadlineElapsedRealtimeMillis = deadlineElapsedRealtime;
+            }
+            adapter.validateReviewedWindow(context, deadlineElapsedRealtime);
+        }
+
+        synchronized boolean isFinalCheckAttempted() { return finalCheckAttempted; }
+        synchronized long finalCheckDeadlineElapsedRealtimeMillis() { return finalCheckDeadlineElapsedRealtimeMillis; }
+
         /** Transfers once for local review only; fresh target/disclosure guards remain mandatory. */
         PngImage claimForReview(ToolRequest expected, AndroidDeviceTools adapter, RunControl owner) throws Exception {
             return claim(expected, adapter, owner, true);
@@ -120,15 +175,25 @@ final class WindowPngConverter {
             if (Looper.myLooper() == Looper.getMainLooper()) throw new IllegalStateException("PNG transfer requires a worker");
             if (transferred) throw new ReceiptException(ReceiptFailure.ALREADY_TRANSFERRED);
             if (closed || image == null) throw new ReceiptException(ReceiptFailure.CLOSED);
-            if (!sameRequest(originalRequest, expected)) throw new ReceiptException(ReceiptFailure.WRONG_REQUEST);
-            if (adapter == null || owner == null || !adapter.ownsHistoricalWindowCapture(historicalPermit, owner, executionEpoch))
-                throw new ReceiptException(ReceiptFailure.WRONG_OWNER);
+            requireOriginalBinding(expected, adapter, owner);
             if (platformCapture != requirePlatform) throw new ReceiptException(requirePlatform
                     ? ReceiptFailure.NON_PLATFORM_SOURCE : ReceiptFailure.NOT_SYNTHETIC_SOURCE);
             // Deliberately no old capture deadline or control-bar lease check:
             // this is historical image ownership entering a new local review.
             adapter.checkHistoricalWindowCaptureContext(historicalPermit, owner, executionEpoch);
             PngImage result = image; image = null; transferred = true; return result;
+        }
+
+        private void requireOriginalBinding(ToolRequest expected, AndroidDeviceTools adapter,
+                                            RunControl owner) throws ReceiptException {
+            if (!sameRequest(originalRequest, expected)) throw new ReceiptException(ReceiptFailure.WRONG_REQUEST);
+            if (adapter == null || owner == null || !adapter.ownsHistoricalWindowCapture(historicalPermit, owner, executionEpoch))
+                throw new ReceiptException(ReceiptFailure.WRONG_OWNER);
+        }
+
+        private void requireUntransferred() throws ReceiptException {
+            if (transferred) throw new ReceiptException(ReceiptFailure.ALREADY_TRANSFERRED);
+            if (closed || image == null) throw new ReceiptException(ReceiptFailure.CLOSED);
         }
 
         private static boolean sameRequest(ToolRequest a, ToolRequest b) {

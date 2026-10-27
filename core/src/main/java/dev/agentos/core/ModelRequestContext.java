@@ -21,11 +21,10 @@ final class ModelRequestContext {
         catch (RuntimeException invalidGuard) { current = false; }
         if (!current) {
             // Do not let a delayed old request cancel a resumed execution epoch.
-            // cancel's hook only invalidates the future and schedules disconnection.
-            synchronized (control) {
-                control.checkExecutionEpoch(epoch);
-                control.cancel();
-            }
+            // Atomic cancellation detaches its hook under the control monitor,
+            // then invokes it outside that monitor. Never wrap this in an outer lock.
+            control.checkExecutionEpoch(epoch);
+            if (!control.cancelIfExecutionEpoch(epoch)) control.checkExecutionEpoch(epoch);
             throw new TaskControlException("TASK_STOPPED", "配置已改变，已停止向原模型服务发送数据。");
         }
         control.checkExecutionEpoch(epoch);

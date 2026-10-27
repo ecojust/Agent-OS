@@ -483,7 +483,7 @@ public final class AgentController {
     private static String visualQualificationMessage(VisualQualification result) {
         switch (result) {
             case SYNTHETIC_VERIFIED:
-                return "本次任务的合成图像理解测试通过；这不是截图许可，当前仍仅使用结构化工具。";
+                return "本次任务的合成图像理解测试通过；页面截图仍须具备设备能力、通过页面检查并逐图确认。";
             case BUSY:
                 return "图像测试服务正忙，本次不重试，继续使用结构化工具。";
             case UNVERIFIED:

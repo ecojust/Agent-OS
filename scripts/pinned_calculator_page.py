@@ -23,16 +23,35 @@ CASES = {
     'actualSettingsPageIsRejected': [('before-settings', 'accepted'), ('settings', 'rejected')],
     'actualUnitConverterPageIsRejected': [('before-converter', 'accepted'), ('converter', 'rejected')],
 }
+WORKFLOW = '.github/workflows/pinned-calculator-page.yml'
+KIND = 'pinned-calculator-page-predicate'
+EVIDENCE_DIR = 'pinned-page'
+DEVICE_DIR = 'pinned-calculator-page'
+CASE_FILE_PATTERN = r'[A-Za-z][A-Za-z0-9]*-(?:[0-9]+)\.(?:json|png)|[A-Za-z][A-Za-z0-9]*\.case\.json'
+MAX_CASE_FILES = 96
+MAX_IMAGE_BYTES = base.MAX_CAPTURE
+CASE_STATUS_KEY = 'pageCaseStatus'
+IMAGE_LIST_KEY = 'verifiedPinnedImages'
+JOB_PREFIX = 'page-predicate'
+ARCHIVE_KIND = 'pinned-calculator-page-predicate-evidence'
+ARCHIVE_TITLE = 'Pinned Calculator Page Predicate Evidence'
+BUILD_VARIANT = None
+IMAGE_CAPTION = 'Actual pinned app UI'
+ARCHIVE_SCOPE = ('Actual pinned Calculator 1.4.0 ordinary/alternate-page predicate on the production accessibility service. '
+                 'No production screenshot capability, buffer capture, review, disclosure, gestures or general application/device acceptance. '
+                 'Pinned UI images use test-only UiAutomation; standard protected/blocked records remain unchanged.')
+INSTRUMENTATION_MARKERS = {'pinnedPageMarker': 'agent-os-pinned-page-v1',
+                           'freshInstallMarker': 'agent-os-pinned-page-fresh-v1'}
 MAX_TOTAL = 64 * 1024 * 1024
 require = base.require
 
 
-def source(env=None):
+def source(env=None, workflow=WORKFLOW):
     env = os.environ if env is None else env
     require(env.get('GITHUB_ACTIONS') == 'true' and env.get('GITHUB_REPOSITORY') == base.REPOSITORY,
             'Only the dedicated repository workflow may operate devices')
     require(env.get('GITHUB_REF') == 'refs/heads/master' and env.get('GITHUB_EVENT_NAME') == 'workflow_dispatch'
-            and env.get('GITHUB_WORKFLOW_REF') == base.REPOSITORY + '/.github/workflows/pinned-calculator-page.yml@refs/heads/master',
+            and env.get('GITHUB_WORKFLOW_REF') == base.REPOSITORY + '/' + workflow + '@refs/heads/master',
             'Unexpected branch, event or workflow')
     sha = env.get('GITHUB_SHA', '')
     require(re.fullmatch(r'[0-9a-f]{40}', sha) is not None, 'Invalid source SHA')
@@ -102,6 +121,10 @@ def validate_case_files(record, files):
     return record
 
 
+def image_paths(record):
+    return [stage['image'] for stage in record['stages'] if stage.get('captureStatus') == 'captured']
+
+
 def empty_capture(label):
     return {'schemaVersion': 1, 'apiLevel': APIS[label], 'matrixLabel': label, 'actualSdkInt': None,
             'gradleExitCode': None, 'captureStatus': 'not_collected', 'captureError': 'Emulator script did not collect evidence',
@@ -119,24 +142,25 @@ def write_capture(directory, value):
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 
 
-def instrument_result(text, exit_code):
-    return exit_code == 0 and bool(re.search(r'\bOK \(5 tests\)', text)) and not any(
+def instrument_result(text, exit_code, expected_tests=5):
+    return exit_code == 0 and bool(re.search(r'\bOK \(' + str(expected_tests) + r' tests\)', text)) and not any(
         token in text for token in ('FAILURES!!!', 'INSTRUMENTATION_FAILED', 'shortMsg=', 'Process crashed'))
 
 
-def collect_cases(adb, serial, directory, binding, api, command=base.run_command):
-    folder = directory / 'pinned-page'; folder.mkdir(exist_ok=True)
-    names = command([adb, '-s', serial, 'shell', 'run-as', base.AGENT_PACKAGE, 'ls', 'files/pinned-calculator-page'], timeout=10).splitlines()
-    require(len(names) <= 96 and len(names) == len(set(names)), 'Unexpected evidence file count')
+def collect_cases(adb, serial, directory, binding, api, command=base.run_command, profile=None):
+    profile = sys.modules[__name__] if profile is None else profile
+    folder = directory / profile.EVIDENCE_DIR; folder.mkdir(exist_ok=True)
+    names = command([adb, '-s', serial, 'shell', 'run-as', base.AGENT_PACKAGE, 'ls', 'files/' + profile.DEVICE_DIR], timeout=10).splitlines()
+    require(len(names) <= profile.MAX_CASE_FILES and len(names) == len(set(names)), 'Unexpected evidence file count')
     files = {}; total = 0
     for name in names:
-        require(re.fullmatch(r'[A-Za-z][A-Za-z0-9]*-(?:[0-9]+)\.(?:json|png)|[A-Za-z][A-Za-z0-9]*\.case\.json', name) is not None,
+        require(re.fullmatch(profile.CASE_FILE_PATTERN, name) is not None,
                 'Unexpected evidence filename')
         relative = Path(name)  # Single-component JSON or PNG name already checked above.
         owner = name.split('-', 1)[0].removesuffix('.case.json')
-        require(owner in CASES, 'File belongs to a foreign case')
-        limit = 96 * 1024 if name.endswith('.json') else base.MAX_CAPTURE
-        raw = command([adb, '-s', serial, 'exec-out', 'run-as', base.AGENT_PACKAGE, 'cat', 'files/pinned-calculator-page/' + str(relative)],
+        require(owner in profile.CASES, 'File belongs to a foreign case')
+        limit = 96 * 1024 if name.endswith('.json') else profile.MAX_IMAGE_BYTES
+        raw = command([adb, '-s', serial, 'exec-out', 'run-as', base.AGENT_PACKAGE, 'cat', 'files/' + profile.DEVICE_DIR + '/' + str(relative)],
                       timeout=10, binary=True, limit=limit)
         total += len(raw); require(total <= MAX_TOTAL, 'Evidence exceeds total budget')
         if name.endswith('.json'): base.parse_json(raw)
@@ -145,21 +169,26 @@ def collect_cases(adb, serial, directory, binding, api, command=base.run_command
             width, height = struct.unpack('>II', raw[16:24]); require(64 <= width <= 4096 and 64 <= height <= 4096, 'Invalid PNG dimensions')
         (folder / name).write_bytes(raw); files[name] = raw
     results = []
-    for name in CASES:
+    for name in profile.CASES:
         filename = name + '.case.json'
         if filename not in files:
             results.append({'name': name, 'status': 'unverified', 'reason': 'Case record missing'}); continue
-        record = validate_case(base.parse_json(files[filename]), binding, api, serial, name)
-        validate_case_files(record, files)
-        results.append({'name': name, 'status': record['status'], 'record': 'pinned-page/' + filename})
+        record = profile.validate_case(base.parse_json(files[filename]), binding, api, serial, name)
+        profile.validate_case_files(record, files)
+        results.append({'name': name, 'status': record['status'], 'record': profile.EVIDENCE_DIR + '/' + filename})
     return results
 
 
-def run(args, binding):
-    output = base.ensure_directory(args.output); report = empty_report(binding, args.api); base.write_report(output, report); write_capture(output, empty_capture(args.api))
+def run(args, binding, profile=None):
+    profile = sys.modules[__name__] if profile is None else profile
+    output = base.ensure_directory(args.output); report = profile.empty_report(binding, args.api); base.write_report(output, report); write_capture(output, empty_capture(args.api))
     instrumentation_exit = None
     api = APIS[args.api]; stage = 'device_preflight'; adb = str(Path(args.sdk_root) / 'platform-tools/adb'); serial = None
     try:
+        if profile.BUILD_VARIANT is not None:
+            stage = 'verify_acceptance_apks'
+            profile.verify_run_inputs(args, binding, report)
+            stage = 'device_preflight'
         sdk = Path(args.sdk_root)
         report['emulatorVersion'] = base.validate_emulator_version((sdk / 'emulator/source.properties').read_text(), api)
         serial = base.select_emulator(base.run_command([adb, 'devices']))
@@ -187,7 +216,7 @@ def run(args, binding):
             require(re.search(r'^Success\s*$', text, re.M) is not None, 'Installation did not report success')
             report['driverSteps'].append({'name': 'install_' + name, 'status': 'passed', 'sha256': base.sha256_file(path)})
         stage = 'instrumentation'
-        parameters = {'class': TEST_CLASS, 'pinnedPageMarker': 'agent-os-pinned-page-v1', 'freshInstallMarker': 'agent-os-pinned-page-fresh-v1',
+        parameters = {'class': profile.TEST_CLASS, **profile.INSTRUMENTATION_MARKERS,
                       'expectedApi': str(api), 'deviceSerial': serial, 'sourceSha': binding['commit'],
                       'runId': str(binding['runId']), 'runAttempt': str(binding['attempt'])}
         command = [adb, '-s', serial, 'shell', 'am', 'instrument', '-w', '-r']
@@ -200,17 +229,17 @@ def run(args, binding):
         result = subprocess.run(bounded, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=440, check=False)
         require(len(result.stdout) <= 1024 * 1024, 'Instrumentation output exceeded its bound')
         text = result.stdout.decode('utf-8', 'replace'); instrumentation_exit = result.returncode
-        instrument_ok = instrument_result(text, instrumentation_exit)
+        instrument_ok = profile.instrument_result(text, instrumentation_exit)
         log = json.dumps({'runner': 'direct_adb_instrumentation', 'exitCode': instrumentation_exit,
                           'passed': instrument_ok, 'stdout': text}, ensure_ascii=False).encode('utf-8')
         require(len(log) <= 2 * 1024 * 1024, 'Instrumentation JSON exceeded its bound')
         (output / 'instrumentation.json').write_bytes(log)
-        report['instrumentation'] = {'selectedClass': TEST_CLASS, 'expectedTests': len(CASES),
+        report['instrumentation'] = {'selectedClass': profile.TEST_CLASS, 'expectedTests': len(profile.CASES),
                                      'exitCode': instrumentation_exit, 'passed': instrument_ok,
                                      'log': 'instrumentation.json', 'bytes': len(log), 'sha256': hashlib.sha256(log).hexdigest()}
         report['driverSteps'].append({'name': stage, 'status': 'passed' if instrument_ok else 'failed'})
         stage = 'collect_cases'
-        report['cases'] = collect_cases(adb, serial, output, binding, api)
+        report['cases'] = collect_cases(adb, serial, output, binding, api, profile=profile)
         report['status'] = 'passed' if instrument_ok and all(item['status'] == 'passed' for item in report['cases']) else 'failed'
     except (base.ProbeError, OSError, ValueError, subprocess.SubprocessError) as failure:
         report['status'] = 'environment_failed'; report['error'] = {'stage': stage, 'type': type(failure).__name__, 'message': str(failure)[:1000]}

@@ -13,6 +13,7 @@ import collect_performance_evidence as performance
 
 EXPECTED_MATRIX = [str(api) for api in range(30, 37)] + ["37.0"]
 PINNED_WORKFLOW = ".github/workflows/pinned-calculator-page.yml"
+DISCLOSURE_WORKFLOW = ".github/workflows/pinned-window-disclosure.yml"
 PINNED_MATRIX = ["34", "35", "36", "37.0"]
 MAX_FILE_BYTES = 16 * 1024 * 1024
 MAX_TOTAL_BYTES = 64 * 1024 * 1024
@@ -34,8 +35,8 @@ def verify_source(run: dict, repository: str) -> tuple[int, int]:
             or run.get("repository", {}).get("id") != run.get("head_repository", {}).get("id")
             or run.get("event") not in ("push", "workflow_dispatch")
             or run.get("head_branch") != "master"
-            or run.get("path") not in (".github/workflows/android.yml", PINNED_WORKFLOW)
-            or (run.get("path") == PINNED_WORKFLOW and run.get("event") != "workflow_dispatch")
+            or run.get("path") not in (".github/workflows/android.yml", PINNED_WORKFLOW, DISCLOSURE_WORKFLOW)
+            or (run.get("path") in (PINNED_WORKFLOW, DISCLOSURE_WORKFLOW) and run.get("event") != "workflow_dispatch")
             or run.get("status") != "completed"
             or not re.fullmatch(r"[0-9a-f]{40}", str(run.get("head_sha", "")))):
         raise ValueError("only completed approved Android workflows from this repository's trusted master are eligible")
@@ -57,8 +58,8 @@ def eligible_artifacts(value, attempt: int) -> list:
 
 
 def performance_artifacts(value, run: dict) -> list:
-    if run.get("path") == PINNED_WORKFLOW:
-        return []  # This fixed predicate profile does not run performance diagnostics.
+    if run.get("path") in (PINNED_WORKFLOW, DISCLOSURE_WORKFLOW):
+        return []  # These fixed profiles do not run performance diagnostics.
     pattern = re.compile(r"performance-reports-api-(3[0-6]|37\.0)-attempt-" + str(run["run_attempt"]))
     selected = []
     names = set()
@@ -171,8 +172,12 @@ def copy_files(source: Path, destination: Path, budget: dict) -> list[dict]:
 
 
 def archive(args, run: dict, run_id: int, attempt: int) -> None:
-    if run.get("path") == PINNED_WORKFLOW:
-        archive_pinned_page(args, run, run_id, attempt)
+    if run.get("path") in (PINNED_WORKFLOW, DISCLOSURE_WORKFLOW):
+        if run["path"] == DISCLOSURE_WORKFLOW:
+            import pinned_window_disclosure as profile
+        else:
+            import pinned_calculator_page as profile
+        archive_pinned_page(args, run, run_id, attempt, profile)
         return
     output = Path("screenshots") / f"{run_id}-{attempt}"
     if output.exists():
@@ -288,24 +293,28 @@ def pinned_page_artifacts(value, run: dict) -> list:
     return selected
 
 
-def pinned_page_report(source: Path, run: dict, label: str) -> dict:
-    # Reuse the dedicated collector's bounded case/PNG checks; no second page evaluator.
-    import pinned_calculator_page as pinned
+def pinned_page_report(source: Path, run: dict, label: str, pinned=None) -> dict:
+    # Only the two source-selected fixed modules supply contracts; no CLI/runtime profile registry.
+    if pinned is None:
+        import pinned_calculator_page as pinned
     import third_party_smoke as base
     require = base.require
     binding = {"repository": run["repository"]["full_name"], "runId": run["id"],
                "attempt": run["run_attempt"], "commit": run["head_sha"]}
     report = base.read_json(source / "report.json")
     api = int(label.split(".")[0])
-    require(report.get("schemaVersion") == 1 and report.get("kind") == "pinned-calculator-page-predicate"
+    require(report.get("schemaVersion") == 1 and report.get("kind") == pinned.KIND
             and report.get("source") == binding and report.get("matrixLabel") == label
-            and type(report.get("expectedTests")) is int and report["expectedTests"] == 5
+            and type(report.get("expectedTests")) is int and report["expectedTests"] == len(pinned.CASES)
             and report.get("status") in ("passed", "failed", "environment_failed"), "Foreign pinned page report")
+    if pinned.BUILD_VARIANT is not None:
+        require(report.get("buildVariant") == pinned.BUILD_VARIANT, "Wrong internal acceptance build variant")
+        pinned.validate_report_extra(report)
     declared = report.get("cases")
-    require(isinstance(declared, list) and len(declared) == 5 and all(isinstance(item, dict) for item in declared)
+    require(isinstance(declared, list) and len(declared) == len(pinned.CASES) and all(isinstance(item, dict) for item in declared)
             and [item.get("name") for item in declared] == list(pinned.CASES)
             and all(item.get("status") in ("passed", "failed", "unverified") for item in declared),
-            "Pinned page report must preserve the exact five-case denominator")
+            "Pinned report must preserve its exact fixed-case denominator")
     device = report.get("device", {})
     if device:
         require(type(device.get("api")) is int and device["api"] == api
@@ -327,7 +336,7 @@ def pinned_page_report(source: Path, run: dict, label: str) -> dict:
     if "instrumentation" in report:
         result = report["instrumentation"]
         require(isinstance(result, dict) and result.get("selectedClass") == pinned.TEST_CLASS
-                and type(result.get("expectedTests")) is int and result["expectedTests"] == 5
+                and type(result.get("expectedTests")) is int and result["expectedTests"] == len(pinned.CASES)
                 and type(result.get("passed")) is bool and type(result.get("exitCode")) is int
                 and result.get("log") == "instrumentation.json", "Invalid selected instrumentation record")
         path = source / "instrumentation.json"
@@ -343,24 +352,24 @@ def pinned_page_report(source: Path, run: dict, label: str) -> dict:
                 "Direct ADB completion does not match its original output")
         require(capture.get("instrumentationExitCode") == result["exitCode"], "Capture command result differs from original execution")
     files = {}
-    folder = source / "pinned-page"
+    folder = source / pinned.EVIDENCE_DIR
     if folder.exists():
         require(folder.is_dir() and not folder.is_symlink(), "Invalid pinned page directory")
-        paths = list(folder.iterdir()); require(len(paths) <= 96, "Too many pinned page files")
+        paths = list(folder.iterdir()); require(len(paths) <= pinned.MAX_CASE_FILES, "Too many pinned page files")
         total = 0
         for path in paths:
             require(path.is_file() and not path.is_symlink() and re.fullmatch(
-                r"[A-Za-z][A-Za-z0-9]*-(?:[0-9]+)\.(?:json|png)|[A-Za-z][A-Za-z0-9]*\.case\.json", path.name) is not None
+                pinned.CASE_FILE_PATTERN, path.name) is not None
                 and path.name.split("-", 1)[0].removesuffix(".case.json") in pinned.CASES,
                 "Unexpected pinned page evidence path")
-            require(path.stat().st_size <= (96 * 1024 if path.suffix == ".json" else base.MAX_CAPTURE), "Oversized pinned page file")
+            require(path.stat().st_size <= (96 * 1024 if path.suffix == ".json" else pinned.MAX_IMAGE_BYTES), "Oversized pinned page file")
             total += path.stat().st_size
             require(total <= MAX_TOTAL_BYTES, "Pinned page payload exceeds archive budget")
             files[path.name] = path.read_bytes()
             if path.suffix == ".json": base.parse_json(files[path.name])
     standard_path = source / "screenshots" / "manifest.json"
     standards = read_json(standard_path).get("tests", []) if standard_path.exists() else []
-    require(isinstance(standards, list) and len(standards) <= 5, "Unexpected standard test evidence count")
+    require(isinstance(standards, list) and len(standards) <= len(pinned.CASES), "Unexpected standard test evidence count")
     by_name = {}
     for item in standards:
         require(isinstance(item, dict) and item.get("testClass") == pinned.TEST_CLASS
@@ -376,15 +385,15 @@ def pinned_page_report(source: Path, run: dict, label: str) -> dict:
         record = None
         if filename in files:
             require(device and download, "Actual page records require verified device and pinned APK")
+            if pinned.BUILD_VARIANT is not None: pinned.validate_report_extra(report, require_actual=True)
             record = pinned.validate_case(base.parse_json(files[filename]), binding, api, device["serial"], name)
             pinned.validate_case_files(record, files)
             if "record" in item:
-                require(item["record"] == "pinned-page/" + filename, "Report links another case file")
+                require(item["record"] == pinned.EVIDENCE_DIR + "/" + filename, "Report links another case file")
             # A collection failure may leave actual case records that the driver did not finish indexing.
             if item["status"] != "unverified":
                 require(item["status"] == record["status"], "Driver summary disagrees with the original case")
-            images.update("pinned-page/" + stage["image"] for stage in record["stages"]
-                          if stage.get("captureStatus") == "captured")
+            images.update(pinned.EVIDENCE_DIR + "/" + path for path in pinned.image_paths(record))
         else:
             require(item["status"] == "unverified" and "record" not in item, "Missing case cannot be claimed as executed")
         standard = by_name.get(name)
@@ -392,24 +401,25 @@ def pinned_page_report(source: Path, run: dict, label: str) -> dict:
         status = ("failed" if raw_status == "failed" or (standard and standard["testResult"] == "fail")
                   else "passed" if raw_status == "passed" and standard and standard["testResult"] == "pass"
                   else "unverified")
-        cases.append({"name": name, "status": status, "pageCaseStatus": raw_status,
+        cases.append({"name": name, "status": status, pinned.CASE_STATUS_KEY: raw_status,
                       "standardTestResult": standard["testResult"] if standard else "not_recorded",
-                      "record": "pinned-page/" + filename if record else None})
+                      "record": pinned.EVIDENCE_DIR + "/" + filename if record else None})
     if report["status"] == "passed":
         require(device and download and report.get("instrumentation", {}).get("passed") is True
-                and all(item["pageCaseStatus"] == "passed" for item in cases), "Passed driver lacks its actual five page outcomes")
+                and all(item[pinned.CASE_STATUS_KEY] == "passed" for item in cases), "Passed driver lacks its actual fixed case outcomes")
     # Missing standard evidence is an unverified sample, not a fabricated pass or a
     # reason to drop this lane from the archive. Keep the original driver claim too.
     status = ("failed" if any(item["status"] == "failed" for item in cases) else "passed"
               if report["status"] == "passed" and all(item["status"] == "passed" for item in cases)
               else "unverified")
-    return {"status": status, "driverStatus": report["status"], "cases": cases, "verifiedPinnedImages": sorted(images),
+    return {"status": status, "driverStatus": report["status"], "cases": cases, pinned.IMAGE_LIST_KEY: sorted(images),
             "captureStatus": capture.get("captureStatus", "unknown"), "actualSdkInt": capture.get("actualSdkInt"),
             "standardRecordedTests": len(standards), "verifiedDownload": download}
 
 
-def archive_pinned_page(args, run: dict, run_id: int, attempt: int) -> None:
-    import pinned_calculator_page as pinned
+def archive_pinned_page(args, run: dict, run_id: int, attempt: int, pinned=None) -> None:
+    if pinned is None:
+        import pinned_calculator_page as pinned
     output = Path("screenshots") / f"{run_id}-{attempt}"
     if output.exists(): raise ValueError("this run's evidence directory already exists")
     artifacts = {item["name"]: item for item in pinned_page_artifacts(read_json(args.artifacts), run)}
@@ -417,13 +427,13 @@ def archive_pinned_page(args, run: dict, run_id: int, attempt: int) -> None:
     budget = {"bytes": 0, "files": 0}; records = []
     output.mkdir(parents=True)
     for label in PINNED_MATRIX:
-        matches = [job for job in jobs if job.get("name") == f"page-predicate ({label})"]
+        matches = [job for job in jobs if job.get("name") == f"{pinned.JOB_PREFIX} ({label})"]
         if len(matches) > 1: raise ValueError("duplicate pinned page job")
         job = matches[0] if matches else {}
         record = {"apiLevel": int(label.split(".")[0]), "matrixLabel": label,
                   "jobConclusion": job.get("conclusion", "not_scheduled"), "jobUrl": job.get("html_url"),
                   "captureStatus": "artifact_unavailable", "status": "unverified", "files": [],
-                  "verifiedPinnedImages": [], "cases": [{"name": name, "status": "unverified"} for name in pinned.CASES]}
+                  pinned.IMAGE_LIST_KEY: [], "cases": [{"name": name, "status": "unverified"} for name in pinned.CASES]}
         artifact = artifacts.get(f"screenshots-api-{label}-attempt-{attempt}")
         if artifact is not None:
             if (not job or job.get("status") != "completed" or job.get("run_id") != run_id
@@ -435,40 +445,38 @@ def archive_pinned_page(args, run: dict, run_id: int, attempt: int) -> None:
             source = args.incoming / artifact["name"]
             if not source.is_dir() or source.is_symlink(): raise ValueError("expected pinned artifact was not downloaded")
             copied = copy_files(source, output / f"api-{label}", budget)
-            record.update(pinned_page_report(source, run, label))
+            record.update(pinned_page_report(source, run, label, pinned))
             record.update(artifactId=artifact["id"], files=copied)
         record["caseCounts"] = {status: sum(item["status"] == status for item in record["cases"])
                                 for status in ("passed", "failed", "unverified")}
         records.append(record)
     totals = {status: sum(item["caseCounts"][status] for item in records) for status in ("passed", "failed", "unverified")}
-    scope = ("Actual pinned Calculator 1.4.0 ordinary/alternate-page predicate on the production accessibility service. "
-             "No production screenshot capability, buffer capture, review, disclosure, gestures or general application/device acceptance. "
-             "Pinned UI images use test-only UiAutomation; standard protected/blocked records remain unchanged.")
-    manifest = {"schemaVersion": 1, "kind": "pinned-calculator-page-predicate-evidence",
+    scope = pinned.ARCHIVE_SCOPE
+    manifest = {"schemaVersion": 1, "kind": pinned.ARCHIVE_KIND,
                 "archivedAt": datetime.now(timezone.utc).isoformat(),
                 "sourceRun": {"repository": args.repository, "runId": run_id, "attempt": attempt,
                               "commit": run["head_sha"], "event": run["event"], "branch": "master",
-                              "workflow": PINNED_WORKFLOW, "conclusion": run.get("conclusion"),
+                              "workflow": pinned.WORKFLOW, "conclusion": run.get("conclusion"),
                               "url": f"https://github.com/{args.repository}/actions/runs/{run_id}"},
                 "expectedMatrixLabels": PINNED_MATRIX, "expectedCases": list(pinned.CASES),
-                "expectedTestsPerApi": 5, "expectedTests": 20, "caseCounts": totals, "apis": records,
+                "expectedTestsPerApi": len(pinned.CASES), "expectedTests": len(PINNED_MATRIX) * len(pinned.CASES), "caseCounts": totals, "apis": records,
                 "junit": {"status": "not_produced", "reason": "Dedicated direct ADB class execution; original per-case records are retained"},
                 "performanceDiagnostics": {"status": "not_run", "budgetAcceptance": False},
                 "scope": scope, "fileCount": budget["files"], "totalBytes": budget["bytes"]}
     (output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
-    lines = ["# Pinned Calculator Page Predicate Evidence", "", "Source run: " + manifest["sourceRun"]["url"], "",
+    lines = ["# " + pinned.ARCHIVE_TITLE, "", "Source run: " + manifest["sourceRun"]["url"], "",
              f"Source commit: `{run['head_sha']}` · Attempt: {attempt}", "", scope, "",
-             "The fixed denominator is 20 cases (4 APIs × 5 cases). Failed, missing and unexecuted cases stay in this denominator.", "",
-             "| API | Job | Passed | Failed | Unverified | Verified pinned images |", "| --- | --- | --- | --- | --- | --- |"]
+             f"The fixed denominator is {len(PINNED_MATRIX) * len(pinned.CASES)} cases (4 APIs × {len(pinned.CASES)} cases). Failed, missing and unexecuted cases stay in this denominator.", "",
+             "| API | Job | Passed | Failed | Unverified | Verified image payloads |", "| --- | --- | --- | --- | --- | --- |"]
     for record in records:
         counts = record["caseCounts"]
-        lines.append(f"| {record['matrixLabel']} | {record['jobConclusion']} | {counts['passed']} | {counts['failed']} | {counts['unverified']} | {len(record['verifiedPinnedImages'])} |")
+        lines.append(f"| {record['matrixLabel']} | {record['jobConclusion']} | {counts['passed']} | {counts['failed']} | {counts['unverified']} | {len(record[pinned.IMAGE_LIST_KEY])} |")
     lines += ["", "[Full source, case and capture manifest](manifest.json)", ""]
     for record in records:
         if record["files"]:
             lines += [f"## API {record['matrixLabel']}", "", f"[Original driver report](api-{record['matrixLabel']}/report.json)", ""]
-            for path in record["verifiedPinnedImages"][:2]:
-                lines += [f"![Actual pinned app UI on API {record['matrixLabel']}](api-{record['matrixLabel']}/{path})", ""]
+            for path in record[pinned.IMAGE_LIST_KEY][:2]:
+                lines += [f"![{pinned.IMAGE_CAPTION} on API {record['matrixLabel']}](api-{record['matrixLabel']}/{path})", ""]
     (output / "README.md").write_text("\n".join(lines))
     print(output.as_posix())
 
@@ -486,7 +494,7 @@ def main() -> None:
     run = read_json(args.run)
     run_id, attempt = verify_source(run, args.repository)
     if args.mode == "verify":
-        has_artifacts = bool(pinned_page_artifacts(read_json(args.artifacts), run) if run.get("path") == PINNED_WORKFLOW
+        has_artifacts = bool(pinned_page_artifacts(read_json(args.artifacts), run) if run.get("path") in (PINNED_WORKFLOW, DISCLOSURE_WORKFLOW)
                              else eligible_artifacts(read_json(args.artifacts), attempt))
         perf_artifacts = performance_artifacts(read_json(args.artifacts), run)
         if args.github_output:

@@ -19,7 +19,16 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+    def selectedTestType = providers.gradleProperty('agentTestBuildType').getOrElse('debug')
+    if (!(selectedTestType in ['debug', 'visualAcceptance'])) {
+        throw new GradleException('agentTestBuildType must be debug or visualAcceptance')
+    }
+    testBuildType selectedTestType
     buildTypes {
+        visualAcceptance {
+            initWith debug
+            matchingFallbacks = ['debug']
+        }
         release {
             minifyEnabled false
         }

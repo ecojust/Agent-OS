@@ -1,0 +1,141 @@
+name: Pinned native window disclosure
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pinned-window-disclosure-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Verify the fixed evidence profile
+        run: |
+          python3 scripts/update_progress.py --check
+          python3 -m unittest discover -s scripts -p 'test_pinned*.py'
+          python3 -m unittest discover -s scripts -p 'test_evidence_scripts.py'
+      - name: Prepare Android SDK
+        run: |
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk_root" >> "$GITHUB_ENV"
+          printf 'y\n%.0s' {1..100} | "$sdk_root/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$sdk_root" 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Build ordinary closed-capability APKs
+        run: ./gradlew --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest :app:assembleRelease :app:lintDebug :fixture:assembleDebug :fixture:lintDebug
+      - name: Build isolated internal acceptance APKs
+        run: ./gradlew --no-daemon -PagentTestBuildType=visualAcceptance :app:assembleVisualAcceptance :app:assembleVisualAcceptanceAndroidTest :app:lintVisualAcceptance
+      - name: Inspect actual packaged capabilities and instrumentation targets
+        run: |
+          python3 scripts/verify_visual_acceptance_apks.py --aapt2 "$ANDROID_HOME/build-tools/35.0.0/aapt2" --source-sha "$GITHUB_SHA" --output "$RUNNER_TEMP/apk-permission-proof.json" --debug app/build/outputs/apk/debug/app-debug.apk --release app/build/outputs/apk/release/app-release-unsigned.apk --visual-acceptance app/build/outputs/apk/visualAcceptance/app-visualAcceptance.apk --debug-test app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk --visual-acceptance-test app/build/outputs/apk/androidTest/visualAcceptance/app-visualAcceptance-androidTest.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-window-apks
+          path: |
+            app/build/outputs/apk/visualAcceptance/*.apk
+            app/build/outputs/apk/androidTest/visualAcceptance/*.apk
+            fixture/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-window-permission-proof
+          path: ${{ runner.temp }}/apk-permission-proof.json
+          if-no-files-found: error
+          retention-days: 14
+
+  window-disclosure:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        api: ['34', '35', '36', '37.0']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Initialize both required outcomes as unverified
+        run: python3 scripts/pinned_window_disclosure.py prepare --api '${{ matrix.api }}' --output "$RUNNER_TEMP/native-window-evidence/api-${{ matrix.api }}"
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-window-apks
+          path: ${{ runner.temp }}/native-window-apks
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-window-permission-proof
+          path: ${{ runner.temp }}/native-window-permission-proof
+      - name: Fetch the exact official Calculator release
+        run: python3 scripts/third_party_smoke_set.py download --app-id calculator-1.4.0 --output "$RUNNER_TEMP/calculator-1.4.0.apk"
+      - name: Prepare Android SDK
+        run: |
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk_root" >> "$GITHUB_ENV"
+          echo "$sdk_root/platform-tools" >> "$GITHUB_PATH"
+          printf 'y\n%.0s' {1..100} | "$sdk_root/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$sdk_root" 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Enable full API version SDK tooling
+        if: matrix.api == '37.0'
+        run: |
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
+          printf 'y\n%.0s' {1..100} | "$sdk_root/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$sdk_root" 'cmdline-tools;23.0'
+          test -x "$sdk_root/cmdline-tools/23.0/bin/sdkmanager"
+          mv "$sdk_root/cmdline-tools/latest" "$sdk_root/cmdline-tools/pre-api37"
+          ln -s 23.0 "$sdk_root/cmdline-tools/latest"
+      - name: Enable hardware virtualization
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Capture, review and deliver through the actual production service
+        id: instrumentation
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: '35'
+          system-image-api-level: ${{ matrix.api }}
+          emulator-build: '16428233'
+          arch: x86_64
+          target: default
+          avd-name: agent-os-native-window
+          enable-hw-keyboard: false
+          pre-emulator-launch-script: python3 scripts/configure_emulator_phone.py --avd-name agent-os-native-window
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            python3 scripts/configure_emulator_phone.py --avd-name agent-os-native-window --check
+            python3 scripts/pinned_window_disclosure.py run --api '${{ matrix.api }}' --output "$RUNNER_TEMP/native-window-evidence/api-${{ matrix.api }}" --sdk-root "$ANDROID_HOME" --apk-verification "$RUNNER_TEMP/native-window-permission-proof/apk-permission-proof.json" --calculator-apk "$RUNNER_TEMP/calculator-1.4.0.apk" --agent-apk "$RUNNER_TEMP/native-window-apks/app/build/outputs/apk/visualAcceptance/app-visualAcceptance.apk" --fixture-apk "$RUNNER_TEMP/native-window-apks/fixture/build/outputs/apk/debug/fixture-debug.apk" --test-apk "$RUNNER_TEMP/native-window-apks/app/build/outputs/apk/androidTest/visualAcceptance/app-visualAcceptance-androidTest.apk"
+      - name: Preserve failed, blocked and unexecuted evidence
+        if: always()
+        env:
+          EMULATOR_OUTCOME: ${{ steps.instrumentation.outcome }}
+        run: python3 scripts/pinned_window_disclosure.py finalize --api '${{ matrix.api }}' --output "$RUNNER_TEMP/native-window-evidence/api-${{ matrix.api }}" --outcome "${EMULATOR_OUTCOME:-unknown}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots-api-${{ matrix.api }}-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/native-window-evidence/api-${{ matrix.api }}/
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: native-window-timeout-diagnostics-${{ matrix.api }}-attempt-${{ github.run_attempt }}
+          path: instrumentation-diagnostics/api-${{ matrix.api }}/
+          if-no-files-found: ignore
+          retention-days: 14

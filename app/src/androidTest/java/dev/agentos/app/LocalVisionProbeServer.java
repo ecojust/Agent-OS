@@ -25,7 +25,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/** Real loopback HTTP fixture; reads generated PNG pixels, never an actual device screenshot. */
+/** Real loopback HTTP fixture; the original probe route reads only generated challenge pixels. */
 final class LocalVisionProbeServer implements AutoCloseable {
     enum Mode { VERIFIED, UNVERIFIED, HELD_VERIFIED, VERIFIED_THEN_UNVERIFIED, HTTP_UNAUTHORIZED }
     static final String KEY = "vision-ui-synthetic-key";
@@ -35,6 +35,9 @@ final class LocalVisionProbeServer implements AutoCloseable {
     // Optional explicit test route only. Its planner consumes the actual task observation;
     // it never supplies or replaces the synthetic PNG/nonce verification algorithm.
     private final LocalControllerModelServer taskPlanner;
+    /** Dedicated native-disclosure test route; never substitutes the real synthetic qualification. */
+    interface WindowTaskRoute { JsonObject respond(JsonObject request, int round) throws IOException; }
+    private final WindowTaskRoute windowTaskRoute;
     private final AtomicInteger taskRequests = new AtomicInteger();
     private final ServerSocket server;
     private final Thread worker;
@@ -52,8 +55,17 @@ final class LocalVisionProbeServer implements AutoCloseable {
     LocalVisionProbeServer(Mode mode) throws IOException { this(mode, null); }
 
     LocalVisionProbeServer(Mode mode, LocalControllerModelServer taskPlanner) throws IOException {
+        this(mode, taskPlanner, null);
+    }
+
+    static LocalVisionProbeServer forNativeWindowDisclosure(WindowTaskRoute route) throws IOException {
+        return new LocalVisionProbeServer(Mode.VERIFIED, null, java.util.Objects.requireNonNull(route));
+    }
+
+    private LocalVisionProbeServer(Mode mode, LocalControllerModelServer taskPlanner, WindowTaskRoute windowTaskRoute) throws IOException {
         this.mode = mode;
         this.taskPlanner = taskPlanner;
+        this.windowTaskRoute = windowTaskRoute;
         server = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"));
         worker = new Thread(this::serve, "synthetic-vision-http");
         worker.setDaemon(true); worker.start();
@@ -101,7 +113,9 @@ final class LocalVisionProbeServer implements AutoCloseable {
             boolean writing = false;
             boolean heldSynthetic = false;
             try (Socket socket = server.accept()) {
-                active = socket; socket.setSoTimeout(5000);
+                active = socket;
+                if (closed) continue; // A close racing accept must not leave this new socket alive.
+                socket.setSoTimeout(5000);
                 JsonObject request = readRequest(socket.getInputStream());
                 recordMaxTokens(request);
                 boolean synthetic = isSyntheticProbe(request);
@@ -153,7 +167,7 @@ final class LocalVisionProbeServer implements AutoCloseable {
             if (name.equals("authorization")) authorized = value.equals("Bearer " + KEY);
         }
         require(authorized, "Synthetic credential missing");
-        require(length > 0 && length <= 256 * 1024, "Unexpected probe body length");
+        require(length > 0 && length <= (windowTaskRoute == null ? 256 * 1024 : 2 * 1024 * 1024), "Unexpected probe body length");
         byte[] bytes = new byte[length];
         try {
             int offset = 0;
@@ -178,6 +192,7 @@ final class LocalVisionProbeServer implements AutoCloseable {
 
     private JsonObject response(JsonObject request) throws IOException {
         if (!isSyntheticProbe(request)) {
+            if (windowTaskRoute != null) return windowTaskRoute.respond(request, taskRequests.incrementAndGet());
             require(taskPlanner != null, "No structured task route was explicitly installed");
             require(request.toString().contains(PRIVATE_TASK), "The explicit structured route did not receive the real synthetic task");
             require(!request.toString().contains("image_url"), "The structured task unexpectedly received an image");
@@ -274,6 +289,8 @@ final class LocalVisionProbeServer implements AutoCloseable {
         closed = true; responseGate.countDown();
         try { server.close(); } catch (SocketException ignored) { }
         Socket connection = active; if (connection != null) connection.close();
-        worker.interrupt(); worker.join(2000); assertHealthy();
+        worker.interrupt(); worker.join(2000);
+        if (worker.isAlive()) throw new AssertionError("Local HTTP worker did not actually stop");
+        assertHealthy();
     }
 }

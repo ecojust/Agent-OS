@@ -52,7 +52,14 @@ public final class ContinuousNavigationInstrumentedTest {
                 device.hideOwnKeyboardAndObserve(activity, tools, device.control);
                 plan(device, tools, "launch_app", data -> device.context.getPackageName().equals(string(data, "packageName")),
                         ignored -> launchArguments());
-                JsonObject opened = fixture(tools, device);
+                assertEquals("The launch must be submitted exactly once", 1, device.control.getDispatchAttempts());
+                // Focus and even a repeated revision do not establish that the
+                // fixture nodes are readable. Only wait for readable evidence; never
+                // launch again or treat the redacted placeholder as the counter value.
+                device.awaitUiIdle();
+                JsonObject opened = awaitObservation(tools, device.control,
+                        ContinuousNavigationInstrumentedTest::hasReadableNavigationBaseline);
+                assertEquals("Waiting for the baseline must not submit another action", 1, device.control.getDispatchAttempts());
                 assertTrue(opened.get("scoped").getAsBoolean());
                 assertEquals("Count: 0", string(node(opened, "counter_value"), "text"));
                 Set<String> originalRows = rows(opened);
@@ -73,14 +80,18 @@ public final class ContinuousNavigationInstrumentedTest {
                 assertFalse(device.control.isPaused());
                 device.instrumentation.runOnMainSync(() -> assertTrue(device.service.isControlAvailable()));
                 screenshots.capture("continuous-navigation-real-home-without-confirmation");
-            } catch (TaskControlException paused) {
-                // Do not resume or replay a paused write. Record the windows while
-                // the owned Activity and its input/control state still exist.
-                AssertionError diagnostic = new AssertionError("Positive navigation stopped: " + paused.getCode()
+            } catch (Exception | AssertionError failure) {
+                // Preserve masked-node assertion failures as well as pauses before
+                // cleanup removes the Activity or changes the observed windows.
+                // A failure never authorizes resuming or replaying an accepted write.
+                String code = failure instanceof TaskControlException
+                        ? ((TaskControlException) failure).getCode() : failure.getClass().getSimpleName();
+                AssertionError diagnostic = new AssertionError("Positive navigation failed: " + code
+                        + "; reason=" + bounded(failure.getMessage(), 12_000)
                         + "; paused=" + device.control.isPaused() + "; cancelled=" + device.control.isCancelled()
                         + "; epoch=" + device.control.getExecutionEpoch() + "; dispatches=" + device.control.getDispatchAttempts()
-                        + "\n" + device.ownActivityDiagnostics(activity) + "\n" + bounded(windowDiagnostics(), 12_000), paused);
-                try { screenshots.capture("continuous-navigation-positive-pause-before-cleanup"); }
+                        + "\n" + device.ownActivityDiagnostics(activity) + "\n" + bounded(windowDiagnostics(), 12_000), failure);
+                try { screenshots.capture("continuous-navigation-positive-failure-before-cleanup"); }
                 catch (Throwable captureFailure) { diagnostic.addSuppressed(captureFailure); }
                 throw diagnostic;
             } finally { device.instrumentation.runOnMainSync(activity::finish); }
@@ -406,6 +417,23 @@ public final class ContinuousNavigationInstrumentedTest {
         return awaitObservation(tools, device.control, ContinuousNavigationInstrumentedTest::isFixture);
     }
     private static boolean isFixture(JsonObject data) { return FIXTURE.equals(string(data, "packageName")); }
+    private static boolean hasReadableNavigationBaseline(JsonObject data) {
+        return isFixture(data) && explicitBoolean(data, "focused", true) && explicitBoolean(data, "scoped", true)
+                && explicitBoolean(data, "truncated", false) && explicitBoolean(data, "hasOcclusion", false)
+                && hasReadableNode(data, "counter_value") && hasReadableNode(data, "fixture_scroll");
+    }
+    private static boolean hasReadableNode(JsonObject data, String id) {
+        if (!data.has("nodes") || !data.get("nodes").isJsonArray()) return false;
+        for (JsonElement entry : data.getAsJsonArray("nodes")) {
+            JsonObject candidate = entry.getAsJsonObject();
+            if ((FIXTURE + ":id/" + id).equals(string(candidate, "viewId"))) {
+                return explicitBoolean(candidate, "obscured", false)
+                        && explicitBoolean(candidate, "contentTruncated", false)
+                        && !"[obscured]".equals(string(candidate, "text"));
+            }
+        }
+        return false;
+    }
     private static JsonObject launchArguments() {
         JsonObject args = new JsonObject(); args.addProperty("packageName", FIXTURE); return args;
     }

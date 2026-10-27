@@ -15,6 +15,7 @@ import dev.agentos.core.RunControl;
 import dev.agentos.core.TaskControlException;
 import dev.agentos.core.TaskBudget;
 import dev.agentos.core.TaskResult;
+import dev.agentos.core.TaskDiagnostics;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -67,10 +68,12 @@ public final class AgentController {
         public final TaskUsage usage;
         public final boolean visualRequested;
         public final VisualQualification visualQualification;
+        public final TaskResult.Kind resultKind;
+        public final String resultCode;
 
         State(String status, boolean running, boolean paused, String approval, String approvalId,
               List<String> log, String summary, TaskUsage usage, boolean visualRequested,
-              VisualQualification visualQualification) {
+              VisualQualification visualQualification, TaskResult.Kind resultKind, String resultCode) {
             this.status = status;
             this.running = running;
             this.paused = paused;
@@ -81,6 +84,8 @@ public final class AgentController {
             this.usage = usage;
             this.visualRequested = visualRequested;
             this.visualQualification = visualQualification;
+            this.resultKind = resultKind;
+            this.resultCode = resultCode;
         }
     }
 
@@ -102,6 +107,8 @@ public final class AgentController {
     private RunControl control;
     private TaskBudget usageBudget;
     private TaskUsage completedUsage;
+    private TaskResult.Kind completedResultKind;
+    private String completedResultCode = "";
     private TaskVisualQualification taskVisual;
     private boolean completedVisualRequested;
     private VisualQualification completedVisualQualification = VisualQualification.NOT_REQUESTED;
@@ -178,13 +185,36 @@ public final class AgentController {
                     pending == null ? "" : pending.description,
                     pending == null ? "" : pending.id, log, summary, taskUsageLocked(),
                     taskVisual == null ? completedVisualRequested : taskVisual.requested,
-                    visualQualificationLocked());
+                    visualQualificationLocked(), completedResultKind, completedResultCode);
         }
     }
 
     /** Lightweight foreground polling: no log copy, publication, View, storage, Binder or network work. */
     public TaskUsage getTaskUsage() {
         synchronized (lock) { return taskUsageLocked(); }
+    }
+
+    /** User-requested numeric snapshot only: no log copy, platform query, network or publication. */
+    public TaskDiagnostics getTaskDiagnostics() {
+        synchronized (lock) {
+            TaskUsage usage = taskUsageLocked();
+            if (usage == null) return null;
+            TaskDiagnostics.Phase phase = usage.finished ? TaskDiagnostics.Phase.FINISHED
+                    : control.isCancelled() ? TaskDiagnostics.Phase.STOPPING
+                    : control.isPaused() ? TaskDiagnostics.Phase.PAUSED
+                    : pending != null ? TaskDiagnostics.Phase.WAITING_APPROVAL : TaskDiagnostics.Phase.RUNNING;
+            return new TaskDiagnostics(usage.taskId, phase, completedResultKind, completedResultCode,
+                    usage.budget, usage.consumed);
+        }
+    }
+
+    /** A copied preview may refer to a stopped task, but never to a cleared or replacement task. */
+    public boolean isTaskDiagnosticsCurrent(String taskId) {
+        synchronized (lock) {
+            String current = control != null ? control.getTaskId()
+                    : completedUsage == null ? null : completedUsage.taskId;
+            return taskId != null && taskId.equals(current);
+        }
     }
 
     private TaskUsage taskUsageLocked() {
@@ -281,6 +311,8 @@ public final class AgentController {
             control = active;
             usageBudget = taskBudget;
             completedUsage = null;
+            completedResultKind = null;
+            completedResultCode = "";
             taskVisual = visual;
             completedVisualRequested = false;
             completedVisualQualification = VisualQualification.NOT_REQUESTED;
@@ -516,15 +548,24 @@ public final class AgentController {
         publish();
     }
 
-    public void stop() {
+    public void stop() { stop(null); }
+
+    /** An old task preview must never stop a replacement task. */
+    public boolean stopIfCurrentTask(String taskId) {
+        return taskId != null && stop(taskId);
+    }
+
+    private boolean stop(String expectedTaskId) {
         PerformanceTrace.Span stopTiming = PerformanceTrace.begin(PerformanceTrace.Stage.STOP_RECEIVED);
         RunControl cancelled;
         synchronized (lock) {
-            if (control == null) return;
+            if (control == null || (expectedTaskId != null && !expectedTaskId.equals(control.getTaskId()))) return false;
             stopTiming.finish();
             cancelled = control;
             cancelled.cancel();
             freezeUsageLocked(cancelled);
+            completedResultKind = TaskResult.Kind.STOPPED;
+            completedResultCode = "TASK_STOPPED";
             releaseVisualQualificationLocked(cancelled);
             PerformanceTrace.mark(PerformanceTrace.Stage.STOP_EPOCH_INVALIDATED,
                     cancelled.getExecutionEpoch(), cancelled.getDispatchAttempts());
@@ -544,6 +585,7 @@ public final class AgentController {
             lock.notifyAll();
         }
         publish();
+        return true;
     }
 
     public void approve(String approvalId, boolean approved) {
@@ -633,6 +675,8 @@ public final class AgentController {
         // Use the existing cancellation hook to abort transport; never replace it.
         active.cancel();
         freezeUsageLocked(active);
+        completedResultKind = TaskResult.Kind.STOPPED;
+        completedResultCode = "CONFIGURATION_CHANGED";
         releaseVisualQualificationLocked(active);
         control = null;
         configuration = null;
@@ -657,6 +701,8 @@ public final class AgentController {
             if (!isCurrentLocked(session)) return;
             control.cancel();
             freezeUsageLocked(control);
+            completedResultKind = result.kind;
+            completedResultCode = TaskDiagnostics.safeTerminalCode(result.code);
             releaseVisualQualificationLocked(control);
             control = null;
             configuration = null;
@@ -736,6 +782,8 @@ public final class AgentController {
             if (control != null) return;
             summary = ""; log.clear(); status = "准备就绪";
             completedUsage = null;
+            completedResultKind = null;
+            completedResultCode = "";
             usageBudget = null;
             completedVisualRequested = false;
             completedVisualQualification = VisualQualification.NOT_REQUESTED;

@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Archived failed walkthrough 40552416631: accessibility-service setup failed before task stages; original failure video retained, no rerun and no change to the last successful walkthrough. Functional modules continue.
+**本次更新：** Implemented explicit redacted task diagnostic preview/copy and atomically task-bound stop; five new core tests and local lint/APK builds pass, two new device tests await matrix execution.
 
-**记录时间：** 2026-10-27T17:53:24Z
+**记录时间：** 2026-10-27T17:54:43Z
 
 [最近测试截图与清单](screenshots/40549230213-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40549230213)。通过、失败及未截图原因见清单。
 

@@ -48,6 +48,7 @@ import dev.agentos.core.ActionConfirmationPolicy;
 import dev.agentos.core.ModelProbe;
 import dev.agentos.core.RunControl;
 import dev.agentos.core.TaskBudget;
+import dev.agentos.core.TaskDiagnostics;
 import dev.agentos.core.VisionModelProbe;
 
 import java.io.IOException;
@@ -99,6 +100,9 @@ public final class MainActivity extends Activity implements AgentController.List
     private LinearLayout taskFocusAnchor;
     private ProgressBar progress;
     private TaskUsageView taskUsageView;
+    private Button taskDiagnosticsButton;
+    private AlertDialog taskDiagnosticsDialog;
+    private TaskDiagnostics displayedTaskDiagnostics;
     private final Runnable taskUsageRefresh = () -> {
         if (!this.resumed || destroyed || taskUsageView == null) return;
         renderTaskUsage(controller.getTaskUsage(), true);
@@ -198,6 +202,7 @@ public final class MainActivity extends Activity implements AgentController.List
 
     @Override protected void onPause() {
         resumed = false;
+        closeTaskDiagnostics(true);
         main.removeCallbacks(taskUsageRefresh);
         dismissProbeTrustDialog();
         invalidateSavedProbe("已失效，请重新测试");
@@ -215,6 +220,7 @@ public final class MainActivity extends Activity implements AgentController.List
     }
 
     @Override protected void onDestroy() {
+        closeTaskDiagnostics(true);
         main.removeCallbacks(taskUsageRefresh);
         closeDeviceDiagnostics(true);
         cancelModelProbe("测试已取消。", false);
@@ -473,6 +479,11 @@ public final class MainActivity extends Activity implements AgentController.List
         logText.setId(R.id.task_log);
         logText.setTextIsSelectable(true);
         marginAdd(results, logText, 12);
+        taskDiagnosticsButton = button("任务诊断", R.drawable.ic_settings, false);
+        taskDiagnosticsButton.setId(R.id.task_diagnostics);
+        taskDiagnosticsButton.setContentDescription("预览本次任务的脱敏状态与用量报告");
+        taskDiagnosticsButton.setOnClickListener(view -> showTaskDiagnostics());
+        marginAdd(results, taskDiagnosticsButton, 8);
         clearButton = button("清空本页任务内容", 0, false);
         clearButton.setId(R.id.clear_task);
         clearButton.setOnClickListener(view -> {
@@ -1009,6 +1020,9 @@ public final class MainActivity extends Activity implements AgentController.List
         renderProbeResult();
         AgentController.State state = controller.getState();
         renderTaskUsage(state.usage, false);
+        taskDiagnosticsButton.setEnabled(state.usage != null);
+        if (displayedTaskDiagnostics != null
+                && !controller.isTaskDiagnosticsCurrent(displayedTaskDiagnostics.taskId)) closeTaskDiagnostics(true);
         if (wasRunning && !state.running) taskField.setText("");
         wasRunning = state.running;
         boolean service = AgentAccessibilityService.getInstance() != null;
@@ -1093,6 +1107,80 @@ public final class MainActivity extends Activity implements AgentController.List
             labels.append(appLabels.getOrDefault(packageName, packageName));
         }
         scopeSummary.setText("已选择 " + draft.allowedPackages.size() + " 个应用\n" + labels + (draft.allowedPackages.size() > 4 ? " 等" : ""));
+    }
+
+    private void showTaskDiagnostics() {
+        if (destroyed || !resumed || isFinishing() || taskDiagnosticsDialog != null) return;
+        final TaskDiagnostics snapshot = controller.getTaskDiagnostics();
+        if (snapshot == null || !controller.isTaskDiagnosticsCurrent(snapshot.taskId)) return;
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setTitle("任务诊断")
+                .setMessage(snapshot.text)
+                .setNegativeButton("关闭", null)
+                .setPositiveButton("复制报告", null);
+        if (snapshot.phase != TaskDiagnostics.Phase.FINISHED) builder.setNeutralButton("停止任务", null);
+        final AlertDialog dialog = builder.create();
+        if (dialog.getWindow() == null) return;
+        dialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        taskDiagnosticsDialog = dialog;
+        displayedTaskDiagnostics = snapshot;
+        dialog.setOnDismissListener(ignored -> {
+            if (taskDiagnosticsDialog == dialog) closeTaskDiagnostics(false);
+        });
+        try { dialog.show(); }
+        catch (RuntimeException unavailable) {
+            closeTaskDiagnostics(false);
+            showMessage("当前窗口无法显示任务诊断，请返回页面后重试。", true);
+            return;
+        }
+        TextView report = dialog.findViewById(android.R.id.message);
+        report.setId(R.id.task_diagnostic_report);
+        report.setTextSize(13);
+        report.setTextIsSelectable(true);
+        report.setSaveEnabled(false);
+        Button copy = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        copy.setId(R.id.copy_task_diagnostic_report);
+        copy.setAllCaps(false);
+        copy.setMinHeight(dp(48));
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setMinHeight(dp(48));
+        if (snapshot.phase != TaskDiagnostics.Phase.FINISHED) {
+            Button stop = dialog.getButton(AlertDialog.BUTTON_NEUTRAL);
+            stop.setId(R.id.stop_task_from_diagnostics);
+            stop.setAllCaps(false);
+            stop.setMinHeight(dp(48));
+            stop.setTextColor(color(R.color.agent_error));
+            stop.setOnClickListener(view -> {
+                if (destroyed || !resumed || taskDiagnosticsDialog != dialog || displayedTaskDiagnostics != snapshot) return;
+                controller.stopIfCurrentTask(snapshot.taskId);
+                closeTaskDiagnostics(true);
+            });
+        }
+        copy.setOnClickListener(view -> {
+            // Copy exactly the immutable preview, never reread a newer task/report.
+            if (destroyed || !resumed || taskDiagnosticsDialog != dialog || displayedTaskDiagnostics != snapshot) return;
+            if (!controller.isTaskDiagnosticsCurrent(snapshot.taskId)) {
+                closeTaskDiagnostics(true);
+                return;
+            }
+            ClipboardManager clipboard = getSystemService(ClipboardManager.class);
+            if (clipboard == null) {
+                Toast.makeText(this, "系统剪贴板不可用，请稍后重试。", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            try {
+                clipboard.setPrimaryClip(ClipData.newPlainText("Agent OS 任务诊断", snapshot.text));
+                copy.setText("报告已复制");
+            } catch (RuntimeException unavailable) {
+                Toast.makeText(this, "无法复制报告，请稍后重试。", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void closeTaskDiagnostics(boolean dismiss) {
+        AlertDialog previous = taskDiagnosticsDialog;
+        taskDiagnosticsDialog = null;
+        displayedTaskDiagnostics = null;
+        if (dismiss && previous != null) previous.dismiss();
     }
 
     private void showDeviceDiagnostics() {

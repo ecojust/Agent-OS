@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Handle Android 15 screenrecord time metadata tracks narrowly while keeping the exported walkthrough video single-track, H.264 and fully decoded. Preserve bounded original probe results and exit codes for diagnosis. All 44 recording/archive checks pass; successful actual walkthrough remains pending.
+**本次更新：** Preserve pre-cleanup walkthrough failure state and opt-in numeric rejection markers for local controls, owned-window metadata and observation revisions. Wait for the actual confirmation before recording its normal 1.2-second user pause. Tool outcomes and guards are unchanged. Debug/test APKs, lint and 13 performance-schema checks pass; exact rejection source awaits the next real run.
 
-**记录时间：** 2026-10-27T15:08:46Z
+**记录时间：** 2026-10-27T15:14:20Z
 
 [最近测试截图与清单](screenshots/40524418849-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40524418849)。通过、失败及未截图原因见清单。
 

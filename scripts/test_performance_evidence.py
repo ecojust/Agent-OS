@@ -102,6 +102,13 @@ class PerformanceEvidenceTests(unittest.TestCase):
             performance.validate_report(value, 37)
 
     def test_schema_rejects_payload_strings_unknown_events_and_nonfinite_or_unbounded_numbers(self):
+        for reason in ("LOCAL_CONTROL_STALE", "OWNED_WINDOW_MISMATCH", "OBSERVATION_REVISION_MISMATCH"):
+            value = report()
+            value["modes"][0]["trace"][0].update(stage=reason)
+            performance.validate_report(value, 37)
+            value["modes"][0]["trace"][0].update(windowText="never archive content")
+            with self.assertRaises(ValueError):
+                performance.validate_report(value, 37)
         changes = [
             lambda value: value.update(kind="screenshot"),
             lambda value: value.update(diagnosticOnly=False),

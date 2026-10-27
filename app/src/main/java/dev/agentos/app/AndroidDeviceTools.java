@@ -377,7 +377,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         // invalidates the completed snapshot before any content reaches the model.
         onMain(() -> { requireReady(control, epoch); return null; }, control, epoch, new Dispatch());
         requireCurrentConfiguration(control, epoch);
-        if (!service.isOwnedControlWindowCurrent(controlWindow)) throw stale();
+        if (!service.isOwnedControlWindowCurrent(controlWindow)) throw diagnosticStale(PerformanceTrace.Stage.LOCAL_CONTROL_STALE, control, epoch);
         lastObservedRevision = result.getAsJsonObject("data").get("revision").getAsString();
         lastObservedEpoch = epoch;
         lastObservedControl = control;
@@ -1114,7 +1114,7 @@ public final class AndroidDeviceTools implements ToolHandler {
             try (RunControl.DispatchTicket ticket = control.beginDispatch(epoch)) {
                 ticket.checkExecutionEpoch();
                 requireCurrentConfiguration(control, epoch);
-                if (!service.isControlLeaseCurrent(controls)) throw stale();
+                if (!service.isControlLeaseCurrent(controls)) throw diagnosticStale(PerformanceTrace.Stage.LOCAL_CONTROL_STALE, control, epoch);
                 PerformanceTrace.mark(PerformanceTrace.Stage.DEVICE_DISPATCH_ATTEMPT, epoch, control.getDispatchAttempts());
                 dispatch.started = true;
                 service.startActivity(intent);
@@ -1171,7 +1171,7 @@ public final class AndroidDeviceTools implements ToolHandler {
             try (RunControl.DispatchTicket ticket = control.beginDispatch(epoch)) {
                 ticket.checkExecutionEpoch();
                 requireCurrentConfiguration(control, epoch);
-                if (!service.isControlLeaseCurrent(controls)) throw stale();
+                if (!service.isControlLeaseCurrent(controls)) throw diagnosticStale(PerformanceTrace.Stage.LOCAL_CONTROL_STALE, control, epoch);
                 PerformanceTrace.mark(PerformanceTrace.Stage.DEVICE_DISPATCH_ATTEMPT, epoch, control.getDispatchAttempts());
                 dispatch.started = true;
                 accepted = action.call();
@@ -1316,7 +1316,7 @@ public final class AndroidDeviceTools implements ToolHandler {
 
         void requireAccessible(RunControl control, long epoch, AgentAccessibilityService.ControlLease controls) throws Exception {
             requireCurrentConfiguration(control, epoch);
-            if (!service.isControlLeaseCurrent(controls)) throw stale();
+            if (!service.isControlLeaseCurrent(controls)) throw diagnosticStale(PerformanceTrace.Stage.LOCAL_CONTROL_STALE, control, epoch);
             if (obscured) pauseForInterruption(interruption, control, epoch);
             if (protectsControl && controls.intersects(bounds)) {
                 throw unavailable("目标被任务控制条遮挡，请先拖动控制条再重新观察");
@@ -1398,7 +1398,7 @@ public final class AndroidDeviceTools implements ToolHandler {
                 || !service.isConnected() || !service.isDeviceReady()) {
             cancelOriginal(control, epoch);
         }
-        if (!service.isControlLeaseCurrent(controls)) throw stale();
+        if (!service.isControlLeaseCurrent(controls)) throw diagnosticStale(PerformanceTrace.Stage.LOCAL_CONTROL_STALE, control, epoch);
         requireCurrentConfiguration(control, epoch);
     }
 
@@ -1439,7 +1439,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         PerformanceTrace.Span timing = PerformanceTrace.begin(PerformanceTrace.Stage.SNAPSHOT_OBSERVE);
         Snapshot result = null;
         try {
-            if (!service.isOwnedControlWindowCurrent(controlWindow)) throw stale();
+            if (!service.isOwnedControlWindowCurrent(controlWindow)) throw diagnosticStale(PerformanceTrace.Stage.LOCAL_CONTROL_STALE, control, epoch);
             extraGuard.check();
             result = buildSnapshot(control, epoch, true, controlWindow, extraGuard); return result;
         } finally {
@@ -1478,7 +1478,7 @@ public final class AndroidDeviceTools implements ToolHandler {
             state.snapshotJsonBytes = state.json().toString().getBytes(StandardCharsets.UTF_8).length;
             if (state.snapshotJsonBytes + 30 > MAX_BYTES) throw unavailable("界面快照超过字节预算");
             state.requireSnapshotCurrent();
-            if (!service.isOwnedControlWindowCurrent(controlWindow)) throw stale();
+            if (!service.isOwnedControlWindowCurrent(controlWindow)) throw diagnosticStale(PerformanceTrace.Stage.LOCAL_CONTROL_STALE, control, epoch);
             return state;
         } catch (Exception | Error failure) { state.close(); throw failure; }
     }
@@ -1687,7 +1687,7 @@ public final class AndroidDeviceTools implements ToolHandler {
                     signature.append('|').append(window.getId()).append(':').append(window.getType()).append(':').append(other.toShortString());
                     obscured.add(other);
                 }
-                if (!service.isOwnedControlWindowCurrent(controlWindow)) throw stale();
+                if (!service.isOwnedControlWindowCurrent(controlWindow)) throw diagnosticStale(PerformanceTrace.Stage.LOCAL_CONTROL_STALE, control, epoch);
                 windowSignature = signature.toString();
             } finally { if (windows != null) recycleWindows(windows); }
         }
@@ -1715,7 +1715,10 @@ public final class AndroidDeviceTools implements ToolHandler {
         }
 
         private void verifyOwnedControlWindow(List<AccessibilityWindowInfo> windows) throws DeviceException {
-            if (!service.isOwnedControlWindowCurrent(controlWindow) || windows == null || windows.size() > 40) throw stale();
+            if (!service.isOwnedControlWindowCurrent(controlWindow))
+                throw diagnosticStale(PerformanceTrace.Stage.LOCAL_CONTROL_STALE, control, epoch);
+            if (windows == null || windows.size() > 40)
+                throw diagnosticStale(PerformanceTrace.Stage.OWNED_WINDOW_MISMATCH, control, epoch);
             int matches = 0;
             for (AccessibilityWindowInfo window : windows) {
                 if (window.getId() != controlWindow.windowId) continue;
@@ -1723,9 +1726,12 @@ public final class AndroidDeviceTools implements ToolHandler {
                 Rect actual = new Rect(); window.getBoundsInScreen(actual);
                 if (window.getType() != AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY
                         || window.getDisplayId() != Display.DEFAULT_DISPLAY || window.getDisplayId() != controlWindow.displayId
-                        || window.isFocused() || actual.isEmpty() || !actual.equals(controlWindow.copyBounds())) throw stale();
+                        || window.isFocused() || actual.isEmpty() || !actual.equals(controlWindow.copyBounds()))
+                    throw diagnosticStale(PerformanceTrace.Stage.OWNED_WINDOW_MISMATCH, control, epoch);
             }
-            if (matches != 1 || !service.isOwnedControlWindowCurrent(controlWindow)) throw stale();
+            if (matches != 1) throw diagnosticStale(PerformanceTrace.Stage.OWNED_WINDOW_MISMATCH, control, epoch);
+            if (!service.isOwnedControlWindowCurrent(controlWindow))
+                throw diagnosticStale(PerformanceTrace.Stage.LOCAL_CONTROL_STALE, control, epoch);
         }
 
         boolean isOurControl(AccessibilityWindowInfo window) {
@@ -1833,7 +1839,7 @@ public final class AndroidDeviceTools implements ToolHandler {
 
         void requireRevision(String expected) throws DeviceException {
             if (!scoped) throw denied("当前窗口未获得读取及操作授权");
-            if (!revision.equals(expected)) throw stale();
+            if (!revision.equals(expected)) throw diagnosticStale(PerformanceTrace.Stage.OBSERVATION_REVISION_MISMATCH, control, epoch);
         }
         AccessibilityNodeInfo node(String id) throws DeviceException {
             AccessibilityNodeInfo node = nodes.get(id);
@@ -1951,6 +1957,11 @@ public final class AndroidDeviceTools implements ToolHandler {
     }
     private static DeviceException unavailable(String message) { return new DeviceException("CAPABILITY_UNAVAILABLE", message, "重新观察；无法可靠确认时由用户接管"); }
     private static DeviceException denied(String message) { return new DeviceException("PERMISSION_DENIED", message, "由用户核对授权，不使用其他工具绕过"); }
+    /** Only an explicitly enabled bounded numeric trace records this rejection classification. */
+    private static DeviceException diagnosticStale(PerformanceTrace.Stage reason, RunControl control, long epoch) {
+        PerformanceTrace.mark(reason, epoch, control.getDispatchAttempts());
+        return stale(); // Preserve the original tool code/message, flags and replan policy.
+    }
     private static DeviceException stale() { return new DeviceException("STALE_OBSERVATION", "界面或执行代次已变化，旧目标已失效", "重新 observe 后再规划动作"); }
     private static class DeviceException extends Exception {
         final String code, next;

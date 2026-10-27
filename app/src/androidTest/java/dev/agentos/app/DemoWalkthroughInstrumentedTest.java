@@ -56,12 +56,16 @@ public final class DemoWalkthroughInstrumentedTest {
     private AgentController controller;
     private LocalControllerModelServer activeServer;
     private RunControl taskOwner;
+    private PerformanceTrace.Session diagnostics;
+    private long chapterStartedNanos;
 
     @Test public void observedActionsRequireConfirmationAndRespectUserControls() throws Exception {
         requireDedicatedRecording();
         initializeReport();
         Throwable failure = null;
-        try (DeviceHarness device = new DeviceHarness()) {
+        try (PerformanceTrace.Session trace = PerformanceTrace.startDiagnostics();
+             DeviceHarness device = new DeviceHarness()) {
+            diagnostics = trace;
             controller = AgentController.get(device.context);
             assertFalse("A demo must not interrupt an existing task", controller.getState().running);
             settleWorker();
@@ -123,7 +127,10 @@ public final class DemoWalkthroughInstrumentedTest {
                 approveVerifiedSequence(device, new String[]{"text_entered", "text_saved", "counter_verified"}, 3);
                 assertEquals("Saved: " + LocalControllerModelServer.TEXT, fixtureText(device, "saved_value"));
                 assertEquals("Count: 1", fixtureText(device, "counter_value"));
-            } catch (Exception | Error error) { chapterFailure = error; throw error; }
+            } catch (Exception | Error error) {
+                AssertionError diagnosed = diagnosedChapterFailure(device, error);
+                chapterFailure = diagnosed; throw diagnosed;
+            }
             finally { clearPreserving(device, chapterFailure); }
         }
     }
@@ -139,7 +146,10 @@ public final class DemoWalkthroughInstrumentedTest {
                         new String[]{"scrolled_down", "scrolled_up", "second_page", "returned_to_fixture"}, 4);
                 assertEquals("Saved: " + LocalControllerModelServer.TEXT, fixtureText(device, "saved_value"));
                 assertEquals("Count: 1", fixtureText(device, "counter_value"));
-            } catch (Exception | Error error) { chapterFailure = error; throw error; }
+            } catch (Exception | Error error) {
+                AssertionError diagnosed = diagnosedChapterFailure(device, error);
+                chapterFailure = diagnosed; throw diagnosed;
+            }
             finally { clearPreserving(device, chapterFailure); }
         }
     }
@@ -201,7 +211,10 @@ public final class DemoWalkthroughInstrumentedTest {
                 assertEquals("Count: 1", fixtureText(device, "counter_value"));
                 server.assertHealthy();
                 recordVisible(device, "stale_approval_rejected");
-            } catch (Exception | Error error) { chapterFailure = error; throw error; }
+            } catch (Exception | Error error) {
+                AssertionError diagnosed = diagnosedChapterFailure(device, error);
+                chapterFailure = diagnosed; throw diagnosed;
+            }
             finally { clearPreserving(device, chapterFailure); }
         }
     }
@@ -222,12 +235,14 @@ public final class DemoWalkthroughInstrumentedTest {
             if (!state.approvalId.isEmpty() && approved.add(state.approvalId)) {
                 currentStage = "confirmation_waiting";
                 approvalOrdinal++;
-                stage("passed");
-                screenshots.capture("confirmation-" + approvalOrdinal);
                 long unapprovedDispatches = taskOwner.getDispatchAttempts();
+                awaitDisplayedApproval(device, state.approvalId);
+                stage("passed");
+                // Keep normal user thinking time; capture only after the real approval has appeared.
                 holdVisible(1_200);
                 assertEquals("An unapproved pending action was dispatched", unapprovedDispatches, taskOwner.getDispatchAttempts());
                 assertEquals(state.approvalId, controller.getState().approvalId);
+                screenshots.capture("confirmation-" + approvalOrdinal);
                 clickOwnedButton(device, "允许此步", state.approvalId);
             } else SystemClock.sleep(25);
         }
@@ -242,12 +257,103 @@ public final class DemoWalkthroughInstrumentedTest {
     }
 
     private void start(DeviceHarness device, ControllerTestSettings settings, String task) throws Exception {
-        requireTime();
+        requireTime(); chapterStartedNanos = SystemClock.elapsedRealtimeNanos();
         onMain(device, () -> controller.start(settings.model, task,
                 Collections.singleton(DeviceHarness.FIXTURE), settings.executionMode, settings.lease));
         assertTrue(controller.getState().running);
         taskOwner = readControl();
         assertNotNull(taskOwner);
+    }
+
+    /** Purely observe the same pending approval's actual owned View; never replay a UI action. */
+    private void awaitDisplayedApproval(DeviceHarness device, String expectedApproval) {
+        long deadline = Math.min(startedElapsed + DEMO_MILLIS, SystemClock.elapsedRealtime() + 5_000);
+        while (SystemClock.elapsedRealtime() < deadline) {
+            requireTime(); activeServer.assertHealthy();
+            boolean[] visible = {false};
+            onMain(device, () -> {
+                AgentController.State state = controller.getState();
+                assertTrue("Task ended before its actual confirmation was displayed", state.running);
+                assertEquals(expectedApproval, state.approvalId);
+                View root = readField(device.service, AgentAccessibilityService.class, "overlay", View.class);
+                AgentAccessibilityService.OwnedControlWindowIdentity identity = device.service.getOwnedControlWindowIdentity();
+                if (root == null || !root.isAttachedToWindow() || !root.isShown() || !root.isLaidOut()
+                        || root.isLayoutRequested() || !device.service.isOwnedControlWindowCurrent(identity)) return;
+                Button approve = findButton(root, "允许此步");
+                String displayed = readField(device.service, AgentAccessibilityService.class, "currentApproval", String.class);
+                Long bound = readField(device.service, AgentAccessibilityService.class, "displayedCallbackGeneration", Long.class);
+                Long current = readField(device.service, AgentAccessibilityService.class, "callbackGeneration", Long.class);
+                visible[0] = !state.approval.isEmpty() && state.approval.equals(displayed) && bound.equals(current)
+                        && approve != null && approve.isShown() && approve.isEnabled();
+            });
+            if (visible[0] && SystemClock.elapsedRealtime() < deadline) return;
+            SystemClock.sleep(25);
+        }
+        throw new AssertionError("The actual owned confirmation did not appear within the fixed display wait");
+    }
+
+    /** Preserve the original assertion and safe actual state before chapter cleanup clears them. */
+    private AssertionError diagnosedChapterFailure(DeviceHarness device, Throwable cause) {
+        String detail = "diagnostics=unavailable";
+        try {
+            AgentController.State state = controller.getState();
+            detail = "controller={running=" + state.running + ",paused=" + state.paused
+                    + ",approvalPending=" + !state.approvalId.isEmpty()
+                    + ",status=" + diagnosticStatus(state.status) + ",summaryClass=" + diagnosticSummary(state.summary)
+                    + ",dispatchAttempts=" + (taskOwner == null ? -1 : taskOwner.getDispatchAttempts()) + "}\n"
+                    + (activeServer == null ? "server=absent" : activeServer.safeDiagnostics())
+                    + "\n" + diagnosticTrace();
+        } catch (Throwable diagnosticFailure) { cause.addSuppressed(diagnosticFailure); }
+        AssertionError result = new AssertionError("Recorded controller chapter failed; original cause retained.\n" + detail, cause);
+        try { screenshots.capture("chapter-failure-" + currentStage); }
+        catch (Throwable captureFailure) { result.addSuppressed(captureFailure); }
+        return result;
+    }
+
+    private String diagnosticTrace() {
+        if (diagnostics == null) return "trace=absent";
+        java.util.ArrayDeque<String> recent = new java.util.ArrayDeque<>();
+        int completed = 0, failed = 0, truncated = 0, local = 0, window = 0, revision = 0;
+        for (PerformanceTrace.Event event : diagnostics.events()) {
+            if (event.startNanos < chapterStartedNanos) continue;
+            boolean snapshot = event.stage == PerformanceTrace.Stage.SNAPSHOT_PREPARE
+                    || event.stage == PerformanceTrace.Stage.SNAPSHOT_FINAL_MUTATION;
+            boolean rejection = event.stage == PerformanceTrace.Stage.LOCAL_CONTROL_STALE
+                    || event.stage == PerformanceTrace.Stage.OWNED_WINDOW_MISMATCH
+                    || event.stage == PerformanceTrace.Stage.OBSERVATION_REVISION_MISMATCH;
+            if (!snapshot && !rejection) continue;
+            if (snapshot) { if (event.nodeCount < 0) failed++; else completed++; if (event.truncated) truncated++; }
+            if (event.stage == PerformanceTrace.Stage.LOCAL_CONTROL_STALE) local++;
+            if (event.stage == PerformanceTrace.Stage.OWNED_WINDOW_MISMATCH) window++;
+            if (event.stage == PerformanceTrace.Stage.OBSERVATION_REVISION_MISMATCH) revision++;
+            recent.addLast(event.stage.name() + "{nodes=" + event.nodeCount + ",bytes=" + event.snapshotJsonBytes
+                    + ",truncated=" + event.truncated + ",epoch=" + event.epoch
+                    + ",dispatchAttempts=" + event.dispatchAttempts + "}");
+            if (recent.size() > 12) recent.removeFirst();
+        }
+        return "trace={snapshotCompleted=" + completed + ",snapshotFailed=" + failed + ",truncated=" + truncated
+                + ",localControlStale=" + local + ",ownedWindowMismatch=" + window + ",revisionMismatch=" + revision
+                + ",overwritten=" + diagnostics.overwrittenCount() + ",recent=" + recent + "}";
+    }
+
+    private static String diagnosticStatus(String value) {
+        if ("执行失败".equals(value)) return "FAILED";
+        if ("已停止".equals(value)) return "STOPPED";
+        if ("达到任务预算，已停止".equals(value)) return "BUDGET_EXCEEDED";
+        if ("配置已改变，任务已停止".equals(value)) return "CONFIGURATION_CHANGED";
+        if ("执行已结束 · 模型报告待核对".equals(value)) return "MODEL_REPORT";
+        if ("准备就绪".equals(value)) return "READY";
+        return value == null || value.isEmpty() ? "EMPTY" : "OTHER";
+    }
+
+    private static String diagnosticSummary(String value) {
+        if ("模型连续三轮未提供可执行的有效操作，任务已停止。".equals(value)) return "THREE_INVALID_TURNS";
+        if ("操作可能已提交但结果未知；任务已停止，请手动核对，未自动重发。".equals(value)) return "OUTCOME_UNKNOWN";
+        if ("你已拒绝该动作，任务已结束，不会改用其他方式执行。".equals(value)) return "USER_DENIED";
+        if ("配置或授权已改变，请重新保存配置并选择允许的应用。".equals(value)) return "CONFIGURATION_INVALID";
+        if ("任务预算已改变，请重新保存配置后启动。".equals(value)) return "BUDGET_CHANGED";
+        if ("任务执行中断；请检查当前界面后重新开始。".equals(value)) return "INTERNAL_ERROR";
+        return value == null || value.isEmpty() ? "EMPTY" : "OTHER";
     }
 
     /** Invoke the real currently attached Button's production listener, never replace callbacks. */

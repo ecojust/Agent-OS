@@ -25,11 +25,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Correct only the post-drag test observation after original API30–32 failures: use the existing guarded fresh-window path within the same five-second deadline. Preserve exact geometry, owner invalidation and callback checks; production code and the 242-case denominator are unchanged. Test APK builds successfully; device revalidation pending.
+**本次更新：** Archive all round-54 evidence for source 7f47313b: 1933/1936 passed, three post-drag registration failures on API30–32, no missing cases. The actual-button approval regression passes on every API. Independently verify all 4,106 payload hashes and retain 2,138 real screenshots; the test-only correction is running in a separate verification round.
 
-**记录时间：** 2026-10-27T15:47:07Z
+**记录时间：** 2026-10-27T15:49:00Z
 
-[最近测试截图与清单](screenshots/40524418849-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40524418849)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40531636963-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40531636963)。通过、失败及未截图原因见清单。
 
 **整体操作演示：** [播放视频](screenshots/demos/40531630013-1/demo.mp4) · [录制与验证清单](screenshots/demos/40531630013-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40531630013)。
 录制版本：[`7f47313b9`](https://github.com/ecojust/Agent-OS/commit/7f47313b949461458529bc972a36f11fa1b327be)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。

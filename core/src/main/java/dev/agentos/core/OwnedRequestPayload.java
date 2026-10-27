@@ -30,13 +30,19 @@ final class OwnedRequestPayload implements AutoCloseable {
     /** The supplied body is already a private snapshot belonging to this request. */
     static OwnedRequestPayload encode(JsonObject body, ImageWorkset workset, ModelRequestContext context)
             throws ModelException, InterruptedException {
+        return encode(body, null, workset, context);
+    }
+
+    /** Borrows the typed PNG for two passes; the request retains responsibility for closing it. */
+    static OwnedRequestPayload encode(JsonObject body, PngImage image, ImageWorkset workset, ModelRequestContext context)
+            throws ModelException, InterruptedException {
         context.check();
         Sink counted = new Sink(null, context);
         byte[] firstHash = null, secondHash = null, encoded = null;
         ImageWorkset.Reservation reservation = null;
         boolean transferred = false;
-        try {
-            serialize(body, counted);
+        try (ImageRequestSerializer picture = image == null ? null : imageSerializer(image, workset, context)) {
+            serialize(body, counted, picture);
             context.check();
             firstHash = counted.hash.digest();
             try { reservation = workset.reserve(counted.length); }
@@ -46,7 +52,7 @@ final class OwnedRequestPayload implements AutoCloseable {
             }
             encoded = new byte[counted.length];
             Sink written = new Sink(encoded, context);
-            serialize(body, written);
+            serialize(body, written, picture);
             context.check();
             secondHash = written.hash.digest();
             if (written.length != counted.length || !MessageDigest.isEqual(firstHash, secondHash)) throw changed();
@@ -63,13 +69,24 @@ final class OwnedRequestPayload implements AutoCloseable {
         }
     }
 
-    private static void serialize(JsonObject body, Sink output) throws ModelException, InterruptedException {
+    private static ImageRequestSerializer imageSerializer(PngImage image, ImageWorkset workset, ModelRequestContext context)
+            throws ModelException, TaskControlException {
+        try { return new ImageRequestSerializer(image, workset); }
+        catch (IllegalStateException unavailable) {
+            context.check();
+            throw new ModelException("REQUEST_MEMORY_LIMIT", "模型图片缓冲暂不可用，请等待上次请求释放资源后重试。");
+        }
+    }
+
+    private static void serialize(JsonObject body, Sink output, ImageRequestSerializer picture) throws ModelException, InterruptedException {
         // These are the same writer settings used by JsonElement.toString(). In
         // particular HTML characters, nulls and surrogate handling stay unchanged.
-        try (OutputStreamWriter utf8 = new OutputStreamWriter(output, StandardCharsets.UTF_8);
-             JsonWriter json = new JsonWriter(utf8)) {
-            json.setStrictness(Strictness.LENIENT);
-            Streams.write(body, json);
+        try (OutputStreamWriter utf8 = new OutputStreamWriter(output, StandardCharsets.UTF_8)) {
+            if (picture == null) {
+                JsonWriter json = new JsonWriter(utf8);
+                json.setStrictness(Strictness.LENIENT);
+                Streams.write(body, json);
+            } else picture.write(body, utf8, output.context);
         } catch (Stopped stopped) { throw stopped.failure; }
         catch (Rejected rejected) { throw rejected.failure; }
         catch (IOException failed) { throw new ModelException("INVALID_REQUEST", "无法编码模型请求，尚未发送网络请求。"); }

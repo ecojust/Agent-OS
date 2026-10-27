@@ -127,9 +127,12 @@ public class ImageAttachmentLifecycleTest {
             assertEquals(request.executionEpoch, image.executionEpoch); assertEquals("one-capture", image.callId);
             assertEquals(REVISION, image.revision);
             first.close(); assertFalse("ownership transferred to the caller", image.isClosed());
-            assertEquals(dataUrl, image.consumeDataUrl(control, request.executionEpoch, REVISION));
-            assertTrue(image.isConsumed()); assertTrue(image.isClosed());
-            assertThrows(IllegalArgumentException.class, () -> image.consumeDataUrl(control, request.executionEpoch, REVISION));
+            try (PngImage transferred = image.consumePng(control, request.executionEpoch, REVISION)) {
+                assertTrue(image.isConsumed()); assertTrue(image.isClosed());
+                assertThrows(IllegalArgumentException.class, () -> image.consumePng(control, request.executionEpoch, REVISION));
+                assertFalse("a duplicate consumption cannot close the transferred owner", transferred.isClosed());
+                assertArrayEquals(validPng(), PngImageTest.read(transferred));
+            }
             try (ToolDispatchResult duplicate = dispatcher.dispatchWithAttachment(request, control)) {
                 assertNull(duplicate.takeImage()); assertTrue(duplicate.getResult().get("ok").getAsBoolean());
                 assertNoBinary(duplicate.getResult(), dataUrl);
@@ -145,7 +148,7 @@ public class ImageAttachmentLifecycleTest {
         ImageAttachment owned = ImageAttachment.fromLocalResult(request, local, local.get("imageDataUrl"));
         try (ToolDispatchResult owner = new ToolDispatchResult(ok(), owned)) { assertFalse(owned.isClosed()); }
         assertTrue(owned.isClosed()); assertFalse(owned.isConsumed());
-        assertThrows(IllegalArgumentException.class, () -> owned.consumeDataUrl(control, request.executionEpoch, REVISION));
+        assertThrows(IllegalArgumentException.class, () -> owned.consumePng(control, request.executionEpoch, REVISION));
         try (ToolDispatcher dispatcher = new ToolDispatcher(source(local, calls))) {
             assertNoBinary(dispatcher.dispatch(request, control), dataUrl);
             try (ToolDispatchResult replay = dispatcher.dispatchWithAttachment(request, control)) { assertNull(replay.takeImage()); }
@@ -161,8 +164,8 @@ public class ImageAttachmentLifecycleTest {
             RunControl receiver = mode == 0 ? new RunControl() : control;
             String revision = mode == 1 ? "a-new-screen" : REVISION;
             if (mode == 2) { control.pause(); control.resume(); }
-            if (mode == 2) assertThrows(TaskControlException.class, () -> image.consumeDataUrl(receiver, request.executionEpoch, revision));
-            else assertThrows(IllegalArgumentException.class, () -> image.consumeDataUrl(receiver, request.executionEpoch, revision));
+            if (mode == 2) assertThrows(TaskControlException.class, () -> image.consumePng(receiver, request.executionEpoch, revision));
+            else assertThrows(IllegalArgumentException.class, () -> image.consumePng(receiver, request.executionEpoch, revision));
             assertTrue(image.isClosed()); assertFalse(image.isConsumed());
         }
     }
@@ -175,9 +178,69 @@ public class ImageAttachmentLifecycleTest {
         for (byte[] bytes : variants) {
             RunControl control = new RunControl(); JsonObject local = screenshot(url(bytes));
             try (ImageAttachment image = ImageAttachment.fromLocalResult(request(control, "valid", "take_screenshot"), local, local.get("imageDataUrl"))) {
-                assertEquals(url(bytes), image.consumeDataUrl(control, control.getExecutionEpoch(), REVISION));
+                try (PngImage png = image.consumePng(control, control.getExecutionEpoch(), REVISION)) {
+                    assertArrayEquals(bytes, PngImageTest.read(png));
+                }
             }
         }
+    }
+
+    @Test public void base64InputRetainsStrictPaddingAndTrailingCharacterChecks() throws Exception {
+        byte[] bytes = png(2, 1, 2, 8, 0, RGB_ROW, "sRGB");
+        String padded = url(bytes);
+        assertTrue("fixture must exercise padding", padded.endsWith("="));
+        RunControl control = new RunControl();
+        ToolRequest request = request(control, "base64", "take_screenshot");
+        ImageWorkset workset = new ImageWorkset(20_000);
+        for (String value : List.of(padded, padded.replace("=", ""))) {
+            JsonObject local = screenshot(value);
+            try (ImageAttachment image = ImageAttachment.fromLocalResult(request, local, local.get("imageDataUrl"), workset)) {
+                assertEquals(bytes.length, workset.reservedBytes());
+                try (PngImage png = image.consumePng(control, request.executionEpoch, REVISION)) {
+                    image.close();
+                    assertArrayEquals(bytes, PngImageTest.read(png));
+                    assertEquals(bytes.length, workset.reservedBytes());
+                }
+            }
+            assertEquals(0, workset.reservedBytes());
+        }
+        for (String value : List.of(padded + "A", padded + "AAAA", padded + "=", padded + "\n", padded + "é",
+                padded.replace("=", "A="), padded.substring(0, 30) + " " + padded.substring(30))) {
+            JsonObject local = screenshot(value);
+            assertThrows(IllegalArgumentException.class,
+                    () -> ImageAttachment.fromLocalResult(request, local, local.get("imageDataUrl"), workset));
+            assertEquals(0, workset.reservedBytes());
+        }
+    }
+
+    @Test public void decodingAndPngAdmissionFailuresReleaseOnlyTheirOwnCapacity() throws Exception {
+        byte[] bytes = validPng(); RunControl control = new RunControl();
+        ToolRequest request = request(control, "budget", "take_screenshot");
+        for (long limit : new long[]{bytes.length - 1, bytes.length, bytes.length * 2L + PngValidator.SCRATCH_BYTES - 1}) {
+            ImageWorkset workset = new ImageWorkset(limit + 7);
+            try (ImageWorkset.Reservation other = workset.reserve(7)) {
+                JsonObject local = screenshot(url(bytes));
+                assertThrows(IllegalArgumentException.class,
+                        () -> ImageAttachment.fromLocalResult(request, local, local.get("imageDataUrl"), workset));
+                assertEquals(7, workset.reservedBytes());
+            }
+            assertEquals(0, workset.reservedBytes());
+        }
+        ImageWorkset workset = new ImageWorkset(20_000);
+        JsonObject wrongMetadata = screenshot(url(bytes));
+        wrongMetadata.getAsJsonObject("data").addProperty("width", 9);
+        assertThrows(IllegalArgumentException.class,
+                () -> ImageAttachment.fromLocalResult(request, wrongMetadata, wrongMetadata.get("imageDataUrl"), workset));
+        assertEquals(0, workset.reservedBytes());
+        AssertionError failure = new AssertionError("synthetic metadata failure");
+        JsonObject errorMetadata = screenshot(url(bytes));
+        errorMetadata.getAsJsonObject("data").addProperty("width", OwnedRequestPayloadTest.number(() -> {
+            assertEquals("both the decode temporary and PNG owner remain admitted", bytes.length * 2L, workset.reservedBytes());
+            throw failure;
+        }));
+        assertSame(failure, assertThrows(AssertionError.class,
+                () -> ImageAttachment.fromLocalResult(request, errorMetadata, errorMetadata.get("imageDataUrl"), workset)));
+        assertEquals(0, workset.reservedBytes());
     }
 
     @Test public void malformedUnsupportedAndOverBudgetPngsNeverProduceAttachmentsOrCachedBytes() throws Exception {

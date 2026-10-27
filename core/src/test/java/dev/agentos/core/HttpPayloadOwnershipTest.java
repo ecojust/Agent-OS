@@ -110,14 +110,18 @@ public final class HttpPayloadOwnershipTest {
     }
 
     private static final class Fixture implements AutoCloseable {
-        final ImageWorkset workset = new ImageWorkset(4096);
+        final ImageWorkset workset;
         final Network network;
         final ExecutorService closer = Executors.newSingleThreadExecutor();
         final ExecutorService callers = Executors.newFixedThreadPool(3);
         final List<Connection> connections = new CopyOnWriteArrayList<>();
         final List<Gate> gates = new CopyOnWriteArrayList<>();
         Fixture() { this(null); }
-        Fixture(Gate beforeRun) { network = new Network(beforeRun); if (beforeRun != null) gates.add(beforeRun); }
+        Fixture(Gate beforeRun) { this(beforeRun, 4096); }
+        Fixture(Gate beforeRun, long capacity) {
+            workset = new ImageWorkset(capacity);
+            network = new Network(beforeRun); if (beforeRun != null) gates.add(beforeRun);
+        }
         HttpModelClient client(Mode mode, Gate gate, long timeout) {
             if (gate != null) gates.add(gate);
             return new HttpModelClient(timeout, url -> {
@@ -186,6 +190,26 @@ public final class HttpPayloadOwnershipTest {
             assertEquals(runningBytes, fixture.workset.reservedBytes());
             assertTrue(fixture.network.getQueue().isEmpty()); assertEquals(1, fixture.connections.size());
             io.release.countDown(); assertTrue(running.get(2, TimeUnit.SECONDS).has("choices")); fixture.firstExited();
+        }
+    }
+
+    @Test(timeout = 8000) public void typedPngIsReleasedBeforeNetworkAndCancelRetainsOnlyInFlightWireBytes() throws Exception {
+        try (Fixture fixture = new Fixture(null, 30_000)) {
+            Gate io = new Gate(); RunControl run = new RunControl();
+            PngImage image = PngImage.fromBytes(PngImageTest.png(), fixture.workset);
+            ModelRequestContext context = ModelRequestContext.syntheticRequest(run, run.getExecutionEpoch());
+            HttpModelClient client = fixture.client(Mode.WRITE_BLOCK, io, 4000);
+            Future<JsonObject> pending = fixture.callers.submit(() -> client.request(SETTINGS, messages(), new JsonArray(), context, image));
+            io.await(); Connection connection = fixture.connections.get(0);
+            byte[] bytes = connection.buffer.get(), unchanged = bytes.clone();
+            assertTrue("PNG ownership ends before queue/network ownership begins", image.isClosed());
+            assertEquals(bytes.length, fixture.workset.reservedBytes());
+            run.cancel(); assertTrue(failure(pending) instanceof TaskControlException);
+            assertEquals(bytes.length, fixture.workset.reservedBytes());
+            assertArrayEquals(unchanged, bytes);
+            io.release.countDown(); fixture.firstExited();
+            assertArrayEquals(new byte[bytes.length], bytes); assertEquals(0, fixture.workset.reservedBytes());
+            assertEquals(1, fixture.connections.size());
         }
     }
 

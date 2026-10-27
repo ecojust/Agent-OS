@@ -58,13 +58,22 @@ final class HttpModelClient {
 
     JsonObject request(ModelSettings settings, JsonArray messages, JsonArray tools, ModelRequestContext context)
             throws ModelException, InterruptedException {
-        context.check();
+        return request(settings, messages, tools, context, null);
+    }
+
+    /** Takes image ownership immediately, including cancellation before the first context check. */
+    JsonObject request(ModelSettings settings, JsonArray messages, JsonArray tools, ModelRequestContext context, PngImage image)
+            throws ModelException, InterruptedException {
+        OwnedRequestPayload payload;
+        try (PngImage ownedImage = image) {
+            context.check();
+            JsonObject body = new JsonObject(); body.addProperty("model", settings.model); body.add("messages", messages.deepCopy());
+            body.add("tools", tools.deepCopy()); body.addProperty("tool_choice", "auto"); body.addProperty("stream", false);
+            body.addProperty("max_tokens", settings.maxOutputTokens);
+            context.check();
+            payload = OwnedRequestPayload.encode(body, ownedImage, workset, context);
+        }
         RunControl control = context.control;
-        JsonObject body = new JsonObject(); body.addProperty("model", settings.model); body.add("messages", messages.deepCopy());
-        body.add("tools", tools.deepCopy()); body.addProperty("tool_choice", "auto"); body.addProperty("stream", false);
-        body.addProperty("max_tokens", settings.maxOutputTokens);
-        context.check();
-        OwnedRequestPayload payload = OwnedRequestPayload.encode(body, workset, context);
         ModelNetworkWork ownedWork = null;
         try {
             context.check();

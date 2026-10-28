@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "api": 31,
+  "testClass": "dev.agentos.app.OwnedControlWindowInstrumentedTest",
+  "testName": "matchingTitleAndPackageCannotClaimAnUnregisteredOverlay",
+  "assertionResult": "pass",
+  "testResult": "pass",
+  "status": "pass",
+  "startedAt": 1793192086770,
+  "finishedAt": 1793192088739,
+  "captures": [
+    {
+      "stage": "same-title-package-unregistered-secure-overlay-refused",
+      "capturedAt": 1793192088337,
+      "foregroundPackage": "dev.agentos.fixture",
+      "status": "blocked",
+      "captureError": "capture_unavailable_or_blank_secure_surface_not_evidence"
+    },
+    {
+      "stage": "unregistered-overlay-removed-without-device-dispatch",
+      "capturedAt": 1793192088637,
+      "foregroundPackage": "dev.agentos.fixture",
+      "status": "pass",
+      "png": "api-31-matchingTitleAndPackageCannotClaimAnUnregisteredOverlay-6dc26801-unregistered-overlay-removed-without-device-dispatch-1.png",
+      "width": 320,
+      "height": 640,
+      "secureWindowTemporarilyCleared": false
+    },
+    {
+      "stage": "finished",
+      "capturedAt": 1793192088710,
+      "foregroundPackage": "dev.agentos.fixture",
+      "status": "pass",
+      "png": "api-31-matchingTitleAndPackageCannotClaimAnUnregisteredOverlay-6dc26801-finished-2.png",
+      "width": 320,
+      "height": 640,
+      "secureWindowTemporarilyCleared": false
+    }
+  ]
+}

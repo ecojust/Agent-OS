@@ -1,0 +1,8 @@
+2026-10-28T13:02:11.1634970Z   | Test: dev.agentos.app.VisualEventGenerationInstrumentedTest.actualSameHeightStatusEventsPreserveTheOriginalLocalGuardAcrossRepeatedPublications
+2026-10-28T13:02:11.1636494Z   | Kind: failure / 
+2026-10-28T13:02:11.1637624Z   | java.lang.AssertionError: A real owned cosmetic event must not revoke this generation expected:<37> but was:<38>
+2026-10-28T13:02:11.1639777Z   | Visual invalidations: baseline=37,round=2,total=1,dropped=0,samplingFailed=false,matched={round=2,type=2048,content=2,windowChanges=0,windowId=805},controlsSampled=true,controlWindowMatches=true,controlAttachmentMatches=true
+2026-10-28T13:02:11.1643745Z   | round=2,generation=37->38,relativeAfterBaseline=1,type=2048,content=4,windowChanges=0,windowId=5,panel=true,attached=true,shown=true,laidOut=true,layoutRequested=false,bounds=[12,36][308,148],registration=true,identity=true,originalCurrent=false,originalRegistration=true,visual=true,visualRegistration=true,eventMatchesVisual=false,boundsMatchVisual=true,calls=invalidateVisualEvents:385;onAccessibilityEvent:1469
+2026-10-28T13:02:11.1646642Z   | at dev.agentos.app.VisualEventGenerationInstrumentedTest$VisualInvalidationProbe.report(VisualEventGenerationInstrumentedTest.java:215)
+2026-10-28T13:02:11.1648833Z   | at dev.agentos.app.VisualEventGenerationInstrumentedTest.actualSameHeightStatusEventsPreserveTheOriginalLocalGuardAcrossRepeatedPublications(VisualEventGenerationInstrumentedTest.java:101)
+2026-10-28T13:02:11.1650242Z   | ... 33 trimmed

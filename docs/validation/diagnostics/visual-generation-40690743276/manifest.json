@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "kind": "original-ci-visual-generation-failure-excerpt",
+  "sourceRun": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 40690743276,
+    "attempt": 1,
+    "commit": "c5b804e757fcf156a9ab34f320b085c213b979ee",
+    "event": "workflow_dispatch",
+    "branch": "master",
+    "conclusion": "failure",
+    "finishedAt": "2026-10-28T13:03:13Z",
+    "url": "https://github.com/ecojust/Agent-OS/actions/runs/40690743276"
+  },
+  "executionScope": "full",
+  "fullSuiteAcceptance": false,
+  "archiveRunId": 40693086120,
+  "archiveCommit": "faedd03cfe344006571f9274f37945011dca405a",
+  "evidenceManifest": "screenshots/40690743276-1/manifest.json",
+  "caseCounts": {
+    "expectedPerApi": 261,
+    "expectedTotal": 2088,
+    "passed": 2087,
+    "failed": 1,
+    "errors": 0,
+    "skipped": 0,
+    "unrecorded": 0
+  },
+  "sourceLogArchive": {
+    "url": "https://api.github.com/repos/ecojust/Agent-OS/actions/runs/40690743276/logs",
+    "bytes": 570247,
+    "sha256": "0f4b86a1c37ecb5ab086968506dc3593210c1114ee25be2dea25b2f1255ead8f"
+  },
+  "entries": [
+    {
+      "matrixLabel": "35",
+      "sourceJob": {
+        "id": 122824582934,
+        "name": "emulator-tests (35)",
+        "url": "https://github.com/ecojust/Agent-OS/actions/runs/40690743276/job/122824582934",
+        "conclusion": "failure"
+      },
+      "sourceLogMember": "emulator-tests (35)/10_Print Android failure details.txt",
+      "sourceLogMemberBytes": 3845,
+      "sourceLogMemberSha256": "34d3fb4ef2872afd51d2e1ab578ab904288689c2a5be01b400b8f008ba4c4e52",
+      "sourceLineStart": 21,
+      "sourceLineCount": 8,
+      "sourceTrailingWhitespaceLinesPreserved": [
+        22
+      ],
+      "file": "api35-failure.txt",
+      "bytes": 1518,
+      "sha256": "fe7598dc21a27ab002aa9d0aac674489fac6853d9234e2fbaf19293a7e0b98b7",
+      "failedTest": "dev.agentos.app.VisualEventGenerationInstrumentedTest#actualSameHeightStatusEventsPreserveTheOriginalLocalGuardAcrossRepeatedPublications",
+      "reportedExpectedGeneration": 37,
+      "reportedActualGeneration": 38
+    }
+  ]
+}

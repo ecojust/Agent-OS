@@ -187,13 +187,27 @@ public final class TaskDiagnosticsInstrumentedTest {
                 }
                 task.awaitStopped();
                 Activity returned = task.activity;
+                AtomicReference<AlertDialog> clearingDialog = new AtomicReference<>();
+                AtomicReference<Window> clearingWindow = new AtomicReference<>();
                 task.onMain(() -> {
                     assertTrue(returned.findViewById(R.id.task_diagnostics).performClick());
+                    clearingDialog.set(dialog(returned));
+                    assertNotNull(clearingDialog.get());
+                    clearingWindow.set(clearingDialog.get().getWindow());
                     ended.set(snapshot(returned));
                     assertEquals(TaskDiagnostics.Phase.FINISHED, ended.get().phase);
                     assertEquals("TASK_STOPPED", ended.get().resultCode);
-                    staleCopy.set(dialog(returned).findViewById(R.id.copy_task_diagnostic_report));
-                    // Invoke the actual attached clear button; it uses the ordinary Controller path.
+                    staleCopy.set(clearingDialog.get().findViewById(R.id.copy_task_diagnostic_report));
+                });
+                awaitFocus(task, clearingWindow.get());
+                task.onMain(() -> {
+                    assertSame(clearingDialog.get(), dialog(returned));
+                    assertSame(clearingWindow.get(), clearingDialog.get().getWindow());
+                    assertSame(ended.get(), snapshot(returned));
+                    assertTrue(clearingDialog.get().isShowing());
+                    assertTrue(clearingWindow.get().getDecorView().hasWindowFocus());
+                    // Test injection through the actual clear button after the preview
+                    // gains focus; this is not a user touch through the modal dialog.
                     assertTrue(returned.findViewById(R.id.clear_task).performClick());
                     assertNull(dialog(returned)); assertNull(snapshot(returned));
                     assertNull(task.controller.getTaskDiagnostics());

@@ -24,8 +24,11 @@ CONTROL_STATUS_SCOPE = "control-status-diagnostic"
 CONTROL_STATUS_TEST = "dev.agentos.app.OwnedControlWindowInstrumentedTest#ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow"
 SCREEN_OFF_SCOPE = "screen-off-diagnostic"
 SCREEN_OFF_TEST = "dev.agentos.app.AgentControllerInstrumentedTest#actualScreenOffStopsPendingApprovalAndWakeDoesNotResumeIt"
+TASK_REPORT_FOCUS_SCOPE = "task-report-focus-diagnostic"
+TASK_REPORT_FOCUS_TEST = "dev.agentos.app.TaskDiagnosticsInstrumentedTest#completedCodeSurvivesButClearReplacementAndLeavingInvalidateOldDialogActions"
 DIAGNOSTIC_SELECTIONS = {DIAGNOSTIC_SCOPE: DIAGNOSTIC_TEST, QUALIFICATION_SCOPE: QUALIFICATION_TEST,
-                        CONTROL_STATUS_SCOPE: CONTROL_STATUS_TEST, SCREEN_OFF_SCOPE: SCREEN_OFF_TEST}
+                        CONTROL_STATUS_SCOPE: CONTROL_STATUS_TEST, SCREEN_OFF_SCOPE: SCREEN_OFF_TEST,
+                        TASK_REPORT_FOCUS_SCOPE: TASK_REPORT_FOCUS_TEST}
 
 
 def test_selection(scope: str) -> str:

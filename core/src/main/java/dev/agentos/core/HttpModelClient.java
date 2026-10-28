@@ -64,9 +64,12 @@ final class HttpModelClient {
     /** Takes image ownership immediately, including cancellation before the first context check. */
     JsonObject request(ModelSettings settings, JsonArray messages, JsonArray tools, ModelRequestContext context, PngImage image)
             throws ModelException, InterruptedException {
+        RunControl.ModelUsageTicket usage = null;
+        try {
         OwnedRequestPayload payload;
         try (PngImage ownedImage = image) {
             context.check();
+            usage = context.control.beginModelUsage(context.epoch);
             JsonObject body = new JsonObject(); body.addProperty("model", settings.model); body.add("messages", messages.deepCopy());
             body.add("tools", tools.deepCopy()); body.addProperty("tool_choice", "auto"); body.addProperty("stream", false);
             body.addProperty("max_tokens", settings.maxOutputTokens);
@@ -80,7 +83,8 @@ final class HttpModelClient {
             long remainingBudget = control.remainingActiveMillis();
             long timeout = Math.max(1, Math.min(requestTimeoutMillis, remainingBudget));
             AtomicReference<HttpURLConnection> connection = new AtomicReference<>();
-            ModelNetworkWork work = new ModelNetworkWork(payload, () -> exchange(settings, payload, context, connection));
+            AtomicReference<ModelTokenUsage.Report> reportedUsage = new AtomicReference<>();
+            ModelNetworkWork work = new ModelNetworkWork(payload, () -> exchange(settings, payload, context, connection, reportedUsage));
             ownedWork = work;
             Runnable abort = () -> {
                 // This hook may run on the UI thread. It never wipes a large buffer.
@@ -96,6 +100,9 @@ final class HttpModelClient {
                 catch (RejectedExecutionException busy) { throw new ModelException("NETWORK_BUSY", "上次网络请求尚在释放资源，请稍后重新开始任务。"); }
                 JsonObject result = work.future.get(timeout, TimeUnit.MILLISECONDS);
                 context.check();
+                // Only the caller adopts optional usage, after the original
+                // response checks. A cancelled future's worker cannot add totals.
+                if (usage != null) usage.accept(reportedUsage.get());
                 return result;
             } catch (CancellationException cancelled) {
                 context.check();
@@ -121,10 +128,12 @@ final class HttpModelClient {
             if (ownedWork == null) payload.close();
             else ownedWork.abandonIfPending();
         }
+        } finally { if (usage != null) usage.close(); }
     }
 
     private JsonObject exchange(ModelSettings settings, OwnedRequestPayload payload, ModelRequestContext context,
-                                AtomicReference<HttpURLConnection> active) throws Exception {
+                                AtomicReference<HttpURLConnection> active,
+                                AtomicReference<ModelTokenUsage.Report> reportedUsage) throws Exception {
         // Recheck on the network worker, even if this request spent time queued.
         context.check();
         URL endpoint = settings.completionUrl();
@@ -166,8 +175,12 @@ final class HttpModelClient {
                 }
                 try {
                     context.check();
-                    JsonObject result = StrictJson.object(new String(output.toByteArray(), StandardCharsets.UTF_8));
+                    String json = new String(output.toByteArray(), StandardCharsets.UTF_8);
+                    JsonObject result = StrictJson.object(json);
                     context.check();
+                    // Parse the same already validated, bounded body separately:
+                    // duplicate/malformed usage never changes response acceptance.
+                    reportedUsage.set(ModelTokenUsage.parseReport(json));
                     return result;
                 }
                 catch (IllegalArgumentException malformed) { throw new ModelException("INVALID_RESPONSE", "模型未返回有效的完整 JSON 响应。"); }

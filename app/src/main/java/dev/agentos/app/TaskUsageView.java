@@ -8,12 +8,13 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import dev.agentos.core.RunControl;
+import dev.agentos.core.ModelTokenUsage;
 
 import java.util.Locale;
 
-/** Native presentation of actual budget counters; no task ownership or execution side effects. */
+/** Native local-budget and server-reported token presentation; no execution side effects. */
 final class TaskUsageView extends LinearLayout {
-    private final TextView heading, counts, times;
+    private final TextView heading, counts, times, tokensHeading, inputTokens, outputTokens, totalTokens;
     private String taskId;
     private boolean finished;
 
@@ -29,6 +30,12 @@ final class TaskUsageView extends LinearLayout {
         times = text("", R.id.task_usage_times, false);
         text("模型等待计入活动时间；暂停、等待确认分别计时。调用次数包含观察及失败调用。",
                 R.id.task_usage_explanation, false);
+        tokensHeading = text("", R.id.task_token_usage_heading, true);
+        inputTokens = text("", R.id.task_token_usage_input, false);
+        outputTokens = text("", R.id.task_token_usage_output, false);
+        totalTokens = text("", R.id.task_token_usage_total, false);
+        text("按字段汇总服务端有效报告，缺失值不补算；调用不保证送达或计费。此处不是费用或累计预算，“每次回复 Token 上限”另行设置。",
+                R.id.task_token_usage_explanation, false);
         // A one-second timer must not announce every elapsed second to TalkBack.
         setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_NONE);
     }
@@ -46,6 +53,7 @@ final class TaskUsageView extends LinearLayout {
             finished = false;
             setVisibility(GONE);
             replace(counts, ""); replace(times, "");
+            replace(tokensHeading, ""); replace(inputTokens, ""); replace(outputTokens, ""); replace(totalTokens, "");
             return;
         }
         taskId = usage.taskId;
@@ -58,7 +66,23 @@ final class TaskUsageView extends LinearLayout {
         replace(times, "活动 " + duration(used.activeMillis) + " / " + duration(usage.budget.maxActiveMillis)
                 + " · 剩余 " + duration(Math.max(0, usage.budget.maxActiveMillis - used.activeMillis))
                 + "\n暂停 " + duration(used.pausedMillis) + " · 等待确认 " + duration(used.approvalMillis));
+        ModelTokenUsage tokens = usage.modelTokens;
+        String coverage = tokens.calls == 0 ? "尚未请求"
+                : tokens.completeness == ModelTokenUsage.Completeness.COMPLETE ? "已登记调用全部有统计"
+                : tokens.completeness == ModelTokenUsage.Completeness.PARTIAL ? "部分统计已报告" : "用量未知";
+        replace(tokensHeading, "服务端 Token · " + coverage);
+        replace(inputTokens, tokenField("输入", tokens.prompt, tokens.calls));
+        replace(outputTokens, tokenField("输出", tokens.completion, tokens.calls));
+        replace(totalTokens, tokenField("总计", tokens.total, tokens.calls));
         setVisibility(VISIBLE);
+    }
+
+    private static String tokenField(String label, ModelTokenUsage.Field value, long calls) {
+        if (calls == 0) return label + "：尚未请求";
+        String coverage = "（有效报告 " + value.reportedCalls + "/" + calls + " 次调用）";
+        if (value.overflowed) return label + "：未知，累计超过可表示范围" + coverage;
+        if (value.subtotal == null) return label + "：未知" + coverage;
+        return label + (value.reportedCalls == calls ? "：" : "已报告小计：") + value.subtotal + coverage;
     }
 
     private TextView text(String value, int id, boolean bold) {

@@ -11,6 +11,7 @@ import dev.agentos.core.AgentRunner;
 import dev.agentos.core.ActionConfirmationPolicy;
 import dev.agentos.core.DisclosureGuard;
 import dev.agentos.core.ModelSettings;
+import dev.agentos.core.ModelTokenUsage;
 import dev.agentos.core.RunControl;
 import dev.agentos.core.TaskControlException;
 import dev.agentos.core.TaskBudget;
@@ -42,18 +43,20 @@ public final class AgentController {
         NOT_REQUESTED, CHECKING, SYNTHETIC_VERIFIED, UNVERIFIED, FAILED, BUSY, INVALIDATED
     }
 
-    /** Numeric task-budget accounting only; no prompt, model settings, response or credentials. */
+    /** Immutable local-budget and reported-token counters; no prompt, response, settings or credentials. */
     public static final class TaskUsage {
         public final String taskId;
         public final boolean finished;
         public final TaskBudget budget;
         public final RunControl.BudgetSnapshot consumed;
+        public final ModelTokenUsage modelTokens;
 
         private TaskUsage(RunControl owner, TaskBudget budget, boolean finished) {
             this.taskId = owner.getTaskId();
             this.finished = finished;
             this.budget = budget;
             this.consumed = owner.budgetSnapshot();
+            this.modelTokens = owner.modelTokenUsageSnapshot();
         }
     }
 

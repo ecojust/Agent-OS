@@ -16,6 +16,7 @@ public final class RunControl {
     private long dispatchAttempts;
     private DispatchTicket inFlightDispatch;
     private Runnable cancelHook;
+    private final ModelTokenUsage.Accumulator modelTokenUsage = new ModelTokenUsage.Accumulator();
 
     public RunControl() { this("current-personal"); }
     public RunControl(String profileId) { this(profileId, TaskBudget.DEFAULT); }
@@ -33,6 +34,43 @@ public final class RunControl {
         checkExecutionEpoch(expectedEpoch); dispatchAttempts++;
     }
     public synchronized long getDispatchAttempts() { return dispatchAttempts; }
+
+    /** Pure numeric snapshot; this does not consume a budget, poll a model or publish UI state. */
+    public synchronized ModelTokenUsage modelTokenUsageSnapshot() { return modelTokenUsage.snapshot(); }
+
+    /** One local gateway invocation, which may fail before any bytes reach the server. */
+    synchronized ModelUsageTicket beginModelUsage(long expectedEpoch) {
+        // All public task/probe paths consume a bounded model round first (at
+        // most 300 per owner); metrics do not introduce another failure budget.
+        // The gateway already checked its context. If cancellation won this
+        // narrow race, later existing context checks still prevent transport.
+        if (cancelled || paused || epoch != expectedEpoch) return null;
+        modelTokenUsage.beginCall();
+        return new ModelUsageTicket(this, expectedEpoch);
+    }
+
+    /** The caller owns this one-use accounting ticket; a network worker cannot settle it. */
+    static final class ModelUsageTicket implements AutoCloseable {
+        private final RunControl owner;
+        private final long epoch;
+        private boolean settled;
+
+        private ModelUsageTicket(RunControl owner, long epoch) { this.owner = owner; this.epoch = epoch; }
+
+        void accept(ModelTokenUsage.Report report) {
+            synchronized (owner) {
+                if (settled) return;
+                settled = true;
+                if (owner.cancelled || owner.paused || owner.epoch != epoch
+                        || Thread.currentThread().isInterrupted()) return;
+                if (report != null) owner.modelTokenUsage.accept(report);
+            }
+        }
+
+        // Failed, queued, cancelled and pending calls stay in the denominator
+        // with unknown usage. Closing does not release network/payload ownership.
+        @Override public void close() { synchronized (owner) { settled = true; } }
+    }
 
     /**
      * Admits one local submission after slow validation has finished. This is not

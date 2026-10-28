@@ -1,0 +1,642 @@
+{
+  "schemaVersion": 1,
+  "kind": "android-emulator-test-evidence",
+  "archivedAt": "2026-10-28T04:10:30.750982+00:00",
+  "sourceRun": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 40630197321,
+    "attempt": 1,
+    "commit": "f2ff7ce5f911c66509bfe72819ff2fa089038cfd",
+    "event": "workflow_dispatch",
+    "branch": "agent/system-font-scale-regression",
+    "conclusion": "failure",
+    "finishedAt": "2026-10-28T04:08:22Z",
+    "url": "https://github.com/ecojust/Agent-OS/actions/runs/40630197321"
+  },
+  "expectedMatrixLabels": [
+    "30",
+    "31",
+    "32",
+    "33",
+    "34",
+    "35",
+    "36",
+    "37.0"
+  ],
+  "apis": [
+    {
+      "apiLevel": 30,
+      "matrixLabel": "30",
+      "jobConclusion": "success",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40630197321/job/122624549228",
+      "captureStatus": "collected",
+      "screenshotCount": 4,
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 1466,
+          "sha256": "abd74a55fa706f8ba2a538ac335a73ad76331173283503efd742342911bd11ea"
+        },
+        {
+          "path": "screenshots/api-30-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-937003c7-enlarged-current-buttons-reach-synthetic-pause-resume-stop-2.png",
+          "bytes": 30260,
+          "sha256": "e53c18d4e1b29df176def2ff275d11cfc9ab85db718f2dabd68a47f7cf7a7415"
+        },
+        {
+          "path": "screenshots/api-30-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-937003c7-finished-3.png",
+          "bytes": 23788,
+          "sha256": "04fed84e73c3ba6e7728a14ba79aa8c3928c65b7d1e64252e80ebe3047867ad4"
+        },
+        {
+          "path": "screenshots/api-30-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-937003c7-real-system-font-scale-1_0-paused-controls-0.png",
+          "bytes": 28434,
+          "sha256": "ef4659da08db514004447420003ea2892670f5a51638fa64ec391d3b46abb30f"
+        },
+        {
+          "path": "screenshots/api-30-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-937003c7-real-system-font-scale-1_3-new-window-old-controls-inert-1.png",
+          "bytes": 30265,
+          "sha256": "da83feab8507013a96fc11c6ad4e6065f1dc962d9dd5f52782950db96f375eea"
+        },
+        {
+          "path": "screenshots/api-30-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-937003c7.json",
+          "bytes": 1952,
+          "sha256": "8c4c72e6be50e01e3923bf4d0f879a570592c3aba03d839abe9b3e0b10cc39cb"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 2409,
+          "sha256": "2bac2405fdfd143426cf95bc751b03e3eae17f88c70c795e9e404e89a8d60631"
+        }
+      ],
+      "diagnosticResult": "passed",
+      "gradleExitCode": 0,
+      "actualSdkInt": 30,
+      "junit": {
+        "reports": 1,
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "unreadableReports": 0,
+        "selection": "dev.agentos.app.FontScaleControlWindowInstrumentedTest#realSystemFontScaleRebuildsControlsAndRevokesOldWindow",
+        "selectedTests": 1,
+        "unexpectedTests": 0
+      },
+      "recordedTests": 1,
+      "testsWithScreenshots": 1,
+      "testsWithoutScreenshots": 0,
+      "unrecordedTests": 0
+    },
+    {
+      "apiLevel": 31,
+      "matrixLabel": "31",
+      "jobConclusion": "failure",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40630197321/job/122624549300",
+      "captureStatus": "collected",
+      "screenshotCount": 2,
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 1158,
+          "sha256": "7cc8fc89b7062fa4c9097a3a2b7c4a7e303c4df1892dbb7dc8e2da23341d8fe6"
+        },
+        {
+          "path": "screenshots/api-31-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-b97679b0-failed-1.png",
+          "bytes": 23699,
+          "sha256": "5b3e2981ee309382b3ea87caf4ffec1098fea7e609a76d3c3b96203e5d49a1fd"
+        },
+        {
+          "path": "screenshots/api-31-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-b97679b0-font-scale-failed-before-setting-restoration-0.png",
+          "bytes": 27997,
+          "sha256": "92d18d78a68a2d7c7e51a7a2c7d7254965e0635ad5797303f5e276480567a29f"
+        },
+        {
+          "path": "screenshots/api-31-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-b97679b0.json",
+          "bytes": 1116,
+          "sha256": "ba7fbd056194fc306988c42838bfb0ea42724db0bf2d3afe406debb4ff2183a0"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 1497,
+          "sha256": "7329c03dfe40a118ab5f6827aa32f440fe3ebc4abda8d6d0677aa384e9abf4f3"
+        }
+      ],
+      "diagnosticResult": "failed",
+      "gradleExitCode": 1,
+      "actualSdkInt": 31,
+      "junit": {
+        "reports": 1,
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "unreadableReports": 0,
+        "selection": "dev.agentos.app.FontScaleControlWindowInstrumentedTest#realSystemFontScaleRebuildsControlsAndRevokesOldWindow",
+        "selectedTests": 1,
+        "unexpectedTests": 0
+      },
+      "recordedTests": 1,
+      "testsWithScreenshots": 1,
+      "testsWithoutScreenshots": 0,
+      "unrecordedTests": 0
+    },
+    {
+      "apiLevel": 32,
+      "matrixLabel": "32",
+      "jobConclusion": "failure",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40630197321/job/122624549335",
+      "captureStatus": "collected",
+      "screenshotCount": 2,
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 1158,
+          "sha256": "cb31a03f6d38d04762b9df085aee45af828ae43aa236d84bfff13945c0a39ad9"
+        },
+        {
+          "path": "screenshots/api-32-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-3e7e4e33-failed-1.png",
+          "bytes": 23761,
+          "sha256": "94bc5a5406836e84a95f0f0222299a770c02e97d412253784196c44ad5e9b3f2"
+        },
+        {
+          "path": "screenshots/api-32-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-3e7e4e33-font-scale-failed-before-setting-restoration-0.png",
+          "bytes": 27772,
+          "sha256": "814c5feda0e961d147d7c61513d5c897cfff0e7fd39774d162295b1dbcfbb7cd"
+        },
+        {
+          "path": "screenshots/api-32-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-3e7e4e33.json",
+          "bytes": 1116,
+          "sha256": "eb5e1d07c9ecdf6934c255eee61a341d38676c9b3910bed5fea9528e620b9b9d"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 1497,
+          "sha256": "c8dd830a4833dc28734683833d1241f74fe0b062e183274956b20f22fd077381"
+        }
+      ],
+      "diagnosticResult": "failed",
+      "gradleExitCode": 1,
+      "actualSdkInt": 32,
+      "junit": {
+        "reports": 1,
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "unreadableReports": 0,
+        "selection": "dev.agentos.app.FontScaleControlWindowInstrumentedTest#realSystemFontScaleRebuildsControlsAndRevokesOldWindow",
+        "selectedTests": 1,
+        "unexpectedTests": 0
+      },
+      "recordedTests": 1,
+      "testsWithScreenshots": 1,
+      "testsWithoutScreenshots": 0,
+      "unrecordedTests": 0
+    },
+    {
+      "apiLevel": 33,
+      "matrixLabel": "33",
+      "jobConclusion": "failure",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40630197321/job/122624549258",
+      "captureStatus": "collected",
+      "screenshotCount": 2,
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 1158,
+          "sha256": "14b846aaf6c6b9c955c0b70563f135c02f3e67a869dcfc52c521a72c5e5d4aa1"
+        },
+        {
+          "path": "screenshots/api-33-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-0504297b-failed-1.png",
+          "bytes": 23870,
+          "sha256": "b747db49b64eb93df4e2b5e57664a9a54d049b963090476065c2f64c158978c4"
+        },
+        {
+          "path": "screenshots/api-33-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-0504297b-font-scale-failed-before-setting-restoration-0.png",
+          "bytes": 27997,
+          "sha256": "81de586262e28dec531fc83b493018a1f936c4fa274ad1f421f3c7de905256cb"
+        },
+        {
+          "path": "screenshots/api-33-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-0504297b.json",
+          "bytes": 1116,
+          "sha256": "50ee09a18f9ee1edab449c8d4bc6950a415b8fc9373b6fdcc49fa28ac18365bc"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 1497,
+          "sha256": "529f317cbbb65bef40f81376b59cd3ab94821844bc45fd923a5039396f05af82"
+        }
+      ],
+      "diagnosticResult": "failed",
+      "gradleExitCode": 1,
+      "actualSdkInt": 33,
+      "junit": {
+        "reports": 1,
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "unreadableReports": 0,
+        "selection": "dev.agentos.app.FontScaleControlWindowInstrumentedTest#realSystemFontScaleRebuildsControlsAndRevokesOldWindow",
+        "selectedTests": 1,
+        "unexpectedTests": 0
+      },
+      "recordedTests": 1,
+      "testsWithScreenshots": 1,
+      "testsWithoutScreenshots": 0,
+      "unrecordedTests": 0
+    },
+    {
+      "apiLevel": 34,
+      "matrixLabel": "34",
+      "jobConclusion": "failure",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40630197321/job/122624549340",
+      "captureStatus": "collected",
+      "screenshotCount": 2,
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 1158,
+          "sha256": "271574ca2049fd84953ed7ca4a74f2ec82ec0cb7a77e79c1f290b86850a1dd4b"
+        },
+        {
+          "path": "screenshots/api-34-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-bf66a735-failed-1.png",
+          "bytes": 24077,
+          "sha256": "1128544eff7d13fd4590e42ee5f42a0241420c19a5aac0ba8a3e2744d188d88c"
+        },
+        {
+          "path": "screenshots/api-34-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-bf66a735-font-scale-failed-before-setting-restoration-0.png",
+          "bytes": 29197,
+          "sha256": "411ffd0a170136afea890443257341642d95921bd479b6daafc6907f54acf73b"
+        },
+        {
+          "path": "screenshots/api-34-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-bf66a735.json",
+          "bytes": 1116,
+          "sha256": "bd71d058b6a5cd79d2a1e6dfb983ccdb708d36556dd37e55604bfd83103e7d3e"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 1497,
+          "sha256": "2f45512a4b556a87b87e9a90bb892c86339b261383fd853903355697099f0a7b"
+        }
+      ],
+      "diagnosticResult": "failed",
+      "gradleExitCode": 1,
+      "actualSdkInt": 34,
+      "junit": {
+        "reports": 1,
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "unreadableReports": 0,
+        "selection": "dev.agentos.app.FontScaleControlWindowInstrumentedTest#realSystemFontScaleRebuildsControlsAndRevokesOldWindow",
+        "selectedTests": 1,
+        "unexpectedTests": 0
+      },
+      "recordedTests": 1,
+      "testsWithScreenshots": 1,
+      "testsWithoutScreenshots": 0,
+      "unrecordedTests": 0
+    },
+    {
+      "apiLevel": 35,
+      "matrixLabel": "35",
+      "jobConclusion": "failure",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40630197321/job/122624549365",
+      "captureStatus": "collected",
+      "screenshotCount": 2,
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 1158,
+          "sha256": "f6164c35a8610619fb086489de23029716c642b74d248593b9bd36f61b789f2e"
+        },
+        {
+          "path": "screenshots/api-35-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-126afef1-failed-1.png",
+          "bytes": 23407,
+          "sha256": "88d2daf01cebc271f06e5d6760cc84bf620be392535adc429bb0b7d4b88bd0b4"
+        },
+        {
+          "path": "screenshots/api-35-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-126afef1-font-scale-failed-before-setting-restoration-0.png",
+          "bytes": 28282,
+          "sha256": "f5b94515315920fb1642a582e889f7ab3d8784f2fbdd2112cd09e4c47ff5a7ee"
+        },
+        {
+          "path": "screenshots/api-35-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-126afef1.json",
+          "bytes": 1116,
+          "sha256": "e9063ff8945388011f37148536a9caab4e4516426abfa22957a642b564bcb2c2"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 1497,
+          "sha256": "a1f135e1d072204d6ee211277903b7f2068defff860de2d9039533d7f5574302"
+        }
+      ],
+      "diagnosticResult": "failed",
+      "gradleExitCode": 1,
+      "actualSdkInt": 35,
+      "junit": {
+        "reports": 1,
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "unreadableReports": 0,
+        "selection": "dev.agentos.app.FontScaleControlWindowInstrumentedTest#realSystemFontScaleRebuildsControlsAndRevokesOldWindow",
+        "selectedTests": 1,
+        "unexpectedTests": 0
+      },
+      "recordedTests": 1,
+      "testsWithScreenshots": 1,
+      "testsWithoutScreenshots": 0,
+      "unrecordedTests": 0
+    },
+    {
+      "apiLevel": 36,
+      "matrixLabel": "36",
+      "jobConclusion": "failure",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40630197321/job/122624549334",
+      "captureStatus": "collected",
+      "screenshotCount": 2,
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 1158,
+          "sha256": "02892a801f6756c2c59611ea145aff56eaa5d2cd4da0413e1de1b587003946c2"
+        },
+        {
+          "path": "screenshots/api-36-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-3bfa4c9a-failed-1.png",
+          "bytes": 22812,
+          "sha256": "a688bcea5e1e67bcd902a45a963014c0d7fd8fd7803db41524dfadf7b5989afa"
+        },
+        {
+          "path": "screenshots/api-36-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-3bfa4c9a-font-scale-failed-before-setting-restoration-0.png",
+          "bytes": 28532,
+          "sha256": "816bc6263346c17dba4ba6b26296c2217303ab0836a792ced2f85a8142ddd932"
+        },
+        {
+          "path": "screenshots/api-36-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-3bfa4c9a.json",
+          "bytes": 1116,
+          "sha256": "76681955d435e76f498bf3d634e40195111f5aec482832870ccd206d915c0917"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 1497,
+          "sha256": "34392cac5527bc3242d6d9f8564189195025ac8f9e14cd6c62555fb9d38dfa40"
+        }
+      ],
+      "diagnosticResult": "failed",
+      "gradleExitCode": 1,
+      "actualSdkInt": 36,
+      "junit": {
+        "reports": 1,
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "unreadableReports": 0,
+        "selection": "dev.agentos.app.FontScaleControlWindowInstrumentedTest#realSystemFontScaleRebuildsControlsAndRevokesOldWindow",
+        "selectedTests": 1,
+        "unexpectedTests": 0
+      },
+      "recordedTests": 1,
+      "testsWithScreenshots": 1,
+      "testsWithoutScreenshots": 0,
+      "unrecordedTests": 0
+    },
+    {
+      "apiLevel": 37,
+      "matrixLabel": "37.0",
+      "jobConclusion": "failure",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40630197321/job/122624549367",
+      "captureStatus": "collected",
+      "screenshotCount": 2,
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 1160,
+          "sha256": "ae8123fbac467d35450324387d99843e79ad26f874eb73f464a02245e9757b2b"
+        },
+        {
+          "path": "screenshots/api-37-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-6de84cd1-failed-1.png",
+          "bytes": 23290,
+          "sha256": "5cf3170ed981a172f74cf7440fb1612fbfadfdeabaed12caa52e524eea188a72"
+        },
+        {
+          "path": "screenshots/api-37-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-6de84cd1-font-scale-failed-before-setting-restoration-0.png",
+          "bytes": 28102,
+          "sha256": "54f206c5c3df3d89f276d55d45ae7d167189d677cc9b0c7ef301a8e0a942d623"
+        },
+        {
+          "path": "screenshots/api-37-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-6de84cd1.json",
+          "bytes": 1116,
+          "sha256": "5cfecf45938dd767caa4c86eecbabf8004c09b3b445049a12de13d1f41f638f5"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 1497,
+          "sha256": "ed667612be2eb27796024e233c3e140da7ed65cc836458f57bfb455930e637c1"
+        }
+      ],
+      "diagnosticResult": "failed",
+      "gradleExitCode": 1,
+      "actualSdkInt": 37,
+      "junit": {
+        "reports": 1,
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "unreadableReports": 0,
+        "selection": "dev.agentos.app.FontScaleControlWindowInstrumentedTest#realSystemFontScaleRebuildsControlsAndRevokesOldWindow",
+        "selectedTests": 1,
+        "unexpectedTests": 0
+      },
+      "recordedTests": 1,
+      "testsWithScreenshots": 1,
+      "testsWithoutScreenshots": 0,
+      "unrecordedTests": 0
+    }
+  ],
+  "executionScope": "font-scale-diagnostic",
+  "testSelection": "dev.agentos.app.FontScaleControlWindowInstrumentedTest#realSystemFontScaleRebuildsControlsAndRevokesOldWindow",
+  "performanceDiagnostics": {
+    "kind": "performance-diagnostic-attachments",
+    "diagnosticOnly": true,
+    "budgetAcceptance": false,
+    "scope": "Raw instrumented emulator CPU/PSS and stage events; excludes fixture-process CPU/PSS. Not screenshots or device performance acceptance.",
+    "apis": [
+      {
+        "matrixLabel": "30",
+        "apiLevel": 30,
+        "jobConclusion": "success",
+        "captureStatus": "invalid",
+        "captureError": "invalid_report",
+        "diagnosticStatus": null,
+        "files": [
+          {
+            "path": "capture.json",
+            "bytes": 614,
+            "sha256": "900526b64c41c10cebf4841915b8754932719b127d7cd686bd15d6bea6e6ddf2"
+          }
+        ],
+        "actualSdkInt": 30,
+        "gradleExitCode": 0,
+        "declaredCiProfile": "default_x86_64_swiftshader_animation_one",
+        "artifactId": 12791102926
+      },
+      {
+        "matrixLabel": "31",
+        "apiLevel": 31,
+        "jobConclusion": "failure",
+        "captureStatus": "invalid",
+        "captureError": "invalid_report",
+        "diagnosticStatus": null,
+        "files": [
+          {
+            "path": "capture.json",
+            "bytes": 614,
+            "sha256": "8af54a816e6dfec66bc6b1a837b0b0eec7357017eab4f103355045e8730d8e37"
+          }
+        ],
+        "actualSdkInt": 31,
+        "gradleExitCode": 1,
+        "declaredCiProfile": "default_x86_64_swiftshader_animation_one",
+        "artifactId": 12791780130
+      },
+      {
+        "matrixLabel": "32",
+        "apiLevel": 32,
+        "jobConclusion": "failure",
+        "captureStatus": "invalid",
+        "captureError": "invalid_report",
+        "diagnosticStatus": null,
+        "files": [
+          {
+            "path": "capture.json",
+            "bytes": 614,
+            "sha256": "48fa69045ec9d07080a52e866020e77733dd20ab3c6d6a7e9d5b6da6aea3f82d"
+          }
+        ],
+        "actualSdkInt": 32,
+        "gradleExitCode": 1,
+        "declaredCiProfile": "default_x86_64_swiftshader_animation_one",
+        "artifactId": 12791052871
+      },
+      {
+        "matrixLabel": "33",
+        "apiLevel": 33,
+        "jobConclusion": "failure",
+        "captureStatus": "invalid",
+        "captureError": "invalid_report",
+        "diagnosticStatus": null,
+        "files": [
+          {
+            "path": "capture.json",
+            "bytes": 614,
+            "sha256": "6643871b4c8eb96d856eeb7203b4a7f2b144c4b8ac2dc8ebc113a53777943144"
+          }
+        ],
+        "actualSdkInt": 33,
+        "gradleExitCode": 1,
+        "declaredCiProfile": "default_x86_64_swiftshader_animation_one",
+        "artifactId": 12790509330
+      },
+      {
+        "matrixLabel": "34",
+        "apiLevel": 34,
+        "jobConclusion": "failure",
+        "captureStatus": "invalid",
+        "captureError": "invalid_report",
+        "diagnosticStatus": null,
+        "files": [
+          {
+            "path": "capture.json",
+            "bytes": 614,
+            "sha256": "254bab83409719a263445b64789b0a3c9f998b5ce85cc691b83c3fbe08b6bb59"
+          }
+        ],
+        "actualSdkInt": 34,
+        "gradleExitCode": 1,
+        "declaredCiProfile": "default_x86_64_swiftshader_animation_one",
+        "artifactId": 12790659656
+      },
+      {
+        "matrixLabel": "35",
+        "apiLevel": 35,
+        "jobConclusion": "failure",
+        "captureStatus": "invalid",
+        "captureError": "invalid_report",
+        "diagnosticStatus": null,
+        "files": [
+          {
+            "path": "capture.json",
+            "bytes": 614,
+            "sha256": "d9fb53b11c2bbc63063169ad3d0b25f512ff10094462304bd37af5a9fddaa4b5"
+          }
+        ],
+        "actualSdkInt": 35,
+        "gradleExitCode": 1,
+        "declaredCiProfile": "default_x86_64_swiftshader_animation_one",
+        "artifactId": 12791845078
+      },
+      {
+        "matrixLabel": "36",
+        "apiLevel": 36,
+        "jobConclusion": "failure",
+        "captureStatus": "invalid",
+        "captureError": "invalid_report",
+        "diagnosticStatus": null,
+        "files": [
+          {
+            "path": "capture.json",
+            "bytes": 614,
+            "sha256": "3d96361ad6e027602a2c88c3d0c351f03540ff410b0b911e69eede24960aef04"
+          }
+        ],
+        "actualSdkInt": 36,
+        "gradleExitCode": 1,
+        "declaredCiProfile": "default_x86_64_swiftshader_animation_one",
+        "artifactId": 12790684618
+      },
+      {
+        "matrixLabel": "37.0",
+        "apiLevel": 37,
+        "jobConclusion": "failure",
+        "captureStatus": "invalid",
+        "captureError": "invalid_report",
+        "diagnosticStatus": null,
+        "files": [
+          {
+            "path": "capture.json",
+            "bytes": 616,
+            "sha256": "af0c464b1998f55eec23e9409ae3360606673d2a46767efb7357afe09c5a8396"
+          }
+        ],
+        "actualSdkInt": 37,
+        "gradleExitCode": 1,
+        "declaredCiProfile": "default_x86_64_swiftshader_animation_one",
+        "artifactId": 12791326701
+      }
+    ]
+  },
+  "jvm": {
+    "screenshotStatus": "not_applicable",
+    "reason": "JVM tests have no device UI",
+    "buildJobConclusion": "success"
+  },
+  "scope": "Development branch evidence awaiting review; not mainline acceptance. Fixed font-scale diagnostic only: one selected test per API. Other suite tests were not selected and receive no passing status; this cannot replace a full regression.",
+  "fileCount": 50,
+  "totalBytes": 512682,
+  "expectedTestsPerApi": 1,
+  "expectedTests": 8,
+  "diagnosticCaseCounts": {
+    "passed": 1,
+    "failed": 7,
+    "unverified": 0
+  },
+  "fullSuiteAcceptance": false,
+  "archiveMode": "review_branch",
+  "mainlineAcceptance": false
+}

@@ -25,11 +25,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 保留字体专项1/8、七档基线安全区域失败；新增同一断言点的实际矩形、系统栏边距和布局状态诊断，原约束不变，测试APK与lint通过。待八档取数后验证布局修正，完整1968项与新版录像仍待后续；检查点45%。
+**本次更新：** Archived development branch evidence for run 40630197321; awaiting review, not mainline acceptance; checkpoints unchanged.
 
-**记录时间：** 2026-10-28T04:01:58Z
+**记录时间：** 2026-10-28T04:10:30Z
 
-[最近测试截图与清单](screenshots/40628762988-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40628762988)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40630197321-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40630197321)。通过、失败及未截图原因见清单。
 
 **整体操作演示：** [播放视频](screenshots/demos/40625513047-1/demo.mp4) · [录制与验证清单](screenshots/demos/40625513047-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40625513047)。
 录制版本：[`5c71d4a48`](https://github.com/ecojust/Agent-OS/commit/5c71d4a485de8806a4436db02bfc72e43fc68670)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。

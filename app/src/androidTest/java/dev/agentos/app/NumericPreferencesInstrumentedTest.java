@@ -322,6 +322,10 @@ public final class NumericPreferencesInstrumentedTest {
         String lifecycleFailure;
         boolean registered, monitored, automationConfigured, closing;
         int originalAutomationFlags;
+        String lastVerifiedSafPackage, selectedSafPackage, selectedRootsLayout = "UNKNOWN";
+        String lastSafPhase = "NOT_OBSERVED", lastSafDirectory = "notSampled";
+        int selectedSafWindow = -1;
+        boolean backAttempted, backAccepted;
 
         Session() throws Exception {
             assertFalse("Synthetic document tests must not replace a running task", controller.getState().running);
@@ -395,6 +399,9 @@ public final class NumericPreferencesInstrumentedTest {
         }
         void clickMain(int id) { main(() -> click(currentMainOnMain().activity, id)); }
         Host begin(boolean export) {
+            lastSafPhase = "PICKER_REQUESTED"; lastSafDirectory = "notSampled";
+            backAttempted = false; backAccepted = false;
+            selectedSafWindow = -1; selectedSafPackage = null; selectedRootsLayout = "UNKNOWN";
             int before = brokerCount(), count = pickerCount();
             clickMain(export ? R.id.numeric_preferences_export : R.id.numeric_preferences_import);
             await(() -> brokerCount() == before + 1 && pickerCount() == count + 1, "The real Main action did not launch one broker and one SAF picker");
@@ -419,12 +426,41 @@ public final class NumericPreferencesInstrumentedTest {
             main(() -> assertSecure(broker.activity)); awaitIoClosed();
         }
         void awaitMain() {
-            await(() -> read(() -> {
-                Host host = currentMainOnMain();
-                return host != null && host.resumed && !host.destroyed && host.activity.hasWindowFocus()
-                        && (Boolean) field(host.activity, "ready") && !(Boolean) field(host.activity, "busy")
-                        && !(Boolean) field(host.activity, "storageDamaged") && field(host.activity, "numericTransfer") == null;
-            }), "The original or replacement Main host did not become ready after the real transfer");
+            String[] last = {"notSampled"};
+            try {
+                await(() -> read(() -> {
+                    Host host = currentMainOnMain();
+                    boolean resumed = host != null && host.resumed, destroyed = host != null && host.destroyed;
+                    boolean focused = host != null && host.activity.hasWindowFocus();
+                    boolean ready = host != null && (Boolean) field(host.activity, "ready");
+                    boolean busy = host != null && (Boolean) field(host.activity, "busy");
+                    boolean damaged = host != null && (Boolean) field(host.activity, "storageDamaged");
+                    NumericPreferencesTransfers.Owner owner = host == null ? null
+                            : (NumericPreferencesTransfers.Owner) field(host.activity, "numericTransfer");
+                    try {
+                        Host broker = null;
+                        for (Host candidate : hosts) if (candidate.activity instanceof NumericPreferencesTransferActivity) broker = candidate;
+                        NumericPreferencesTransfers.Owner brokerOwner = broker == null ? null
+                                : (NumericPreferencesTransfers.Owner) field(broker.activity, "owner");
+                        last[0] = "mainDiagnosticSampled=true,mainPresent=" + (host != null) + ",resumed=" + resumed + ",destroyed=" + destroyed
+                            + ",focus=" + focused + ",ready=" + ready + ",busy=" + busy + ",storageDamaged=" + damaged
+                            + ",ownerPresent=" + (owner != null) + ",ownerCurrent=" + NumericPreferencesTransfers.isCurrent(owner)
+                            + ",ownerReturning=" + NumericPreferencesTransfers.isReturning(owner)
+                            + ",resultReceived=" + (host != null && (Boolean) field(host.activity, "numericResultReceived"))
+                            + ",brokerPresent=" + (broker != null) + ",brokerResumed=" + (broker != null && broker.resumed)
+                            + ",brokerDestroyed=" + (broker != null && broker.destroyed)
+                            + ",brokerPhase=" + (broker == null ? "NONE" : fixedValue(String.valueOf(field(broker.activity, "phase")),
+                            "NEW", "PICKER", "WAITING_RESUME", "IO", "PREVIEW", "RETURNING"))
+                            + ",brokerOwnerCurrent=" + NumericPreferencesTransfers.isCurrent(brokerOwner)
+                                + ",brokerOwnerReturning=" + NumericPreferencesTransfers.isReturning(brokerOwner);
+                    } catch (RuntimeException | AssertionError unavailable) { last[0] = "mainDiagnosticSampled=false"; }
+                    return host != null && resumed && !destroyed && focused && ready && !busy && !damaged && owner == null;
+                }), "The original or replacement Main host did not become ready after the real transfer");
+            } catch (AssertionError failure) {
+                throw new AssertionError(failure.getMessage() + "; " + last[0] + "; lastSafPhase=" + lastSafPhase
+                        + ",backAttempted=" + backAttempted + ",backAccepted=" + backAccepted
+                        + "; lastPreparedSaf={" + lastSafDirectory + "}; " + safIdentityDiagnostic(), failure);
+            }
             main(() -> assertSecure(currentMainOnMain().activity));
         }
         void recreateMain() { Host old = currentMain(); main(old.activity::recreate); awaitReplacementMain(old); }
@@ -496,8 +532,10 @@ public final class NumericPreferencesInstrumentedTest {
             String name = String.valueOf(root.getPackageName());
             try {
                 ApplicationInfo info = context.getPackageManager().getApplicationInfo(name, 0);
-                return (info.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0
+                boolean verified = (info.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0
                         && context.getPackageManager().checkPermission("android.permission.MANAGE_DOCUMENTS", name) == PackageManager.PERMISSION_GRANTED;
+                if (verified) lastVerifiedSafPackage = name;
+                return verified;
             } catch (PackageManager.NameNotFoundException unavailable) { return false; }
         }
         AccessibilityNodeInfo findSaf(Predicate<AccessibilityNodeInfo> predicate, long millis) {
@@ -597,10 +635,20 @@ public final class NumericPreferencesInstrumentedTest {
                         else if (!isCurrentSafWindow(ready)) {
                             diagnostic.preparation = "CURRENT_WINDOW_CHANGED"; previous.close(); previous = null;
                         } else if (SystemClock.elapsedRealtime() < deadline) {
+                            String rootsLayout = "PROVIDER_ROOT".equals(phase) ? rootsLayout(ready.selected) : "NOT_APPLICABLE";
+                            if ("UNKNOWN".equals(rootsLayout)) {
+                                diagnostic.preparation = "UNKNOWN_ROOTS_LAYOUT";
+                                throw safFailure("The actual SAF root row has no recognized drawer or rail context", diagnostic);
+                            }
+                            if (SystemClock.elapsedRealtime() >= deadline) { diagnostic.preparation = "DEADLINE_EXPIRED"; break; }
                             diagnostic.actionAttempted = true;
                             diagnostic.actionResult = ready.action.performAction(AccessibilityNodeInfo.ACTION_CLICK);
                             // Even false/unknown dispatch is never replayed. Callers retain their real postconditions.
                             if (!diagnostic.actionResult) throw safFailure("The single SAF click returned false", diagnostic);
+                            lastSafPhase = phase + "_CLICK_ACCEPTED";
+                            if ("PROVIDER_ROOT".equals(phase)) {
+                                selectedRootsLayout = rootsLayout; selectedSafWindow = ready.window; selectedSafPackage = ready.packageName;
+                            }
                             return;
                         }
                     } else {
@@ -671,7 +719,76 @@ public final class NumericPreferencesInstrumentedTest {
             } catch (RuntimeException | AssertionError unavailable) {
                 providerDiagnostic = ",providerDiagnosticSampled=false";
             }
-            return new AssertionError(fixedMessage + "; " + diagnostic + providerDiagnostic);
+            return new AssertionError(fixedMessage + "; " + diagnostic + providerDiagnostic + "; " + safIdentityDiagnostic());
+        }
+        String safIdentityDiagnostic() {
+            try { return NumericPreferencesSafDiagnostics.sample(context, lastVerifiedSafPackage, automation); }
+            catch (RuntimeException | AssertionError unavailable) { return "safIdentityDiagnosticSampled=false"; }
+        }
+        SafDirectory readProviderDirectory() {
+            SafDirectory page = new SafDirectory();
+            AccessibilityNodeInfo root = automation.getRootInActiveWindow();
+            if (root == null) return page;
+            List<AccessibilityNodeInfo> found = new ArrayList<>();
+            try {
+                if (!root.refresh() || !isSystemSaf(root)) return page;
+                page.window = root.getWindowId();
+                page.systemSaf = true; page.packageName = String.valueOf(root.getPackageName());
+                page.sameSelection = sameSafWindow(root, selectedSafWindow, selectedSafPackage);
+                root.getBoundsInScreen(page.rootBounds);
+                int[] traversal = {0, 0, 0};
+                find(root, node -> NumericPreferencesDocumentsProvider.INPUT_NAME.contentEquals(node.getText() == null ? "" : node.getText())
+                        || idEndsWith(node, ":id/roots_list") || idEndsWith(node, ":id/drawer_roots")
+                        || idEndsWith(node, ":id/nav_rail_container_roots"), found, traversal, 0, false);
+                page.limitExceeded = traversal[0] > 1500 || traversal[1] != 0;
+                page.complete = !page.limitExceeded && traversal[2] == 0;
+                for (AccessibilityNodeInfo node : found) {
+                    if (!node.refresh() || !sameSafWindow(node, page.window, page.packageName)) { page.complete = false; continue; }
+                    if (!node.isVisibleToUser()) continue;
+                    if (idEndsWith(node, ":id/roots_list")) {
+                        String layout = rootsLayout(node);
+                        page.drawerVisible |= "DRAWER".equals(layout);
+                        page.railVisible |= "RAIL".equals(layout);
+                        page.unknownLayout |= "UNKNOWN".equals(layout);
+                    } else if (idEndsWith(node, ":id/drawer_roots")) {
+                        page.drawerVisible = true;
+                        page.unknownLayout |= !hasAncestor(node, ":id/drawer_layout");
+                    } else if (idEndsWith(node, ":id/nav_rail_container_roots")) page.railVisible = true;
+                    else if (NumericPreferencesDocumentsProvider.INPUT_NAME.contentEquals(node.getText() == null ? "" : node.getText())) {
+                        page.inputs++;
+                        if (page.input == null) {
+                            page.input = AccessibilityNodeInfo.obtain(node); node.getBoundsInScreen(page.inputBounds);
+                            page.inputEnabled = node.isEnabled();
+                        }
+                    }
+                }
+                return page;
+            } catch (RuntimeException | Error failure) { page.close(); throw failure; }
+            finally { for (AccessibilityNodeInfo node : found) node.recycle(); root.recycle(); }
+        }
+        void awaitProviderDirectory() {
+            // Reuse the original document-listing budget. These are observable preparation
+            // conditions, not a claim to read DrawerLayout's private animation completion bit.
+            long deadline = SystemClock.elapsedRealtime() + 5_000;
+            SafDirectory previous = null;
+            SafDiagnostic diagnostic = new SafDiagnostic("DIRECTORY_READY");
+            try {
+                do {
+                    SafDirectory page = readProviderDirectory();
+                    lastSafDirectory = "selectedLayout=" + selectedRootsLayout + "," + page.summary();
+                    diagnostic.window = page.window; diagnostic.matches = page.inputs; diagnostic.bounds.set(page.inputBounds);
+                    diagnostic.preparation = page.preparation();
+                    if (page.limitExceeded || page.inputs > 1) {
+                        page.close(); throw safFailure("The actual provider directory was not complete and unique", diagnostic);
+                    }
+                    boolean stable = page.ready() && previous != null && previous.ready() && page.sameAs(previous);
+                    if (previous != null) previous.close(); previous = page;
+                    if (stable && SystemClock.elapsedRealtime() < deadline) { lastSafPhase = "DIRECTORY_READY"; return; }
+                    long remaining = deadline - SystemClock.elapsedRealtime();
+                    if (remaining > 0) SystemClock.sleep(Math.min(25, remaining));
+                } while (SystemClock.elapsedRealtime() < deadline);
+                throw safFailure("The actual provider directory and drawer did not reach the original preparation condition", diagnostic);
+            } finally { if (previous != null) previous.close(); }
         }
         void selectProviderRoot() {
             Predicate<AccessibilityNodeInfo> providerRoot = node -> node.isVisibleToUser() && node.isEnabled()
@@ -684,9 +801,7 @@ public final class NumericPreferencesInstrumentedTest {
                         && description.contentEquals(node.getContentDescription() == null ? "" : node.getContentDescription()), null, false);
             } else root.recycle();
             clickSaf("PROVIDER_ROOT", providerRoot, ":id/roots_list", true);
-            AccessibilityNodeInfo input = findSaf(node -> node.isVisibleToUser()
-                    && NumericPreferencesDocumentsProvider.INPUT_NAME.contentEquals(node.getText() == null ? "" : node.getText()), 5_000);
-            assertNotNull("The actual provider document was not listed", input); input.recycle();
+            awaitProviderDirectory();
         }
         void chooseImport() {
             selectProviderRoot();
@@ -705,8 +820,10 @@ public final class NumericPreferencesInstrumentedTest {
         }
         void cancelSystemPicker() {
             assertTrue("Back must be sent to the actual system picker", safRootAvailable());
-            assertTrue("The single system SAF Back action must be accepted",
-                    automation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK));
+            backAttempted = true; lastSafPhase = "BACK_ATTEMPTED";
+            backAccepted = automation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK);
+            assertTrue("The single system SAF Back action must be accepted", backAccepted);
+            lastSafPhase = "BACK_ACCEPTED";
         }
         String drawerDescription() {
             AccessibilityNodeInfo root = automation.getRootInActiveWindow();
@@ -813,11 +930,62 @@ public final class NumericPreferencesInstrumentedTest {
     }
 
     private static boolean sameSafWindow(AccessibilityNodeInfo node, int window, String packageName) {
-        return node.getWindowId() == window && packageName.contentEquals(node.getPackageName() == null ? "" : node.getPackageName());
+        return packageName != null && node.getWindowId() == window
+                && packageName.contentEquals(node.getPackageName() == null ? "" : node.getPackageName());
     }
     private static String fixedValue(String actual, String... allowed) {
         for (String value : allowed) if (value.equals(actual)) return value;
         return "UNAVAILABLE";
+    }
+    private static boolean idEndsWith(AccessibilityNodeInfo node, String suffix) {
+        return String.valueOf(node.getViewIdResourceName()).endsWith(suffix);
+    }
+    private static String rootsLayout(AccessibilityNodeInfo selected) {
+        int window = selected.getWindowId();
+        String packageName = String.valueOf(selected.getPackageName());
+        boolean drawer = false, drawerLayout = false, rail = false;
+        AccessibilityNodeInfo node = AccessibilityNodeInfo.obtain(selected);
+        try {
+            for (int depth = 0; node != null && depth < 15; depth++) {
+                if (!node.refresh() || !sameSafWindow(node, window, packageName)) return "UNKNOWN";
+                drawer |= idEndsWith(node, ":id/drawer_roots");
+                drawerLayout |= idEndsWith(node, ":id/drawer_layout");
+                rail |= idEndsWith(node, ":id/nav_rail_container_roots");
+                AccessibilityNodeInfo parent = node.getParent(); node.recycle(); node = parent;
+            }
+            // container_roots alone is also used by fixed sidebars and proves no drawer.
+            if (rail && !drawer) return "RAIL";
+            return drawer && drawerLayout && !rail ? "DRAWER" : "UNKNOWN";
+        } finally { if (node != null) node.recycle(); }
+    }
+    private static final class SafDirectory implements AutoCloseable {
+        AccessibilityNodeInfo input;
+        String packageName = "";
+        int window = -1, inputs;
+        boolean systemSaf, sameSelection, complete, limitExceeded, inputEnabled, drawerVisible, railVisible, unknownLayout;
+        final Rect inputBounds = new Rect(), rootBounds = new Rect();
+        boolean ready() {
+            return systemSaf && sameSelection && complete && inputs == 1 && input != null && inputEnabled
+                    && !inputBounds.isEmpty() && !drawerVisible && !unknownLayout;
+        }
+        boolean sameAs(SafDirectory other) {
+            return window == other.window && packageName.equals(other.packageName) && input.equals(other.input)
+                    && inputBounds.equals(other.inputBounds) && rootBounds.equals(other.rootBounds)
+                    && railVisible == other.railVisible;
+        }
+        String preparation() {
+            if (!systemSaf || !sameSelection) return "DIRECTORY_WINDOW_CHANGED";
+            if (!complete) return "INCOMPLETE_TREE";
+            if (unknownLayout) return "UNKNOWN_ROOTS_LAYOUT";
+            if (drawerVisible) return "DRAWER_VISIBLE";
+            return ready() ? "DIRECTORY_SAMPLE_READY" : "DIRECTORY_NOT_READY";
+        }
+        String summary() {
+            return "window=" + window + ",systemSaf=" + systemSaf + ",sameSelection=" + sameSelection + ",complete=" + complete
+                    + ",inputs=" + inputs + ",inputEnabled=" + inputEnabled + ",drawerVisible=" + drawerVisible
+                    + ",railVisible=" + railVisible + ",unknownLayout=" + unknownLayout + ",bounds=" + inputBounds.toShortString();
+        }
+        @Override public void close() { if (input != null) { input.recycle(); input = null; } }
     }
     private static final class SafDiagnostic {
         final String phase;
@@ -908,15 +1076,19 @@ public final class NumericPreferencesInstrumentedTest {
     }
     private static void find(AccessibilityNodeInfo node, Predicate<AccessibilityNodeInfo> predicate,
                              List<AccessibilityNodeInfo> matches, int[] visited, int depth) {
+        find(node, predicate, matches, visited, depth, true);
+    }
+    private static void find(AccessibilityNodeInfo node, Predicate<AccessibilityNodeInfo> predicate,
+                             List<AccessibilityNodeInfo> matches, int[] visited, int depth, boolean stopAfterAmbiguity) {
         if (depth > 30) { visited[1] = 1; return; }
-        if (++visited[0] > 1500 || matches.size() > 1) return;
+        if (++visited[0] > 1500 || stopAfterAmbiguity && matches.size() > 1) return;
         if (predicate.test(node)) matches.add(AccessibilityNodeInfo.obtain(node));
         int childCount = node.getChildCount();
         if (childCount > 150) { visited[1] = 1; return; }
         for (int i = 0; i < childCount; i++) {
             AccessibilityNodeInfo child = node.getChild(i);
             if (child == null) { visited[2]++; continue; }
-            try { find(child, predicate, matches, visited, depth + 1); }
+            try { find(child, predicate, matches, visited, depth + 1, stopAfterAmbiguity); }
             finally { child.recycle(); }
         }
     }

@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-28T05:15:27Z",
-  "note": "81f固定视觉代次诊断8/8通过（低API拒绝路径、高API实际正例），16张真实PNG已核验，旧API36原因仍未知；同源码37.981秒/443342字节录像已归档。完整1968项正在运行，原失败保留，检查点45%。",
+  "updated_at": "2026-10-28T05:31:48Z",
+  "note": "81f同源码八档完整1968/1968通过，零失败/错误/跳过/缺失；2232张真实PNG及原日志已核验，37.981秒真实录像已归档。旧API36单次失败未复现但原因仍未知，全部旧证据保留；检查点45%。",
   "latest_evidence": {
-    "path": "screenshots/40636096797-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40636096797"
+    "path": "screenshots/40636551126-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40636551126"
   },
   "checkpoints": [
     {
@@ -65,8 +65,8 @@
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
       "status": "in_progress",
-      "evidence": "screenshots/40625516651-1/manifest.json",
-      "scope": "Last completed full source3cff90d62/run40633417256:1967/1968 passed, one API36 same-height status visual-generation failure (expected42/actual43), zero errors/skips/missing; all246 identities/API preserved. Last completely passing full remains source5c71d4a48/run40625516651,1960/1960. Source81f0548d3 adds only bounded invalidation diagnostics and passes selected8/run40636096797 (API30–33 unsupported rejection, API34–37 actual positive); no failure trace was printed and old cause remains unknown. Exact81f full1968/run40636551126 is running. More font/Activity/rotation/screen-reader, phone, real-model, broad-app, performance-budget and ROM acceptance remain incomplete."
+      "evidence": "screenshots/40636551126-1/manifest.json",
+      "scope": "Latest completed full: source81f0548d3/run40636551126,1968/1968 passed on eight API30–37 emulators; all246 exact case identities/API verified, zero failures/errors/skips/unreadable/missing. This includes real font1.0→1.3/restoration and actual pending-approval screen-off/wake. The visual-generation positive runs only on API34–37; lower APIs verify unsupported rejection. Prior source3cff run40633417256 remains1967/1968 with one unexplained API36 generation change; added bounded diagnostics did not reproduce it and do not establish a cause or fix. More font/Activity/rotation/screen-reader, phone, real-model, broad-app, performance-budget and ROM acceptance remain incomplete."
     },
     {
       "id": "performance",
@@ -90,7 +90,7 @@
       "name": "普通操作连续执行与接管",
       "status": "in_progress",
       "evidence": "screenshots/demos/40636167819-1/manifest.json",
-      "scope": "Source81f0548d3 actual API35 walkthrough passes13 required phases and8 confirmations with a local synthetic HTTP model; pause/resume/stop, edits and navigation recorded with secure flags retained. The default-off invalidation observer is not installed in this video. Prior source3cff full40633417256 passes controller/approval and pending-approval screen-off/wake cases across eight APIs, but its full result is1967/1968 with one visual-generation failure. Exact81f full40636551126 is running. Ordinary video excludes font-scale, screen-off, visual-probe and protected task diagnostics; not actual-model or phone acceptance."
+      "scope": "Source81f0548d3 actual API35 walkthrough passes13 required phases and8 confirmations with a local synthetic HTTP model; pause/resume/stop, edits and navigation recorded with secure flags retained. The default-off invalidation observer is not installed in this video. Exact-source full40636551126 passes1968/1968, including controller/approval and actual pending-approval screen-off/wake cases across eight APIs. Prior3cff single visual-generation failure remains archived and unexplained. Ordinary video excludes font-scale, screen-off, visual-probe and protected task diagnostics; not unrestricted execution, actual-model or phone acceptance."
     },
     {
       "id": "model_acceptance",

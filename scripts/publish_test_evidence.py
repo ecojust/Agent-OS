@@ -82,22 +82,36 @@ def read_json(path: Path, maximum: int = 2 * 1024 * 1024):
     return json.loads(path.read_text())
 
 
-def verify_source(run: dict, repository: str) -> tuple[int, int]:
+def verify_source(run: dict, repository: str, review_branch: str | None = None,
+                  expected_source_sha: str | None = None) -> tuple[int, int]:
     if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository):
         raise ValueError("invalid repository")
+    if review_branch is not None:
+        if (not re.fullmatch(r"agent/[A-Za-z0-9_-]+(?:[./][A-Za-z0-9_-]+)*", review_branch)
+                or not re.fullmatch(r"[0-9a-f]{40}", str(expected_source_sha or ""))
+                or run.get("head_branch") != review_branch
+                or run.get("head_sha") != expected_source_sha
+                or run.get("event") != "workflow_dispatch"
+                or run.get("path") != ".github/workflows/android.yml"):
+            raise ValueError("review evidence requires the same agent/ workflow branch, explicit source SHA and manual Android run")
+    elif expected_source_sha is not None or run.get("head_branch") != "master":
+        raise ValueError("non-master evidence requires explicit review-branch opt-in and source SHA")
     if (run.get("repository", {}).get("full_name") != repository
             or run.get("head_repository", {}).get("full_name") != repository
+            or not performance.positive_int(run.get("repository", {}).get("id"))
+            or not performance.positive_int(run.get("head_repository", {}).get("id"))
             or run.get("repository", {}).get("id") != run.get("head_repository", {}).get("id")
             or run.get("event") not in ("push", "workflow_dispatch")
-            or run.get("head_branch") != "master"
             or run.get("path") not in (".github/workflows/android.yml", PINNED_WORKFLOW, DISCLOSURE_WORKFLOW)
             or (run.get("path") in (PINNED_WORKFLOW, DISCLOSURE_WORKFLOW) and run.get("event") != "workflow_dispatch")
             or run.get("status") != "completed"
             or not re.fullmatch(r"[0-9a-f]{40}", str(run.get("head_sha", "")))):
-        raise ValueError("only completed approved Android workflows from this repository's trusted master are eligible")
+        raise ValueError("only completed approved Android workflows from this repository's verified source are eligible")
     run_id, attempt = run.get("id"), run.get("run_attempt")
     if type(run_id) is not int or type(attempt) is not int or run_id <= 0 or attempt <= 0:
         raise ValueError("invalid source run identity")
+    if review_branch is not None:
+        android_execution_scope(run)  # Unknown diagnostic titles never enter the review archive.
     return run_id, attempt
 
 
@@ -110,6 +124,50 @@ def eligible_artifacts(value, attempt: int) -> list:
     pattern = re.compile(r"screenshots-api-(3[0-6]|37\.0)-attempt-" + str(attempt))
     return [item for item in page_entries(value, "artifacts")
             if pattern.fullmatch(item.get("name", "")) and not item.get("expired", True)]
+
+
+def screenshot_artifacts(value, run: dict) -> list:
+    selected = eligible_artifacts(value, run["run_attempt"])
+    if run["head_branch"] == "master":
+        return selected  # Preserve the existing master archive format and eligibility.
+    names, ids = set(), set()
+    for artifact in selected:
+        origin = artifact.get("workflow_run", {})
+        if (artifact["name"] in names or artifact.get("id") in ids
+                or artifact.get("expired") is not False
+                or not performance.positive_int(artifact.get("id"))
+                or not performance.positive_int(artifact.get("size_in_bytes"))
+                or artifact["size_in_bytes"] > MAX_TOTAL_BYTES
+                or origin.get("id") != run["id"] or origin.get("head_sha") != run["head_sha"]
+                or origin.get("head_branch") != run["head_branch"]
+                or origin.get("repository_id") != run["repository"]["id"]
+                or origin.get("head_repository_id") != run["repository"]["id"]):
+            raise ValueError("review screenshot artifact origin, attempt or size failed verification")
+        names.add(artifact["name"])
+        ids.add(artifact["id"])
+    return selected
+
+
+def verify_review_jobs(jobs: list, artifacts: list, run: dict) -> None:
+    names = set()
+    for job in jobs:
+        if (job.get("name") in names or job.get("status") != "completed"
+                or job.get("run_id") != run["id"] or job.get("run_attempt") != run["run_attempt"]
+                or job.get("head_sha") != run["head_sha"]):
+            raise ValueError("review job does not match source attempt")
+        names.add(job.get("name"))
+    for artifact in artifacts:
+        label = artifact["name"].removeprefix("screenshots-api-").split("-attempt-", 1)[0]
+        job = next((item for item in jobs if item.get("name") == f"emulator-tests ({label})"), None)
+        if job is None:
+            raise ValueError("review screenshot artifact has no matching job")
+        try:
+            start, finish, uploaded = (datetime.fromisoformat(value.replace("Z", "+00:00")) for value in
+                                      (job["started_at"], job["completed_at"], artifact["created_at"]))
+            if not start <= uploaded <= finish:
+                raise ValueError("review screenshot upload is outside its source job")
+        except (KeyError, TypeError, AttributeError) as unavailable:
+            raise ValueError("review screenshot job timestamps are unavailable") from unavailable
 
 
 def performance_artifacts(value, run: dict) -> list:
@@ -127,7 +185,7 @@ def performance_artifacts(value, run: dict) -> list:
                 or not performance.positive_int(artifact.get("size_in_bytes"))
                 or artifact["size_in_bytes"] > performance.MAX_ARTIFACT_BYTES
                 or origin.get("id") != run["id"] or origin.get("head_sha") != run["head_sha"]
-                or origin.get("head_branch") != "master"
+                or origin.get("head_branch") != run["head_branch"]
                 or origin.get("repository_id") != run["repository"]["id"]
                 or origin.get("head_repository_id") != run["repository"]["id"]):
             raise ValueError("performance artifact origin, attempt or size failed verification")
@@ -240,10 +298,13 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
     output = Path("screenshots") / f"{run_id}-{attempt}"
     if output.exists():
         raise ValueError("this run's evidence directory already exists")
-    artifacts = eligible_artifacts(read_json(args.artifacts), attempt)
+    artifacts = screenshot_artifacts(read_json(args.artifacts), run)
     expected_names = {entry["name"] for entry in artifacts}
     incoming = args.incoming
     jobs = page_entries(read_json(args.jobs), "jobs")
+    review = run["head_branch"] != "master"
+    if review:
+        verify_review_jobs(jobs, artifacts, run)
     records = []
     budget = {"bytes": 0, "files": 0}
     output.mkdir(parents=True)
@@ -293,7 +354,7 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         "schemaVersion": 1, "kind": "android-emulator-test-evidence",
         "archivedAt": datetime.now(timezone.utc).isoformat(),
         "sourceRun": {"repository": args.repository, "runId": run_id, "attempt": attempt,
-                      "commit": run["head_sha"], "event": run["event"], "branch": "master",
+                      "commit": run["head_sha"], "event": run["event"], "branch": run["head_branch"],
                       "conclusion": run.get("conclusion"), "finishedAt": run.get("updated_at"),
                       "url": f"https://github.com/{args.repository}/actions/runs/{run_id}"},
         "expectedMatrixLabels": EXPECTED_MATRIX, "apis": records,
@@ -310,10 +371,15 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
                                                   for status in ("passed", "failed", "unverified")},
                          "fullSuiteAcceptance": False,
                          "scope": "Fixed " + diagnostic_name.lower().replace(" ", "-") + " diagnostic only: one selected test per API. Other suite tests were not selected and receive no passing status; this cannot replace a full regression."})
+    if review:
+        manifest.update({"archiveMode": "review_branch", "mainlineAcceptance": False,
+                         "scope": "Development branch evidence awaiting review; not mainline acceptance. " + manifest["scope"]})
     (output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     lines = ["# " + (diagnostic_name + " Diagnostic Evidence" if diagnostic else "Android Test Evidence"), "", f"Source run: {manifest['sourceRun']['url']}", "",
              f"Source commit: `{run['head_sha']}` · Attempt: {attempt}", "",
              "These screenshots show synthetic test scenarios. Missing screenshots and failed tests remain visible in the manifest.", ""]
+    if review:
+        lines += [f"Source branch: `{run['head_branch']}`. Development branch evidence awaiting review; not mainline acceptance.", ""]
     if diagnostic:
         lines += [f"Execution scope: `{execution_scope}`. Only `{android_evidence.test_selection(execution_scope)}` was selected.", "",
                   "The diagnostic denominator is 8 cases (8 APIs × 1 test); missing, skipped and unexecuted cases remain unverified. "
@@ -568,17 +634,21 @@ def main() -> None:
     parser.add_argument("--jobs", type=Path)
     parser.add_argument("--incoming", type=Path)
     parser.add_argument("--github-output", type=Path)
+    parser.add_argument("--review-branch", help="Explicit opt-in: current archive workflow agent/ branch, not a source-selected ref")
+    parser.add_argument("--expected-source-sha", help="Explicit exact 40-hex source commit required with --review-branch")
     args = parser.parse_args()
     run = read_json(args.run)
-    run_id, attempt = verify_source(run, args.repository)
+    run_id, attempt = verify_source(run, args.repository, args.review_branch, args.expected_source_sha)
     if args.mode == "verify":
         has_artifacts = bool(pinned_page_artifacts(read_json(args.artifacts), run) if run.get("path") in (PINNED_WORKFLOW, DISCLOSURE_WORKFLOW)
-                             else eligible_artifacts(read_json(args.artifacts), attempt))
+                             else screenshot_artifacts(read_json(args.artifacts), run))
+        screenshots = screenshot_artifacts(read_json(args.artifacts), run) if args.review_branch else []
         perf_artifacts = performance_artifacts(read_json(args.artifacts), run)
         if args.github_output:
             with args.github_output.open("a") as output:
                 output.write(f"run_id={run_id}\nattempt={attempt}\n"
                              f"has_artifacts={'true' if has_artifacts else 'false'}\n"
+                             f"screenshot_artifact_ids={','.join(str(item['id']) for item in screenshots)}\n"
                              f"performance_artifact_ids={','.join(str(item['id']) for item in perf_artifacts)}\n"
                              f"evidence_path=screenshots/{run_id}-{attempt}\n")
         print(f"Verified trusted source run {run_id}, attempt {attempt}")

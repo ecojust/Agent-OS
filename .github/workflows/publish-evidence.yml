@@ -4,8 +4,18 @@ on:
   workflow_dispatch:
     inputs:
       run_id:
-        description: Completed Android checks run from this repository's master branch
+        description: Completed run from master, or the explicitly selected same development branch
         required: true
+        type: string
+      mode:
+        description: Development branch evidence awaits review and is not mainline acceptance
+        required: true
+        default: master
+        type: choice
+        options: [master, review_branch]
+      expected_source_sha:
+        description: Exact 40-hex source commit, required only for review_branch
+        required: false
         type: string
 
 permissions:
@@ -17,15 +27,20 @@ concurrency:
 
 jobs:
   archive:
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master'
+    if: github.event_name == 'workflow_dispatch' && ((inputs.mode == 'master' && github.ref == 'refs/heads/master') || (inputs.mode == 'review_branch' && startsWith(github.ref, 'refs/heads/agent/')))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: write
       actions: read
+    env:
+      ARCHIVE_MODE: ${{ inputs.mode }}
+      ARCHIVE_REF: ${{ github.ref_name }}
+      EXPECTED_SOURCE_SHA: ${{ inputs.expected_source_sha }}
     steps:
       - uses: actions/checkout@v4
         with:
+          # Execute the selected archive workflow revision, never the source run's code.
           ref: ${{ github.sha }}
           persist-credentials: false
       - name: Verify trusted source run
@@ -37,9 +52,16 @@ jobs:
           [[ "$SOURCE_RUN_ID" =~ ^[0-9]+$ ]]
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > "$RUNNER_TEMP/source-run.json"
           gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/source-artifacts.json"
+          source_args=()
+          if [[ "$ARCHIVE_MODE" == review_branch ]]; then
+            source_args+=(--review-branch "$ARCHIVE_REF")
+          fi
+          if [[ -n "$EXPECTED_SOURCE_SHA" ]]; then
+            source_args+=(--expected-source-sha "$EXPECTED_SOURCE_SHA")
+          fi
           python3 scripts/publish_test_evidence.py verify \
             --run "$RUNNER_TEMP/source-run.json" --repository "$GITHUB_REPOSITORY" \
-            --artifacts "$RUNNER_TEMP/source-artifacts.json" --github-output "$GITHUB_OUTPUT"
+            --artifacts "$RUNNER_TEMP/source-artifacts.json" --github-output "$GITHUB_OUTPUT" "${source_args[@]}"
       - name: Read matching attempt jobs
         env:
           GH_TOKEN: ${{ github.token }}
@@ -48,12 +70,20 @@ jobs:
         run: |
           gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/attempts/$SOURCE_ATTEMPT/jobs?per_page=100" > "$RUNNER_TEMP/source-jobs.json"
       - name: Download screenshot artifacts
-        if: steps.source.outputs.has_artifacts == 'true'
+        if: inputs.mode == 'master' && steps.source.outputs.has_artifacts == 'true'
         uses: actions/download-artifact@v4
         with:
           github-token: ${{ github.token }}
           run-id: ${{ steps.source.outputs.run_id }}
           pattern: screenshots-api-*-attempt-${{ steps.source.outputs.attempt }}
+          path: ${{ runner.temp }}/evidence-input
+      - name: Download only verified development branch screenshot artifacts
+        if: inputs.mode == 'review_branch' && steps.source.outputs.screenshot_artifact_ids != ''
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.source.outputs.run_id }}
+          artifact-ids: ${{ steps.source.outputs.screenshot_artifact_ids }}
           path: ${{ runner.temp }}/evidence-input
       - name: Download verified performance artifacts
         if: steps.source.outputs.performance_artifact_ids != ''
@@ -68,12 +98,23 @@ jobs:
           EVIDENCE_PATH: ${{ steps.source.outputs.evidence_path }}
           SOURCE_RUN_ID: ${{ steps.source.outputs.run_id }}
         run: |
+          source_args=()
+          if [[ "$ARCHIVE_MODE" == review_branch ]]; then
+            source_args+=(--review-branch "$ARCHIVE_REF")
+          fi
+          if [[ -n "$EXPECTED_SOURCE_SHA" ]]; then
+            source_args+=(--expected-source-sha "$EXPECTED_SOURCE_SHA")
+          fi
           python3 scripts/publish_test_evidence.py archive \
             --run "$RUNNER_TEMP/source-run.json" --repository "$GITHUB_REPOSITORY" \
             --artifacts "$RUNNER_TEMP/source-artifacts.json" --jobs "$RUNNER_TEMP/source-jobs.json" \
-            --incoming "$RUNNER_TEMP/evidence-input"
+            --incoming "$RUNNER_TEMP/evidence-input" "${source_args[@]}"
+          progress_args=()
+          if [[ "$ARCHIVE_MODE" == review_branch ]]; then
+            progress_args+=(--note "Archived development branch evidence for run $SOURCE_RUN_ID; awaiting review, not mainline acceptance; checkpoints unchanged.")
+          fi
           python3 scripts/update_progress.py --evidence-path "$EVIDENCE_PATH" \
-            --run-url "https://github.com/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID"
+            --run-url "https://github.com/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" "${progress_args[@]}"
           python3 scripts/update_progress.py --check
       - name: Commit evidence to a separate branch
         env:

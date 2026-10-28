@@ -114,6 +114,7 @@ public final class MainActivity extends Activity implements AgentController.List
         renderTaskUsage(controller.getTaskUsage(), true);
     };
     private Button serviceButton, modelToggle, saveButton, reloadButton, resetButton, appsButton, startButton, pauseButton, stopButton, clearButton, allowButton, denyButton;
+    private Button keyVisibilityButton;
     private RadioGroup executionModes;
     private final List<View> configurationViews = new ArrayList<>();
     private String boundApprovalId = "";
@@ -299,7 +300,7 @@ public final class MainActivity extends Activity implements AgentController.List
         marginAdd(content, messageText, 14);
 
         LinearLayout service = card(content);
-        service.addView(sectionTitle("手机操作服务", R.drawable.ic_shield));
+        service.addView(sectionTitle("手机操作服务", R.drawable.ic_shield, R.id.service_section_heading));
         serviceState = text("正在检查服务…", 14, R.color.agent_muted, false);
         marginAdd(service, serviceState, 8);
         serviceButton = button("前往开启无障碍服务", R.drawable.ic_shield, false);
@@ -316,26 +317,33 @@ public final class MainActivity extends Activity implements AgentController.List
         LinearLayout configuration = card(content);
         modelToggle = button("模型连接 · 展开设置", R.drawable.ic_settings, false);
         modelToggle.setId(R.id.configuration_toggle);
+        modelToggle.setAccessibilityHeading(true);
         modelToggle.setOnClickListener(view -> { modelExpanded = !modelExpanded; updateModelPanel(); });
         configuration.addView(modelToggle, new LinearLayout.LayoutParams(-1, -2));
         configSummary = text("配置模型地址、名称和密钥", 13, R.color.agent_muted, false);
         marginAdd(configuration, configSummary, 4);
         modelFields = column();
         marginAdd(configuration, modelFields, 10);
-        endpointField = field(modelFields, "服务地址", "https://你的服务地址/v1", R.id.settings_endpoint, false, 2048);
+        endpointField = field(modelFields, "服务地址", "https://你的服务地址/v1", R.id.settings_endpoint,
+                R.id.settings_endpoint_label, false, 2048);
         endpointField.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
-        modelField = field(modelFields, "模型名称", "填写支持工具调用的模型名称", R.id.settings_model, false, 200);
-        keyField = field(modelFields, "API 密钥", "本地服务不需要密钥时可留空", R.id.settings_api_key, true, 8192);
-        Button reveal = button("显示 / 隐藏密钥", 0, false);
-        reveal.setOnClickListener(view -> {
+        modelField = field(modelFields, "模型名称", "填写支持工具调用的模型名称", R.id.settings_model,
+                R.id.settings_model_label, false, 200);
+        keyField = field(modelFields, "API 密钥", "本地服务不需要密钥时可留空", R.id.settings_api_key,
+                R.id.settings_api_key_label, true, 8192);
+        keyVisibilityButton = button("显示密钥", 0, false);
+        keyVisibilityButton.setId(R.id.toggle_api_key_visibility);
+        keyVisibilityButton.setOnClickListener(view -> {
             boolean masked = keyField.getTransformationMethod() instanceof PasswordTransformationMethod;
             keyField.setTransformationMethod(masked ? null : PasswordTransformationMethod.getInstance());
             keyField.setSelection(keyField.length());
+            updateKeyVisibilitySemantics();
         });
-        configurationViews.add(reveal);
-        marginAdd(modelFields, reveal, 4);
+        updateKeyVisibilitySemantics();
+        configurationViews.add(keyVisibilityButton);
+        marginAdd(modelFields, keyVisibilityButton, 4);
         maxOutputTokensField = field(modelFields, "每次回复 Token 上限", "2048（128–8192）",
-                R.id.settings_max_output_tokens, false, 24);
+                R.id.settings_max_output_tokens, R.id.settings_max_output_tokens_label, false, 24);
         maxOutputTokensField.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED
                 | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         maxOutputTokensField.setSelectAllOnFocus(true);
@@ -381,7 +389,7 @@ public final class MainActivity extends Activity implements AgentController.List
         marginAdd(modelFields, resetButton, 4);
 
         LinearLayout scope = card(content);
-        scope.addView(sectionTitle("允许操作的应用", R.drawable.ic_apps));
+        scope.addView(sectionTitle("允许操作的应用", R.drawable.ic_apps, R.id.scope_section_heading));
         scopeSummary = text("尚未选择应用", 14, R.color.agent_muted, false);
         marginAdd(scope, scopeSummary, 8);
         appsButton = button("选择应用", R.drawable.ic_apps, false);
@@ -419,6 +427,7 @@ public final class MainActivity extends Activity implements AgentController.List
         LinearLayout budget = card(content);
         budgetToggle = button("任务预算 · 展开设置", R.drawable.ic_settings, false);
         budgetToggle.setId(R.id.task_budget_toggle);
+        budgetToggle.setAccessibilityHeading(true);
         budgetToggle.setOnClickListener(view -> {
             if (!canEditBudget()) return;
             budgetExpanded = !budgetExpanded;
@@ -433,9 +442,9 @@ public final class MainActivity extends Activity implements AgentController.List
                 || getResources().getConfiguration().fontScale >= 1.3f;
         budgetFields = compactBudget ? column() : row();
         budgetFields.setId(R.id.task_budget_fields);
-        budgetRounds = budgetField(budgetFields, "模型轮次", R.id.task_budget_rounds);
-        budgetTools = budgetField(budgetFields, "工具调用", R.id.task_budget_tools);
-        budgetSeconds = budgetField(budgetFields, "活动时间（秒）", R.id.task_budget_seconds);
+        budgetRounds = budgetField(budgetFields, "模型轮次", R.id.task_budget_rounds, R.id.task_budget_rounds_label);
+        budgetTools = budgetField(budgetFields, "工具调用", R.id.task_budget_tools, R.id.task_budget_tools_label);
+        budgetSeconds = budgetField(budgetFields, "活动时间（秒）", R.id.task_budget_seconds, R.id.task_budget_seconds_label);
         marginAdd(budget, budgetFields, 8);
         TextView budgetExplanation = text("达到任一上限后任务停止。暂停和确认等待不计活动时间；次数不会因暂停而重置。", 12, R.color.agent_muted, false);
         budgetExplanation.setId(R.id.task_budget_explanation);
@@ -444,7 +453,8 @@ public final class MainActivity extends Activity implements AgentController.List
         updateBudgetPanel();
 
         LinearLayout task = card(content);
-        task.addView(sectionTitle("这次想完成什么？", R.drawable.ic_play));
+        task.addView(sectionTitle("这次想完成什么？", R.drawable.ic_play, R.id.task_prompt_label));
+        task.<TextView>findViewById(R.id.task_prompt_label).setLabelFor(R.id.task_prompt);
         taskField = new EditText(this);
         taskField.setId(R.id.task_prompt);
         decorateField(taskField);
@@ -458,7 +468,7 @@ public final class MainActivity extends Activity implements AgentController.List
         marginAdd(task, text("任务使用上方所选预算。任务和界面内容不保存为历史文件。", 12, R.color.agent_muted, false), 10);
 
         LinearLayout results = card(content);
-        results.addView(sectionTitle("当前任务", R.drawable.ic_agent_os));
+        results.addView(sectionTitle("当前任务", R.drawable.ic_agent_os, R.id.task_result_section_heading));
         statusText = text("正在读取本机配置…", 16, R.color.agent_text, true);
         statusText.setId(R.id.status_text);
         statusText.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
@@ -687,6 +697,7 @@ public final class MainActivity extends Activity implements AgentController.List
         modelField.setText(draft.model);
         maxOutputTokensField.setText(String.valueOf(draft.maxOutputTokens));
         keyField.setTransformationMethod(PasswordTransformationMethod.getInstance());
+        updateKeyVisibilitySemantics();
         bindExecutionMode();
         budgetTexts = new String[]{String.valueOf(draft.taskBudget.maxModelRounds), String.valueOf(draft.taskBudget.maxToolCalls),
                 String.valueOf(draft.taskBudget.maxActiveMillis / 1000)};
@@ -836,10 +847,13 @@ public final class MainActivity extends Activity implements AgentController.List
         return ready && !busy && !destroyed && !storageDamaged && modelProbe == null && !controller.getState().running;
     }
 
-    private EditText budgetField(LinearLayout parent, String label, int id) {
+    private EditText budgetField(LinearLayout parent, String label, int id, int labelId) {
         LinearLayout cell = column();
         cell.setPadding(0, 0, dp(8), 0);
-        cell.addView(text(label, 12, R.color.agent_muted, false));
+        TextView caption = text(label, 12, R.color.agent_muted, false);
+        caption.setId(labelId);
+        caption.setLabelFor(id);
+        cell.addView(caption);
         EditText field = new EditText(this);
         field.setId(id);
         decorateField(field);
@@ -914,6 +928,7 @@ public final class MainActivity extends Activity implements AgentController.List
     private void updateBudgetPanel() {
         budgetFields.setVisibility(budgetExpanded ? View.VISIBLE : View.GONE);
         budgetToggle.setText(budgetExpanded ? "任务预算 · 收起设置" : "任务预算 · 展开设置");
+        budgetToggle.setStateDescription(budgetExpanded ? "已展开" : "已收起");
         updateBudgetSummary();
     }
 
@@ -1779,6 +1794,13 @@ public final class MainActivity extends Activity implements AgentController.List
     private void updateModelPanel() {
         modelFields.setVisibility(modelExpanded ? View.VISIBLE : View.GONE);
         modelToggle.setText(modelExpanded ? "模型连接 · 收起设置" : "模型连接 · 展开设置");
+        modelToggle.setStateDescription(modelExpanded ? "已展开" : "已收起");
+    }
+
+    private void updateKeyVisibilitySemantics() {
+        boolean masked = keyField.getTransformationMethod() instanceof PasswordTransformationMethod;
+        keyVisibilityButton.setText(masked ? "显示密钥" : "隐藏密钥");
+        keyVisibilityButton.setStateDescription(masked ? "密钥已隐藏" : "密钥已显示");
     }
 
     private void showMessage(String message, boolean error) {
@@ -1788,8 +1810,11 @@ public final class MainActivity extends Activity implements AgentController.List
         messageText.setVisibility(View.VISIBLE);
     }
 
-    private EditText field(LinearLayout parent, String label, String hint, int id, boolean secret, int maxLength) {
-        marginAdd(parent, text(label, 13, R.color.agent_muted, true), 10);
+    private EditText field(LinearLayout parent, String label, String hint, int id, int labelId, boolean secret, int maxLength) {
+        TextView caption = text(label, 13, R.color.agent_muted, true);
+        caption.setId(labelId);
+        caption.setLabelFor(id);
+        marginAdd(parent, caption, 10);
         EditText field = new EditText(this);
         field.setId(id);
         decorateField(field);
@@ -1822,13 +1847,15 @@ public final class MainActivity extends Activity implements AgentController.List
         return panel;
     }
 
-    private LinearLayout sectionTitle(String title, int icon) {
+    private LinearLayout sectionTitle(String title, int icon, int headingId) {
         LinearLayout row = row();
         ImageView image = new ImageView(this);
         image.setImageDrawable(tintedIcon(icon, color(R.color.agent_primary)));
         image.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         row.addView(image, new LinearLayout.LayoutParams(dp(22), dp(22)));
         TextView label = text(title, 16, R.color.agent_text, true);
+        label.setId(headingId);
+        label.setAccessibilityHeading(true);
         label.setPadding(dp(9), 0, 0, 0);
         row.addView(label, new LinearLayout.LayoutParams(0, -2, 1));
         return row;

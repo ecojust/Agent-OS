@@ -25,11 +25,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** ba5fbe295版本整体录像已归档并双重核验：35.436秒、411901字节；熄屏专项另为8/8，其流程不混入普通录像。1960项完整回归运行中，下一项为真实系统字体缩放；检查点45%。
+**本次更新：** Archived development branch evidence for run 40622992507; awaiting review, not mainline acceptance; checkpoints unchanged.
 
-**记录时间：** 2026-10-28T02:53:57Z
+**记录时间：** 2026-10-28T03:03:46Z
 
-[最近测试截图与清单](screenshots/40622578371-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40622578371)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40622992507-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40622992507)。通过、失败及未截图原因见清单。
 
 **整体操作演示：** [播放视频](screenshots/demos/40622945600-1/demo.mp4) · [录制与验证清单](screenshots/demos/40622945600-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40622945600)。
 录制版本：[`ba5fbe295`](https://github.com/ecojust/Agent-OS/commit/ba5fbe29561bfca4471d18b6bffd3d7c04a796f7)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。

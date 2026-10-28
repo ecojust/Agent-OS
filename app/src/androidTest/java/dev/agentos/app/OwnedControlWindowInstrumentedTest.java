@@ -689,6 +689,13 @@ public final class OwnedControlWindowInstrumentedTest {
             // before spending any time on diagnostic collection.
             pending.cancel(false);
             if (failure instanceof InterruptedException) Thread.currentThread().interrupt();
+            // This samples only the post-cancellation instant, not the earlier
+            // five-second interval. Never delay cancellation to capture a stack.
+            long stackEntered = SystemClock.elapsedRealtime() - started;
+            String mainStack;
+            try { mainStack = boundedMainThreadStack(); }
+            catch (RuntimeException | Error unavailable) { mainStack = "mainStack=unavailable"; }
+            long stackCompleted = SystemClock.elapsedRealtime() - started;
             // All identity-wait timestamps are now frozen; diagnostic time never
             // contributes to the original get's remaining allowance.
             String timeline = "waitStartElapsedMs=0,publicationEnterElapsedMs=" + publicationTimes[0]
@@ -697,7 +704,9 @@ public final class OwnedControlWindowInstrumentedTest {
                     + ",acquireReturnedElapsedMs=" + acquireReturned
                     + ",getEnterElapsedMs=" + (getEntered - started)
                     + ",getRemainingMs=" + getRemaining + ",getTimeoutMs=" + getTimeout
-                    + ",getFailedElapsedMs=" + getFailed;
+                    + ",getFailedElapsedMs=" + getFailed
+                    + ",stackEnterElapsedMs=" + stackEntered + ",stackCompleteElapsedMs=" + stackCompleted
+                    + "," + mainStack;
             String diagnostic;
             try { diagnostic = failedStatusIdentityDiagnostic(service, publication.get(),
                     futureDone, futureCancelled, futureExceptional, status, paused, started, timeline); }
@@ -883,6 +892,22 @@ public final class OwnedControlWindowInstrumentedTest {
 
     private static String diagnosticTimes(AtomicLong entered, AtomicLong completed) {
         return ",diagnosticEnterElapsedMs=" + entered.get() + ",diagnosticCompleteElapsedMs=" + completed.get();
+    }
+
+    /** Failure-only sample: at most 12 class.method:line frames and 2048 total characters. */
+    private static String boundedMainThreadStack() {
+        StackTraceElement[] frames = Looper.getMainLooper().getThread().getStackTrace();
+        StringBuilder text = new StringBuilder("mainStack=[");
+        for (int index = 0; index < Math.min(12, frames.length); index++) {
+            StackTraceElement frame = frames[index];
+            String className = frame.getClassName(), methodName = frame.getMethodName();
+            String line = Integer.toString(frame.getLineNumber());
+            int added = (index == 0 ? 0 : 1) + className.length() + 1 + methodName.length() + 1 + line.length();
+            if (added > 2047 - text.length()) break; // Leave room for the closing bracket; no partial frames.
+            if (index != 0) text.append(';');
+            text.append(className).append('.').append(methodName).append(':').append(line);
+        }
+        return text.append(']').toString();
     }
 
     private static long registrationNumber(Object registration, String fieldName) {

@@ -200,3 +200,16 @@ API31/36的失败发生在一次根目录动作返回false后，没有重放；�
 [本轮原始材料](diagnostics/numeric-preferences-40745270296/README.md)同时保留八档报告、安装原段及九个任务的稀疏检出记录。原始脚本步骤实际报告 `Ran 342 tests in 58.431s / OK`，零跳过；本轮确实执行新稀疏检出工作流，九个任务均执行八目录的 `sparse-checkout set` 后检出eee60。整体设备运行仍失败，不把这些构建与脚本结果替代2160项验收。四轮失败保留，工程检查点保持9/20（45%）。
 
 第四轮9个任务与34个产物来源的独立核验记录为 `02328e078523c4b2794a458600f247b029fa5d1287b355a08992eba1941233e0`，完整审计汇总为 `7c328adc80d6ab5fa7f04b5c412db1aabb897ef8688cc7c9c37343f42522ef60`。
+
+
+## 文件点击能力与根目录动作准备
+
+第四轮三个API30导入失败尚未尝试动作。AOSP11的[文档列表无障碍代理](https://android.googlesource.com/platform/packages/apps/DocumentsUI/+/refs/tags/android-11.0.0_r1/src/com/android/documentsui/dirlist/AccessibilityEventRouter.java)直接发布并处理 `ACTION_CLICK`，不依赖View的 `isClickable`；这与原测试驱动只接受该布尔值的条件不一致。源码机制不等于已经观测到失败节点的actionList，实际效果仍需设备验证。
+
+本次仅修改测试驱动：点击目标改为要求已刷新节点明确声明 `ACTION_CLICK`，导入目标的祖先范围限制在真实 `dir_list` 内，不能把整列表或外层窗口当作文件动作。两次稳定观察增加固定动作位、clickable及selected状态比较，最终重新核对同窗、可见、启用、节点、矩形及祖先。动作节点的refresh放在最后，随后只有本地快照和原期限检查，再执行一次真实点击。返回false仍失败，不用重放、补选中或补OPEN来掩盖结果；预览和真实I/O的原业务断言保留。
+
+API31/36的两次根目录false尚未确定唯一平台原因。只对根目录点击，在原5秒准备期限的剩余时间内等待100毫秒无障碍事件安静，超时则在动作前失败；之后重新核实根布局和实际当前SAF窗口，再做最终节点复核。这是额外可观察的准备条件，不是读取ListView私有 `mDataChanged` 状态或证明布局已完成。当前窗口检查在等待之后，不沿用等待前的窗口判断。固定失败诊断追加能力位、动作祖先深度、矩形和是否观察到事件安静；原最多四次根列表滚动及实际进展要求保持。
+
+测试文件冻结SHA-256为 `661eb3a19ef31206268b8306157eb327fa01ec59e94012dd5d24d7c73b6f9818`。六个11,725字节业务块仍为原 `a9a7c7463a4199e2817ba0dd30d26bfa6c3bb2ed94fd7a47756e07a32b72936c`，270项/API、生产实现、安装脚本及旧视觉测试均未改变。独立审查记录为 `ba6aca435d11417bc3abe1c6cf888f3f9faaa9b0f6d93cc90aa39e5d0ec7e34f`，预声明清单为 `b5d00856607d4bb4a9f5179edf6914ca2616b02de94014d58e8156d67ccbfd18`。
+
+[本地最小验证](diagnostics/numeric-preferences-fix4-local/README.md)仅执行测试APK构建和lint，59秒成功。225个Android/Gradle输入前后相同，并逐一匹配主分支集成文件，清单SHA-256 `c8257955f5e113a4cee1e0b1b4293ee0a1d920f15ba95b445c53a28642d50d05`；lint仍0错误、54警告，无新增或移除。测试APK为6,054,985字节，SHA-256 `f1c8cc793b3740c292365eaceb1e79058b58b5ecfe3993929aa337ed39c4a140`，实际编译清单与上一轮相同。没有重跑未改的脚本342项、核心333项或本地设备测试，远端效果待新精确源码回归。

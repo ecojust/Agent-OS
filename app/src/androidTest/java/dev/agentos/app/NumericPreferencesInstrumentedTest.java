@@ -48,6 +48,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
@@ -573,6 +574,8 @@ public final class NumericPreferencesInstrumentedTest {
             diagnostic.operation = scroll ? "ROOTS_SCROLL" : "TARGET_CLICK";
             diagnostic.preparation = "NO_ROOT"; diagnostic.matches = -1; diagnostic.refresh = -1;
             diagnostic.window = -1; diagnostic.bounds.setEmpty();
+            diagnostic.actionDepth = -1; diagnostic.actionMask = 0; diagnostic.actionBounds.setEmpty();
+            diagnostic.actionClickable = false; diagnostic.actionSelected = false; diagnostic.idleObserved = false;
             AccessibilityNodeInfo root = automation.getRootInActiveWindow();
             if (root == null) return null;
             List<AccessibilityNodeInfo> found = new ArrayList<>();
@@ -608,7 +611,11 @@ public final class NumericPreferencesInstrumentedTest {
                         }
                         // A root row must not turn into an action on its whole list or outside it.
                         if (!scroll && boundary != null && String.valueOf(action.getViewIdResourceName()).endsWith(boundary)) break;
-                        if (scroll ? action.isScrollable() : action.isClickable()) {
+                        diagnostic.actionDepth = depth;
+                        diagnostic.recordAction(action);
+                        // DocumentsUI's document delegate can advertise ACTION_CLICK without
+                        // View.isClickable(): it routes accessibility through TouchDetector's handler.
+                        if (scroll ? action.isScrollable() : advertisesClick(action)) {
                             SafReady ready = new SafReady(selected, action, window, packageName, boundary, scroll);
                             if (!ready.completeList) {
                                 ready.close(); diagnostic.preparation = "LIST_INCOMPLETE"; return null;
@@ -639,25 +646,48 @@ public final class NumericPreferencesInstrumentedTest {
                         boolean stable = previous != null && ready.sameGeometryAndContext(previous);
                         if (previous != null) previous.close(); previous = ready;
                         if (!stable) diagnostic.preparation = "TARGET_NOT_STABLE";
-                        else if (!ready.revalidate(predicate, diagnostic)) { previous.close(); previous = null; }
-                        else if (!isCurrentSafWindow(ready)) {
-                            diagnostic.preparation = "CURRENT_WINDOW_CHANGED"; previous.close(); previous = null;
-                        } else if (SystemClock.elapsedRealtime() < deadline) {
+                        else if (SystemClock.elapsedRealtime() < deadline) {
+                            if ("PROVIDER_ROOT".equals(phase)) {
+                                long remaining = deadline - SystemClock.elapsedRealtime();
+                                if (remaining <= 0) { diagnostic.preparation = "DEADLINE_EXPIRED"; break; }
+                                diagnostic.idleAttempted = true;
+                                try {
+                                    // A quiet accessibility-event interval is only preparation;
+                                    // it does not expose ListView's private adapter/layout state.
+                                    automation.waitForIdle(100, remaining);
+                                    diagnostic.idleObserved = true;
+                                } catch (TimeoutException timedOut) {
+                                    diagnostic.preparation = "IDLE_TIMEOUT";
+                                    AssertionError failure = safFailure("The provider root did not reach event idle before its original deadline", diagnostic);
+                                    failure.initCause(timedOut); throw failure;
+                                }
+                            }
+                            if (SystemClock.elapsedRealtime() >= deadline) { diagnostic.preparation = "DEADLINE_EXPIRED"; break; }
                             String rootsLayout = "PROVIDER_ROOT".equals(phase) ? rootsLayout(ready.selected) : "NOT_APPLICABLE";
                             if ("UNKNOWN".equals(rootsLayout)) {
                                 diagnostic.preparation = "UNKNOWN_ROOTS_LAYOUT";
                                 throw safFailure("The actual SAF root row has no recognized drawer or rail context", diagnostic);
                             }
-                            if (SystemClock.elapsedRealtime() >= deadline) { diagnostic.preparation = "DEADLINE_EXPIRED"; break; }
-                            diagnostic.actionAttempted = true;
-                            diagnostic.actionResult = ready.action.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                            // Even false/unknown dispatch is never replayed. Callers retain their real postconditions.
-                            if (!diagnostic.actionResult) throw safFailure("The single SAF click returned false", diagnostic);
-                            lastSafPhase = phase + "_CLICK_ACCEPTED";
-                            if ("PROVIDER_ROOT".equals(phase)) {
-                                selectedRootsLayout = rootsLayout; selectedSafWindow = ready.window; selectedSafPackage = ready.packageName;
+                            // Recheck layout and the actual active window after any idle wait,
+                            // then finish all other reads before the final target/action refresh.
+                            // A false dispatch is still a failure, not evidence permitting another click.
+                            if (!isCurrentSafWindow(ready)) {
+                                diagnostic.preparation = "CURRENT_WINDOW_CHANGED"; previous.close(); previous = null;
+                            } else {
+                                if (SystemClock.elapsedRealtime() >= deadline) { diagnostic.preparation = "DEADLINE_EXPIRED"; break; }
+                                if (!ready.revalidate(predicate, diagnostic)) { previous.close(); previous = null; }
+                                else {
+                                    if (SystemClock.elapsedRealtime() >= deadline) { diagnostic.preparation = "DEADLINE_EXPIRED"; break; }
+                                    diagnostic.actionAttempted = true;
+                                    diagnostic.actionResult = ready.action.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                                    if (!diagnostic.actionResult) throw safFailure("The single SAF click returned false", diagnostic);
+                                    lastSafPhase = phase + "_CLICK_ACCEPTED";
+                                    if ("PROVIDER_ROOT".equals(phase)) {
+                                        selectedRootsLayout = rootsLayout; selectedSafWindow = ready.window; selectedSafPackage = ready.packageName;
+                                    }
+                                    return;
+                                }
                             }
-                            return;
                         }
                     } else {
                         if (previous != null) { previous.close(); previous = null; }
@@ -824,7 +854,8 @@ public final class NumericPreferencesInstrumentedTest {
         void chooseImport() {
             selectProviderRoot();
             clickSaf("IMPORT_DOCUMENT", node -> node.isVisibleToUser()
-                    && NumericPreferencesDocumentsProvider.INPUT_NAME.contentEquals(node.getText() == null ? "" : node.getText()), null, false);
+                    && NumericPreferencesDocumentsProvider.INPUT_NAME.contentEquals(node.getText() == null ? "" : node.getText())
+                    && hasAncestor(node, ":id/dir_list"), ":id/dir_list", false);
         }
         void chooseExport() {
             selectProviderRoot();
@@ -1028,26 +1059,45 @@ public final class NumericPreferencesInstrumentedTest {
     }
     private static final class SafDiagnostic {
         final String phase;
-        final Rect bounds = new Rect();
+        final Rect bounds = new Rect(), actionBounds = new Rect();
         String operation = "TARGET_CLICK", preparation = "NOT_OBSERVED";
-        int matches = -1, window = -1, refresh = -1, scrolls;
-        boolean actionAttempted, actionResult, scrollResult;
+        int matches = -1, window = -1, refresh = -1, scrolls, actionDepth = -1, actionMask;
+        boolean actionAttempted, actionResult, scrollResult, actionClickable, actionSelected, idleAttempted, idleObserved;
         SafDiagnostic(String phase) { this.phase = phase; }
+        void recordAction(AccessibilityNodeInfo node) {
+            actionMask = fixedActionMask(node); actionClickable = node.isClickable(); actionSelected = node.isSelected();
+            node.getBoundsInScreen(actionBounds);
+        }
         @Override public String toString() {
             return "phase=" + phase + ",operation=" + operation + ",preparation=" + preparation + ",matches=" + matches + ",window=" + window
                     + ",bounds=" + bounds.toShortString() + ",refresh=" + refresh + ",actionAttempted=" + actionAttempted
-                    + ",actionResult=" + actionResult + ",scrolls=" + scrolls + ",scrollResult=" + scrollResult;
+                    + ",actionResult=" + actionResult + ",scrolls=" + scrolls + ",scrollResult=" + scrollResult
+                    + ",actionDepth=" + actionDepth + ",actionMask=" + actionMask + ",actionClickable=" + actionClickable
+                    + ",actionSelected=" + actionSelected + ",actionBounds=" + actionBounds.toShortString()
+                    + ",idleAttempted=" + idleAttempted + ",idleObserved=" + idleObserved;
         }
+    }
+    private static boolean advertisesClick(AccessibilityNodeInfo node) {
+        return node.getActionList().contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK);
+    }
+    private static int fixedActionMask(AccessibilityNodeInfo node) {
+        // Fixed capability bits only: click=1, select=2, clear-selection=4, scroll-forward=8.
+        List<AccessibilityNodeInfo.AccessibilityAction> actions = node.getActionList();
+        return (actions.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK) ? 1 : 0)
+                | (actions.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_SELECT) ? 2 : 0)
+                | (actions.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLEAR_SELECTION) ? 4 : 0)
+                | (actions.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD) ? 8 : 0);
     }
     private static final class SafReady implements AutoCloseable {
         final AccessibilityNodeInfo selected, action, firstChild, lastChild;
-        final int window, childCount;
+        final int window, childCount, actionMask;
         final String packageName, boundary;
-        final boolean scroll, completeList;
+        final boolean scroll, completeList, actionClickable, actionSelected;
         final Rect bounds = new Rect(), actionBounds = new Rect(), firstBounds = new Rect(), lastBounds = new Rect();
         SafReady(AccessibilityNodeInfo selected, AccessibilityNodeInfo action, int window, String packageName, String boundary, boolean scroll) {
             this.selected = AccessibilityNodeInfo.obtain(selected); this.action = AccessibilityNodeInfo.obtain(action);
             this.window = window; this.packageName = packageName; this.boundary = boundary; this.scroll = scroll;
+            actionMask = fixedActionMask(action); actionClickable = action.isClickable(); actionSelected = action.isSelected();
             selected.getBoundsInScreen(bounds); action.getBoundsInScreen(actionBounds);
             childCount = scroll ? action.getChildCount() : 0;
             boolean boundedChildren = childCount > 0 && childCount <= 150;
@@ -1064,7 +1114,8 @@ public final class NumericPreferencesInstrumentedTest {
         boolean sameGeometryAndContext(SafReady other) {
             return window == other.window && packageName.equals(other.packageName)
                     && selected.equals(other.selected) && action.equals(other.action)
-                    && bounds.equals(other.bounds) && actionBounds.equals(other.actionBounds);
+                    && bounds.equals(other.bounds) && actionBounds.equals(other.actionBounds)
+                    && actionMask == other.actionMask && actionClickable == other.actionClickable && actionSelected == other.actionSelected;
         }
         boolean sameListContents(SafReady other) {
             return completeList && other.completeList && childCount == other.childCount
@@ -1079,12 +1130,6 @@ public final class NumericPreferencesInstrumentedTest {
                     || !bounds.equals(diagnostic.bounds) || !predicate.test(selected)) {
                 diagnostic.preparation = "TARGET_CHANGED"; return false;
             }
-            if (!action.refresh()) { diagnostic.preparation = "ANCESTOR_STALE"; return false; }
-            Rect actualBounds = new Rect(); action.getBoundsInScreen(actualBounds);
-            if (!sameSafWindow(action, window, packageName) || !action.isVisibleToUser() || !action.isEnabled()
-                    || !actionBounds.equals(actualBounds) || !(scroll ? action.isScrollable() : action.isClickable())) {
-                diagnostic.preparation = "ANCESTOR_CHANGED"; return false;
-            }
             AccessibilityNodeInfo ancestor = AccessibilityNodeInfo.obtain(selected);
             boolean sameAncestry = false;
             try {
@@ -1097,10 +1142,21 @@ public final class NumericPreferencesInstrumentedTest {
             } finally { if (ancestor != null) ancestor.recycle(); }
             if (!sameAncestry) { diagnostic.preparation = "ANCESTRY_CHANGED"; return false; }
             if (scroll) {
+                // Endpoint/count comparison must use a fresh list snapshot, as before.
+                if (!action.refresh()) { diagnostic.preparation = "ANCESTOR_STALE"; return false; }
                 try (SafReady current = new SafReady(selected, action, window, packageName, boundary, true)) {
                     if (!current.completeList) { diagnostic.preparation = "LIST_INCOMPLETE"; return false; }
                     if (!sameListContents(current)) { diagnostic.preparation = "LIST_MOVING"; return false; }
                 }
+            }
+            // Keep the dispatch node's refresh last: remaining checks read only this frozen node.
+            if (!action.refresh()) { diagnostic.preparation = "ANCESTOR_STALE"; return false; }
+            diagnostic.recordAction(action);
+            if (!sameSafWindow(action, window, packageName) || !action.isVisibleToUser() || !action.isEnabled()
+                    || !actionBounds.equals(diagnostic.actionBounds) || !(scroll ? action.isScrollable() : advertisesClick(action))
+                    || actionMask != diagnostic.actionMask || actionClickable != diagnostic.actionClickable
+                    || actionSelected != diagnostic.actionSelected) {
+                diagnostic.preparation = "ANCESTOR_CHANGED"; return false;
             }
             diagnostic.preparation = "READY"; return true;
         }

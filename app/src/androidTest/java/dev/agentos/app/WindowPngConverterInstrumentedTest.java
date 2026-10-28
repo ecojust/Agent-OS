@@ -222,8 +222,9 @@ public final class WindowPngConverterInstrumentedTest {
         // integer Region truncation can explain the CI 960->959 discrepancy;
         // source arithmetic alone does not confirm the platform's root cause.
         // At 799x1598 the derived inverse is 2.49687504768: the compact controls
-        // [189,12][609,102] project to [76,5][244,41] and back without changing
-        // integer bounds. Verify the actual View, registration and platform too.
+        // [189,12][609,124] (48dp status + 48dp buttons + 16dp padding)
+        // project to [76,5][244,50] and back without changing integer bounds.
+        // Verify the actual View, registration and platform too.
         // Keep automatic scaling; disabling it would crop the physical screen.
         assertEquals("Large-window derivation requires the fixed 160dpi baseline", 160,
                 InstrumentationRegistry.getInstrumentation().getTargetContext().getResources()
@@ -275,7 +276,7 @@ public final class WindowPngConverterInstrumentedTest {
         assertNotNull("Actual controls must have an attached window registration", identity);
         Rect registered = identity.copyBounds();
         String geometry = "view=" + actualView.get().toShortString() + ", registered=" + registered.toShortString();
-        assertEquals(geometry, new Rect(189, 12, 609, 102), actualView.get());
+        assertEquals(geometry, new Rect(189, 12, 609, 124), actualView.get());
         assertEquals(geometry, actualView.get(), registered);
         assertTrue("Control registration changed before platform comparison", device.service.isOwnedControlWindowCurrent(identity));
         // The case is API34+; a fresh public cache read must agree with the exact

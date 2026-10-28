@@ -25,9 +25,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Archived native-window run40555508845: API34–37 approved/declined cases8/8; 36 payloads/4 PNG independently verified. Earlier API36 timeout did not recur but remains unexplained. Full Android matrix has failures under original-report investigation.
+**本次更新：** 修正48dp控制条改动后的两个布局回归用例，保留窗口身份、精确边界及失效检查；249项脚本测试通过，Android构建与八档设备回归待验证，新版录像待录制。
 
-**记录时间：** 2026-10-27T18:12:56Z
+**记录时间：** 2026-10-28T01:29:53Z
 
 [最近测试截图与清单](screenshots/40555508845-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40555508845)。通过、失败及未截图原因见清单。
 

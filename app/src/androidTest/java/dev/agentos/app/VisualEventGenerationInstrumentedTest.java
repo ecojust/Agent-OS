@@ -96,10 +96,36 @@ public final class VisualEventGenerationInstrumentedTest {
     @Test public void actualControlGrowthAndRootVisibilityAndUnknownWindowsRevokeWithoutAnyDeviceAction() throws Exception {
         try (Environment env = new Environment("CapturePatternActivity")) {
             env.main(() -> env.device.service.showOverlay("Short", false, ""));
-            Rect old = controls(env.device).copyBounds(); env.device.awaitUiIdle();
+            TextView status = (TextView) read(env.device.service, "statusView");
+            // Two lines at the production 13sp size can both fit inside the
+            // 48dp touch target. Enlarge this actual test View before recording
+            // the baseline; verify measured layout, not an assumed line height.
+            env.main(() -> status.setTextSize(24));
+            AgentAccessibilityService.ControlLease original = controls(env.device);
+            Rect old = original.copyBounds(); env.device.awaitUiIdle();
+            AgentAccessibilityService.OwnedControlWindowIdentity attachment = env.device.service.getOwnedControlWindowIdentity();
+            assertNotNull(attachment);
+            assertTrue(original.matchesOriginalAttachment(attachment));
+            env.main(() -> {
+                assertEquals(1, status.getLineCount());
+                assertEquals(old, env.device.service.controlBounds());
+                assertEquals(old, attachment.copyBounds());
+            });
             long before = env.device.service.visualEventGeneration();
             env.main(() -> env.device.service.showOverlay("First status line\nSecond status line", false, ""));
-            Rect grown = controls(env.device).copyBounds(); env.device.awaitUiIdle();
+            AgentAccessibilityService.ControlLease current = controls(env.device);
+            Rect grown = current.copyBounds(); env.device.awaitUiIdle();
+            assertTrue("Text growth must keep the original actual window attachment",
+                    current.matchesOriginalAttachment(attachment));
+            assertEquals(original.windowId, current.windowId);
+            assertEquals(old.left, grown.left); assertEquals(old.top, grown.top); assertEquals(old.right, grown.right);
+            env.main(() -> {
+                assertEquals(2, status.getLineCount());
+                assertEquals(0, status.getLayout().getEllipsisCount(1));
+                assertTrue("Measured text must exceed the minimum touch target", status.getHeight() > status.getMinHeight());
+                assertEquals(grown, env.device.service.controlBounds());
+                assertEquals(grown, env.device.service.getOwnedControlWindowIdentity().copyBounds());
+            });
             assertTrue("Actual text layout must grow the control window", grown.height() > old.height());
             assertFalse(env.device.service.isVisualEventGenerationCurrent(before));
             View actualRoot = (View) read(env.device.service, "overlay");

@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-28T06:51:23Z",
-  "note": "共享字体清理改为观察每次真实变化的规范化写回，再单次恢复原raw；保留原10秒、严格检查及失败。独立APK/lint和12组数值位值检查通过，两个八档专项/1976项/新录像待执行；旧1974/1976证据保留，检查点45%。",
+  "updated_at": "2026-10-28T07:01:46Z",
+  "note": "14c主界面与控制窗字体专项各8/8通过，原raw恢复严格检查通过；32张控制窗PNG与32条受保护未截图记录归档，36.885秒录像已核验。同源码完整1976项运行中，旧1974/1976保留；检查点45%。",
   "latest_evidence": {
-    "path": "screenshots/40643561197-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40643561197"
+    "path": "screenshots/40646425323-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40646425323"
   },
   "checkpoints": [
     {
@@ -66,7 +66,7 @@
       "name": "Android 11–17 API 行为矩阵",
       "status": "in_progress",
       "evidence": "screenshots/40636551126-1/manifest.json",
-      "scope": "Latest completed full: source81f0548d3/run40636551126,1968/1968 passed on eight API30–37 emulators; all246 exact case identities/API verified, zero failures/errors/skips/unreadable/missing. This includes real font1.0→1.3/restoration and actual pending-approval screen-off/wake. The visual-generation positive runs only on API34–37; lower APIs verify unsupported rejection. Prior source3cff run40633417256 remains1967/1968 with one unexplained API36 generation change; added bounded diagnostics did not reproduce it and do not establish a cause or fix. More font/Activity/rotation/screen-reader, phone, real-model, broad-app, performance-budget and ROM acceptance remain incomplete. New sourceb7bb/run40642275055 passes8/8 real Activity font1.0→1.3, postCreated memory handoff, protected saved-state, and explicit finish/fresh-open checks; no PNG attempted on protected pages. Full1976 run40643561197 completed1974/1976: only API32/33 new Activity font cleanup fails to restore originally absent font_scale row (actual font restored1.0, final raw1.0). Keep both failures and scope/full denominators separate. Last all-passing full remains81f/1968."
+      "scope": "Latest completed all-passing full remains81f/run40636551126,1968/1968. New14c canonical-font-writeback helper passes two independent fixed scopes: Activity40646422586 8/8 and ControlFont40646425323 8/8; full1976 run40647046321 is pending. Earlierb7bb full40643561197 remains1974/1976 with two original-raw font cleanup failures. Prior3cff API36 visual-generation cause remains unknown. No phone, rotation/screen-reader, real-model, broad-app, performance-budget or ROM acceptance implied."
     },
     {
       "id": "performance",
@@ -89,8 +89,8 @@
       "id": "continuous_actions",
       "name": "普通操作连续执行与接管",
       "status": "in_progress",
-      "evidence": "screenshots/demos/40642313167-1/manifest.json",
-      "scope": "Sourceb7bb92b43 actual API35 walkthrough passes13 required phases and8 confirmations using a local synthetic HTTP model; pause/resume/stop, edits and navigation recorded with secure flags retained. This ordinary video excludes font-scale, screen-off, visual probes and protected pages; those have separate tests. Exact-source full1976 run40643561197 is1974/1976 with two new font cleanup failures; ordinary demo does not validate that cleanup. Not actual-model, phone, unrestricted execution or performance-budget acceptance."
+      "evidence": "screenshots/demos/40646472832-1/manifest.json",
+      "scope": "Source14c621aac API35 ordinary walkthrough passes13 required phases and8 confirmations with a local synthetic HTTP model and secure flags retained. It does not run either font test, visual probes, screen-off or protected-page checks. Exact-source full1976 run40647046321 is pending. Not actual-model, phone, unrestricted execution or performance-budget acceptance."
     },
     {
       "id": "model_acceptance",
@@ -130,9 +130,9 @@
     }
   ],
   "latest_demo": {
-    "path": "screenshots/demos/40642313167-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40642313167",
-    "source_sha": "b7bb92b438c5d8d3ebc0d72deec8c33e7689aab6",
+    "path": "screenshots/demos/40646472832-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40646472832",
+    "source_sha": "14c621aac92a4412a29b08e35ddc34f23d666821",
     "status": "passed"
   }
 }

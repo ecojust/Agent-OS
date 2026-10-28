@@ -123,3 +123,5 @@
 
 
 源码 `b7bb92b438c5d8d3ebc0d72deec8c33e7689aab6` 的普通[录像40642313167](https://github.com/ecojust/Agent-OS/actions/runs/40642313167)及[归档40642781994](https://github.com/ecojust/Agent-OS/actions/runs/40642781994)成功。[清单](../../screenshots/demos/40642313167-1/manifest.json)30载荷、1,190,706字节、22张320×640实际PNG已核验；[视频](../../screenshots/demos/40642313167-1/demo.mp4)39.064秒、640×1280、457,501字节，完整解码与实际帧检查通过。普通操作1/1、13阶段及8确认通过，安全标志未清除，模型为本地合成HTTP服务；不执行本次字体用例、不替代专项或真机／真实模型验收。
+
+源码 `14c621aac92a4412a29b08e35ddc34f23d666821` 的普通[录像40646472832](https://github.com/ecojust/Agent-OS/actions/runs/40646472832)及[归档40646954765](https://github.com/ecojust/Agent-OS/actions/runs/40646954765)成功。[清单](../../screenshots/demos/40646472832-1/manifest.json)30载荷、1,174,614字节、22张320×640实际PNG已核验；[视频](../../screenshots/demos/40646472832-1/demo.mp4)36.885秒、640×1280、440,347字节，完整解码及实际帧检查通过。普通操作1/1、13阶段和8确认通过，安全标志保留，使用本地合成HTTP模型；不执行字体辅助器或两个字体专项，不代替真机／真实模型验收。

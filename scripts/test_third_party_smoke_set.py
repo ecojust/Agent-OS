@@ -114,6 +114,33 @@ def ui_from_report(lock, value):
     return ui
 
 
+def notes_preparation_failure(lock, diagnostic=True):
+    """Synthetic failed state with the bounded same-observation diagnostic schema."""
+    value = report(lock, captures=False)
+    value["status"] = "failed"
+    failed = value["apps"][1]["states"][0]
+    error = ("AssertionError: Notes v3 observation timed out: "
+             "reason=notes_target_covered_by_verified_input_method "
+             "automaticBackPolicy=prohibited imeSamples=0 lastImeSurface=NOT_SAMPLED")
+    failed.update(status="failed", stage="create_note", error=error,
+                  steps=[{"name": "create_note", "status": "failed", "details": error}],
+                  captures=[{"stage": "failure", "status": "blocked",
+                             "reason": "synthetic_parser_fixture_no_device"}],
+                  result={"automaticBackPolicy": "prohibited", "homeAttempts": 0})
+    if diagnostic:
+        failed["notesPreparationDiagnostic"] = {
+            "schemaVersion": 1, "snapshotKind": "LAST_OBSERVATION",
+            "operationStage": "CONFIRM_CREATE", "resourceClass": "CONFIRM_BUTTON",
+            "readPhase": "TARGET_CHECK", "appWindowId": 12,
+            "appBounds": [0, 24, 320, 616], "displayId": 0,
+            "displayBounds": [0, 0, 320, 640], "imeWindowId": 14,
+            "imeBounds": [0, 390, 320, 640], "matchedCount": 1,
+            "visibleMatchCount": 1, "matchScanComplete": True,
+            "targetPresent": True, "targetBounds": [220, 400, 300, 448],
+            "targetVisible": True, "targetEnabled": True, "targetWindowId": 12}
+    return value
+
+
 class ThirdPartySmokeSetTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix="third-party-set-parser-", dir="/tmp")
@@ -569,6 +596,70 @@ class ThirdPartySmokeSetArchiveTests(unittest.TestCase):
         result = self.run_archive()
         self.assertEqual({"passed": 3, "failed": 1, "unverified": 28}, result["stateCounts"])
         self.assertFalse(result["allProbeStatesPassed"])
+
+    def test_failed_notes_diagnostic_error_and_existing_instrumentation_are_preserved(self):
+        value = notes_preparation_failure(self.lock)
+        directory = self.lane(value=value)
+        output = ("Synthetic parser fixture failure\n" + value["apps"][1]["states"][0]["error"] + "\n" +
+                  "at dev.agentos.compat.SyntheticParserFixture.sameRead(Fixture.java:1)\n" * 40 +
+                  "FAILURES!!!\nTests run: 4, Failures: 1\nsynthetic-complete-output-end\n")
+        self.assertGreater(len(output), 1024)
+        (directory / "instrumentation.json").write_text(
+            json.dumps({"commandCompleted": True, "output": output}) + "\n", encoding="utf-8")
+        originals = {path.name: path.read_bytes() for path in directory.iterdir()}
+        run = source_run()
+        run["conclusion"] = "failure"
+        result = self.run_archive(run=run)
+        self.assertEqual({"passed": 3, "failed": 1, "unverified": 28}, result["stateCounts"])
+        self.assertEqual(32, result["expectedCombinationCount"])
+        self.assertFalse(result["allProbeStatesPassed"])
+        self.assertEqual("failure", result["sourceRun"]["conclusion"])
+        self.assertEqual(0, result["screenshotCount"])
+        self.assertEqual({"blocked": 4}, result["apis"][0]["captureCounts"])
+        copied = self.root / self.output / "api-30"
+        files = {item["path"]: item for item in result["apis"][0]["files"]}
+        self.assertEqual({"report.json", "ui-results.json", "instrumentation.json"}, set(files))
+        for name, raw in originals.items():
+            with self.subTest(file=name):
+                self.assertEqual(raw, (copied / name).read_bytes())
+                self.assertEqual(len(raw), files[name]["bytes"])
+                self.assertEqual(hashlib.sha256(raw).hexdigest(), files[name]["sha256"])
+        for name in ("report.json", "ui-results.json"):
+            failed = json.loads((copied / name).read_bytes())["apps"][1]["states"][0]
+            self.assertEqual(value["apps"][1]["states"][0], failed)
+        self.assertEqual(output, json.loads((copied / "instrumentation.json").read_bytes())["output"])
+
+    def test_failed_notes_report_cannot_alter_remove_or_truncate_raw_diagnostic(self):
+        directory = self.lane(value=notes_preparation_failure(self.lock))
+        original_ui = (directory / "ui-results.json").read_bytes()
+        original_report = json.loads((directory / "report.json").read_bytes())
+        changes = {
+            "alter": lambda state: state["notesPreparationDiagnostic"].update(targetVisible=False),
+            "remove": lambda state: state.pop("notesPreparationDiagnostic"),
+            "truncate": lambda state: state["notesPreparationDiagnostic"].update(targetBounds=[220, 400, 300]),
+            "error": lambda state: state.update(error=state["error"][:-1])}
+        for name, change in changes.items():
+            with self.subTest(change=name):
+                changed = copy.deepcopy(original_report)
+                change(changed["apps"][1]["states"][0])
+                self.write_report(directory, changed)
+                with self.assertRaisesRegex(ValueError, "Report assertions differ from collected UI result"):
+                    self.run_archive()
+                self.assertFalse((self.root / self.output).exists())
+                self.assertEqual(original_ui, (directory / "ui-results.json").read_bytes())
+
+    def test_failed_notes_without_optional_diagnostic_remains_failed(self):
+        value = notes_preparation_failure(self.lock, diagnostic=False)
+        self.lane(value=value)
+        result = self.run_archive()
+        self.assertEqual({"passed": 3, "failed": 1, "unverified": 28}, result["stateCounts"])
+        self.assertEqual(32, result["expectedCombinationCount"])
+        self.assertFalse(result["allProbeStatesPassed"])
+        self.assertEqual("failed", result["apis"][0]["apps"]["notes-1.7.0"]["off"])
+        for name in ("report.json", "ui-results.json"):
+            failed = json.loads((self.root / self.output / "api-30" / name).read_bytes())["apps"][1]["states"][0]
+            self.assertNotIn("notesPreparationDiagnostic", failed)
+            self.assertEqual(value["apps"][1]["states"][0], failed)
 
     def test_capture_reuse_across_apps_digest_drift_and_unreferenced_files_are_rejected(self):
         directory = self.lane()

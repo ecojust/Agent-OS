@@ -31,6 +31,7 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 
 import org.json.JSONObject;
+import org.json.JSONArray;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -546,13 +547,15 @@ final class SmokeHarness {
         require(target == NOTES_TARGET && (resource != null || exactText != null), "A real Notes target is required");
         do {
             wait.requireTime();
+            wait.beginObservation(notesStage, NotesResource.forTarget(resource));
             WindowSnapshot window = null;
             AccessibilityNodeInfo node = null;
             boolean retryRead = false;
             try {
                 window = appWindow(true);
-                node = resource != null ? uniqueNode(window, resource) : uniqueNotesText(window, exactText);
-                requireUsableNotesNode(window, node);
+                wait.observation.window(window.id, window.bounds, window.display, window.inputMethodId, window.inputMethod);
+                node = resource != null ? uniqueNode(window, resource, wait.observation) : uniqueNotesText(window, exactText);
+                requireUsableNotesNode(window, node, wait.observation);
                 if (!window.inputMethod.isEmpty() && !window.display.contains(window.inputMethod))
                     throw new NotesObservationPending("input_method_geometry_not_settled");
                 Rect nodeBounds = new Rect(); node.getBoundsInScreen(nodeBounds);
@@ -658,10 +661,15 @@ final class SmokeHarness {
         notesAwaitText(resource, text, wait);
     }
 
-    private void requireUsableNotesNode(WindowSnapshot window, AccessibilityNodeInfo node) {
-        require(node != null && node.isVisibleToUser() && node.isEnabled() && !node.isPassword() && node.getWindowId() == window.id,
+    private void requireUsableNotesNode(WindowSnapshot window, AccessibilityNodeInfo node, NotesRead observation) {
+        observation.readPhase = NotesReadPhase.TARGET_CHECK;
+        observation.targetPresent = node != null;
+        // Record only the original short-circuited reads, in their original order.
+        require(node != null && observation.visible(node.isVisibleToUser()) && observation.enabled(node.isEnabled())
+                        && !node.isPassword() && observation.windowId(node.getWindowId()) == window.id,
                 "Notes resource is not current, enabled and visible");
         Rect bounds = new Rect(); node.getBoundsInScreen(bounds);
+        observation.targetBounds = new Rect(bounds);
         require(fullyInside(window.bounds, bounds), "Notes resource is not fully inside its original application window");
         if (!uncoveredByInputMethod(bounds, window.inputMethod))
             throw new NotesObservationPending("notes_target_covered_by_verified_input_method");
@@ -761,16 +769,23 @@ final class SmokeHarness {
     }
 
     private AccessibilityNodeInfo uniqueNode(WindowSnapshot window, String id) {
+        return uniqueNode(window, id, null);
+    }
+
+    private AccessibilityNodeInfo uniqueNode(WindowSnapshot window, String id, NotesRead observation) {
         List<AccessibilityNodeInfo> found = window.root.findAccessibilityNodeInfosByViewId(id.startsWith("android:id/") ? id : target.packageName + ":id/" + id);
         AccessibilityNodeInfo selected = null;
         try {
+            if (observation != null) observation.matches(found == null ? null : found.size());
             require(found != null && found.size() <= 16, "Missing or ambiguous application resource");
             for (AccessibilityNodeInfo node : found) {
                 if (!node.isVisibleToUser()) continue;
+                if (observation != null) observation.visibleMatchCount++;
                 require(selected == null && node.getWindowId() == window.id, "Resource did not map to a unique current application window");
                 require(target.packageName.contentEquals(node.getPackageName() == null ? "" : node.getPackageName()), "Unexpected resource package");
                 selected = AccessibilityNodeInfo.obtain(node);
             }
+            if (observation != null) observation.matchScanComplete = true;
             if (selected == null && target == NOTES_TARGET) throw new NotesObservationPending("exact_resource_not_published");
             require(selected != null, "Visible application resource was not found");
             AccessibilityNodeInfo result = selected; selected = null; return result;
@@ -872,6 +887,12 @@ final class SmokeHarness {
         long since, surfaceSince, nextSample;
         int samples;
         boolean surfaceReady;
+        NotesRead observation = new NotesRead(NotesStage.UNSET, NotesResource.NOT_SELECTED, NotesReadPhase.NOT_STARTED);
+        void beginObservation(NotesStage stage, NotesResource resource) {
+            // Last observation only: an incomplete new window read must never
+            // inherit the previous iteration's node or geometry.
+            observation = new NotesRead(stage, resource, NotesReadPhase.WINDOW_PENDING);
+        }
         boolean targetStable(String current, long now) {
             if (!current.equals(identity)) {
                 identity = current; since = now; clearSurface(); last = "target_not_stable"; return false;
@@ -892,8 +913,98 @@ final class SmokeHarness {
         void pendingReason(String reason) { last = reason; }
         void pending(String reason) { identity = null; since = 0; clearSurface(); last = reason; }
         void requireTime() { if (SystemClock.elapsedRealtime() >= deadline) throw timeout(); }
-        AssertionError timeout() { return new AssertionError("Notes v3 observation timed out: reason=" + last
-                + " automaticBackPolicy=prohibited imeSamples=" + samples + " lastImeSurface=" + lastVisibility); }
+        AssertionError timeout() { return new NotesPreparationTimeout("Notes v3 observation timed out: reason=" + last
+                + " automaticBackPolicy=prohibited imeSamples=" + samples + " lastImeSurface=" + lastVisibility, observation); }
+    }
+
+    private enum NotesResource {
+        NOT_SELECTED, NEW_NOTE, TITLE_FIELD, TEXT_TYPE, CONFIRM_BUTTON, BODY_FIELD, EXACT_TITLE, OTHER_RESOURCE;
+        static NotesResource forTarget(String resource) {
+            if (resource == null) return EXACT_TITLE;
+            switch (resource) {
+                case "new_note": return NEW_NOTE;
+                case "locked_note_title": return TITLE_FIELD;
+                case "type_text_note": return TEXT_TYPE;
+                case "android:id/button1": return CONFIRM_BUTTON;
+                case "text_note_view": return BODY_FIELD;
+                default: return OTHER_RESOURCE;
+            }
+        }
+    }
+    private enum NotesReadPhase { NOT_STARTED, WINDOW_PENDING, WINDOW_READY, RESOURCE_LOOKUP, TARGET_CHECK }
+
+    /** Primitive metadata from one existing read; never retains a platform object or text. */
+    private static final class NotesRead {
+        final NotesStage stage;
+        final NotesResource resource;
+        NotesReadPhase readPhase;
+        Integer appWindowId, displayId, imeWindowId, matchedCount, visibleMatchCount, targetWindowId;
+        Rect appBounds, displayBounds, imeBounds, targetBounds;
+        Boolean targetPresent, targetVisible, targetEnabled;
+        boolean matchScanComplete;
+        NotesRead(NotesStage stage, NotesResource resource, NotesReadPhase readPhase) {
+            this.stage = stage; this.resource = resource; this.readPhase = readPhase;
+        }
+        void window(int id, Rect bounds, Rect display, int inputMethodId, Rect inputMethod) {
+            readPhase = NotesReadPhase.WINDOW_READY;
+            appWindowId = id; appBounds = new Rect(bounds);
+            // appWindow already required DEFAULT_DISPLAY before returning.
+            displayId = Display.DEFAULT_DISPLAY; displayBounds = new Rect(display);
+            imeWindowId = inputMethodId; imeBounds = new Rect(inputMethod);
+        }
+        void matches(Integer count) {
+            readPhase = NotesReadPhase.RESOURCE_LOOKUP;
+            matchedCount = count; visibleMatchCount = count == null ? null : 0;
+            matchScanComplete = false;
+        }
+        boolean visible(boolean value) { targetVisible = value; return value; }
+        boolean enabled(boolean value) { targetEnabled = value; return value; }
+        int windowId(int value) { targetWindowId = value; return value; }
+    }
+
+    /** Frozen before cleanup; serialization performs no node, window or platform reads. */
+    private static final class NotesReadSnapshot {
+        static final int MAX_JSON_CHARS = 2048;
+        final NotesStage stage;
+        final NotesResource resource;
+        final NotesReadPhase readPhase;
+        final Integer appWindowId, displayId, imeWindowId, matchedCount, visibleMatchCount, targetWindowId;
+        private final Rect appBounds, displayBounds, imeBounds, targetBounds;
+        final Boolean targetPresent, targetVisible, targetEnabled;
+        final boolean matchScanComplete;
+        NotesReadSnapshot(NotesRead read) {
+            stage = read.stage; resource = read.resource; readPhase = read.readPhase;
+            appWindowId = read.appWindowId; displayId = read.displayId; imeWindowId = read.imeWindowId;
+            matchedCount = read.matchedCount; visibleMatchCount = read.visibleMatchCount; targetWindowId = read.targetWindowId;
+            appBounds = copy(read.appBounds); displayBounds = copy(read.displayBounds);
+            imeBounds = copy(read.imeBounds); targetBounds = copy(read.targetBounds);
+            targetPresent = read.targetPresent; targetVisible = read.targetVisible; targetEnabled = read.targetEnabled;
+            matchScanComplete = read.matchScanComplete;
+        }
+        JSONObject json() throws Exception {
+            JSONObject result = new JSONObject().put("schemaVersion", 1).put("snapshotKind", "LAST_OBSERVATION")
+                    .put("operationStage", stage.name()).put("resourceClass", resource.name()).put("readPhase", readPhase.name())
+                    .put("appWindowId", value(appWindowId)).put("appBounds", rect(appBounds))
+                    .put("displayId", value(displayId)).put("displayBounds", rect(displayBounds))
+                    .put("imeWindowId", value(imeWindowId)).put("imeBounds", rect(imeBounds))
+                    .put("matchedCount", value(matchedCount)).put("visibleMatchCount", value(visibleMatchCount))
+                    .put("matchScanComplete", matchScanComplete).put("targetPresent", value(targetPresent))
+                    .put("targetBounds", rect(targetBounds)).put("targetVisible", value(targetVisible))
+                    .put("targetEnabled", value(targetEnabled)).put("targetWindowId", value(targetWindowId));
+            require(result.toString().length() <= MAX_JSON_CHARS, "Notes preparation diagnostic exceeded its fixed bound");
+            return result;
+        }
+        private static Rect copy(Rect value) { return value == null ? null : new Rect(value); }
+        private static Object value(Object value) { return value == null ? JSONObject.NULL : value; }
+        private static Object rect(Rect value) {
+            return value == null ? JSONObject.NULL : new JSONArray().put(value.left).put(value.top).put(value.right).put(value.bottom);
+        }
+    }
+
+    static final class NotesPreparationTimeout extends AssertionError {
+        private final NotesReadSnapshot snapshot;
+        NotesPreparationTimeout(String message, NotesRead read) { super(message); snapshot = new NotesReadSnapshot(read); }
+        JSONObject diagnostic() throws Exception { return snapshot.json(); }
     }
 
     static void verifyNotesEditingPreparation() {
@@ -924,6 +1035,56 @@ final class SmokeHarness {
                 && !wait.takeSurfaceSample(1400), "Surface sampling exceeded its original preparation bound");
         wait.pending("not_published");
         require(!wait.takeSurfaceSample(1600) && wait.deadline == deadline, "Readiness reset renewed sampling or timeout");
+        verifyNotesPreparationDiagnostics();
+    }
+
+    private static void verifyNotesPreparationDiagnostics() {
+        // Same-source value fixtures, not device observations or app acceptance.
+        try {
+            NotesWait wait = new NotesWait(); long deadline = wait.deadline;
+            wait.beginObservation(NotesStage.CONFIRM_CREATE, NotesResource.forTarget("android:id/button1"));
+            Rect app = new Rect(0, 24, 320, 616), display = new Rect(0, 0, 320, 640);
+            Rect ime = new Rect(0, 390, 320, 640), target = new Rect(220, 400, 300, 448);
+            wait.observation.window(12, app, display, 14, ime);
+            wait.observation.matches(1); wait.observation.visibleMatchCount = 1; wait.observation.matchScanComplete = true;
+            wait.observation.readPhase = NotesReadPhase.TARGET_CHECK; wait.observation.targetPresent = true;
+            wait.observation.visible(true); wait.observation.enabled(true); wait.observation.windowId(12);
+            wait.observation.targetBounds = new Rect(target);
+            wait.pending("notes_target_covered_by_verified_input_method");
+            NotesPreparationTimeout failure = (NotesPreparationTimeout) wait.timeout();
+            String before = failure.diagnostic().toString();
+            require(before.contains("CONFIRM_BUTTON") && failure.diagnostic().getInt("matchedCount") == 1
+                    && failure.diagnostic().getJSONArray("targetBounds").getInt(1) == 400,
+                    "The last observation lost its same-read values");
+            app.setEmpty(); display.setEmpty(); ime.setEmpty(); target.setEmpty();
+            wait.observation.appBounds.setEmpty(); wait.observation.targetBounds.setEmpty();
+            wait.observation.visibleMatchCount = 0;
+            failure.diagnostic().put("appWindowId", 999);
+            require(before.equals(failure.diagnostic().toString()), "Cleanup or JSON mutation changed the frozen diagnostic");
+            require(failure.getMessage().equals("Notes v3 observation timed out: reason=notes_target_covered_by_verified_input_method"
+                            + " automaticBackPolicy=prohibited imeSamples=0 lastImeSurface=NOT_SAMPLED"),
+                    "Geometry diagnostics changed the original timeout message");
+            wait.beginObservation(NotesStage.CONFIRM_CREATE, NotesResource.forTarget("private-resource-marker"));
+            JSONObject unread = ((NotesPreparationTimeout) wait.timeout()).diagnostic();
+            require("OTHER_RESOURCE".equals(unread.getString("resourceClass")) && !unread.toString().contains("private-resource-marker")
+                    && unread.isNull("appWindowId") && unread.isNull("targetBounds") && unread.isNull("matchedCount")
+                    && unread.isNull("targetVisible") && !unread.getBoolean("matchScanComplete"),
+                    "An incomplete last read leaked a resource or reused earlier geometry");
+            wait.observation.matches(2); wait.observation.matchScanComplete = true;
+            JSONObject invisible = ((NotesPreparationTimeout) wait.timeout()).diagnostic();
+            require(invisible.getInt("matchedCount") == 2 && invisible.getInt("visibleMatchCount") == 0,
+                    "Invisible matches were confused with a missing query");
+            wait.observation.matches(0); wait.observation.matchScanComplete = true;
+            require(((NotesPreparationTimeout) wait.timeout()).diagnostic().getInt("matchedCount") == 0,
+                    "Zero exact matches were not preserved");
+            Rect extremes = new Rect(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
+            wait.observation.window(Integer.MIN_VALUE, extremes, extremes, Integer.MAX_VALUE, extremes);
+            wait.observation.targetBounds = new Rect(extremes); wait.observation.targetWindowId = Integer.MIN_VALUE;
+            wait.observation.matchedCount = Integer.MAX_VALUE; wait.observation.visibleMatchCount = Integer.MAX_VALUE;
+            require(((NotesPreparationTimeout) wait.timeout()).diagnostic().toString().length() <= NotesReadSnapshot.MAX_JSON_CHARS
+                    && wait.deadline == deadline && wait.samples == 0 && !wait.surfaceReady,
+                    "Diagnostic bounds or collection altered the original wait budget");
+        } catch (Exception failure) { throw new AssertionError("Notes preparation diagnostic boundary check failed", failure); }
     }
 
     /** Only these known incomplete reads are eligible for another observation. */

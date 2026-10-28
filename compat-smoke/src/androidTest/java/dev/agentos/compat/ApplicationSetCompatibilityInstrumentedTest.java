@@ -278,6 +278,11 @@ public final class ApplicationSetCompatibilityInstrumentedTest {
             if (("calculator_result".equals(phase) || "notes_persisted_result".equals(phase)) && error instanceof SmokeHarness.ResultMismatch) {
                 entry.getJSONObject("result").put("actual", ((SmokeHarness.ResultMismatch) error).actual);
             }
+            if (error instanceof SmokeHarness.NotesPreparationTimeout) {
+                try {
+                    entry.put("notesPreparationDiagnostic", ((SmokeHarness.NotesPreparationTimeout) error).diagnostic());
+                } catch (Exception | AssertionError diagnosticFailure) { error.addSuppressed(diagnosticFailure); }
+            }
             entry.put("status", "failed").put("stage", phase).put("error", safeError(error));
             steps.put(new JSONObject().put("name", phase).put("status", "failed").put("details", safeError(error)));
             if (entry.optBoolean("installedIdentityVerified")) {
@@ -370,8 +375,10 @@ public final class ApplicationSetCompatibilityInstrumentedTest {
 
     private static String safeError(Throwable failure) {
         String message = failure.getMessage();
-        if (message == null) return failure.getClass().getSimpleName();
-        return failure.getClass().getSimpleName() + ": " + message.substring(0, Math.min(message.length(), 400));
+        // Geometry is a separate fixed object; preserve the historical timeout error text.
+        String kind = failure instanceof SmokeHarness.NotesPreparationTimeout ? "AssertionError" : failure.getClass().getSimpleName();
+        if (message == null) return kind;
+        return kind + ": " + message.substring(0, Math.min(message.length(), 400));
     }
 
     private static void persist() throws Exception {

@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "kind": "original-ci-navigation-origin-failure-excerpt",
+  "sourceRun": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 40698819944,
+    "attempt": 1,
+    "commit": "31e14e233d79d56de8b16f0ee702193abe5cd266",
+    "event": "workflow_dispatch",
+    "branch": "master",
+    "conclusion": "failure",
+    "finishedAt": "2026-10-28T13:58:57Z",
+    "url": "https://github.com/ecojust/Agent-OS/actions/runs/40698819944"
+  },
+  "executionScope": "full",
+  "fullSuiteAcceptance": false,
+  "archiveRunId": 40702377809,
+  "archiveCommit": "b4bc3712c117f1130269e890acf9037806d4a668",
+  "archiveParent": "a7037680c1044998caa1a427cf634661e6ba4f6b",
+  "evidenceManifest": "screenshots/40698819944-1/manifest.json",
+  "archiveHistory": [
+    {
+      "runId": 40701793532,
+      "conclusion": "failure",
+      "stage": "Verify trusted source run",
+      "reason": "master mode rejects expected_source_sha, which is only accepted in review_branch mode; no evidence commit created"
+    },
+    {
+      "runId": 40702377809,
+      "conclusion": "success",
+      "correction": "Same original test run archived in master mode with expected_source_sha omitted; no test rerun"
+    }
+  ],
+  "caseCounts": {
+    "expectedPerApi": 264,
+    "expectedTotal": 2112,
+    "passed": 2111,
+    "failed": 1,
+    "errors": 0,
+    "skipped": 0,
+    "unrecorded": 0
+  },
+  "sourceLogArchive": {
+    "url": "https://api.github.com/repos/ecojust/Agent-OS/actions/runs/40698819944/logs",
+    "bytes": 575603,
+    "sha256": "67713563c49b4f7550b0008e0c33d4ade6c30983bf0cc6b306da8a3e892192bc"
+  },
+  "entries": [
+    {
+      "matrixLabel": "35",
+      "sourceJob": {
+        "id": 122852752289,
+        "name": "emulator-tests (35)",
+        "url": "https://github.com/ecojust/Agent-OS/actions/runs/40698819944/job/122852752289",
+        "conclusion": "failure"
+      },
+      "sourceLogMember": "emulator-tests (35)/10_Print Android failure details.txt",
+      "sourceLogMemberBytes": 2264,
+      "sourceLogMemberSha256": "45719a1554249a2cf3831e51916fa79be383d60e15c767f644c113646cb7ec67",
+      "sourceLineStart": 19,
+      "sourceLineCount": 8,
+      "sourceTrailingWhitespaceLinesPreserved": [
+        22
+      ],
+      "file": "api35-failure.txt",
+      "bytes": 904,
+      "sha256": "e78e2fc062e2d877ea3eb3837df2c521681e5f2da65b54ee04d95ac45d0e119b",
+      "failedTest": "dev.agentos.app.NavigationObservationGuardInstrumentedTest#anUnscopedSettingsWindowCannotBeReplacedByAnAutomaticLaunch",
+      "caseEvidence": "screenshots/40698819944-1/api-35/screenshots/api-35-anUnscopedSettingsWindowCannotBeReplacedByAnAutomaticLaunch-cf48a38e.json",
+      "captureStatus": "blocked",
+      "captureError": "foreground_is_not_an_approved_synthetic_test_screen",
+      "captureForegroundPackageAfterCleanup": "com.android.settings",
+      "failurePngAvailable": false
+    }
+  ]
+}

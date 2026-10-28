@@ -19,7 +19,7 @@
 | 连续导航模式只允许已声明的普通导航省去逐次确认 | [ContinuousNavigationInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/ContinuousNavigationInstrumentedTest.java)：`launchScrollAndHomeChangeTheRealUiWithoutAnApproval`、`textClickAndBackStillRequireDistinctApprovalsInNavigationMode`、`rejectingInputCannotBeBypassedWithAnyNavigationTool` | 点击、输入与返回仍需确认，不代表任意连续自动操作 |
 | 任务诊断由用户预览／复制，旧预览不能操作替代任务 | [TaskDiagnosticsInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/TaskDiagnosticsInstrumentedTest.java)：`activePreviewIsFrozenRedactedExplicitlyCopiedAndCanStopItsOriginalTask`、`completedCodeSurvivesButClearReplacementAndLeavingInvalidateOldDialogActions` | 诊断与预算数字不代表性能预算或完成动作数量 |
 
-## 实际熄屏停止：八档专项通过，完整回归待验证
+## 实际熄屏停止：专项及完整套件中的八档用例通过
 
 生产服务已有屏幕广播及交互／锁屏状态检查；先前 `DeviceHarness` 只在初始化和清理时唤醒、解除专用模拟器键盘锁。完整回归40620143610之后新增了 `actualScreenOffStopsPendingApprovalAndWakeDoesNotResumeIt`，复用现有控制器测试设施。此新增用例不属于先前1952项结果，新增源码 `ba5fbe295` 的[专项清单](../../screenshots/40622578371-1/manifest.json)记录八档8/8通过，实际覆盖如下：
 
@@ -38,7 +38,7 @@
 
 核对旧View已移除、旧身份和许可失效，新窗口保持原状态、文字实际变大、平台登记与真实View几何一致；当前暂停／停止按钮仍至少48dp、位于可见安全区域，短标签没有省略或裁切，并验证当前实际按钮行为。最后恢复原设置；原值缺失时删除测试覆盖值，并等待实际配置恢复。API34及以上支持非线性缩放，不要求像素大小简单乘以1.3。
 
-此首个放大样本不代表最大字体、Activity重建、横竖屏或读屏服务已验收。主界面真实字体变化后的重建、草稿和安全窗口保留，随后单独验证，不能由主动 `recreate()` 替代系统配置变化。
+当前先处理完整运行40622992507中既有任务诊断清空后的焦点失败，再执行字体变化样本。此首个放大样本不代表最大字体、Activity重建、横竖屏或读屏服务已验收。主界面真实字体变化后的重建、草稿和安全窗口保留，随后单独验证，不能由主动 `recreate()` 替代系统配置变化。
 
 ## 分开的后续验证
 
@@ -48,3 +48,5 @@
 - **未公开能力：** 普通 APK 的截图及坐标点击／滑动入口仍未开放。内部视觉链路和低API“不支持”断言分别记录，不算公开能力的正向通过，也不因新增本表而扩大 `api_matrix` 的范围。
 
 依据：[兼容性矩阵与发布条件](../COMPATIBILITY.md)、[设计规则的验收安排](../DESIGN_RULES.md#验收安排)、[产品里程碑](../PRODUCT_PLAN.md#5-里程碑与验收)。
+
+新增源码ba5fbe295的[完整回归清单](../../screenshots/40622992507-1/manifest.json)为1959/1960，API30有1项任务诊断焦点失败；新增熄屏用例八档全部通过。该结果保留失败，不能将本节的熄屏通过扩大为整套回归通过。

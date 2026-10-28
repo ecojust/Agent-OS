@@ -44,6 +44,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import dev.agentos.core.ModelSettings;
+import dev.agentos.core.NumericPreferences;
 import dev.agentos.core.ActionConfirmationPolicy;
 import dev.agentos.core.ModelProbe;
 import dev.agentos.core.RunControl;
@@ -100,6 +101,10 @@ public final class MainActivity extends Activity implements AgentController.List
     private TextView budgetSummary;
     private LinearLayout budgetFields;
     private Button budgetToggle;
+    private Button numericImportButton, numericExportButton;
+    private NumericPreferencesTransfers.Owner numericTransfer;
+    private boolean numericResultReceived;
+    private int numericResultCode;
     private TextView serviceState, statusText, configSummary, scopeSummary, messageText, logText, summaryText, approvalText;
     private LinearLayout modelFields, approvalPanel, runningButtons;
     private LinearLayout taskFocusAnchor;
@@ -209,7 +214,24 @@ public final class MainActivity extends Activity implements AgentController.List
         super.onResume();
         resumed = true;
         renderState();
+        finishNumericTransfer();
         renderTaskUsage(controller.getTaskUsage(), true);
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != NumericPreferencesTransfers.REQUEST_CODE || numericTransfer == null || data == null) return;
+        final String nonce;
+        try { nonce = data.getStringExtra(NumericPreferencesTransfers.EXTRA_NONCE); }
+        catch (RuntimeException malformed) { return; }
+        // Even a cancellation must belong to this operation. An old or absent
+        // nonce cannot release a replacement operation's owner.
+        if (!numericTransfer.nonce.equals(nonce) || numericResultReceived) return;
+        if (!NumericPreferencesTransfers.isReturning(numericTransfer)) return;
+        numericResultReceived = true;
+        numericResultCode = resultCode;
+        // Activity results may arrive before onResume. Never apply off-screen.
+        if (resumed) finishNumericTransfer();
     }
 
     @Override protected void onPause() {
@@ -234,6 +256,7 @@ public final class MainActivity extends Activity implements AgentController.List
     }
 
     @Override protected void onDestroy() {
+        invalidateNumericTransfer();
         closeTaskDiagnostics(true);
         closeTaskActionReceipts(true);
         main.removeCallbacks(taskUsageRefresh);
@@ -461,6 +484,17 @@ public final class MainActivity extends Activity implements AgentController.List
         marginAdd(budget, budgetExplanation, 6);
         bindBudgetTexts(budgetTexts);
         updateBudgetPanel();
+
+        marginAdd(budget, text("数值偏好文件仅含每次回复 Token 上限和三项任务预算。导入预览后填入当前设置，保存或开始任务时才生效。", 12,
+                R.color.agent_muted, false), 12);
+        numericImportButton = button("导入数值偏好…", 0, false);
+        numericImportButton.setId(R.id.numeric_preferences_import);
+        numericImportButton.setOnClickListener(view -> startNumericTransfer(false));
+        marginAdd(budget, numericImportButton, 8);
+        numericExportButton = button("导出当前数值偏好…", 0, false);
+        numericExportButton.setId(R.id.numeric_preferences_export);
+        numericExportButton.setOnClickListener(view -> startNumericTransfer(true));
+        marginAdd(budget, numericExportButton, 4);
 
         LinearLayout task = card(content);
         task.addView(sectionTitle("这次想完成什么？", R.drawable.ic_play, R.id.task_prompt_label));
@@ -869,6 +903,114 @@ public final class MainActivity extends Activity implements AgentController.List
         return ready && !busy && !destroyed && !storageDamaged && modelProbe == null && !controller.getState().running;
     }
 
+    private void startNumericTransfer(boolean export) {
+        if (!canStartModelProbe() || numericTransfer != null) return;
+        NumericPreferences frozen = null;
+        if (export) {
+            Integer tokens = readMaxOutputTokens(true);
+            TaskBudget budget = readBudget(true);
+            if (tokens == null || budget == null) {
+                showMessage("请修正每次回复 Token 上限和任务预算后再导出。", true);
+                return;
+            }
+            // Do not create a SavedSettings copy: this path needs no credentials,
+            // model endpoint, grants, execution mode or task text.
+            frozen = NumericPreferences.fromTaskBudget(tokens, budget);
+        }
+        if (!numericProfileIsCurrent()) {
+            showMessage("当前个人资料不可用，请解锁设备后重试。", true);
+            return;
+        }
+        NumericPreferencesTransfers.Owner owner = NumericPreferencesTransfers.create(
+                export ? NumericPreferencesTransfers.Mode.EXPORT : NumericPreferencesTransfers.Mode.IMPORT,
+                draft.profileId, configurationGeneration, controller.getTaskInputState(), frozen);
+        if (owner == null) {
+            showMessage("上一项文件操作尚未结束，请稍后重试。配置保存和任务操作仍可使用。", false);
+            return;
+        }
+        numericTransfer = owner;
+        numericResultReceived = false;
+        renderState();
+        try {
+            startActivityForResult(new Intent(this, NumericPreferencesTransferActivity.class)
+                    .putExtra(NumericPreferencesTransfers.EXTRA_NONCE, owner.nonce), NumericPreferencesTransfers.REQUEST_CODE);
+        } catch (RuntimeException unavailable) {
+            invalidateNumericTransfer();
+            showMessage("无法打开数值偏好页面，请返回此页面后重试。", true);
+            renderState();
+        }
+    }
+
+    private boolean numericProfileIsCurrent() {
+        try {
+            SettingsStore.requirePersonalProfile(getApplicationContext());
+            return draft.profileId.equals(SettingsStore.currentProfileId(getApplicationContext()));
+        } catch (RuntimeException unavailable) { return false; }
+    }
+
+    /** Pure-memory check; called by normal rendering without storage or provider I/O. */
+    private boolean numericContextIsCurrent(NumericPreferencesTransfers.Owner owner) {
+        AgentController.State state = controller.getState();
+        return ready && !busy && !destroyed && !isFinishing() && !storageDamaged && modelProbe == null && probeTrustDialog == null
+                && owner.configurationGeneration == configurationGeneration && owner.profileId.equals(draft.profileId)
+                && owner.taskInput.matches(state.taskInput) && !state.running;
+    }
+
+    private void finishNumericTransfer() {
+        NumericPreferencesTransfers.Owner owner = numericTransfer;
+        if (!resumed || owner == null) return;
+        if (!NumericPreferencesTransfers.isCurrent(owner) || !numericContextIsCurrent(owner)) {
+            invalidateNumericTransfer();
+            showMessage("数值偏好操作已取消，当前设置保持不变。", false);
+            renderState();
+            return;
+        }
+        NumericPreferencesTransfers.Result result = NumericPreferencesTransfers.peekResult(owner);
+        if (!NumericPreferencesTransfers.isReturning(owner) || result == null) return;
+        // A trusted broker cancellation may clean up even if Android supplied no
+        // result Intent. Success still requires the routed nonce and RESULT_OK.
+        if (!numericResultReceived && result.outcome != NumericPreferencesTransfers.Outcome.CANCELLED) return;
+        boolean success = result.outcome == NumericPreferencesTransfers.Outcome.IMPORTED
+                || result.outcome == NumericPreferencesTransfers.Outcome.EXPORTED;
+        if (success && (numericResultCode != RESULT_OK || !numericProfileIsCurrent())) {
+            invalidateNumericTransfer();
+            showMessage("数值偏好结果已失效，当前设置保持不变。", false);
+            renderState();
+            return;
+        }
+        result = NumericPreferencesTransfers.consume(owner);
+        numericTransfer = null;
+        numericResultReceived = false;
+        if (result == null) { renderState(); return; }
+        if (result.outcome == NumericPreferencesTransfers.Outcome.IMPORTED) {
+            NumericPreferences values = result.preferences;
+            // Consume ownership before TextWatchers invalidate configuration.
+            // Only these four draft fields change; Save/Start remains explicit.
+            maxOutputTokensField.setText(String.valueOf(values.maxOutputTokens));
+            budgetTexts = new String[]{String.valueOf(values.maxModelRounds), String.valueOf(values.maxToolCalls),
+                    String.valueOf(values.maxActiveSeconds)};
+            bindBudgetTexts(budgetTexts);
+            showMessage("四项数值已填入当前设置，尚未保存。请检查后选择保存设置或开始任务。", false);
+        } else if (result.outcome == NumericPreferencesTransfers.Outcome.EXPORTED) {
+            showMessage("数值偏好文件已写入所选位置，仅含四项数值。", false);
+        } else if (result.outcome == NumericPreferencesTransfers.Outcome.CANCELLED) {
+            showMessage(owner.mode == NumericPreferencesTransfers.Mode.EXPORT
+                    ? "导出已取消。所选位置可能留有空文件或部分内容，请自行核对。" : "导入已取消，当前设置保持不变。", false);
+        } else {
+            showMessage(owner.mode == NumericPreferencesTransfers.Mode.EXPORT
+                    ? "文件未能确认写入完成。所选位置可能留有空文件或部分内容，请核对后重试。"
+                    : "无法导入此数值偏好文件。请检查文件格式、大小和访问权限后重试。", true);
+        }
+        renderState();
+    }
+
+    private void invalidateNumericTransfer() {
+        NumericPreferencesTransfers.Owner owner = numericTransfer;
+        numericTransfer = null;
+        numericResultReceived = false;
+        if (owner != null) NumericPreferencesTransfers.revoke(owner);
+    }
+
     private EditText budgetField(LinearLayout parent, String label, int id, int labelId) {
         LinearLayout cell = column();
         cell.setPadding(0, 0, dp(8), 0);
@@ -1122,6 +1264,7 @@ public final class MainActivity extends Activity implements AgentController.List
 
     private void renderState() {
         if (destroyed || statusText == null) return;
+        if (numericTransfer != null && !numericContextIsCurrent(numericTransfer)) invalidateNumericTransfer();
         refreshSavedProbe();
         displayedVisionKind = savedVisionLease() == null ? ProbeKind.VISION : ProbeKind.SAVED_VISION;
         if (visionProbeButton != null) visionProbeButton.setText(displayedVisionKind == ProbeKind.VISION
@@ -1145,6 +1288,8 @@ public final class MainActivity extends Activity implements AgentController.List
         serviceButton.setText(service ? "查看系统服务设置" : "前往开启无障碍服务");
         boolean editable = ready && !busy && !state.running && !storageDamaged;
         boolean probing = modelProbe != null;
+        numericImportButton.setEnabled(editable && !probing && resumed && numericTransfer == null);
+        numericExportButton.setEnabled(editable && !probing && resumed && numericTransfer == null);
         for (View view : configurationViews) view.setEnabled(editable && !probing);
         // Editing any connection field cancels the old request before another probe can start.
         endpointField.setEnabled(editable);
@@ -1520,6 +1665,7 @@ public final class MainActivity extends Activity implements AgentController.List
 
     private void startModelProbe(ProbeKind kind) {
         if (!canStartModelProbe()) return;
+        invalidateNumericTransfer();
         final SettingsStore.ConfigurationLease lease = kind == ProbeKind.SAVED_VISION ? savedVisionLease() : null;
         if (kind == ProbeKind.SAVED_VISION && lease == null) {
             // A stale saved-mode click must not silently become a draft request.
@@ -1695,6 +1841,7 @@ public final class MainActivity extends Activity implements AgentController.List
     }
 
     private void configurationEdited() {
+        invalidateNumericTransfer();
         configurationGeneration++;
         invalidateSavedProbe("已失效，请重新测试");
     }

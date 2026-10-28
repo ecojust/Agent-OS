@@ -16,5 +16,20 @@
             android:authorities="dev.agentos.app.test.windowcapture"
             android:exported="true" android:grantUriPermissions="false"
             tools:ignore="ExportedContentProvider" />
+        <!-- Synthetic SAF documents only, isolated in the test APK UID/process; no production provider. -->
+        <provider android:name="dev.agentos.app.numericstest.NumericPreferencesDocumentsProvider"
+            android:authorities="dev.agentos.app.test.numericpreferences"
+            android:process=":numeric_preferences_documents"
+            android:exported="true" android:grantUriPermissions="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS"
+            tools:ignore="ExportedContentProvider">
+            <intent-filter><action android:name="android.content.action.DOCUMENTS_PROVIDER" /></intent-filter>
+        </provider>
+        <!-- Setup/telemetry only. This separate authority never opens or grants a document. -->
+        <provider android:name="dev.agentos.app.numericstest.NumericPreferencesControlProvider"
+            android:authorities="dev.agentos.app.test.numericpreferences.control"
+            android:process=":numeric_preferences_documents"
+            android:exported="true" android:grantUriPermissions="false"
+            tools:ignore="ExportedContentProvider" />
     </application>
 </manifest>

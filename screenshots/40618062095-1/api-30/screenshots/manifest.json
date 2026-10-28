@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "api": 30,
+  "runId": "1793152775454-16e0a9b4",
+  "scope": "Dedicated synthetic Android fixture and verified empty application UI only",
+  "jvmTests": "No UI; no screenshot is claimed for JVM tests",
+  "tests": [
+    {
+      "schemaVersion": 1,
+      "api": 30,
+      "testClass": "dev.agentos.app.OwnedControlWindowInstrumentedTest",
+      "testName": "ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow",
+      "assertionResult": "fail",
+      "testResult": "fail",
+      "status": "fail",
+      "startedAt": 1793152775455,
+      "finishedAt": 1793152783406,
+      "failureClass": "AssertionError",
+      "captures": [
+        {
+          "stage": "real-owned-window-identity-and-lease-match",
+          "capturedAt": 1793152777463,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-30-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-68976d6b-real-owned-window-identity-and-lease-match-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        },
+        {
+          "stage": "owned-control-status-exposes-current-waiting-state",
+          "capturedAt": 1793152777703,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-30-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-68976d6b-owned-control-status-exposes-current-waiting-state-1.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        },
+        {
+          "stage": "owned-control-accessibility-failed-before-cleanup",
+          "capturedAt": 1793152782885,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-30-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-68976d6b-owned-control-accessibility-failed-before-cleanup-2.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        },
+        {
+          "stage": "failed",
+          "capturedAt": 1793152783393,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-30-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-68976d6b-failed-3.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    }
+  ]
+}

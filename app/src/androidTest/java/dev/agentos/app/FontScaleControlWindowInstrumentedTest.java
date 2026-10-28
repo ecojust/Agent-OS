@@ -142,11 +142,15 @@ public final class FontScaleControlWindowInstrumentedTest {
                 throw reported;
             } finally {
                 Throwable cleanup = null;
-                try { onMain(device, device.service::hideOverlay); }
-                catch (Exception | AssertionError failure) { cleanup = failure; }
+                // Restore before removing the real service window; removal is
+                // attempted even when restoration fails.
                 try { original.restore(device); }
-                catch (Exception | AssertionError failure) {
-                    if (cleanup == null) cleanup = failure; else cleanup.addSuppressed(failure);
+                catch (Exception | AssertionError failure) { cleanup = failure; }
+                finally {
+                    try { onMain(device, device.service::hideOverlay); }
+                    catch (Exception | AssertionError failure) {
+                        if (cleanup == null) cleanup = failure; else cleanup.addSuppressed(failure);
+                    }
                 }
                 if (cleanup != null) {
                     if (primary != null) primary.addSuppressed(cleanup);
@@ -175,9 +179,29 @@ public final class FontScaleControlWindowInstrumentedTest {
         }
         void restore(DeviceHarness device) throws Exception {
             long deadline = SystemClock.elapsedRealtime() + 10_000;
-            device.shell(raw == null ? "settings --user current delete system font_scale"
-                    : "settings --user current put system font_scale " + raw);
-            awaitFont(device, raw, actual, deadline);
+            // The exact provider row (including absence) and effective resources
+            // are separate restoration targets. A font change can itself persist
+            // a canonical numeric row, so publish the original effective scale
+            // before restoring absence or the original numeric spelling.
+            // Both stages share the original ten-second deadline. Even a failed
+            // first stage must attempt to restore the exact original provider row.
+            String effectiveRaw = Float.toString(actual);
+            Throwable failure = null;
+            try {
+                device.shell("settings --user current put system font_scale " + effectiveRaw);
+                awaitFont(device, effectiveRaw, actual, deadline);
+            } catch (Exception | AssertionError failed) { failure = failed; }
+            finally {
+                try {
+                    device.shell(raw == null ? "settings --user current delete system font_scale"
+                            : "settings --user current put system font_scale " + raw);
+                    awaitFont(device, raw, actual, deadline);
+                } catch (Exception | AssertionError failed) {
+                    if (failure == null) failure = failed; else failure.addSuppressed(failed);
+                }
+            }
+            if (failure instanceof AssertionError) throw (AssertionError) failure;
+            if (failure != null) throw (Exception) failure;
         }
     }
 
@@ -193,15 +217,42 @@ public final class FontScaleControlWindowInstrumentedTest {
     }
 
     private static void awaitFont(DeviceHarness device, String raw, float expected, long deadline) throws Exception {
+        FontSnapshot latest = null;
         while (SystemClock.elapsedRealtime() < deadline) {
-            boolean applied = onMain(device, () ->
-                    Objects.equals(raw, readFont(device))
-                            && Math.abs(device.service.getResources().getConfiguration().fontScale - expected) < 0.0001f
-                            && Math.abs(device.context.getResources().getConfiguration().fontScale - expected) < 0.0001f);
-            if (applied) { requireTime(deadline); return; }
+            latest = onMain(device, () -> new FontSnapshot(readFont(device),
+                    device.service.getResources().getConfiguration().fontScale,
+                    device.context.getResources().getConfiguration().fontScale));
+            boolean applied = latest.matches(raw, expected);
+            if (SystemClock.elapsedRealtime() >= deadline) break;
+            if (applied) return;
             Thread.sleep(25);
         }
-        throw new AssertionError("System setting and actual service/application font configuration did not agree within ten seconds");
+        // Reuse the last main-thread poll. Do not post additional
+        // diagnostic work after timeout or read settings other than font_scale.
+        throw new AssertionError("System setting and actual service/application font configuration did not agree within ten seconds"
+                + ";expectedRaw=" + fontToken(raw) + ",expectedScale=" + expected
+                + ",last=" + (latest == null ? "unavailable" : latest.diagnostic()));
+    }
+
+    private static final class FontSnapshot {
+        final String raw;
+        final float service, application;
+        FontSnapshot(String raw, float service, float application) {
+            this.raw = raw; this.service = service; this.application = application;
+        }
+        boolean matches(String expectedRaw, float expected) {
+            return Objects.equals(expectedRaw, raw) && Math.abs(service - expected) < 0.0001f
+                    && Math.abs(application - expected) < 0.0001f;
+        }
+        String diagnostic() {
+            return "{raw=" + fontToken(raw) + ",serviceScale=" + service + ",applicationScale=" + application + "}";
+        }
+    }
+
+    private static String fontToken(String raw) {
+        if (raw == null) return "absent";
+        return raw.length() <= 64 && raw.matches("[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?")
+                ? raw : "invalid_numeric_token";
     }
 
     private static void prepareApi30Cache(DeviceHarness device) {

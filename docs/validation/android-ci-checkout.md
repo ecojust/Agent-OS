@@ -1,10 +1,10 @@
 # Android CI 的代码检出范围
 
-Android完整工作流的构建任务及八档设备任务现在只检出 `.github`、`app`、`core`、`fixture`、`compat-smoke`、`docs`、`gradle`、`scripts` 八个目录。checkout v4 的cone模式自动保留根目录文件，包括Gradle入口、README与配置。测试结果仍写入本次新目录并上传；历史截图继续留在仓库与原提交中，证据发布工作流没有改动。
+Android完整工作流的构建任务及八档设备任务最初只检出 `.github`、`app`、`core`、`fixture`、`compat-smoke`、`docs`、`gradle`、`scripts` 八个目录。新增独立升级验证模块后，另包含 `upgrade-smoke`，保持与根项目配置一致。checkout v4 的cone模式自动保留根目录文件，包括Gradle入口、README与配置。测试结果仍写入本次新目录并上传；历史截图继续留在仓库与原提交中，证据发布工作流没有改动。
 
 在固定源码 `3eb74b5d5119738ba8e3c560ed8b078df223bba1` 中，历史 `screenshots/` 包含186,583个Git树文件、2,144,992,421字节；其余407文件共5,943,146字节。这是Git树未压缩内容大小，不是网络下载体积或节时测量。checkout v4 当前实现会在指定sparse范围、未显式设置filter时使用 `blob:none`，并在检出前设置稀疏规则；树元数据仍会取得，Git可按需获取其他对象。本次不改源码ref、fetch-depth、权限或原凭据设置。
 
-保留的目录具有实际依赖：进度检查需要 `docs/progress.json` 与SVG；兼容性脚本使用文档中的例子及锁定清单；脚本测试会读取 `.github/workflows/third-party-smoke.yml`。Gradle包含app、core、fixture与compat-smoke四个模块，不能只保留app/core。脚本中的历史截图名称用于临时合成fixture或新输出，没有依赖仓库内旧截图文件。
+保留的目录具有实际依赖：进度检查需要 `docs/progress.json` 与SVG；兼容性脚本使用文档中的例子及锁定清单；脚本测试会读取 `.github/workflows/third-party-smoke.yml`。Gradle除app/core外，也包含fixture、compat-smoke及新upgrade-smoke，检出范围需要保留这些模块。脚本中的历史截图名称用于临时合成fixture或新输出，没有依赖仓库内旧截图文件。
 
 从上述精确源码创建独立稀疏工作树后，确认八目录及根文件完整、历史截图目录不存在，407个输入前后Git内容一致。实际一次脚本检查 **336/336通过，零失败、错误或跳过，49.024秒**，包括原314项及离线APK预检22项，其中11项真实SDK集成用例确实执行；进度检查也通过。[原始日志、逐项结果与清单](diagnostics/android-sparse-checkout-local/manifest.json)已保留。Windows批处理文件按既有 `.gitattributes` 的CRLF规则核对Git内容，没有将正常行尾转换误判为源码变化。
 

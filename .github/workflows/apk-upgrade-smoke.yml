@@ -1,0 +1,245 @@
+name: Development APK in-place upgrade
+run-name: APK upgrade smoke (${{ inputs.mode }})
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Test the fixed APK pair or archive a completed test run
+        required: true
+        default: test
+        type: choice
+        options: [test, archive]
+      run_id:
+        description: Completed test run ID (archive only)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apk-upgrade-smoke-${{ inputs.mode }}-${{ inputs.run_id || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/master' && inputs.mode == 'test'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+            app
+            core
+            fixture
+            compat-smoke
+            upgrade-smoke
+            docs
+            gradle
+            scripts
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Prepare Android SDK
+        run: |
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk_root" >> "$GITHUB_ENV"
+          printf 'y\n%.0s' {1..100} | "$sdk_root/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$sdk_root" 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Verify progress and upgrade evidence boundaries
+        run: |
+          python3 scripts/update_progress.py --check
+          python3 -m unittest discover -s scripts -p 'test_apk_upgrade_smoke*.py'
+          python3 -m unittest discover -s scripts -p 'test_check_apk_upgrade.py'
+      - name: Check out the fixed version 1 source
+        uses: actions/checkout@v4
+        with:
+          ref: b1fd337262775a505327088975a3320fe323f034
+          path: _upgrade-baseline
+          persist-credentials: false
+          sparse-checkout: |
+            .github
+            app
+            core
+            fixture
+            compat-smoke
+            docs
+            gradle
+            scripts
+      - name: Create one temporary development signing identity
+        run: |
+          mkdir -m 700 "$RUNNER_TEMP/upgrade-signing"
+          mkdir "$RUNNER_TEMP/upgrade-bundle"
+          keytool -genkeypair -keystore "$RUNNER_TEMP/upgrade-signing/development.jks" -storetype JKS -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 3650 -dname 'CN=Agent OS Synthetic Upgrade Test,O=Development,C=US' -noprompt
+          keytool -exportcert -keystore "$RUNNER_TEMP/upgrade-signing/development.jks" -storepass android -alias androiddebugkey -file "$RUNNER_TEMP/upgrade-bundle/signing-certificate.der"
+      - name: Build both exact sources with that development identity
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git -C _upgrade-baseline rev-parse HEAD)" = b1fd337262775a505327088975a3320fe323f034
+          signing_args=("-Pandroid.injected.signing.store.file=$RUNNER_TEMP/upgrade-signing/development.jks" '-Pandroid.injected.signing.store.password=android' '-Pandroid.injected.signing.key.alias=androiddebugkey' '-Pandroid.injected.signing.key.password=android')
+          ./_upgrade-baseline/gradlew -p _upgrade-baseline --no-daemon "${signing_args[@]}" :app:assembleDebug
+          cp _upgrade-baseline/app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/upgrade-bundle/baseline.apk"
+          ./gradlew --no-daemon "${signing_args[@]}" :app:assembleDebug :fixture:assembleDebug :upgrade-smoke:assembleDebug :app:lintDebug
+          cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/upgrade-bundle/candidate.apk"
+          cp fixture/build/outputs/apk/debug/fixture-debug.apk "$RUNNER_TEMP/upgrade-bundle/fixture.apk"
+          cp upgrade-smoke/build/outputs/apk/debug/upgrade-smoke-debug.apk "$RUNNER_TEMP/upgrade-bundle/probe.apk"
+          python3 scripts/apk_upgrade_smoke.py describe-build --bundle "$RUNNER_TEMP/upgrade-bundle" --sdk-root "$ANDROID_HOME"
+      - name: Remove the disposable private signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upgrade-signing/development.jks"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk-upgrade-smoke-bundle
+          path: ${{ runner.temp }}/upgrade-bundle/
+          if-no-files-found: error
+          retention-days: 14
+
+  upgrade:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        api: ['30', '31', '32', '33', '34', '35', '36', '37.0']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+            app
+            core
+            fixture
+            compat-smoke
+            upgrade-smoke
+            docs
+            gradle
+            scripts
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Initialize the unverified combination
+        run: python3 scripts/apk_upgrade_smoke.py prepare --api '${{ matrix.api }}' --output "$RUNNER_TEMP/upgrade-evidence/api-${{ matrix.api }}"
+      - uses: actions/download-artifact@v4
+        with:
+          name: apk-upgrade-smoke-bundle
+          path: ${{ runner.temp }}/upgrade-bundle
+      - name: Prepare Android SDK
+        run: |
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk_root" >> "$GITHUB_ENV"
+          echo "$sdk_root/platform-tools" >> "$GITHUB_PATH"
+          printf 'y\n%.0s' {1..100} | "$sdk_root/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$sdk_root" 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Enable full API version SDK tooling
+        if: matrix.api == '37.0'
+        run: |
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
+          printf 'y\n%.0s' {1..100} | "$sdk_root/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$sdk_root" 'cmdline-tools;23.0'
+          test -x "$sdk_root/cmdline-tools/23.0/bin/sdkmanager"
+          mv "$sdk_root/cmdline-tools/latest" "$sdk_root/cmdline-tools/pre-api37"
+          ln -s 23.0 "$sdk_root/cmdline-tools/latest"
+      - name: Enable hardware virtualization
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Perform the one in-place update and verify real retained data
+        id: upgrade
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: '35'
+          system-image-api-level: ${{ matrix.api }}
+          emulator-build: '16428233'
+          arch: x86_64
+          target: default
+          avd-name: agent-os-apk-upgrade
+          enable-hw-keyboard: false
+          pre-emulator-launch-script: python3 scripts/configure_emulator_phone.py --avd-name agent-os-apk-upgrade
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            python3 scripts/configure_emulator_phone.py --avd-name agent-os-apk-upgrade --check
+            python3 scripts/apk_upgrade_smoke.py run --bundle "$RUNNER_TEMP/upgrade-bundle" --api '${{ matrix.api }}' --output "$RUNNER_TEMP/upgrade-evidence/api-${{ matrix.api }}" --sdk-root "$ANDROID_HOME"
+      - name: Preserve failures and incomplete phases
+        if: always()
+        env:
+          OUTCOME: ${{ steps.upgrade.outcome }}
+        run: python3 scripts/apk_upgrade_smoke.py finalize --api '${{ matrix.api }}' --output "$RUNNER_TEMP/upgrade-evidence/api-${{ matrix.api }}" --outcome "${OUTCOME:-unknown}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apk-upgrade-smoke-api-${{ matrix.api }}-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/upgrade-evidence/api-${{ matrix.api }}/
+          if-no-files-found: error
+          retention-days: 30
+
+  archive:
+    if: github.ref == 'refs/heads/master' && inputs.mode == 'archive'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Select the completed source and exact attempt
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.run_id }}
+        run: |
+          [[ "$SOURCE_RUN_ID" =~ ^[1-9][0-9]{0,18}$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > "$RUNNER_TEMP/upgrade-source.json"
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/upgrade-artifacts.json"
+          python3 scripts/apk_upgrade_smoke_archive.py validate-source --source-run-json "$RUNNER_TEMP/upgrade-source.json" --artifact-index "$RUNNER_TEMP/upgrade-artifacts.json" --github-output "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.source.outputs.commit }}
+          persist-credentials: false
+      - name: Download only selected attempt artifacts
+        if: steps.source.outputs.artifactIds != ''
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.source.outputs.runId }}
+          artifact-ids: ${{ steps.source.outputs.artifactIds }}
+          path: ${{ runner.temp }}/upgrade-incoming
+      - name: Archive all eight combinations and protected capture records
+        env:
+          EVIDENCE_PATH: ${{ steps.source.outputs.evidencePath }}
+          SOURCE_RUN_ID: ${{ steps.source.outputs.runId }}
+        run: |
+          python3 scripts/apk_upgrade_smoke_archive.py archive --source-run-json "$RUNNER_TEMP/upgrade-source.json" --artifact-index "$RUNNER_TEMP/upgrade-artifacts.json" --incoming "$RUNNER_TEMP/upgrade-incoming"
+          python3 scripts/update_progress.py --evidence-path "$EVIDENCE_PATH" --run-url "https://github.com/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" --note '归档开发签名APK原地升级的八档固定组合；保留失败、缺失和受保护采集记录，不替代正式签名、真机、格式迁移或ROM验收。'
+          python3 scripts/update_progress.py --check
+      - name: Commit an immutable evidence branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVIDENCE_PATH: ${{ steps.source.outputs.evidencePath }}
+          SOURCE_RUN_ID: ${{ steps.source.outputs.runId }}
+          SOURCE_ATTEMPT: ${{ steps.source.outputs.attempt }}
+        run: |
+          branch="evidence/apk-upgrade-$SOURCE_RUN_ID-$SOURCE_ATTEMPT"
+          gh auth setup-git
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            echo 'Evidence branch already exists; refusing to overwrite it.'
+            exit 1
+          fi
+          git switch -c "$branch"
+          git config user.name agent
+          git config user.email agent@users.noreply.github.com
+          git add -- "$EVIDENCE_PATH" README.md docs/progress.json docs/diagrams/development-progress.svg
+          git diff --cached --check
+          git commit -m "Archive development APK upgrade run $SOURCE_RUN_ID [skip ci]"
+          git push origin "HEAD:refs/heads/$branch"
+          echo "Evidence branch: https://github.com/$GITHUB_REPOSITORY/tree/$branch" >> "$GITHUB_STEP_SUMMARY"

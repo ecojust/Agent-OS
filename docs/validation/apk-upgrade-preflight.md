@@ -59,6 +59,8 @@ python3 -m unittest discover -s scripts -p test_check_apk_upgrade.py -v
 
 后续正式发布仍需可信正式证书/产物来源、同一产物的设备安装与升级、配置保留/拒绝与恢复、任务终止及不自动续跑等证据；ROM 还需要明确机型与恢复流程。本模块不会自动推进这些验收结论。
 
+后续[开发APK原地升级模块](apk-upgrade-smoke.md)独立验证一次真实PackageManager替换与同格式配置连续性，复用此预检检查确切两份构建产物；设备结果单独记录，不改变本CLI只读、不安装的契约。
+
 本次本地实际执行为 **22/22通过，22.090秒，零失败、错误或跳过**；真实SDK集成组确实执行。两份脚本与独立审查冻结逐字节相同，[原始测试日志、实际正例报告及输入摘要](diagnostics/apk-upgrade-preflight-local/README.md)已归档。没有重跑未改的核心333项或原314项脚本，也没有运行设备安装测试；纯CLI验证没有UI截图。源码518621d4的唯一整体应用录像已录制并归档，35.867秒、444,016字节；[录像及范围](operation-demo.md#离线apk预检源码的整体演示)只覆盖普通Fixture应用流程，不替代此CLI的实际验签报告。
 
 后续测试驱动源码eee60的完整CI [40745270296](https://github.com/ecojust/Agent-OS/actions/runs/40745270296)已执行新的342项脚本，58.431秒、零失败/错误/跳过；增加的六项属于仪器测试执行边界，本CLI仍为原22项。[原始步骤](diagnostics/numeric-preferences-40745270296/build-script-tests.original.txt)与设备侧六项失败分别记录。

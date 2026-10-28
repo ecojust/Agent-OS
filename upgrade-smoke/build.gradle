@@ -1,0 +1,32 @@
+plugins { id 'com.android.test' }
+
+android {
+    namespace 'dev.agentos.upgradesmoke'
+    compileSdk 35
+    buildToolsVersion '35.0.0'
+    targetProjectPath ':app'
+    defaultConfig {
+        testApplicationId 'dev.agentos.upgradesmoke.test'
+        minSdk 30
+        targetSdk 35
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    lint {
+        abortOnError true
+        checkReleaseBuilds true
+        checkTestSources true
+    }
+}
+
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+
+dependencies {
+    // Compile against the existing API; run against the core in the installed target APK.
+    compileOnly project(':core')
+    implementation 'androidx.test:runner:1.6.2'
+    implementation 'androidx.test.ext:junit:1.2.1'
+}

@@ -1,0 +1,187 @@
+{
+  "schemaVersion": 1,
+  "kind": "local-apk-upgrade-build-validation",
+  "baselineSource": "b1fd337262775a505327088975a3320fe323f034",
+  "candidateSourceBinding": "candidate-inputs-3-before.json",
+  "androidBuildInputCount": 222,
+  "inputsUnchanged": true,
+  "baselineBuild": {
+    "status": "passed",
+    "seconds": 13
+  },
+  "candidateBuilds": [
+    {
+      "status": "failed",
+      "seconds": 11,
+      "reason": "standalone com.android.test has no lintDebug task"
+    },
+    {
+      "status": "failed",
+      "seconds": 27,
+      "reason": "target app implementation dependency core missing from standalone compile classpath"
+    },
+    {
+      "status": "passed",
+      "seconds": 34,
+      "tasks": [
+        ":app:assembleDebug",
+        ":fixture:assembleDebug",
+        ":upgrade-smoke:assembleDebug",
+        ":app:lintDebug"
+      ]
+    }
+  ],
+  "lint": {
+    "scope": "app including its existing tests; standalone upgrade-smoke has no generated lint task",
+    "severities": {
+      "Warning": 54
+    }
+  },
+  "deviceTestsRun": false,
+  "installationPerformed": false,
+  "standaloneProbe": {
+    "package": "dev.agentos.upgradesmoke.test",
+    "targetPackage": "dev.agentos.app",
+    "runner": "androidx.test.runner.AndroidJUnitRunner",
+    "testOnly": true
+  },
+  "productPreflight": "actual-product-preflight.json",
+  "artifacts": [
+    {
+      "name": "baseline.apk",
+      "sizeBytes": 951220,
+      "sha256": "92fec31b7e22f764c074039355a1b81a08d9bd083e5b53da3b59bdb897fae482",
+      "committed": false
+    },
+    {
+      "name": "candidate.apk",
+      "sizeBytes": 951220,
+      "sha256": "85da38b984b20dc0f5639ff37a7512a820854aec3b6b7bf43dd4b96b9835b771",
+      "committed": false
+    },
+    {
+      "name": "fixture.apk",
+      "sizeBytes": 41237,
+      "sha256": "afebf36e9340cf571215efeba30c55debf09768ec0416df87ce71c289c000178",
+      "committed": false
+    },
+    {
+      "name": "probe.apk",
+      "sizeBytes": 4497847,
+      "sha256": "2d283d65d8443f303b7382214c4b15d5acd2c2ec1806dd749f73158575ad0cc6",
+      "committed": false
+    }
+  ],
+  "files": [
+    {
+      "path": "baseline-build.original.log",
+      "sizeBytes": 2318,
+      "sha256": "20c430eb12858dbbc4f9a8b0a1bb1b539151c44330fcfb20cd3e6c9840f51802"
+    },
+    {
+      "path": "candidate-build.original.log",
+      "sizeBytes": 1195,
+      "sha256": "a38a03cda8b3c7dff2b5d91a71f5168f7831d188fb245365c6a5b5cbeca3ecb5"
+    },
+    {
+      "path": "candidate-build-2.original.log",
+      "sizeBytes": 18729,
+      "sha256": "9fc6788138cabcb8e44f907710884897e8cc56fe9cdfd109f844e51c9833bc16"
+    },
+    {
+      "path": "candidate-build-3.original.log",
+      "sizeBytes": 7361,
+      "sha256": "37e9fade0f84af8751f20a5e1923822c683d5dd1ad83803ee5472c6119b97d8f"
+    },
+    {
+      "path": "upgrade-tasks.original.log",
+      "sizeBytes": 4614,
+      "sha256": "fe9d1dca2040a39e2744247374bf552fd0120fb7f690fd1da203138d80947072"
+    },
+    {
+      "path": "signing.original.log",
+      "sizeBytes": 1230,
+      "sha256": "072c2182318c9743085568c9c37a59697faff8d18bdc27ab03d0fb0a98212447"
+    },
+    {
+      "path": "signing-certificate.der",
+      "sizeBytes": 846,
+      "sha256": "c380c4182d8e93811e2482b0825c5170b940b720797c50496a1138ab951b04dc"
+    },
+    {
+      "path": "actual-product-preflight.json",
+      "sizeBytes": 1190,
+      "sha256": "fde6d01ecc5e5660010003d21ab3a9ea49a7d29a059f344670b7d35360f0203d"
+    },
+    {
+      "path": "probe-manifest.original.txt",
+      "sizeBytes": 5047,
+      "sha256": "c25152ce50c053b72ab58e84b56aab4a4315b3fd4fd816b8d7826a42f591f7de"
+    },
+    {
+      "path": "candidate-inputs-3-before.json",
+      "sizeBytes": 37349,
+      "sha256": "bc54b6a5a0e95396b5714a4ff0ecafed127cd4742d5135d6a4fcdd4b4260b294"
+    },
+    {
+      "path": "candidate-inputs-3-after.json",
+      "sizeBytes": 37349,
+      "sha256": "bc54b6a5a0e95396b5714a4ff0ecafed127cd4742d5135d6a4fcdd4b4260b294"
+    },
+    {
+      "path": "app-lint.original.xml",
+      "sizeBytes": 75248,
+      "sha256": "a6dd862d34edd8c8505ce618a68b421f10790a9a6d7c5e9b30b043a9630ec3bb"
+    },
+    {
+      "path": "product-apk-entry-comparison.json",
+      "sizeBytes": 620,
+      "sha256": "718c4720e1cfa22cb1d8e6d8a25981044cb9158142a647b228a44371ebd2b6a7"
+    },
+    {
+      "path": "host-tests-first.original.txt",
+      "sizeBytes": 22814,
+      "sha256": "8909a43bbff80774d8a57f2123e9e7e07c1d9bc66d86c15c102b78f6c3ec3d05"
+    },
+    {
+      "path": "host-tests-final.original.txt",
+      "sizeBytes": 6858,
+      "sha256": "c34dacb42c862780810dc56e8a4ce0e81f923b2ae5d439c3cd484628fff242cd"
+    },
+    {
+      "path": "archive-tests-before-final-host.original.log",
+      "sizeBytes": 6400,
+      "sha256": "dbeb1fe04e589f04cfa30c9aa5dc3254bead465e88c381cb223d0c8a3f6e9a43"
+    },
+    {
+      "path": "archive-tests-final.original.log",
+      "sizeBytes": 6400,
+      "sha256": "0978a7c5aa48728927865a02ff0c835692d990a1828960ef38c5f370c993ff59"
+    },
+    {
+      "path": "actual-helper-sdk-check.json",
+      "sizeBytes": 603,
+      "sha256": "4fe7a66a6314a44cf6087b83402a269d570c5fb95233b6ab76d12b7440cae5d8"
+    }
+  ],
+  "finalScriptInputs": {
+    "scripts/apk_upgrade_smoke.py": "5b9ebbaeea1cd3f694344381168658e5add4a31e2b9bb21e02cabcc1f0abd19f",
+    "scripts/test_apk_upgrade_smoke.py": "a24b8871f3d0d186d81d24339fa682cfda1fd4baa4a9e92562886d09e59897eb",
+    "scripts/apk_upgrade_smoke_archive.py": "c167273bf901b319aba1f0d41fd3c084507596453dd40aab08c82256cdef0dab",
+    "scripts/test_apk_upgrade_smoke_archive.py": "2c886556df478adad5e2848aaa8a07eeae85b4f44d7d37c672077f334fdd364d"
+  },
+  "scriptTests": {
+    "host": {
+      "passed": 35,
+      "seconds": 3.581,
+      "skipped": 0,
+      "log": "host-tests-final.original.txt"
+    },
+    "archiveWithFinalHost": {
+      "passed": 31,
+      "skipped": 0,
+      "log": "archive-tests-final.original.log"
+    },
+    "scope": "Only the two new suites; no repeat of unchanged full script/core/device suites."
+  }
+}

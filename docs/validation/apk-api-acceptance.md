@@ -67,15 +67,17 @@
 安全区修正源码b6fd的[原拖动／审批收缩专项](../../screenshots/40631512822-1/manifest.json)8/8通过，但[字体专项](../../screenshots/40631510591-1/manifest.json)仅4/8通过：API30–33均在最后恢复原字体配置超时，仍计为失败。源码3cff仅修正测试清理，生产安全区修正不变；其后8/8通过不抹去这四项失败。四项失败的具体raw差异原先未记录，恢复失败的具体根因仍未证明。
 
 
-## 主Activity真实字体变化：首轮八档均在准备阶段失败
+## 主Activity真实字体变化：两轮测试断言失败均保留
 
 [MainActivityFontScaleInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/MainActivityFontScaleInstrumentedTest.java) 的 `realSystemFontScaleRecreatesSecureActivityAndRetainsOnlyInMemoryDraft` 使用系统设置1.0→1.3触发真实Activity替换，同profile内存草稿在重建后保留，主动finish再打开回到已保存配置且任务为空。核对新旧窗口安全标志、输入控件不保存View状态、实际最终saved-state Bundle无固定合成敏感marker、原始偏好与配置lease不变，以及真实Controller与模型请求保持空闲基线。关键开始／保存按钮经实际View滚动核对48dp、安全区与完整标签；该过程不触发保存或执行任务，也不冒充物理点击。
 
 本用例八档均执行真实字体变化，不沿用visual-generation专项的低API不支持分支。安全界面保留固定原因的blocked记录，不尝试截图，不解除FLAG_SECURE；无PNG不等于测试跳过。原字体raw与实际配置仍在既有同一个10秒恢复期限内恢复；结束前清理全部所见Activity及其worker，再恢复原存储。首轮8b97专项40640583322已实际0/8通过、8失败，均停在baseline的RadioButton.performClick返回值断言，未执行1.3重建；[原归档](../../screenshots/40640583322-1/manifest.json)保留32载荷、8条failed阶段blocked记录、0PNG。普通录像已独立通过，但不执行此用例；完整247×8＝1976项尚未运行。不以源码数量代替通过数量，不扩展为进程死亡、最大字体、旋转、读屏或真机验收。
 
+第二轮2691专项40641436998仍0/8通过：真实重建后的UI草稿断言已通过，随后在resumed后读取系统非配置对象的非空断言失败，尚未完成其后的对象身份、布局及重新打开检查。[原归档](../../screenshots/40641436998-1/manifest.json)32载荷、27,724字节、16条blocked、0PNG，原失败与[连续日志](diagnostics/activity-font-retention-40641436998/)保留。完整1976项尚未运行，普通录像独立通过不改变专项结论。
+
 ## 分开的后续验证
 
-- **当前独立验证：** 新增主Activity真实系统字体变化、同profile内存草稿恢复、finish后丢弃草稿及安全窗口的组合用例，固定范围 `activity-font-scale-diagnostic`，首轮八档均在RadioButton准备断言失败；已改为实际点击后核对按钮、分组及草稿三重状态，新版待验证；已有主动 `recreate()` 不替代该场景。服务控件1.0→1.3专项已经通过，其他字体样本、横竖屏后关键操作可达、实际读屏服务共存仍按 [R8](../DESIGN_RULES.md#r8-统一交互与可访问性) 分别安排。
+- **当前独立验证：** 新增主Activity真实系统字体变化、同profile内存草稿恢复、finish后丢弃草稿及安全窗口的组合用例，固定范围 `activity-font-scale-diagnostic`，首轮八档均在RadioButton准备断言失败；已改为实际点击后核对按钮、分组及草稿三重状态，第二轮又在恢复后系统交接引用采样失败、生命周期时点修正待验证；已有主动 `recreate()` 不替代该场景。服务控件1.0→1.3专项已经通过，其他字体样本、横竖屏后关键操作可达、实际读屏服务共存仍按 [R8](../DESIGN_RULES.md#r8-统一交互与可访问性) 分别安排。
 - **独立应用回归：** [固定第三方应用探针](third-party-smoke.md)保留 API31 Notes/off 的键盘准备失败与原32组合。其定位和复测属于应用检查点，不计入执行器合成应用矩阵。
 - **外部条件：** 真实模型任务需要可用的实际服务配置；厂商与低资源验收需要对应设备；AOSP、OTA及恢复需要明确参考机型、地区变体、启动链与恢复资料；正式交付还需签名和维护条件。APK试用不要求解锁 Bootloader。
 - **未公开能力：** 普通 APK 的截图及坐标点击／滑动入口仍未开放。内部视觉链路和低API“不支持”断言分别记录，不算公开能力的正向通过，也不因新增本表而扩大 `api_matrix` 的范围。

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "api": 31,
+  "runId": "1793167533446-4688413b",
+  "scope": "Dedicated synthetic Android fixture and verified empty application UI only",
+  "jvmTests": "No UI; no screenshot is claimed for JVM tests",
+  "tests": [
+    {
+      "schemaVersion": 1,
+      "api": 31,
+      "testClass": "dev.agentos.app.MainActivityFontScaleInstrumentedTest",
+      "testName": "realSystemFontScaleRecreatesSecureActivityAndRetainsOnlyInMemoryDraft",
+      "assertionResult": "fail",
+      "testResult": "fail",
+      "status": "fail",
+      "startedAt": 1793167533447,
+      "finishedAt": 1793167537437,
+      "failureClass": "AssertionError",
+      "captures": [
+        {
+          "stage": "secure-main-activity-font-1_0-memory-draft",
+          "capturedAt": 1793167536203,
+          "status": "blocked",
+          "captureError": "secure_activity_font_draft_capture_not_attempted"
+        },
+        {
+          "stage": "failed",
+          "capturedAt": 1793167537437,
+          "status": "blocked",
+          "captureError": "secure_activity_font_draft_capture_not_attempted"
+        }
+      ]
+    }
+  ]
+}

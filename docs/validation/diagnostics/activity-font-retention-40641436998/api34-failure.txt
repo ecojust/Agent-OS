@@ -1,0 +1,30 @@
+2026-10-28T06:05:07.9361290Z   | Suite: dev.agentos.app.MainActivityFontScaleInstrumentedTest
+2026-10-28T06:05:07.9362341Z   | Test: dev.agentos.app.MainActivityFontScaleInstrumentedTest.realSystemFontScaleRecreatesSecureActivityAndRetainsOnlyInMemoryDraft
+2026-10-28T06:05:07.9363236Z   | Kind: failure / 
+2026-10-28T06:05:07.9363891Z   | java.lang.AssertionError: Secure Activity font test failed;phase=real_configuration_recreation,requests=0,dispatchAttempts=0
+2026-10-28T06:05:07.9365590Z   | at dev.agentos.app.MainActivityFontScaleInstrumentedTest.realSystemFontScaleRecreatesSecureActivityAndRetainsOnlyInMemoryDraft(MainActivityFontScaleInstrumentedTest.java:140)
+2026-10-28T06:05:07.9366702Z   | ... 33 trimmed
+2026-10-28T06:05:07.9367001Z   | Caused by: java.lang.AssertionError
+2026-10-28T06:05:07.9367391Z   | at org.junit.Assert.fail(Assert.java:87)
+2026-10-28T06:05:07.9367805Z   | at org.junit.Assert.assertTrue(Assert.java:42)
+2026-10-28T06:05:07.9368255Z   | at org.junit.Assert.assertNotNull(Assert.java:713)
+2026-10-28T06:05:07.9368714Z   | at org.junit.Assert.assertNotNull(Assert.java:723)
+2026-10-28T06:05:07.9369503Z   | at dev.agentos.app.MainActivityFontScaleInstrumentedTest.assertDraft(MainActivityFontScaleInstrumentedTest.java:219)
+2026-10-28T06:05:07.9370793Z   | at dev.agentos.app.MainActivityFontScaleInstrumentedTest.lambda$realSystemFontScaleRecreatesSecureActivityAndRetainsOnlyInMemoryDraft$1(MainActivityFontScaleInstrumentedTest.java:104)
+2026-10-28T06:05:07.9371941Z   | at dev.agentos.app.MainActivityFontScaleInstrumentedTest$$ExternalSyntheticLambda4.run(D8$$SyntheticClass:0)
+2026-10-28T06:05:07.9372812Z   | at dev.agentos.app.MainActivityFontScaleInstrumentedTest.lambda$onMain$12(MainActivityFontScaleInstrumentedTest.java:560)
+2026-10-28T06:05:07.9373682Z   | at dev.agentos.app.MainActivityFontScaleInstrumentedTest$$ExternalSyntheticLambda15.get(D8$$SyntheticClass:0)
+2026-10-28T06:05:07.9374538Z   | at dev.agentos.app.MainActivityFontScaleInstrumentedTest.lambda$onMain$13(MainActivityFontScaleInstrumentedTest.java:563)
+2026-10-28T06:05:07.9375510Z   | at dev.agentos.app.MainActivityFontScaleInstrumentedTest$$ExternalSyntheticLambda10.run(D8$$SyntheticClass:0)
+2026-10-28T06:05:07.9376182Z   | at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:487)
+2026-10-28T06:05:07.9376659Z   | at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+2026-10-28T06:05:07.9377139Z   | at android.app.Instrumentation$SyncRunnable.run(Instrumentation.java:2420)
+2026-10-28T06:05:07.9377597Z   | at android.os.Handler.handleCallback(Handler.java:958)
+2026-10-28T06:05:07.9378243Z   | at android.os.Handler.dispatchMessage(Handler.java:99)
+2026-10-28T06:05:07.9378619Z   | at android.os.Looper.loopOnce(Looper.java:205)
+2026-10-28T06:05:07.9378960Z   | at android.os.Looper.loop(Looper.java:294)
+2026-10-28T06:05:07.9379339Z   | at android.app.ActivityThread.main(ActivityThread.java:8177)
+2026-10-28T06:05:07.9379746Z   | at java.lang.reflect.Method.invoke(Native Method)
+2026-10-28T06:05:07.9380358Z   | at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:552)
+2026-10-28T06:05:07.9381158Z   | at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:971)
+2026-10-28T06:05:07.9381600Z Parsed 1 Android reports; found 1 failure/error entries.

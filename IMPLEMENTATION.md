@@ -1045,3 +1045,12 @@ API30–32在真实手势曾移动且结束后，确认旧控制窗实际移除�
 Android CompoundButton.performClick先toggle，再返回父View的点击处理结果；本界面通过RadioGroup.OnCheckedChangeListener更新模式，没有给该RadioButton安装OnClickListener。原断言错误地要求返回true。现仍只调用一次真实performClick，随后精确检查RadioButton选中、RadioGroup选择编号和实际内存draft.executionMode均为连续导航；不直接设置选中状态或草稿来绕过真实监听器。
 
 仅此测试文件的import和准备段改变，生产代码、同profile内存保留、最终Bundle扫描、持久化／Controller／模型请求、布局、安全窗口及原时限断言均保留。原8档失败继续保留，旧日志未保存当时checked值，不补写该次状态。独立审查、最终APK和lint32秒通过，源码构建前后hash一致；新版八档专项、完整1976项和普通录像待执行，当前README视频仍准确标记8b97。
+
+
+### 主Activity字体第二轮：保留内存交接采样时点失败
+
+源码 `2691e5d782c88dbefcc23bd93b627ea9e80bdf72` 的[专项40641436998](https://github.com/ecojust/Agent-OS/actions/runs/40641436998)仍为**0/8通过、8失败，零错误、跳过、额外用例、不可读报告和缺失记录**。八档已通过RadioButton实际状态、真实1.3后的新旧Activity、旧实例销毁、最终保存Bundle与UI草稿字段检查，随后在 `assertDraft:219` 对恢复后 `getLastNonConfigurationInstance()` 的非空断言失败。该位置之后的内存对象身份、实际字高／布局及finish重开检查尚未完成，不能将这次失败报告为草稿丢失或完整字体场景通过。
+
+[归档](screenshots/40641436998-1/manifest.json)32载荷、27,724字节经独立完整文件集合、大小/SHA-256、逐案JSON及采集器JUnit摘要核验。每档baseline与failed两条受保护未尝试捕获，共16条blocked，PNG为0，安全标志未清除；8份性能附件invalid。[原始连续日志](docs/validation/diagnostics/activity-font-retention-40641436998/)保留八档Suite到Parsed的原时间戳、裁剪标记、尾空格及换行，并记录整ZIP／member／行范围校验值；没有下载原XML，不冒称重解析XML。
+
+同源码普通[录像40641491474](https://github.com/ecojust/Agent-OS/actions/runs/40641491474)及[归档40641955644](https://github.com/ecojust/Agent-OS/actions/runs/40641955644)成功。[清单](screenshots/demos/40641491474-1/manifest.json)30载荷、1,182,340字节、22张320×640实际PNG已核验；[视频](screenshots/demos/40641491474-1/demo.mp4)36.212秒、640×1280、446,068字节，完整解码及实际帧检查通过。普通1/1、13阶段、8确认通过，安全标志保留，模型为本地合成HTTP服务；不执行本次Activity字体专项、不代替其失败。完整1976项仍未运行，完整通过基线保留81f的1968/1968，检查点45%。

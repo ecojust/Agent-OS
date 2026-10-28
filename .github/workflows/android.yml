@@ -30,6 +30,16 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+            app
+            core
+            fixture
+            compat-smoke
+            docs
+            gradle
+            scripts
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -87,6 +97,16 @@ jobs:
         api-level: ['30', '31', '32', '33', '34', '35', '36', '37.0']
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+            app
+            core
+            fixture
+            compat-smoke
+            docs
+            gradle
+            scripts
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

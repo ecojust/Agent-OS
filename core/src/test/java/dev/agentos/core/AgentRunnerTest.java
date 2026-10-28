@@ -38,12 +38,14 @@ public class AgentRunnerTest {
 
     private static final class Events implements AgentRunner.Listener {
         final List<String> log = new CopyOnWriteArrayList<>();
+        final List<TaskActionReceipts> receipts = new CopyOnWriteArrayList<>();
         final AtomicInteger finishes = new AtomicInteger();
         volatile String summary;
         volatile boolean success;
         volatile TaskResult result;
         public void onStatus(String message) { log.add(message); }
         public void onStep(String message) { log.add(message); }
+        public void onActionReceipts(TaskActionReceipts snapshot) { receipts.add(snapshot); }
         public void onFinished(String message, boolean success) { summary = message; this.success = success; log.add(message); finishes.incrementAndGet(); }
         public void onResult(TaskResult result) { this.result=result; AgentRunner.Listener.super.onResult(result); }
     }
@@ -113,6 +115,33 @@ public class AgentRunnerTest {
             assertEquals(Arrays.asList("observe", "launch_app", "observe"), actions);
             assertEquals(TaskResult.Kind.MODEL_REPORT, events.result.kind);
             assertEquals(2, server.requests.size());
+        }
+    }
+
+    @Test public void actualHttpPlanPublishesLocalActionReceiptsWithoutPromotingItsFinalReport() throws Exception {
+        Events events = new Events(); RunControl control = new RunControl(); AtomicInteger writes = new AtomicInteger();
+        try (Server server = new Server((index, request) -> new Reply(index == 0
+                ? replyTools(tool("private-model-call", "launch_app", "{\"packageName\":\"demo.app\"}"))
+                : replyText("模型声称任务已完成。")))) {
+            runner(server, (name, args, active) -> {
+                if ("observe".equals(name)) return observation("r1");
+                writes.incrementAndGet();
+                try (RunControl.DispatchTicket ignored = active.beginDispatch(active.getExecutionEpoch())) {
+                    return json("{\"ok\":true,\"dispatchSubmitted\":true,\"dispatchAccepted\":true,\"verification\":\"UNVERIFIED\"}");
+                }
+            }, events).run("synthetic-private-task", control);
+            assertEquals(2, server.requests.size()); assertEquals(1, writes.get());
+            assertEquals(2, events.receipts.size());
+            TaskActionReceipts started = events.receipts.get(0), completed = events.receipts.get(1);
+            assertEquals(TaskActionReceipts.Stage.WAITING_RESULT, started.entries.get(0).stage);
+            TaskActionReceipts.Entry receipt = completed.entries.get(0);
+            assertEquals(control.getTaskId(), completed.taskId);
+            assertEquals(TaskActionReceipts.Action.LAUNCH_APP, receipt.action);
+            assertEquals(TaskActionReceipts.Fact.YES, receipt.accepted);
+            assertEquals(TaskActionReceipts.Verification.UNVERIFIED, receipt.verification);
+            assertEquals(TaskResult.Kind.MODEL_REPORT, events.result.kind); assertFalse(events.result.verified);
+            assertFalse(new Gson().toJson(completed).contains("private"));
+            assertEquals(1, events.finishes.get()); server.assertHealthy();
         }
     }
 

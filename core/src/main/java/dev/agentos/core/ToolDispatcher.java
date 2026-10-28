@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Consumer;
 
 /** In-memory at-most-dispatch ledger for one task. It is not a cross-app transaction. */
 public final class ToolDispatcher implements AutoCloseable {
@@ -16,8 +17,16 @@ public final class ToolDispatcher implements AutoCloseable {
     private String boundTask;
     private boolean closed;
     private volatile boolean unknownOutcome;
+    private final Consumer<TaskActionReceipts> receiptListener;
+    private final long startedNanos = System.nanoTime();
+    private TaskActionReceipts receipts;
+    private long publishedReceiptVersion;
 
-    public ToolDispatcher(ToolHandler handler) { this.handler = java.util.Objects.requireNonNull(handler); }
+    public ToolDispatcher(ToolHandler handler) { this(handler, ignored -> { }); }
+    public ToolDispatcher(ToolHandler handler, Consumer<TaskActionReceipts> receiptListener) {
+        this.handler = java.util.Objects.requireNonNull(handler);
+        this.receiptListener = java.util.Objects.requireNonNull(receiptListener);
+    }
 
     public JsonObject dispatch(ToolRequest request, RunControl control) throws InterruptedException {
         try (ToolDispatchResult result = dispatchWithAttachment(request, control)) { return result.getResult(); }
@@ -31,7 +40,10 @@ public final class ToolDispatcher implements AutoCloseable {
             ToolDispatchResult result = new ToolDispatchResult(metadata, image[0]);
             transferred = true;
             return result;
-        } finally { if (!transferred && image[0] != null) image[0].close(); }
+        } finally {
+            try { if (!transferred && image[0] != null) image[0].close(); }
+            finally { publishReceipts(); }
+        }
     }
 
     private JsonObject dispatchInternal(ToolRequest request, RunControl control, ImageAttachment[] image) throws InterruptedException {
@@ -45,7 +57,7 @@ public final class ToolDispatcher implements AutoCloseable {
         Entry entry;
         synchronized (ledger) {
             if (closed) return envelope(request, error("TASK_STOPPED", "执行通道已关闭。"));
-            if (boundTask == null) boundTask = request.taskId;
+            if (boundTask == null) { boundTask = request.taskId; receipts = TaskActionReceipts.empty(boundTask); }
             if (!boundTask.equals(request.taskId)) return envelope(request, error("PERMISSION_DENIED", "执行通道不能跨任务复用。"));
             Entry previous = ledger.get(request.callId);
             if (previous != null) {
@@ -57,7 +69,13 @@ public final class ToolDispatcher implements AutoCloseable {
             }
             if (ledger.size() >= 1000) return envelope(request, error("BUDGET_EXCEEDED", "调用记录已达到上限。"));
             entry = new Entry(fingerprint); ledger.put(request.callId, entry);
+            TaskActionReceipts next = receipts.started(request.tool, request.executionEpoch, elapsedMillis());
+            if (next != receipts) entry.receiptOrdinal = next.omittedCount + next.entries.size();
+            receipts = next;
         }
+        // Registration is evidence only that this distinct request is awaiting
+        // a result. Publish outside both device/ledger locks before it can block.
+        publishReceipts();
         JsonObject result;
         long dispatchAttempts = control.getDispatchAttempts();
         boolean enteredHandler = false;
@@ -102,10 +120,10 @@ public final class ToolDispatcher implements AutoCloseable {
         } catch (TaskControlException interrupted) {
             boolean uncertainWrite = ToolCatalog.isMutation(request.tool) && control.getDispatchAttempts() != dispatchAttempts;
             save(entry, envelope(request, error(uncertainWrite ? "OUTCOME_UNKNOWN" : interrupted.getCode(),
-                    uncertainWrite ? "操作可能已提交，不能自动重发；请核对当前界面。" : interrupted.getMessage())));
+                    uncertainWrite ? "操作可能已提交，不能自动重发；请核对当前界面。" : interrupted.getMessage())), true);
             throw interrupted;
         } catch (InterruptedException interrupted) {
-            save(entry, envelope(request, error(enteredHandler && ToolCatalog.isMutation(request.tool) ? "OUTCOME_UNKNOWN" : "TASK_STOPPED", "操作已中断；已提交的动作不能保证撤回。")));
+            save(entry, envelope(request, error(enteredHandler && ToolCatalog.isMutation(request.tool) ? "OUTCOME_UNKNOWN" : "TASK_STOPPED", "操作已中断；已提交的动作不能保证撤回。")), true);
             throw interrupted;
         } catch (Exception failed) {
             result = error(enteredHandler && ToolCatalog.isMutation(request.tool) ? "OUTCOME_UNKNOWN" : "DEVICE_ERROR", "无法确定设备操作结果；请核对当前界面，不能自动重复执行。");
@@ -117,8 +135,27 @@ public final class ToolDispatcher implements AutoCloseable {
     }
 
     private JsonObject save(Entry entry, JsonObject result) {
+        return save(entry, result, false);
+    }
+    private JsonObject save(Entry entry, JsonObject result, boolean interrupted) {
         if (result.has("code") && "OUTCOME_UNKNOWN".equals(result.get("code").getAsString())) unknownOutcome = true;
-        synchronized (ledger) { entry.result = result.deepCopy(); } return result;
+        synchronized (ledger) {
+            entry.result = result.deepCopy();
+            if (!closed) receipts = receipts.returned(entry.receiptOrdinal, result, interrupted, elapsedMillis());
+        }
+        return result;
+    }
+    private long elapsedMillis() { return Math.max(0, (System.nanoTime() - startedNanos) / 1_000_000L); }
+    private void publishReceipts() {
+        TaskActionReceipts snapshot;
+        synchronized (ledger) {
+            if (closed || receipts == null || receipts.version <= publishedReceiptVersion) return;
+            snapshot = receipts; publishedReceiptVersion = snapshot.version;
+        }
+        // A read-only observer must not turn an accepted write into an error or
+        // cause a device call to be repeated. Consumers also check owner/version.
+        try { receiptListener.accept(snapshot); }
+        catch (RuntimeException | AssertionError ignored) { }
     }
     public boolean hasUnknownOutcome() { return unknownOutcome; }
     public static JsonObject error(String code, String reason) {
@@ -143,6 +180,6 @@ public final class ToolDispatcher implements AutoCloseable {
         if (value.getAsJsonPrimitive().isNumber()) try { return new BigDecimal(value.getAsString()).stripTrailingZeros().toPlainString(); } catch (NumberFormatException ignored) { }
         return value.toString();
     }
-    @Override public void close() { synchronized (ledger) { closed = true; ledger.clear(); } }
-    private static final class Entry { final String fingerprint; JsonObject result; Entry(String fingerprint) { this.fingerprint = fingerprint; } }
+    @Override public void close() { synchronized (ledger) { closed = true; ledger.clear(); receipts = null; } }
+    private static final class Entry { final String fingerprint; JsonObject result; int receiptOrdinal; Entry(String fingerprint) { this.fingerprint = fingerprint; } }
 }

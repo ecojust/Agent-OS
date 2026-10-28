@@ -30,6 +30,7 @@ public final class AgentRunner {
         void onStep(String step);
         void onFinished(String summary, boolean verified);
         default void onResult(TaskResult result) { onFinished(result.summary, result.verified); }
+        default void onActionReceipts(TaskActionReceipts receipts) { }
     }
 
     private final ModelSettings settings;
@@ -93,7 +94,7 @@ public final class AgentRunner {
                 return null;
             }
         };
-        try (ToolDispatcher dispatcher = new ToolDispatcher(guarded)) {
+        try (ToolDispatcher dispatcher = new ToolDispatcher(guarded, listener::onActionReceipts)) {
             settings.validate();
             if (task == null || task.trim().isEmpty() || task.length() > 6000) throw new ModelException("INVALID_TASK", "请填写 1 至 6000 字的任务目标。");
             if (!tools.availableTools().contains("observe")) throw new ModelException("CAPABILITY_UNAVAILABLE", "当前执行器不能观察界面，无法开始任务。");

@@ -19,6 +19,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.agentos.core.TaskBudget;
+import dev.agentos.core.TaskActionReceipts;
 import dev.agentos.core.RunControl;
 import dev.agentos.core.TaskDiagnostics;
 import dev.agentos.core.TaskResult;
@@ -105,10 +106,35 @@ public final class AgentControllerInstrumentedTest {
                 assertEquals("Count: 1", fixtureText(device, "counter_value"));
                 assertEquals("执行已结束 · 模型报告待核对", controller.getState().status);
                 assertTrue(controller.getState().summary.contains("模型报告"));
+                TaskActionReceipts receipts = controller.getTaskActionReceipts();
+                assertNotNull(receipts);
+                assertTrue("Ended task receipts must remain frozen in memory", receipts.frozen);
+                assertEquals(controller.getTaskUsage().taskId, receipts.taskId);
+                assertEquals(0, receipts.omittedCount);
+                TaskActionReceipts.Action[] acceptedActions = {TaskActionReceipts.Action.TYPE_TEXT,
+                        TaskActionReceipts.Action.CLICK, TaskActionReceipts.Action.CLICK};
+                int acceptedReceipts = 0;
+                long previousOrdinal = 0;
+                for (TaskActionReceipts.Entry receipt : receipts.entries) {
+                    assertTrue(receipt.ordinal > previousOrdinal);
+                    previousOrdinal = receipt.ordinal;
+                    assertEquals(TaskActionReceipts.Stage.RETURNED, receipt.stage);
+                    if (receipt.accepted != TaskActionReceipts.Fact.YES) continue;
+                    assertTrue("A bounded stale replan must not duplicate an accepted write",
+                            acceptedReceipts < acceptedActions.length);
+                    assertEquals(acceptedActions[acceptedReceipts++], receipt.action);
+                    assertEquals(TaskActionReceipts.Fact.YES, receipt.submitted);
+                    assertEquals(TaskActionReceipts.Verification.UNVERIFIED, receipt.verification);
+                }
+                assertEquals(server.acceptedWriteCount(), acceptedReceipts);
+                assertEquals("Fixture observations do not promote the product's model report to verified completion",
+                        TaskResult.Kind.MODEL_REPORT, controller.getState().resultKind);
                 screenshots.capture("verified-fixture-result");
                 for (String oldApproval : approved) controller.approve(oldApproval, true);
                 assertFalse("Finished task sent another model request", server.receivedAnotherRequest(server.requestCount(), 350));
                 assertEquals("Count: 1", fixtureText(device, "counter_value"));
+                assertEquals(receipts.version, controller.getTaskActionReceipts().version);
+                assertEquals(receipts.entries.size(), controller.getTaskActionReceipts().entries.size());
             } catch (AssertionError failure) {
                 try { screenshots.capture("failure-before-controller-cleanup"); }
                 catch (Throwable evidenceFailure) { failure.addSuppressed(evidenceFailure); }

@@ -16,6 +16,7 @@ import dev.agentos.core.TaskControlException;
 import dev.agentos.core.TaskBudget;
 import dev.agentos.core.TaskResult;
 import dev.agentos.core.TaskDiagnostics;
+import dev.agentos.core.TaskActionReceipts;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -109,6 +110,7 @@ public final class AgentController {
     private TaskUsage completedUsage;
     private TaskResult.Kind completedResultKind;
     private String completedResultCode = "";
+    private TaskActionReceipts actionReceipts;
     private TaskVisualQualification taskVisual;
     private boolean completedVisualRequested;
     private VisualQualification completedVisualQualification = VisualQualification.NOT_REQUESTED;
@@ -192,6 +194,23 @@ public final class AgentController {
     /** Lightweight foreground polling: no log copy, publication, View, storage, Binder or network work. */
     public TaskUsage getTaskUsage() {
         synchronized (lock) { return taskUsageLocked(); }
+    }
+
+    /** Immutable local receipts only; viewing never publishes, queries the device or starts work. */
+    public TaskActionReceipts getTaskActionReceipts() {
+        synchronized (lock) { return actionReceipts; }
+    }
+
+    /** A frozen preview may outlive task completion, but not clearing or replacement. */
+    public boolean isTaskActionReceiptsCurrent(TaskActionReceipts snapshot) {
+        synchronized (lock) {
+            return snapshot != null && actionReceipts != null
+                    && snapshot.taskId.equals(actionReceipts.taskId);
+        }
+    }
+
+    private void freezeActionReceiptsLocked() {
+        if (actionReceipts != null) actionReceipts = actionReceipts.freeze();
     }
 
     /** User-requested numeric snapshot only: no log copy, platform query, network or publication. */
@@ -313,6 +332,7 @@ public final class AgentController {
             completedUsage = null;
             completedResultKind = null;
             completedResultCode = "";
+            actionReceipts = TaskActionReceipts.empty(active.getTaskId());
             taskVisual = visual;
             completedVisualRequested = false;
             completedVisualQualification = VisualQualification.NOT_REQUESTED;
@@ -407,6 +427,17 @@ public final class AgentController {
                         finish(session, result, success);
                     }
                     @Override public void onResult(TaskResult result) { finish(session, result); }
+                    @Override public void onActionReceipts(TaskActionReceipts snapshot) {
+                        synchronized (lock) {
+                            // A stopped worker cannot update its frozen history, a
+                            // replacement task or a user-cleared page. Never republish
+                            // the control window for an action-receipt-only update.
+                            if (!isCurrentLocked(session) || control != active || snapshot == null
+                                    || !active.getTaskId().equals(snapshot.taskId) || actionReceipts == null
+                                    || actionReceipts.frozen || snapshot.version <= actionReceipts.version) return;
+                            actionReceipts = snapshot;
+                        }
+                    }
                 }, active, disclosureGuardFor(active, configurationLease));
                 active.checkCancelled();
                 runner.run(task.trim(), active);
@@ -564,6 +595,7 @@ public final class AgentController {
             cancelled = control;
             cancelled.cancel();
             freezeUsageLocked(cancelled);
+            freezeActionReceiptsLocked();
             completedResultKind = TaskResult.Kind.STOPPED;
             completedResultCode = "TASK_STOPPED";
             releaseVisualQualificationLocked(cancelled);
@@ -675,6 +707,7 @@ public final class AgentController {
         // Use the existing cancellation hook to abort transport; never replace it.
         active.cancel();
         freezeUsageLocked(active);
+        freezeActionReceiptsLocked();
         completedResultKind = TaskResult.Kind.STOPPED;
         completedResultCode = "CONFIGURATION_CHANGED";
         releaseVisualQualificationLocked(active);
@@ -701,6 +734,7 @@ public final class AgentController {
             if (!isCurrentLocked(session)) return;
             control.cancel();
             freezeUsageLocked(control);
+            freezeActionReceiptsLocked();
             completedResultKind = result.kind;
             completedResultCode = TaskDiagnostics.safeTerminalCode(result.code);
             releaseVisualQualificationLocked(control);
@@ -784,6 +818,7 @@ public final class AgentController {
             completedUsage = null;
             completedResultKind = null;
             completedResultCode = "";
+            actionReceipts = null;
             usageBudget = null;
             completedVisualRequested = false;
             completedVisualQualification = VisualQualification.NOT_REQUESTED;

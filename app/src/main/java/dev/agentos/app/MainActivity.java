@@ -49,6 +49,7 @@ import dev.agentos.core.ModelProbe;
 import dev.agentos.core.RunControl;
 import dev.agentos.core.TaskBudget;
 import dev.agentos.core.TaskDiagnostics;
+import dev.agentos.core.TaskActionReceipts;
 import dev.agentos.core.VisionModelProbe;
 
 import java.io.IOException;
@@ -103,6 +104,9 @@ public final class MainActivity extends Activity implements AgentController.List
     private Button taskDiagnosticsButton;
     private AlertDialog taskDiagnosticsDialog;
     private TaskDiagnostics displayedTaskDiagnostics;
+    private Button taskActionReceiptsButton;
+    private AlertDialog taskActionReceiptsDialog;
+    private TaskActionReceipts displayedTaskActionReceipts;
     private final Runnable taskUsageRefresh = () -> {
         if (!this.resumed || destroyed || taskUsageView == null) return;
         renderTaskUsage(controller.getTaskUsage(), true);
@@ -203,6 +207,7 @@ public final class MainActivity extends Activity implements AgentController.List
     @Override protected void onPause() {
         resumed = false;
         closeTaskDiagnostics(true);
+        closeTaskActionReceipts(true);
         main.removeCallbacks(taskUsageRefresh);
         dismissProbeTrustDialog();
         invalidateSavedProbe("已失效，请重新测试");
@@ -221,6 +226,7 @@ public final class MainActivity extends Activity implements AgentController.List
 
     @Override protected void onDestroy() {
         closeTaskDiagnostics(true);
+        closeTaskActionReceipts(true);
         main.removeCallbacks(taskUsageRefresh);
         closeDeviceDiagnostics(true);
         cancelModelProbe("测试已取消。", false);
@@ -479,6 +485,11 @@ public final class MainActivity extends Activity implements AgentController.List
         logText.setId(R.id.task_log);
         logText.setTextIsSelectable(true);
         marginAdd(results, logText, 12);
+        taskActionReceiptsButton = button("操作回执", R.drawable.ic_check, false);
+        taskActionReceiptsButton.setId(R.id.task_action_receipts);
+        taskActionReceiptsButton.setContentDescription("查看本次任务的本机操作回执与未验证状态");
+        taskActionReceiptsButton.setOnClickListener(view -> showTaskActionReceipts());
+        marginAdd(results, taskActionReceiptsButton, 8);
         taskDiagnosticsButton = button("任务诊断", R.drawable.ic_settings, false);
         taskDiagnosticsButton.setId(R.id.task_diagnostics);
         taskDiagnosticsButton.setContentDescription("预览本次任务的脱敏状态与用量报告");
@@ -1021,6 +1032,9 @@ public final class MainActivity extends Activity implements AgentController.List
         AgentController.State state = controller.getState();
         renderTaskUsage(state.usage, false);
         taskDiagnosticsButton.setEnabled(state.usage != null);
+        taskActionReceiptsButton.setEnabled(state.usage != null);
+        if (displayedTaskActionReceipts != null
+                && !controller.isTaskActionReceiptsCurrent(displayedTaskActionReceipts)) closeTaskActionReceipts(true);
         if (displayedTaskDiagnostics != null
                 && !controller.isTaskDiagnosticsCurrent(displayedTaskDiagnostics.taskId)) closeTaskDiagnostics(true);
         if (wasRunning && !state.running) taskField.setText("");
@@ -1181,6 +1195,114 @@ public final class MainActivity extends Activity implements AgentController.List
         taskDiagnosticsDialog = null;
         displayedTaskDiagnostics = null;
         if (dismiss && previous != null) previous.dismiss();
+    }
+
+    private void showTaskActionReceipts() {
+        if (destroyed || !resumed || isFinishing() || taskActionReceiptsDialog != null) return;
+        final TaskActionReceipts snapshot = controller.getTaskActionReceipts();
+        if (snapshot == null || !controller.isTaskActionReceiptsCurrent(snapshot)) return;
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("本次任务操作回执")
+                .setMessage(actionReceiptsText(snapshot))
+                .setNegativeButton("关闭", null).create();
+        if (dialog.getWindow() == null) return;
+        dialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        taskActionReceiptsDialog = dialog;
+        displayedTaskActionReceipts = snapshot;
+        dialog.setOnDismissListener(ignored -> {
+            if (taskActionReceiptsDialog == dialog) closeTaskActionReceipts(false);
+        });
+        try { dialog.show(); }
+        catch (RuntimeException unavailable) {
+            closeTaskActionReceipts(false);
+            try { dialog.dismiss(); }
+            catch (RuntimeException cleanup) { unavailable.addSuppressed(cleanup); }
+            showMessage("当前窗口无法显示操作回执，请返回页面后重试。", true);
+            return;
+        }
+        TextView report = dialog.findViewById(android.R.id.message);
+        report.setId(R.id.task_action_receipts_report);
+        report.setTextSize(14);
+        report.setSaveEnabled(false);
+        // A bounded immutable preview: no polling, live text updates, clipboard
+        // action or operation replay while the user reads it.
+        Button close = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+        close.setAllCaps(false);
+        close.setMinHeight(dp(48));
+    }
+
+    private void closeTaskActionReceipts(boolean dismiss) {
+        AlertDialog previous = taskActionReceiptsDialog;
+        taskActionReceiptsDialog = null;
+        displayedTaskActionReceipts = null;
+        if (dismiss && previous != null) previous.dismiss();
+    }
+
+    /** Only fixed user-facing labels and bounded ordinal/counts are rendered. */
+    private static String actionReceiptsText(TaskActionReceipts snapshot) {
+        StringBuilder text = new StringBuilder("仅记录本机工具回执。系统接受不等于目标完成；模型报告也不代表目标已验证。\n这是打开时的快照，不自动更新。\n");
+        text.append(snapshot.frozen ? "任务已结束，保留以下回执。" : "关闭后重新打开可查看后续回执。");
+        if (snapshot.omittedCount > 0)
+            text.append("\n仅显示最近 ").append(TaskActionReceipts.MAX_ENTRIES).append(" 项，另有 ")
+                    .append(snapshot.omittedCount).append(" 项较早回执未显示。");
+        if (snapshot.entries.isEmpty()) text.append("\n\n本次任务尚无操作回执；目标仍未验证。");
+        for (TaskActionReceipts.Entry entry : snapshot.entries) {
+            text.append("\n\n第 ").append(entry.ordinal).append(" 项 · ").append(actionReceiptLabel(entry.action));
+            switch (entry.stage) {
+                case WAITING_RESULT: text.append("\n正在等待最终回执，提交情况需核对"); break;
+                case NO_FINAL_RESULT: text.append("\n最终回执未返回，提交情况需核对"); break;
+                default: text.append("\n本机回执已返回");
+            }
+            text.append("\n是否提交：").append(actionReceiptFact(entry.submitted))
+                    .append("\n系统接受：").append(actionReceiptFact(entry.accepted))
+                    .append("\n目标验证：").append(entry.verification == TaskActionReceipts.Verification.UNKNOWN
+                            ? "结果未知" : "未验证")
+                    .append('\n').append(actionReceiptHint(entry));
+        }
+        return text.toString();
+    }
+
+    private static String actionReceiptHint(TaskActionReceipts.Entry entry) {
+        if (entry.stage != TaskActionReceipts.Stage.RETURNED)
+            return "最终回执未完整返回，请核对目标应用，勿重复操作。";
+        if (entry.submitted == TaskActionReceipts.Fact.UNKNOWN
+                || entry.accepted == TaskActionReceipts.Fact.UNKNOWN)
+            return "操作结果尚不明确，请核对目标应用，勿重复操作。";
+        if (entry.accepted == TaskActionReceipts.Fact.YES)
+            return entry.verification == TaskActionReceipts.Verification.UNKNOWN
+                    ? "系统已接受，但目标结果未知；请查看目标应用的实际结果。"
+                    : "系统已接受，目标尚未验证；请查看目标应用的实际结果。";
+        if (entry.submitted == TaskActionReceipts.Fact.YES)
+            return "请求已提交，系统未接受；请核对目标应用。";
+        if ("USER_DENIED".equals(entry.code) || "APPROVAL_REJECTED".equals(entry.code))
+            return "未提交：你已拒绝本次操作。";
+        if ("STALE_OBSERVATION".equals(entry.code))
+            return "未提交：界面条件已改变，需要重新观察并确认。";
+        if ("APPROVAL_EXPIRED".equals(entry.code))
+            return "未提交：确认已过期，需要重新观察并确认。";
+        if ("TASK_STOPPED".equals(entry.code) || "TASK_PAUSED".equals(entry.code))
+            return "未提交：任务已停止或暂停。";
+        return "未提交：本次操作未满足执行条件，请核对目标应用。";
+    }
+
+    private static String actionReceiptLabel(TaskActionReceipts.Action action) {
+        switch (action) {
+            case LAUNCH_APP: return "打开应用";
+            case CLICK: return "点击";
+            case TYPE_TEXT: return "输入文字";
+            case SCROLL: return "滚动";
+            case BACK: return "返回";
+            case HOME: return "回到桌面";
+            default: return "操作";
+        }
+    }
+
+    private static String actionReceiptFact(TaskActionReceipts.Fact value) {
+        switch (value) {
+            case YES: return "是";
+            case NO: return "否";
+            default: return "未知";
+        }
     }
 
     private void showDeviceDiagnostics() {

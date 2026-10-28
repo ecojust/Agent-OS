@@ -36,6 +36,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static dev.agentos.app.DeviceHarness.*;
@@ -656,20 +657,31 @@ public final class OwnedControlWindowInstrumentedTest {
     /** Read the actual owned window's node semantics; this is not a screen-reader coexistence test. */
     private static void assertAccessibleStatus(DeviceHarness device, String status, boolean paused) throws Exception {
         AgentAccessibilityService service = device.service;
-        long deadline = SystemClock.elapsedRealtime() + 5_000;
+        long started = SystemClock.elapsedRealtime();
+        long deadline = started + 5_000;
+        long[] publicationTimes = {-1, -1};
         AtomicReference<StatusPublication> publication = new AtomicReference<>();
         safeMain(device, () -> {
-            service.showOverlay(status, paused, "");
-            // Bind diagnostics to this publication's actual host. Capture failure
-            // must not change the successful test path or the identity deadline.
-            try { publication.set(new StatusPublication(service)); }
-            catch (RuntimeException | AssertionError unavailable) { /* Report unavailable only if waiting fails. */ }
+            publicationTimes[0] = SystemClock.elapsedRealtime() - started;
+            try {
+                service.showOverlay(status, paused, "");
+                // Bind diagnostics to this publication's actual host. Capture failure
+                // must not change the successful test path or the identity deadline.
+                try { publication.set(new StatusPublication(service)); }
+                catch (RuntimeException | AssertionError unavailable) { /* Report unavailable only if waiting fails. */ }
+            } finally { publicationTimes[1] = SystemClock.elapsedRealtime() - started; }
         });
+        long publicationReturned = SystemClock.elapsedRealtime() - started;
         requireRegistrationTime(deadline);
         CompletableFuture<AgentAccessibilityService.OwnedControlWindowIdentity> pending = service.acquireOwnedControlWindowIdentity();
+        long acquireReturned = SystemClock.elapsedRealtime() - started;
         AgentAccessibilityService.OwnedControlWindowIdentity owned;
-        try { owned = pending.get(Math.max(1, deadline - SystemClock.elapsedRealtime()), TimeUnit.MILLISECONDS); }
+        long getEntered = SystemClock.elapsedRealtime();
+        long getRemaining = deadline - getEntered;
+        long getTimeout = Math.max(1, getRemaining);
+        try { owned = pending.get(getTimeout, TimeUnit.MILLISECONDS); }
         catch (Exception failure) {
+            long getFailed = SystemClock.elapsedRealtime() - started;
             boolean futureDone = pending.isDone();
             boolean futureCancelled = pending.isCancelled();
             boolean futureExceptional = pending.isCompletedExceptionally();
@@ -677,10 +689,19 @@ public final class OwnedControlWindowInstrumentedTest {
             // before spending any time on diagnostic collection.
             pending.cancel(false);
             if (failure instanceof InterruptedException) Thread.currentThread().interrupt();
+            // All identity-wait timestamps are now frozen; diagnostic time never
+            // contributes to the original get's remaining allowance.
+            String timeline = "waitStartElapsedMs=0,publicationEnterElapsedMs=" + publicationTimes[0]
+                    + ",publicationExitElapsedMs=" + publicationTimes[1]
+                    + ",publicationReturnedElapsedMs=" + publicationReturned
+                    + ",acquireReturnedElapsedMs=" + acquireReturned
+                    + ",getEnterElapsedMs=" + (getEntered - started)
+                    + ",getRemainingMs=" + getRemaining + ",getTimeoutMs=" + getTimeout
+                    + ",getFailedElapsedMs=" + getFailed;
             String diagnostic;
             try { diagnostic = failedStatusIdentityDiagnostic(service, publication.get(),
-                    futureDone, futureCancelled, futureExceptional, status, paused); }
-            catch (RuntimeException | AssertionError unavailable) { diagnostic = "diagnostic=unavailable"; }
+                    futureDone, futureCancelled, futureExceptional, status, paused, started, timeline); }
+            catch (RuntimeException | AssertionError unavailable) { diagnostic = timeline + ",diagnostic=unavailable"; }
             throw new AssertionError("Owned status identity wait failed after publication; " + diagnostic, failure);
         }
         finally { pending.cancel(false); }
@@ -768,20 +789,24 @@ public final class OwnedControlWindowInstrumentedTest {
     /** Only after the original get failed; 500ms is a diagnostic bound, never extra identity-wait time. */
     private static String failedStatusIdentityDiagnostic(AgentAccessibilityService service,
             StatusPublication original, boolean futureDone, boolean futureCancelled, boolean futureExceptional,
-            String status, boolean paused) {
+            String status, boolean paused, long started, String timeline) {
         String prefix = "stage=published_waiting_for_identity,requestedPaused=" + paused
+                + "," + timeline
                 + ",futureDone=" + futureDone + ",futureCancelled=" + futureCancelled
                 + ",futureExceptional=" + futureExceptional
                 + ",serviceCurrent=" + (AgentAccessibilityService.getInstance() == service)
                 + ",serviceConnected=" + service.isConnected();
-        if (original == null) return prefix + ",main=publication_binding_unavailable";
-        if (Thread.currentThread().isInterrupted()) return prefix + ",main=interrupted";
+        String notEntered = ",diagnosticEnterElapsedMs=-1,diagnosticCompleteElapsedMs=-1";
+        if (original == null) return prefix + ",main=publication_binding_unavailable" + notEntered;
+        if (Thread.currentThread().isInterrupted()) return prefix + ",main=interrupted" + notEntered;
         Handler handler = new Handler(Looper.getMainLooper());
         CountDownLatch finished = new CountDownLatch(1);
         AtomicBoolean active = new AtomicBoolean(true);
         AtomicReference<String> snapshot = new AtomicReference<>("main=unavailable");
+        AtomicLong diagnosticEntered = new AtomicLong(-1), diagnosticCompleted = new AtomicLong(-1);
         long expires = SystemClock.uptimeMillis() + 500;
         Runnable read = () -> {
+            diagnosticEntered.set(SystemClock.elapsedRealtime() - started);
             try {
                 if (!active.get() || SystemClock.uptimeMillis() >= expires) return;
                 if (AgentAccessibilityService.getInstance() != service) {
@@ -836,20 +861,28 @@ public final class OwnedControlWindowInstrumentedTest {
                         + ",visualGeneration=" + controlField(service, "visualGeneration"));
             } catch (RuntimeException | AssertionError unavailable) {
                 snapshot.set("main=capture_failed");
-            } finally { finished.countDown(); }
+            } finally {
+                diagnosticCompleted.set(SystemClock.elapsedRealtime() - started);
+                finished.countDown();
+            }
         };
         try {
-            if (!handler.post(read)) return prefix + ",main=post_rejected";
+            if (!handler.post(read)) return prefix + ",main=post_rejected" + notEntered;
             long remaining = expires - SystemClock.uptimeMillis();
-            if (remaining <= 0 || !finished.await(remaining, TimeUnit.MILLISECONDS)) return prefix + ",main=timed_out";
-            return prefix + "," + snapshot.get();
+            if (remaining <= 0 || !finished.await(remaining, TimeUnit.MILLISECONDS))
+                return prefix + ",main=timed_out" + diagnosticTimes(diagnosticEntered, diagnosticCompleted);
+            return prefix + "," + snapshot.get() + diagnosticTimes(diagnosticEntered, diagnosticCompleted);
         } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
-            return prefix + ",main=interrupted";
+            return prefix + ",main=interrupted" + diagnosticTimes(diagnosticEntered, diagnosticCompleted);
         } finally {
             active.set(false);
             handler.removeCallbacks(read);
         }
+    }
+
+    private static String diagnosticTimes(AtomicLong entered, AtomicLong completed) {
+        return ",diagnosticEnterElapsedMs=" + entered.get() + ",diagnosticCompleteElapsedMs=" + completed.get();
     }
 
     private static long registrationNumber(Object registration, String fieldName) {

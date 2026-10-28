@@ -1,8 +1,8 @@
 # 公开 APK 的 API 行为覆盖盘点
 
-本表基于源码 `5c71d4a485de8806a4436db02bfc72e43fc68670`，将当前公开 APK 能力与已有测试对应，便于安排下一步验证。它是代码与覆盖范围盘点，不是新增的冻结验收合同；表格本身不构成通过证明。具体结果须核对同一源码的原始测试结果、截图清单及运行范围；专项通过不能替代完整回归。
+当前完整通过基线仍为源码 `5c71d4a485de8806a4436db02bfc72e43fc68670`；新增字体用例单独记录源码 `3cff90d62fe181fdee9c83b6348ea4becd6ac121` 的专项结果。本表将公开 APK 能力与已有测试对应，是代码与覆盖范围盘点，不是新增的冻结验收合同，也不构成通过证明。具体结果须核对同一源码的原始测试结果、截图清单及运行范围；专项通过不能替代完整回归。
 
-同源码完整[运行40625516651](https://github.com/ecojust/Agent-OS/actions/runs/40625516651)的[原始清单](../../screenshots/40625516651-1/manifest.json)记录 API30–37 八档各245项、**1960/1960通过，零失败、错误、跳过和缺失**。逐案结果、采集的 JUnit 摘要、源码用例集合及原始载荷已独立核对。此结果验证当前测试条件，未覆盖的行为仍需单独补齐；下表各项是该套件的子集，不另加执行分母。
+该基线完整[运行40625516651](https://github.com/ecojust/Agent-OS/actions/runs/40625516651)的[原始清单](../../screenshots/40625516651-1/manifest.json)记录 API30–37 八档各245项、**1960/1960通过，零失败、错误、跳过和缺失**。逐案结果、采集的 JUnit 摘要、源码用例集合及原始载荷已独立核对。此结果验证对应测试条件，未覆盖的行为仍需单独补齐；新增字体专项不并入这1960项。源码3cff的完整1968项[运行40633417256](https://github.com/ecojust/Agent-OS/actions/runs/40633417256)仍在执行，尚无完整通过结论。
 
 `api_matrix` 记录 Android 11—17 的 API 行为验证。真实模型、第三方应用日常使用、真机、性能及 ROM 分别验收；它们不因本表或模拟器全绿而完成，也不全部并入此检查点。
 
@@ -17,6 +17,7 @@
 | 实际熄屏中止待确认任务，唤醒后旧审批与恢复调用不能继续原任务 | [AgentControllerInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/AgentControllerInstrumentedTest.java)：`actualScreenOffStopsPendingApprovalAndWakeDoesNotResumeIt` | 真实非交互状态、同一任务终态、零派发与原计数不变在八档通过；不覆盖密码锁屏、模型等待／已提交动作中的熄屏或硬件停止时延 |
 | 按实际输入焦点观察，拒绝未知遮挡和密码内容 | [DeviceToolsInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/DeviceToolsInstrumentedTest.java)：`observationsAndWritesFollowTheInputFocusedWindowAcrossNavigation`、`showingTheKeyboardDoesNotSwitchObservationToAnOldApplicationWindow`、`anUnrecognizedOverlayStillBlocksTheTargetAndPausesBeforeDispatch`、`passwordContentIsRedactedAndCannotBeModified` | 当前窗口、键盘及遮挡场景不扩展为旋转、多窗口或 PiP 全覆盖 |
 | 控制条身份、精确边界、48dp目标与当前节点语义一致 | [OwnedControlWindowInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/OwnedControlWindowInstrumentedTest.java)：`ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow` 及原窗口失效用例；[VisualEventGenerationInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/VisualEventGenerationInstrumentedTest.java)：`actualControlGrowthAndRootVisibilityAndUnknownWindowsRevokeWithoutAnyDeviceAction` | API30状态用例有明确的 UiAutomation 缓存准备；24sp布局测试不等于系统字体缩放；节点标签不等于实际读屏服务共存 |
+| 真实系统字号1.0→1.3后服务控制窗重建，旧窗口失效，并恢复原字体设置与实际配置 | [FontScaleControlWindowInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/FontScaleControlWindowInstrumentedTest.java)：`realSystemFontScaleRebuildsControlsAndRevokesOldWindow` | 源码3cff专项8/8通过；仅该字号样本、服务控件与合成 `RunControl`，按钮 `performClick()` 不证明物理命中；不覆盖主Activity、旋转或实际读屏服务 |
 | 连续导航模式只允许已声明的普通导航省去逐次确认 | [ContinuousNavigationInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/ContinuousNavigationInstrumentedTest.java)：`launchScrollAndHomeChangeTheRealUiWithoutAnApproval`、`textClickAndBackStillRequireDistinctApprovalsInNavigationMode`、`rejectingInputCannotBeBypassedWithAnyNavigationTool` | 点击、输入与返回仍需确认，不代表任意连续自动操作 |
 | 任务诊断由用户预览／复制，旧预览不能操作替代任务 | [TaskDiagnosticsInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/TaskDiagnosticsInstrumentedTest.java)：`activePreviewIsFrozenRedactedExplicitlyCopiedAndCanStopItsOriginalTask`、`completedCodeSurvivesButClearReplacementAndLeavingInvalidateOldDialogActions` | 清空前确认预览已真实获得焦点，不覆盖同帧快速显示／关闭；诊断与预算数字不代表性能预算或完成动作数量 |
 
@@ -41,23 +42,25 @@
 
 修正后的[专项40625129440](../../screenshots/40625129440-1/manifest.json)为8/8，随后同一 `5c71d4a485de8806a4436db02bfc72e43fc68670` 源码完整1960项通过。这验证的是“已显示并获得焦点的预览被清空后失效”；**没有证明原API30失败根因，也未覆盖同帧快速显示／关闭**。生产代码和安全窗口保护未因本次测试准备修正改变。
 
-## 真实系统字体变化：已定位基线问题，修正待复验
+## 真实系统字体变化：服务控件与原配置恢复专项8/8通过
 
-新增 [FontScaleControlWindowInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/FontScaleControlWindowInstrumentedTest.java) 的 `realSystemFontScaleRebuildsControlsAndRevokesOldWindow`。首次专项发现放大前的控制窗安全区域问题；服务原有 `onConfigurationChanged` 路径会撤销旧许可并重建控制窗，不能把基线失败归因为字体重建。该用例在专用模拟器将控制条字体比例从1.0变为1.3：保存原始设置及实际配置，通过系统设置触发变化并等待服务／应用资源中的实际字体比例生效，不手动调用配置回调、不修改显示密度或旋转。
+源码 `3cff90d62fe181fdee9c83b6348ea4becd6ac121` 的[字体专项40632979448](https://github.com/ecojust/Agent-OS/actions/runs/40632979448)经独立核验为**API30–37八档8/8通过，零失败、错误、跳过和缺失**。[原始清单](../../screenshots/40632979448-1/manifest.json)保留64个载荷、1,082,679字节和32张真实PNG；这是开发分支的固定专项，未声明主线或完整套件验收。截图保持原采集时序，基线图可能仍显示较早文案，不作为断言瞬间文字同步的证明。
 
-核对旧View已移除、旧身份和许可失效，新窗口保持原状态、文字实际变大、平台登记与真实View几何一致；当前暂停／停止按钮仍至少48dp、位于可见安全区域，短标签没有省略或裁切，并验证当前实际按钮行为。最后恢复原设置；原值缺失时删除测试覆盖值，并等待实际配置恢复。API34及以上支持非线性缩放，不要求像素大小简单乘以1.3。
+[FontScaleControlWindowInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/FontScaleControlWindowInstrumentedTest.java) 的 `realSystemFontScaleRebuildsControlsAndRevokesOldWindow` 在专用模拟器将系统字体比例从1.0变为1.3：保存原始设置及实际配置，通过系统设置触发变化并等待服务／应用资源中的实际字体比例生效，不手动调用配置回调、不修改显示密度或旋转。核对旧View已移除、旧身份和许可失效，新窗口保持原状态、文字实际变大、平台登记与真实View几何一致；当前暂停／停止按钮仍至少48dp、位于可见安全区域，短标签没有省略或裁切。API34及以上支持非线性缩放，不要求像素大小简单乘以1.3。
+
+清理同时验证原raw设置和实际配置恢复：在同一个原10秒期限内，先显式写回原实际字号并等待生效，再原样恢复原设置字符串；原值缺失则删除该设置行。最终仍要求设置行及服务／应用实际字体比例全部匹配。两阶段任一步失败仍计为失败，并尝试恢复原行及隐藏窗口；原始失败不被清理异常覆盖。这一恢复顺序不证明先前失败的具体raw差异，也不证明隐藏窗口会阻止配置更新。
 
 该用例还保留旧按钮引用，检查其真实监听器拒绝旧窗口调用，再通过新窗口按钮的实际监听器验证继续、暂停和停止。`performClick()` 属于测试注入，不证明物理触摸命中；回调使用合成 `RunControl`，不冒充真实 `AgentController` 任务链。API30在指定阶段之前原样重设 UiAutomation 配置以清理测试节点缓存，不改变生产逻辑或观察期限。
 
-先前源码5c71d4a48的完整1960项回归保持其准确范围，不包含新增字体用例。`font-scale-diagnostic` 固定选择本用例，八档共8项；完整套件新增后预计每档246项、共1968项，必须等待实际执行和归档核验。该首个放大样本不代表最大字体、Activity重建、横竖屏或读屏服务已验收。主界面真实字体变化后的重建、草稿和安全窗口保留，随后单独验证，不能由主动 `recreate()` 替代系统配置变化。
+先前源码5c71d4a48的完整1960项回归保持其准确范围，不包含新增字体用例。`font-scale-diagnostic` 固定选择本用例，八档共8项；源码3cff的完整套件为每档246项、共1968项，须等待当前运行结束及归档核验。该首个放大样本不代表最大字体、Activity重建、横竖屏或读屏服务已验收。主界面真实字体变化后的重建、草稿恢复规则和安全窗口保护仍需单独验证，不能由主动 `recreate()` 替代系统配置变化。
 
-两轮原始专项分别保留于 [40628762988](../../screenshots/40628762988-1/manifest.json) 和 [40630197321](../../screenshots/40630197321-1/manifest.json)，均1/8通过、7失败，零错误／跳过／缺失。[原始冻结数值](diagnostics/font-control-safe-area-40630197321/)确认七档字体1.0时面板顶部12、安全顶部24，且实际布局已完成。生产修正现按全局安全区统一初始、重建与拖动坐标，安全验证先于身份／许可发布，保留48dp及精确登记要求；本地编译和lint通过，设备复验尚未完成。大窗口PNG样本同时独立推导为831×1662，保持三方矩形精确相等，仍须实际API34–37运行。
+两轮原始专项分别保留于 [40628762988](../../screenshots/40628762988-1/manifest.json) 和 [40630197321](../../screenshots/40630197321-1/manifest.json)，均1/8通过、7失败，零错误／跳过／缺失。[原始冻结数值](diagnostics/font-control-safe-area-40630197321/)确认七档字体1.0时面板顶部12、安全顶部24，且实际布局已完成；这些基线失败不能归因为1.3字体重建。生产修正按全局安全区统一初始、重建与拖动坐标，安全验证先于身份／许可发布，保留48dp及精确登记要求。大窗口PNG样本同时独立推导为831×1662，保持三方矩形精确相等，其API34–37实际结果仍待当前完整回归验证。
 
-安全区修正源码b6fd的[原拖动／审批收缩专项](../../screenshots/40631512822-1/manifest.json)8/8通过，但[字体专项](../../screenshots/40631510591-1/manifest.json)仅4/8通过：API30–33均在最后恢复原字体配置超时，仍计为失败。当前测试清理将实际配置与原raw记录分两阶段恢复，共用原10秒并保留最终全部匹配要求；生产修正不变。四项失败的具体raw差异原先未记录，不推定根因，新版设备复验待进行。
+安全区修正源码b6fd的[原拖动／审批收缩专项](../../screenshots/40631512822-1/manifest.json)8/8通过，但[字体专项](../../screenshots/40631510591-1/manifest.json)仅4/8通过：API30–33均在最后恢复原字体配置超时，仍计为失败。源码3cff仅修正测试清理，生产安全区修正不变；其后8/8通过不抹去这四项失败。四项失败的具体raw差异原先未记录，恢复失败的具体根因仍未证明。
 
 ## 分开的后续验证
 
-- **已有公开能力的验证缺口：** 系统字体缩放、横竖屏后关键操作可达、实际读屏服务共存。依据 [R8](../DESIGN_RULES.md#r8-统一交互与可访问性) 逐项安排；其中字体／旋转可先用专用模拟器验证，不能由单次24sp文字测量推断通过。
+- **下一项独立验证：** 主Activity在真实系统字体变化后的重建、草稿恢复规则和安全窗口保护，目前尚无这一组合的专项用例；已有主动 `recreate()` 和独立安全标志检查不替代该场景。服务控件1.0→1.3专项已经通过，其他字体样本、横竖屏后关键操作可达、实际读屏服务共存仍按 [R8](../DESIGN_RULES.md#r8-统一交互与可访问性) 分别安排，不合并为本次专项通过。
 - **独立应用回归：** [固定第三方应用探针](third-party-smoke.md)保留 API31 Notes/off 的键盘准备失败与原32组合。其定位和复测属于应用检查点，不计入执行器合成应用矩阵。
 - **外部条件：** 真实模型任务需要可用的实际服务配置；厂商与低资源验收需要对应设备；AOSP、OTA及恢复需要明确参考机型、地区变体、启动链与恢复资料；正式交付还需签名和维护条件。APK试用不要求解锁 Bootloader。
 - **未公开能力：** 普通 APK 的截图及坐标点击／滑动入口仍未开放。内部视觉链路和低API“不支持”断言分别记录，不算公开能力的正向通过，也不因新增本表而扩大 `api_matrix` 的范围。

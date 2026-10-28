@@ -1029,3 +1029,12 @@ API30–32在真实手势曾移动且结束后，确认旧控制窗实际移除�
 复用既有字体设置与原raw恢复辅助器，仅将两个声明改为包内可见；原两阶段共用10秒恢复期限与生产代码均未变。所有观察到的Activity及其两个worker在恢复原配置后尽力逐项清理，保留原失败和异常分类，配置存储在worker退出后恢复。受保护界面只保存固定原因的blocked JSON，始终不尝试PNG，不清除安全标志；普通录像另行录制。
 
 固定 `activity-font-scale-diagnostic` 只执行该原用例，八档均进入真实字体路径，没有低API提前返回。标题、选择、JUnit摘要、捕获和归档范围互相核验，304项脚本检查通过；完整套件源码计数新增为247项／档，预期1976项，但当前已完成完整基线仍是81f的1968/1968。最终测试APK和lint独立构建39秒通过，两Java源码构建前后SHA-256一致；lint零错误，固定合成输入的5条国际化警告保留。八档专项、完整1976项及新源码录像待实际执行，尚未发生的云端结果不算通过。
+
+
+### 主Activity字体首轮：保留八档基线准备失败
+
+源码 `8b97d5dda743224e4998a1349d29015f217a24b8` 的[主界面字体专项40640583322](https://github.com/ecojust/Agent-OS/actions/runs/40640583322)为**0/8通过、8失败，零错误、跳过、额外用例、不可读报告和缺失记录**。[八档原始连续日志](docs/validation/diagnostics/activity-font-radio-40640583322/)均停在baseline阶段的 `seedDraft:191`：对连续导航RadioButton的 `performClick()` 返回值进行assertTrue失败，requests与dispatchAttempts均为0。尚未走到1.3实际重建和草稿保留检查，不能称为字体重建生产失败，也不能反推单选状态没有变化；原记录没有保存该时刻的checked值。
+
+[完整原始归档](screenshots/40640583322-1/manifest.json)32载荷、24,188字节已独立核对完整文件集合、大小/SHA-256、逐案JSON与采集器JUnit摘要。八条捕获均为固定策略 `secure_activity_font_draft_capture_not_attempted` 的failed阶段blocked记录，PNG为0，没有尝试受保护截图或清除安全标志；blocked不等于测试跳过。8份性能附件invalid，专项与整套计数分开；完整1976项尚未启动，现有完整通过基线保持81f的1968/1968。
+
+同源码普通[录像40640618487](https://github.com/ecojust/Agent-OS/actions/runs/40640618487)及[归档40640972317](https://github.com/ecojust/Agent-OS/actions/runs/40640972317)成功。[清单](screenshots/demos/40640618487-1/manifest.json)30载荷、1,153,615字节、22张320×640真实PNG已核验；[视频](screenshots/demos/40640618487-1/demo.mp4)32.885秒、640×1280、410,653字节，完整解码及实际帧检查通过。普通操作1/1、13阶段、8确认通过，使用本地合成HTTP模型并保留安全标志。录像不执行新Activity字体用例，不代替其八档失败，也不代表真机或真实模型验收。

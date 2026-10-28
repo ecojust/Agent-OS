@@ -25,14 +25,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 新增主界面真实系统字体变化、内存草稿/关闭重开和安全窗口专项；304项脚本及测试APK/lint通过。八档专项、完整1976项和新源码录像待运行，README当前视频仍为准确f901版本；检查点45%。
+**本次更新：** 8b97主界面字体首轮0/8：八档均在RadioButton返回值准备断言失败，尚未进入1.3重建；原JSON/blocked完整归档。独立普通录像32.885秒已核验并链接，不代替专项；完整1976项待运行，检查点45%。
 
-**记录时间：** 2026-10-28T05:53:06Z
+**记录时间：** 2026-10-28T06:00:09Z
 
-[最近测试截图与清单](screenshots/40636551126-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40636551126)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40640583322-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40640583322)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/40639607580-1/demo.mp4) · [录制与验证清单](screenshots/demos/40639607580-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40639607580)。
-录制版本：[`f9017791e`](https://github.com/ecojust/Agent-OS/commit/f9017791e6230bff478ed82f72368fca44765a11)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/40640618487-1/demo.mp4) · [录制与验证清单](screenshots/demos/40640618487-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40640618487)。
+录制版本：[`8b97d5dda`](https://github.com/ecojust/Agent-OS/commit/8b97d5dda743224e4998a1349d29015f217a24b8)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 | 检查点 | 状态 |
 | --- | --- |

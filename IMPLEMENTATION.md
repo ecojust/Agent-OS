@@ -9,7 +9,7 @@
 | 构建基础 | Java 17、最低 API 30、编译/目标 API 35，固定版本 Gradle Wrapper 与分发校验值 |
 | 任务运行时 | 单前台任务、版本化工具请求、暂停/停止、执行代次、累计预算、参数校验、重复请求去重、未知写结果停止 |
 | 本机任务预算 | 折叠设置模型轮次、工具次数与活动秒数；加密保存、严格格式校验及旧配置默认读取。启动核对保存值，排队和执行共用上限，运行期间冻结修改；新增14项回归已在八档模拟器通过 |
-| 数值偏好文件 | 通过系统 SAF 导出四项数值或预览导入，只填当前草稿，不携带连接、密钥、授权或任务。严格 4 KiB 格式、一次性结果所属关系和独立单槽文件线程；核心333项、APK及lint通过，新增6项首轮八档26通过、22失败，测试驱动修复已通过测试APK/lint，完整回归待验证，见[验收范围](docs/validation/numeric-preferences.md) |
+| 数值偏好文件 | 通过系统 SAF 导出四项数值或预览导入，只填当前草稿，不携带连接、密钥、授权或任务。严格 4 KiB 格式、一次性结果所属关系和独立单槽文件线程；核心333项、APK及lint通过，新增6项第二轮31通过、17失败，原2112项全部通过；模块跨平台验收仍未完成，见[验收范围](docs/validation/numeric-preferences.md) |
 | 本次任务用量 | 展示原RunControl的实际模型轮次、工具调用、活动/暂停/待确认时间及原预算；结束时冻结、清空时移除、旧任务不能改写新记录。主页面前台最多每秒只刷新统计区域；6项真实Controller/UI回归在第四十九轮八档48/48通过；此前两轮辅助器失败完整保留 |
 | 服务端Token用量 | 统一模型网关按任务登记调用，输入/输出/总计分别显示有效报告小计与覆盖次数；缺失、冲突和溢出不伪造数值，终态冻结、清空与新任务隔离。核心314项、脚本314项及APK/lint通过；新增3项八档24/24通过，整套另有API34窗口事件失败，见[验收范围](docs/validation/task-token-usage.md) |
 | 本次任务操作回执 | 六种既有写工具的实际提交/接受/未验证状态，最多200项纯内存快照；停止保留未决未知，清空与新任务隔离旧记录。原生受保护只读页面不触发额外操作；新回执16/16及原三次写操作8/8在八档完整回归中通过，见[验收范围](docs/validation/task-action-receipts.md) |
@@ -145,7 +145,7 @@ Windows 使用 `gradlew.bat`。默认 APK 输出到 `app/build/outputs/apk/debug
 
 | 范围 | 已核实结果与入口 |
 | --- | --- |
-| 最新八档回归 | 数值偏好源码`41e44b000`，固定2160项中2057通过、37失败、66缺失（API32超时且无JUnit）；新增六项26通过、22失败。[原运行](https://github.com/ecojust/Agent-OS/actions/runs/40719564182)、[原始证据](screenshots/40719564182-1/manifest.json)、[结果与诊断范围](docs/validation/numeric-preferences.md#首轮八档结果保留失败与缺失)，尚未通过模块验收 |
+| 最新八档回归 | 数值偏好测试驱动源码`300c4c7a1`，完整2160项中2143通过、17失败，零错误/跳过/缺失；原2112项全部通过，新增六项31通过、17失败。[原运行](https://github.com/ecojust/Agent-OS/actions/runs/40728782554)、[原始证据](screenshots/40728782554-1/manifest.json)、[结果与诊断范围](docs/validation/numeric-preferences.md#测试驱动修复后的第二轮结果)，两轮失败均保留，模块尚未全部通过 |
 | 最近全部通过基线 | 源码`1f9f773ae`，八档 **2112/2112通过**，零失败、错误、跳过和缺失；[运行与调试APK](https://github.com/ecojust/Agent-OS/actions/runs/40706713295)、[逐项原始证据](screenshots/40706713295-1/manifest.json)。原31e1的2111/2112及[导航失败](docs/validation/diagnostics/navigation-origin-40698819944/README.md)保留，本轮不证明其历史根因已确定 |
 | 此前完整通过基线 | 源码`4b87c9a28`，八档1992/1992通过；[原运行](https://github.com/ecojust/Agent-OS/actions/runs/40664625632)、[原始证据](screenshots/40664625632-1/manifest.json)，不改写为本轮结果 |
 | 配置恢复 | 源码28a4，核心299/299、脚本314/314、APK/lint通过；新增6项八档 **48/48通过**，整套另有1项旧窗口事件失败；[验收范围及限制](docs/validation/configuration-recovery.md) |

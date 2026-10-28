@@ -1,0 +1,305 @@
+{
+  "schemaVersion": 1,
+  "runId": 40728782554,
+  "attempt": 1,
+  "runUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40728782554",
+  "sourceSha": "300c4c7a1e0bd634f5c6b474ed2c50b057734172",
+  "scope": "full",
+  "originalLogsZip": {
+    "fileName": "whole-run-logs.zip",
+    "bytes": 559650,
+    "sha256": "4214ee9b11ae7a6c3afe5e7b15a877dd4cb6f9af02aa9901d6c66657bdcbc36f"
+  },
+  "expectedIdentitySet": {
+    "perApi": 270,
+    "apis": [
+      "30",
+      "31",
+      "32",
+      "33",
+      "34",
+      "35",
+      "36",
+      "37.0"
+    ],
+    "total": 2160,
+    "existingExcludedIdentities": 8,
+    "exclusionsChanged": false
+  },
+  "caseLedger": {
+    "recorded": 2160,
+    "pass": 2143,
+    "fail": 17,
+    "expectedMissing": 0,
+    "source": "current run per-case evidence ledger; completion also checked against all eight raw Starting/Finished270 lines"
+  },
+  "availableJUnit": {
+    "apis": [
+      "30",
+      "31",
+      "32",
+      "33",
+      "34",
+      "35",
+      "36",
+      "37.0"
+    ],
+    "tests": 2160,
+    "failures": 17,
+    "errors": 0,
+    "skipped": 0,
+    "unavailableApis": [],
+    "allApisComplete": true,
+    "fullSuitePassed": false
+  },
+  "newNumericPreferencesCases": {
+    "expected": 48,
+    "pass": 31,
+    "fail": 17
+  },
+  "retainedPriorCases": {
+    "expected": 2112,
+    "pass": 2112,
+    "fail": 0,
+    "historicalCausesProvenFixed": false
+  },
+  "observedFailureGroups": [
+    {
+      "apis": [
+        "30"
+      ],
+      "count": 6,
+      "phase": "PROVIDER_ROOT",
+      "rootsQueryEntered": 0,
+      "rootsQueryReturned": 0,
+      "rootsOutcome": "NOT_QUERIED",
+      "scope": "Sampled telemetry from the current provider process; zero entries into this queryRoots override is not a diagnosis of provider discovery or cache/identity failure."
+    },
+    {
+      "apis": [
+        "31",
+        "32"
+      ],
+      "count": 2,
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#oldPickerResultsCannotReachARecreatedMainOrClearANewerOwner",
+      "testSourceLine": 172,
+      "stage": "awaitReplacementMain/awaitMain after the first picker cancellation following Main recreation"
+    },
+    {
+      "apis": [
+        "33",
+        "34",
+        "36"
+      ],
+      "count": 3,
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#oldPickerResultsCannotReachARecreatedMainOrClearANewerOwner",
+      "testSourceLine": 193,
+      "stage": "awaitMain after the second picker cancellation with the newer transfer owner"
+    },
+    {
+      "apis": [
+        "31",
+        "32",
+        "34",
+        "35",
+        "36",
+        "37.0"
+      ],
+      "count": 6,
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#malformedOversizedAndCancelledImportsLeaveTheOriginalDraftAndSavedStateUntouched",
+      "testSourceLine": 151,
+      "stage": "awaitMain after the actual picker cancellation"
+    }
+  ],
+  "mainReadinessFailureLimit": "The assertion combines existing host, resumed, not destroyed, window focus, ready, not busy, storage not damaged, and numericTransfer null. These raw failures do not identify which constituent remained false.",
+  "legacyResolveFailure": {
+    "identity": "dev.agentos.app.ResolveNodeAtInstrumentedTest#uniqueActionCandidatesAreReadOnlyAndASelectedClickStillRequiresConfirmation",
+    "presentInThisRun": false,
+    "historicalCauseResolved": false
+  },
+  "failedIdentities": [
+    {
+      "api": "30",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#recreatedBrokerDoesNotReopenThePickerOrAdoptAnOrphanedTransfer"
+    },
+    {
+      "api": "30",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#oldPickerResultsCannotReachARecreatedMainOrClearANewerOwner"
+    },
+    {
+      "api": "30",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#cancelledProviderIoKeepsItsProcessSlotUntilActualCloseWithoutBlockingMainWork"
+    },
+    {
+      "api": "30",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#malformedOversizedAndCancelledImportsLeaveTheOriginalDraftAndSavedStateUntouched"
+    },
+    {
+      "api": "30",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#realSafExportWritesTheCapturedFourFieldSnapshotWithoutConfigurationAuthority"
+    },
+    {
+      "api": "30",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#realSafImportPreviewsAndAppliesOnlyFourUnsavedNumericFields"
+    },
+    {
+      "api": "31",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#oldPickerResultsCannotReachARecreatedMainOrClearANewerOwner"
+    },
+    {
+      "api": "31",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#malformedOversizedAndCancelledImportsLeaveTheOriginalDraftAndSavedStateUntouched"
+    },
+    {
+      "api": "32",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#oldPickerResultsCannotReachARecreatedMainOrClearANewerOwner"
+    },
+    {
+      "api": "32",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#malformedOversizedAndCancelledImportsLeaveTheOriginalDraftAndSavedStateUntouched"
+    },
+    {
+      "api": "33",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#oldPickerResultsCannotReachARecreatedMainOrClearANewerOwner"
+    },
+    {
+      "api": "34",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#oldPickerResultsCannotReachARecreatedMainOrClearANewerOwner"
+    },
+    {
+      "api": "34",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#malformedOversizedAndCancelledImportsLeaveTheOriginalDraftAndSavedStateUntouched"
+    },
+    {
+      "api": "35",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#malformedOversizedAndCancelledImportsLeaveTheOriginalDraftAndSavedStateUntouched"
+    },
+    {
+      "api": "36",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#oldPickerResultsCannotReachARecreatedMainOrClearANewerOwner"
+    },
+    {
+      "api": "36",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#malformedOversizedAndCancelledImportsLeaveTheOriginalDraftAndSavedStateUntouched"
+    },
+    {
+      "api": "37.0",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#malformedOversizedAndCancelledImportsLeaveTheOriginalDraftAndSavedStateUntouched"
+    }
+  ],
+  "preservation": "Original continuous bytes from the first Report to the final Parsed line in each source entry; no ANSI removal, line-ending normalization, stack reconstruction, concatenation or filtering.",
+  "files": [
+    {
+      "path": "api-30-failure-report.original.txt",
+      "kind": "continuous_original_log_excerpt",
+      "api": "30",
+      "sourceZipEntry": "emulator-tests (30)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 11727,
+      "sourceEntrySha256": "235bcc5bcc492165adcac630cd72ae31bfcd6a546117ff9ff9d6eb189d9777af",
+      "startLine": 19,
+      "endLine": 77,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "failureErrorEntriesReported": 6,
+      "bytes": 10367,
+      "sha256": "731b3a1a1b1ab554d897f39940002a2e0bbf31847ab98dd5cfe7ea4ac67b91e5"
+    },
+    {
+      "path": "api-31-failure-report.original.txt",
+      "kind": "continuous_original_log_excerpt",
+      "api": "31",
+      "sourceZipEntry": "emulator-tests (31)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 3891,
+      "sourceEntrySha256": "6983b34ca29a386fbb4e69712579cb84216c3c233fc0946ac2d629c1d290415a",
+      "startLine": 19,
+      "endLine": 38,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "failureErrorEntriesReported": 2,
+      "bytes": 2531,
+      "sha256": "b63a51982b4ce8c01ba47f2847aae7599e6f53beb0b4cda4df9a0c839ab3578b"
+    },
+    {
+      "path": "api-32-failure-report.original.txt",
+      "kind": "continuous_original_log_excerpt",
+      "api": "32",
+      "sourceZipEntry": "emulator-tests (32)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 3891,
+      "sourceEntrySha256": "4e5c78799b3d26bd7277d4502bbe1ef7d05d6a924acd9992c25d0811b9c224ae",
+      "startLine": 19,
+      "endLine": 38,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "failureErrorEntriesReported": 2,
+      "bytes": 2531,
+      "sha256": "dc17ae8daf42ab48425a59b3d1632f9dd696fcc41de359586d5a038620b28c99"
+    },
+    {
+      "path": "api-33-failure-report.original.txt",
+      "kind": "continuous_original_log_excerpt",
+      "api": "33",
+      "sourceZipEntry": "emulator-tests (33)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 2567,
+      "sourceEntrySha256": "0a3558687759aace10ad673152e757137e1b14cc67728ff56f43c35f99614db0",
+      "startLine": 19,
+      "endLine": 28,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "failureErrorEntriesReported": 1,
+      "bytes": 1207,
+      "sha256": "0e2f79ada42b465bb32ef5a192fd22be595e3b5f22fe69b958da34fffb4f7c2b"
+    },
+    {
+      "path": "api-34-failure-report.original.txt",
+      "kind": "continuous_original_log_excerpt",
+      "api": "34",
+      "sourceZipEntry": "emulator-tests (34)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 3730,
+      "sourceEntrySha256": "e0021403fdfadef47763d21aeaf63476e40a4636ec0db89e59448ec4cda82549",
+      "startLine": 19,
+      "endLine": 37,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "failureErrorEntriesReported": 2,
+      "bytes": 2370,
+      "sha256": "7a813ed772b973f320a13b5454d3a95ac6516aeb8a5ac0c0ddcfcbbc316b32e7"
+    },
+    {
+      "path": "api-35-failure-report.original.txt",
+      "kind": "continuous_original_log_excerpt",
+      "api": "35",
+      "sourceZipEntry": "emulator-tests (35)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 2609,
+      "sourceEntrySha256": "53a1f7a781bd00b6f8e1415bc428867dd913a4da81d12bbd872350affd4b2cb4",
+      "startLine": 19,
+      "endLine": 28,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "failureErrorEntriesReported": 1,
+      "bytes": 1249,
+      "sha256": "abaf8c86b1544e94dc47cff82b92d0d39f58d1f83a528d69dd531dd7ad446ae0"
+    },
+    {
+      "path": "api-36-failure-report.original.txt",
+      "kind": "continuous_original_log_excerpt",
+      "api": "36",
+      "sourceZipEntry": "emulator-tests (36)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 3730,
+      "sourceEntrySha256": "cc6a5ddd4a30f37a7875392cd31b4b07c60e055208ea765ad1a60c7214a62948",
+      "startLine": 19,
+      "endLine": 37,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "failureErrorEntriesReported": 2,
+      "bytes": 2370,
+      "sha256": "e21a578c7150dd7c89e00fc07caecb7328efb254bd61bc3607bdae3a5ed9d031"
+    },
+    {
+      "path": "api-37.0-failure-report.original.txt",
+      "kind": "continuous_original_log_excerpt",
+      "api": "37.0",
+      "sourceZipEntry": "emulator-tests (37.0)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 2609,
+      "sourceEntrySha256": "5a68e95684000c07e00af8cf5b6bc91b606eff61d20cafd68fac04e6aa6b9b3e",
+      "startLine": 19,
+      "endLine": 28,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "failureErrorEntriesReported": 1,
+      "bytes": 1249,
+      "sha256": "395de84b01dbb5cac501cef26ac1e1970a27fbfe8aca15adc9f70648ca49d6d9"
+    }
+  ]
+}

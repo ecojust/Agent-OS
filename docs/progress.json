@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-28T10:51:20Z",
-  "note": "第三方v4源码5436整体录像已一次完成并归档：33.233秒、629760字节、22张真实PNG，13阶段及8次确认通过，安全标志保留。原32项应用矩阵仍在执行，v3 22/32历史完整保留；本地314项脚本通过，生产执行器1992/1992基线与45%检查点不变。",
+  "updated_at": "2026-10-28T11:00:41Z",
+  "note": "第三方v4首轮已归档：24/32通过、8项隐藏验证失败；相较v3六项改善、四项仍失败、另四项新增失败，分版本保留。56载荷、32实际PNG及32条blocked已独立核验；33.233秒录像已链接，314项脚本通过。生产执行器1992/1992基线和45%检查点不变，尚未全面修复。",
   "latest_evidence": {
-    "path": "screenshots/third-party-40669447296-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40669447296"
+    "path": "screenshots/third-party-40674357809-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40674357809"
   },
   "checkpoints": [
     {
@@ -102,7 +102,7 @@
       "name": "冻结常用应用样本与日常使用验收",
       "status": "in_progress",
       "evidence": "docs/validation/third-party-smoke.md",
-      "scope": "Two pinned unmodified apps across eight emulator APIs and service off/idle. Independent v4 adds at most one verified BACK only before Notes create confirmation, same-dialog/title/hidden-IME/uncovered-button revalidation within5s and visible4+hidden4 sampling limits.32-case matrix unchanged; v4 device verification pending. Latest historical v3 exact5c57/run40669447296 remains22/32,10fail/0unverified;31–34 rectangles overlap64x27px,35 matched1/visible0. Earlier v3 source8edd remains22/32; v2 source5a8 remains31/32 under its separate contract. Executing-agent, upgrades, broad apps and phones remain unverified."
+      "scope": "Independent v4 exact5436/run40674357809 passes24/32,8failed/0unverified:Calculator16/16;Notes API30/33/34/35 off+idle8/16 with HOME1 and exact fresh-process title/body readback. API31/32 four failures:BACK1 accepted but hidden unverified;API36/37 four new failures:BACK0/visible0 but hidden unverified;all eight confirm0/HOME0. Versus historical v3 six previously failing combinations pass,four still fail,four formerly passing now fail under the new contract;do not combine versions.56payload/32Calculator PNG/32Notes blocked verified. v3 source5c57 and8edd remain22/32;v2 source5a8 remains31/32. Executing-agent,upgrades,broad apps,phones and remaining failures unverified."
     },
     {
       "id": "physical_devices",

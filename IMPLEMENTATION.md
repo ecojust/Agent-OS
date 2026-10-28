@@ -1054,3 +1054,12 @@ Android CompoundButton.performClick先toggle，再返回父View的点击处理�
 [归档](screenshots/40641436998-1/manifest.json)32载荷、27,724字节经独立完整文件集合、大小/SHA-256、逐案JSON及采集器JUnit摘要核验。每档baseline与failed两条受保护未尝试捕获，共16条blocked，PNG为0，安全标志未清除；8份性能附件invalid。[原始连续日志](docs/validation/diagnostics/activity-font-retention-40641436998/)保留八档Suite到Parsed的原时间戳、裁剪标记、尾空格及换行，并记录整ZIP／member／行范围校验值；没有下载原XML，不冒称重解析XML。
 
 同源码普通[录像40641491474](https://github.com/ecojust/Agent-OS/actions/runs/40641491474)及[归档40641955644](https://github.com/ecojust/Agent-OS/actions/runs/40641955644)成功。[清单](screenshots/demos/40641491474-1/manifest.json)30载荷、1,182,340字节、22张320×640实际PNG已核验；[视频](screenshots/demos/40641491474-1/demo.mp4)36.212秒、640×1280、446,068字节，完整解码及实际帧检查通过。普通1/1、13阶段、8确认通过，安全标志保留，模型为本地合成HTTP服务；不执行本次Activity字体专项、不代替其失败。完整1976项仍未运行，完整通过基线保留81f的1968/1968，检查点45%。
+
+
+### 在真实创建回调中验证内存交接对象
+
+独立对照AOSP11／14／16实现：Activity.performResume在应用onResume之前清除mLastNonConfigurationInstances；performCreate在应用onCreate后分发postCreated回调。因此此前resumed后非空断言采用了无效采样时点，不能据此认定生产草稿遗失。
+
+测试现在在已登记的真实Host的onActivityPostCreated回调保存平台getter返回的交接对象；后续仍精确核对同profile、相同settings对象、任务与无效原始输入及retainedDraft已消费。主动finish后的新开界面也改为检查创建时快照为空，避免使用平台必然清空后的值形成无效检查。回调失败保留固定诊断，不保存敏感内容到文件，不伪造或主动调用生命周期方法。
+
+仅该测试文件改变，生产、单次真实模式点击、系统字体、Bundle敏感标记、存储／Controller、布局与时限断言均保留。最终APK和lint50秒通过，冻结源码构建前后hash一致；新版八档专项、完整1976项及普通录像待执行，原两轮0/8和准确来源录像全部保留。

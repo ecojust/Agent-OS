@@ -80,7 +80,7 @@ public final class MainActivityFontScaleInstrumentedTest {
                     Baseline before = onMain(device, () -> {
                         assertSecure(first.activity);
                         seedDraft(first.activity, server.endpoint());
-                        assertDraft(first.activity, saved.profileId, server.endpoint(), false);
+                        assertDraft(first, saved.profileId, server.endpoint(), false);
                         first.activity.dismissOwnTaskKeyboard();
                         return new Baseline(first.activity);
                     });
@@ -101,7 +101,7 @@ public final class MainActivityFontScaleInstrumentedTest {
                         assertTrue("The system must save the original Activity state", first.savedStates > 0);
                         assertTrue("The original saved-state Bundle must have been checked", first.bundleBytes > 0);
                         assertSecure(first.activity); assertSecure(enlarged.activity);
-                        assertDraft(enlarged.activity, saved.profileId, server.endpoint(), true);
+                        assertDraft(enlarged, saved.profileId, server.endpoint(), true);
                         Baseline after = new Baseline(enlarged.activity);
                         assertTrue(after.editorPixels > before.editorPixels);
                         assertTrue(after.buttonPixels > before.buttonPixels);
@@ -127,7 +127,7 @@ public final class MainActivityFontScaleInstrumentedTest {
                         assertNotSame(enlarged.activity, reopened.activity);
                         assertFalse("An explicit finish is not configuration retention", enlarged.configurationDestroy);
                         assertNull("A fresh launch must not inherit the old in-memory draft",
-                                reopened.activity.getLastNonConfigurationInstance());
+                                reopened.nonConfiguration);
                         assertSaved(reopened.activity, saved);
                         assertSecure(reopened.activity);
                     });
@@ -199,7 +199,8 @@ public final class MainActivityFontScaleInstrumentedTest {
                 ((SettingsStore.SavedSettings) field(activity, "draft")).executionMode);
     }
 
-    private static void assertDraft(MainActivity activity, String profile, String endpoint, boolean retained) {
+    private static void assertDraft(Host host, String profile, String endpoint, boolean retained) {
+        MainActivity activity = host.activity;
         assertText(activity, R.id.settings_endpoint, endpoint + ENDPOINT_SUFFIX);
         assertText(activity, R.id.settings_model, MODEL); assertText(activity, R.id.settings_api_key, KEY);
         assertText(activity, R.id.task_prompt, TASK); assertText(activity, R.id.settings_max_output_tokens, "8193");
@@ -216,7 +217,7 @@ public final class MainActivityFontScaleInstrumentedTest {
         assertFalse(activity.findViewById(R.id.confirm_actions).isSaveEnabled());
         assertFalse(activity.findViewById(R.id.execution_mode_continuous_navigation).isSaveEnabled());
         if (retained) {
-            Object memory = activity.getLastNonConfigurationInstance(); assertNotNull(memory);
+            Object memory = host.nonConfiguration; assertNotNull(memory);
             SettingsStore.SavedSettings retainedSettings = (SettingsStore.SavedSettings) field(memory, "settings");
             assertTrue("Retained state must belong to the same profile", profile.equals(retainedSettings.profileId));
             assertSame("The loaded Activity must use the actual nonconfiguration draft", retainedSettings, field(activity, "draft"));
@@ -388,6 +389,7 @@ public final class MainActivityFontScaleInstrumentedTest {
 
     private static final class Host {
         final MainActivity activity;
+        Object nonConfiguration;
         ExecutorService storage, diagnostics;
         boolean resumed, destroyed, configurationDestroy;
         int savedStates, bundleBytes;
@@ -426,6 +428,10 @@ public final class MainActivityFontScaleInstrumentedTest {
             // Unexpected extra recreations remain failures but still get cleanup.
             Host host = new Host((MainActivity) activity); hosts.add(host);
             if (hosts.size() > MAX_EXPECTED_HOSTS) reject("too_many_activity_hosts");
+            // Activity.performResume clears the framework handoff before onResume.
+            // Capture its real object after app onCreate, while it is still available.
+            try { host.nonConfiguration = activity.getLastNonConfigurationInstance(); }
+            catch (RuntimeException failed) { reject("host_nonconfiguration_snapshot_unavailable"); }
             try {
                 host.storage = (ExecutorService) field(activity, "storageWorker");
                 host.diagnostics = (ExecutorService) field(activity, "diagnosticsWorker");

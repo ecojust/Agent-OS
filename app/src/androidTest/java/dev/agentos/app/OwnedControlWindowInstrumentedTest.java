@@ -1,5 +1,6 @@
 package dev.agentos.app;
 
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
@@ -656,6 +657,17 @@ public final class OwnedControlWindowInstrumentedTest {
 
     /** Read the actual owned window's node semantics; this is not a screen-reader coexistence test. */
     private static void assertAccessibleStatus(DeviceHarness device, String status, boolean paused) throws Exception {
+        if (Build.VERSION.SDK_INT == 30) {
+            // Android 11 shares the node cache between this test's UiAutomation
+            // callback thread and the application's accessibility service. Its
+            // event refresh holds the cache lock while querying cached nodes.
+            // Clear nodes from prior test reads before publishing another state
+            // to avoid candidate same-process test cache interference. Reapply
+            // the exact configuration; this is preparation, not a production fix.
+            AccessibilityServiceInfo current = device.automation.getServiceInfo();
+            assertNotNull("UiAutomation configuration is required for API 30 test preparation", current);
+            device.automation.setServiceInfo(current);
+        }
         AgentAccessibilityService service = device.service;
         long started = SystemClock.elapsedRealtime();
         long deadline = started + 5_000;

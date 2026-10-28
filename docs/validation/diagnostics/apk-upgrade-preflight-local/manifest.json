@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "kind": "agentos-apk-upgrade-preflight-local-validation",
+  "baseSource": "300c4c7a1e0bd634f5c6b474ed2c50b057734172",
+  "inputsSha256": {
+    "scripts/check_apk_upgrade.py": "263e286d1db0856910f9bb36bf4a307bc99dec022a17cc750616c29035882689",
+    "scripts/test_check_apk_upgrade.py": "b8ffd69ecc7fdba14785b6bdd3d990ff3903dabc9a81656061542839ac524a18",
+    "scripts/verify_visual_acceptance_apks.py": "1625d89ea966522692f2c7235daf08a26ad4e5ee5da727af816fb5ec5630afb7"
+  },
+  "testCommand": "python3 -m unittest discover -s scripts -p test_check_apk_upgrade.py -v",
+  "tests": 22,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "seconds": 22.09,
+  "sdkBuildTools": "35.0.0",
+  "independentReviewSha256": "67589e6bfc7d287a52c52b9c96ed54da1b4695c524c14369bf07bb0c6fb494cf",
+  "scope": "Actual local SDK tools and temporary test certificates; minimal synthetic binary-manifest APKs, no installation or device/migration/release acceptance. Positive CLI report is a separate real invocation using controlled temporary test artifacts.",
+  "temporaryPrivateKeysCommitted": false,
+  "screenshots": "not_applicable_nonvisual_cli",
+  "unchangedCoreOrOtherScriptTestsRerun": false,
+  "files": [
+    {
+      "path": "unittest.log",
+      "bytes": 3705,
+      "sha256": "f99380cf330d55e570160b1fd8e9f629921010ee9ac83d386fdcf975680bba2b"
+    },
+    {
+      "path": "synthetic-sdk-preflight.json",
+      "bytes": 1186,
+      "sha256": "a20dc80bddd20bf655f10593faab55b3b8fa304d57d8817e211fbc8f07931782"
+    }
+  ]
+}

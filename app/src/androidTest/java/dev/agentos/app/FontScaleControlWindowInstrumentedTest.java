@@ -333,11 +333,42 @@ public final class FontScaleControlWindowInstrumentedTest {
         assertEquals(Display.DEFAULT_DISPLAY, controls.identity.displayId);
         WindowManager manager = service.getSystemService(WindowManager.class); assertNotNull(manager);
         WindowMetrics metrics = manager.getCurrentWindowMetrics();
-        Insets insets = metrics.getWindowInsets().getInsetsIgnoringVisibility(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
-        Rect safe = new Rect(metrics.getBounds());
+        int safeTypes = WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout();
+        WindowInsets metricInsets = metrics.getWindowInsets();
+        Insets insets = metricInsets.getInsetsIgnoringVisibility(safeTypes);
+        Rect metricBounds = new Rect(metrics.getBounds());
+        Rect safe = new Rect(metricBounds);
         safe.set(safe.left + insets.left, safe.top + insets.top, safe.right - insets.right, safe.bottom - insets.bottom);
-        assertFalse(safe.isEmpty());
-        assertTrue("The entire compact control window must fit within system-bar/cutout safe bounds", safe.contains(screenBounds(controls.panel)));
+        Rect panelBounds = screenBounds(controls.panel);
+        WindowInsets rootInsets = controls.panel.getRootWindowInsets();
+        // Freeze only bounded geometry and lifecycle metadata on this main-thread
+        // snapshot. Keep the original safe-region predicate and phase deadline.
+        StringBuilder geometry = new StringBuilder("metricsBounds=").append(metricBounds)
+                .append(",metricsStableInsets=").append(insets)
+                .append(",metricsVisibleInsets=").append(metricInsets.getInsets(safeTypes))
+                .append(",metricsStatusVisible=").append(metricInsets.isVisible(WindowInsets.Type.statusBars()))
+                .append(",metricsNavigationVisible=").append(metricInsets.isVisible(WindowInsets.Type.navigationBars()))
+                .append(",safeRect=").append(safe).append(",panelRect=").append(panelBounds)
+                .append(",rootInsetsPresent=").append(rootInsets != null);
+        if (rootInsets != null) {
+            geometry.append(",rootStableInsets=").append(rootInsets.getInsetsIgnoringVisibility(safeTypes))
+                    .append(",rootVisibleInsets=").append(rootInsets.getInsets(safeTypes))
+                    .append(",rootStatusVisible=").append(rootInsets.isVisible(WindowInsets.Type.statusBars()))
+                    .append(",rootNavigationVisible=").append(rootInsets.isVisible(WindowInsets.Type.navigationBars()));
+        }
+        View[] diagnosticViews = {controls.panel, controls.title, controls.pause, controls.stop};
+        String[] diagnosticNames = {"panel", "title", "pause", "stop"};
+        for (int index = 0; index < diagnosticViews.length; index++) {
+            View view = diagnosticViews[index];
+            geometry.append(',').append(diagnosticNames[index]).append("State={attached=")
+                    .append(view.isAttachedToWindow()).append(",laidOut=").append(view.isLaidOut())
+                    .append(",layoutRequested=").append(view.isLayoutRequested())
+                    .append(",shown=").append(view.isShown()).append('}');
+        }
+        String geometrySnapshot = geometry.toString();
+        assertFalse("System-bar/cutout safe bounds must be nonempty: " + geometrySnapshot, safe.isEmpty());
+        assertTrue("The entire compact control window must fit within system-bar/cutout safe bounds: " + geometrySnapshot,
+                safe.contains(panelBounds));
         int minimum = Math.round(48 * controls.density);
         for (TextView text : new TextView[]{controls.title, controls.pause, controls.stop}) {
             assertTrue(text.isAttachedToWindow() && text.isLaidOut() && text.isShown());

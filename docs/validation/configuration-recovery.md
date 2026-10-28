@@ -23,7 +23,19 @@
 
 实现与独立审查完成；本地核心测试本次实际执行299/299通过，脚本314/314通过，零失败、错误或跳过。主应用、仪器测试和Fixture APK构建成功，lint为0错误、40警告；应用单元测试任务为NO-SOURCE，不计为实际执行。构建前后252个源码、资源和构建输入哈希完全一致。
 
-源码`28a410c7e6098a8bb116fde0c8b17827e472e340`的[八档设备回归40678960624](https://github.com/ecojust/Agent-OS/actions/runs/40678960624)正在执行，尚未将本轮标为设备验收完成。此前完整源码`4b87c9a286`的1992/1992结果继续保留原标记。
+## 八档设备结果
+
+源码`28a410c7e6098a8bb116fde0c8b17827e472e340`的[完整回归40678960624](https://github.com/ecojust/Agent-OS/actions/runs/40678960624)、attempt1为 **2039/2040通过、1失败**，不是完整通过。API30、31、32、33、35、36、37.0各255/255通过；API34为254/255。事前冻结的255项身份逐档完整匹配，零错误、跳过、不可读报告、缺失或额外用例；每档原日志均Starting255/Finished255。逐案JSON与采集的JUnit摘要一致，未另行下载并解析原JUnit XML。
+
+新增配置恢复 **48/48通过**：存储3项×8＝24，原生界面3项×8＝24，均实际执行。未知格式和损坏配置原字节保留、严格版本类型、旧许可撤销及重新发放、未知写入故障锁定、重复点击限流、重读完成后旧删除确认拒绝、真实离页迟到结果隔离与返回后显式重读均通过。
+
+唯一失败为API34既有窗口事件用例`VisualEventGenerationInstrumentedTest#actualSameHeightStatusEventsPreserveTheOriginalLocalGuardAcrossRepeatedPublications`，预期代次33、实际35。第3轮匹配的自身事件来自窗口782；实际两次失效来自窗口2，探针无丢弃或采样失败。该窗口归属与触发源未记录，不能将其归因于配置恢复或控制条自身外观更新，也不能排除整套时序或隔离影响。详见[原始失败摘录与来源](diagnostics/visual-generation-40678960624/README.md)。本轮不放宽窗口规则、不重跑覆盖失败；此前完整源码`4b87c9a286`的1992/1992仍是此前完整通过基线。
+
+[完整证据](../../screenshots/40678960624-1/manifest.json)由[归档40681019453](https://github.com/ecojust/Agent-OS/actions/runs/40681019453)产生，原提交`6f6f11e6b7696ea4bd1a22acb073212a3ca9d6ec`原样入库：**4303载荷、46,061,854字节、2231张真实PNG**，完整文件集合、大小、SHA-256和图像解码经两次独立检查。归档父提交为仅文档与演示的`19748e6f`，清单中的实际测试源码始终为28a4，不将归档成功当作测试成功。
+
+1205条blocked记录保留，其中新模块96条：UI72条`secure_configuration_recovery_capture_not_attempted`、存储24条`non_visual_settings_recovery_test`。新模块没有PNG，也没有清除安全标志；这是保护性未尝试或无界面记录，不是跳过测试。原有24次空合成界面截图例外不变，其余2207张PNG明确未清除标志。API34失败阶段的PNG只显示四色Fixture，不能用于还原断言时的事件或窗口归属。8份性能诊断采集通过，但budgetAcceptance仍为false。
+
+## 同源码整体录像
 
 本轮唯一[整体录像](../../screenshots/demos/40679000948-1/demo.mp4)已完成并核验：36.893秒、423,258字节，13阶段与8次确认通过。它只展示本地合成模型的普通Fixture操作，不展示受保护配置页或验证恢复路径；见[演示范围](operation-demo.md#配置恢复源码的整体演示)。
 

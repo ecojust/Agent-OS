@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "api": 32,
+  "testClass": "dev.agentos.app.MainActivityFontScaleInstrumentedTest",
+  "testName": "realSystemFontScaleRecreatesSecureActivityAndRetainsOnlyInMemoryDraft",
+  "assertionResult": "fail",
+  "testResult": "fail",
+  "status": "fail",
+  "startedAt": 1793168971812,
+  "finishedAt": 1793168985329,
+  "failureClass": "AssertionError",
+  "captures": [
+    {
+      "stage": "secure-main-activity-font-1_0-memory-draft",
+      "capturedAt": 1793168973181,
+      "status": "blocked",
+      "captureError": "secure_activity_font_draft_capture_not_attempted"
+    },
+    {
+      "stage": "secure-main-activity-font-1_3-real-replacement",
+      "capturedAt": 1793168973483,
+      "status": "blocked",
+      "captureError": "secure_activity_font_draft_capture_not_attempted"
+    },
+    {
+      "stage": "secure-fresh-main-activity-discards-unsaved-draft",
+      "capturedAt": 1793168974698,
+      "status": "blocked",
+      "captureError": "secure_activity_font_draft_capture_not_attempted"
+    },
+    {
+      "stage": "failed",
+      "capturedAt": 1793168985329,
+      "status": "blocked",
+      "captureError": "secure_activity_font_draft_capture_not_attempted"
+    }
+  ]
+}

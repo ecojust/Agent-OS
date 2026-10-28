@@ -143,11 +143,11 @@ Windows 使用 `gradlew.bat`。默认 APK 输出到 `app/build/outputs/apk/debug
 | --- | --- |
 | 最近完整回归 | 源码`28a410c7e`，八档 **2039/2040通过、1失败**；API34旧窗口事件用例失败，零错误、跳过和缺失；[运行与调试APK](https://github.com/ecojust/Agent-OS/actions/runs/40678960624)、[逐项原始证据](screenshots/40678960624-1/manifest.json) |
 | 此前完整通过基线 | 源码`4b87c9a28`，八档1992/1992通过；[原运行](https://github.com/ecojust/Agent-OS/actions/runs/40664625632)、[原始证据](screenshots/40664625632-1/manifest.json)，不改写为本轮结果 |
-| 本轮配置恢复 | 源码28a4，核心299/299、脚本314/314、APK/lint通过；新增6项八档 **48/48通过**，整套另有1项旧窗口事件失败；[验收范围及限制](docs/validation/configuration-recovery.md) |
+| 配置恢复 | 源码28a4，核心299/299、脚本314/314、APK/lint通过；新增6项八档 **48/48通过**，整套另有1项旧窗口事件失败；[验收范围及限制](docs/validation/configuration-recovery.md) |
 | 服务端Token用量 | 本地核心314/314、脚本314/314及构建检查通过；新增3项已加入完整2064项设备矩阵，待运行；[固定范围](docs/validation/task-token-usage.md) |
 | 操作回执 | 源码4b87，完整核心299/299、脚本304/304、APK/lint通过；新回执16/16及强化的真实三次写操作8/8在同源码完整矩阵通过；[固定验收范围](docs/validation/task-action-receipts.md) |
 | 字体缩放专项 | 源码14c主Activity与控制窗各8/8通过；[Activity](screenshots/40646422586-1/manifest.json)、[控制窗](screenshots/40646425323-1/manifest.json)，完整回归中也均通过 |
-| 整体实际操作演示 | 源码28a4、API35本地合成模型流程通过，36.893秒；[录像](screenshots/demos/40679000948-1/demo.mp4)及[范围说明](docs/validation/operation-demo.md#配置恢复源码的整体演示)。受保护配置恢复页由独立测试验证，不在普通录像中展示 |
+| 整体实际操作演示 | 源码52ce、API35本地合成模型流程通过，38.584秒；[录像](screenshots/demos/40684345203-1/demo.mp4)及[范围说明](docs/validation/operation-demo.md#token用量源码的整体演示)。受保护Token用量页面及数值由独立测试验证，不在普通录像中展示 |
 | 第三方应用开发探针 | 独立v4源码5436为 **24/32通过、8失败**；[原始结果](screenshots/third-party-40674357809-1/manifest.json)，与v3的22/32、v2的31/32分开统计；本轮配置恢复没有重跑或改写这些结果 |
 | 待定位的历史现象 | 先前API33图像资格等待、API36视觉事件代次及专用原生捕获TIMEOUT未确定完整根因；后续通过不改写原失败，逐轮原始记录保留 |
 | 交付边界 | Android11+开发APK；普通构建尚未开放截图与坐标手势，真实模型、厂商真机、性能预算、正式签名及可刷写系统镜像未验收 |

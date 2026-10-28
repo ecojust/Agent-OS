@@ -1,0 +1,711 @@
+{
+  "schemaVersion": 1,
+  "kind": "original-ci-geometry-diagnostic-excerpts",
+  "sourceRun": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 40630197321,
+    "attempt": 1,
+    "commit": "f2ff7ce5f911c66509bfe72819ff2fa089038cfd",
+    "event": "workflow_dispatch",
+    "branch": "agent/system-font-scale-regression",
+    "conclusion": "failure",
+    "finishedAt": "2026-10-28T04:08:22Z",
+    "url": "https://github.com/ecojust/Agent-OS/actions/runs/40630197321"
+  },
+  "executionScope": "font-scale-diagnostic",
+  "testSelection": "dev.agentos.app.FontScaleControlWindowInstrumentedTest#realSystemFontScaleRebuildsControlsAndRevokesOldWindow",
+  "archiveRunId": 40630748914,
+  "evidenceManifest": "screenshots/40630197321-1/manifest.json",
+  "diagnosticCaseCounts": {
+    "passed": 1,
+    "failed": 7,
+    "unverified": 0
+  },
+  "fullSuiteAcceptance": false,
+  "mainlineAcceptance": false,
+  "sourceLogArchive": {
+    "url": "https://api.github.com/repos/ecojust/Agent-OS/actions/runs/40630197321/logs",
+    "fileName": "font-geometry-40630197321-logs.zip",
+    "bytes": 470913,
+    "sha256": "0ce1d83827a029777e2868509cb79799c86e1024ecee975eb55629b99e7c93e4"
+  },
+  "entries": [
+    {
+      "matrixLabel": "30",
+      "sourceJob": {
+        "id": 122624549228,
+        "name": "emulator-tests (30)",
+        "url": "https://github.com/ecojust/Agent-OS/actions/runs/40630197321/job/122624549228",
+        "conclusion": "success"
+      },
+      "sourceLogMember": "emulator-tests (30)/10_Print Android failure details.txt",
+      "sourceLogMemberBytes": 1463,
+      "sourceLogMemberSha256": "7b6ea300e7f307c117345bdca94458bd0d42980e4b04a8bf54f9f846154caa85",
+      "sourceLineStart": 19,
+      "sourceLineCount": 1,
+      "file": "api30-summary.txt",
+      "bytes": 86,
+      "sha256": "8c7ef35639d4dae8e9b66da01d507bcad50b1091b31e4628812ccd3bd9fd2e5b",
+      "parsedFailureOrErrorEntries": 0
+    },
+    {
+      "matrixLabel": "31",
+      "sourceJob": {
+        "id": 122624549300,
+        "name": "emulator-tests (31)",
+        "url": "https://github.com/ecojust/Agent-OS/actions/runs/40630197321/job/122624549300",
+        "conclusion": "failure"
+      },
+      "sourceLogMember": "emulator-tests (31)/10_Print Android failure details.txt",
+      "sourceLogMemberBytes": 5247,
+      "sourceLogMemberSha256": "7bb5f1cc1283a62f1d6cddd5f6bb9a4457e68b68991113cd0d3d3906f8d17a32",
+      "sourceLineStart": 19,
+      "sourceLineCount": 27,
+      "file": "api31-failure.txt",
+      "bytes": 3870,
+      "sha256": "cc01b1dc4aa232b99e10cc8bb550b5d26427ec059686f9072d5df014f279ad9a",
+      "parsedFailureOrErrorEntries": 1,
+      "phase": "baseline_configuration",
+      "reportedActualFontScale": 1.0,
+      "geometrySourceLine": 26,
+      "geometry": {
+        "metricsBounds": [
+          0,
+          0,
+          320,
+          640
+        ],
+        "safeRect": [
+          0,
+          24,
+          320,
+          640
+        ],
+        "panelRect": [
+          12,
+          12,
+          308,
+          124
+        ],
+        "metricsStableInsets": [
+          0,
+          24,
+          0,
+          0
+        ],
+        "metricsVisibleInsets": [
+          0,
+          24,
+          0,
+          0
+        ],
+        "rootStableInsets": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "rootVisibleInsets": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "metricsStatusVisible": true,
+        "metricsNavigationVisible": false,
+        "rootInsetsPresent": true,
+        "rootStatusVisible": false,
+        "rootNavigationVisible": false,
+        "panelState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "titleState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "pauseState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "stopState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        }
+      }
+    },
+    {
+      "matrixLabel": "32",
+      "sourceJob": {
+        "id": 122624549335,
+        "name": "emulator-tests (32)",
+        "url": "https://github.com/ecojust/Agent-OS/actions/runs/40630197321/job/122624549335",
+        "conclusion": "failure"
+      },
+      "sourceLogMember": "emulator-tests (32)/10_Print Android failure details.txt",
+      "sourceLogMemberBytes": 5247,
+      "sourceLogMemberSha256": "58a38b03e0e891f659b639951183374a54744a31c51e131955820a83f00b4bbf",
+      "sourceLineStart": 19,
+      "sourceLineCount": 27,
+      "file": "api32-failure.txt",
+      "bytes": 3870,
+      "sha256": "47b0e45230f2d59d5be6e690cf608736c2e1a185eaa9102b5163b08c9b193b21",
+      "parsedFailureOrErrorEntries": 1,
+      "phase": "baseline_configuration",
+      "reportedActualFontScale": 1.0,
+      "geometrySourceLine": 26,
+      "geometry": {
+        "metricsBounds": [
+          0,
+          0,
+          320,
+          640
+        ],
+        "safeRect": [
+          0,
+          24,
+          320,
+          640
+        ],
+        "panelRect": [
+          12,
+          12,
+          308,
+          124
+        ],
+        "metricsStableInsets": [
+          0,
+          24,
+          0,
+          0
+        ],
+        "metricsVisibleInsets": [
+          0,
+          24,
+          0,
+          0
+        ],
+        "rootStableInsets": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "rootVisibleInsets": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "metricsStatusVisible": true,
+        "metricsNavigationVisible": false,
+        "rootInsetsPresent": true,
+        "rootStatusVisible": false,
+        "rootNavigationVisible": false,
+        "panelState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "titleState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "pauseState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "stopState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        }
+      }
+    },
+    {
+      "matrixLabel": "33",
+      "sourceJob": {
+        "id": 122624549258,
+        "name": "emulator-tests (33)",
+        "url": "https://github.com/ecojust/Agent-OS/actions/runs/40630197321/job/122624549258",
+        "conclusion": "failure"
+      },
+      "sourceLogMember": "emulator-tests (33)/10_Print Android failure details.txt",
+      "sourceLogMemberBytes": 5246,
+      "sourceLogMemberSha256": "6029fe2817b70bbfd199ea61a60207de6f47ed4735e7043f8a3b15fdd3a669af",
+      "sourceLineStart": 19,
+      "sourceLineCount": 27,
+      "file": "api33-failure.txt",
+      "bytes": 3869,
+      "sha256": "706876e9f0d9bee30f1d4eed54b604fc773418af6153433239f0986c1312d452",
+      "parsedFailureOrErrorEntries": 1,
+      "phase": "baseline_configuration",
+      "reportedActualFontScale": 1.0,
+      "geometrySourceLine": 26,
+      "geometry": {
+        "metricsBounds": [
+          0,
+          0,
+          320,
+          640
+        ],
+        "safeRect": [
+          0,
+          24,
+          320,
+          640
+        ],
+        "panelRect": [
+          12,
+          12,
+          308,
+          124
+        ],
+        "metricsStableInsets": [
+          0,
+          24,
+          0,
+          0
+        ],
+        "metricsVisibleInsets": [
+          0,
+          24,
+          0,
+          0
+        ],
+        "rootStableInsets": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "rootVisibleInsets": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "metricsStatusVisible": true,
+        "metricsNavigationVisible": false,
+        "rootInsetsPresent": true,
+        "rootStatusVisible": false,
+        "rootNavigationVisible": false,
+        "panelState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "titleState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "pauseState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "stopState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        }
+      }
+    },
+    {
+      "matrixLabel": "34",
+      "sourceJob": {
+        "id": 122624549340,
+        "name": "emulator-tests (34)",
+        "url": "https://github.com/ecojust/Agent-OS/actions/runs/40630197321/job/122624549340",
+        "conclusion": "failure"
+      },
+      "sourceLogMember": "emulator-tests (34)/10_Print Android failure details.txt",
+      "sourceLogMemberBytes": 5246,
+      "sourceLogMemberSha256": "537f8b37865af49405a2935fc48ce968e49ef9fd309af6fd26bc4ef7316ddea5",
+      "sourceLineStart": 19,
+      "sourceLineCount": 27,
+      "file": "api34-failure.txt",
+      "bytes": 3869,
+      "sha256": "fcac99c2d257af7cff44a7d620ef32618963b19883aa3c7dcf7f5e9b157e9e7b",
+      "parsedFailureOrErrorEntries": 1,
+      "phase": "baseline_configuration",
+      "reportedActualFontScale": 1.0,
+      "geometrySourceLine": 26,
+      "geometry": {
+        "metricsBounds": [
+          0,
+          0,
+          320,
+          640
+        ],
+        "safeRect": [
+          0,
+          24,
+          320,
+          640
+        ],
+        "panelRect": [
+          12,
+          12,
+          308,
+          124
+        ],
+        "metricsStableInsets": [
+          0,
+          24,
+          0,
+          0
+        ],
+        "metricsVisibleInsets": [
+          0,
+          24,
+          0,
+          0
+        ],
+        "rootStableInsets": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "rootVisibleInsets": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "metricsStatusVisible": true,
+        "metricsNavigationVisible": false,
+        "rootInsetsPresent": true,
+        "rootStatusVisible": false,
+        "rootNavigationVisible": false,
+        "panelState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "titleState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "pauseState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "stopState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        }
+      }
+    },
+    {
+      "matrixLabel": "35",
+      "sourceJob": {
+        "id": 122624549365,
+        "name": "emulator-tests (35)",
+        "url": "https://github.com/ecojust/Agent-OS/actions/runs/40630197321/job/122624549365",
+        "conclusion": "failure"
+      },
+      "sourceLogMember": "emulator-tests (35)/10_Print Android failure details.txt",
+      "sourceLogMemberBytes": 5248,
+      "sourceLogMemberSha256": "de4ba56d3a76e4b52a8a28c6d2a561a78dad5aef5ff5afb35948101145148900",
+      "sourceLineStart": 19,
+      "sourceLineCount": 27,
+      "file": "api35-failure.txt",
+      "bytes": 3871,
+      "sha256": "a9ab9d3b759b4ac3a301e4da4213d4733e5dd3bb1358f7c822ac4f34c516e582",
+      "parsedFailureOrErrorEntries": 1,
+      "phase": "baseline_configuration",
+      "reportedActualFontScale": 1.0,
+      "geometrySourceLine": 26,
+      "geometry": {
+        "metricsBounds": [
+          0,
+          0,
+          320,
+          640
+        ],
+        "safeRect": [
+          0,
+          24,
+          320,
+          592
+        ],
+        "panelRect": [
+          12,
+          12,
+          308,
+          124
+        ],
+        "metricsStableInsets": [
+          0,
+          24,
+          0,
+          48
+        ],
+        "metricsVisibleInsets": [
+          0,
+          24,
+          0,
+          48
+        ],
+        "rootStableInsets": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "rootVisibleInsets": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "metricsStatusVisible": true,
+        "metricsNavigationVisible": true,
+        "rootInsetsPresent": true,
+        "rootStatusVisible": false,
+        "rootNavigationVisible": false,
+        "panelState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "titleState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "pauseState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "stopState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        }
+      }
+    },
+    {
+      "matrixLabel": "36",
+      "sourceJob": {
+        "id": 122624549334,
+        "name": "emulator-tests (36)",
+        "url": "https://github.com/ecojust/Agent-OS/actions/runs/40630197321/job/122624549334",
+        "conclusion": "failure"
+      },
+      "sourceLogMember": "emulator-tests (36)/10_Print Android failure details.txt",
+      "sourceLogMemberBytes": 5248,
+      "sourceLogMemberSha256": "0872f03e387ee4f2d4bf07144bf065ee5751d016fa10e80f53d0de2ffe08c004",
+      "sourceLineStart": 19,
+      "sourceLineCount": 27,
+      "file": "api36-failure.txt",
+      "bytes": 3871,
+      "sha256": "71befba95d407d42b7be860d399dd49f1a86746342617a7e151661c4f372fa3b",
+      "parsedFailureOrErrorEntries": 1,
+      "phase": "baseline_configuration",
+      "reportedActualFontScale": 1.0,
+      "geometrySourceLine": 26,
+      "geometry": {
+        "metricsBounds": [
+          0,
+          0,
+          320,
+          640
+        ],
+        "safeRect": [
+          0,
+          24,
+          320,
+          592
+        ],
+        "panelRect": [
+          12,
+          12,
+          308,
+          124
+        ],
+        "metricsStableInsets": [
+          0,
+          24,
+          0,
+          48
+        ],
+        "metricsVisibleInsets": [
+          0,
+          24,
+          0,
+          48
+        ],
+        "rootStableInsets": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "rootVisibleInsets": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "metricsStatusVisible": true,
+        "metricsNavigationVisible": true,
+        "rootInsetsPresent": true,
+        "rootStatusVisible": false,
+        "rootNavigationVisible": false,
+        "panelState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "titleState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "pauseState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "stopState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        }
+      }
+    },
+    {
+      "matrixLabel": "37.0",
+      "sourceJob": {
+        "id": 122624549367,
+        "name": "emulator-tests (37.0)",
+        "url": "https://github.com/ecojust/Agent-OS/actions/runs/40630197321/job/122624549367",
+        "conclusion": "failure"
+      },
+      "sourceLogMember": "emulator-tests (37.0)/10_Print Android failure details.txt",
+      "sourceLogMemberBytes": 5341,
+      "sourceLogMemberSha256": "f2b688e13266441f63a916a856a49960f4e34deaec1ee0de53ed4142e61d833a",
+      "sourceLineStart": 19,
+      "sourceLineCount": 28,
+      "file": "api37.0-failure.txt",
+      "bytes": 3964,
+      "sha256": "0f8c25efb506b42fccdf8cda73b7976c0b8f4d5444ebcef25d2de8cde6aa1efe",
+      "parsedFailureOrErrorEntries": 1,
+      "phase": "baseline_configuration",
+      "reportedActualFontScale": 1.0,
+      "geometrySourceLine": 26,
+      "geometry": {
+        "metricsBounds": [
+          0,
+          0,
+          320,
+          640
+        ],
+        "safeRect": [
+          0,
+          24,
+          320,
+          640
+        ],
+        "panelRect": [
+          12,
+          12,
+          308,
+          124
+        ],
+        "metricsStableInsets": [
+          0,
+          24,
+          0,
+          0
+        ],
+        "metricsVisibleInsets": [
+          0,
+          24,
+          0,
+          0
+        ],
+        "rootStableInsets": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "rootVisibleInsets": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "metricsStatusVisible": true,
+        "metricsNavigationVisible": false,
+        "rootInsetsPresent": true,
+        "rootStatusVisible": false,
+        "rootNavigationVisible": false,
+        "panelState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "titleState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "pauseState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        },
+        "stopState": {
+          "attached": true,
+          "laidOut": true,
+          "layoutRequested": false,
+          "shown": true
+        }
+      }
+    }
+  ],
+  "scope": "Exact contiguous original Print Android failure details log excerpts, not separately downloaded or reparsed XML. Line numbers are one-based within each named ZIP member; excerpt bytes retain the original line endings. Parsed geometry is derived from the indicated original line; API30 has no failure geometry and none is inferred."
+}

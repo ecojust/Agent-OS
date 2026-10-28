@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "api": 36,
+  "runId": "1793160439590-e2474340",
+  "scope": "Dedicated synthetic Android fixture and verified empty application UI only",
+  "jvmTests": "No UI; no screenshot is claimed for JVM tests",
+  "tests": [
+    {
+      "schemaVersion": 1,
+      "api": 36,
+      "testClass": "dev.agentos.app.FontScaleControlWindowInstrumentedTest",
+      "testName": "realSystemFontScaleRebuildsControlsAndRevokesOldWindow",
+      "assertionResult": "fail",
+      "testResult": "fail",
+      "status": "fail",
+      "startedAt": 1793160439591,
+      "finishedAt": 1793160442835,
+      "failureClass": "AssertionError",
+      "captures": [
+        {
+          "stage": "font-scale-failed-before-setting-restoration",
+          "capturedAt": 1793160442634,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-36-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-3bfa4c9a-font-scale-failed-before-setting-restoration-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        },
+        {
+          "stage": "failed",
+          "capturedAt": 1793160442810,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-36-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-3bfa4c9a-failed-1.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    }
+  ]
+}

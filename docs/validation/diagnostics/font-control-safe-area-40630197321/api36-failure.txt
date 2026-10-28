@@ -1,0 +1,27 @@
+2026-10-28T04:07:25.8349078Z   | Report: app/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 16-_app-.xml
+2026-10-28T04:07:25.8350799Z   | Suite: dev.agentos.app.FontScaleControlWindowInstrumentedTest
+2026-10-28T04:07:25.8353093Z   | Test: dev.agentos.app.FontScaleControlWindowInstrumentedTest.realSystemFontScaleRebuildsControlsAndRevokesOldWindow
+2026-10-28T04:07:25.8354620Z   | Kind: failure / 
+2026-10-28T04:07:25.8355790Z   | java.lang.AssertionError: System font-scale assertion failed before restoration; phase=baseline_configuration,actualScale=1.0,paused=true,cancelled=false,pauseResumeCallbacks=0,stopCallbacks=0,dispatchAttempts=0
+2026-10-28T04:07:25.8358121Z   | at dev.agentos.app.FontScaleControlWindowInstrumentedTest.realSystemFontScaleRebuildsControlsAndRevokesOldWindow(FontScaleControlWindowInstrumentedTest.java:137)
+2026-10-28T04:07:25.8359237Z   | ... 33 trimmed
+2026-10-28T04:07:25.8362754Z   | Caused by: java.lang.AssertionError: The entire compact control window must fit within system-bar/cutout safe bounds: metricsBounds=Rect(0, 0 - 320, 640),metricsStableInsets=Insets{left=0, top=24, right=0, bottom=48},metricsVisibleInsets=Insets{left=0, top=24, right=0, bottom=48},metricsStatusVisible=true,metricsNavigationVisible=true,safeRect=Rect(0, 24 - 320, 592),panelRect=Rect(12, 12 - 308, 124),rootInsetsPresent=true,rootStableInsets=Insets{left=0, top=0, right=0, bottom=0},rootVisibleInsets=Insets{left=0, top=0, right=0, bottom=0},rootStatusVisible=false,rootNavigationVisible=false,panelState={attached=true,laidOut=true,layoutRequested=false,shown=true},titleState={attached=true,laidOut=true,layoutRequested=false,shown=true},pauseState={attached=true,laidOut=true,layoutRequested=false,shown=true},stopState={attached=true,laidOut=true,layoutRequested=false,shown=true}
+2026-10-28T04:07:25.8366031Z   | at org.junit.Assert.fail(Assert.java:89)
+2026-10-28T04:07:25.8366399Z   | at org.junit.Assert.assertTrue(Assert.java:42)
+2026-10-28T04:07:25.8367137Z   | at dev.agentos.app.FontScaleControlWindowInstrumentedTest.assertSafeGeometry(FontScaleControlWindowInstrumentedTest.java:370)
+2026-10-28T04:07:25.8368224Z   | at dev.agentos.app.FontScaleControlWindowInstrumentedTest.lambda$currentControls$7(FontScaleControlWindowInstrumentedTest.java:258)
+2026-10-28T04:07:25.8369211Z   | at dev.agentos.app.FontScaleControlWindowInstrumentedTest$$ExternalSyntheticLambda1.get(D8$$SyntheticClass:0)
+2026-10-28T04:07:25.8370166Z   | at dev.agentos.app.FontScaleControlWindowInstrumentedTest.lambda$onMain$10(FontScaleControlWindowInstrumentedTest.java:433)
+2026-10-28T04:07:25.8371251Z   | at dev.agentos.app.FontScaleControlWindowInstrumentedTest$$ExternalSyntheticLambda3.run(D8$$SyntheticClass:0)
+2026-10-28T04:07:25.8372262Z   | at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:524)
+2026-10-28T04:07:25.8372794Z   | at java.util.concurrent.FutureTask.run(FutureTask.java:317)
+2026-10-28T04:07:25.8373315Z   | at android.app.Instrumentation$SyncRunnable.run(Instrumentation.java:2616)
+2026-10-28T04:07:25.8373814Z   | at android.os.Handler.handleCallback(Handler.java:995)
+2026-10-28T04:07:25.8374242Z   | at android.os.Handler.dispatchMessage(Handler.java:103)
+2026-10-28T04:07:25.8374653Z   | at android.os.Looper.loopOnce(Looper.java:248)
+2026-10-28T04:07:25.8375030Z   | at android.os.Looper.loop(Looper.java:338)
+2026-10-28T04:07:25.8375445Z   | at android.app.ActivityThread.main(ActivityThread.java:9067)
+2026-10-28T04:07:25.8375877Z   | at java.lang.reflect.Method.invoke(Native Method)
+2026-10-28T04:07:25.8376392Z   | at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)
+2026-10-28T04:07:25.8376969Z   | at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:932)
+2026-10-28T04:07:25.8377439Z Parsed 1 Android reports; found 1 failure/error entries.

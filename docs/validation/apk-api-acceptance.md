@@ -1,8 +1,12 @@
 # 公开 APK 的 API 行为覆盖盘点
 
-当前完整通过基线为源码 `14c621aac92a4412a29b08e35ddc34f23d666821`。本表将公开 APK 能力与已有测试对应，是代码与覆盖范围盘点，不是新增的冻结验收合同，也不构成通过证明。具体结果须核对同一源码的原始测试结果、截图清单及运行范围；专项通过不能替代完整回归。
+当前完整通过基线为源码 `4b87c9a28662772ce8aff50fdd95f31fd9402b07`。本表将公开 APK 能力与已有测试对应，是代码与覆盖范围盘点，不是新增的冻结验收合同，也不构成通过证明。具体结果须核对同一源码的原始测试结果、截图清单及运行范围；专项通过不能替代完整回归。
 
-源码14c的[完整运行40647046321](https://github.com/ecojust/Agent-OS/actions/runs/40647046321)在八档各执行247项，**1976/1976通过，零失败、错误、跳过、额外用例、不可读和缺失**。[归档](../../screenshots/40647046321-1/manifest.json)4241载荷、46,210,103字节、2233张实际PNG（2229张320×640、4张831×1662），完整集合、大小/SHA-256、逐案／JUnit摘要、原日志及247个精确源码身份均独立核验。1076条blocked保留；24次安全标志临时清除仅既有空合成界面例外，8份性能诊断通过仍非预算验收。两个字体用例在本次完整矩阵中也均8/8通过，Activity新增32条保护性未尝试捕获无PNG；不将专项或不同源码结果拼接。
+源码4b87的[完整运行40664625632](https://github.com/ecojust/Agent-OS/actions/runs/40664625632)在八档各执行249项，**1992/1992通过，零失败、错误、跳过、额外用例、不可读和缺失**。[归档](../../screenshots/40664625632-1/manifest.json)4255载荷、46,071,693字节、2231张实际PNG（2227张320×640、4张831×1662），完整文件集合、大小/SHA-256、PNG解码、逐案JSON/JUnit摘要和冻结的249个精确身份均独立核验。1109条blocked保留；新回执两案共16/16通过、32条保护性未尝试采集、零PNG。既有真实三次写操作方法的新增回执断言8/8通过；24次旧空界面安全标志例外范围不变，8份性能诊断通过仍非预算验收。
+
+同4b87的[37.556秒普通录像](../../screenshots/demos/40664692440-1/demo.mp4)及[清单](../../screenshots/demos/40664692440-1/manifest.json)已核验，458,452字节、13阶段及8确认通过，保持安全标志。它不打开受保护回执页，独立回执验证范围见[专项说明](task-action-receipts.md)。以下历史结果保留各自源码。
+
+此前源码14c的[完整运行40647046321](https://github.com/ecojust/Agent-OS/actions/runs/40647046321)在八档各执行247项，**1976/1976通过，零失败、错误、跳过、额外用例、不可读和缺失**。[归档](../../screenshots/40647046321-1/manifest.json)4241载荷、46,210,103字节、2233张实际PNG（2229张320×640、4张831×1662），完整集合、大小/SHA-256、逐案／JUnit摘要、原日志及247个精确源码身份均独立核验。1076条blocked保留；24次安全标志临时清除仅既有空合成界面例外，8份性能诊断通过仍非预算验收。两个字体用例在本次完整矩阵中也均8/8通过，Activity新增32条保护性未尝试捕获无PNG；不将专项或不同源码结果拼接。
 
 准确14c的[36.885秒普通录像](../../screenshots/demos/40646472832-1/demo.mp4)及[清单](../../screenshots/demos/40646472832-1/manifest.json)已核验，440,347字节，13阶段及8确认通过、安全标志保留，使用本地合成模型。视频不执行字体、熄屏或受保护页面用例，不代替它们，也不代表真机、真实模型或ROM验收。
 
@@ -32,6 +36,7 @@
 | 真实系统字号1.0→1.3后服务控制窗重建，旧窗口失效，并恢复原字体设置与实际配置 | [FontScaleControlWindowInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/FontScaleControlWindowInstrumentedTest.java)：`realSystemFontScaleRebuildsControlsAndRevokesOldWindow` | 14c专项与完整回归内该用例均8/8通过；仅该字号样本、服务控件与合成 `RunControl`，按钮 `performClick()` 不证明物理命中；不覆盖主Activity、旋转或实际读屏服务 |
 | 主界面真实系统字体重建保留同profile内存草稿，主动关闭重开丢弃未保存内容 | [MainActivityFontScaleInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/MainActivityFontScaleInstrumentedTest.java)：`realSystemFontScaleRecreatesSecureActivityAndRetainsOnlyInMemoryDraft` | 14c专项及完整回归八档均8/8；安全窗口始终保留，不尝试PNG；不覆盖进程死亡、所有字号、旋转或读屏服务 |
 | 连续导航模式只允许已声明的普通导航省去逐次确认 | [ContinuousNavigationInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/ContinuousNavigationInstrumentedTest.java)：`launchScrollAndHomeChangeTheRealUiWithoutAnApproval`、`textClickAndBackStillRequireDistinctApprovalsInNavigationMode`、`rejectingInputCannotBeBypassedWithAnyNavigationTool` | 点击、输入与返回仍需确认，不代表任意连续自动操作 |
+| 操作回执区分未提交、系统接受和未知，旧回调不覆盖新任务 | [TaskActionReceiptsInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/TaskActionReceiptsInstrumentedTest.java)：真实拒绝与只读保护、停止未知及替换/离页/清空两案 | 16/16通过；系统接受仍不代表目标完成，32条保护性未尝试记录无PNG；未新增工具或重放能力 |
 | 任务诊断由用户预览／复制，旧预览不能操作替代任务 | [TaskDiagnosticsInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/TaskDiagnosticsInstrumentedTest.java)：`activePreviewIsFrozenRedactedExplicitlyCopiedAndCanStopItsOriginalTask`、`completedCodeSurvivesButClearReplacementAndLeavingInvalidateOldDialogActions` | 清空前确认预览已真实获得焦点，不覆盖同帧快速显示／关闭；诊断与预算数字不代表性能预算或完成动作数量 |
 
 ## 实际熄屏停止：专项及完整套件中的八档用例通过

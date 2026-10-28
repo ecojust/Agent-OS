@@ -1,0 +1,712 @@
+{
+  "schemaVersion": 1,
+  "kind": "android-emulator-test-evidence",
+  "archivedAt": "2026-10-28T02:14:57.888542+00:00",
+  "sourceRun": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 40618062095,
+    "attempt": 1,
+    "commit": "cf5139ceb2d657cc48e4f78a8e766ef7dbd9d5dd",
+    "event": "workflow_dispatch",
+    "branch": "agent/control-layout-regression",
+    "conclusion": "failure",
+    "finishedAt": "2026-10-28T02:00:37Z",
+    "url": "https://github.com/ecojust/Agent-OS/actions/runs/40618062095"
+  },
+  "expectedMatrixLabels": [
+    "30",
+    "31",
+    "32",
+    "33",
+    "34",
+    "35",
+    "36",
+    "37.0"
+  ],
+  "apis": [
+    {
+      "apiLevel": 30,
+      "matrixLabel": "30",
+      "jobConclusion": "failure",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40618062095/job/122585128845",
+      "captureStatus": "collected",
+      "screenshotCount": 4,
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 1487,
+          "sha256": "bb4adaf52b3e60c62dd9d855ea3462a800ab958dec94b998fb059093f1f0cfc9"
+        },
+        {
+          "path": "screenshots/api-30-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-68976d6b-failed-3.png",
+          "bytes": 23789,
+          "sha256": "48993d288fec633c4fc7a2b260aceea9ca2ce59e40e3e06414ad63d148a0ee2d"
+        },
+        {
+          "path": "screenshots/api-30-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-68976d6b-owned-control-accessibility-failed-before-cleanup-2.png",
+          "bytes": 29318,
+          "sha256": "87c20cb9ef13334b240cb4ae7928d67887fcc9b16f8b73592d081cda0a4e7e98"
+        },
+        {
+          "path": "screenshots/api-30-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-68976d6b-owned-control-status-exposes-current-waiting-state-1.png",
+          "bytes": 28451,
+          "sha256": "c5c797d5826d0a8268bfd4e572198266528c548d7883f27bdf5f08fea0e70b22"
+        },
+        {
+          "path": "screenshots/api-30-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-68976d6b-real-owned-window-identity-and-lease-match-0.png",
+          "bytes": 28451,
+          "sha256": "c5c797d5826d0a8268bfd4e572198266528c548d7883f27bdf5f08fea0e70b22"
+        },
+        {
+          "path": "screenshots/api-30-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-68976d6b.json",
+          "bytes": 1980,
+          "sha256": "faac82c29acaeb4ee0797e9060297664f42ebae088cbaeb13ccb95238ce36faf"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 2441,
+          "sha256": "67c908907b3520d6be4fb61c2df9669e53b32f5d5817134a012acb39ded3789b"
+        }
+      ],
+      "diagnosticResult": "failed",
+      "gradleExitCode": 1,
+      "actualSdkInt": 30,
+      "junit": {
+        "reports": 1,
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "unreadableReports": 0,
+        "selection": "dev.agentos.app.OwnedControlWindowInstrumentedTest#ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow",
+        "selectedTests": 1,
+        "unexpectedTests": 0
+      },
+      "recordedTests": 1,
+      "testsWithScreenshots": 1,
+      "testsWithoutScreenshots": 0,
+      "unrecordedTests": 0
+    },
+    {
+      "apiLevel": 31,
+      "matrixLabel": "31",
+      "jobConclusion": "success",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40618062095/job/122585128720",
+      "captureStatus": "collected",
+      "screenshotCount": 4,
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 1489,
+          "sha256": "924386163acc5e9888c0f0f02497772ed75e13507ae88a9f7d754e3a4a40b180"
+        },
+        {
+          "path": "screenshots/api-31-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-e00f7cb5-finished-3.png",
+          "bytes": 23697,
+          "sha256": "558d2cdfa408352663c3430c865de9366713008cf60773f76609c74cf970905b"
+        },
+        {
+          "path": "screenshots/api-31-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-e00f7cb5-owned-control-status-exposes-current-paused-state-2.png",
+          "bytes": 28405,
+          "sha256": "e57dfffb5bb0cd1dac8e25e8b6949d9a96aba31fa24982c9801f2ef9745d4be5"
+        },
+        {
+          "path": "screenshots/api-31-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-e00f7cb5-owned-control-status-exposes-current-waiting-state-1.png",
+          "bytes": 28651,
+          "sha256": "a1c0d8104e79fea5b1c78078d315fca91b100d366d82f5897db18ab4b3388995"
+        },
+        {
+          "path": "screenshots/api-31-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-e00f7cb5-real-owned-window-identity-and-lease-match-0.png",
+          "bytes": 27908,
+          "sha256": "4373343fe3801a451c148e3e58b1cdda785f2a555af74871af4d95bb6b39513b"
+        },
+        {
+          "path": "screenshots/api-31-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-e00f7cb5.json",
+          "bytes": 1948,
+          "sha256": "6a41db51f88aeab9886606c0a74a7b158acf078382f8b505488565088a3ebcc6"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 2405,
+          "sha256": "ffa14bc82ffebe41a5b6a8699c88e6a6e66108a4c8cc5071e3729e53e3d3fdca"
+        }
+      ],
+      "diagnosticResult": "passed",
+      "gradleExitCode": 0,
+      "actualSdkInt": 31,
+      "junit": {
+        "reports": 1,
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "unreadableReports": 0,
+        "selection": "dev.agentos.app.OwnedControlWindowInstrumentedTest#ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow",
+        "selectedTests": 1,
+        "unexpectedTests": 0
+      },
+      "recordedTests": 1,
+      "testsWithScreenshots": 1,
+      "testsWithoutScreenshots": 0,
+      "unrecordedTests": 0
+    },
+    {
+      "apiLevel": 32,
+      "matrixLabel": "32",
+      "jobConclusion": "success",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40618062095/job/122585128999",
+      "captureStatus": "collected",
+      "screenshotCount": 4,
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 1489,
+          "sha256": "b36d6ffa914011ac7a405138af7965c1e4d936b4be1b1ca86a3a2f73e6546839"
+        },
+        {
+          "path": "screenshots/api-32-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-e88b0f91-finished-3.png",
+          "bytes": 23697,
+          "sha256": "f89e725c2b581e015cf069437a8c28c457f790db03b68543fa14419f58cd15b9"
+        },
+        {
+          "path": "screenshots/api-32-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-e88b0f91-owned-control-status-exposes-current-paused-state-2.png",
+          "bytes": 28569,
+          "sha256": "f1f2efba8935b341346d3affe14535710991b971b49be71de7ca924de33cfccd"
+        },
+        {
+          "path": "screenshots/api-32-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-e88b0f91-owned-control-status-exposes-current-waiting-state-1.png",
+          "bytes": 27677,
+          "sha256": "2888fd75d7b977552992d71b7c814fb8697583d0b7b699038f161117c542e666"
+        },
+        {
+          "path": "screenshots/api-32-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-e88b0f91-real-owned-window-identity-and-lease-match-0.png",
+          "bytes": 27677,
+          "sha256": "2888fd75d7b977552992d71b7c814fb8697583d0b7b699038f161117c542e666"
+        },
+        {
+          "path": "screenshots/api-32-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-e88b0f91.json",
+          "bytes": 1948,
+          "sha256": "13e75a1f4387a53f7c80440a09c800aa841314b5b2ff763e6c164e7e3f31f61c"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 2405,
+          "sha256": "76d4d422c670348c64ef252235408a91c77b1d675152d584137743299568da8f"
+        }
+      ],
+      "diagnosticResult": "passed",
+      "gradleExitCode": 0,
+      "actualSdkInt": 32,
+      "junit": {
+        "reports": 1,
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "unreadableReports": 0,
+        "selection": "dev.agentos.app.OwnedControlWindowInstrumentedTest#ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow",
+        "selectedTests": 1,
+        "unexpectedTests": 0
+      },
+      "recordedTests": 1,
+      "testsWithScreenshots": 1,
+      "testsWithoutScreenshots": 0,
+      "unrecordedTests": 0
+    },
+    {
+      "apiLevel": 33,
+      "matrixLabel": "33",
+      "jobConclusion": "success",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40618062095/job/122585128818",
+      "captureStatus": "collected",
+      "screenshotCount": 4,
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 1489,
+          "sha256": "c5e775f75efbc24ceba45c22596c9ee7fa7314db6e9eb75b70b28ffae06bf8b9"
+        },
+        {
+          "path": "screenshots/api-33-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-7bbce005-finished-3.png",
+          "bytes": 23838,
+          "sha256": "685197139b9b5612a52a433b8ed7fe9873378f0e3b06de82b95e7710705dfec9"
+        },
+        {
+          "path": "screenshots/api-33-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-7bbce005-owned-control-status-exposes-current-paused-state-2.png",
+          "bytes": 28966,
+          "sha256": "cb66ffa4eda80ead64c0f8f7d5bc3f0b41be59bd5647d26aeee1f91b4803b6de"
+        },
+        {
+          "path": "screenshots/api-33-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-7bbce005-owned-control-status-exposes-current-waiting-state-1.png",
+          "bytes": 28056,
+          "sha256": "21f454a7608448693b6f0b431cc1d71c52660558c4a4919ffa7d74a4f03fc0ee"
+        },
+        {
+          "path": "screenshots/api-33-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-7bbce005-real-owned-window-identity-and-lease-match-0.png",
+          "bytes": 28056,
+          "sha256": "21f454a7608448693b6f0b431cc1d71c52660558c4a4919ffa7d74a4f03fc0ee"
+        },
+        {
+          "path": "screenshots/api-33-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-7bbce005.json",
+          "bytes": 1948,
+          "sha256": "067bc35b85c6c113c1742038cfff04ca9d947d74583283056279cd842e10a868"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 2405,
+          "sha256": "4e2222a6077537863220ccb0e518e5b9fbb306bb849503e5abc2102f1cb764a5"
+        }
+      ],
+      "diagnosticResult": "passed",
+      "gradleExitCode": 0,
+      "actualSdkInt": 33,
+      "junit": {
+        "reports": 1,
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "unreadableReports": 0,
+        "selection": "dev.agentos.app.OwnedControlWindowInstrumentedTest#ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow",
+        "selectedTests": 1,
+        "unexpectedTests": 0
+      },
+      "recordedTests": 1,
+      "testsWithScreenshots": 1,
+      "testsWithoutScreenshots": 0,
+      "unrecordedTests": 0
+    },
+    {
+      "apiLevel": 34,
+      "matrixLabel": "34",
+      "jobConclusion": "success",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40618062095/job/122585128820",
+      "captureStatus": "collected",
+      "screenshotCount": 4,
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 1489,
+          "sha256": "e40e891a2a44379e0eb6690a4b9d59e6560c0c4141d7ffa31a6e5e6296c6992e"
+        },
+        {
+          "path": "screenshots/api-34-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-bdc677f2-finished-3.png",
+          "bytes": 23941,
+          "sha256": "9478eb481c0f1ed0d7ac9acb80c2fe709116ba37514732e5a2b9ec8d74db3982"
+        },
+        {
+          "path": "screenshots/api-34-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-bdc677f2-owned-control-status-exposes-current-paused-state-2.png",
+          "bytes": 29379,
+          "sha256": "93dbbafe7d1ddd35bdbf15439e548ea07ab77e1352a788cab42b288bdd81b134"
+        },
+        {
+          "path": "screenshots/api-34-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-bdc677f2-owned-control-status-exposes-current-waiting-state-1.png",
+          "bytes": 28485,
+          "sha256": "2c8aa035ffb76fe45a4c28bc716f0dd53f922c3c144c80db611667a7ecc18525"
+        },
+        {
+          "path": "screenshots/api-34-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-bdc677f2-real-owned-window-identity-and-lease-match-0.png",
+          "bytes": 28485,
+          "sha256": "2c8aa035ffb76fe45a4c28bc716f0dd53f922c3c144c80db611667a7ecc18525"
+        },
+        {
+          "path": "screenshots/api-34-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-bdc677f2.json",
+          "bytes": 1948,
+          "sha256": "cd26a9c9a9156fff6bff02b61ffab8555eb0b50531215eb43df5976cb1dc8ea2"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 2405,
+          "sha256": "36b99fa5f4513231f071897f89a398ee25ffe7a3f65ff85ee484cffc65fd31d2"
+        }
+      ],
+      "diagnosticResult": "passed",
+      "gradleExitCode": 0,
+      "actualSdkInt": 34,
+      "junit": {
+        "reports": 1,
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "unreadableReports": 0,
+        "selection": "dev.agentos.app.OwnedControlWindowInstrumentedTest#ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow",
+        "selectedTests": 1,
+        "unexpectedTests": 0
+      },
+      "recordedTests": 1,
+      "testsWithScreenshots": 1,
+      "testsWithoutScreenshots": 0,
+      "unrecordedTests": 0
+    },
+    {
+      "apiLevel": 35,
+      "matrixLabel": "35",
+      "jobConclusion": "success",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40618062095/job/122585128807",
+      "captureStatus": "collected",
+      "screenshotCount": 4,
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 1489,
+          "sha256": "d6e3f69f7836c87d2cefcb5d597709704ed77f96d08dcc12ecb7c25536887abe"
+        },
+        {
+          "path": "screenshots/api-35-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-a9c99de0-finished-3.png",
+          "bytes": 23389,
+          "sha256": "c25834b878a7d8ab4fbceeae58fdb527ecfd6f7311ff00be145412c9c6ab1080"
+        },
+        {
+          "path": "screenshots/api-35-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-a9c99de0-owned-control-status-exposes-current-paused-state-2.png",
+          "bytes": 29031,
+          "sha256": "d64150259322454e7e26936670e32e0b090b09e6adbf9716c0719c0f6707dd95"
+        },
+        {
+          "path": "screenshots/api-35-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-a9c99de0-owned-control-status-exposes-current-waiting-state-1.png",
+          "bytes": 29221,
+          "sha256": "cfaea8aa54dd4b992e4df6b6a61e5a94ba149803a43ec4e57ac1ef1da1907450"
+        },
+        {
+          "path": "screenshots/api-35-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-a9c99de0-real-owned-window-identity-and-lease-match-0.png",
+          "bytes": 28321,
+          "sha256": "4a1f8e7ebfd667e2867dd1f466ac5b7ad46f9dc63f3f58649610c2270d192083"
+        },
+        {
+          "path": "screenshots/api-35-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-a9c99de0.json",
+          "bytes": 1948,
+          "sha256": "423ad0feab1ecff98de455e8642a498d11e1f52aeb95dd62bba75938adf1c7cc"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 2405,
+          "sha256": "ebf52aa22dd82a9e2a4b34ebc5174ac6202d47e86a2b54f3843bdea10df47d00"
+        }
+      ],
+      "diagnosticResult": "passed",
+      "gradleExitCode": 0,
+      "actualSdkInt": 35,
+      "junit": {
+        "reports": 1,
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "unreadableReports": 0,
+        "selection": "dev.agentos.app.OwnedControlWindowInstrumentedTest#ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow",
+        "selectedTests": 1,
+        "unexpectedTests": 0
+      },
+      "recordedTests": 1,
+      "testsWithScreenshots": 1,
+      "testsWithoutScreenshots": 0,
+      "unrecordedTests": 0
+    },
+    {
+      "apiLevel": 36,
+      "matrixLabel": "36",
+      "jobConclusion": "success",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40618062095/job/122585128788",
+      "captureStatus": "collected",
+      "screenshotCount": 4,
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 1489,
+          "sha256": "6b992c2d5a8e462610d4ac5e6ce764d57ddff1e394d57694e6b1a0b3f2f5b200"
+        },
+        {
+          "path": "screenshots/api-36-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-cf5b5029-finished-3.png",
+          "bytes": 22871,
+          "sha256": "32c4dd25f5bf2a677d2a973a8ca4958f3fcf6bb4c8079d8e5e071737b567c19a"
+        },
+        {
+          "path": "screenshots/api-36-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-cf5b5029-owned-control-status-exposes-current-paused-state-2.png",
+          "bytes": 28512,
+          "sha256": "b1bf6f4b6bc63b7968db671ed902e87c6aa9d24d3b83b2afd6cdd9dd79e407c8"
+        },
+        {
+          "path": "screenshots/api-36-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-cf5b5029-owned-control-status-exposes-current-waiting-state-1.png",
+          "bytes": 28727,
+          "sha256": "495cbfe4c10dfeb007d7803e8f98a297ed3190f94dd2c4d4a7ea1e4d6a89627d"
+        },
+        {
+          "path": "screenshots/api-36-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-cf5b5029-real-owned-window-identity-and-lease-match-0.png",
+          "bytes": 27821,
+          "sha256": "7d83b42825830570665712bf623dd5d6028ec6d659dd23c092ba90ae46625cf0"
+        },
+        {
+          "path": "screenshots/api-36-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-cf5b5029.json",
+          "bytes": 1948,
+          "sha256": "6b784225dd1289cdffcbb3f14fff8bce9766067bcc82adc8e788a1a6f2da54a6"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 2405,
+          "sha256": "fcb64957d9ef3b613f58c53935cb688b6ba1ab39992a71b59d867b0df9bcbfea"
+        }
+      ],
+      "diagnosticResult": "passed",
+      "gradleExitCode": 0,
+      "actualSdkInt": 36,
+      "junit": {
+        "reports": 1,
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "unreadableReports": 0,
+        "selection": "dev.agentos.app.OwnedControlWindowInstrumentedTest#ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow",
+        "selectedTests": 1,
+        "unexpectedTests": 0
+      },
+      "recordedTests": 1,
+      "testsWithScreenshots": 1,
+      "testsWithoutScreenshots": 0,
+      "unrecordedTests": 0
+    },
+    {
+      "apiLevel": 37,
+      "matrixLabel": "37.0",
+      "jobConclusion": "success",
+      "jobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40618062095/job/122585129027",
+      "captureStatus": "collected",
+      "screenshotCount": 4,
+      "files": [
+        {
+          "path": "capture.json",
+          "bytes": 1491,
+          "sha256": "9fc4fcbb94816a8eb28bdc673f20ca2d50d3b5c7e1e52fb9c2fa0c15b45def16"
+        },
+        {
+          "path": "screenshots/api-37-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-4af20a98-finished-3.png",
+          "bytes": 23238,
+          "sha256": "33d4059cfdd276998634df79e70df46d4644785583618ce2f98091da9f36d3d5"
+        },
+        {
+          "path": "screenshots/api-37-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-4af20a98-owned-control-status-exposes-current-paused-state-2.png",
+          "bytes": 28952,
+          "sha256": "07e2745cdc56c12e706898f1bd91bfaf14c94f86cdff0cceb85a2641aacf9880"
+        },
+        {
+          "path": "screenshots/api-37-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-4af20a98-owned-control-status-exposes-current-waiting-state-1.png",
+          "bytes": 28009,
+          "sha256": "17b400f0a11c6afd1b49e6cfe07ac2d9e2416cddcd0b92eae1b2bafed574adcc"
+        },
+        {
+          "path": "screenshots/api-37-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-4af20a98-real-owned-window-identity-and-lease-match-0.png",
+          "bytes": 28009,
+          "sha256": "17b400f0a11c6afd1b49e6cfe07ac2d9e2416cddcd0b92eae1b2bafed574adcc"
+        },
+        {
+          "path": "screenshots/api-37-ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow-4af20a98.json",
+          "bytes": 1948,
+          "sha256": "2ef8d481279debd71220fe20bd4db4591565ce6e648c1a887389a3a4396ffc54"
+        },
+        {
+          "path": "screenshots/manifest.json",
+          "bytes": 2405,
+          "sha256": "f1d95b94c67701697c33fbfe39f612f36e6e44e0ff44456614c459700d9919e7"
+        }
+      ],
+      "diagnosticResult": "passed",
+      "gradleExitCode": 0,
+      "actualSdkInt": 37,
+      "junit": {
+        "reports": 1,
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "unreadableReports": 0,
+        "selection": "dev.agentos.app.OwnedControlWindowInstrumentedTest#ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow",
+        "selectedTests": 1,
+        "unexpectedTests": 0
+      },
+      "recordedTests": 1,
+      "testsWithScreenshots": 1,
+      "testsWithoutScreenshots": 0,
+      "unrecordedTests": 0
+    }
+  ],
+  "executionScope": "control-status-diagnostic",
+  "testSelection": "dev.agentos.app.OwnedControlWindowInstrumentedTest#ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow",
+  "performanceDiagnostics": {
+    "kind": "performance-diagnostic-attachments",
+    "diagnosticOnly": true,
+    "budgetAcceptance": false,
+    "scope": "Raw instrumented emulator CPU/PSS and stage events; excludes fixture-process CPU/PSS. Not screenshots or device performance acceptance.",
+    "apis": [
+      {
+        "matrixLabel": "30",
+        "apiLevel": 30,
+        "jobConclusion": "failure",
+        "captureStatus": "invalid",
+        "captureError": "invalid_report",
+        "diagnosticStatus": null,
+        "files": [
+          {
+            "path": "capture.json",
+            "bytes": 614,
+            "sha256": "9b158099b0d46533b929e4fa443e7124f578af1b53b7bcfba7cb007fb9fd1ab4"
+          }
+        ],
+        "actualSdkInt": 30,
+        "gradleExitCode": 1,
+        "declaredCiProfile": "default_x86_64_swiftshader_animation_one",
+        "artifactId": 12786112549
+      },
+      {
+        "matrixLabel": "31",
+        "apiLevel": 31,
+        "jobConclusion": "success",
+        "captureStatus": "invalid",
+        "captureError": "invalid_report",
+        "diagnosticStatus": null,
+        "files": [
+          {
+            "path": "capture.json",
+            "bytes": 614,
+            "sha256": "06c481a55a4f6ae43097e0904e0e2bfbbf4fc912dffa140bcbc72f793a12fa14"
+          }
+        ],
+        "actualSdkInt": 31,
+        "gradleExitCode": 0,
+        "declaredCiProfile": "default_x86_64_swiftshader_animation_one",
+        "artifactId": 12785828131
+      },
+      {
+        "matrixLabel": "32",
+        "apiLevel": 32,
+        "jobConclusion": "success",
+        "captureStatus": "invalid",
+        "captureError": "invalid_report",
+        "diagnosticStatus": null,
+        "files": [
+          {
+            "path": "capture.json",
+            "bytes": 614,
+            "sha256": "a43fe2ef668d60344b7ba404cdb65af53dff57124df202b3610143482b5eeac7"
+          }
+        ],
+        "actualSdkInt": 32,
+        "gradleExitCode": 0,
+        "declaredCiProfile": "default_x86_64_swiftshader_animation_one",
+        "artifactId": 12786072689
+      },
+      {
+        "matrixLabel": "33",
+        "apiLevel": 33,
+        "jobConclusion": "success",
+        "captureStatus": "invalid",
+        "captureError": "invalid_report",
+        "diagnosticStatus": null,
+        "files": [
+          {
+            "path": "capture.json",
+            "bytes": 614,
+            "sha256": "7bf2981cbb63ac532d29385fe05533a743ee684391e5ea236f0853e38343dac7"
+          }
+        ],
+        "actualSdkInt": 33,
+        "gradleExitCode": 0,
+        "declaredCiProfile": "default_x86_64_swiftshader_animation_one",
+        "artifactId": 12785239774
+      },
+      {
+        "matrixLabel": "34",
+        "apiLevel": 34,
+        "jobConclusion": "success",
+        "captureStatus": "invalid",
+        "captureError": "invalid_report",
+        "diagnosticStatus": null,
+        "files": [
+          {
+            "path": "capture.json",
+            "bytes": 614,
+            "sha256": "8d50eaf8c7c4daf33171661a87f7db66cb97a7478926e4442570ca8dee410c93"
+          }
+        ],
+        "actualSdkInt": 34,
+        "gradleExitCode": 0,
+        "declaredCiProfile": "default_x86_64_swiftshader_animation_one",
+        "artifactId": 12785559346
+      },
+      {
+        "matrixLabel": "35",
+        "apiLevel": 35,
+        "jobConclusion": "success",
+        "captureStatus": "invalid",
+        "captureError": "invalid_report",
+        "diagnosticStatus": null,
+        "files": [
+          {
+            "path": "capture.json",
+            "bytes": 614,
+            "sha256": "c685b06c0ffed3ade1c528141dd7138971ec3d52df23ac3fb483803050433d95"
+          }
+        ],
+        "actualSdkInt": 35,
+        "gradleExitCode": 0,
+        "declaredCiProfile": "default_x86_64_swiftshader_animation_one",
+        "artifactId": 12785638114
+      },
+      {
+        "matrixLabel": "36",
+        "apiLevel": 36,
+        "jobConclusion": "success",
+        "captureStatus": "invalid",
+        "captureError": "invalid_report",
+        "diagnosticStatus": null,
+        "files": [
+          {
+            "path": "capture.json",
+            "bytes": 614,
+            "sha256": "99cfa42bea3f468442737a4e2e5c879293e4264f14bba45c2d7994fb8aa22590"
+          }
+        ],
+        "actualSdkInt": 36,
+        "gradleExitCode": 0,
+        "declaredCiProfile": "default_x86_64_swiftshader_animation_one",
+        "artifactId": 12786222385
+      },
+      {
+        "matrixLabel": "37.0",
+        "apiLevel": 37,
+        "jobConclusion": "success",
+        "captureStatus": "invalid",
+        "captureError": "invalid_report",
+        "diagnosticStatus": null,
+        "files": [
+          {
+            "path": "capture.json",
+            "bytes": 616,
+            "sha256": "b3651d59d2cd167f3c63c36a69710987a6d1e54e4667e29ceca3e313a4556187"
+          }
+        ],
+        "actualSdkInt": 37,
+        "gradleExitCode": 0,
+        "declaredCiProfile": "default_x86_64_swiftshader_animation_one",
+        "artifactId": 12786670032
+      }
+    ]
+  },
+  "jvm": {
+    "screenshotStatus": "not_applicable",
+    "reason": "JVM tests have no device UI",
+    "buildJobConclusion": "success"
+  },
+  "scope": "Development branch evidence awaiting review; not mainline acceptance. Fixed control-status diagnostic only: one selected test per API. Other suite tests were not selected and receive no passing status; this cannot replace a full regression.",
+  "fileCount": 64,
+  "totalBytes": 923315,
+  "expectedTestsPerApi": 1,
+  "expectedTests": 8,
+  "diagnosticCaseCounts": {
+    "passed": 7,
+    "failed": 1,
+    "unverified": 0
+  },
+  "fullSuiteAcceptance": false,
+  "archiveMode": "review_branch",
+  "mainlineAcceptance": false
+}

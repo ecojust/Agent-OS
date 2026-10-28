@@ -25,16 +25,19 @@ QUALIFICATION_TITLE = "Android checks [task-qualification-diagnostic]"
 CONTROL_STATUS_TITLE = "Android checks [control-status-diagnostic]"
 SCREEN_OFF_TITLE = "Android checks [screen-off-diagnostic]"
 TASK_REPORT_FOCUS_TITLE = "Android checks [task-report-focus-diagnostic]"
+FONT_SCALE_TITLE = "Android checks [font-scale-diagnostic]"
 DIAGNOSTIC_TITLES = {DIAGNOSTIC_TITLE: android_evidence.DIAGNOSTIC_SCOPE,
                      QUALIFICATION_TITLE: android_evidence.QUALIFICATION_SCOPE,
                      CONTROL_STATUS_TITLE: android_evidence.CONTROL_STATUS_SCOPE,
                      SCREEN_OFF_TITLE: android_evidence.SCREEN_OFF_SCOPE,
-                     TASK_REPORT_FOCUS_TITLE: android_evidence.TASK_REPORT_FOCUS_SCOPE}
+                     TASK_REPORT_FOCUS_TITLE: android_evidence.TASK_REPORT_FOCUS_SCOPE,
+                     FONT_SCALE_TITLE: android_evidence.FONT_SCALE_SCOPE}
 DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
                     android_evidence.QUALIFICATION_SCOPE: "Task Qualification",
                     android_evidence.CONTROL_STATUS_SCOPE: "Control Status",
                     android_evidence.SCREEN_OFF_SCOPE: "Screen Off",
-                    android_evidence.TASK_REPORT_FOCUS_SCOPE: "Task Report Focus"}
+                    android_evidence.TASK_REPORT_FOCUS_SCOPE: "Task Report Focus",
+                    android_evidence.FONT_SCALE_SCOPE: "Font Scale"}
 
 
 def android_execution_scope(run: dict) -> str:

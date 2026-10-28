@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "api": 33,
+  "runId": "1793161237620-ee745f28",
+  "scope": "Dedicated synthetic Android fixture and verified empty application UI only",
+  "jvmTests": "No UI; no screenshot is claimed for JVM tests",
+  "tests": [
+    {
+      "schemaVersion": 1,
+      "api": 33,
+      "testClass": "dev.agentos.app.FontScaleControlWindowInstrumentedTest",
+      "testName": "realSystemFontScaleRebuildsControlsAndRevokesOldWindow",
+      "assertionResult": "fail",
+      "testResult": "fail",
+      "status": "fail",
+      "startedAt": 1793161237621,
+      "finishedAt": 1793161250741,
+      "failureClass": "AssertionError",
+      "captures": [
+        {
+          "stage": "real-system-font-scale-1_0-paused-controls",
+          "capturedAt": 1793161240321,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-33-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-c5df6d35-real-system-font-scale-1_0-paused-controls-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        },
+        {
+          "stage": "real-system-font-scale-1_3-new-window-old-controls-inert",
+          "capturedAt": 1793161240626,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-33-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-c5df6d35-real-system-font-scale-1_3-new-window-old-controls-inert-1.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        },
+        {
+          "stage": "enlarged-current-buttons-reach-synthetic-pause-resume-stop",
+          "capturedAt": 1793161240677,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-33-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-c5df6d35-enlarged-current-buttons-reach-synthetic-pause-resume-stop-2.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        },
+        {
+          "stage": "failed",
+          "capturedAt": 1793161250719,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-33-realSystemFontScaleRebuildsControlsAndRevokesOldWindow-c5df6d35-failed-3.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    }
+  ]
+}

@@ -25,14 +25,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 已实现控制窗全局安全区域定位，统一显示/拖动/重建并保留旧所有者保护；受控大窗口样本按整数投影重新推导。测试APK与lint33秒通过、独立审查通过，云端专项/1968项全套与新版录像待执行；两轮原失败保留，进度45%。
+**本次更新：** 安全区域修正b6fd：拖动/审批专项8/8通过，字体专项4/8通过、低四档在原字体恢复时失败并完整保留。已归档34.284秒真实视频及专项PNG；正在修正测试清理，1968项全套尚未启动，检查点45%。
 
-**记录时间：** 2026-10-28T04:16:39Z
+**记录时间：** 2026-10-28T04:31:00Z
 
-[最近测试截图与清单](screenshots/40630197321-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40630197321)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40631510591-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40631510591)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/40625513047-1/demo.mp4) · [录制与验证清单](screenshots/demos/40625513047-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40625513047)。
-录制版本：[`5c71d4a48`](https://github.com/ecojust/Agent-OS/commit/5c71d4a485de8806a4436db02bfc72e43fc68670)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/40631598544-1/demo.mp4) · [录制与验证清单](screenshots/demos/40631598544-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40631598544)。
+录制版本：[`b6fd6243f`](https://github.com/ecojust/Agent-OS/commit/b6fd6243f11f1660aa496be10e09e980b005021c)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 | 检查点 | 状态 |
 | --- | --- |

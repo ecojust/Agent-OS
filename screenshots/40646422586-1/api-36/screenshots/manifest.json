@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "api": 36,
+  "runId": "1793170507736-016fa4f1",
+  "scope": "Dedicated synthetic Android fixture and verified empty application UI only",
+  "jvmTests": "No UI; no screenshot is claimed for JVM tests",
+  "tests": [
+    {
+      "schemaVersion": 1,
+      "api": 36,
+      "testClass": "dev.agentos.app.MainActivityFontScaleInstrumentedTest",
+      "testName": "realSystemFontScaleRecreatesSecureActivityAndRetainsOnlyInMemoryDraft",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793170507738,
+      "finishedAt": 1793170514557,
+      "captures": [
+        {
+          "stage": "secure-main-activity-font-1_0-memory-draft",
+          "capturedAt": 1793170512087,
+          "status": "blocked",
+          "captureError": "secure_activity_font_draft_capture_not_attempted"
+        },
+        {
+          "stage": "secure-main-activity-font-1_3-real-replacement",
+          "capturedAt": 1793170512633,
+          "status": "blocked",
+          "captureError": "secure_activity_font_draft_capture_not_attempted"
+        },
+        {
+          "stage": "secure-fresh-main-activity-discards-unsaved-draft",
+          "capturedAt": 1793170513986,
+          "status": "blocked",
+          "captureError": "secure_activity_font_draft_capture_not_attempted"
+        },
+        {
+          "stage": "finished",
+          "capturedAt": 1793170514557,
+          "status": "blocked",
+          "captureError": "secure_activity_font_draft_capture_not_attempted"
+        }
+      ]
+    }
+  ]
+}

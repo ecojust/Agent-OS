@@ -142,7 +142,7 @@ Windows 使用 `gradlew.bat`。默认 APK 输出到 `app/build/outputs/apk/debug
 | 最近完整回归 | 源码 `14c621aac`，八档 **1976/1976通过**；[运行与调试APK](https://github.com/ecojust/Agent-OS/actions/runs/40647046321)、[逐项原始证据](screenshots/40647046321-1/manifest.json) |
 | 本轮操作回执 | 代码完成；完整核心299/299、脚本304/304、APK/lint通过，2项新增Android用例和原三次写操作断言待八档完整验证；[固定验收范围](docs/validation/task-action-receipts.md) |
 | 字体缩放专项 | 源码14c主Activity与控制窗各8/8通过；[Activity](screenshots/40646422586-1/manifest.json)、[控制窗](screenshots/40646425323-1/manifest.json)，完整回归中也均通过 |
-| 整体实际操作演示 | 源码14c、API35本地合成模型流程通过，36.885秒；[录像](screenshots/demos/40646472832-1/demo.mp4)及[范围说明](docs/validation/operation-demo.md)。本轮操作回执源码录像待录制 |
+| 整体实际操作演示 | 源码4b87、API35本地合成模型流程通过，37.556秒；[录像](screenshots/demos/40664692440-1/demo.mp4)及[范围说明](docs/validation/operation-demo.md#操作回执源码的整体演示)。受保护操作回执页由独立测试验证，不在普通录像中展示 |
 | 第三方应用开发探针 | 当前v3历史 **22/32通过**，10项Notes创建确认准备失败；[原始结果](screenshots/third-party-40555177328-1/manifest.json)，与v2的31/32分开统计 |
 | 待定位的历史现象 | 先前API33图像资格等待、API36视觉事件代次及专用原生捕获TIMEOUT未确定完整根因；后续通过不改写原失败，逐轮原始记录保留 |
 | 交付边界 | Android11+开发APK；普通构建尚未开放截图与坐标手势，真实模型、厂商真机、性能预算、正式签名及可刷写系统镜像未验收 |

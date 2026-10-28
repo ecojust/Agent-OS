@@ -126,7 +126,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: third-party-smoke-v3-api-${{ matrix.api }}-attempt-${{ github.run_attempt }}
+          name: third-party-smoke-v4-api-${{ matrix.api }}-attempt-${{ github.run_attempt }}
           path: ${{ runner.temp }}/third-party-evidence/api-${{ matrix.api }}/
           if-no-files-found: error
           retention-days: 30

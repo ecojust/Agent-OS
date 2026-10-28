@@ -29,7 +29,7 @@ def source_run():
             "updated_at": "2026-10-27T09:10:00Z"}
 
 
-def artifact(label, attempt=2, version=3):
+def artifact(label, attempt=2, version=4):
     prefix = "third-party-smoke" if version == 1 else f"third-party-smoke-v{version}"
     return {"id": 200 + int(label.split(".")[0]), "name": f"{prefix}-api-{label}-attempt-{attempt}",
             "expired": False, "size_in_bytes": 4096, "created_at": "2026-10-27T09:05:00Z",
@@ -41,6 +41,23 @@ def installed_identity(app):
     return {"package": app["package"], "versionName": app["versionName"], "versionCode": app["versionCode"],
             "certificateSha256": app["certificateSha256"], "apkSha256": app["sha256"],
             "minSdk": app["minSdk"], "targetSdk": app["targetSdk"], "uid": 10042}
+
+
+def confirmation_preparation(back=True):
+    """Synthetic parser proof, never an observation or a claimed device execution."""
+    return {"policy": "once-verified-create-dialog", "stage": "CONFIRM_ACCEPTED",
+            "backAttempts": 1 if back else 0,
+            "backDownAttempted": back, "backDownAccepted": True if back else None,
+            "backUpAttempted": back, "backUpAccepted": True if back else None,
+            "backPreconditionVerified": back, "visibleSamples": 2 if back else 0,
+            "hiddenSamples": 2, "elapsedMillis": 400,
+            "originalDialogWindowId": 12, "finalDialogWindowId": 12,
+            "preBackTitleMatched": True if back else None,
+            "preBackTitleFocused": True if back else None,
+            "preBackTitleEditable": True if back else None,
+            "postTitleMatched": True, "postTitleFocused": False, "postTitleEditable": True,
+            "imeHiddenVerified": True, "confirmTargetReached": True,
+            "confirmAttempts": 1, "confirmAccepted": True}
 
 
 def passed_state(entry, name, captures=True):
@@ -56,7 +73,8 @@ def passed_state(entry, name, captures=True):
         result = {"resourceId": "org.fossify.notes:id/text_note_view", "expected": body, "actual": body,
                   "titleExpected": title, "titleActual": title,
                   "persistenceVerified": True, "reopenedInFreshProcess": True,
-                  "automaticBackPolicy": "prohibited", "homeAttempts": 1}
+                  "automaticBackPolicy": "single-back-only-before-notes-create-confirm", "homeAttempts": 1,
+                  "confirmationPreparation": confirmation_preparation()}
     else:
         raise AssertionError("The fixture cannot manufacture a pass for an unknown app")
     steps = ("installed_identity", "service_state_before", check, "installed_identity_after",
@@ -81,7 +99,7 @@ def ui_results(lock, label="35", passed=True, captures=False):
                                 {"state": name, "status": "unverified", "steps": [], "captures": [],
                                  "reason": "synthetic probe did not execute"} for name in STATES]})
     api = int(label.split(".")[0])
-    return {"schemaVersion": 3, "kind": "third-party-app-set-smoke", "sampleId": lock["sampleId"],
+    return {"schemaVersion": 4, "kind": "third-party-app-set-smoke", "sampleId": lock["sampleId"],
             "keyboardPolicy": probe.KEYBOARD_POLICY, "navigationPolicy": probe.NAVIGATION_POLICY,
             "lockSha256": probe.lock_digest(lock), "matrixLabel": label,
             "source": {"sha": SOURCE["commit"], "runId": 123, "attempt": 2,
@@ -119,14 +137,14 @@ def notes_preparation_failure(lock, diagnostic=True):
     value = report(lock, captures=False)
     value["status"] = "failed"
     failed = value["apps"][1]["states"][0]
-    error = ("AssertionError: Notes v3 observation timed out: "
+    error = ("AssertionError: Notes v4 observation timed out: "
              "reason=notes_target_covered_by_verified_input_method "
-             "automaticBackPolicy=prohibited imeSamples=0 lastImeSurface=NOT_SAMPLED")
+             "automaticBackPolicy=single-back-only-before-notes-create-confirm imeSamples=0 lastImeSurface=NOT_SAMPLED")
     failed.update(status="failed", stage="create_note", error=error,
                   steps=[{"name": "create_note", "status": "failed", "details": error}],
                   captures=[{"stage": "failure", "status": "blocked",
                              "reason": "synthetic_parser_fixture_no_device"}],
-                  result={"automaticBackPolicy": "prohibited", "homeAttempts": 0})
+                  result={"automaticBackPolicy": "single-back-only-before-notes-create-confirm", "homeAttempts": 0})
     if diagnostic:
         failed["notesPreparationDiagnostic"] = {
             "schemaVersion": 1, "snapshotKind": "LAST_OBSERVATION",
@@ -157,18 +175,20 @@ class ThirdPartySmokeSetTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             probe.validate_ui_results(value, SOURCE, int(label.split(".")[0]), "emulator-5554", self.lock)
 
-    def test_v1_defaults_remain_six_states_and_v3_has_exactly_thirty_two(self):
+    def test_v1_defaults_remain_six_states_and_v4_has_exactly_thirty_two(self):
         old = v1_probe.load_lock()
         self.assertEqual(1, old["schemaVersion"])
         self.assertEqual([30, 35, 37], old["apis"])
         self.assertEqual({"30": 30, "35": 35, "37.0": 37}, v1_probe.APIS)
         self.assertEqual(("30", "35", "37.0"), v1_archive.LABELS)
-        self.assertEqual(3, self.lock["schemaVersion"])
+        self.assertEqual(4, self.lock["schemaVersion"])
         self.assertEqual("third-party-app-set-lock", self.lock["kind"])
-        self.assertEqual("calculator-1.4.0-notes-1.7.0-v3", self.lock["sampleId"])
+        self.assertEqual("calculator-1.4.0-notes-1.7.0-v4", self.lock["sampleId"])
         self.assertEqual(list(range(30, 38)), self.lock["apis"])
         self.assertEqual({label: int(label.split(".")[0]) for label in LABELS}, probe.APIS)
         self.assertEqual(["off", "idle"], self.lock["scope"]["states"])
+        self.assertEqual("verified-system-ime-uncovered-targets", probe.KEYBOARD_POLICY)
+        self.assertEqual("single-back-only-before-notes-create-confirm", probe.NAVIGATION_POLICY)
         self.assertFalse(self.lock["scope"]["releaseAcceptance"])
         apps = {entry["app"]["package"]: entry["app"] for entry in self.lock["apps"]}
         self.assertEqual({"org.fossify.math", "org.fossify.notes"}, set(apps))
@@ -181,9 +201,11 @@ class ThirdPartySmokeSetTests(unittest.TestCase):
         self.assertEqual((26, 36), (notes["minSdk"], notes["targetSdk"]))
         self.assertEqual(old["app"]["abis"], notes["abis"])
 
-    def test_v3_contract_cannot_relabel_v2_or_change_keyboard_navigation_rules(self):
+    def test_v4_contract_cannot_relabel_older_payloads_or_change_keyboard_navigation_rules(self):
         for mutate in (lambda v: v.update(schemaVersion=2),
+                       lambda v: v.update(schemaVersion=3),
                        lambda v: v.update(sampleId="calculator-1.4.0-notes-1.7.0-v2"),
+                       lambda v: v.update(sampleId="calculator-1.4.0-notes-1.7.0-v3"),
                        lambda v: v["scope"].pop("keyboardPolicy"),
                        lambda v: v["scope"].update(navigationPolicy="repeat-back")):
             value = copy.deepcopy(self.lock); mutate(value)
@@ -192,7 +214,7 @@ class ThirdPartySmokeSetTests(unittest.TestCase):
             for changed in (None, "old-profile"):
                 value = ui_results(self.lock); value[key] = changed
                 self.assert_ui_rejected(value)
-        for key, changed in (("automaticBackPolicy", "allowed"), ("automaticBackPolicy", False),
+        for key, changed in (("automaticBackPolicy", "allowed"), ("automaticBackPolicy", "prohibited"), ("automaticBackPolicy", False),
                              ("automaticBackPolicy", 0), ("automaticBackPolicy", None), ("homeAttempts", 0),
                              ("homeAttempts", 2), ("homeAttempts", True), ("homeAttempts", 1.0)):
             value = ui_results(self.lock); value["apps"][1]["states"][0]["result"][key] = changed
@@ -200,18 +222,99 @@ class ThirdPartySmokeSetTests(unittest.TestCase):
         value = ui_results(self.lock); value["apps"][1]["states"][0]["result"].pop("automaticBackPolicy")
         self.assert_ui_rejected(value)
 
-    def test_archive_source_routing_keeps_v1_v2_v3_distinct(self):
-        for version in (1, 2, 3):
+    def test_archive_source_routing_keeps_all_four_protocols_distinct(self):
+        for version in (1, 2, 3, 4):
             item = artifact("35", version=version)
             self.assertEqual({"35": item}, v1_archive.eligible_run_artifacts({"artifacts": [item]}, source_run()))
-        for left, right in ((1, 2), (1, 3), (2, 3)):
-            with self.assertRaises(ValueError):
-                v1_archive.eligible_run_artifacts({"artifacts": [artifact("30", version=left),
-                    artifact("35", version=right)]}, source_run())
+        for left, right in ((1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4)):
+            for second_label in ("30", "35"):
+                for expired in (False, True):
+                    with self.subTest(versions=(left, right), label=second_label, expired=expired):
+                        other = artifact(second_label, version=right)
+                        other["expired"] = expired
+                        with self.assertRaisesRegex(ValueError, "mixed evidence versions"):
+                            v1_archive.eligible_run_artifacts({"artifacts": [artifact("30", version=left), other]}, source_run())
+
+    def test_v4_confirmation_accepts_one_verified_back_or_no_back_without_widening_editing(self):
+        variants = [confirmation_preparation(), confirmation_preparation(False)]
+        variants.append(dict(confirmation_preparation(), elapsedMillis=0, postTitleFocused=True,
+                             originalDialogWindowId=0, finalDialogWindowId=0))
+        variants.append(dict(confirmation_preparation(), elapsedMillis=4999, visibleSamples=4, hiddenSamples=4))
+        for title_state in (None, False, True):
+            variants.append(dict(confirmation_preparation(False), visibleSamples=4,
+                                 preBackTitleMatched=title_state, preBackTitleFocused=title_state,
+                                 preBackTitleEditable=title_state))
+        for proof in variants:
+            with self.subTest(proof=proof):
+                value = ui_results(self.lock)
+                for state in value["apps"][1]["states"]:
+                    state["result"]["confirmationPreparation"] = copy.deepcopy(proof)
+                apps = probe.validate_ui_results(value, SOURCE, 35, "emulator-5554", self.lock)
+                self.assertEqual(value["apps"], apps)
+                self.assertEqual(4, sum(len(app["states"]) for app in apps))
+                for state in apps[1]["states"]:
+                    self.assertEqual(1, state["result"]["homeAttempts"])
+                    self.assertEqual("single-back-only-before-notes-create-confirm", state["result"]["automaticBackPolicy"])
+
+    def test_v4_passed_notes_require_every_exact_confirmation_field(self):
+        for invalid in (None, [], "unverified", True):
+            with self.subTest(proof=invalid):
+                value = ui_results(self.lock)
+                value["apps"][1]["states"][0]["result"]["confirmationPreparation"] = invalid
+                self.assert_ui_rejected(value)
+        value = ui_results(self.lock)
+        value["apps"][1]["states"][0]["result"].pop("confirmationPreparation")
+        self.assert_ui_rejected(value)
+        for key in confirmation_preparation():
+            with self.subTest(missing=key):
+                value = ui_results(self.lock)
+                value["apps"][1]["states"][0]["result"]["confirmationPreparation"].pop(key)
+                self.assert_ui_rejected(value)
+        value = ui_results(self.lock)
+        value["apps"][1]["states"][0]["result"]["confirmationPreparation"]["unreviewedExtension"] = True
+        self.assert_ui_rejected(value)
+
+    def test_v4_confirmation_rejects_changed_authority_deadline_geometry_counts_and_types(self):
+        invalid = {
+            "policy": ("repeat-back", None, True),
+            "stage": ("WAIT_IME_HIDDEN", "FAILED", None),
+            "backAttempts": (-1, 2, True, 1.0, "1", None),
+            "visibleSamples": (-1, 0, 1, 5, True, 2.0, "2", None),
+            "hiddenSamples": (-1, 0, 1, 5, True, 2.0, "2", None),
+            "elapsedMillis": (-1, 5000, True, 400.0, "400", None),
+            "originalDialogWindowId": (-1, 13, True, 12.0, "12", None),
+            "finalDialogWindowId": (-1, 13, True, 12.0, "12", None),
+            "confirmAttempts": (0, 2, True, 1.0, "1", None),
+            "postTitleFocused": (0, 1, "false", None)}
+        for flag in ("backDownAttempted", "backDownAccepted", "backUpAttempted", "backUpAccepted",
+                     "backPreconditionVerified", "preBackTitleMatched", "preBackTitleFocused", "preBackTitleEditable",
+                     "postTitleMatched", "postTitleEditable", "imeHiddenVerified", "confirmTargetReached", "confirmAccepted"):
+            invalid[flag] = (False, 0, 1, "true", None)
+        for key, alternatives in invalid.items():
+            for changed in alternatives:
+                with self.subTest(field=key, changed=changed):
+                    value = ui_results(self.lock)
+                    value["apps"][1]["states"][0]["result"]["confirmationPreparation"][key] = changed
+                    self.assert_ui_rejected(value)
+
+    def test_v4_zero_back_cannot_claim_submitted_keys_or_an_untyped_title_observation(self):
+        invalid = {"backPreconditionVerified": (True, 0), "backDownAttempted": (True, 0),
+                   "backUpAttempted": (True, 0), "backDownAccepted": (True, False, 0, "null"),
+                   "backUpAccepted": (True, False, 0, "null"),
+                   "preBackTitleMatched": (0, 1, "true"), "preBackTitleFocused": (0, 1, "false"),
+                   "preBackTitleEditable": (0, 1, "true"), "visibleSamples": (-1, 5, True, 0.0)}
+        for key, alternatives in invalid.items():
+            for changed in alternatives:
+                with self.subTest(field=key, changed=changed):
+                    value = ui_results(self.lock)
+                    proof = confirmation_preparation(False)
+                    proof[key] = changed
+                    value["apps"][1]["states"][0]["result"]["confirmationPreparation"] = proof
+                    self.assert_ui_rejected(value)
 
     def test_lock_version_matrix_and_each_app_identity_are_frozen(self):
-        changes = [lambda v: v.update(schemaVersion=1), lambda v: v.update(schemaVersion=3.0),
-                   lambda v: v.update(schemaVersion="3"), lambda v: v.update(schemaVersion=True),
+        changes = [lambda v: v.update(schemaVersion=1), lambda v: v.update(schemaVersion=4.0),
+                   lambda v: v.update(schemaVersion="4"), lambda v: v.update(schemaVersion=True),
                    lambda v: v.update(kind="third-party-smoke-lock"), lambda v: v.update(sampleId="latest"),
                    lambda v: v["apis"].pop(), lambda v: v["apis"].append(38),
                    lambda v: v["apps"].pop(), lambda v: v["apps"].append(copy.deepcopy(v["apps"][0])),
@@ -254,7 +357,7 @@ class ThirdPartySmokeSetTests(unittest.TestCase):
         count = 0
         for label in LABELS:
             value = probe.empty_report(self.lock, SOURCE, label)
-            self.assertEqual((3, "third-party-app-set-smoke", label),
+            self.assertEqual((4, "third-party-app-set-smoke", label),
                              (value["schemaVersion"], value["kind"], value["matrixLabel"]))
             self.assertEqual(SOURCE, value["source"])
             self.assertEqual(self.lock["sampleId"], value["sampleId"])
@@ -283,7 +386,8 @@ class ThirdPartySmokeSetTests(unittest.TestCase):
             self.assertEqual(4, sum(len(app["states"]) for app in apps))
 
     def test_ui_source_device_versions_and_duplicate_app_state_are_rejected(self):
-        changes = [lambda v: v.update(schemaVersion=1), lambda v: v.update(schemaVersion=3.0),
+        changes = [lambda v: v.update(schemaVersion=1), lambda v: v.update(schemaVersion=3),
+                   lambda v: v.update(schemaVersion=4.0),
                    lambda v: v.update(kind="third-party-app-smoke"),
                    lambda v: v.update(sampleId="another-sample"),
                    lambda v: v["source"].update(sha="b" * 40), lambda v: v["source"].update(attempt=1),
@@ -422,7 +526,7 @@ class ThirdPartySmokeSetArchiveTests(unittest.TestCase):
 
     def test_no_artifacts_retains_all_thirty_two_unverified_combinations(self):
         result = self.run_archive(labels=())
-        self.assertEqual(3, result["schemaVersion"])
+        self.assertEqual(4, result["schemaVersion"])
         self.assertEqual({"passed": 0, "failed": 0, "unverified": 32}, result["stateCounts"])
         self.assertEqual(32, result["expectedCombinationCount"])
         self.assertEqual(8, len(result["apis"]))
@@ -479,17 +583,17 @@ class ThirdPartySmokeSetArchiveTests(unittest.TestCase):
         self.assertEqual({"passed": 4, "failed": 0, "unverified": 28}, result["stateCounts"])
         self.assertFalse(result["allProbeStatesPassed"])
 
-    def test_v1_old_attempt_and_expired_files_cannot_fill_v3_combinations(self):
+    def test_older_protocols_old_attempts_and_expired_files_cannot_fill_v4_combinations(self):
         self.lane()
         # Current-attempt protocols must never be mixed or silently guessed.
-        self.assert_rejected(index={"artifacts": [artifact("35", version=1)]})
-        self.assert_rejected(index={"artifacts": [artifact("35", version=2)]})
-        self.assert_rejected(index={"artifacts": [artifact("30"), artifact("35", version=2)]})
-        self.assert_rejected(index={"artifacts": [artifact("30"), artifact("35", version=1)]})
+        for version in (1, 2, 3):
+            with self.subTest(version=version):
+                self.assert_rejected(index={"artifacts": [artifact("35", version=version)]})
+                self.assert_rejected(index={"artifacts": [artifact("30"), artifact("35", version=version)]})
         expired = artifact("30")
         expired["expired"] = True
-        result = self.run_archive(index={"artifacts": [expired, artifact("31", attempt=1),
-                                                      artifact("35", attempt=1, version=1)]})
+        old = [artifact("35", attempt=1, version=version) for version in (1, 2, 3, 4)]
+        result = self.run_archive(index={"artifacts": [expired, *old]})
         self.assertEqual({"passed": 0, "failed": 0, "unverified": 32}, result["stateCounts"])
         self.assertEqual(0, result["fileCount"])
         self.assertFalse(result["allProbeStatesPassed"])
@@ -520,7 +624,8 @@ class ThirdPartySmokeSetArchiveTests(unittest.TestCase):
 
     def test_schema_lane_sample_hash_and_locked_app_swaps_fail_before_copy(self):
         directory = self.lane()
-        mutations = [lambda v: v.update(schemaVersion=1), lambda v: v.update(schemaVersion=3.0),
+        mutations = [lambda v: v.update(schemaVersion=1), lambda v: v.update(schemaVersion=3),
+                     lambda v: v.update(schemaVersion=4.0),
                      lambda v: v.update(kind="third-party-app-smoke"), lambda v: v.update(matrixLabel="31"),
                      lambda v: v.update(sampleId="another-sample"), lambda v: v.update(lockSha256="0" * 64),
                      lambda v: v["source"].update(attempt=1), lambda v: v["source"].update(commit="b" * 40),
@@ -554,7 +659,9 @@ class ThirdPartySmokeSetArchiveTests(unittest.TestCase):
         (directory / "ui-results.json").write_bytes(original_ui + b" ")
         self.assert_rejected()  # Even whitespace changes raw bytes and must invalidate the saved hash.
 
-        ui_changes = [lambda v: v.update(schemaVersion=1), lambda v: v.update(dedicatedEmulatorVerified=False),
+        ui_changes = [lambda v: v.update(schemaVersion=1), lambda v: v.update(schemaVersion=3),
+                      lambda v: v.update(sampleId="calculator-1.4.0-notes-1.7.0-v3"),
+                      lambda v: v.update(dedicatedEmulatorVerified=False),
                       lambda v: v["source"].update(sha="b" * 40), lambda v: v["source"].update(attempt=1),
                       lambda v: v["device"].update(sdkInt=31),
                       lambda v: v["apps"][0]["states"][0]["installedIdentity"].update(uid=10043),
@@ -660,6 +767,60 @@ class ThirdPartySmokeSetArchiveTests(unittest.TestCase):
             failed = json.loads((self.root / self.output / "api-30" / name).read_bytes())["apps"][1]["states"][0]
             self.assertNotIn("notesPreparationDiagnostic", failed)
             self.assertEqual(value["apps"][1]["states"][0], failed)
+
+    def test_v4_failed_overbudget_and_unverified_null_confirmation_proofs_are_archived_verbatim(self):
+        value = notes_preparation_failure(self.lock)
+        failed, unverified = value["apps"][1]["states"]
+        failed["result"]["confirmationPreparation"] = {
+            "policy": "once-verified-create-dialog", "stage": "FAILED",
+            "backAttempts": 2, "backDownAttempted": True, "backDownAccepted": None,
+            "backUpAttempted": False, "backUpAccepted": None,
+            "visibleSamples": 5, "hiddenSamples": 0, "elapsedMillis": 5001,
+            "originalDialogWindowId": 12, "finalDialogWindowId": None,
+            "confirmAttempts": 0, "confirmAccepted": False}
+        unverified.update(status="unverified", steps=[], reason="synthetic partial probe did not reach confirmation")
+        unverified["result"]["confirmationPreparation"] = None
+        unverified["result"]["homeAttempts"] = 0
+        directory = self.lane(value=value)
+        originals = {path.name: path.read_bytes() for path in directory.iterdir()}
+        run = source_run()
+        run["conclusion"] = "failure"
+        result = self.run_archive(run=run)
+        self.assertEqual({"passed": 2, "failed": 1, "unverified": 29}, result["stateCounts"])
+        self.assertEqual(32, result["expectedCombinationCount"])
+        self.assertFalse(result["allProbeStatesPassed"])
+        files = {item["path"]: item for item in result["apis"][0]["files"]}
+        for name, raw in originals.items():
+            with self.subTest(file=name):
+                copied = self.root / self.output / "api-30" / name
+                self.assertEqual(raw, copied.read_bytes())
+                self.assertEqual(len(raw), files[name]["bytes"])
+                self.assertEqual(hashlib.sha256(raw).hexdigest(), files[name]["sha256"])
+                self.assertEqual(value["apps"][1]["states"], json.loads(raw)["apps"][1]["states"])
+
+    def test_v4_confirmation_report_cannot_replace_valid_original_proof_or_promote_partial_failure(self):
+        value = notes_preparation_failure(self.lock)
+        failed = value["apps"][1]["states"][0]
+        failed["result"]["confirmationPreparation"] = {"backAttempts": 2, "confirmAccepted": False}
+        directory = self.lane(value=value)
+        original_ui = (directory / "ui-results.json").read_bytes()
+        original_report = json.loads((directory / "report.json").read_bytes())
+        changes = {
+            # Change a still-valid passed proof: local shape validation alone
+            # must not authorize rewriting the original device observation.
+            "valid_elapsed": lambda report: report["apps"][1]["states"][1]["result"]["confirmationPreparation"].update(elapsedMillis=401),
+            "partial_replaced": lambda report: report["apps"][1]["states"][0]["result"].update(confirmationPreparation=confirmation_preparation()),
+            "partial_removed": lambda report: report["apps"][1]["states"][0]["result"].pop("confirmationPreparation"),
+            "promoted": lambda report: report["apps"][1]["states"].__setitem__(0, passed_state(self.lock["apps"][1], "off", False))}
+        for name, mutate in changes.items():
+            with self.subTest(change=name):
+                changed = copy.deepcopy(original_report)
+                mutate(changed)
+                self.write_report(directory, changed)
+                with self.assertRaisesRegex(ValueError, "Report assertions differ from collected UI result"):
+                    self.run_archive()
+                self.assertFalse((self.root / self.output).exists())
+                self.assertEqual(original_ui, (directory / "ui-results.json").read_bytes())
 
     def test_capture_reuse_across_apps_digest_drift_and_unreferenced_files_are_rejected(self):
         directory = self.lane()

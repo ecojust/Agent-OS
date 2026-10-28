@@ -1,7 +1,7 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "kind": "third-party-app-set-lock",
-  "sampleId": "calculator-1.4.0-notes-1.7.0-v3",
+  "sampleId": "calculator-1.4.0-notes-1.7.0-v4",
   "apps": [
     {
       "appId": "calculator-1.4.0",
@@ -72,13 +72,13 @@
       "off",
       "idle"
     ],
-    "operation": "Fresh install and ordinary UI editing: Calculator 2 + 3 = 5; Notes keeps its default keyboard, operates only fully visible uncovered targets, saves through one normal HOME and reads after a new process launch. No automatic BACK.",
+    "operation": "Fresh install and ordinary UI editing: Calculator 2 + 3 = 5; Notes keeps its default keyboard and operates only fully visible uncovered targets. Only before confirming the create dialog, at most one BACK may hide a verified IME; the same five-second preparation must revalidate the original dialog, hidden IME and uncovered confirmation target. Visible and hidden surface reads are each limited to four, eight total. Other editing sends no automatic BACK; one normal HOME saves before a new process launch verifies the note.",
     "data": "Synthetic arithmetic and distinct per-state note text only; no accounts or user files.",
     "executing": "unverified",
     "upgrade": "unverified",
     "physicalDevices": "unverified",
     "releaseAcceptance": false,
     "keyboardPolicy": "verified-system-ime-uncovered-targets",
-    "navigationPolicy": "no-automatic-back"
+    "navigationPolicy": "single-back-only-before-notes-create-confirm"
   }
 }

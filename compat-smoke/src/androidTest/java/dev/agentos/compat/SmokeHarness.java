@@ -70,6 +70,7 @@ final class SmokeHarness {
     private String lastNotesActionResult = "NOT_ATTEMPTED";
     private int notesActionAttempts;
     private int notesHomeAttempts;
+    private NotesConfirmation notesConfirmation;
 
     int notesHomeAttempts() { return notesHomeAttempts; }
 
@@ -102,16 +103,16 @@ final class SmokeHarness {
     }
 
     static void validateArguments(Bundle args) {
-        boolean versionThree = "agent-os-third-party-smoke-v3".equals(args.getString("syntheticTestMarker"));
-        require(versionThree || "agent-os-third-party-smoke-v1".equals(args.getString("syntheticTestMarker")), "Dedicated smoke test marker is required");
-        require((versionThree ? "agent-os-third-party-fresh-install-v3" : "agent-os-third-party-fresh-install-v1")
+        boolean versionFour = "agent-os-third-party-smoke-v4".equals(args.getString("syntheticTestMarker"));
+        require(versionFour || "agent-os-third-party-smoke-v1".equals(args.getString("syntheticTestMarker")), "Dedicated smoke test marker is required");
+        require((versionFour ? "agent-os-third-party-fresh-install-v4" : "agent-os-third-party-fresh-install-v1")
                 .equals(args.getString("freshInstallMarker")), "Fresh isolated installation marker is required");
-        if (versionThree) require("calculator-1.4.0-notes-1.7.0-v3".equals(args.getString("sampleId")), "Unknown frozen application set");
+        if (versionFour) require("calculator-1.4.0-notes-1.7.0-v4".equals(args.getString("sampleId")), "Unknown frozen application set");
         require(matches(args.getString("deviceSerial"), "emulator-[0-9]{1,6}"), "An emulator transport serial is required");
         require(matches(args.getString("sourceSha"), "[0-9a-f]{40}"), "A source SHA is required");
         require(matches(args.getString("runId"), "[1-9][0-9]{0,19}"), "A CI run ID is required");
         require(matches(args.getString("runAttempt"), "[1-9][0-9]{0,5}"), "A CI attempt is required");
-        require(matches(args.getString("expectedApi"), versionThree ? "30|31|32|33|34|35|36|37" : "30|35|37"), "Only the frozen smoke API samples are allowed");
+        require(matches(args.getString("expectedApi"), versionFour ? "30|31|32|33|34|35|36|37" : "30|35|37"), "Only the frozen smoke API samples are allowed");
     }
 
     void requireDedicatedEmulator() throws Exception {
@@ -371,7 +372,13 @@ final class SmokeHarness {
     }
 
     WindowSnapshot appWindow(boolean allowInputMethod) {
+        return appWindow(allowInputMethod, false);
+    }
+
+    private WindowSnapshot appWindow(boolean allowInputMethod, boolean inspectNonIntersectingInputMethod) {
         require(!allowInputMethod || target == NOTES_TARGET, "Only the notes editing probe may inspect an IME");
+        require(!inspectNonIntersectingInputMethod || (allowInputMethod && target == NOTES_TARGET),
+                "Only Notes confirmation may inspect a nonintersecting input method");
         List<AccessibilityWindowInfo> windows = automation.getWindows();
         require(windows != null && windows.size() <= 64, "Window inventory is unavailable or truncated");
         AccessibilityWindowInfo focused = null;
@@ -415,7 +422,11 @@ final class SmokeHarness {
                 if (other.getId() == focused.getId() || other.getDisplayId() != Display.DEFAULT_DISPLAY
                         || other.getLayer() < focused.getLayer()) continue;
                 Rect overlay = new Rect(); other.getBoundsInScreen(overlay);
-                if (!Rect.intersects(bounds, overlay)) continue;
+                // The v4 confirmation must distinguish a keyboard outside the
+                // dialog from no keyboard. Ordinary reads retain their filter.
+                if (inspectNonIntersectingInputMethod
+                        ? !inspectConfirmationWindow(other.getType(), bounds, overlay)
+                        : !Rect.intersects(bounds, overlay)) continue;
                 if (target == NOTES_TARGET && other.getType() == AccessibilityWindowInfo.TYPE_INPUT_METHOD) {
                     require(inputMethod.isEmpty(), "More than one input-method window");
                     String refusal = systemInputMethodRefusal(other, overlay, display);
@@ -437,6 +448,10 @@ final class SmokeHarness {
             if (root != null) root.recycle();
             recycle(windows);
         }
+    }
+
+    private static boolean inspectConfirmationWindow(int type, Rect app, Rect other) {
+        return type == AccessibilityWindowInfo.TYPE_INPUT_METHOD || Rect.intersects(app, other);
     }
 
     /** Metadata from this rejected read only; never record package names or UI text. */
@@ -503,7 +518,7 @@ final class SmokeHarness {
         } finally { if (root != null) root.recycle(); }
         // Accessibility reports a touchable region, which can translate during
         // the IME animation and need not include the navigation bar. This
-        // bounded allowance only permits observing an animated keyboard. The v3
+        // bounded allowance only permits observing an animated keyboard. The
         // editing helper separately requires settled geometry and an uncovered
         // target; capture still rejects every visible keyboard.
         if (!plausibleInputMethodRegion(region, display)) return "unexplained_geometry";
@@ -538,12 +553,17 @@ final class SmokeHarness {
         return matched;
     }
 
-    /** Version-three ordinary editing: a known keyboard is not a navigation request. */
+    /** Ordinary editing retains v3's rule: a known keyboard is not a navigation request. */
     private NotesTarget awaitNotesTarget(String resource, NotesWait wait) throws Exception {
         return awaitNotesTarget(resource, null, wait);
     }
 
     private NotesTarget awaitNotesTarget(String resource, String exactText, NotesWait wait) throws Exception {
+        return awaitNotesTarget(resource, exactText, wait, null, false);
+    }
+
+    private NotesTarget awaitNotesTarget(String resource, String exactText, NotesWait wait,
+                                         NotesConfirmation confirmation, boolean afterBackDecision) throws Exception {
         require(target == NOTES_TARGET && (resource != null || exactText != null), "A real Notes target is required");
         do {
             wait.requireTime();
@@ -552,22 +572,49 @@ final class SmokeHarness {
             AccessibilityNodeInfo node = null;
             boolean retryRead = false;
             try {
-                window = appWindow(true);
+                window = appWindow(true, confirmation != null);
                 wait.observation.window(window.id, window.bounds, window.display, window.inputMethodId, window.inputMethod);
+                Rect titleBounds = null;
+                if (confirmation != null) {
+                    wait.requireTime();
+                    confirmation.requireDialog(window.id);
+                    if (afterBackDecision) {
+                        if (!window.inputMethod.isEmpty()) throw new NotesObservationPending("confirmation_input_method_still_present");
+                        // Bind the title and button to this same fresh window, never
+                        // a button with the same resource ID in a replacement dialog.
+                        wait.beginObservation(notesStage, NotesResource.TITLE_FIELD);
+                        wait.observation.window(window.id, window.bounds, window.display, window.inputMethodId, window.inputMethod);
+                        AccessibilityNodeInfo title = uniqueNode(window, "locked_note_title", wait.observation);
+                        try {
+                            requireUsableNotesNode(window, title, wait.observation);
+                            confirmation.title(title, false, false);
+                            titleBounds = new Rect(wait.observation.targetBounds);
+                        } finally { title.recycle(); }
+                        wait.beginObservation(notesStage, NotesResource.forTarget(resource));
+                        wait.observation.window(window.id, window.bounds, window.display, window.inputMethodId, window.inputMethod);
+                    }
+                }
                 node = resource != null ? uniqueNode(window, resource, wait.observation) : uniqueNotesText(window, exactText);
                 requireUsableNotesNode(window, node, wait.observation);
+                if (confirmation != null && !afterBackDecision) confirmation.title(node, true, !window.inputMethod.isEmpty());
                 if (!window.inputMethod.isEmpty() && !window.display.contains(window.inputMethod))
                     throw new NotesObservationPending("input_method_geometry_not_settled");
                 Rect nodeBounds = new Rect(); node.getBoundsInScreen(nodeBounds);
                 String identity = window.id + "/" + window.geometry + "/" + nodeBounds.toShortString()
-                        + "/" + window.inputMethodId + "/" + window.inputMethod.toShortString();
+                        + "/" + window.inputMethodId + "/" + window.inputMethod.toShortString()
+                        + (titleBounds == null ? "" : "/title=" + titleBounds.toShortString());
                 if (!wait.targetStable(identity, SystemClock.elapsedRealtime())) {
+                    if (confirmation != null) confirmation.clearHiddenReadiness();
                     retryRead = true; continue;
                 }
                 if (!window.inputMethod.isEmpty() && !wait.surfaceReady) {
                     wait.pendingReason("verified_input_method_not_ready");
                     if (wait.takeSurfaceSample(SystemClock.elapsedRealtime())) {
                         wait.requireTime();
+                        if (confirmation != null) {
+                            confirmation.requireIme(configuredSystemInputMethod());
+                            wait.requireTime();
+                        }
                         String shown = SmokeCapture.visibleNotesInputMethod(this);
                         wait.requireTime();
                         wait.observeSurface(shown, SystemClock.elapsedRealtime());
@@ -576,12 +623,27 @@ final class SmokeHarness {
                     // No click or text action uses the pre-read accessibility tree.
                     retryRead = true; continue;
                 }
+                if (confirmation != null && afterBackDecision && !confirmation.imeHiddenVerified) {
+                    wait.pendingReason("confirmation_input_method_hidden_not_verified");
+                    if (confirmation.takeHiddenSample(SystemClock.elapsedRealtime())) {
+                        wait.requireTime();
+                        confirmation.requireIme(configuredSystemInputMethod());
+                        wait.requireTime();
+                        String hidden = SmokeCapture.hiddenNotesInputMethodForConfirmation(this);
+                        wait.requireTime();
+                        confirmation.observeHidden(hidden, SystemClock.elapsedRealtime());
+                    }
+                    // A hidden sample cannot authorize a click using a tree from
+                    // before the shell read. The next iteration reacquires all nodes.
+                    retryRead = true; continue;
+                }
                 wait.requireTime();
                 NotesTarget ready = new NotesTarget(window, node);
                 window = null; node = null;
                 return ready;
             } catch (NotesObservationPending pending) {
                 retryRead = true;
+                if (confirmation != null) confirmation.clearHiddenReadiness();
                 wait.pending(pending.getMessage());
             } finally {
                 if (node != null) node.recycle();
@@ -629,6 +691,92 @@ final class SmokeHarness {
         notesClick("new_note");
         // The following title-input preparation observes the new dialog and its
         // actual uncovered target; the app's default keyboard remains enabled.
+    }
+
+    /** v4 only: one BACK immediately before confirming this exact creation dialog. */
+    void notesConfirmCreate(String expectedTitle) throws Exception {
+        require(dedicated && target == NOTES_TARGET && notesStage == NotesStage.CONFIRM_CREATE
+                && notesConfirmation == null, "Unexpected or repeated Notes confirmation preparation");
+        require(expectedTitle != null && expectedTitle.length() <= 256, "Invalid synthetic title bound");
+        NotesConfirmation confirmation = new NotesConfirmation(expectedTitle);
+        notesConfirmation = confirmation;
+        NotesWait wait = confirmation.wait;
+        try {
+            confirmation.stage = ConfirmationStage.TITLE_PREPARATION;
+            confirmation.requireIme(configuredSystemInputMethod());
+            try (NotesTarget title = awaitNotesTarget("locked_note_title", null, wait, confirmation, false)) {
+                wait.requireTime();
+                if (!title.window.inputMethod.isEmpty()) {
+                    require(wait.surfaceReady, "Visible keyboard preparation was not completed");
+                    confirmation.requireIme(configuredSystemInputMethod());
+                    confirmation.backPreconditionVerified = true;
+                    sendConfirmationBack(confirmation);
+                }
+            }
+            // Changing from title to button resets geometric stability, while
+            // the original deadline and all consumed samples remain unchanged.
+            confirmation.enterHiddenPreparation();
+            try (NotesTarget button = awaitNotesTarget("android:id/button1", null, wait, confirmation, true)) {
+                wait.requireTime();
+                confirmation.requireDialog(button.window.id);
+                confirmation.requireIme(configuredSystemInputMethod());
+                require(confirmation.imeHiddenVerified && button.window.inputMethod.isEmpty()
+                        && button.node.isClickable(), "Notes confirmation was not independently ready");
+                confirmation.finalDialogWindowId = button.window.id;
+                confirmation.confirmTargetReached = true;
+                wait.requireTime();
+                confirmation.stage = ConfirmationStage.CONFIRM_SUBMISSION;
+                confirmation.confirmAttempts++;
+                notesActionAttempt("CLICK_CONFIRM");
+                confirmation.confirmAccepted = button.node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                notesActionResult(confirmation.confirmAccepted);
+                require(confirmation.confirmAccepted, "Notes resource rejected its click");
+                long completed = SystemClock.elapsedRealtime();
+                if (completed >= wait.deadline) throw wait.timeout();
+                confirmation.elapsedMillis = completed - confirmation.started;
+                confirmation.stage = ConfirmationStage.CONFIRM_ACCEPTED;
+            }
+        } finally {
+            if (confirmation.stage != ConfirmationStage.CONFIRM_ACCEPTED)
+                confirmation.elapsedMillis = Math.max(0, SystemClock.elapsedRealtime() - confirmation.started);
+        }
+        automation.waitForIdle(150, 5_000);
+    }
+
+    private void sendConfirmationBack(NotesConfirmation confirmation) throws Exception {
+        confirmation.wait.requireTime();
+        confirmation.claimBack();
+        confirmation.stage = ConfirmationStage.BACK_SUBMISSION;
+        long downTime = SystemClock.uptimeMillis();
+        Throwable failure = null;
+        notesActionAttempt("KEY_BACK");
+        confirmation.backDownAttempted = true;
+        try {
+            confirmation.backDownAccepted = automation.injectInputEvent(
+                    new KeyEvent(downTime, downTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK, 0), true);
+            require(confirmation.backDownAccepted, "BACK key down was rejected");
+        } catch (Exception | AssertionError original) { failure = original; }
+        finally {
+            // One paired UP closes the already-started attempt, even if DOWN's
+            // synchronous call failed or overran the deadline. No second DOWN.
+            confirmation.backUpAttempted = true;
+            try {
+                confirmation.backUpAccepted = automation.injectInputEvent(new KeyEvent(downTime,
+                        SystemClock.uptimeMillis(), KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK, 0), true);
+                require(confirmation.backUpAccepted, "BACK key up was rejected");
+            } catch (Exception | AssertionError cleanup) {
+                if (failure == null) failure = cleanup; else failure.addSuppressed(cleanup);
+            }
+        }
+        if (confirmation.backDownAccepted != null && confirmation.backUpAccepted != null)
+            notesActionResult(confirmation.backDownAccepted && confirmation.backUpAccepted);
+        if (failure instanceof AssertionError) throw (AssertionError) failure;
+        if (failure != null) throw (Exception) failure;
+        confirmation.wait.requireTime();
+    }
+
+    JSONObject notesConfirmationResult() throws Exception {
+        return notesConfirmation == null ? new NotesConfirmation(null).json() : notesConfirmation.json();
     }
 
     void notesClick(String resource) throws Exception {
@@ -913,8 +1061,95 @@ final class SmokeHarness {
         void pendingReason(String reason) { last = reason; }
         void pending(String reason) { identity = null; since = 0; clearSurface(); last = reason; }
         void requireTime() { if (SystemClock.elapsedRealtime() >= deadline) throw timeout(); }
-        AssertionError timeout() { return new NotesPreparationTimeout("Notes v3 observation timed out: reason=" + last
-                + " automaticBackPolicy=prohibited imeSamples=" + samples + " lastImeSurface=" + lastVisibility, observation); }
+        AssertionError timeout() { return new NotesPreparationTimeout("Notes v4 observation timed out: reason=" + last
+                + " automaticBackPolicy=single-back-only-before-notes-create-confirm imeSamples=" + samples
+                + " lastImeSurface=" + lastVisibility, observation); }
+    }
+
+    private enum ConfirmationStage {
+        NOT_STARTED, TITLE_PREPARATION, BACK_SUBMISSION, HIDDEN_PREPARATION, CONFIRM_SUBMISSION, CONFIRM_ACCEPTED
+    }
+
+    private static final class NotesConfirmation {
+        static final int MAX_JSON_CHARS = 2048;
+        final NotesWait wait = new NotesWait();
+        final long started = wait.deadline - 5_000;
+        private final String expectedTitle;
+        private Integer imeUid;
+        private String imeComponent, hiddenIdentity;
+        private long hiddenSince, nextHiddenSample;
+        ConfirmationStage stage = ConfirmationStage.NOT_STARTED;
+        int backAttempts, hiddenSamples, confirmAttempts;
+        long elapsedMillis;
+        boolean backDownAttempted, backUpAttempted, backPreconditionVerified, imeHiddenVerified, confirmTargetReached;
+        Boolean backDownAccepted, backUpAccepted, preBackTitleMatched, preBackTitleFocused, preBackTitleEditable;
+        Boolean postTitleMatched, postTitleFocused, postTitleEditable, confirmAccepted;
+        Integer originalDialogWindowId, finalDialogWindowId;
+        NotesConfirmation(String expectedTitle) { this.expectedTitle = expectedTitle; }
+        void requireDialog(int id) {
+            require(id >= 0, "Creation dialog window identity is unavailable");
+            if (originalDialogWindowId == null) originalDialogWindowId = id;
+            require(originalDialogWindowId == id, "Original creation dialog window changed");
+        }
+        void requireIme(ServiceInfo ime) {
+            require(ime != null && ime.applicationInfo != null, "Configured system input method is unverified");
+            String component = new ComponentName(ime.packageName, ime.name).flattenToString();
+            if (imeUid == null) { imeUid = ime.applicationInfo.uid; imeComponent = component; }
+            require(imeUid == ime.applicationInfo.uid && imeComponent.equals(component), "Configured input method identity changed");
+        }
+        void title(AccessibilityNodeInfo title, boolean beforeDecision, boolean needsInputFocus) {
+            CharSequence actual = title.getText();
+            recordTitle(actual != null && expectedTitle.contentEquals(actual), title.isEditable(),
+                    title.isFocused(), beforeDecision, needsInputFocus);
+        }
+        void recordTitle(boolean matched, boolean editable, boolean focused, boolean beforeDecision, boolean needsInputFocus) {
+            if (beforeDecision) {
+                preBackTitleMatched = matched; preBackTitleEditable = editable; preBackTitleFocused = focused;
+            } else {
+                postTitleMatched = matched; postTitleEditable = editable; postTitleFocused = focused;
+            }
+            require(matched && editable, "Original creation title anchor changed or is not editable");
+            // Input focus is needed to authorize BACK, not to click a safe button
+            // after independently proving that the keyboard is hidden.
+            require(!needsInputFocus || focused, "Creation title does not hold the input focus required for BACK");
+        }
+        void enterHiddenPreparation() {
+            stage = ConfirmationStage.HIDDEN_PREPARATION;
+            wait.pending("confirmation_target_changed");
+            clearHiddenReadiness();
+        }
+        void claimBack() {
+            require(backAttempts == 0 && backPreconditionVerified && wait.surfaceReady
+                    && Boolean.TRUE.equals(preBackTitleMatched) && Boolean.TRUE.equals(preBackTitleEditable)
+                    && Boolean.TRUE.equals(preBackTitleFocused), "BACK has no remaining verified creation-dialog allowance");
+            backAttempts = 1;
+        }
+        boolean takeHiddenSample(long now) {
+            if (imeHiddenVerified || now < nextHiddenSample || hiddenSamples >= 4) return false;
+            hiddenSamples++; nextHiddenSample = now + 150; return true;
+        }
+        void observeHidden(String identity, long now) {
+            if (identity == null) { clearHiddenReadiness(); return; }
+            if (!identity.equals(hiddenIdentity)) { hiddenIdentity = identity; hiddenSince = now; imeHiddenVerified = false; return; }
+            imeHiddenVerified = now - hiddenSince >= 150;
+        }
+        void clearHiddenReadiness() { hiddenIdentity = null; hiddenSince = 0; imeHiddenVerified = false; }
+        JSONObject json() throws Exception {
+            JSONObject result = new JSONObject().put("policy", "once-verified-create-dialog").put("stage", stage.name())
+                    .put("backAttempts", backAttempts).put("backDownAttempted", backDownAttempted)
+                    .put("backDownAccepted", value(backDownAccepted)).put("backUpAttempted", backUpAttempted)
+                    .put("backUpAccepted", value(backUpAccepted)).put("backPreconditionVerified", backPreconditionVerified)
+                    .put("visibleSamples", wait.samples).put("hiddenSamples", hiddenSamples).put("elapsedMillis", elapsedMillis)
+                    .put("originalDialogWindowId", value(originalDialogWindowId)).put("finalDialogWindowId", value(finalDialogWindowId))
+                    .put("preBackTitleMatched", value(preBackTitleMatched)).put("preBackTitleFocused", value(preBackTitleFocused))
+                    .put("preBackTitleEditable", value(preBackTitleEditable)).put("postTitleMatched", value(postTitleMatched))
+                    .put("postTitleFocused", value(postTitleFocused)).put("postTitleEditable", value(postTitleEditable))
+                    .put("imeHiddenVerified", imeHiddenVerified).put("confirmTargetReached", confirmTargetReached)
+                    .put("confirmAttempts", confirmAttempts).put("confirmAccepted", value(confirmAccepted));
+            require(result.toString().length() <= MAX_JSON_CHARS, "Notes confirmation record exceeded its fixed bound");
+            return result;
+        }
+        private static Object value(Object value) { return value == null ? JSONObject.NULL : value; }
     }
 
     private enum NotesResource {
@@ -1036,6 +1271,99 @@ final class SmokeHarness {
         wait.pending("not_published");
         require(!wait.takeSurfaceSample(1600) && wait.deadline == deadline, "Readiness reset renewed sampling or timeout");
         verifyNotesPreparationDiagnostics();
+        verifyNotesConfirmationPreparation();
+    }
+
+    private static void verifyNotesConfirmationPreparation() {
+        // Pure state boundaries, never synthetic platform acceptance or UI evidence.
+        try {
+            Rect dialog = new Rect(8, 24, 312, 300), separateIme = new Rect(0, 394, 320, 640);
+            require(!Rect.intersects(dialog, separateIme)
+                    && inspectConfirmationWindow(AccessibilityWindowInfo.TYPE_INPUT_METHOD, dialog, separateIme)
+                    && !inspectConfirmationWindow(AccessibilityWindowInfo.TYPE_SYSTEM, dialog, separateIme)
+                    && !inspectConfirmationWindow(AccessibilityWindowInfo.TYPE_APPLICATION, dialog, separateIme)
+                    && inspectConfirmationWindow(AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY,
+                            dialog, new Rect(10, 100, 100, 200)),
+                    "Confirmation lost a separate IME or bypassed an intersecting unknown window");
+            NotesConfirmation confirmation = new NotesConfirmation("private-title-marker");
+            long deadline = confirmation.wait.deadline;
+            JSONObject initial = confirmation.json();
+            require(initial.isNull("backDownAccepted") && initial.isNull("backUpAccepted")
+                    && initial.isNull("confirmAccepted") && initial.getInt("backAttempts") == 0,
+                    "Unattempted confirmation became a rejected or accepted action");
+            confirmation.requireDialog(12); confirmation.requireDialog(12);
+            requireConfirmationRefusal(() -> confirmation.requireDialog(13), "A replacement dialog was admitted");
+            confirmation.recordTitle(true, true, false, true, false);
+            confirmation.wait.surfaceReady = true;
+            confirmation.backPreconditionVerified = true;
+            requireConfirmationRefusal(confirmation::claimBack, "A title without input focus authorized BACK");
+            requireConfirmationRefusal(() -> confirmation.recordTitle(true, true, false, true, true),
+                    "The pre-BACK focus guard was bypassed");
+            confirmation.recordTitle(true, true, true, true, true);
+            confirmation.claimBack();
+            requireConfirmationRefusal(confirmation::claimBack, "BACK allowance was renewed after its claim");
+            confirmation.backDownAttempted = true;
+            confirmation.backUpAttempted = true; confirmation.backUpAccepted = true;
+            JSONObject partial = confirmation.json();
+            require(partial.getInt("backAttempts") == 1 && partial.isNull("backDownAccepted")
+                    && partial.getBoolean("backUpAccepted") && !partial.getBoolean("imeHiddenVerified"),
+                    "An unknown DOWN or successful paired UP was treated as hidden");
+            confirmation.backDownAccepted = false;
+            require(!confirmation.json().getBoolean("backDownAccepted"), "A rejected DOWN was lost");
+            confirmation.recordTitle(true, true, false, false, false);
+            require(!confirmation.postTitleFocused, "Post-hidden confirmation wrongly requires input focus");
+            requireConfirmationRefusal(() -> confirmation.recordTitle(false, true, false, false, false),
+                    "A changed title was admitted after BACK");
+
+            NotesConfirmation phase = new NotesConfirmation("private-title-marker");
+            require(!phase.wait.targetStable("same-rectangle", 0) && phase.wait.targetStable("same-rectangle", 600),
+                    "Title geometry did not require its original stability interval");
+            require(phase.takeHiddenSample(600) && !phase.takeHiddenSample(749), "Hidden sampling lacked spacing");
+            phase.observeHidden("surface-A", 600);
+            require(!phase.imeHiddenVerified, "One hidden sample admitted confirmation");
+            require(phase.takeHiddenSample(750), "Second hidden sample was unavailable");
+            phase.observeHidden("surface-A", 750);
+            require(phase.imeHiddenVerified, "Two same-identity hidden samples were rejected");
+            phase.enterHiddenPreparation();
+            require(!phase.imeHiddenVerified && phase.hiddenSamples == 2
+                    && !phase.wait.targetStable("same-rectangle", 800)
+                    && !phase.wait.targetStable("same-rectangle", 1399)
+                    && phase.wait.targetStable("same-rectangle", 1400),
+                    "Title-to-button transition reused readiness when rectangles were equal");
+            phase.observeHidden("surface-A", 1500); phase.observeHidden("surface-B", 1650);
+            require(!phase.imeHiddenVerified, "Hidden readiness mixed different WMS identities");
+            phase.observeHidden(null, 1800);
+            require(!phase.imeHiddenVerified && phase.hiddenIdentity == null,
+                    "An incomplete hidden sample preserved readiness");
+
+            NotesConfirmation budget = new NotesConfirmation(null);
+            long budgetDeadline = budget.wait.deadline;
+            for (int i = 0; i < 4; i++) {
+                require(budget.wait.takeSurfaceSample(i * 150) && budget.takeHiddenSample(i * 150),
+                        "Independent visible and hidden budgets were not available");
+                budget.wait.pending("boundary_reset"); budget.clearHiddenReadiness();
+            }
+            budget.enterHiddenPreparation();
+            require(!budget.wait.takeSurfaceSample(600) && !budget.takeHiddenSample(600)
+                    && budget.wait.samples == 4 && budget.hiddenSamples == 4 && budget.wait.deadline == budgetDeadline,
+                    "A readiness or phase reset renewed the four-plus-four budget or deadline");
+            partial.put("backAttempts", 99);
+            require(confirmation.json().getInt("backAttempts") == 1 && confirmation.wait.deadline == deadline
+                    && confirmation.originalDialogWindowId == 12, "Receipt mutation changed preparation state");
+            confirmation.backAttempts = Integer.MAX_VALUE; confirmation.confirmAttempts = Integer.MAX_VALUE;
+            confirmation.wait.samples = Integer.MAX_VALUE; confirmation.hiddenSamples = Integer.MAX_VALUE;
+            confirmation.elapsedMillis = Long.MAX_VALUE;
+            confirmation.originalDialogWindowId = Integer.MIN_VALUE; confirmation.finalDialogWindowId = Integer.MAX_VALUE;
+            String bounded = confirmation.json().toString();
+            require(bounded.length() <= NotesConfirmation.MAX_JSON_CHARS && !bounded.contains("private-title-marker")
+                    && !bounded.contains("surface-A"), "Confirmation output leaked content or exceeded its bound");
+        } catch (Exception failure) { throw new AssertionError("Notes confirmation preparation boundary check failed", failure); }
+    }
+
+    private static void requireConfirmationRefusal(Runnable action, String message) {
+        boolean refused = false;
+        try { action.run(); } catch (AssertionError expected) { refused = true; }
+        require(refused, message);
     }
 
     private static void verifyNotesPreparationDiagnostics() {
@@ -1061,8 +1389,8 @@ final class SmokeHarness {
             wait.observation.visibleMatchCount = 0;
             failure.diagnostic().put("appWindowId", 999);
             require(before.equals(failure.diagnostic().toString()), "Cleanup or JSON mutation changed the frozen diagnostic");
-            require(failure.getMessage().equals("Notes v3 observation timed out: reason=notes_target_covered_by_verified_input_method"
-                            + " automaticBackPolicy=prohibited imeSamples=0 lastImeSurface=NOT_SAMPLED"),
+            require(failure.getMessage().equals("Notes v4 observation timed out: reason=notes_target_covered_by_verified_input_method"
+                            + " automaticBackPolicy=single-back-only-before-notes-create-confirm imeSamples=0 lastImeSurface=NOT_SAMPLED"),
                     "Geometry diagnostics changed the original timeout message");
             wait.beginObservation(NotesStage.CONFIRM_CREATE, NotesResource.forTarget("private-resource-marker"));
             JSONObject unread = ((NotesPreparationTimeout) wait.timeout()).diagnostic();

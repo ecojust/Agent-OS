@@ -15,9 +15,10 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SAMPLE = ROOT / 'docs/validation/third-party-app-set-lock.json'
 APIS = {str(api): api for api in range(30, 37)} | {'37.0': 37}
 APP_IDS = ('calculator-1.4.0', 'notes-1.7.0')
-SAMPLE_ID = 'calculator-1.4.0-notes-1.7.0-v3'
+SAMPLE_ID = 'calculator-1.4.0-notes-1.7.0-v4'
 KEYBOARD_POLICY = 'verified-system-ime-uncovered-targets'
-NAVIGATION_POLICY = 'no-automatic-back'
+NAVIGATION_POLICY = 'single-back-only-before-notes-create-confirm'
+CONFIRMATION_POLICY = 'once-verified-create-dialog'
 STATES = base.STATES
 require = base.require
 ProbeError = base.ProbeError
@@ -31,7 +32,7 @@ NOTES = {'package': 'org.fossify.notes', 'versionName': '1.7.0', 'versionCode': 
 
 
 def validate_lock(data):
-    require(isinstance(data, dict) and type(data.get('schemaVersion')) is int and data['schemaVersion'] == 3
+    require(isinstance(data, dict) and type(data.get('schemaVersion')) is int and data['schemaVersion'] == 4
             and data.get('kind') == 'third-party-app-set-lock' and data.get('sampleId') == SAMPLE_ID, 'Unknown app-set lock')
     apps = data.get('apps')
     require(isinstance(apps, list) and len(apps) == 2 and [item.get('appId') for item in apps if isinstance(item, dict)] == list(APP_IDS), 'Frozen application set changed')
@@ -59,7 +60,7 @@ def lock_digest(lock):
 def empty_report(lock, source, label):
     validate_lock(lock)
     require(label in APIS, 'Unsupported app-set API')
-    return {'schemaVersion': 3, 'kind': 'third-party-app-set-smoke', 'sampleId': SAMPLE_ID,
+    return {'schemaVersion': 4, 'kind': 'third-party-app-set-smoke', 'sampleId': SAMPLE_ID,
             'lockSha256': lock_digest(lock), 'source': copy.deepcopy(source), 'matrixLabel': label,
             'device': {'serial': '', 'apiLevel': None}, 'scope': copy.deepcopy(lock['scope']),
             'status': 'environment_failed', 'driverSteps': [],
@@ -76,6 +77,50 @@ def write_report(directory, report):
         require(all(old.get(key) == report.get(key) for key in ('schemaVersion', 'kind', 'sampleId', 'lockSha256', 'source', 'matrixLabel')),
                 'Cannot overwrite a different locked sample or source report')
     base.write_report(directory, report)
+
+
+def validate_passed_confirmation(value):
+    """A successful v4 confirmation needs observed postconditions, not BACK acceptance alone.
+
+    Failed and unverified states deliberately do not use this acceptance validator:
+    their original partial/unknown or over-budget records must remain archivable.
+    """
+    fields = {'policy', 'stage', 'backAttempts', 'backDownAttempted', 'backDownAccepted',
+              'backUpAttempted', 'backUpAccepted', 'backPreconditionVerified', 'visibleSamples',
+              'hiddenSamples', 'elapsedMillis', 'originalDialogWindowId', 'finalDialogWindowId',
+              'preBackTitleMatched', 'preBackTitleFocused', 'preBackTitleEditable',
+              'postTitleMatched', 'postTitleFocused', 'postTitleEditable', 'imeHiddenVerified',
+              'confirmTargetReached', 'confirmAttempts', 'confirmAccepted'}
+    require(isinstance(value, dict) and set(value) == fields, 'Successful Notes confirmation evidence is incomplete')
+    require(value['policy'] == CONFIRMATION_POLICY and value['stage'] == 'CONFIRM_ACCEPTED',
+            'Notes confirmation used another navigation contract or did not finish')
+    booleans = ('backDownAttempted', 'backUpAttempted', 'backPreconditionVerified', 'postTitleMatched',
+                'postTitleFocused', 'postTitleEditable', 'imeHiddenVerified', 'confirmTargetReached', 'confirmAccepted')
+    nullable = ('backDownAccepted', 'backUpAccepted', 'preBackTitleMatched', 'preBackTitleFocused', 'preBackTitleEditable')
+    require(all(type(value[key]) is bool for key in booleans)
+            and all(value[key] is None or type(value[key]) is bool for key in nullable),
+            'Notes confirmation facts need explicit boolean or unknown values')
+    limits = {'backAttempts': (0, 1), 'visibleSamples': (0, 4), 'hiddenSamples': (2, 4),
+              'elapsedMillis': (0, 4999), 'confirmAttempts': (1, 1)}
+    require(all(type(value[key]) is int and low <= value[key] <= high for key, (low, high) in limits.items())
+            and value['visibleSamples'] + value['hiddenSamples'] <= 8,
+            'Successful Notes confirmation exceeded its fixed action, time or sampling budget')
+    require(type(value['originalDialogWindowId']) is int and value['originalDialogWindowId'] >= 0
+            and type(value['finalDialogWindowId']) is int
+            and value['finalDialogWindowId'] == value['originalDialogWindowId'],
+            'Notes confirmation did not return to the same original dialog')
+    require(all(value[key] is True for key in ('postTitleMatched', 'postTitleEditable', 'imeHiddenVerified',
+                                              'confirmTargetReached', 'confirmAccepted')),
+            'Successful Notes confirmation lacks verified hidden IME, title, target or submission')
+    if value['backAttempts'] == 1:
+        require(value['visibleSamples'] >= 2 and all(value[key] is True for key in
+                ('backPreconditionVerified', 'preBackTitleMatched', 'preBackTitleFocused', 'preBackTitleEditable',
+                 'backDownAttempted', 'backDownAccepted', 'backUpAttempted', 'backUpAccepted')),
+                'Notes BACK lacks a verified precondition or fully accepted paired submission')
+    else:
+        require(all(value[key] is False for key in ('backPreconditionVerified', 'backDownAttempted', 'backUpAttempted'))
+                and value['backDownAccepted'] is None and value['backUpAccepted'] is None,
+                'Zero-BACK Notes confirmation cannot claim a BACK submission')
 
 
 def validate_app_results(entries, lock, complete=True):
@@ -141,14 +186,17 @@ def validate_app_results(entries, lock, complete=True):
                 text = NOTE_TEXT.format(state=state['state']); title = NOTE_TITLE.format(state=state['state'])
                 result = {'resourceId': 'org.fossify.notes:id/text_note_view', 'expected': text, 'actual': text,
                           'titleExpected': title, 'titleActual': title, 'persistenceVerified': True, 'reopenedInFreshProcess': True,
-                          'automaticBackPolicy': 'prohibited', 'homeAttempts': 1}
+                          'automaticBackPolicy': NAVIGATION_POLICY, 'homeAttempts': 1}
             if app_id == APP_IDS[1]:
                 actual_result = state.get('result', {})
                 require(isinstance(actual_result, dict) and actual_result.get('persistenceVerified') is True
                         and actual_result.get('reopenedInFreshProcess') is True, 'Notes persistence needs explicit boolean proof')
-                require(actual_result.get('automaticBackPolicy') == 'prohibited'
+                require(actual_result.get('automaticBackPolicy') == NAVIGATION_POLICY
                         and type(actual_result.get('homeAttempts')) is int and actual_result['homeAttempts'] == 1,
-                        'Version-three Notes must use no automatic BACK and one normal HOME')
+                        'Version-four Notes must limit BACK to create confirmation and use one normal HOME')
+                confirmation = actual_result.get('confirmationPreparation')
+                validate_passed_confirmation(confirmation)
+                result['confirmationPreparation'] = confirmation
             require(state.get('result') == result, 'App-specific independent result was not verified')
             require(captures, 'Passed UI state has no screenshot attempt')
         if complete: require(names == set(STATES), 'Missing UI app state')
@@ -160,10 +208,10 @@ def validate_app_results(entries, lock, complete=True):
 
 
 def validate_ui_results(data, source, api, serial, lock):
-    require(isinstance(data, dict) and type(data.get('schemaVersion')) is int and data['schemaVersion'] == 3
+    require(isinstance(data, dict) and type(data.get('schemaVersion')) is int and data['schemaVersion'] == 4
             and data.get('kind') == 'third-party-app-set-smoke' and data.get('sampleId') == SAMPLE_ID, 'Invalid app-set UI format')
     require(data.get('keyboardPolicy') == KEYBOARD_POLICY and data.get('navigationPolicy') == NAVIGATION_POLICY,
-            'UI editing contract differs from the locked version-three profile')
+            'UI editing contract differs from the locked version-four profile')
     binding = data.get('source', {})
     require(isinstance(binding, dict) and binding.get('sha') == source['commit']
             and str(binding.get('runId')) == str(source['runId']) and str(binding.get('attempt')) == str(source['attempt'])
@@ -215,8 +263,8 @@ def run_probe(args, lock, source):
             report['driverSteps'].append({'name': name, 'status': 'passed', 'sha256': base.sha256_file(path)})
         stage = 'instrumentation'
         parameters = {'class': 'dev.agentos.compat.ApplicationSetCompatibilityInstrumentedTest',
-                      'syntheticTestMarker': 'agent-os-third-party-smoke-v3',
-                      'freshInstallMarker': 'agent-os-third-party-fresh-install-v3', 'sampleId': SAMPLE_ID,
+                      'syntheticTestMarker': 'agent-os-third-party-smoke-v4',
+                      'freshInstallMarker': 'agent-os-third-party-fresh-install-v4', 'sampleId': SAMPLE_ID,
                       'deviceSerial': serial, 'expectedApi': str(api), 'sourceSha': source['commit'],
                       'runId': str(source['runId']), 'runAttempt': str(source['attempt'])}
         command = [adb, '-s', serial, 'shell', 'am', 'instrument', '-w', '-r']
@@ -232,14 +280,14 @@ def run_probe(args, lock, source):
         report['driverSteps'].append({'name': stage, 'status': 'passed' if instrument_passed else 'failed'})
         stage = 'collect_ui_results'
         raw = base.run_command([adb, '-s', serial, 'exec-out', 'run-as', base.PROBE_PACKAGE,
-                                'cat', 'files/third-party-smoke-v3/ui-results.json'], binary=True, limit=base.MAX_JSON)
+                                'cat', 'files/third-party-smoke-v4/ui-results.json'], binary=True, limit=base.MAX_JSON)
         ui = base.parse_json(raw)
         entries = validate_ui_results(ui, source, api, serial, lock)
         report['uiResultsSha256'] = hashlib.sha256(raw).hexdigest()
         (directory / 'ui-results.json').write_bytes(raw)
         def fetch_capture(path):
             return base.run_command([adb, '-s', serial, 'exec-out', 'run-as', base.PROBE_PACKAGE, 'cat',
-                                     'files/third-party-smoke-v3/' + path], binary=True, limit=base.MAX_CAPTURE)
+                                     'files/third-party-smoke-v4/' + path], binary=True, limit=base.MAX_CAPTURE)
         capture_errors = []
         for stored, observed in zip(report['apps'], entries):
             require(stored['appId'] == observed['appId'], 'UI application order changed')

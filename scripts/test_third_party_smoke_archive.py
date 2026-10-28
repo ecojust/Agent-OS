@@ -31,9 +31,10 @@ def sample():
             "scope": {"deviceKind": "dedicated_emulator", "states": ["off", "idle"]}}
 
 
-def artifact(label):
+def artifact(label, version=1, attempt=2):
+    prefix = "third-party-smoke" if version == 1 else f"third-party-smoke-v{version}"
     return {"id": 100 + int(label.split(".")[0]),
-            "name": f"third-party-smoke-api-{label}-attempt-2", "expired": False, "size_in_bytes": 4096,
+            "name": f"{prefix}-api-{label}-attempt-{attempt}", "expired": False, "size_in_bytes": 4096,
             "created_at": "2026-10-27T09:05:00Z",
             "workflow_run": {"id": 123, "head_sha": "a" * 40, "head_branch": "master",
                              "repository_id": 42, "head_repository_id": 42}}
@@ -347,17 +348,39 @@ class ThirdPartyArchiveTests(unittest.TestCase):
     def test_source_validation_outputs_only_verified_download_ids(self):
         run_file, index_file = self.root / "source.json", self.root / "index.json"
         run_file.write_text(json.dumps(source_run()))
-        expired = artifact("35")
-        expired["expired"] = True
-        index_file.write_text(json.dumps({"artifacts": [artifact("30"), expired]}))
-        output = self.root / "github-output"
-        with patch("builtins.print"):
-            code = archive.main(["validate-source", "--source-run-json", str(run_file),
-                                 "--artifact-index", str(index_file), "--github-output", str(output)])
-        self.assertEqual(0, code)
-        self.assertIn("artifactIds=130\n", output.read_text())
-        self.assertIn("evidencePath=screenshots/third-party-123-2\n", output.read_text())
+        for version in (1, 2, 3, 4):
+            with self.subTest(version=version):
+                expired = artifact("35", version)
+                expired["expired"] = True
+                old = [artifact("37.0", old_version, attempt=1) for old_version in (1, 2, 3, 4)]
+                index_file.write_text(json.dumps({"artifacts": [artifact("30", version), expired, *old]}))
+                output = self.root / f"github-output-v{version}"
+                with patch("builtins.print"):
+                    code = archive.main(["validate-source", "--source-run-json", str(run_file),
+                                         "--artifact-index", str(index_file), "--github-output", str(output)])
+                self.assertEqual(0, code)
+                self.assertIn("artifactIds=130\n", output.read_text())
+                self.assertIn("commit=" + source_run()["head_sha"] + "\n", output.read_text())
+                self.assertIn("evidencePath=screenshots/third-party-123-2\n", output.read_text())
         self.assertFalse((self.root / "screenshots").exists())
+
+    def test_archive_workflow_keeps_exact_source_checkout_between_validation_and_payload_interpretation(self):
+        # The current metadata selector recognizes older protocols. Their own
+        # source checkout supplies the historical lock/parser; current v4 rules
+        # are not evidence that an older BACK contract was satisfied.
+        workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/third-party-smoke.yml").read_text()
+        validation = workflow.index("scripts/third_party_smoke_archive.py validate-source ")
+        checkout = workflow.index("ref: ${{ steps.source.outputs.commit }}", validation)
+        download = workflow.index("name: Download only the verified current-attempt artifacts", checkout)
+        interpret = workflow.index("scripts/third_party_smoke_archive.py archive ", download)
+        self.assertLess(validation, checkout)
+        self.assertLess(checkout, download)
+        self.assertLess(download, interpret)
+        handoff = workflow[validation:interpret]
+        self.assertEqual(1, handoff.count("uses: actions/checkout@"))
+        self.assertIn("persist-credentials: false", workflow[checkout:download])
+        self.assertIn("run-id: ${{ steps.source.outputs.runId }}", handoff)
+        self.assertIn("artifact-ids: ${{ steps.source.outputs.artifactIds }}", handoff)
 
 
 if __name__ == "__main__":

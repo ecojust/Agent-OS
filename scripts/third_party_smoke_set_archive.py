@@ -20,7 +20,7 @@ APP_IDS = probe.APP_IDS
 
 
 def validate_report(report, label, identity, lock, files):
-    require(isinstance(report, dict) and type(report.get('schemaVersion')) is int and report['schemaVersion'] == 3
+    require(isinstance(report, dict) and type(report.get('schemaVersion')) is int and report['schemaVersion'] == 4
             and report.get('kind') == 'third-party-app-set-smoke', 'Invalid app-set report schema')
     require(report.get('source') == identity and all(type(report['source'].get(key)) is int for key in ('runId', 'attempt')),
             'Report source differs from trusted run')
@@ -95,9 +95,9 @@ def validate_report(report, label, identity, lock, files):
 def archive(incoming, output, run, artifact_index, sample, repo=None):
     identity = base.verify_source(run)
     probe.validate_lock(sample)
-    selected = base.eligible_artifacts(artifact_index, run, 3)
-    require(not any(base.eligible_artifacts(artifact_index, run, version) for version in (1, 2)),
-            'Older evidence cannot fill a version-three app-set run')
+    selected = base.eligible_artifacts(artifact_index, run, 4)
+    require(not any(base.eligible_artifacts(artifact_index, run, version) for version in (1, 2, 3)),
+            'Older evidence cannot fill a version-four app-set run')
     ids = [item['id'] for item in selected.values()]
     require(len(ids) == len(set(ids)), 'Artifact ID reused across app-set lanes')
     repo = Path(repo or Path.cwd()).resolve()
@@ -129,7 +129,7 @@ def archive(incoming, output, run, artifact_index, sample, repo=None):
         records.append(record); staged.append((label, files))
     counts = Counter(status for record in records for states in record['apps'].values() for status in states.values())
     require(sum(counts.values()) == 32, 'App-set denominator changed')
-    manifest = {'schemaVersion': 3, 'kind': 'third-party-emulator-app-set-evidence',
+    manifest = {'schemaVersion': 4, 'kind': 'third-party-emulator-app-set-evidence',
                 'archivedAt': datetime.now(timezone.utc).isoformat(),
                 'sourceRun': {**identity, 'url': f"https://github.com/{base.REPOSITORY}/actions/runs/{identity['runId']}",
                               'conclusion': run['conclusion'], 'event': 'workflow_dispatch', 'branch': 'master'},

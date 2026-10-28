@@ -34,14 +34,14 @@ public final class ApplicationSetCompatibilityInstrumentedTest {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         Context context = instrumentation.getTargetContext();
         Bundle arguments = InstrumentationRegistry.getArguments();
-        directory = new File(context.getFilesDir(), "third-party-smoke-v3");
+        directory = new File(context.getFilesDir(), "third-party-smoke-v4");
         if (!directory.isDirectory() && !directory.mkdirs()) throw new IllegalStateException("Cannot create evidence directory");
         apps = new JSONArray().put(emptyApp(SmokeHarness.CALCULATOR_TARGET)).put(emptyApp(SmokeHarness.NOTES_TARGET));
-        report = new JSONObject().put("schemaVersion", 3)
+        report = new JSONObject().put("schemaVersion", 4)
                 .put("kind", "third-party-app-set-smoke")
-                .put("sampleId", "calculator-1.4.0-notes-1.7.0-v3")
+                .put("sampleId", "calculator-1.4.0-notes-1.7.0-v4")
                 .put("keyboardPolicy", "verified-system-ime-uncovered-targets")
-                .put("navigationPolicy", "no-automatic-back")
+                .put("navigationPolicy", "single-back-only-before-notes-create-confirm")
                 .put("apps", apps);
         persist();
         SmokeHarness guard = null;
@@ -49,8 +49,8 @@ public final class ApplicationSetCompatibilityInstrumentedTest {
             // Check explicit opt-in before connecting UiAutomation. Device properties are
             // then checked independently; argument strings do not prove an emulator.
             SmokeHarness.validateArguments(arguments);
-            SmokeHarness.require("agent-os-third-party-smoke-v3".equals(arguments.getString("syntheticTestMarker")),
-                    "The application-set probe requires its version-three editing sample");
+            SmokeHarness.require("agent-os-third-party-smoke-v4".equals(arguments.getString("syntheticTestMarker")),
+                    "The application-set probe requires its version-four confirmation sample");
             report.put("source", SmokeHarness.source(arguments));
             persist();
             verifyPlatformParsers();
@@ -213,7 +213,7 @@ public final class ApplicationSetCompatibilityInstrumentedTest {
                 harness.notesDiagnosticStage(SmokeHarness.NotesStage.SELECT_TEXT_TYPE);
                 harness.notesClick("type_text_note");
                 harness.notesDiagnosticStage(SmokeHarness.NotesStage.CONFIRM_CREATE);
-                harness.notesClick("android:id/button1");
+                harness.notesConfirmCreate(noteTitle(state));
                 harness.notesDiagnosticStage(SmokeHarness.NotesStage.CREATED_EDITOR);
                 harness.awaitNotesResource("text_note_view");
                 harness.notesDiagnosticStage(SmokeHarness.NotesStage.CREATED_TITLE);
@@ -305,7 +305,13 @@ public final class ApplicationSetCompatibilityInstrumentedTest {
                 }
             }
             if (target == SmokeHarness.NOTES_TARGET) {
-                entry.getJSONObject("result").put("automaticBackPolicy", "prohibited").put("homeAttempts", harness.notesHomeAttempts());
+                try {
+                    entry.getJSONObject("result").put("automaticBackPolicy", "single-back-only-before-notes-create-confirm")
+                            .put("homeAttempts", harness.notesHomeAttempts()).put("confirmationPreparation", harness.notesConfirmationResult());
+                } catch (Exception | AssertionError evidenceFailure) {
+                    entry.put("status", "failed").put("confirmationEvidenceError", safeError(evidenceFailure));
+                    if (failure == null) failure = evidenceFailure; else failure.addSuppressed(evidenceFailure);
+                }
             }
             entry.put("finishedAt", System.currentTimeMillis());
             boolean anyIdentityVerified = false;
@@ -342,7 +348,7 @@ public final class ApplicationSetCompatibilityInstrumentedTest {
                         .put("resourceId", target.packageName + ":id/text_note_view")
                         .put("titleExpected", noteTitle(state)).put("titleActual", JSONObject.NULL)
                         .put("persistenceVerified", false).put("reopenedInFreshProcess", false)
-                        .put("automaticBackPolicy", "prohibited").put("homeAttempts", 0);
+                        .put("automaticBackPolicy", "single-back-only-before-notes-create-confirm").put("homeAttempts", 0);
         return new JSONObject().put("state", state).put("status", "unverified").put("stage", "not_run")
                 .put("cause", "test_has_not_executed").put("installedIdentityVerified", false)
                 .put("serviceState", "unknown").put("serviceObservations", new JSONArray())

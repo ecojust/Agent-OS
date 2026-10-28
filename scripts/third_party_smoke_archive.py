@@ -123,7 +123,7 @@ def artifact_entries(value):
 
 def eligible_artifacts(index, run, version=1):
     identity = verify_source(run)
-    require(type(version) is int and version in (1, 2, 3), "unknown evidence version")
+    require(type(version) is int and version in (1, 2, 3, 4), "unknown evidence version")
     prefix = "third-party-smoke-api-" if version == 1 else f"third-party-smoke-v{version}-api-"
     labels = r"(30|35|37\.0)" if version == 1 else r"(30|31|32|33|34|35|36|37\.0)"
     pattern = re.compile(prefix + labels + "-attempt-" + str(identity["attempt"]))
@@ -155,7 +155,7 @@ def eligible_artifacts(index, run, version=1):
 
 def eligible_run_artifacts(index, run):
     """Select one current-attempt evidence protocol, never mix old and new lanes."""
-    protocols = [eligible_artifacts(index, run, version) for version in (1, 2, 3)]
+    protocols = [eligible_artifacts(index, run, version) for version in (1, 2, 3, 4)]
     require(sum(bool(items) for items in protocols) <= 1, "source attempt contains mixed evidence versions")
     selected = next((items for items in protocols if items), {})
     ids = [item["id"] for item in selected.values()]
@@ -395,13 +395,13 @@ def main(argv=None):
         else:
             require(args.incoming is not None, "archive requires --incoming")
             # After the workflow checks out the exact source SHA, use its lock.
-            # Earlier sources retain their original script and version-1 default.
+            # Earlier sources retain their original scripts and v1/v2/v3 contracts.
             selected_sample = args.sample
             if selected_sample is None:
                 newer = args.repo / "docs/validation/third-party-app-set-lock.json"
                 selected_sample = newer if newer.exists() else args.repo / "docs/validation/third-party-calculator-lock.json"
             sample = read_json(selected_sample)
-            if type(sample.get("schemaVersion")) is int and sample["schemaVersion"] == 3:
+            if type(sample.get("schemaVersion")) is int and sample["schemaVersion"] == 4:
                 from third_party_smoke_set_archive import archive as archive_set
                 result = archive_set(args.incoming, args.output or path, run, index, sample, args.repo)
             else:

@@ -161,3 +161,12 @@
 源码`1f9f773ae8513ddad19193bfdb511c26ad68e9b2`的[唯一录制40706746603](https://github.com/ecojust/Agent-OS/actions/runs/40706746603)与[归档40707534834](https://github.com/ecojust/Agent-OS/actions/runs/40707534834)均成功。[实际录像](../../screenshots/demos/40706746603-1/demo.mp4)为32.651秒、640×1280、H.264/yuv420p，410,296字节，严格小于100 MB；SHA-256为`8c92586dc03b055da29c46e21d2483e45a3cafd39e1e6aec92ddc0426c37d066`。30个载荷共1,139,856字节、22张320×640实际PNG（19个不同摘要），完整文件集合、大小、摘要、PNG解码、视频全段解码及实际帧均已核验。
 
 13阶段与8次确认通过，流程记录31,941毫秒；所有22次采集均未清除安全标志，使用本地合成HTTP模型。本次相对31e1的代码变更仅在导航验证测试；普通Fixture录像不运行Settings来源拒绝用例，不代替本轮独立设备结果。原始证据提交`7d5153b4620e46844475d2c0bdc6690415f6b424`的父提交为上述精确源码，旧录像保持各自来源。
+
+
+## 数值偏好源码的整体演示
+
+源码`41e44b00069b0b58725f8e8de89afa5cb9bcf4f9`的[首次且唯一录制40719665055](https://github.com/ecojust/Agent-OS/actions/runs/40719665055)成功，[归档40720781331](https://github.com/ecojust/Agent-OS/actions/runs/40720781331)保存不可变提交`dbe6b3a0c3c72330b2324c7b63f80790ac505479`，父提交正是被测源码。[录像](../../screenshots/demos/40719665055-1/demo.mp4)为35.347秒、640×1280、H.264/yuv420p，427,699字节，严格小于100,000,000字节；SHA-256为`a5fb66efacef07a0bc3b9971b1753453dd7169ef6924ff8c278621b122aef0f5`。
+
+[原始清单](../../screenshots/demos/40719665055-1/manifest.json)记录30个载荷、1,171,177字节，22张320×640实际PNG。文件集合、字节数、摘要、全部PNG解码、视频全段解码及三帧实际画面均经两次独立核验；13必需阶段与8次确认通过。该运行采用direct ADB仪器流程，`junitStatus=not_produced_direct_adb`，未生成原始JUnit XML。清单SHA-256为`2f3e988d4c88b84bd6ee6691825357f4774c2e0d6341785d74b5434edc523267`，独立审计记录为`fcc48e4a5d895749b8f636fb3fc568a257ba5ce7fa1d22784d138e8417a7dd7f`。
+
+录像展示普通Fixture与暂停、停止和动作确认，模型回复来自本地合成服务；没有清除安全窗口标志，也不打开数值偏好的受保护配置或预览页面。它不是文件导入导出、真实模型或真机验收；新增六项SAF与生命周期用例由[对应完整运行40719564182](https://github.com/ecojust/Agent-OS/actions/runs/40719564182)独立统计。

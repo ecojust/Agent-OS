@@ -120,3 +120,6 @@
 
 
 源码 `2691e5d782c88dbefcc23bd93b627ea9e80bdf72` 的普通[录像40641491474](https://github.com/ecojust/Agent-OS/actions/runs/40641491474)及[归档40641955644](https://github.com/ecojust/Agent-OS/actions/runs/40641955644)成功。[清单](../../screenshots/demos/40641491474-1/manifest.json)30载荷、1,182,340字节、22张320×640实际PNG已核验；[视频](../../screenshots/demos/40641491474-1/demo.mp4)36.212秒、640×1280、446,068字节，完整解码及实际帧检查通过。普通1/1、13阶段、8确认通过，安全标志保留，模型为本地合成HTTP服务；不执行本次Activity字体专项、不代替其失败。完整1976项仍未运行，完整通过基线保留81f的1968/1968，检查点45%。
+
+
+源码 `b7bb92b438c5d8d3ebc0d72deec8c33e7689aab6` 的普通[录像40642313167](https://github.com/ecojust/Agent-OS/actions/runs/40642313167)及[归档40642781994](https://github.com/ecojust/Agent-OS/actions/runs/40642781994)成功。[清单](../../screenshots/demos/40642313167-1/manifest.json)30载荷、1,190,706字节、22张320×640实际PNG已核验；[视频](../../screenshots/demos/40642313167-1/demo.mp4)39.064秒、640×1280、457,501字节，完整解码与实际帧检查通过。普通操作1/1、13阶段及8确认通过，安全标志未清除，模型为本地合成HTTP服务；不执行本次字体用例、不替代专项或真机／真实模型验收。

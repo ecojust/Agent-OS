@@ -1063,3 +1063,14 @@ Android CompoundButton.performClick先toggle，再返回父View的点击处理�
 测试现在在已登记的真实Host的onActivityPostCreated回调保存平台getter返回的交接对象；后续仍精确核对同profile、相同settings对象、任务与无效原始输入及retainedDraft已消费。主动finish后的新开界面也改为检查创建时快照为空，避免使用平台必然清空后的值形成无效检查。回调失败保留固定诊断，不保存敏感内容到文件，不伪造或主动调用生命周期方法。
 
 仅该测试文件改变，生产、单次真实模式点击、系统字体、Bundle敏感标记、存储／Controller、布局与时限断言均保留。最终APK和lint50秒通过，冻结源码构建前后hash一致；新版八档专项、完整1976项及普通录像待执行，原两轮0/8和准确来源录像全部保留。
+
+
+### 主Activity实际系统字体与草稿边界：八档8/8通过
+
+源码 `b7bb92b438c5d8d3ebc0d72deec8c33e7689aab6` 的[专项40642275055](https://github.com/ecojust/Agent-OS/actions/runs/40642275055)在API30、31、32、33、34、35、36、37.0八档各执行唯一原用例，**8/8通过，零失败、错误、跳过、额外用例、不可读报告和缺失记录**。八档均进入实际系统1.0→1.3重建路径；UI草稿、创建时真实非配置对象及settings身份、原始无效数值、最终Bundle保护、实际字高／关键按钮、安全窗口、主动finish后不继承草稿，以及原字体／存储恢复均通过。Controller代次与实际worker保持基线，模型请求为0；该固定样本不扩展为进程死亡、所有字号、旋转或真机验收。
+
+[原始归档](screenshots/40642275055-1/manifest.json)32载荷、34,396字节经独立完整集合、大小/SHA-256、逐案JSON、采集器JUnit摘要及原日志核验。每档实际记录1.0基线、1.3替换、fresh-open与finished，共32条固定保护策略blocked，**没有尝试受保护PNG，PNG为0，安全窗口标志保持**；这不是系统截图拒绝或用例跳过。8份性能附件invalid，fullSuiteAcceptance=false，不能替代整套。前两轮0/8及原始连续失败日志完整保留；两处修正只纠正测试的控件返回值与生命周期采样契约，没有改变生产行为或放宽原保护与时限。
+
+同源码普通[录像40642313167](https://github.com/ecojust/Agent-OS/actions/runs/40642313167)及[归档40642781994](https://github.com/ecojust/Agent-OS/actions/runs/40642781994)成功。[清单](screenshots/demos/40642313167-1/manifest.json)30载荷、1,190,706字节、22张320×640实际PNG已核验；[视频](screenshots/demos/40642313167-1/demo.mp4)39.064秒、640×1280、457,501字节，完整解码与实际帧检查通过。普通操作1/1、13阶段及8确认通过，安全标志未清除，模型为本地合成HTTP服务；不执行本次字体用例、不替代专项或真机／真实模型验收。
+
+相同b7bb精确源码的[完整1976项40643561197](https://github.com/ecojust/Agent-OS/actions/runs/40643561197)已启动；完整247身份／档从源码冻结，不把预期数量当通过数。当前已完成完整基线仍为81f的1968/1968；前次API36视觉代次失败原因仍未知，不借新专项通过消除原问题。检查点保持9/20（45%）。

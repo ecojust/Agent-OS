@@ -1,0 +1,16 @@
+2026-10-28T18:27:29.2606009Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --filter=blob:none --depth=1 origin +eee60b1b273e458db92f3ed2391ee5a84d63e2fb:refs/remotes/origin/master
+2026-10-28T18:27:30.0902403Z From https://github.com/ecojust/Agent-OS
+2026-10-28T18:27:30.0903583Z  * [new ref]         eee60b1b273e458db92f3ed2391ee5a84d63e2fb -> origin/master
+2026-10-28T18:27:30.0909246Z ##[endgroup]
+2026-10-28T18:27:30.0910073Z ##[group]Determining the checkout info
+2026-10-28T18:27:30.0913778Z ##[endgroup]
+2026-10-28T18:27:30.0914489Z ##[group]Setting up sparse checkout
+2026-10-28T18:27:30.0922692Z [command]/usr/bin/git sparse-checkout set .github app core fixture compat-smoke docs gradle scripts
+2026-10-28T18:27:30.0995719Z ##[endgroup]
+2026-10-28T18:27:30.0996679Z ##[group]Checking out the ref
+2026-10-28T18:27:30.1003089Z [command]/usr/bin/git checkout --progress --force -B master refs/remotes/origin/master
+2026-10-28T18:27:31.1590505Z Reset branch 'master'
+2026-10-28T18:27:31.1594774Z branch 'master' set up to track 'origin/master'.
+2026-10-28T18:27:31.1649820Z ##[endgroup]
+2026-10-28T18:27:31.1714193Z [command]/usr/bin/git log -1 --format=%H
+2026-10-28T18:27:31.1749363Z eee60b1b273e458db92f3ed2391ee5a84d63e2fb

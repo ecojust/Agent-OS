@@ -1,0 +1,17 @@
+2026-10-28T18:43:01.1742502Z   | Report: app/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 15-_app-.xml
+2026-10-28T18:43:01.1743674Z   | Suite: dev.agentos.app.AgentControllerInstrumentedTest
+2026-10-28T18:43:01.1745240Z   | Test: dev.agentos.app.VisualEventGenerationInstrumentedTest.actualSameHeightStatusEventsPreserveTheOriginalLocalGuardAcrossRepeatedPublications
+2026-10-28T18:43:01.1747076Z   | Kind: failure / 
+2026-10-28T18:43:01.1748053Z   | java.lang.AssertionError: A real owned cosmetic event must not revoke this generation expected:<34> but was:<35>
+2026-10-28T18:43:01.1750324Z   | Visual invalidations: baseline=34,round=3,total=1,dropped=0,samplingFailed=false,matched={round=3,type=2048,content=2,windowChanges=0,windowId=859},controlsSampled=true,controlWindowMatches=true,controlAttachmentMatches=true
+2026-10-28T18:43:01.1754257Z   | round=3,generation=34->35,relativeAfterBaseline=1,type=2048,content=4,windowChanges=0,windowId=4,panel=true,attached=true,shown=true,laidOut=true,layoutRequested=false,bounds=[12,36][308,148],registration=true,identity=true,originalCurrent=false,originalRegistration=true,visual=true,visualRegistration=true,eventMatchesVisual=false,boundsMatchVisual=true,calls=invalidateVisualEvents:385;onAccessibilityEvent:1469
+2026-10-28T18:43:01.1758587Z   | at dev.agentos.app.VisualEventGenerationInstrumentedTest$VisualInvalidationProbe.report(VisualEventGenerationInstrumentedTest.java:215)
+2026-10-28T18:43:01.1761062Z   | at dev.agentos.app.VisualEventGenerationInstrumentedTest.actualSameHeightStatusEventsPreserveTheOriginalLocalGuardAcrossRepeatedPublications(VisualEventGenerationInstrumentedTest.java:101)
+2026-10-28T18:43:01.1762966Z   | ... 33 trimmed
+2026-10-28T18:43:01.1763856Z   | Caused by: java.lang.AssertionError: A real owned cosmetic event must not revoke this generation expected:<34> but was:<35>
+2026-10-28T18:43:01.1764956Z   | at org.junit.Assert.fail(Assert.java:89)
+2026-10-28T18:43:01.1765634Z   | at org.junit.Assert.failNotEquals(Assert.java:835)
+2026-10-28T18:43:01.1766539Z   | at org.junit.Assert.assertEquals(Assert.java:647)
+2026-10-28T18:43:01.1768527Z   | at dev.agentos.app.VisualEventGenerationInstrumentedTest.actualSameHeightStatusEventsPreserveTheOriginalLocalGuardAcrossRepeatedPublications(VisualEventGenerationInstrumentedTest.java:92)
+2026-10-28T18:43:01.1770389Z   | ... 34 more
+2026-10-28T18:43:01.1770905Z Parsed 1 Android reports; found 1 failure/error entries.

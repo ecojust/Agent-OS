@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-28T18:26:46Z",
-  "note": "修正数值偏好导出页面准备和代理销毁等待；依据精确Android11镜像，仅API30/full为合成测试APK设置可发现性，原权限、270项/API及1200秒边界保持。测试APK构建和lint通过，相关脚本83/83通过；新八档实测待运行，第三轮14项失败保留，检查点9/20（45%）。",
+  "updated_at": "2026-10-28T18:55:16Z",
+  "note": "归档eee60第四轮：2160项完成，2154通过、6失败；数值偏好43/48、旧用例2111/2112。导出和代理重建八档通过，API30已发现提供方，剩余文件选择交互与旧视觉测试失败保留。342脚本实际通过且零跳过，九个任务已执行稀疏检出；检查点9/20（45%）。",
   "latest_evidence": {
-    "path": "screenshots/40736683857-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40736683857"
+    "path": "screenshots/40745270296-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40745270296"
   },
   "checkpoints": [
     {
@@ -65,8 +65,8 @@
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
       "status": "in_progress",
-      "evidence": "screenshots/40736683857-1/manifest.json",
-      "scope": "Latest exact3eb/run40736683857:270 identities/API x8=2160 complete;2146pass/14fail, zero errors/skips/missing/extra/duplicates. Original2112 all pass; Numeric48 cases34pass/14fail.2232 actualPNGs/1431blocked; Numeric82blocked/noPNG; original24 secure exceptions unchanged. API30 root discovery, API31–37 export directory readiness and API37 broker destruction assertion remain unresolved. Previous exact1f9f/run40706713295 remains last wholly passing2112/2112 baseline. Scripts336 passed with no skips. Phone/model/ROM, broad-app and performance acceptance remain unverified."
+      "evidence": "screenshots/40745270296-1/manifest.json",
+      "scope": "Latest exacteee60/run40745270296:270 identities/API x8=2160 complete;2154pass/6fail,zero errors/skips/missing/extra/duplicates. Numeric48=43pass/5fail;old2112=2111pass/1fail(API35VisualEventGeneration).2229 actualPNG/1440blocked;Numeric91blocked/noPNG;24 original secure exceptions unchanged. Export and broker-recreation8/8;API30 roots discovered and installation override observed,three import target-action failures remain;API31/36 root single-click false. Scripts342 actualpass/0skip;remote sparse checkout executed. Last wholly passing2112 baseline remains1f9f/run40706713295. No physical-phone/model/ROM/broad-app/performance acceptance."
     },
     {
       "id": "performance",

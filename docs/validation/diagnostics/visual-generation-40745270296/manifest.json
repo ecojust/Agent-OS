@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "kind": "original-ci-visual-foreign-event-failure-excerpt",
+  "sourceRun": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 40745270296,
+    "attempt": 1,
+    "commit": "eee60b1b273e458db92f3ed2391ee5a84d63e2fb",
+    "event": "workflow_dispatch",
+    "branch": "master",
+    "conclusion": "failure",
+    "finishedAt": "2026-10-28T18:43:20Z",
+    "url": "https://github.com/ecojust/Agent-OS/actions/runs/40745270296"
+  },
+  "executionScope": "full",
+  "fullSuiteAcceptance": false,
+  "archiveVerification": {
+    "commit": "6bd8fcd130f830472fa56095500fd04411f58c0e",
+    "path": "screenshots/40745270296-1/manifest.json",
+    "fullPayloadAndIdentityAudit": "passed; does not turn failed test into a pass",
+    "verificationSha256": "148a963a72d4f5486ec5c549ebafd65f72c1fa01146e21645c6a90dd9fe3cc8b"
+  },
+  "sourceLogArchive": {
+    "url": "https://api.github.com/repos/ecojust/Agent-OS/actions/runs/40745270296/attempts/1/logs",
+    "bytes": 559420,
+    "sha256": "818023676fec9b0a8188cc04d0bfad79f305082c9faf937f45ac7579010a7ace"
+  },
+  "entries": [
+    {
+      "matrixLabel": "35",
+      "sourceJob": {
+        "id": 123017267350,
+        "name": "emulator-tests (35)",
+        "url": "https://github.com/ecojust/Agent-OS/actions/runs/40745270296/job/123017267350",
+        "conclusion": "failure"
+      },
+      "sourceLogMember": "emulator-tests (35)/10_Print Android failure details.txt",
+      "sourceLogMemberBytes": 3845,
+      "sourceLogMemberSha256": "8d0f72163e8b0d04d422f0a206b412b6521acd748c6386a3fe7ff546aa84bed4",
+      "sourceLineStart": 19,
+      "sourceLineCount": 17,
+      "sourceTrailingWhitespaceLinesPreserved": [
+        22
+      ],
+      "file": "api35-failure.txt",
+      "bytes": 2485,
+      "sha256": "ff9bb13d7a809caecc5a50edb3db3417307b4241004dd7994d41048166990ee9",
+      "failedTest": "dev.agentos.app.VisualEventGenerationInstrumentedTest#actualSameHeightStatusEventsPreserveTheOriginalLocalGuardAcrossRepeatedPublications",
+      "observed": {
+        "baselineGeneration": 34,
+        "actualGeneration": 35,
+        "round": 3,
+        "invalidationCount": 1,
+        "dropped": 0,
+        "samplingFailed": false,
+        "matchedOwnedEvent": {
+          "eventType": 2048,
+          "contentChangeTypes": 2,
+          "windowChanges": 0,
+          "windowId": 859
+        },
+        "invalidatingEvent": {
+          "eventType": 2048,
+          "contentChangeTypes": 4,
+          "windowChanges": 0,
+          "windowId": 4
+        },
+        "sameControlWindow": true,
+        "sameControlAttachment": true,
+        "sameOriginalRegistration": true,
+        "sameVisualBounds": true,
+        "eventMatchesVisual": false,
+        "guardAssertionAfterGenerationFailureExecuted": false
+      },
+      "originalJUnitXmlDownloaded": false
+    }
+  ],
+  "proposedFollowupImplemented": false,
+  "productionGuardRulesChanged": false,
+  "testBodyOrIdentityChanged": false
+}

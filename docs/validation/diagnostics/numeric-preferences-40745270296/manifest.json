@@ -1,0 +1,925 @@
+{
+  "schemaVersion": 1,
+  "runId": 40745270296,
+  "attempt": 1,
+  "runUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40745270296",
+  "sourceSha": "eee60b1b273e458db92f3ed2391ee5a84d63e2fb",
+  "scope": "full",
+  "originalLogsZip": {
+    "fileName": "whole-run-logs.zip",
+    "bytes": 559420,
+    "sha256": "818023676fec9b0a8188cc04d0bfad79f305082c9faf937f45ac7579010a7ace"
+  },
+  "archive": {
+    "runId": 40748128968,
+    "status": "immutable_bound_counts_verified",
+    "commit": "6bd8fcd130f830472fa56095500fd04411f58c0e",
+    "parent": "eee60b1b273e458db92f3ed2391ee5a84d63e2fb",
+    "rootManifestPath": "screenshots/40745270296-1/manifest.json",
+    "rootManifestBytes": 1204136,
+    "rootManifestSha256": "7e9afaae5d551c04803dd50ab571dfa5ffc974d9bb999efbfb07c902f1f73a4a",
+    "verificationScope": "Root manifest and all eight ledger hashes, sizes, exact 270-identity sets, results and reported JUnit totals; separate full payload/PNG audit is outside this diagnostic binding."
+  },
+  "expectedIdentitySet": {
+    "perApi": 270,
+    "apis": [
+      "30",
+      "31",
+      "32",
+      "33",
+      "34",
+      "35",
+      "36",
+      "37.0"
+    ],
+    "total": 2160,
+    "existingExcludedIdentities": 8,
+    "exclusionsChanged": false
+  },
+  "rawLogTotals": {
+    "started": 2160,
+    "finished": 2160,
+    "parsedReports": 8,
+    "printedFailures": 6,
+    "printedErrors": 0,
+    "numericFailures": 5,
+    "retainedPriorCaseFailures": 1,
+    "originalXmlIndependentlyDownloaded": false,
+    "fullSuitePassed": false
+  },
+  "caseLedger": {
+    "recorded": 2160,
+    "pass": 2154,
+    "fail": 6,
+    "missing": 0,
+    "unexpected": 0,
+    "source": "Eight per-API ledgers read directly from the immutable archive commit and matched to the frozen source identity set",
+    "apis": [
+      {
+        "api": "30",
+        "recorded": 270,
+        "pass": 267,
+        "fail": 3,
+        "missing": 0,
+        "unexpected": 0,
+        "numericPass": 3,
+        "numericFail": 3,
+        "priorPass": 264,
+        "priorFail": 0,
+        "ledgerPath": "screenshots/40745270296-1/api-30/screenshots/manifest.json",
+        "ledgerBytes": 266154,
+        "ledgerSha256": "999971c66cc06efac21b5c498a0cc40d6965c3233ee724444450d18791af0b33",
+        "reportedJUnit": {
+          "reports": 1,
+          "tests": 270,
+          "failures": 3,
+          "errors": 0,
+          "skipped": 0,
+          "unreadableReports": 0
+        }
+      },
+      {
+        "api": "31",
+        "recorded": 270,
+        "pass": 269,
+        "fail": 1,
+        "missing": 0,
+        "unexpected": 0,
+        "numericPass": 5,
+        "numericFail": 1,
+        "priorPass": 264,
+        "priorFail": 0,
+        "ledgerPath": "screenshots/40745270296-1/api-31/screenshots/manifest.json",
+        "ledgerBytes": 266467,
+        "ledgerSha256": "f86a776a582e8dc71bd93d0dbded28b6f8054658c5b54af324f9e636356e4b34",
+        "reportedJUnit": {
+          "reports": 1,
+          "tests": 270,
+          "failures": 1,
+          "errors": 0,
+          "skipped": 0,
+          "unreadableReports": 0
+        }
+      },
+      {
+        "api": "32",
+        "recorded": 270,
+        "pass": 270,
+        "fail": 0,
+        "missing": 0,
+        "unexpected": 0,
+        "numericPass": 6,
+        "numericFail": 0,
+        "priorPass": 264,
+        "priorFail": 0,
+        "ledgerPath": "screenshots/40745270296-1/api-32/screenshots/manifest.json",
+        "ledgerBytes": 266690,
+        "ledgerSha256": "0c293bc8ba93739311f101355f48abddb6f7d7c1d3ebcb18157ce37aad94802e",
+        "reportedJUnit": {
+          "reports": 1,
+          "tests": 270,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "unreadableReports": 0
+        }
+      },
+      {
+        "api": "33",
+        "recorded": 270,
+        "pass": 270,
+        "fail": 0,
+        "missing": 0,
+        "unexpected": 0,
+        "numericPass": 6,
+        "numericFail": 0,
+        "priorPass": 264,
+        "priorFail": 0,
+        "ledgerPath": "screenshots/40745270296-1/api-33/screenshots/manifest.json",
+        "ledgerBytes": 268251,
+        "ledgerSha256": "d672935864629bb2bb7911f1223ae7593b7afa38951cda42875d8feee9cc6c86",
+        "reportedJUnit": {
+          "reports": 1,
+          "tests": 270,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "unreadableReports": 0
+        }
+      },
+      {
+        "api": "34",
+        "recorded": 270,
+        "pass": 270,
+        "fail": 0,
+        "missing": 0,
+        "unexpected": 0,
+        "numericPass": 6,
+        "numericFail": 0,
+        "priorPass": 264,
+        "priorFail": 0,
+        "ledgerPath": "screenshots/40745270296-1/api-34/screenshots/manifest.json",
+        "ledgerBytes": 267640,
+        "ledgerSha256": "4d0474820560557c39a03a9d619d813252a411f1b6a1301159e6f6463e811c65",
+        "reportedJUnit": {
+          "reports": 1,
+          "tests": 270,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "unreadableReports": 0
+        }
+      },
+      {
+        "api": "35",
+        "recorded": 270,
+        "pass": 269,
+        "fail": 1,
+        "missing": 0,
+        "unexpected": 0,
+        "numericPass": 6,
+        "numericFail": 0,
+        "priorPass": 263,
+        "priorFail": 1,
+        "ledgerPath": "screenshots/40745270296-1/api-35/screenshots/manifest.json",
+        "ledgerBytes": 267131,
+        "ledgerSha256": "fadf47e2b876f8d97d74760331be8269444a299e0458bcc214c83353dc129856",
+        "reportedJUnit": {
+          "reports": 1,
+          "tests": 270,
+          "failures": 1,
+          "errors": 0,
+          "skipped": 0,
+          "unreadableReports": 0
+        }
+      },
+      {
+        "api": "36",
+        "recorded": 270,
+        "pass": 269,
+        "fail": 1,
+        "missing": 0,
+        "unexpected": 0,
+        "numericPass": 5,
+        "numericFail": 1,
+        "priorPass": 264,
+        "priorFail": 0,
+        "ledgerPath": "screenshots/40745270296-1/api-36/screenshots/manifest.json",
+        "ledgerBytes": 267439,
+        "ledgerSha256": "1a1513bb97f6b048bc0ae03255fd29c826351b15f14ef226ec6dc06cf67db125",
+        "reportedJUnit": {
+          "reports": 1,
+          "tests": 270,
+          "failures": 1,
+          "errors": 0,
+          "skipped": 0,
+          "unreadableReports": 0
+        }
+      },
+      {
+        "api": "37.0",
+        "recorded": 270,
+        "pass": 270,
+        "fail": 0,
+        "missing": 0,
+        "unexpected": 0,
+        "numericPass": 6,
+        "numericFail": 0,
+        "priorPass": 264,
+        "priorFail": 0,
+        "ledgerPath": "screenshots/40745270296-1/api-37.0/screenshots/manifest.json",
+        "ledgerBytes": 267662,
+        "ledgerSha256": "511000d22c3fc5b6090c71a9cc5c5bb48ffc69712d3f43fba0dd57a1057d13c8",
+        "reportedJUnit": {
+          "reports": 1,
+          "tests": 270,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "unreadableReports": 0
+        }
+      }
+    ]
+  },
+  "failedIdentities": [
+    {
+      "api": "30",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#cancelledProviderIoKeepsItsProcessSlotUntilActualCloseWithoutBlockingMainWork"
+    },
+    {
+      "api": "30",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#malformedOversizedAndCancelledImportsLeaveTheOriginalDraftAndSavedStateUntouched"
+    },
+    {
+      "api": "30",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#realSafImportPreviewsAndAppliesOnlyFourUnsavedNumericFields"
+    },
+    {
+      "api": "31",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#malformedOversizedAndCancelledImportsLeaveTheOriginalDraftAndSavedStateUntouched"
+    },
+    {
+      "api": "35",
+      "identity": "dev.agentos.app.VisualEventGenerationInstrumentedTest#actualSameHeightStatusEventsPreserveTheOriginalLocalGuardAcrossRepeatedPublications"
+    },
+    {
+      "api": "36",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#malformedOversizedAndCancelledImportsLeaveTheOriginalDraftAndSavedStateUntouched"
+    }
+  ],
+  "originalCompletionLogLocations": [
+    {
+      "api": "30",
+      "sourceZipEntry": "emulator-tests (30)/8_Exercise Android execution boundaries.txt",
+      "sourceEntrySha256": "db6ec0449cd311e3849370d8df945c25c30739114fd714523b2e06c096d70ccc",
+      "starting270Line": 424,
+      "finished270Line": 514,
+      "jobConclusion": "failure"
+    },
+    {
+      "api": "31",
+      "sourceZipEntry": "emulator-tests (31)/8_Exercise Android execution boundaries.txt",
+      "sourceEntrySha256": "daa2dd741934089cdf345f9f61fd8a3cbf7f8a506da354e1666dd0be8eb35daf",
+      "starting270Line": 366,
+      "finished270Line": 1134,
+      "jobConclusion": "failure"
+    },
+    {
+      "api": "32",
+      "sourceZipEntry": "emulator-tests (32)/8_Exercise Android execution boundaries.txt",
+      "sourceEntrySha256": "433fd9ad1d67fe16d5bf3bc26d337447ca6fe894af182991e7f602ef8a8a3c72",
+      "starting270Line": 368,
+      "finished270Line": 1046,
+      "jobConclusion": "success"
+    },
+    {
+      "api": "33",
+      "sourceZipEntry": "emulator-tests (33)/8_Exercise Android execution boundaries.txt",
+      "sourceEntrySha256": "af9407661ae43f90ca5165ddb0f241f1ee8351b2db14d47f64a8978d5cea840e",
+      "starting270Line": 376,
+      "finished270Line": 914,
+      "jobConclusion": "success"
+    },
+    {
+      "api": "34",
+      "sourceZipEntry": "emulator-tests (34)/8_Exercise Android execution boundaries.txt",
+      "sourceEntrySha256": "aa46149fb44f085ac12869d1d6dd60ea434b999b67df1df2bc217c5f90838b12",
+      "starting270Line": 365,
+      "finished270Line": 708,
+      "jobConclusion": "success"
+    },
+    {
+      "api": "35",
+      "sourceZipEntry": "emulator-tests (35)/8_Exercise Android execution boundaries.txt",
+      "sourceEntrySha256": "641ac9ce260f8c493157c81c60f1a728f50241730d034e4d64cb7c58bab07d5e",
+      "starting270Line": 368,
+      "finished270Line": 1142,
+      "jobConclusion": "failure"
+    },
+    {
+      "api": "36",
+      "sourceZipEntry": "emulator-tests (36)/8_Exercise Android execution boundaries.txt",
+      "sourceEntrySha256": "0f0961376eadc3474e90cfc1889ae34850e55cd9986e2be3f2b03730adf35cdf",
+      "starting270Line": 382,
+      "finished270Line": 621,
+      "jobConclusion": "failure"
+    },
+    {
+      "api": "37.0",
+      "sourceZipEntry": "emulator-tests (37.0)/8_Exercise Android execution boundaries.txt",
+      "sourceEntrySha256": "f281186883b3ebb2af90bf13529cf598ee5e76f845d7c26550b052e78cf25194",
+      "starting270Line": 378,
+      "finished270Line": 689,
+      "jobConclusion": "success"
+    }
+  ],
+  "scriptTests": {
+    "ran": 342,
+    "durationSeconds": 58.431,
+    "result": "OK",
+    "skipped": 0,
+    "skipEvidence": "342 progress dots and bare OK; no skipped count",
+    "perMethodResultsPrinted": false,
+    "evidence": "build-script-tests.original.txt",
+    "resultLines": [
+      19,
+      21
+    ]
+  },
+  "api30TestApkInstallation": {
+    "evidence": "api-30-install-through-start.original.txt",
+    "sourceScript": "scripts/run_android_tests.sh",
+    "sourceScriptCommit": "eee60b1b273e458db92f3ed2391ee5a84d63e2fb",
+    "sourceScriptLines": [
+      129,
+      140
+    ],
+    "fullAdbArgvPrintedInLog": false,
+    "sourceCommand": "timeout --signal=TERM --kill-after=2s 60s adb install -r -t --force-queryable app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+    "scope": "Fixed synthetic test APK only; original step prints the fixed installation description, Streamed Install, Success, and subsequently Starting270. Exact argv is from reviewed source, not added to raw log."
+  },
+  "sparseCheckoutObservations": [
+    {
+      "job": "build",
+      "evidence": "build-sparse-checkout.original.txt",
+      "filter": "blob:none",
+      "coneDirectories": [
+        ".github",
+        "app",
+        "core",
+        "fixture",
+        "compat-smoke",
+        "docs",
+        "gradle",
+        "scripts"
+      ],
+      "checkoutStepConclusion": "success",
+      "jobConclusion": "success"
+    },
+    {
+      "job": "emulator-tests (30)",
+      "evidence": "api-30-sparse-checkout.original.txt",
+      "filter": "blob:none",
+      "coneDirectories": [
+        ".github",
+        "app",
+        "core",
+        "fixture",
+        "compat-smoke",
+        "docs",
+        "gradle",
+        "scripts"
+      ],
+      "checkoutStepConclusion": "success",
+      "jobConclusion": "failure"
+    },
+    {
+      "job": "emulator-tests (31)",
+      "evidence": "api-31-sparse-checkout.original.txt",
+      "filter": "blob:none",
+      "coneDirectories": [
+        ".github",
+        "app",
+        "core",
+        "fixture",
+        "compat-smoke",
+        "docs",
+        "gradle",
+        "scripts"
+      ],
+      "checkoutStepConclusion": "success",
+      "jobConclusion": "failure"
+    },
+    {
+      "job": "emulator-tests (32)",
+      "evidence": "api-32-sparse-checkout.original.txt",
+      "filter": "blob:none",
+      "coneDirectories": [
+        ".github",
+        "app",
+        "core",
+        "fixture",
+        "compat-smoke",
+        "docs",
+        "gradle",
+        "scripts"
+      ],
+      "checkoutStepConclusion": "success",
+      "jobConclusion": "success"
+    },
+    {
+      "job": "emulator-tests (33)",
+      "evidence": "api-33-sparse-checkout.original.txt",
+      "filter": "blob:none",
+      "coneDirectories": [
+        ".github",
+        "app",
+        "core",
+        "fixture",
+        "compat-smoke",
+        "docs",
+        "gradle",
+        "scripts"
+      ],
+      "checkoutStepConclusion": "success",
+      "jobConclusion": "success"
+    },
+    {
+      "job": "emulator-tests (34)",
+      "evidence": "api-34-sparse-checkout.original.txt",
+      "filter": "blob:none",
+      "coneDirectories": [
+        ".github",
+        "app",
+        "core",
+        "fixture",
+        "compat-smoke",
+        "docs",
+        "gradle",
+        "scripts"
+      ],
+      "checkoutStepConclusion": "success",
+      "jobConclusion": "success"
+    },
+    {
+      "job": "emulator-tests (35)",
+      "evidence": "api-35-sparse-checkout.original.txt",
+      "filter": "blob:none",
+      "coneDirectories": [
+        ".github",
+        "app",
+        "core",
+        "fixture",
+        "compat-smoke",
+        "docs",
+        "gradle",
+        "scripts"
+      ],
+      "checkoutStepConclusion": "success",
+      "jobConclusion": "failure"
+    },
+    {
+      "job": "emulator-tests (36)",
+      "evidence": "api-36-sparse-checkout.original.txt",
+      "filter": "blob:none",
+      "coneDirectories": [
+        ".github",
+        "app",
+        "core",
+        "fixture",
+        "compat-smoke",
+        "docs",
+        "gradle",
+        "scripts"
+      ],
+      "checkoutStepConclusion": "success",
+      "jobConclusion": "failure"
+    },
+    {
+      "job": "emulator-tests (37.0)",
+      "evidence": "api-37.0-sparse-checkout.original.txt",
+      "filter": "blob:none",
+      "coneDirectories": [
+        ".github",
+        "app",
+        "core",
+        "fixture",
+        "compat-smoke",
+        "docs",
+        "gradle",
+        "scripts"
+      ],
+      "checkoutStepConclusion": "success",
+      "jobConclusion": "success"
+    }
+  ],
+  "jobSnapshot": {
+    "evidence": "source-jobs.original.json",
+    "completed": 9,
+    "success": 5,
+    "failure": 4,
+    "jobs": [
+      {
+        "id": 123017267170,
+        "name": "build",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-28T18:27:24Z",
+        "completedAt": "2026-10-28T18:29:35Z"
+      },
+      {
+        "id": 123017267350,
+        "name": "emulator-tests (35)",
+        "status": "completed",
+        "conclusion": "failure",
+        "startedAt": "2026-10-28T18:27:25Z",
+        "completedAt": "2026-10-28T18:43:19Z"
+      },
+      {
+        "id": 123017267370,
+        "name": "emulator-tests (33)",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-28T18:27:24Z",
+        "completedAt": "2026-10-28T18:38:34Z"
+      },
+      {
+        "id": 123017267373,
+        "name": "emulator-tests (36)",
+        "status": "completed",
+        "conclusion": "failure",
+        "startedAt": "2026-10-28T18:27:25Z",
+        "completedAt": "2026-10-28T18:42:53Z"
+      },
+      {
+        "id": 123017267421,
+        "name": "emulator-tests (32)",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-28T18:27:24Z",
+        "completedAt": "2026-10-28T18:38:27Z"
+      },
+      {
+        "id": 123017267423,
+        "name": "emulator-tests (37.0)",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-28T18:27:24Z",
+        "completedAt": "2026-10-28T18:42:28Z"
+      },
+      {
+        "id": 123017267515,
+        "name": "emulator-tests (34)",
+        "status": "completed",
+        "conclusion": "success",
+        "startedAt": "2026-10-28T18:27:24Z",
+        "completedAt": "2026-10-28T18:42:40Z"
+      },
+      {
+        "id": 123017267629,
+        "name": "emulator-tests (31)",
+        "status": "completed",
+        "conclusion": "failure",
+        "startedAt": "2026-10-28T18:27:24Z",
+        "completedAt": "2026-10-28T18:38:14Z"
+      },
+      {
+        "id": 123017267859,
+        "name": "emulator-tests (30)",
+        "status": "completed",
+        "conclusion": "failure",
+        "startedAt": "2026-10-28T18:27:24Z",
+        "completedAt": "2026-10-28T18:42:05Z"
+      }
+    ]
+  },
+  "timingLimit": "Original timestamps are retained; this is not a controlled checkout performance benchmark and makes no causal speedup claim.",
+  "preservation": "Android failure extracts copy the continuous first-Report to final-Parsed range. A zero-failure step has no Report block, so only its original Parsed line is copied. Other log ranges remain continuous. Original bytes are not filtered, concatenated, reflowed or line-ending normalized.",
+  "files": [
+    {
+      "path": "api-30-report.original.txt",
+      "kind": "continuous_original_failure_report",
+      "sourceZipEntry": "emulator-tests (30)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 11643,
+      "sourceEntrySha256": "a58e9ca1ab0d0e96603b18133d80240386c7422a3a86129df77c41c6d8643151",
+      "startLine": 19,
+      "endLine": 46,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "bytes": 10283,
+      "sha256": "bd0cffeee6f135f108c7c5388a1653474fea41261d7f9ea1cd6702f5c132b9ac",
+      "api": "30",
+      "failureErrorEntriesReported": 3
+    },
+    {
+      "path": "api-30-install-through-start.original.txt",
+      "kind": "continuous_original_install_and_test_start",
+      "sourceZipEntry": "emulator-tests (30)/8_Exercise Android execution boundaries.txt",
+      "sourceEntryBytes": 63072,
+      "sourceEntrySha256": "db6ec0449cd311e3849370d8df945c25c30739114fd714523b2e06c096d70ccc",
+      "startLine": 293,
+      "endLine": 424,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "bytes": 10170,
+      "sha256": "9f3eb38699b7799a5e03eb39c7b146ff49585880edc0b392c2d6f11b9371ec8c",
+      "api": "30",
+      "installDescriptionLine": 293,
+      "streamedInstallLine": 294,
+      "successLine": 295,
+      "starting270Line": 424,
+      "fullAdbArgvPrinted": false
+    },
+    {
+      "path": "api-31-report.original.txt",
+      "kind": "continuous_original_failure_report",
+      "sourceZipEntry": "emulator-tests (31)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 4522,
+      "sourceEntrySha256": "f844671a282d7f055153d666a4ba0951be3cc7a9f83eca01122c41b5b1a864a3",
+      "startLine": 19,
+      "endLine": 28,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "bytes": 3162,
+      "sha256": "6ec20691119a3b9a30f3044d20b9cbc14879646bc067474f965b5773f1950c31",
+      "api": "31",
+      "failureErrorEntriesReported": 1
+    },
+    {
+      "path": "api-32-report.original.txt",
+      "kind": "original_zero_failure_summary_line",
+      "sourceZipEntry": "emulator-tests (32)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 1446,
+      "sourceEntrySha256": "9afb1ebd25e977f23f1310d884ad4a8d16cd3b8e76bc941e23e27a6cbbc30890",
+      "startLine": 19,
+      "endLine": 19,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "bytes": 86,
+      "sha256": "448216d1c65427d7c9460e1d0054d9af5e03ec3997be967919985e884547623e",
+      "api": "32",
+      "failureErrorEntriesReported": 0
+    },
+    {
+      "path": "api-33-report.original.txt",
+      "kind": "original_zero_failure_summary_line",
+      "sourceZipEntry": "emulator-tests (33)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 1446,
+      "sourceEntrySha256": "248d9b8617eb32424778f7fd9904dc161a058fcd44f1e26aeae1821656cfd5a6",
+      "startLine": 19,
+      "endLine": 19,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "bytes": 86,
+      "sha256": "268dc8138729efa43542e26d9fb6db637079b967fc220524af7735ae760a6fb6",
+      "api": "33",
+      "failureErrorEntriesReported": 0
+    },
+    {
+      "path": "api-34-report.original.txt",
+      "kind": "original_zero_failure_summary_line",
+      "sourceZipEntry": "emulator-tests (34)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 1446,
+      "sourceEntrySha256": "f8ecf6c1b34de5f054cebadebebf696bac751670ea7550142fbad3d6617c94fd",
+      "startLine": 19,
+      "endLine": 19,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "bytes": 86,
+      "sha256": "55a1a38b197725d0e222820f5b2e6ddc1aac2cc79ddba8aefb5bbb0c14ad3e25",
+      "api": "34",
+      "failureErrorEntriesReported": 0
+    },
+    {
+      "path": "api-35-report.original.txt",
+      "kind": "continuous_original_failure_report",
+      "sourceZipEntry": "emulator-tests (35)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 3845,
+      "sourceEntrySha256": "8d0f72163e8b0d04d422f0a206b412b6521acd748c6386a3fe7ff546aa84bed4",
+      "startLine": 19,
+      "endLine": 35,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "bytes": 2485,
+      "sha256": "ff9bb13d7a809caecc5a50edb3db3417307b4241004dd7994d41048166990ee9",
+      "api": "35",
+      "failureErrorEntriesReported": 1
+    },
+    {
+      "path": "api-36-report.original.txt",
+      "kind": "continuous_original_failure_report",
+      "sourceZipEntry": "emulator-tests (36)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 4676,
+      "sourceEntrySha256": "7fee3220b1bc728f6fe9cf94948709363c6e9793ee7756852e2fce5ee4d38d2c",
+      "startLine": 19,
+      "endLine": 29,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "bytes": 3316,
+      "sha256": "d01a0b1441c790e3e214d9c401f0df85cd490f5c3d3680a586d0c0bd50b60e76",
+      "api": "36",
+      "failureErrorEntriesReported": 1
+    },
+    {
+      "path": "api-37.0-report.original.txt",
+      "kind": "original_zero_failure_summary_line",
+      "sourceZipEntry": "emulator-tests (37.0)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 1446,
+      "sourceEntrySha256": "43dfa5cf464f0f5562a2fed494fdb6ed7282757b70f18f6cfcc0dd27a1eeadf8",
+      "startLine": 19,
+      "endLine": 19,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "bytes": 86,
+      "sha256": "dccdaf3510691a839e01f1ab7b8e5aabdedf3e558f8612b1560e68a213d62ee2",
+      "api": "37.0",
+      "failureErrorEntriesReported": 0
+    },
+    {
+      "path": "build-script-tests.original.txt",
+      "kind": "complete_original_log_entry",
+      "sourceZipEntry": "build/7_Test evidence collection boundaries.txt",
+      "sourceEntryBytes": 2003,
+      "sourceEntrySha256": "6d5de74f336bfa99f40e19b664b63282965bc99f348723fb2ae2869cd701419a",
+      "startLine": 1,
+      "endLine": 23,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "bytes": 2003,
+      "sha256": "6d5de74f336bfa99f40e19b664b63282965bc99f348723fb2ae2869cd701419a",
+      "resultStartLine": 19,
+      "resultEndLine": 21
+    },
+    {
+      "path": "build-sparse-checkout.original.txt",
+      "kind": "continuous_original_checkout_commands",
+      "sourceZipEntry": "build/2_Run actions_checkout@v4.txt",
+      "sourceEntryBytes": 12029,
+      "sourceEntrySha256": "49e9e8609af15cebded6c1dfb021c9d5c9c7a8d99e59df19962800eadec9fa4c",
+      "startLine": 68,
+      "endLine": 185,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "bytes": 7379,
+      "sha256": "d6c0fe00126eb155762046acfed895d9ea0cf6645d22de022c901b1c99fd915f",
+      "job": "build",
+      "fetchCommandLine": 68,
+      "sparseCommandLine": 75,
+      "exactSourceLine": 185
+    },
+    {
+      "path": "api-30-sparse-checkout.original.txt",
+      "kind": "continuous_original_checkout_commands",
+      "sourceZipEntry": "emulator-tests (30)/2_Run actions_checkout@v4.txt",
+      "sourceEntryBytes": 6018,
+      "sourceEntrySha256": "c86c010e728b202367d4d190c367f306aab6c92196b9e82251e378fa6efbdcfc",
+      "startLine": 70,
+      "endLine": 85,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "bytes": 1278,
+      "sha256": "b3baa35781f79312c678e96e8540596b9e0f6391564bd7650ca8198116681a0f",
+      "job": "emulator-tests (30)",
+      "fetchCommandLine": 70,
+      "sparseCommandLine": 77,
+      "exactSourceLine": 85
+    },
+    {
+      "path": "api-31-sparse-checkout.original.txt",
+      "kind": "continuous_original_checkout_commands",
+      "sourceZipEntry": "emulator-tests (31)/2_Run actions_checkout@v4.txt",
+      "sourceEntryBytes": 6018,
+      "sourceEntrySha256": "76f53e8726dcffba21ded9a2c454749d5099d65a5843fa730650a59dbd21d650",
+      "startLine": 70,
+      "endLine": 85,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "bytes": 1278,
+      "sha256": "cfd3bbecef076c07ac2319841bbd7e85b13603333fbb689bd95b4d97bf6b42fb",
+      "job": "emulator-tests (31)",
+      "fetchCommandLine": 70,
+      "sparseCommandLine": 77,
+      "exactSourceLine": 85
+    },
+    {
+      "path": "api-32-sparse-checkout.original.txt",
+      "kind": "continuous_original_checkout_commands",
+      "sourceZipEntry": "emulator-tests (32)/2_Run actions_checkout@v4.txt",
+      "sourceEntryBytes": 12119,
+      "sourceEntrySha256": "2355ebc1d4f3397faf060523464be1330dc4a30eddacc7ba80a13a94bfc1a92f",
+      "startLine": 70,
+      "endLine": 187,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "bytes": 7379,
+      "sha256": "47e3a2af128a29fb233f9827465070f2ba66ea6fdb15be3a95a05678271bc77d",
+      "job": "emulator-tests (32)",
+      "fetchCommandLine": 70,
+      "sparseCommandLine": 77,
+      "exactSourceLine": 187
+    },
+    {
+      "path": "api-33-sparse-checkout.original.txt",
+      "kind": "continuous_original_checkout_commands",
+      "sourceZipEntry": "emulator-tests (33)/2_Run actions_checkout@v4.txt",
+      "sourceEntryBytes": 6018,
+      "sourceEntrySha256": "00e2e0882e5312158270431f842cf924723124d67c3360c7846e942f67c7a265",
+      "startLine": 70,
+      "endLine": 85,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "bytes": 1278,
+      "sha256": "cb7c4cf675220d56747c7e8f718addd167ecf9e6badc784275e9ca095b62bb63",
+      "job": "emulator-tests (33)",
+      "fetchCommandLine": 70,
+      "sparseCommandLine": 77,
+      "exactSourceLine": 85
+    },
+    {
+      "path": "api-34-sparse-checkout.original.txt",
+      "kind": "continuous_original_checkout_commands",
+      "sourceZipEntry": "emulator-tests (34)/2_Run actions_checkout@v4.txt",
+      "sourceEntryBytes": 6018,
+      "sourceEntrySha256": "39d9c8150f12cd1b9c12d65106748208ded488cdb30795151637d4dcf0a4fc43",
+      "startLine": 70,
+      "endLine": 85,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "bytes": 1278,
+      "sha256": "6323ee627eeeb0817cd5260ac9b6e2466fa881990701032382aa531fde152d8d",
+      "job": "emulator-tests (34)",
+      "fetchCommandLine": 70,
+      "sparseCommandLine": 77,
+      "exactSourceLine": 85
+    },
+    {
+      "path": "api-35-sparse-checkout.original.txt",
+      "kind": "continuous_original_checkout_commands",
+      "sourceZipEntry": "emulator-tests (35)/2_Run actions_checkout@v4.txt",
+      "sourceEntryBytes": 6018,
+      "sourceEntrySha256": "26f878b732b38e939dc7d5a937f2beb8065a529b24555e30ceae3fd74ba40a68",
+      "startLine": 70,
+      "endLine": 85,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "bytes": 1278,
+      "sha256": "97d685761b01e8acf71aeb378ad75a07374d8f9cc65c705e91ae2f449cd566b1",
+      "job": "emulator-tests (35)",
+      "fetchCommandLine": 70,
+      "sparseCommandLine": 77,
+      "exactSourceLine": 85
+    },
+    {
+      "path": "api-36-sparse-checkout.original.txt",
+      "kind": "continuous_original_checkout_commands",
+      "sourceZipEntry": "emulator-tests (36)/2_Run actions_checkout@v4.txt",
+      "sourceEntryBytes": 12119,
+      "sourceEntrySha256": "a8a6277bcec7937a4bc3eb46f78f12e4c499c8429eb3a33cc4b9507981526ef3",
+      "startLine": 70,
+      "endLine": 187,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "bytes": 7379,
+      "sha256": "712e5ba04a02b88edff721496fbf23f1f00c7f83c879d24259cb4802592ac755",
+      "job": "emulator-tests (36)",
+      "fetchCommandLine": 70,
+      "sparseCommandLine": 77,
+      "exactSourceLine": 187
+    },
+    {
+      "path": "api-37.0-sparse-checkout.original.txt",
+      "kind": "continuous_original_checkout_commands",
+      "sourceZipEntry": "emulator-tests (37.0)/2_Run actions_checkout@v4.txt",
+      "sourceEntryBytes": 6018,
+      "sourceEntrySha256": "412ca52085b101b354834e4130d93c5b47473ffe36d273a1dc8da9aa3053d777",
+      "startLine": 70,
+      "endLine": 85,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "bytes": 1278,
+      "sha256": "16cafa76f66dc0c5ab1b82d6d3bd1665da033c223a3e268d1aa1691ac90c83ad",
+      "job": "emulator-tests (37.0)",
+      "fetchCommandLine": 70,
+      "sparseCommandLine": 77,
+      "exactSourceLine": 85
+    },
+    {
+      "path": "source-run.original.json",
+      "kind": "complete_original_local_github_api_snapshot",
+      "sourceFileName": "source.json",
+      "bytes": 13057,
+      "sha256": "952a39f16ad0e2c0368a8ae307b3684b156beb81b1b3cfe8b67efdb1786f1432",
+      "description": "Unmodified source-run watcher snapshot, separately supplied alongside the whole-run ZIP; not a ZIP member."
+    },
+    {
+      "path": "source-jobs.original.json",
+      "kind": "complete_original_local_github_api_snapshot",
+      "sourceFileName": "jobs.json",
+      "bytes": 53166,
+      "sha256": "dc55fc7bad8966eeb58bb3333411262500de9929169a18e036f9c2e55b0aa641",
+      "description": "Unmodified source-run watcher snapshot, separately supplied alongside the whole-run ZIP; not a ZIP member."
+    }
+  ],
+  "reportedJUnit": {
+    "reports": 8,
+    "tests": 2160,
+    "failures": 6,
+    "errors": 0,
+    "skipped": 0,
+    "unreadableReports": 0,
+    "originalXmlIndependentlyDownloaded": false,
+    "source": "Immutable root manifest capture parsed-JUnit summaries; raw Print report counts and Starting/Finished lines agree."
+  },
+  "newNumericPreferencesCases": {
+    "expected": 48,
+    "pass": 43,
+    "fail": 5
+  },
+  "retainedPriorCases": {
+    "expected": 2112,
+    "pass": 2111,
+    "fail": 1,
+    "historicalCausesProvenFixed": false
+  }
+}

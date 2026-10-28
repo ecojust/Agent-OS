@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "api": 35,
+  "runId": "1793157184729-31492861",
+  "scope": "Dedicated synthetic Android fixture and verified empty application UI only",
+  "jvmTests": "No UI; no screenshot is claimed for JVM tests",
+  "tests": [
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.TaskDiagnosticsInstrumentedTest",
+      "testName": "completedCodeSurvivesButClearReplacementAndLeavingInvalidateOldDialogActions",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793157184730,
+      "finishedAt": 1793157194693,
+      "captures": [
+        {
+          "stage": "protected-report-invalidated-on-task-replacement-and-leave",
+          "capturedAt": 1793157193759,
+          "status": "blocked",
+          "captureError": "secure_task_diagnostic_preview_capture_not_attempted"
+        },
+        {
+          "stage": "finished",
+          "capturedAt": 1793157194693,
+          "status": "blocked",
+          "captureError": "secure_task_diagnostic_preview_capture_not_attempted"
+        }
+      ]
+    }
+  ]
+}

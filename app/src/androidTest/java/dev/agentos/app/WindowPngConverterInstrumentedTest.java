@@ -7,13 +7,16 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorSpace;
+import android.graphics.Insets;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.hardware.HardwareBuffer;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.view.WindowInsets;
 import android.view.WindowManager;
+import android.view.WindowMetrics;
 import android.view.accessibility.AccessibilityWindowInfo;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -221,15 +224,23 @@ public final class WindowPngConverterInstrumentedTest {
         // not a general device workaround. AOSP's float inverse projection and
         // integer Region truncation can explain the CI 960->959 discrepancy;
         // source arithmetic alone does not confirm the platform's root cause.
-        // At 799x1598 the derived inverse is 2.49687504768: the compact controls
-        // [189,12][609,124] (48dp status + 48dp buttons + 16dp padding)
-        // project to [76,5][244,50] and back without changing integer bounds.
-        // Verify the actual View, registration and platform too.
+        // With the asserted stable left/top/right insets of 0/24/0, 831x1662
+        // places the 420x112 controls at [205,36][625,148]: horizontal centering,
+        // safe top + 12dp, and 48dp status + 48dp buttons + 16dp padding.
+        // AOSP14 Layer.cpp's transformTouchableRegionSafely rounds the scaled local
+        // region and translation separately; ui::Transform::inverse uses
+        // float32 s*(1/(s*s)). Here s=320f/831f, inverse=2.59687495232:
+        // [79,14][241,57] projects back through AccessibilityWindowsPopulator's
+        // mapRect and integer truncation to the exact control bounds. The full
+        // [0,0][320,640] similarly returns [0,0][831,1662]. The old 799x1598
+        // sample with safe top 36 would instead return top/bottom 34/147.
+        // Arithmetic is not platform acceptance: compare actual View,
+        // registration and platform without tolerance on every supported API.
         // Keep automatic scaling; disabling it would crop the physical screen.
         assertEquals("Large-window derivation requires the fixed 160dpi baseline", 160,
                 InstrumentationRegistry.getInstrumentation().getTargetContext().getResources()
                         .getDisplayMetrics().densityDpi);
-        try (DisplaySizeOverride display = new DisplaySizeOverride(799, 1598)) {
+        try (DisplaySizeOverride display = new DisplaySizeOverride(831, 1662)) {
             assertEquals("Large-window derivation requires the fixed physical display", "320x640", display.originalPhysical);
             try (Environment env = new Environment()) {
                 assertLargeWindowGeometry(env);
@@ -263,20 +274,38 @@ public final class WindowPngConverterInstrumentedTest {
     /** Checks real registrations and Views; no title matching or geometry tolerance. */
     private static void assertLargeWindowGeometry(Environment env) {
         DeviceHarness device = env.device;
-        Rect expectedWindow = new Rect(0, 0, 799, 1598);
+        Rect expectedWindow = new Rect(0, 0, 831, 1662);
+        Rect expectedControls = new Rect(205, 36, 625, 148);
         assertEquals("Actual focused capture window", expectedWindow, env.bounds);
         AtomicReference<Rect> actualView = new AtomicReference<>();
+        AtomicReference<Rect> metricBounds = new AtomicReference<>();
+        AtomicReference<Insets> stableInsets = new AtomicReference<>();
         AtomicReference<AgentAccessibilityService.OwnedControlWindowIdentity> registration = new AtomicReference<>();
         device.instrumentation.runOnMainSync(() -> {
             assertEquals("Control View density changed", 160, device.service.getResources().getDisplayMetrics().densityDpi);
+            WindowMetrics metrics = device.service.getSystemService(WindowManager.class).getCurrentWindowMetrics();
+            metricBounds.set(new Rect(metrics.getBounds()));
+            stableInsets.set(metrics.getWindowInsets().getInsetsIgnoringVisibility(
+                    WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout()));
             actualView.set(device.service.controlBounds());
             registration.set(device.service.getOwnedControlWindowIdentity());
         });
         AgentAccessibilityService.OwnedControlWindowIdentity identity = registration.get();
         assertNotNull("Actual controls must have an attached window registration", identity);
         Rect registered = identity.copyBounds();
-        String geometry = "view=" + actualView.get().toShortString() + ", registered=" + registered.toShortString();
-        assertEquals(geometry, new Rect(189, 12, 609, 124), actualView.get());
+        Insets insets = stableInsets.get();
+        String geometry = "metrics=" + metricBounds.get().toShortString() + ", stableInsets=" + insets
+                + ", view=" + actualView.get().toShortString() + ", registered=" + registered.toShortString();
+        assertEquals("Fixed display prerequisite: " + geometry, expectedWindow, metricBounds.get());
+        assertEquals("Fixed left inset prerequisite: " + geometry, 0, insets.left);
+        assertEquals("Fixed top inset prerequisite: " + geometry, 24, insets.top);
+        assertEquals("Fixed right inset prerequisite: " + geometry, 0, insets.right);
+        // Navigation height may differ by API. It must leave room for the
+        // independently fixed expected controls, rather than defining them.
+        Rect safe = new Rect(expectedWindow.left + insets.left, expectedWindow.top + insets.top,
+                expectedWindow.right - insets.right, expectedWindow.bottom - insets.bottom);
+        assertTrue("Fixed controls must fit the actual safe region: " + geometry, safe.contains(expectedControls));
+        assertEquals(geometry, expectedControls, actualView.get());
         assertEquals(geometry, actualView.get(), registered);
         assertTrue("Control registration changed before platform comparison", device.service.isOwnedControlWindowCurrent(identity));
         // The case is API34+; a fresh public cache read must agree with the exact

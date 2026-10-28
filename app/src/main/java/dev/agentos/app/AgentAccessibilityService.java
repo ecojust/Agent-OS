@@ -10,6 +10,7 @@ import android.content.IntentFilter;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.Typeface;
@@ -27,7 +28,9 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.view.WindowInsets;
 import android.view.WindowManager;
+import android.view.WindowMetrics;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Button;
@@ -211,6 +214,9 @@ public final class AgentAccessibilityService extends AccessibilityService {
     private final Handler main = new Handler(Looper.getMainLooper());
     private OverlayCallbacks callbacks;
     private LinearLayout overlay;
+    // Main-only global bounds, independent of the overlay's z-order-filtered insets.
+    private Rect controlSafeBounds;
+    private UnsafeControlStop unsafeControlStopPending;
     private TextView statusView;
     private TextView approvalView;
     private Button pauseButton;
@@ -231,7 +237,10 @@ public final class AgentAccessibilityService extends AccessibilityService {
     private final DisplayManager.DisplayListener visualDisplayListener = new DisplayManager.DisplayListener() {
         @Override public void onDisplayAdded(int displayId) { invalidateVisualEvents(); }
         @Override public void onDisplayRemoved(int displayId) { invalidateVisualEvents(); }
-        @Override public void onDisplayChanged(int displayId) { invalidateVisualEvents(); }
+        @Override public void onDisplayChanged(int displayId) {
+            invalidateVisualEvents();
+            if (displayId == Display.DEFAULT_DISPLAY) refreshControlSafeBounds();
+        }
     };
     private boolean receiverRegistered;
     private boolean packageReceiverRegistered;
@@ -616,17 +625,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
                 approvalButtons.setVisibility(waiting ? View.VISIBLE : View.GONE);
                 if (!currentApproval.equals(previousApproval)) approvalScroll.scrollTo(0, 0);
                 LinearLayout shownPanel = overlay;
-                shownPanel.post(() -> {
-                    if (!isCurrentControlPanel(shownPanel)) return;
-                    WindowManager manager = (WindowManager) getSystemService(WINDOW_SERVICE);
-                    if (manager == null) { stopFromDevice(); return; }
-                    Rect screen = manager.getCurrentWindowMetrics().getBounds();
-                    Rect controls = controlBounds();
-                    if (controls.width() > screen.width() || controls.bottom > screen.bottom - dp(12)) {
-                        // A tiny or highly magnified window cannot safely show controls; stop instead of hiding them.
-                        stopFromDevice();
-                    }
-                });
+                shownPanel.post(() -> checkControlLayoutSafety(shownPanel));
                 // Bind the displayed request, not whichever callback exists at a later click.
                 OverlayCallbacks shownCallbacks = callbacks;
                 long shownGeneration = callbackGeneration;
@@ -760,6 +759,10 @@ public final class AgentAccessibilityService extends AccessibilityService {
         }
         Rect bounds = controlBounds();
         if (bounds.isEmpty()) return null;
+        if (!isSafeControlBounds(bounds)) {
+            rejectUnsafeControlLayout(overlay);
+            return null;
+        }
         OwnedControlWindowIdentity previous = currentControlWindowIdentity;
         if (previous != null && previous.matches(registration, bounds, controlGeneration, callbackGeneration)) return previous;
         if (previous != null) invalidateControlLease();
@@ -993,13 +996,98 @@ public final class AgentAccessibilityService extends AccessibilityService {
         return new Rect(location[0], location[1], location[0] + overlay.getWidth(), location[1] + overlay.getHeight());
     }
 
-    private void ensureOverlay() { ensureOverlay(dp(12)); }
+    private static final class ControlWindowArea {
+        final Rect display, safe;
+        ControlWindowArea(WindowMetrics metrics) {
+            display = new Rect(metrics.getBounds());
+            Insets insets = metrics.getWindowInsets().getInsetsIgnoringVisibility(
+                    WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+            safe = new Rect(display.left + insets.left, display.top + insets.top,
+                    display.right - insets.right, display.bottom - insets.bottom);
+            if (display.isEmpty() || safe.isEmpty() || !display.contains(safe)) {
+                throw new IllegalStateException("显示安全区域不可用");
+            }
+        }
+    }
 
-    private LinearLayout ensureOverlay(int initialY) {
+    private ControlWindowArea controlWindowArea(WindowManager manager) {
+        if (manager == null) throw new IllegalStateException("显示窗口不可用");
+        return new ControlWindowArea(manager.getCurrentWindowMetrics());
+    }
+
+    private boolean isSafeControlBounds(Rect bounds) {
+        return controlSafeBounds != null && !bounds.isEmpty() && controlSafeBounds.contains(bounds)
+                && bounds.bottom <= controlSafeBounds.bottom - dp(12);
+    }
+
+    private void checkControlLayoutSafety(LinearLayout panel) {
+        if (!isCurrentControlPanel(panel) || !panel.isLaidOut() || panel.isLayoutRequested()) return;
+        if (!isSafeControlBounds(controlBounds())) rejectUnsafeControlLayout(panel);
+    }
+
+    private static final class UnsafeControlStop {
+        final LinearLayout panel;
+        final OverlayCallbacks owner;
+        final long callbacks, connection;
+        UnsafeControlStop(LinearLayout panel, OverlayCallbacks owner, long callbacks, long connection) {
+            this.panel = panel; this.owner = owner; this.callbacks = callbacks; this.connection = connection;
+        }
+    }
+
+    private void rejectUnsafeControlLayout(LinearLayout panel) {
+        if (panel == null || overlay != panel) return;
+        OverlayCallbacks owner = callbacks;
+        long ownerCallbacks = callbackGeneration, ownerConnection = connectionGeneration;
+        invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_INVALIDATED);
+        if (overlay != panel || callbacks != owner || callbackGeneration != ownerCallbacks
+                || connectionGeneration != ownerConnection) return;
+        UnsafeControlStop pending = unsafeControlStopPending;
+        if (pending != null && pending.panel == panel && pending.owner == owner
+                && pending.callbacks == ownerCallbacks && pending.connection == ownerConnection) return;
+        UnsafeControlStop request = new UnsafeControlStop(panel, owner, ownerCallbacks, ownerConnection);
+        unsafeControlStopPending = request;
+        // A layout/pre-draw callback must not remove its View during traversal.
+        // No identity/lease is published while unsafe, and only this owner may stop.
+        main.post(() -> {
+            if (unsafeControlStopPending == request) unsafeControlStopPending = null;
+            if (!isCurrentControlPanel(panel) || callbacks != owner
+                    || callbackGeneration != ownerCallbacks || connectionGeneration != ownerConnection) return;
+            if (!isSafeControlBounds(controlBounds())) stopFromDevice();
+        });
+    }
+
+    private void refreshControlSafeBounds() {
+        LinearLayout panel = overlay;
+        if (panel == null) return;
+        try {
+            Rect safe = controlWindowArea(getSystemService(WindowManager.class)).safe;
+            if (overlay != panel) return;
+            if (!safe.equals(controlSafeBounds)) {
+                controlSafeBounds = safe;
+                invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONFIGURATION);
+            }
+        } catch (RuntimeException unavailable) {
+            if (overlay != panel) return;
+            controlSafeBounds = null;
+            rejectUnsafeControlLayout(panel);
+        }
+        checkControlLayoutSafety(panel);
+    }
+
+    private void ensureOverlay() { ensureOverlay(null); }
+
+    private LinearLayout ensureOverlay(Integer requestedScreenTop) {
         if (controlRemovalPending) throw new IllegalStateException("旧任务控制条尚未移除");
         if (overlay != null) return overlay;
         WindowManager manager = (WindowManager) getSystemService(WINDOW_SERVICE);
         if (manager == null) throw new IllegalStateException("悬浮控制不可用");
+        ControlWindowArea area = controlWindowArea(manager);
+        int width = Math.min(dp(420), area.safe.width() - dp(24));
+        // Preserve both 48dp button targets and the panel's horizontal padding.
+        if (width < dp(48) * 2 + dp(12) * 2) throw new IllegalStateException("显示安全区域无法容纳任务控制条");
+        int screenLeft = area.safe.left + (area.safe.width() - width) / 2;
+        int screenTop = requestedScreenTop == null ? area.safe.top + dp(12)
+                : Math.max(area.safe.top, requestedScreenTop);
         LinearLayout panel = new LinearLayout(this) {
             @Override public void requestLayout() {
                 if (overlay == this) invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_LAYOUT_REQUEST);
@@ -1011,6 +1099,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
                     invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_LAYOUT_CHANGED);
                 }
                 super.onLayout(changed, left, top, right, bottom);
+                if (overlay == this) post(() -> checkControlLayoutSafety(this));
             }
             @Override protected void onAttachedToWindow() {
                 if (overlay == this) invalidateControlWindowRegistration(SecureImageReviewOverlay.CloseSource.SERVICE_CONTROL_ATTACHED);
@@ -1085,7 +1174,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
         approvalView.setTextIsSelectable(true);
         approvalScroll = new ScrollView(this) {
             @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-                int available = manager.getCurrentWindowMetrics().getBounds().height();
+                int available = controlSafeBounds == null ? 0 : controlSafeBounds.height();
                 int maximum = Math.max(dp(32), Math.min(dp(240), available - dp(250)));
                 super.onMeasure(widthMeasureSpec, View.MeasureSpec.makeMeasureSpec(maximum, View.MeasureSpec.AT_MOST));
             }
@@ -1101,19 +1190,26 @@ public final class AgentAccessibilityService extends AccessibilityService {
         approvalButtons.addView(approveButton, new LinearLayout.LayoutParams(0, dp(48), 1));
         panel.addView(approvalButtons);
 
-        int displayWidth = manager.getCurrentWindowMetrics().getBounds().width();
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                Math.min(dp(420), Math.max(1, displayWidth - dp(24))),
+                width,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                 PixelFormat.TRANSLUCENT);
-        params.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
-        params.y = initialY;
+        // Use one explicit display coordinate system on every supported API.
+        // Default fitting differs with overlay z-order; default cutout fitting
+        // can move the parent origin again. The entire View is constrained to
+        // the global safe area above, including when a system bar is hidden.
+        params.setFitInsetsTypes(0);
+        params.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+        params.gravity = Gravity.TOP | Gravity.LEFT;
+        params.x = screenLeft - area.display.left;
+        params.y = screenTop - area.display.top;
         params.setTitle("Agent OS task controls");
         // Own the exact View before add callbacks. A failed add is stopped and
         // cleaned rather than followed by a second replacement add.
         overlay = panel;
+        controlSafeBounds = new Rect(area.safe);
         manager.addView(panel, params);
         panel.post(() -> {
             if (overlay != panel || !panel.isAttachedToWindow()) return;
@@ -1122,7 +1218,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
         });
         statusView.setOnTouchListener(new View.OnTouchListener() {
             float startY;
-            int originalY, originalDisplay;
+            int originalScreenTop, requestedScreenTop, originalDisplay;
             long dragConnection, dragCallbackGeneration;
             OverlayCallbacks dragCallbacks;
             boolean dragging, moved;
@@ -1142,7 +1238,8 @@ public final class AgentAccessibilityService extends AccessibilityService {
                     if (!isDisplayedControlPanel(panel, callbacks, callbackGeneration)) return false;
                     Display display = panel.getDisplay();
                     if (display == null || display.getDisplayId() != Display.DEFAULT_DISPLAY) return false;
-                    startY = event.getRawY(); originalY = params.y; originalDisplay = display.getDisplayId();
+                    startY = event.getRawY(); originalScreenTop = controlBounds().top;
+                    requestedScreenTop = originalScreenTop; originalDisplay = display.getDisplayId();
                     dragCallbacks = callbacks; dragCallbackGeneration = callbackGeneration;
                     dragConnection = connectionGeneration; dragging = true;
                     return true;
@@ -1152,23 +1249,45 @@ public final class AgentAccessibilityService extends AccessibilityService {
                 // MOVE has already revoked the old lease; strict final guards stay.
                 if (!ownsGesture()) { dragging = false; return false; }
                 if (action == MotionEvent.ACTION_MOVE) {
-                    int height = manager.getCurrentWindowMetrics().getBounds().height();
-                    int nextY = Math.max(0, Math.min(Math.max(0, height - panel.getHeight() - dp(48)),
-                            originalY + Math.round(event.getRawY() - startY)));
-                    if (nextY == params.y) return true;
-                    invalidateVisualEvents();
-                    invalidateControlLease();
-                    if (!ownsGesture()) { dragging = false; return false; }
-                    params.y = nextY;
-                    try { manager.updateViewLayout(panel, params); moved = true; }
-                    catch (RuntimeException failed) { dragging = false; stopFromDevice(); }
+                    try {
+                        ControlWindowArea currentArea = controlWindowArea(manager);
+                        if (!ownsGesture()) { dragging = false; return false; }
+                        if (!currentArea.safe.equals(controlSafeBounds)) {
+                            invalidateVisualEvents();
+                            invalidateControlLease(SecureImageReviewOverlay.CloseSource.SERVICE_CONFIGURATION);
+                            if (!ownsGesture()) { dragging = false; return false; }
+                            controlSafeBounds = new Rect(currentArea.safe);
+                        }
+                        Rect actual = controlBounds();
+                        if (actual.left < currentArea.safe.left || actual.right > currentArea.safe.right
+                                || panel.getHeight() > currentArea.safe.height() - dp(12)) {
+                            dragging = false; stopFromDevice(); return true;
+                        }
+                        int maximumTop = Math.max(currentArea.safe.top,
+                                currentArea.safe.bottom - panel.getHeight() - dp(48));
+                        int nextTop = Math.max(currentArea.safe.top, Math.min(maximumTop,
+                                originalScreenTop + Math.round(event.getRawY() - startY)));
+                        if (nextTop == requestedScreenTop) return true;
+                        invalidateVisualEvents();
+                        invalidateControlLease();
+                        if (!ownsGesture()) { dragging = false; return false; }
+                        requestedScreenTop = nextTop;
+                        controlSafeBounds = new Rect(currentArea.safe);
+                        params.x = actual.left - currentArea.display.left;
+                        params.y = nextTop - currentArea.display.top;
+                        manager.updateViewLayout(panel, params); moved = true;
+                    } catch (RuntimeException failed) {
+                        dragging = false;
+                        if (isDisplayedControlPanel(panel, dragCallbacks, dragCallbackGeneration)
+                                && connectionGeneration == dragConnection) stopFromDevice();
+                    }
                     return true;
                 }
                 if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
                     dragging = false; // At most one replacement attempt per actual gesture.
                     if (action == MotionEvent.ACTION_UP) view.performClick();
                     if (Build.VERSION.SDK_INT >= 30 && Build.VERSION.SDK_INT <= 32 && moved) {
-                        reattachAfterDrag(panel, manager, params.y, originalDisplay,
+                        reattachAfterDrag(panel, manager, requestedScreenTop, originalDisplay,
                                 dragCallbacks, dragCallbackGeneration, dragConnection);
                     }
                     return true;
@@ -1201,7 +1320,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
      * actual attachment after a completed position change; never substitute root
      * or WMS geometry for the original exact platform-window checks.
      */
-    private void reattachAfterDrag(LinearLayout originalPanel, WindowManager manager, int finalY, int originalDisplay,
+    private void reattachAfterDrag(LinearLayout originalPanel, WindowManager manager, int finalScreenTop, int originalDisplay,
                                    OverlayCallbacks originalCallbacks, long originalCallbacksGeneration,
                                    long originalConnection) {
         if (!isDisplayedControlPanel(originalPanel, originalCallbacks, originalCallbacksGeneration)
@@ -1229,7 +1348,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
             eventReadyCheckPending = false;
             if (!isDeviceReady()) { stopFromDevice(); return; }
             // First add uses the final drag y, never a default-position add/move.
-            LinearLayout replacement = ensureOverlay(finalY);
+            LinearLayout replacement = ensureOverlay(finalScreenTop);
             // addView returns before the first attachment/traversal on some
             // platforms. Only restore this exact new View here; the original
             // identity/lease waiters still require actual attachment, display,
@@ -1292,6 +1411,8 @@ public final class AgentAccessibilityService extends AccessibilityService {
     private void clearOverlayReferences(View exactPanel) {
         if (overlay != exactPanel) return;
         overlay = null;
+        controlSafeBounds = null;
+        unsafeControlStopPending = null;
         controlRemovalPending = false;
         statusView = null;
         pauseButton = null;

@@ -41,15 +41,17 @@
 
 修正后的[专项40625129440](../../screenshots/40625129440-1/manifest.json)为8/8，随后同一 `5c71d4a485de8806a4436db02bfc72e43fc68670` 源码完整1960项通过。这验证的是“已显示并获得焦点的预览被清空后失效”；**没有证明原API30失败根因，也未覆盖同帧快速显示／关闭**。生产代码和安全窗口保护未因本次测试准备修正改变。
 
-## 真实系统字体变化：新增用例，设备结果待验证
+## 真实系统字体变化：已定位基线问题，修正待复验
 
-新增 [FontScaleControlWindowInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/FontScaleControlWindowInstrumentedTest.java) 的 `realSystemFontScaleRebuildsControlsAndRevokesOldWindow`，设备结果待验证。服务已有 `onConfigurationChanged` 路径，会撤销旧许可并重建控制窗；尚无实际字体缺陷证据。该用例在专用模拟器将控制条字体比例从1.0变为1.3：保存原始设置及实际配置，通过系统设置触发变化并等待服务／应用资源中的实际字体比例生效，不手动调用配置回调、不修改显示密度或旋转。
+新增 [FontScaleControlWindowInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/FontScaleControlWindowInstrumentedTest.java) 的 `realSystemFontScaleRebuildsControlsAndRevokesOldWindow`。首次专项发现放大前的控制窗安全区域问题；服务原有 `onConfigurationChanged` 路径会撤销旧许可并重建控制窗，不能把基线失败归因为字体重建。该用例在专用模拟器将控制条字体比例从1.0变为1.3：保存原始设置及实际配置，通过系统设置触发变化并等待服务／应用资源中的实际字体比例生效，不手动调用配置回调、不修改显示密度或旋转。
 
 核对旧View已移除、旧身份和许可失效，新窗口保持原状态、文字实际变大、平台登记与真实View几何一致；当前暂停／停止按钮仍至少48dp、位于可见安全区域，短标签没有省略或裁切，并验证当前实际按钮行为。最后恢复原设置；原值缺失时删除测试覆盖值，并等待实际配置恢复。API34及以上支持非线性缩放，不要求像素大小简单乘以1.3。
 
 该用例还保留旧按钮引用，检查其真实监听器拒绝旧窗口调用，再通过新窗口按钮的实际监听器验证继续、暂停和停止。`performClick()` 属于测试注入，不证明物理触摸命中；回调使用合成 `RunControl`，不冒充真实 `AgentController` 任务链。API30在指定阶段之前原样重设 UiAutomation 配置以清理测试节点缓存，不改变生产逻辑或观察期限。
 
 先前源码5c71d4a48的完整1960项回归保持其准确范围，不包含新增字体用例。`font-scale-diagnostic` 固定选择本用例，八档共8项；完整套件新增后预计每档246项、共1968项，必须等待实际执行和归档核验。该首个放大样本不代表最大字体、Activity重建、横竖屏或读屏服务已验收。主界面真实字体变化后的重建、草稿和安全窗口保留，随后单独验证，不能由主动 `recreate()` 替代系统配置变化。
+
+两轮原始专项分别保留于 [40628762988](../../screenshots/40628762988-1/manifest.json) 和 [40630197321](../../screenshots/40630197321-1/manifest.json)，均1/8通过、7失败，零错误／跳过／缺失。[原始冻结数值](diagnostics/font-control-safe-area-40630197321/)确认七档字体1.0时面板顶部12、安全顶部24，且实际布局已完成。生产修正现按全局安全区统一初始、重建与拖动坐标，安全验证先于身份／许可发布，保留48dp及精确登记要求；本地编译和lint通过，设备复验尚未完成。大窗口PNG样本同时独立推导为831×1662，保持三方矩形精确相等，仍须实际API34–37运行。
 
 ## 分开的后续验证
 

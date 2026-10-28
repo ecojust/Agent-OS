@@ -40,7 +40,30 @@ def provenance():
     return run, {"jobs": [job]}, {"artifacts": [artifact]}
 
 
+def workflow_env(branch="master", review=False):
+    ref = "refs/heads/" + branch
+    return {"GITHUB_ACTIONS": "true", "RUNNER_OS": "Linux", "GITHUB_REPOSITORY": demo.REPO,
+            "GITHUB_REF": ref, "GITHUB_EVENT_NAME": "workflow_dispatch",
+            "GITHUB_WORKFLOW_REF": demo.REPO + "/" + demo.WORKFLOW + "@" + ref,
+            "GITHUB_SHA": "b" * 40, "GITHUB_RUN_ID": "456", "GITHUB_RUN_ATTEMPT": "1",
+            "DEMO_REVIEW_BRANCH": "true" if review else "false"}
+
+
+def review_provenance():
+    run, jobs, artifacts = provenance()
+    run["head_branch"] = artifacts["artifacts"][0]["workflow_run"]["head_branch"] = "agent/demo-review"
+    scope = {"review_branch": True, "expected_source_sha": SOURCE["commit"],
+             "env": workflow_env("agent/demo-review", True)}
+    return run, jobs, artifacts, scope
+
+
 class DemoBoundaries(unittest.TestCase):
+    def setUp(self):
+        # Running these boundary tests in a review workflow must not opt the
+        # legacy master fixtures into that workflow's archive policy.
+        clean_scope = mock.patch.dict(os.environ, {"DEMO_REVIEW_BRANCH": "false", "DEMO_EXPECTED_SOURCE_SHA": ""})
+        clean_scope.start(); self.addCleanup(clean_scope.stop)
+
     def test_source_requires_exact_workflow_repository_branch_and_event(self):
         env = {"GITHUB_ACTIONS": "true", "RUNNER_OS": "Linux", "GITHUB_REPOSITORY": demo.REPO,
                "GITHUB_REF": "refs/heads/master", "GITHUB_EVENT_NAME": "workflow_dispatch",
@@ -51,6 +74,95 @@ class DemoBoundaries(unittest.TestCase):
                              ("GITHUB_EVENT_NAME", "push"), ("GITHUB_WORKFLOW_REF", "arbitrary"),
                              ("RUNNER_OS", "Windows"), ("GITHUB_RUN_ID", "1; echo hidden")):
             with self.subTest(key=key), self.assertRaises(ValueError): demo.identity(dict(env, **{key: invalid}))
+
+    def test_review_recording_requires_explicit_opt_in_and_exact_current_workflow(self):
+        env = workflow_env("agent/demo-review", True)
+        self.assertEqual({"repository": demo.REPO, "commit": "b" * 40, "runId": 456, "attempt": 1}, demo.identity(env))
+        for key, invalid in (("DEMO_REVIEW_BRANCH", "false"), ("DEMO_REVIEW_BRANCH", "yes"),
+                             ("GITHUB_REF", "refs/heads/feature/demo-review"), ("GITHUB_REF", "refs/pull/1/merge"),
+                             ("GITHUB_EVENT_NAME", "pull_request"), ("GITHUB_EVENT_NAME", "push"),
+                             ("GITHUB_REPOSITORY", "fork/Agent-OS"),
+                             ("GITHUB_WORKFLOW_REF", demo.REPO + "/" + demo.WORKFLOW + "@refs/heads/master")):
+            with self.subTest(key=key, invalid=invalid), self.assertRaises(ValueError):
+                demo.identity(dict(env, **{key: invalid}))
+        env.pop("DEMO_REVIEW_BRANCH")
+        with self.assertRaises(ValueError): demo.identity(env)
+        for branch in ("agent/", "agent//other", "agent/../other", "agent/demo.lock", "unknown/demo"):
+            with self.subTest(branch=branch), self.assertRaises(ValueError): demo.identity(workflow_env(branch, True))
+
+    def test_review_archive_is_explicit_same_branch_and_pins_source_not_current_head(self):
+        run, jobs, artifacts, scope = review_provenance()
+        self.assertNotEqual(run["head_sha"], scope["env"]["GITHUB_SHA"])
+        self.assertEqual(SOURCE, demo.select_artifact(run, jobs, artifacts, **scope)[0])
+        with self.assertRaises(ValueError): demo.select_artifact(run, jobs, artifacts)
+        with self.assertRaises(ValueError): demo.select_artifact(run, jobs, artifacts, expected_source_sha="a" * 40)
+        for sha in (None, "", "a" * 39, "A" * 40, "b" * 40, "unknown", True):
+            with self.subTest(sha=sha), self.assertRaises(ValueError):
+                demo.select_artifact(run, jobs, artifacts, **dict(scope, expected_source_sha=sha))
+        for env in (workflow_env("agent/other", True), workflow_env("master", True),
+                    workflow_env("feature/demo-review", True), dict(scope["env"], GITHUB_EVENT_NAME="pull_request")):
+            with self.subTest(env=env), self.assertRaises(ValueError):
+                demo.select_artifact(run, jobs, artifacts, **dict(scope, env=env))
+
+    def test_review_archive_keeps_exact_repository_attempt_job_and_artifact_checks(self):
+        mutations = (lambda r,j,a: r["head_repository"].update(id=21),
+                     lambda r,j,a: r["head_repository"].update(full_name="fork/Agent-OS"),
+                     lambda r,j,a: r.update(event="pull_request"), lambda r,j,a: r.update(event="unknown"),
+                     lambda r,j,a: r.update(head_branch="master"),
+                     lambda r,j,a: r.update(path=".github/workflows/android.yml"),
+                     lambda r,j,a: j["jobs"][0].update(run_attempt=2),
+                     lambda r,j,a: j["jobs"][0].update(head_sha="b"*40),
+                     lambda r,j,a: j["jobs"][0].update(conclusion="unknown"),
+                     lambda r,j,a: j["jobs"][0].update(run_attempt=True),
+                     lambda r,j,a: a["artifacts"][0]["workflow_run"].update(head_branch="agent/other"),
+                     lambda r,j,a: a["artifacts"][0]["workflow_run"].update(head_sha="b"*40),
+                     lambda r,j,a: a["artifacts"][0]["workflow_run"].update(head_repository_id=21),
+                     lambda r,j,a: a["artifacts"][0].update(created_at="2026-10-26T23:59:59Z"))
+        for mutate in mutations:
+            run, jobs, artifacts, scope = review_provenance(); mutate(run, jobs, artifacts)
+            with self.subTest(mutate=mutate), self.assertRaises(ValueError):
+                demo.select_artifact(run, jobs, artifacts, **scope)
+
+    def test_master_archive_default_remains_compatible_but_explicit_sha_is_checked(self):
+        run, jobs, artifacts = provenance()
+        self.assertEqual(SOURCE, demo.select_artifact(run, jobs, artifacts)[0])
+        self.assertEqual(SOURCE, demo.select_artifact(run, jobs, artifacts, expected_source_sha="a"*40)[0])
+        for sha in ("b"*40, "not-a-sha"):
+            with self.assertRaises(ValueError): demo.select_artifact(run, jobs, artifacts, expected_source_sha=sha)
+
+    def test_select_cli_uses_explicit_review_workflow_context(self):
+        run, jobs, artifacts, scope = review_provenance()
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for name, value in (("run", run), ("jobs", jobs), ("artifacts", artifacts)):
+                (root / (name + ".json")).write_text(json.dumps(value))
+            output = root / "output"
+            argv = ["demo_video.py", "select", "--run", str(root / "run.json"), "--jobs", str(root / "jobs.json"),
+                    "--artifacts", str(root / "artifacts.json"), "--github-output", str(output)]
+            env = dict(scope["env"], DEMO_EXPECTED_SOURCE_SHA=SOURCE["commit"])
+            with mock.patch.object(sys, "argv", argv), mock.patch.dict(os.environ, env, clear=True):
+                self.assertEqual(0, demo.main())
+            self.assertIn("artifact_id=100\nsource_run=123\nattempt=1\n", output.read_text())
+            output.unlink()
+            env.pop("DEMO_EXPECTED_SOURCE_SHA")
+            with mock.patch.object(sys, "argv", argv), mock.patch.dict(os.environ, env, clear=True), self.assertRaises(ValueError):
+                demo.main()
+            self.assertFalse(output.exists())
+
+    def test_review_prepare_rejects_missing_opt_in_before_writing_any_record(self):
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / "recording"
+            argv = ["demo_video.py", "prepare", "--output", str(output)]
+            with mock.patch.object(sys, "argv", argv), \
+                    mock.patch.dict(os.environ, workflow_env("agent/demo-review"), clear=True), self.assertRaises(ValueError):
+                demo.main()
+            self.assertFalse(output.exists())
+            with mock.patch.object(sys, "argv", argv), \
+                    mock.patch.dict(os.environ, workflow_env("agent/demo-review", True), clear=True):
+                self.assertEqual(0, demo.main())
+            report = json.loads((output / "report.json").read_text())
+            self.assertEqual("unverified", report["status"])
+            self.assertEqual("b" * 40, report["source"]["commit"])
 
     def test_flow_preserves_real_per_task_counter_resets(self):
         self.assertEqual("passed", demo.validate_flow(flow(), SOURCE)["status"])
@@ -283,6 +395,46 @@ class DemoBoundaries(unittest.TestCase):
             self.assertEqual(before, (root / "docs/progress.json").read_bytes())
             self.assertEqual((args.incoming / "demo.mp4").read_bytes(),
                              (root / "screenshots/demos/123-1/demo.mp4").read_bytes())
+
+    def test_review_archive_records_real_branch_without_changing_legacy_source_schema(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); args = self.archive_fixture(root, "failure")
+            run, jobs, artifacts, scope = review_provenance(); jobs["jobs"][0]["conclusion"] = "failure"
+            for name, value in (("run", run), ("jobs", jobs), ("artifacts", artifacts)):
+                (root / (name + ".json")).write_text(json.dumps(value))
+            before = (root / "docs/progress.json").read_bytes(); previous = Path.cwd()
+            try:
+                os.chdir(root)
+                with mock.patch.dict(os.environ, dict(scope["env"], DEMO_EXPECTED_SOURCE_SHA=SOURCE["commit"]), clear=True), \
+                        mock.patch.object(demo.bounded, "run_command", side_effect=AssertionError("must not execute downloaded content")):
+                    demo.archive(args)
+            finally: os.chdir(previous)
+            manifest = json.loads((root / "screenshots/demos/123-1/manifest.json").read_text())
+            self.assertEqual("agent/demo-review", manifest["sourceBranch"])
+            self.assertEqual(SOURCE, manifest["source"])
+            self.assertEqual("failed", manifest["status"])
+            self.assertEqual(before, (root / "docs/progress.json").read_bytes())
+
+    def test_review_archive_revalidates_scope_after_artifact_selection(self):
+        run, jobs, artifacts, scope = review_provenance(); jobs["jobs"][0]["conclusion"] = "failure"
+        self.assertEqual(100, demo.select_artifact(run, jobs, artifacts, **scope)[2]["id"])
+        env = dict(scope["env"], DEMO_EXPECTED_SOURCE_SHA=SOURCE["commit"])
+        for field, value in (("DEMO_EXPECTED_SOURCE_SHA", ""), ("DEMO_EXPECTED_SOURCE_SHA", "b"*40),
+                             ("DEMO_REVIEW_BRANCH", "false"), ("GITHUB_REF", "refs/heads/agent/other")):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp); args = self.archive_fixture(root, "failure")
+                for name, data in (("run", run), ("jobs", jobs), ("artifacts", artifacts)):
+                    (root / (name + ".json")).write_text(json.dumps(data))
+                previous = Path.cwd()
+                try:
+                    os.chdir(root)
+                    with mock.patch.dict(os.environ, dict(env, **{field:value}), clear=True), \
+                            mock.patch.object(demo, "inspect_bundle", side_effect=AssertionError("reject before bundle reads")) as inspect, \
+                            self.assertRaises(ValueError):
+                        demo.archive(args)
+                    inspect.assert_not_called()
+                finally: os.chdir(previous)
+                self.assertFalse((root / "screenshots").exists())
 
     def test_success_or_cancelled_source_does_not_activate_failed_raw_exception(self):
         for conclusion in ("success", "cancelled", "timed_out"):

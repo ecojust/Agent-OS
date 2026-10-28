@@ -118,13 +118,37 @@ def validate_diagnostics(value, source):
     return value
 
 
+def review_opt_in(env):
+    value = env.get("DEMO_REVIEW_BRANCH", "false")
+    require(value in ("true", "false"), "Unknown review-branch opt-in")
+    return value == "true"
+
+
+def workflow_branch(env, review_branch=False):
+    require(type(review_branch) is bool, "Review-branch opt-in must be boolean")
+    ref = env.get("GITHUB_REF", "")
+    branch = ref.removeprefix("refs/heads/")
+    agent_branch = re.fullmatch(r"agent/[A-Za-z0-9][A-Za-z0-9._/-]{0,179}", branch)
+    require(ref == "refs/heads/master" or (review_branch and agent_branch
+            and ref == "refs/heads/" + branch and ".." not in branch
+            and all(part and not part.startswith(".") and not part.endswith((".", ".lock")) for part in branch.split("/"))),
+            "Only master or an explicitly opted-in agent branch may record or archive")
+    require(env.get("GITHUB_ACTIONS") == "true" and env.get("RUNNER_OS") == "Linux"
+            and env.get("GITHUB_REPOSITORY") == REPO
+            and env.get("GITHUB_EVENT_NAME") == "workflow_dispatch"
+            and env.get("GITHUB_WORKFLOW_REF") == REPO + "/" + WORKFLOW + "@" + ref,
+            "Only the dedicated trusted workflow may record or archive a demo")
+    return branch
+
+
+def archive_options(env=None):
+    env = os.environ if env is None else env
+    return {"review_branch": review_opt_in(env), "expected_source_sha": env.get("DEMO_EXPECTED_SOURCE_SHA"), "env": env}
+
+
 def identity(env=None):
     env = os.environ if env is None else env
-    require(env.get("GITHUB_ACTIONS") == "true" and env.get("RUNNER_OS") == "Linux"
-            and env.get("GITHUB_REPOSITORY") == REPO and env.get("GITHUB_REF") == "refs/heads/master"
-            and env.get("GITHUB_EVENT_NAME") == "workflow_dispatch"
-            and env.get("GITHUB_WORKFLOW_REF") == REPO + "/" + WORKFLOW + "@refs/heads/master",
-            "Only the dedicated trusted workflow may record a demo")
+    workflow_branch(env, review_opt_in(env))
     sha = env.get("GITHUB_SHA", "")
     require(re.fullmatch(r"[0-9a-f]{40}", sha), "Invalid source SHA")
     values = [env.get(key, "") for key in ("GITHUB_RUN_ID", "GITHUB_RUN_ATTEMPT")]
@@ -482,11 +506,22 @@ def record(directory, source):
     return report["status"] == "passed"
 
 
-def source_run(run, jobs):
+def source_run(run, jobs, *, review_branch=False, expected_source_sha=None, env=None):
+    require(type(review_branch) is bool, "Review-branch opt-in must be boolean")
+    branch = "master"
+    if review_branch:
+        branch = workflow_branch(os.environ if env is None else env, True)
+        require(branch.startswith("agent/"), "Review archive requires the current agent branch")
+        require(isinstance(expected_source_sha, str) and re.fullmatch(r"[0-9a-f]{40}", expected_source_sha),
+                "Review archive requires an exact expected source SHA")
+    if expected_source_sha not in (None, ""):
+        require(isinstance(expected_source_sha, str) and re.fullmatch(r"[0-9a-f]{40}", expected_source_sha)
+                and run.get("head_sha") == expected_source_sha, "Unexpected recording source SHA")
     require(run.get("repository", {}).get("full_name") == run.get("head_repository", {}).get("full_name") == REPO
             and trusted.positive_int(run.get("repository", {}).get("id"))
+            and trusted.positive_int(run.get("head_repository", {}).get("id"))
             and run["repository"]["id"] == run["head_repository"].get("id"), "Foreign repository")
-    require(run.get("event") == "workflow_dispatch" and run.get("head_branch") == "master"
+    require(run.get("event") == "workflow_dispatch" and run.get("head_branch") == branch
             and run.get("path") == WORKFLOW and run.get("status") == "completed"
             and re.fullmatch(r"[0-9a-f]{40}", str(run.get("head_sha", "")))
             and trusted.positive_int(run.get("id")) and trusted.positive_int(run.get("run_attempt")), "Untrusted source run")
@@ -497,15 +532,17 @@ def source_run(run, jobs):
     matches = [job for job in entries if job.get("name") == JOB]
     require(len(matches) == 1, "Missing or duplicate recording job")
     job = matches[0]
-    require(job.get("status") == "completed" and job.get("conclusion") not in (None, "skipped")
+    require(job.get("status") == "completed" and job.get("conclusion") in (
+                "success", "failure", "cancelled", "timed_out", "neutral", "action_required", "startup_failure", "stale")
+            and trusted.positive_int(job.get("run_id")) and trusted.positive_int(job.get("run_attempt"))
             and job.get("run_id") == run["id"] and job.get("run_attempt") == run["run_attempt"]
             and job.get("head_sha") == run["head_sha"], "Not a completed test-mode source job")
     require(trusted.timestamp(job["started_at"]) <= trusted.timestamp(job["completed_at"]), "Invalid job times")
     return {"repository": REPO, "commit": run["head_sha"], "runId": run["id"], "attempt": run["run_attempt"]}, job
 
 
-def select_artifact(run, jobs, index):
-    source, job = source_run(run, jobs)
+def select_artifact(run, jobs, index, **scope):
+    source, job = source_run(run, jobs, **scope)
     name = "demo-video-api-35-attempt-" + str(source["attempt"])
     matches = [a for a in trusted.artifact_entries(index) if a.get("name") == name]
     require(len(matches) <= 1, "Duplicate demo artifact")
@@ -513,8 +550,9 @@ def select_artifact(run, jobs, index):
     artifact = matches[0]; origin = artifact.get("workflow_run", {})
     require(artifact.get("expired") is False and trusted.positive_int(artifact.get("id"))
             and trusted.positive_int(artifact.get("size_in_bytes")) and artifact["size_in_bytes"] <= 130_000_000
+            and all(trusted.positive_int(origin.get(key)) for key in ("id", "repository_id", "head_repository_id"))
             and origin.get("id") == source["runId"] and origin.get("head_sha") == source["commit"]
-            and origin.get("head_branch") == "master"
+            and origin.get("head_branch") == run["head_branch"]
             and origin.get("repository_id") == origin.get("head_repository_id") == run["repository"]["id"], "Artifact provenance mismatch")
     require(trusted.timestamp(job["started_at"]) <= trusted.timestamp(artifact["created_at"]) <= trusted.timestamp(job["completed_at"]),
             "Artifact is outside its job attempt")
@@ -663,10 +701,10 @@ def prepare_schema_keys(version=2):
 
 def archive(args):
     run = trusted.read_json(args.run); jobs = trusted.read_json(args.jobs)
-    source, job, artifact = select_artifact(run, jobs, trusted.read_json(args.artifacts))
+    source, job, artifact = select_artifact(run, jobs, trusted.read_json(args.artifacts), **archive_options())
     relative = Path("screenshots/demos") / f"{source['runId']}-{source['attempt']}"
     require(not relative.exists(), "Never overwrite an archived attempt")
-    manifest = {"schemaVersion": 1, "kind": "agent-os-demo-video-archive", "source": source,
+    manifest = {"schemaVersion": 1, "kind": "agent-os-demo-video-archive", "source": source, "sourceBranch": run["head_branch"],
                 "sourceRunUrl": f"https://github.com/{REPO}/actions/runs/{source['runId']}",
                 "jobConclusion": job["conclusion"], "apiLevel": 35, "status": "unavailable", "files": [],
                 "scope": "Dedicated emulator; preconfigured app; local synthetic HTTP model; secure flags preserved; no real-model or phone acceptance."}
@@ -709,7 +747,8 @@ def main():
                 if report["failureStage"] in (None, "not_started"): report["failureStage"] = "environment"
             write_report(directory, report)
     elif args.mode == "select":
-        source, job, artifact = select_artifact(trusted.read_json(args.run), trusted.read_json(args.jobs), trusted.read_json(args.artifacts))
+        source, job, artifact = select_artifact(trusted.read_json(args.run), trusted.read_json(args.jobs),
+                trusted.read_json(args.artifacts), **archive_options())
         with args.github_output.open("a") as stream:
             stream.write(f"artifact_id={artifact['id'] if artifact else ''}\nsource_run={source['runId']}\nattempt={source['attempt']}\nfailed_source={'true' if job['conclusion'] == 'failure' else 'false'}\n")
     else: archive(args)

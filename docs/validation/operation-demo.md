@@ -16,7 +16,9 @@
 
 ## 运行与归档
 
-使用仓库的 `Record and archive an actual walkthrough` 工作流：`mode=test` 构建并录制；完成后用 `mode=archive` 和原运行编号归档。归档限定本仓库主分支的专用录制任务，复核原运行、源码、attempt、产物、逐项结果和文件校验值。
+使用仓库的 `Record and archive an actual walkthrough` 工作流：`mode=test` 构建并录制；完成后用 `mode=archive` 和原运行编号归档。默认限定本仓库主分支的专用录制任务，复核原运行、源码、attempt、产物、逐项结果和文件校验值。
+
+开发分支录制及归档须从同一 `agent/*` 分支显式设置 `review_branch=true`；归档另需 `source_run_id` 和匹配的40位 `expected_source_sha`。工作流核对仓库、当前分支、原任务及产物身份，清单记录实际 `sourceBranch`，输出独立证据分支。开发分支录像不代表主线或真机验收；安全窗口、真实流程验证、整段解码及小于100 MB限制保持不变。
 
 每次真实运行都保留结果，包括失败、缺失或受保护的捕获。原始 Android 流程记录、截图清单和实际视频放入 `screenshots/demos/<run>-<attempt>/`。README 只将验证成功的真实视频设置为“整体操作演示”，显示其确切源码；失败记录不覆盖上一段成功录像，也不被删除。构建脚本或归档代码的更新不意味着已经重录。
 
@@ -64,4 +66,4 @@
 
 ## 开发分支上的跳过记录
 
-[运行40617444655](https://github.com/ecojust/Agent-OS/actions/runs/40617444655)对源码 `3d3c6a10acf2b0e27085fa2c2683fe9c4ba992cd` 请求录制；当前工作流的录制及归档任务均要求 `master`，因此两个任务实际为skipped，没有启动模拟器、生成录像或上传产物。[跳过清单](../../screenshots/demos/40617444655-1/manifest.json)只保留已核对的运行／任务元数据，不是标准成功录像归档，不补造时长、尺寸或摘要。本次跳过不阻塞功能工作，README继续指向原源码 `8843d9313` 的实际成功录像。
+[运行40617444655](https://github.com/ecojust/Agent-OS/actions/runs/40617444655)对源码 `3d3c6a10acf2b0e27085fa2c2683fe9c4ba992cd` 请求录制；当时工作流的录制及归档任务均要求 `master`，因此两个任务实际为skipped，没有启动模拟器、生成录像或上传产物。[跳过清单](../../screenshots/demos/40617444655-1/manifest.json)只保留已核对的运行／任务元数据，不是标准成功录像归档，不补造时长、尺寸或摘要。本次跳过不阻塞功能工作，README继续指向原源码 `8843d9313` 的实际成功录像。

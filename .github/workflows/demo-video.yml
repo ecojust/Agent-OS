@@ -12,9 +12,22 @@ on:
         description: Completed test-mode run from this workflow (archive only)
         type: string
         required: false
+      review_branch:
+        description: Explicitly allow this agent/* development branch to record or archive its own evidence
+        type: boolean
+        default: false
+        required: false
+      expected_source_sha:
+        description: Exact 40-character recording source SHA (required for review-branch archive)
+        type: string
+        required: false
 
 permissions:
   contents: read
+
+env:
+  DEMO_REVIEW_BRANCH: ${{ inputs.review_branch && 'true' || 'false' }}
+  DEMO_EXPECTED_SOURCE_SHA: ${{ inputs.expected_source_sha }}
 
 concurrency:
   group: demo-video-${{ inputs.mode == 'archive' && inputs.source_run_id || github.run_id }}
@@ -23,7 +36,7 @@ concurrency:
 jobs:
   record-demo:
     name: record-demo (API 35)
-    if: github.ref == 'refs/heads/master' && inputs.mode == 'test'
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'test' && (github.ref == 'refs/heads/master' || (inputs.review_branch == true && startsWith(github.ref, 'refs/heads/agent/')))
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -90,7 +103,7 @@ jobs:
           retention-days: 30
 
   archive-demo:
-    if: github.ref == 'refs/heads/master' && inputs.mode == 'archive'
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'archive' && (github.ref == 'refs/heads/master' || (inputs.review_branch == true && startsWith(github.ref, 'refs/heads/agent/')))
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:

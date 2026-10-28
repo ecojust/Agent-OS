@@ -156,7 +156,7 @@ Windows 使用 `gradlew.bat`。默认 APK 输出到 `app/build/outputs/apk/debug
 | 导航来源验证 | 源码1f9f，仅强化已有测试，生产不变；相关测试APK/lint通过，Settings来源用例 **8/8**、原三项风险用例 **24/24**，均在完整2112/2112中通过；[前置身份与诊断边界](docs/validation/navigation-origin-verification.md) |
 | 操作回执 | 源码4b87，完整核心299/299、脚本304/304、APK/lint通过；新回执16/16及强化的真实三次写操作8/8在同源码完整矩阵通过；[固定验收范围](docs/validation/task-action-receipts.md) |
 | 字体缩放专项 | 源码14c主Activity与控制窗各8/8通过；[Activity](screenshots/40646422586-1/manifest.json)、[控制窗](screenshots/40646425323-1/manifest.json)，完整回归中也均通过 |
-| 整体实际操作演示 | 数值偏好源码41e44、API35本地合成模型流程通过，35.347秒、427,699字节；[录像](screenshots/demos/40719665055-1/demo.mp4)及[范围说明](docs/validation/operation-demo.md#数值偏好源码的整体演示)。普通Fixture录像不覆盖受保护配置与数值偏好页面，专项语义另行验收 |
+| 整体实际操作演示 | 源码518621d4、API35本地合成模型流程通过，35.867秒、444,016字节；[录像](screenshots/demos/40733609989-1/demo.mp4)及[范围说明](docs/validation/operation-demo.md#离线apk预检源码的整体演示)。普通Fixture流程不覆盖离线CLI或受保护数值偏好页面，专项验证另计 |
 | 第三方应用开发探针 | 独立v4源码5436为 **24/32通过、8失败**；[原始结果](screenshots/third-party-40674357809-1/manifest.json)，与v3的22/32、v2的31/32分开统计；本轮配置恢复没有重跑或改写这些结果 |
 | 待定位的历史现象 | 先前API33图像资格等待、API36视觉事件代次及专用原生捕获TIMEOUT未确定完整根因；后续通过不改写原失败，逐轮原始记录保留 |
 | 交付边界 | Android11+开发APK；普通构建尚未开放截图与坐标手势，真实模型、厂商真机、性能预算、正式签名及可刷写系统镜像未验收 |

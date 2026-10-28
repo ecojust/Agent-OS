@@ -170,3 +170,12 @@
 [原始清单](../../screenshots/demos/40719665055-1/manifest.json)记录30个载荷、1,171,177字节，22张320×640实际PNG。文件集合、字节数、摘要、全部PNG解码、视频全段解码及三帧实际画面均经两次独立核验；13必需阶段与8次确认通过。该运行采用direct ADB仪器流程，`junitStatus=not_produced_direct_adb`，未生成原始JUnit XML。清单SHA-256为`2f3e988d4c88b84bd6ee6691825357f4774c2e0d6341785d74b5434edc523267`，独立审计记录为`fcc48e4a5d895749b8f636fb3fc568a257ba5ce7fa1d22784d138e8417a7dd7f`。
 
 录像展示普通Fixture与暂停、停止和动作确认，模型回复来自本地合成服务；没有清除安全窗口标志，也不打开数值偏好的受保护配置或预览页面。它不是文件导入导出、真实模型或真机验收；新增六项SAF与生命周期用例由[对应完整运行40719564182](https://github.com/ecojust/Agent-OS/actions/runs/40719564182)独立统计。
+
+
+## 离线APK预检源码的整体演示
+
+精确源码 `518621d4db2a0a7dd9098fa6e7b5a36d434d2d1c` 的唯一录制运行 [40733609989](https://github.com/ecojust/Agent-OS/actions/runs/40733609989)（attempt 1）成功；[归档40735355437](https://github.com/ecojust/Agent-OS/actions/runs/40735355437)发布固定提交 `454078f3d1fdadb8e0e7a363f117dd480525011c`。归档父提交 `8aab39ed6afd78d403d8472b27324e942ff8ca29`包含后续原始CLI日志和CI步骤顺序文档，不改变录像来源。
+
+[实际录像](../../screenshots/demos/40733609989-1/demo.mp4)为35.867秒、640×1280、H.264/yuv420p、444,016字节（小于100 MB），SHA-256 `d6e6e09130f8763cb26a1e9543d3e261375746b9f16229309f09eff16f1aed25`。30载荷共1,180,441字节，22张320×640的真实PNG；全部文件、来源、视频完整解码和3个实际帧均已复核，13阶段与8次确认通过。独立核验报告摘要为 `089b67d043eeb89c8bb59706324fcf14bc3ef8851df7f5c6ce9a09bd4210e8f7`。
+
+录像是专用API35模拟器上的普通Fixture与本地合成HTTP模型流程，安全窗口标志始终保留。它不运行离线APK检查器，不打开受保护的数值偏好配置或预览页，也不证明真实模型、真机、安装或迁移；CLI的22项本地验签验证见[独立记录](apk-upgrade-preflight.md)。本次为直接ADB仪器执行，`junitStatus=not_produced_direct_adb`，不声称生成了原JUnit XML。

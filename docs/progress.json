@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-28T07:18:08Z",
-  "note": "14c同源码八档完整1976/1976通过，零失败/错误/跳过/缺失；2233张真实PNG及1076条blocked完整核验。主界面和控制窗字体/原raw恢复在整套均8/8，36.885秒真实录像已链接；旧失败保留，真机/ROM未验收，检查点45%。",
+  "updated_at": "2026-10-28T09:13:45Z",
+  "note": "补齐第三方v3遗漏历史：固定32组合22通过、10项Notes确认按钮准备失败，32张实际计算器截图及32条blocked原样提交；旧v2 31/32独立保留。执行器完整基线仍1976/1976，检查点45%；操作回执功能正在实现，现有录像保留原源码。",
   "latest_evidence": {
     "path": "screenshots/40647046321-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40647046321"
@@ -102,7 +102,7 @@
       "name": "冻结常用应用样本与日常使用验收",
       "status": "in_progress",
       "evidence": "docs/validation/third-party-smoke.md",
-      "scope": "Two pinned unmodified apps across eight emulator APIs and service off/idle: run40523086830/source5a8da0ad8 passed31/32. API31 Notes/off timed out with IME still visible after one accepted BACK. All originals retained; ordinary app coverage, executing-agent tasks, upgrades and physical devices remain unverified."
+      "scope": "Two pinned unmodified apps across eight emulator APIs and service off/idle. Current v3 source8edd/run40555177328:22/32 passed,10 Notes dialog-confirm preparation failures,0unverified; archive6f679bce restored verbatim.32 Calculator PNGs and32 blocked captures verified; no Notes PNG. Prior v2 source5a8/run40523086830 remains31/32 under its separate keyboard/BACK contract. Executing-agent tasks, upgrades, broad apps and phones remain unverified."
     },
     {
       "id": "physical_devices",

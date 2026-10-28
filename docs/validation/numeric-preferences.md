@@ -142,3 +142,16 @@ Main的原就绪条件未变；在原等待期间的同一次主线程读取中�
 测试APK为6,049,193字节，SHA-256 `2e233a24b02bd9d936085abaadd53923d2e107be083c6a8397113fa894a8df9b`；lint为0错误、54警告，无新增或移除。实际APK的runner、target与三个测试Provider权限/进程/grant声明保持原样。构建报告摘要 `a55f18d244645abc95d70489d93bbd87c11e8520014e075f87a3749910f419c6`。未重跑未改的核心333项、原314项脚本或已验证的APK预检22项；新精确源码的八档结果待实际运行。整体录像继续保留准确的518621d4来源，不改标为测试驱动源码。
 
 最终独立源码审查记录SHA-256为 `1a89c11839aaac1fdb476cbf7533b228555e1a4c58b0f96ef8e2b5b7cd1cd56f`，270项预声明记录为 `0b9ef03a67f5fb718ba2d542a070b66a5b59b0265d63de373c5a9a5fde592bec`。这些冻结记录针对隔离测试驱动增量；主分支另含已分别提交的离线APK脚本及CI前置顺序，不将它们描述成相对300c未变。
+
+
+## 第三轮结果与剩余失败
+
+精确源码 `3eb74b5d5119738ba8e3c560ed8b078df223bba1` 的完整运行 [40736683857](https://github.com/ecojust/Agent-OS/actions/runs/40736683857)（attempt 1）完成2160项：2146通过、14失败，零错误、跳过、缺失、额外或重复身份。原有2112项全部通过；新增六项跨八档为34通过、14失败。API30为264/6，API31–36各269/1，API37为268/2（通过/失败）。八份JUnit摘要、逐案账本与原日志的失败身份吻合；没有独立下载原JUnit XML。
+
+API30六项仍止于提供方根目录选择准备。新增诊断确认仪器目标UID可见的已安装Provider组件、authority、enabled/exported、MANAGE_DOCUMENTS读写权限、URI授权和独立进程声明符合预期，应用未stopped/suspended；但这不是DocumentsUI UID的实际发现结果。进程查询计数仍为零，有限历史ProvidersCache日志没有命中本authority或失败头，不能据此排除包可见性、缓存或平台发现问题。API31–37七个导出用例均在 `DIRECTORY_READY/DIRECTORY_NOT_READY` 失败，未进入文件保存点击；API37代理重建用例另在 `No recreated transfer window may remain owned` 断言失败。上一轮11个取消后Main复合就绪超时未再出现，但不将“本轮未出现”当作已证明旧失败因果。
+
+[完整证据](../../screenshots/40736683857-1/manifest.json)由归档 [40740470120](https://github.com/ecojust/Agent-OS/actions/runs/40740470120)发布，固定提交 `2293745e500e4dd01870447d8530abda580b8001`，父提交 `41a53966c12848a2c140c06edf556d1170102fd2`。父提交另外含Android CI稀疏检出调整，不是纯文档变更，也不替换被测源码3eb。4424载荷、46,366,650字节、2232张PNG与1431条blocked已逐文件核对；新增模块82条blocked、零PNG，原24条安全窗口测试例外保持。八档性能采集仍只属于诊断，未验收性能预算。根清单SHA-256为 `cf88fb8fae546ac44804913b66ceaa4c7d5ecbc48bd742c980434099362e25e0`。独立载荷审计为 `d9d5b41be2a952761ebfc4878d1fe4827b6b26a187f9723cbf44291ed0ae09a3`，9个任务/34个产物来源审计为 `b244ffc56dfb8646ffdf1847d3b623c74282ac51a270fe9b9b9afff2ef9d36d8`。
+
+[原始失败摘录](diagnostics/numeric-preferences-40736683857/README.md)保留各档连续原字节。完整日志ZIP为581,175字节，SHA-256 `b224c2a4e47fffa38a861e420197e1c53bf74b82d0640e7cf71c27371e07b1bd`。构建任务的原始脚本结果为 `Ran 336 tests in 62.467s / OK`，无跳过；SDK准备先于脚本执行，新增APK预检的真实SDK测试随整套实际执行。此运行尚未使用后提交的稀疏检出工作流，不能用它宣称远端稀疏检出已经验证。
+
+三轮失败均保留。工程检查点仍为9/20（45%），数值偏好跨平台验收继续进行；普通整体录像仍准确引用518621d4，不用该视频替代受保护页面的专项测试。

@@ -55,7 +55,7 @@ python3 -m unittest discover -s scripts -p test_check_apk_upgrade.py -v
 
 测试分为纯边界检查和真实 SDK 集成。真实集成临时生成两套测试证书，用 `aapt2` 编译最小二进制 Android 清单，再由实际 `apksigner` 签名与验签。覆盖正常版本增长、错误 pin、不同/多个签名者、已签名内容被篡改、错误包名、相同/降低版本、split、非零 major、提高最低 SDK、清单多行字符串、源文件替换和快照变更。边界测试覆盖输出洪水、超时、子进程保留管道、固定错误、损坏压缩流及 ZIP 声明上限。测试不安装这些合成 APK。
 
-默认查找 `$ANDROID_SDK_ROOT`（或 `$ANDROID_HOME`）下 Build Tools 35.0.0 与 android-35；也可用 `APK_PREFLIGHT_BUILD_TOOLS`、`APK_PREFLIGHT_ANDROID_JAR` 显式指定本地工具。该仓库开发容器另提供 `/workspace/android-toolchain/sdk` 默认路径。缺少 SDK 或 keytool 时，真实集成组标为 skipped，不能把这种结果说成完成验签验收。完整CI的脚本检查已移到SDK准备步骤之后，确保Build Tools 35.0.0与android-35先安装，再运行包括本模块的脚本用例；该顺序的实际CI结果随下一次完整运行记录。
+默认查找 `$ANDROID_SDK_ROOT`（或 `$ANDROID_HOME`）下 Build Tools 35.0.0 与 android-35；也可用 `APK_PREFLIGHT_BUILD_TOOLS`、`APK_PREFLIGHT_ANDROID_JAR` 显式指定本地工具。该仓库开发容器另提供 `/workspace/android-toolchain/sdk` 默认路径。缺少 SDK 或 keytool 时，真实集成组标为 skipped，不能把这种结果说成完成验签验收。完整CI的脚本检查已移到SDK准备步骤之后，确保Build Tools 35.0.0与android-35先安装，再运行包括本模块的脚本用例；精确源码3eb的完整CI [40736683857](https://github.com/ecojust/Agent-OS/actions/runs/40736683857)已实际执行整套336项（原314+本模块22），62.467秒、零失败/错误/跳过；[原始结果](diagnostics/numeric-preferences-40736683857/README.md)与设备侧失败分开保留。
 
 后续正式发布仍需可信正式证书/产物来源、同一产物的设备安装与升级、配置保留/拒绝与恢复、任务终止及不自动续跑等证据；ROM 还需要明确机型与恢复流程。本模块不会自动推进这些验收结论。
 

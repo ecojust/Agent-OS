@@ -1,0 +1,34 @@
+2026-10-28T17:48:59.6360297Z   | Report: app/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 17-_app-.xml
+2026-10-28T17:48:59.6361185Z   | Suite: dev.agentos.app.AgentControllerInstrumentedTest
+2026-10-28T17:48:59.6362239Z   | Test: dev.agentos.app.NumericPreferencesInstrumentedTest.recreatedBrokerDoesNotReopenThePickerOrAdoptAnOrphanedTransfer
+2026-10-28T17:48:59.6363174Z   | Kind: failure / 
+2026-10-28T17:48:59.6363660Z   | java.lang.AssertionError: No recreated transfer window may remain owned
+2026-10-28T17:48:59.6364279Z   | at org.junit.Assert.fail(Assert.java:89)
+2026-10-28T17:48:59.6364807Z   | at org.junit.Assert.assertTrue(Assert.java:42)
+2026-10-28T17:48:59.6365972Z   | at dev.agentos.app.NumericPreferencesInstrumentedTest.lambda$recreatedBrokerDoesNotReopenThePickerOrAdoptAnOrphanedTransfer$7(NumericPreferencesInstrumentedTest.java:220)
+2026-10-28T17:48:59.6367886Z   | at dev.agentos.app.NumericPreferencesInstrumentedTest$$ExternalSyntheticLambda3.run(D8$$SyntheticClass:0)
+2026-10-28T17:48:59.6369003Z   | at dev.agentos.app.NumericPreferencesInstrumentedTest$Session.lambda$main$31(NumericPreferencesInstrumentedTest.java:844)
+2026-10-28T17:48:59.6370137Z   | at dev.agentos.app.NumericPreferencesInstrumentedTest$Session$$ExternalSyntheticLambda7.run(D8$$SyntheticClass:0)
+2026-10-28T17:48:59.6371051Z   | at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:520)
+2026-10-28T17:48:59.6371710Z   | at java.util.concurrent.FutureTask.run(FutureTask.java:328)
+2026-10-28T17:48:59.6372334Z   | at android.app.Instrumentation$SyncRunnable.run(Instrumentation.java:2657)
+2026-10-28T17:48:59.6372944Z   | at android.os.Handler.handleCallback(Handler.java:1095)
+2026-10-28T17:48:59.6373501Z   | at android.os.Handler.dispatchMessageImpl(Handler.java:135)
+2026-10-28T17:48:59.6374043Z   | at android.os.Handler.dispatchMessage(Handler.java:125)
+2026-10-28T17:48:59.6374532Z   | at android.os.Looper.loopOnce(Looper.java:296)
+2026-10-28T17:48:59.6374974Z   | at android.os.Looper.loop(Looper.java:397)
+2026-10-28T17:48:59.6375472Z   | at android.app.ActivityThread.main(ActivityThread.java:9523)
+2026-10-28T17:48:59.6376002Z   | at java.lang.reflect.Method.invoke(Native Method)
+2026-10-28T17:48:59.6376625Z   | at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:575)
+2026-10-28T17:48:59.6377467Z   | at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:939)
+2026-10-28T17:48:59.6378194Z   | Report: app/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 17-_app-.xml
+2026-10-28T17:48:59.6379131Z   | Suite: dev.agentos.app.AgentControllerInstrumentedTest
+2026-10-28T17:48:59.6380001Z   | Test: dev.agentos.app.NumericPreferencesInstrumentedTest.realSafExportWritesTheCapturedFourFieldSnapshotWithoutConfigurationAuthority
+2026-10-28T17:48:59.6381005Z   | Kind: failure / 
+2026-10-28T17:48:59.6388015Z   | java.lang.AssertionError: The actual provider directory and drawer did not reach the original preparation condition; phase=DIRECTORY_READY,operation=TARGET_CLICK,preparation=DIRECTORY_NOT_READY,matches=1,window=542,bounds=[74,324][144,343],refresh=-1,actionAttempted=false,actionResult=false,scrolls=0,scrollResult=false,rootsEntered=21,rootsReturned=21,rootsOutcome=RETURNED,rootsCaller=SYSTEM_ALLOWED,rootsPackages=1,rootsApplications=1,rootsLookupMisses=0,rootsCountersSaturated=false,providerDiagnosticSampled=true; installView=TARGET_UID_NOT_SAF_DISCOVERY,installApi=37,installSamplerUid=10157,installTargetContext=true,providerInfo=PRESENT,providerComponentMatches=true,providerAuthorityMatches=true,providerEnabled=true,providerExported=true,providerGrants=true,providerReadManage=true,providerWriteManage=true,providerProcessMatches=true,providerAppEnabled=true,providerAppStopped=false,providerAppSuspended=false,providerUid=10158,providerUidSeparate=true,providerSameUser=true,providerMinSdk=30,providerTargetSdk=35,authorityResolve=PRESENT,authorityComponentMatches=true,authorityUidMatches=true,providerPackage=PRESENT,providerVersion=0,providerPackageUidMatches=true,providerComponentSetting=0,providerAppSetting=0,lastObservedSafCandidate=AOSP_DOCUMENTS_UI,safPackage=PRESENT,safSystem=true,safEnabled=true,safSameUser=true,safTargetSdk=37,safVersion=37,safManageDocuments=true,providerLogWindow=HISTORICAL_BOUNDED_NOT_ATOMIC,providerLogStatus=COMPLETE,providerLogBytes=1943,logAuthoritySeen=true,logFailureSeen=false,logProviderInfoMissing=false,logNotExported=false,logNoUriGrants=false,logManageMismatch=false,logLoadFailed=false,logSecurityClass=false,logDeadObjectClass=false,logRemoteClass=false,logIllegalArgumentClass=false,logIllegalStateClass=false,logFileNotFoundClass=false,logOtherExceptionClass=false
+2026-10-28T17:48:59.6395485Z   | at dev.agentos.app.NumericPreferencesInstrumentedTest$Session.safFailure(NumericPreferencesInstrumentedTest.java:722)
+2026-10-28T17:48:59.6396497Z   | at dev.agentos.app.NumericPreferencesInstrumentedTest$Session.awaitProviderDirectory(NumericPreferencesInstrumentedTest.java:790)
+2026-10-28T17:48:59.6397645Z   | at dev.agentos.app.NumericPreferencesInstrumentedTest$Session.selectProviderRoot(NumericPreferencesInstrumentedTest.java:804)
+2026-10-28T17:48:59.6398634Z   | at dev.agentos.app.NumericPreferencesInstrumentedTest$Session.chooseExport(NumericPreferencesInstrumentedTest.java:812)
+2026-10-28T17:48:59.6399941Z   | at dev.agentos.app.NumericPreferencesInstrumentedTest.realSafExportWritesTheCapturedFourFieldSnapshotWithoutConfigurationAuthority(NumericPreferencesInstrumentedTest.java:113)
+2026-10-28T17:48:59.6400985Z Parsed 1 Android reports; found 2 failure/error entries.

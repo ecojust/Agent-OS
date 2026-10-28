@@ -1,0 +1,372 @@
+{
+  "schemaVersion": 1,
+  "runId": 40736683857,
+  "attempt": 1,
+  "runUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40736683857",
+  "sourceSha": "3eb74b5d5119738ba8e3c560ed8b078df223bba1",
+  "scope": "full",
+  "originalLogsZip": {
+    "fileName": "whole-run-logs.zip",
+    "bytes": 581175,
+    "sha256": "b224c2a4e47fffa38a861e420197e1c53bf74b82d0640e7cf71c27371e07b1bd"
+  },
+  "archiveCountSource": {
+    "commit": "2293745e500e4dd01870447d8530abda580b8001",
+    "parent": "41a53966c12848a2c140c06edf556d1170102fd2",
+    "path": "screenshots/40736683857-1/manifest.json",
+    "manifestSha256": "cf88fb8fae546ac44804913b66ceaa4c7d5ecbc48bd742c980434099362e25e0",
+    "description": "Immutable archive per-case ledger and capture parsed-JUnit summaries; original XML was not independently downloaded for this diagnostic collection."
+  },
+  "expectedIdentitySet": {
+    "perApi": 270,
+    "apis": [
+      "30",
+      "31",
+      "32",
+      "33",
+      "34",
+      "35",
+      "36",
+      "37.0"
+    ],
+    "total": 2160,
+    "existingExcludedIdentities": 8,
+    "exclusionsChanged": false
+  },
+  "caseLedger": {
+    "recorded": 2160,
+    "pass": 2146,
+    "fail": 14,
+    "expectedMissing": 0
+  },
+  "reportedJUnit": {
+    "reports": 8,
+    "tests": 2160,
+    "failures": 14,
+    "errors": 0,
+    "skipped": 0,
+    "unreadableReports": 0,
+    "originalXmlIndependentlyDownloaded": false,
+    "allApisFinished270": true,
+    "fullSuitePassed": false
+  },
+  "newNumericPreferencesCases": {
+    "expected": 48,
+    "pass": 34,
+    "fail": 14
+  },
+  "retainedPriorCases": {
+    "expected": 2112,
+    "pass": 2112,
+    "fail": 0,
+    "historicalCausesProvenFixed": false
+  },
+  "scriptTests": {
+    "source": "Original CI unittest step in this same run; not the later local sparse-checkout validation",
+    "ran": 336,
+    "durationSeconds": 62.467,
+    "result": "OK",
+    "skipped": 0,
+    "skipEvidence": "Bare unittest OK with no skipped count; no skipped s marker in 336-dot progress line",
+    "legacyMethods": 314,
+    "apkPreflightMethods": 22,
+    "perMethodResultsPrinted": false,
+    "evidence": "build-script-tests.original.txt",
+    "resultLines": [
+      19,
+      21
+    ]
+  },
+  "observedFailureGroups": [
+    {
+      "apis": [
+        "30"
+      ],
+      "count": 6,
+      "phase": "PROVIDER_ROOT",
+      "preparation": "NO_ACTIONABLE_ANCESTOR",
+      "rootsEntered": 0,
+      "rootsReturned": 0,
+      "rootsOutcome": "NOT_QUERIED",
+      "providerInfoView": "TARGET_UID_NOT_SAF_DISCOVERY",
+      "providerInfo": "PRESENT",
+      "logStatus": "COMPLETE",
+      "logBytes": 524,
+      "logAuthoritySeen": false,
+      "logFailureSeen": false,
+      "limit": "Current provider-process telemetry and target-UID metadata do not prove SAF UID discovery or a root cause; historical filtered-log COMPLETE means stream EOF only, not shell success or absence of all platform failures."
+    },
+    {
+      "apis": [
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37.0"
+      ],
+      "count": 7,
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#realSafExportWritesTheCapturedFourFieldSnapshotWithoutConfigurationAuthority",
+      "phase": "DIRECTORY_READY",
+      "preparation": "DIRECTORY_NOT_READY",
+      "rootsOutcome": "RETURNED",
+      "limit": "The original directory-and-drawer preparation condition was not met; returned roots-query counts do not prove directory UI readiness or completed export."
+    },
+    {
+      "apis": [
+        "37.0"
+      ],
+      "count": 1,
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#recreatedBrokerDoesNotReopenThePickerOrAdoptAnOrphanedTransfer",
+      "assertion": "No recreated transfer window may remain owned",
+      "testSourceLine": 220,
+      "limit": "Preserves the actual assertion only; does not assign lifecycle cause from the report."
+    }
+  ],
+  "failedIdentities": [
+    {
+      "api": "30",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#recreatedBrokerDoesNotReopenThePickerOrAdoptAnOrphanedTransfer"
+    },
+    {
+      "api": "30",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#oldPickerResultsCannotReachARecreatedMainOrClearANewerOwner"
+    },
+    {
+      "api": "30",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#cancelledProviderIoKeepsItsProcessSlotUntilActualCloseWithoutBlockingMainWork"
+    },
+    {
+      "api": "30",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#malformedOversizedAndCancelledImportsLeaveTheOriginalDraftAndSavedStateUntouched"
+    },
+    {
+      "api": "30",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#realSafExportWritesTheCapturedFourFieldSnapshotWithoutConfigurationAuthority"
+    },
+    {
+      "api": "30",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#realSafImportPreviewsAndAppliesOnlyFourUnsavedNumericFields"
+    },
+    {
+      "api": "31",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#realSafExportWritesTheCapturedFourFieldSnapshotWithoutConfigurationAuthority"
+    },
+    {
+      "api": "32",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#realSafExportWritesTheCapturedFourFieldSnapshotWithoutConfigurationAuthority"
+    },
+    {
+      "api": "33",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#realSafExportWritesTheCapturedFourFieldSnapshotWithoutConfigurationAuthority"
+    },
+    {
+      "api": "34",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#realSafExportWritesTheCapturedFourFieldSnapshotWithoutConfigurationAuthority"
+    },
+    {
+      "api": "35",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#realSafExportWritesTheCapturedFourFieldSnapshotWithoutConfigurationAuthority"
+    },
+    {
+      "api": "36",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#realSafExportWritesTheCapturedFourFieldSnapshotWithoutConfigurationAuthority"
+    },
+    {
+      "api": "37.0",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#recreatedBrokerDoesNotReopenThePickerOrAdoptAnOrphanedTransfer"
+    },
+    {
+      "api": "37.0",
+      "identity": "dev.agentos.app.NumericPreferencesInstrumentedTest#realSafExportWritesTheCapturedFourFieldSnapshotWithoutConfigurationAuthority"
+    }
+  ],
+  "originalCompletionLogLocations": [
+    {
+      "api": "30",
+      "sourceZipEntry": "emulator-tests (30)/8_Exercise Android execution boundaries.txt",
+      "sourceEntrySha256": "c64ed7fb48222c4cec8590ced3a6caf0658b94eb69a79e9679070f81a9a07df8",
+      "starting270Line": 358,
+      "finished270Line": 468
+    },
+    {
+      "api": "31",
+      "sourceZipEntry": "emulator-tests (31)/8_Exercise Android execution boundaries.txt",
+      "sourceEntrySha256": "6649f0dd316edfe4758353695073ec20069703b985166339a4cf7191106133c7",
+      "starting270Line": 365,
+      "finished270Line": 1098
+    },
+    {
+      "api": "32",
+      "sourceZipEntry": "emulator-tests (32)/8_Exercise Android execution boundaries.txt",
+      "sourceEntrySha256": "8dc83f374c435049c10f4e165dbd8859ee7e0b708b92f9fb9d30539aedf7b265",
+      "starting270Line": 368,
+      "finished270Line": 1028
+    },
+    {
+      "api": "33",
+      "sourceZipEntry": "emulator-tests (33)/8_Exercise Android execution boundaries.txt",
+      "sourceEntrySha256": "a97704a09491f0a61e8b4677c5fff06e813869e5125336e18447305d2adff70b",
+      "starting270Line": 376,
+      "finished270Line": 930
+    },
+    {
+      "api": "34",
+      "sourceZipEntry": "emulator-tests (34)/8_Exercise Android execution boundaries.txt",
+      "sourceEntrySha256": "ad0a64e24973c5acdbc8f03c837f8a1687c616bb5037a0293fc6a416fe5f5376",
+      "starting270Line": 360,
+      "finished270Line": 719
+    },
+    {
+      "api": "35",
+      "sourceZipEntry": "emulator-tests (35)/8_Exercise Android execution boundaries.txt",
+      "sourceEntrySha256": "2f70ecf7eebb22919b2bd99fbd6c7dffcd4e3da358dc515d3d68f7464ff21613",
+      "starting270Line": 370,
+      "finished270Line": 1139
+    },
+    {
+      "api": "36",
+      "sourceZipEntry": "emulator-tests (36)/8_Exercise Android execution boundaries.txt",
+      "sourceEntrySha256": "f07cd337b2001b8c806cc54a4305b279d6136050e9b4d453795ccd994eebef49",
+      "starting270Line": 386,
+      "finished270Line": 631
+    },
+    {
+      "api": "37.0",
+      "sourceZipEntry": "emulator-tests (37.0)/8_Exercise Android execution boundaries.txt",
+      "sourceEntrySha256": "eaa9381c5d2b9892208187214addde437624e077fcb5aeb3cd87dc6155a090a1",
+      "starting270Line": 378,
+      "finished270Line": 681
+    }
+  ],
+  "preservation": "Each Android excerpt is the original continuous bytes from its first Report through final Parsed line. The build-script step is copied in full. No ANSI removal, line-ending normalization, stack reconstruction, reordering or concatenation.",
+  "files": [
+    {
+      "path": "api-30-failure-report.original.txt",
+      "kind": "continuous_original_log_excerpt",
+      "api": "30",
+      "sourceZipEntry": "emulator-tests (30)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 19587,
+      "sourceEntrySha256": "79a3cd043757113891dd5eaf725f8d6662a732634675b685ada116a165b7c1ce",
+      "startLine": 19,
+      "endLine": 77,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "failureErrorEntriesReported": 6,
+      "bytes": 18227,
+      "sha256": "ef92b9507ee62597834cc06df8fd4ba953306dd1baa96dc9496a7793aeefb87a"
+    },
+    {
+      "path": "api-31-failure-report.original.txt",
+      "kind": "continuous_original_log_excerpt",
+      "api": "31",
+      "sourceZipEntry": "emulator-tests (31)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 4577,
+      "sourceEntrySha256": "09aae0451411d4afa5d800a63bbb59854ac32be0c57dfd40b04c0b0d6d293f6a",
+      "startLine": 19,
+      "endLine": 29,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "failureErrorEntriesReported": 1,
+      "bytes": 3217,
+      "sha256": "babf28eed8a0b4b26e2ddbab5625084704a870f516f0fd188a99e7f04d0c5a7b"
+    },
+    {
+      "path": "api-32-failure-report.original.txt",
+      "kind": "continuous_original_log_excerpt",
+      "api": "32",
+      "sourceZipEntry": "emulator-tests (32)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 4577,
+      "sourceEntrySha256": "7efd75346593eecac1362de19a3db6cc35fc3a656296e023a34833180a8affd0",
+      "startLine": 19,
+      "endLine": 29,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "failureErrorEntriesReported": 1,
+      "bytes": 3217,
+      "sha256": "7f375aea6353427e8f5ba82924d6f422bd4c21a1291cf3d08006b54630396f11"
+    },
+    {
+      "path": "api-33-failure-report.original.txt",
+      "kind": "continuous_original_log_excerpt",
+      "api": "33",
+      "sourceZipEntry": "emulator-tests (33)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 4577,
+      "sourceEntrySha256": "a53007ad518bfd39ab428bfce3acd966a5445726aee884f677ddea013580b2fd",
+      "startLine": 19,
+      "endLine": 29,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "failureErrorEntriesReported": 1,
+      "bytes": 3217,
+      "sha256": "89ffdf6914bb950eb25c33154e59fdcb0589c751291b501038b721a08d55984a"
+    },
+    {
+      "path": "api-34-failure-report.original.txt",
+      "kind": "continuous_original_log_excerpt",
+      "api": "34",
+      "sourceZipEntry": "emulator-tests (34)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 4577,
+      "sourceEntrySha256": "e694c9048d4d998bd3fa1e1e370d651d81fc2f07f81fd27174ff1b10ea58d9bd",
+      "startLine": 19,
+      "endLine": 29,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "failureErrorEntriesReported": 1,
+      "bytes": 3217,
+      "sha256": "a4ef60057ba4189d10283a280cf7b87c4dde25a98074d16a7379be2bd14f1306"
+    },
+    {
+      "path": "api-35-failure-report.original.txt",
+      "kind": "continuous_original_log_excerpt",
+      "api": "35",
+      "sourceZipEntry": "emulator-tests (35)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 4577,
+      "sourceEntrySha256": "a057cd47da962a02432ba9acd4768f37bfc3c568486bded59fe7c9f24a51720b",
+      "startLine": 19,
+      "endLine": 29,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "failureErrorEntriesReported": 1,
+      "bytes": 3217,
+      "sha256": "ecd62ca7ca3f7d34557bf223f26b69e511961a6da173775ce24d6f485087448b"
+    },
+    {
+      "path": "api-36-failure-report.original.txt",
+      "kind": "continuous_original_log_excerpt",
+      "api": "36",
+      "sourceZipEntry": "emulator-tests (36)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 4577,
+      "sourceEntrySha256": "d6219e9ec3d4ad2d8291314fa9335dda107c79bf0a9e0768a4887816f0c263cf",
+      "startLine": 19,
+      "endLine": 29,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "failureErrorEntriesReported": 1,
+      "bytes": 3217,
+      "sha256": "f4c460eb48fd3bb22cca2bcd69944192ee380e1873e6674f9f231a894303d3c6"
+    },
+    {
+      "path": "api-37.0-failure-report.original.txt",
+      "kind": "continuous_original_log_excerpt",
+      "api": "37.0",
+      "sourceZipEntry": "emulator-tests (37.0)/10_Print Android failure details.txt",
+      "sourceEntryBytes": 7029,
+      "sourceEntrySha256": "ab4172de1ac8c62cd5460a1c5a52849972ba03d461ad1c8ed1c23b3c8f3e6bc2",
+      "startLine": 19,
+      "endLine": 52,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "failureErrorEntriesReported": 2,
+      "bytes": 5669,
+      "sha256": "2f1dafa7c2ecd6d7feb4b2def2422bfb1d22a8a0f32a71b9a2deaeffc33ad0d9"
+    },
+    {
+      "path": "build-script-tests.original.txt",
+      "kind": "complete_original_log_entry",
+      "sourceZipEntry": "build/7_Test evidence collection boundaries.txt",
+      "sourceEntryBytes": 1997,
+      "sourceEntrySha256": "917f0b3ebb6b9f13917224220c26dee62b4a9ac369ae766815fd652e40c1a302",
+      "startLine": 1,
+      "endLine": 23,
+      "lineNumbering": "1-based inclusive; splitlines(keepends=True)",
+      "resultStartLine": 19,
+      "resultEndLine": 21,
+      "bytes": 1997,
+      "sha256": "917f0b3ebb6b9f13917224220c26dee62b4a9ac369ae766815fd652e40c1a302"
+    }
+  ]
+}

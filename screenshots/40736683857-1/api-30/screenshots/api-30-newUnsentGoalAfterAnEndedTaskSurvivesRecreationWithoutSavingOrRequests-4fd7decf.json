@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "api": 30,
+  "testClass": "dev.agentos.app.TaskInputDraftInstrumentedTest",
+  "testName": "newUnsentGoalAfterAnEndedTaskSurvivesRecreationWithoutSavingOrRequests",
+  "assertionResult": "pass",
+  "testResult": "pass",
+  "status": "pass",
+  "startedAt": 1793209730157,
+  "finishedAt": 1793209735615,
+  "captures": [
+    {
+      "stage": "protected-new-unsent-draft-retained-after-historical-end",
+      "capturedAt": 1793209734253,
+      "status": "blocked",
+      "captureError": "secure_task_input_draft_capture_not_attempted"
+    },
+    {
+      "stage": "finished",
+      "capturedAt": 1793209735615,
+      "status": "blocked",
+      "captureError": "secure_task_input_draft_capture_not_attempted"
+    }
+  ]
+}

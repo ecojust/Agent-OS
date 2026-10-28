@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-28T17:42:56Z",
-  "note": "Android CI改为只检出构建与测试所需八个目录；独立稀疏工作树336/336脚本通过，真实SDK组零跳过，原始结果已归档。历史截图完整保留，远端耗时尚未测量；已启动的3eb/40736683857仍按原源码运行。离线APK预检与518录像已交付，检查点9/20（45%）。",
+  "updated_at": "2026-10-28T18:02:55Z",
+  "note": "归档数值偏好第三轮3eb源码：2160项完成，2146通过、14失败，旧2112项全通过；保留三轮失败与本轮2232张真实截图，新增受保护页面82条blocked。336项脚本实际通过且零跳过；剩余根目录发现、导出准备和代理重建问题继续修复，检查点9/20（45%）。",
   "latest_evidence": {
-    "path": "screenshots/40728782554-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40728782554"
+    "path": "screenshots/40736683857-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40736683857"
   },
   "checkpoints": [
     {
@@ -65,8 +65,8 @@
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
       "status": "in_progress",
-      "evidence": "screenshots/40728782554-1/manifest.json",
-      "scope": "Latest exact300c/run40728782554:270 identities/API x8=2160 complete;2143pass/17fail, zero errors/skips/missing/extra/duplicates. Original2112 all pass; Numeric48 cases31pass/17fail.2232 actualPNGs/1428blocked; Numeric79blocked/noPNG; original24 secure exceptions unchanged. API30 root selection and picker-cancel/Main-ready failures remain unresolved. Previous exact1f9f/run40706713295 remains last wholly passing2112/2112 baseline. Phone/model/ROM, broad-app and performance acceptance remain unverified."
+      "evidence": "screenshots/40736683857-1/manifest.json",
+      "scope": "Latest exact3eb/run40736683857:270 identities/API x8=2160 complete;2146pass/14fail, zero errors/skips/missing/extra/duplicates. Original2112 all pass; Numeric48 cases34pass/14fail.2232 actualPNGs/1431blocked; Numeric82blocked/noPNG; original24 secure exceptions unchanged. API30 root discovery, API31–37 export directory readiness and API37 broker destruction assertion remain unresolved. Previous exact1f9f/run40706713295 remains last wholly passing2112/2112 baseline. Scripts336 passed with no skips. Phone/model/ROM, broad-app and performance acceptance remain unverified."
     },
     {
       "id": "performance",

@@ -25,11 +25,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 新增真实熄屏停止与亮屏后旧审批无效用例，保留原任务身份及零派发检查；277项脚本、测试APK和lint通过，独立审查通过。八档熄屏专项、1960项完整回归及本阶段录像待验证，旧录像保持准确源码；进度45%。
+**本次更新：** Archived development branch evidence for run 40622578371; awaiting review, not mainline acceptance; checkpoints unchanged.
 
-**记录时间：** 2026-10-28T02:43:04Z
+**记录时间：** 2026-10-28T02:48:02Z
 
-[最近测试截图与清单](screenshots/40620143610-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40620143610)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40622578371-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40622578371)。通过、失败及未截图原因见清单。
 
 **整体操作演示：** [播放视频](screenshots/demos/40619745356-1/demo.mp4) · [录制与验证清单](screenshots/demos/40619745356-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40619745356)。
 录制版本：[`7af1ac979`](https://github.com/ecojust/Agent-OS/commit/7af1ac97903148e3ff912e1fdb10de3a2f7c312d)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。

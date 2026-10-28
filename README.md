@@ -25,14 +25,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 完成本次任务服务端Token用量：按输入/输出/总计独立报告覆盖与小计，缺失不补零，停止/暂停/超时迟到回复不能补账。新增15项核心回归，完整核心314/314、脚本314/314及APK/lint通过；新增3项设备用例加入原255项/API，八档2064项完整回归及唯一整体录像待运行。原API34失败保留，工程检查点9/20。
+**本次更新：** Archive actual API35 walkthrough evidence; local synthetic model, secure flags preserved
 
-**记录时间：** 2026-10-28T11:59:50Z
+**记录时间：** 2026-10-28T12:07:13Z
 
 [最近测试截图与清单](screenshots/40678960624-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40678960624)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/40679000948-1/demo.mp4) · [录制与验证清单](screenshots/demos/40679000948-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40679000948)。
-录制版本：[`28a410c7e`](https://github.com/ecojust/Agent-OS/commit/28a410c7e6098a8bb116fde0c8b17827e472e340)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/40684345203-1/demo.mp4) · [录制与验证清单](screenshots/demos/40684345203-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40684345203)。
+录制版本：[`52cecfc0d`](https://github.com/ecojust/Agent-OS/commit/52cecfc0da8ff8d94962948a9dcc488070466fdd)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 | 检查点 | 状态 |
 | --- | --- |

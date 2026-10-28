@@ -25,14 +25,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 81f同源码八档完整1968/1968通过，零失败/错误/跳过/缺失；2232张真实PNG及原日志已核验，37.981秒真实录像已归档。旧API36单次失败未复现但原因仍未知，全部旧证据保留；检查点45%。
+**本次更新：** 已按要求将33个提交推进master；补齐最早1938/1952失败归档，2164张原图保留。f901主分支新录像38.975秒/443258字节已核验并链接；完整基线仍为81f的1968/1968，检查点45%。
 
-**记录时间：** 2026-10-28T05:31:48Z
+**记录时间：** 2026-10-28T05:51:38Z
 
 [最近测试截图与清单](screenshots/40636551126-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40636551126)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/40636167819-1/demo.mp4) · [录制与验证清单](screenshots/demos/40636167819-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40636167819)。
-录制版本：[`81f0548d3`](https://github.com/ecojust/Agent-OS/commit/81f0548d3be3f2372f492b9dcdcb865bbbb8cfb6)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/40639607580-1/demo.mp4) · [录制与验证清单](screenshots/demos/40639607580-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40639607580)。
+录制版本：[`f9017791e`](https://github.com/ecojust/Agent-OS/commit/f9017791e6230bff478ed82f72368fca44765a11)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 | 检查点 | 状态 |
 | --- | --- |

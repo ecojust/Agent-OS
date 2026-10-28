@@ -325,7 +325,7 @@ public final class NumericPreferencesInstrumentedTest {
         String lastVerifiedSafPackage, selectedSafPackage, selectedRootsLayout = "UNKNOWN";
         String lastSafPhase = "NOT_OBSERVED", lastSafDirectory = "notSampled";
         int selectedSafWindow = -1;
-        boolean backAttempted, backAccepted;
+        boolean backAttempted, backAccepted, createDocument;
 
         Session() throws Exception {
             assertFalse("Synthetic document tests must not replace a running task", controller.getState().running);
@@ -408,6 +408,7 @@ public final class NumericPreferencesInstrumentedTest {
             Intent picker;
             synchronized (pickers) { picker = pickers.get(count); }
             assertEquals(export ? Intent.ACTION_CREATE_DOCUMENT : Intent.ACTION_OPEN_DOCUMENT, picker.getAction());
+            createDocument = Intent.ACTION_CREATE_DOCUMENT.equals(picker.getAction());
             assertEquals("application/json", picker.getType()); assertTrue(picker.hasCategory(Intent.CATEGORY_OPENABLE));
             assertFalse(picker.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, true));
             assertEquals(0, picker.getFlags() & Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
@@ -437,6 +438,11 @@ public final class NumericPreferencesInstrumentedTest {
                     boolean damaged = host != null && (Boolean) field(host.activity, "storageDamaged");
                     NumericPreferencesTransfers.Owner owner = host == null ? null
                             : (NumericPreferencesTransfers.Owner) field(host.activity, "numericTransfer");
+                    // Main can resume before finish's separate broker destruction callback.
+                    // Observe every host already delivered to this session within this same wait.
+                    int activeBrokers = 0;
+                    for (Host candidate : hosts) if (candidate.activity instanceof NumericPreferencesTransferActivity
+                            && !candidate.destroyed) activeBrokers++;
                     try {
                         Host broker = null;
                         for (Host candidate : hosts) if (candidate.activity instanceof NumericPreferencesTransferActivity) broker = candidate;
@@ -449,12 +455,14 @@ public final class NumericPreferencesInstrumentedTest {
                             + ",resultReceived=" + (host != null && (Boolean) field(host.activity, "numericResultReceived"))
                             + ",brokerPresent=" + (broker != null) + ",brokerResumed=" + (broker != null && broker.resumed)
                             + ",brokerDestroyed=" + (broker != null && broker.destroyed)
+                            + ",activeBrokerCount=" + activeBrokers
                             + ",brokerPhase=" + (broker == null ? "NONE" : fixedValue(String.valueOf(field(broker.activity, "phase")),
                             "NEW", "PICKER", "WAITING_RESUME", "IO", "PREVIEW", "RETURNING"))
                             + ",brokerOwnerCurrent=" + NumericPreferencesTransfers.isCurrent(brokerOwner)
                                 + ",brokerOwnerReturning=" + NumericPreferencesTransfers.isReturning(brokerOwner);
                     } catch (RuntimeException | AssertionError unavailable) { last[0] = "mainDiagnosticSampled=false"; }
-                    return host != null && resumed && !destroyed && focused && ready && !busy && !damaged && owner == null;
+                    return host != null && resumed && !destroyed && focused && ready && !busy && !damaged
+                            && owner == null && activeBrokers == 0;
                 }), "The original or replacement Main host did not become ready after the real transfer");
             } catch (AssertionError failure) {
                 throw new AssertionError(failure.getMessage() + "; " + last[0] + "; lastSafPhase=" + lastSafPhase
@@ -719,14 +727,15 @@ public final class NumericPreferencesInstrumentedTest {
             } catch (RuntimeException | AssertionError unavailable) {
                 providerDiagnostic = ",providerDiagnosticSampled=false";
             }
-            return new AssertionError(fixedMessage + "; " + diagnostic + providerDiagnostic + "; " + safIdentityDiagnostic());
+            return new AssertionError(fixedMessage + "; " + diagnostic + providerDiagnostic
+                    + "; lastPreparedSaf={" + lastSafDirectory + "}; " + safIdentityDiagnostic());
         }
         String safIdentityDiagnostic() {
             try { return NumericPreferencesSafDiagnostics.sample(context, lastVerifiedSafPackage, automation); }
             catch (RuntimeException | AssertionError unavailable) { return "safIdentityDiagnosticSampled=false"; }
         }
         SafDirectory readProviderDirectory() {
-            SafDirectory page = new SafDirectory();
+            SafDirectory page = new SafDirectory(createDocument);
             AccessibilityNodeInfo root = automation.getRootInActiveWindow();
             if (root == null) return page;
             List<AccessibilityNodeInfo> found = new ArrayList<>();
@@ -739,7 +748,8 @@ public final class NumericPreferencesInstrumentedTest {
                 int[] traversal = {0, 0, 0};
                 find(root, node -> NumericPreferencesDocumentsProvider.INPUT_NAME.contentEquals(node.getText() == null ? "" : node.getText())
                         || idEndsWith(node, ":id/roots_list") || idEndsWith(node, ":id/drawer_roots")
-                        || idEndsWith(node, ":id/nav_rail_container_roots"), found, traversal, 0, false);
+                        || idEndsWith(node, ":id/nav_rail_container_roots")
+                        || page.createDocument && "android:id/title".equals(node.getViewIdResourceName()), found, traversal, 0, false);
                 page.limitExceeded = traversal[0] > 1500 || traversal[1] != 0;
                 page.complete = !page.limitExceeded && traversal[2] == 0;
                 for (AccessibilityNodeInfo node : found) {
@@ -760,6 +770,14 @@ public final class NumericPreferencesInstrumentedTest {
                             page.input = AccessibilityNodeInfo.obtain(node); node.getBoundsInScreen(page.inputBounds);
                             page.inputEnabled = node.isEnabled();
                         }
+                    } else if (page.createDocument && "android:id/title".equals(node.getViewIdResourceName())
+                            && hasAncestor(node, ":id/container_save")) {
+                        page.filenames++;
+                        if (page.filename == null) {
+                            page.filename = AccessibilityNodeInfo.obtain(node); node.getBoundsInScreen(page.filenameBounds);
+                            page.filenameEnabled = node.isEnabled(); page.filenameEditable = node.isEditable();
+                            page.filenameMatches = "numeric-preferences.json".contentEquals(node.getText() == null ? "" : node.getText());
+                        }
                     }
                 }
                 return page;
@@ -778,7 +796,7 @@ public final class NumericPreferencesInstrumentedTest {
                     lastSafDirectory = "selectedLayout=" + selectedRootsLayout + "," + page.summary();
                     diagnostic.window = page.window; diagnostic.matches = page.inputs; diagnostic.bounds.set(page.inputBounds);
                     diagnostic.preparation = page.preparation();
-                    if (page.limitExceeded || page.inputs > 1) {
+                    if (page.limitExceeded || page.inputs > 1 || page.filenames > 1) {
                         page.close(); throw safFailure("The actual provider directory was not complete and unique", diagnostic);
                     }
                     boolean stable = page.ready() && previous != null && previous.ready() && page.sameAs(previous);
@@ -959,33 +977,54 @@ public final class NumericPreferencesInstrumentedTest {
         } finally { if (node != null) node.recycle(); }
     }
     private static final class SafDirectory implements AutoCloseable {
-        AccessibilityNodeInfo input;
+        final boolean createDocument;
+        AccessibilityNodeInfo input, filename;
         String packageName = "";
-        int window = -1, inputs;
+        int window = -1, inputs, filenames;
         boolean systemSaf, sameSelection, complete, limitExceeded, inputEnabled, drawerVisible, railVisible, unknownLayout;
-        final Rect inputBounds = new Rect(), rootBounds = new Rect();
+        boolean filenameEnabled, filenameEditable, filenameMatches;
+        final Rect inputBounds = new Rect(), rootBounds = new Rect(), filenameBounds = new Rect();
+        SafDirectory(boolean createDocument) { this.createDocument = createDocument; }
         boolean ready() {
-            return systemSaf && sameSelection && complete && inputs == 1 && input != null && inputEnabled
-                    && !inputBounds.isEmpty() && !drawerVisible && !unknownLayout;
+            // CREATE lists the read-only input as a directory sentinel, not an overwrite target.
+            // Its actionable control is the real filename editor; Save keeps its own final checks.
+            return systemSaf && sameSelection && complete && inputs == 1 && input != null
+                    && !inputBounds.isEmpty() && !drawerVisible && !unknownLayout
+                    && (createDocument ? filenames == 1 && filename != null && filenameEnabled && filenameEditable
+                    && filenameMatches && !filenameBounds.isEmpty() : inputEnabled);
         }
         boolean sameAs(SafDirectory other) {
-            return window == other.window && packageName.equals(other.packageName) && input.equals(other.input)
+            return createDocument == other.createDocument && window == other.window
+                    && packageName.equals(other.packageName) && input.equals(other.input) && inputEnabled == other.inputEnabled
                     && inputBounds.equals(other.inputBounds) && rootBounds.equals(other.rootBounds)
-                    && railVisible == other.railVisible;
+                    && railVisible == other.railVisible
+                    && (!createDocument || filename.equals(other.filename) && filenameBounds.equals(other.filenameBounds));
         }
         String preparation() {
             if (!systemSaf || !sameSelection) return "DIRECTORY_WINDOW_CHANGED";
             if (!complete) return "INCOMPLETE_TREE";
             if (unknownLayout) return "UNKNOWN_ROOTS_LAYOUT";
             if (drawerVisible) return "DRAWER_VISIBLE";
+            if (inputs != 1 || input == null || inputBounds.isEmpty()) return "INPUT_SENTINEL_NOT_READY";
+            if (!createDocument && !inputEnabled) return "IMPORT_INPUT_DISABLED";
+            if (createDocument && (filenames != 1 || filename == null || filenameBounds.isEmpty())) return "CREATE_FILENAME_NOT_READY";
+            if (createDocument && !filenameEnabled) return "CREATE_FILENAME_DISABLED";
+            if (createDocument && !filenameEditable) return "CREATE_FILENAME_NOT_EDITABLE";
+            if (createDocument && !filenameMatches) return "CREATE_FILENAME_MISMATCH";
             return ready() ? "DIRECTORY_SAMPLE_READY" : "DIRECTORY_NOT_READY";
         }
         String summary() {
-            return "window=" + window + ",systemSaf=" + systemSaf + ",sameSelection=" + sameSelection + ",complete=" + complete
+            return "mode=" + (createDocument ? "CREATE" : "OPEN") + ",window=" + window
+                    + ",systemSaf=" + systemSaf + ",sameSelection=" + sameSelection + ",complete=" + complete
                     + ",inputs=" + inputs + ",inputEnabled=" + inputEnabled + ",drawerVisible=" + drawerVisible
-                    + ",railVisible=" + railVisible + ",unknownLayout=" + unknownLayout + ",bounds=" + inputBounds.toShortString();
+                    + ",railVisible=" + railVisible + ",unknownLayout=" + unknownLayout + ",bounds=" + inputBounds.toShortString()
+                    + ",filenames=" + filenames + ",filenameEnabled=" + filenameEnabled + ",filenameEditable=" + filenameEditable
+                    + ",filenameMatches=" + filenameMatches + ",filenameBounds=" + filenameBounds.toShortString();
         }
-        @Override public void close() { if (input != null) { input.recycle(); input = null; } }
+        @Override public void close() {
+            if (input != null) { input.recycle(); input = null; }
+            if (filename != null) { filename.recycle(); filename = null; }
+        }
     }
     private static final class SafDiagnostic {
         final String phase;

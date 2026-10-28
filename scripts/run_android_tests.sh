@@ -122,6 +122,24 @@ done
 adb_bounded shell run-as dev.agentos.app rm -rf files/screenshots >/dev/null 2>&1 || true
 adb_bounded shell run-as dev.agentos.app rm -rf files/performance >/dev/null 2>&1 || true
 
+test_command=(./gradlew --no-daemon
+  -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true
+  "${selection[@]}"
+  :fixture:installDebug :app:connectedDebugAndroidTest)
+if [[ "$matrix_label" == '30' && "$test_scope" == 'full' ]]; then
+  # The pinned API30 DocumentsUI lacks QUERY_ALL_PACKAGES. Make only the synthetic
+  # test APK discoverable; AGP marks helper APKs, but not its own test APK, this way.
+  # The following build and install remain children of the original watchdog.
+  # A normal same-package Gradle update preserves this installation override.
+  test_command=(bash -e -c '
+    ./gradlew --no-daemon :app:assembleDebugAndroidTest
+    echo "API30 synthetic DocumentsProvider: install only dev.agentos.app.test with force-queryable"
+    timeout --signal=TERM --kill-after=2s 60s adb install -r -t --force-queryable \
+      app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+    exec "$@"
+  ' agentos-numeric-provider "${test_command[@]}")
+fi
+
 # Twenty minutes for this invocation, then about one minute of diagnostics
 # (60s collection budget +1s final reap), <=10s TERM grace and <=2s final reap.
 # The existing collectors independently bound their adb reads to <=35s and <=25s.
@@ -130,10 +148,7 @@ adb_bounded shell run-as dev.agentos.app rm -rf files/performance >/dev/null 2>&
 python3 scripts/run_bounded_instrumentation.py --matrix-label "$matrix_label" \
   --timeout-seconds "${ANDROID_TEST_TIMEOUT_SECONDS:-1200}" \
   --termination-grace-seconds "${ANDROID_TEST_TERMINATE_GRACE_SECONDS:-10}" \
-  -- ./gradlew --no-daemon \
-  -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true \
-  "${selection[@]}" \
-  :fixture:installDebug :app:connectedDebugAndroidTest &
+  -- "${test_command[@]}" &
 instrumentation_pid=$!
 wait "$instrumentation_pid"
 exit "$?"

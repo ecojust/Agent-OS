@@ -1,0 +1,92 @@
+{
+  "kind": "matching-api30-system-image-static-inspection",
+  "sourceRunId": 40736683857,
+  "sourceSha": "3eb74b5d5119738ba8e3c560ed8b078df223bba1",
+  "evidenceCommit": "2293745e500e4dd01870447d8530abda580b8001",
+  "imageUrl": "https://dl.google.com/android/repository/sys-img/android/x86_64-30_r11.zip",
+  "archiveBytes": 676379777,
+  "archiveSha1": "5e4de3946d46f88856c35efcc4d797b381456347",
+  "archiveSha256": "8d591034a4244a920d7a3ec274bb1734dd6474a3d8c11d0fce902010db3a13aa",
+  "officialMetadataRevision": 11,
+  "embeddedRevision": 10,
+  "fingerprint": "Android/sdk_phone_x86_64/generic_x86_64:11/RSR1.210722.013.A2/10067904:userdebug/test-keys",
+  "fingerprintMatchesArchivedDevice": true,
+  "archivedFingerprintEvidence": {
+    "path": "screenshots/40736683857-1/performance/api-30/three-state-diagnostics.json",
+    "bytes": 48981,
+    "sha256": "8f997e7267b579c48a2684f8f087e1cdfab079bb6dea01cf86f699baa0bc2113"
+  },
+  "documentsUiApk": {
+    "imagePath": "/system/priv-app/DocumentsUI/DocumentsUI.apk",
+    "bytes": 5378268,
+    "sha256": "c07ca46778a773973c2af56204bf211778cf9b42b2476bd144c403f1f1131aed",
+    "package": "com.android.documentsui",
+    "versionCode": 30,
+    "versionName": "11",
+    "targetSdk": 30,
+    "requestedPermissions": [
+      "android.permission.MANAGE_DOCUMENTS",
+      "android.permission.REMOVE_TASKS",
+      "android.permission.FOREGROUND_SERVICE",
+      "android.permission.WAKE_LOCK",
+      "android.permission.CACHE_CONTENT",
+      "android.permission.RECEIVE_BOOT_COMPLETED",
+      "android.permission.CHANGE_OVERLAY_PACKAGES",
+      "android.permission.INTERACT_ACROSS_USERS",
+      "android.permission.MODIFY_QUIET_MODE",
+      "android.permission.LOG_COMPAT_CHANGE",
+      "android.permission.READ_COMPAT_CHANGE_CONFIG"
+    ],
+    "queryAllPackagesRequested": false,
+    "sharedUserIdPresent": false,
+    "queriesActions": [
+      "android.intent.action.SEND",
+      "android.intent.action.SEND_MULTIPLE",
+      "android.intent.action.VIEW"
+    ]
+  },
+  "frameworkQueryAllPackagesProtectionLevel": {
+    "hex": "0x00000000",
+    "meaning": "normal"
+  },
+  "runtimePermissionGrantObserved": false,
+  "originalFailureCauseProvenByStaticInspectionAlone": false,
+  "tool": "Android SDK Build Tools 35.0.0 aapt2 dump xmltree --file AndroidManifest.xml",
+  "files": [
+    {
+      "path": "DocumentsUI-AndroidManifest.txt",
+      "bytes": 20367,
+      "sha256": "88c14511144aaeb776ca5424bcb935d1f0e93507c897a2c8e7749cc846cf2598",
+      "kind": "complete_original_extracted_file_or_tool_dump"
+    },
+    {
+      "path": "com.android.documentsui.xml",
+      "bytes": 1216,
+      "sha256": "3059b3e870879fd82e224f2666386126f2b98f3129c555298ad11c2876dbb7db",
+      "kind": "complete_original_extracted_file_or_tool_dump"
+    },
+    {
+      "path": "build.prop",
+      "bytes": 2210,
+      "sha256": "d023a6596f9dca1735f348666462d5dbbe68419197caacd888166d12f55b7157",
+      "kind": "complete_original_extracted_file_or_tool_dump"
+    },
+    {
+      "path": "source.properties",
+      "bytes": 258,
+      "sha256": "38908033e6c529a998fff729b01c44eb698bf0520f465e82d2608f5594ae7bf0",
+      "kind": "complete_original_extracted_file_or_tool_dump"
+    },
+    {
+      "path": "framework-query-all-permission.original.txt",
+      "bytes": 283,
+      "sha256": "ecdb8aec27361f507173ffdd3fdbe099a5a0578a92a3b06a263509ff51d04a6a",
+      "kind": "continuous_original_tool_dump_excerpt",
+      "source": "framework-AndroidManifest.txt",
+      "sourceBytes": 363583,
+      "sourceSha256": "86760feffabcf8040d74a8a019d50f2b848d542eb88195a5bf5d5f6041adce50",
+      "startLine1Based": 3173,
+      "endLine1Based": 3175
+    }
+  ]
+}

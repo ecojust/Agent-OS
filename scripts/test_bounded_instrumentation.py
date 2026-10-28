@@ -29,15 +29,19 @@ class BoundedInstrumentationTests(unittest.TestCase):
         (self.root / 'bin').mkdir()
         adb = self.root / 'bin/adb'
         adb.write_text('''#!/usr/bin/env python3
-import sys
+import os,sys,time
 from pathlib import Path
 args=sys.argv[1:]
 with Path('adb-calls.txt').open('a') as log: log.write(' '.join(args)+'\\n')
-if args==['shell','getprop','ro.build.version.sdk']: print(30)
+if args==['shell','getprop','ro.build.version.sdk']: print(os.environ.get('FAKE_SDK','30'))
 elif args==['shell','getprop','ro.kernel.qemu']: print(1)
 elif args[:4]==['shell','settings','get','global']: print('1.0')
 elif args[:4]==['shell','settings','put','global']: pass
 elif args[:2]==['shell','run-as']: pass
+elif args==['install','-r','-t','--force-queryable','app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk']:
+ if not Path(args[-1]).is_file(): sys.exit(18)
+ if os.environ.get('FAKE_INSTALL_EXIT')=='hang': time.sleep(60)
+ sys.exit(int(os.environ.get('FAKE_INSTALL_EXIT','0')))
 elif args[:2]==['shell','dumpsys'] or args[:2]==['shell','ps'] or args[:1]==['logcat']:
  print('synthetic fixture diagnostic only')
 else: sys.exit(1)
@@ -45,10 +49,13 @@ else: sys.exit(1)
         adb.chmod(0o755)
         gradle = self.root / 'gradlew'
         gradle.write_text('''#!/usr/bin/env python3
-import os,signal,subprocess,sys,time
+import json,os,signal,subprocess,sys,time
 from pathlib import Path
+with Path('gradle-calls.jsonl').open('a') as log: log.write(json.dumps(sys.argv[1:])+'\\n')
+assembling=':app:assembleDebugAndroidTest' in sys.argv
+if not assembling: Path('connected-started').touch()
 Path('gradle-pid').write_text(str(os.getpid()))
-mode=os.environ['FAKE_GRADLE_MODE']
+mode=os.environ.get('FAKE_ASSEMBLE_MODE','0') if assembling else os.environ['FAKE_GRADLE_MODE']
 if mode in ('hang','detached'):
  if mode=='detached':
   signal.signal(signal.SIGTERM,signal.SIG_IGN)
@@ -56,7 +63,9 @@ if mode in ('hang','detached'):
    "import os,signal,time;from pathlib import Path;signal.signal(signal.SIGTERM,signal.SIG_IGN);Path('detached-pid').write_text(str(os.getpid()));time.sleep(60)"],start_new_session=True)
  while True: time.sleep(1)
 result=int(mode)
-if result:
+if assembling and not result:
+ apk=Path('app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk');apk.parent.mkdir(parents=True,exist_ok=True);apk.write_bytes(b'synthetic APK only')
+if result and not assembling:
  report=Path('app/build/outputs/androidTest-results/partial.xml');report.parent.mkdir(parents=True)
  report.write_text('<testsuite><testcase name="existing_failure"><failure>synthetic failure</failure></testcase></testsuite>')
 sys.exit(result)
@@ -69,9 +78,10 @@ sys.exit(result)
                         GITHUB_RUN_ID='123', GITHUB_RUN_ATTEMPT='1',
                         ANDROID_TEST_TIMEOUT_SECONDS='1', ANDROID_TEST_TERMINATE_GRACE_SECONDS='1')
 
-    def run_shell(self, mode):
+    def run_shell(self, mode, matrix_label='30', scope='full'):
         self.env['FAKE_GRADLE_MODE'] = mode
-        result = subprocess.run(['bash', 'scripts/run_android_tests.sh', '30'], cwd=self.root,
+        self.env['FAKE_SDK'] = matrix_label
+        result = subprocess.run(['bash', 'scripts/run_android_tests.sh', matrix_label, scope], cwd=self.root,
                                 env=self.env, capture_output=True, text=True, timeout=12)
         return result
 
@@ -91,6 +101,71 @@ sys.exit(result)
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual('completed', self.execution()['status'])
         self.assert_collected(0)
+
+    def test_api30_full_installs_only_the_fixed_test_apk_once_before_connected(self):
+        result = self.run_shell('0')
+        self.assertEqual(0, result.returncode, result.stderr)
+        calls = [json.loads(line) for line in (self.root / 'gradle-calls.jsonl').read_text().splitlines()]
+        self.assertEqual(['--no-daemon', ':app:assembleDebugAndroidTest'], calls[0])
+        self.assertEqual(2, len(calls))
+        self.assertEqual(':app:connectedDebugAndroidTest', calls[1][-1])
+        self.assertIn('-Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true', calls[1])
+        self.assertTrue(any(value.startswith('-Pandroid.testInstrumentationRunnerArguments.notClass=')
+                            for value in calls[1]))
+        installs = [line for line in (self.root / 'adb-calls.txt').read_text().splitlines()
+                    if line.startswith('install ')]
+        self.assertEqual(['install -r -t --force-queryable '
+                          'app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk'], installs)
+        self.assertEqual(1, self.execution()['timeoutSeconds'])
+
+    def test_other_api_and_diagnostic_scope_do_not_change_apk_installation(self):
+        for api, scope in [('31', 'full'), ('30', 'owned-control-diagnostic')]:
+            with self.subTest(api=api, scope=scope):
+                for name in ('adb-calls.txt', 'gradle-calls.jsonl'):
+                    (self.root / name).unlink(missing_ok=True)
+                result = self.run_shell('0', api, scope)
+                self.assertEqual(0, result.returncode, result.stderr)
+                calls = [json.loads(line) for line in (self.root / 'gradle-calls.jsonl').read_text().splitlines()]
+                self.assertEqual(1, len(calls))
+                self.assertEqual(':app:connectedDebugAndroidTest', calls[0][-1])
+                self.assertNotIn('--force-queryable', (self.root / 'adb-calls.txt').read_text())
+
+    def test_test_apk_assembly_failure_does_not_install_or_start_connected(self):
+        self.env['FAKE_ASSEMBLE_MODE'] = '19'
+        result = self.run_shell('0')
+        self.assertEqual(19, result.returncode, result.stderr)
+        self.assertFalse((self.root / 'connected-started').exists())
+        self.assertNotIn('--force-queryable', (self.root / 'adb-calls.txt').read_text())
+        self.assert_collected(19)
+
+    def test_test_apk_install_failure_does_not_start_connected_and_is_not_retried(self):
+        self.env['FAKE_INSTALL_EXIT'] = '17'
+        result = self.run_shell('0')
+        self.assertEqual(17, result.returncode, result.stderr)
+        self.assertFalse((self.root / 'connected-started').exists())
+        self.assertEqual(1, (self.root / 'adb-calls.txt').read_text().count('--force-queryable'))
+        self.assertEqual('completed', self.execution()['status'])
+        self.assert_collected(17)
+
+    def test_original_watchdog_also_bounds_the_added_assembly(self):
+        self.env['FAKE_ASSEMBLE_MODE'] = 'hang'
+        result = self.run_shell('0')
+        self.assertEqual(124, result.returncode, result.stderr)
+        self.assertFalse((self.root / 'connected-started').exists())
+        self.assertNotIn('--force-queryable', (self.root / 'adb-calls.txt').read_text())
+        self.assertEqual('timed_out', self.execution()['status'])
+        self.assertLess(self.execution()['elapsedSeconds'], 6)
+        self.assert_collected(124)
+
+    def test_original_watchdog_also_bounds_the_added_install(self):
+        self.env['FAKE_INSTALL_EXIT'] = 'hang'
+        result = self.run_shell('0')
+        self.assertEqual(124, result.returncode, result.stderr)
+        self.assertFalse((self.root / 'connected-started').exists())
+        self.assertEqual(1, (self.root / 'adb-calls.txt').read_text().count('--force-queryable'))
+        self.assertEqual('timed_out', self.execution()['status'])
+        self.assertLess(self.execution()['elapsedSeconds'], 6)
+        self.assert_collected(124)
 
     def test_failure_exit_and_existing_partial_junit_are_preserved(self):
         result = self.run_shell('23')

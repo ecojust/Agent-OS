@@ -1,0 +1,86 @@
+{
+  "kind": "numeric-preferences-fix3-local-validation",
+  "baseCommit": "4690cb0849c31371f6313a4b3abfb82fb5f351f1",
+  "sourceState": "five frozen changed files over base; source commit not yet created at execution time",
+  "frozenChangedFiles": {
+    "app/src/androidTest/java/dev/agentos/app/NumericPreferencesInstrumentedTest.java": "69230e57fb97fbeac6b7e99a6386981a69f8268a5fcb0e9e848335b65586f461",
+    "app/src/androidTest/java/dev/agentos/app/NumericPreferencesSafDiagnostics.java": "68c69b285358f9ee9f5fa9cd3a234d41d95faf5f1af8a7074e5cb5082571944c",
+    "scripts/run_android_tests.sh": "f6a89dd4c457fbf5bb03b045db4148152200837551fcd8a8c6b61c53f9bf7f3e",
+    "scripts/test_bounded_instrumentation.py": "f1850851941a6ae554052e1ef5d68d58eed316c896da8c5129bb4e5dc5248370",
+    "scripts/test_evidence_scripts.py": "24e5da91de2b49974f56fcf244e1df8e14cfe54df79083998e37980c6aac9d2a"
+  },
+  "android": {
+    "command": "source /workspace/android-toolchain/env.sh\nexec ./gradlew --no-daemon :app:assembleDebugAndroidTest :app:lintDebug",
+    "exitCode": 0,
+    "durationSeconds": 58.41659687700303,
+    "inputFiles": 225,
+    "inputScope": [
+      "app",
+      "core",
+      "fixture",
+      "compat-smoke",
+      "build.gradle",
+      "settings.gradle",
+      "gradle.properties",
+      "gradlew",
+      "gradlew.bat",
+      "gradle/wrapper"
+    ],
+    "excludedNonGradleScope": [
+      "scripts",
+      ".github/workflows",
+      "docs",
+      "screenshots"
+    ],
+    "inputsChangedDuringBuild": false,
+    "inputSnapshotSha256": "05340b9cb6fd6b64a39b0a6a6a79fa84c7210a7de9b4c4d1b190931462a044e9",
+    "lintErrors": 0,
+    "lintWarnings": 54,
+    "lintAddedFindings": [],
+    "lintRemovedFindings": [],
+    "testApkBytes": 7228055,
+    "testApkSha256": "a7286322813005f5e4ccab388ba2d30ff8e18892bace95fe78d38633089fff85",
+    "compiledManifestMatchesPreviousFix2": true,
+    "coreTestsRun": false,
+    "appUnitTestsRun": false,
+    "deviceTestsRun": false
+  },
+  "hostScriptTests": {
+    "command": "python3 -m unittest -v test_bounded_instrumentation test_evidence_scripts",
+    "tests": 83,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "seconds": 41.282
+  },
+  "scriptExecutionContext": "isolated fix3 tree based on41a53966; three changed scripts match main exactly; remaining executable scripts are unchanged by intervening evidence-only4690 commit",
+  "classifierVectors": {
+    "newPackage": 12,
+    "existingLog": 12,
+    "actualHelperCompiled": true
+  },
+  "newFullScriptInventory": 342,
+  "newFullScriptInventoryExecutedLocally": false,
+  "files": [
+    {
+      "path": "build.original.txt",
+      "bytes": 3989,
+      "sha256": "db5a88121ecb1da90b5398f048a93c0e245933fc43e72e8b9afa915ace7764d7"
+    },
+    {
+      "path": "runner-tests.original.txt",
+      "bytes": 16437,
+      "sha256": "7252b3f99bb225fb55bb094aacb9711baadb9734815d7456da239ddba7d8dd40"
+    },
+    {
+      "path": "test-apk-manifest.original.txt",
+      "bytes": 8487,
+      "sha256": "384c678d7fc2f1d1fc0f8b607c7f6c1636ffb1215a631ad60366ae1b5d945175"
+    },
+    {
+      "path": "android-gradle-inputs.json",
+      "bytes": 39575,
+      "sha256": "05340b9cb6fd6b64a39b0a6a6a79fa84c7210a7de9b4c4d1b190931462a044e9"
+    }
+  ]
+}

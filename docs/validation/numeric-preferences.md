@@ -155,3 +155,25 @@ API30六项仍止于提供方根目录选择准备。新增诊断确认仪器目
 [原始失败摘录](diagnostics/numeric-preferences-40736683857/README.md)保留各档连续原字节。完整日志ZIP为581,175字节，SHA-256 `b224c2a4e47fffa38a861e420197e1c53bf74b82d0640e7cf71c27371e07b1bd`。构建任务的原始脚本结果为 `Ran 336 tests in 62.467s / OK`，无跳过；SDK准备先于脚本执行，新增APK预检的真实SDK测试随整套实际执行。此运行尚未使用后提交的稀疏检出工作流，不能用它宣称远端稀疏检出已经验证。
 
 三轮失败均保留。工程检查点仍为9/20（45%），数值偏好跨平台验收继续进行；普通整体录像仍准确引用518621d4，不用该视频替代受保护页面的专项测试。
+
+
+## 导出准备与代理销毁等待修复
+
+第三轮七个导出失败可以结合固定3eb源码进一步定位：`preparation()`已经用不同返回值排除了系统窗口、完整观察、未知布局和抽屉可见问题；原记录同时为一个输入节点和非空矩形，而该计数增加时必取得节点。因此当次 `DIRECTORY_NOT_READY` 剩余不满足的条件是 `inputEnabled=false`。这是源码和原诊断的逻辑推导，原日志没有直接打印该布尔位。[AOSP 12.1的创建文件选择逻辑](https://android.googlesource.com/platform/packages/apps/DocumentsUI/+/refs/tags/android-12.1.0_r1/src/com/android/documentsui/picker/Config.java#66)明确禁用没有写权限标志的已有文件；本测试输入文件的flags为0。此源码解释与观察一致，不冒称已提取各档系统APK证明每个版本的具体调用链。
+
+修复从本次已核验的真实SAF Intent区分OPEN和CREATE。导入继续要求输入文件可用；导出把该只读文件用于确认目录，保留同一系统窗口、完整唯一节点、非空几何、抽屉不可见和两次稳定观察，并额外要求保存容器内唯一的真实文件名编辑框可见、启用、可编辑且值为 `numeric-preferences.json`。保存点击仍执行原最终准备核对，之后仍读取实际导出字节、精确校验六个键和四项数值，没有伪造结果或点击重试。
+
+代理调用 `finish()` 后，Main恢复及消费所属关系与代理 `onDestroy` 回调不是同一个观察条件。原等待Main就绪不能保证已满足后面的“全部代理销毁”断言。本次在同一原10秒等待内，额外观察本Session已登记的全部代理均收到销毁回调；不主动调用finish、追加等待或移除原断言，也不承诺未来不会再有尚未观察到的生命周期事件。失败记录增加活动代理数量，以及同次目录观察的固定字段，直接区分文件可用性、抽屉、完整性和保存编辑框状态。
+
+六个业务测试方法体仍为11,725字节，SHA-256 `a9a7c7463a4199e2817ba0dd30d26bfa6c3bb2ed94fd7a47756e07a32b72936c`；270项/API、原排除范围、生产实现和安全窗口均未改变。测试文件冻结SHA-256为 `69230e57fb97fbeac6b7e99a6386981a69f8268a5fcb0e9e848335b65586f461`。本地构建已通过，设备效果仍需新精确源码实际验证。
+
+API30另外完成了[精确系统镜像静态核验](diagnostics/numeric-preferences-api30-image/README.md)：Google官方镜像的实际指纹与失败设备10067904一致，实际DocumentsUI.apk没有声明 `QUERY_ALL_PACKAGES`，对应特权配置也无该项，框架定义其为normal权限。该APK SHA-256为 `c07ca46778a773973c2af56204bf211778cf9b42b2476bd144c403f1f1131aed`。这补齐了泛AOSP不同标签之间的证据差异；尚不是对原设备实时AppsFilter决定的观测。
+
+固定失败诊断追加实际SAF包的查询全部包权限请求与授权结果，并单次执行固定 `dumpsys package dev.agentos.app.test`，最多读取64 KiB。仅当读取完整、唯一准确包区段及唯一严格匹配的forceQueryable字段均存在时，才报告声明值与安装override；缺失、重复、畸形或截断均为UNKNOWN。这两个字段不等于有效发现结果。原ProvidersCache分类不变，两个固定命令分别关闭FD；没有轮询、重试、额外线程或权限变化。EOF仍不代表shell退出成功，Binder及FD读取仍无本地硬时限。helper冻结SHA-256为 `68c69b285358f9ee9f5fa9cd3a234d41d95faf5f1af8a7074e5cb5082571944c`。
+
+
+API30完整回归现在先构建测试APK，再仅对固定 `dev.agentos.app.test` APK执行一次 `adb install -r -t --force-queryable`，成功后透传原Gradle仪器测试参数。没有把该设置放进全局adbOptions，没有增加 `-g`，主APK安装方式、Provider权限和调用方校验不变。准备构建和安装均位于原1200秒执行边界内，安装另有60秒上限；任一步失败立即保留退出结果，不继续connected测试。其他API和所有独立诊断scope仍使用原命令。普通更新安装保留override由AOSP11的PackageSetting复制和仅true写入路径支持；AGP/UTP前置安装不卸载、后置保留APK参数未变。这是依据实际镜像和工具链修正测试环境，是否消除原失败仍以新运行验证，不称为已观测过的实时授权证明。
+
+[本地实际验证](diagnostics/numeric-preferences-fix3-local/README.md)：两项指定Android任务58秒成功，225个Android/Gradle输入前后一致，清单SHA-256 `05340b9cb6fd6b64a39b0a6a6a79fa84c7210a7de9b4c4d1b190931462a044e9`；此清单明确排除非Gradle脚本/工作流，不能与先前267项直接比较。lint仍0错误、54警告且无新增/移除；实际测试APK为7,228,055字节，SHA-256 `a7286322813005f5e4ccab388ba2d30ff8e18892bace95fe78d38633089fff85`，实际编译清单与上轮相同。相关两个脚本模块83/83通过，新增六项覆盖固定安装范围、构建/安装失败及两阶段超时；另24个纯分类向量通过。整套脚本新分母为342，本地仅核清单，未冒称已重跑全部342项或核心333项。
+
+五个修改代码文件的最终独立审查冻结为 `d2071eddb176699a1f6778ed9d2c667833855e961c8767e03da12231a6931282`，270项/API预声明清单为 `1b76ae50acf0716510b04cf6a8abc31fb0ffe4597452fe158a44a3f60098b24d`；实际远端结果尚待新运行。

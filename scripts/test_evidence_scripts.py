@@ -150,10 +150,13 @@ class EvidenceTests(unittest.TestCase):
                 'if [ "$1 $2 $3 $4" = "shell settings put global" ]; then '
                 'printf "%s\\n" "$5=$6" >> "$FAKE_SETTINGS_LOG"; exit 0; fi\n'
                 f'if [ "$1 $2 $3 $4" = "shell settings get global" ]; then echo {animation_value}; exit 0; fi\n'
+                'if [ "$*" = "install -r -t --force-queryable app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk" ]; then exit 0; fi\n'
                 'exit 1\n')
             adb.chmod(0o755)
             gradle = root / "gradlew"
-            gradle.write_text("#!/bin/sh\ntouch gradle-started\nprintf '%s\\n' \"$@\" > gradle-args.txt\nexit 7\n")
+            gradle.write_text("#!/bin/sh\n"
+                "if [ \"$*\" = \"--no-daemon :app:assembleDebugAndroidTest\" ]; then exit 0; fi\n"
+                "touch gradle-started\nprintf '%s\\n' \"$@\" > gradle-args.txt\nexit 7\n")
             gradle.chmod(0o755)
             env = os.environ.copy()
             env["PATH"] = str(root / "bin") + os.pathsep + env["PATH"]

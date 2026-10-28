@@ -29,9 +29,10 @@ final class NumericPreferencesSafDiagnostics {
     private static final String PROVIDER_PROCESS = TEST_PACKAGE + ":numeric_preferences_documents";
     private static final ComponentName COMPONENT = new ComponentName(TEST_PACKAGE, PROVIDER);
     private static final int MAX_OUTPUT_CHARS = 2400;
-    private static final int MAX_LOG_BYTES = 64 * 1024;
+    private static final int MAX_SHELL_BYTES = 64 * 1024;
     // Native -t tail selection precedes tag filtering; keep the finite existing ring window.
     private static final String LOG_COMMAND = "logcat -d -v brief -s ProvidersCache:V";
+    private static final String PACKAGE_COMMAND = "dumpsys package dev.agentos.app.test";
 
     private enum Status { PRESENT, NOT_VISIBLE_OR_MISSING, NOT_RESOLVED, SECURITY_DENIED,
         LOOKUP_FAILED, NOT_OBSERVED, INVALID_OBSERVED_ID }
@@ -60,6 +61,7 @@ final class NumericPreferencesSafDiagnostics {
             sampleProvider(pm, facts);
             sampleSaf(pm, observedSystemSafPackage, facts);
             sampleLog(automation, facts);
+            samplePackageDump(automation, facts);
             String result = facts.value.toString();
             return result.length() <= MAX_OUTPUT_CHARS ? result : "installDiagnostic=OUTPUT_BOUND";
         } catch (RuntimeException | AssertionError failed) {
@@ -152,7 +154,7 @@ final class NumericPreferencesSafDiagnostics {
             facts.add("safPackage", Status.INVALID_OBSERVED_ID); return;
         }
         try {
-            PackageInfo installed = pm.getPackageInfo(observedPackage, 0);
+            PackageInfo installed = pm.getPackageInfo(observedPackage, PackageManager.GET_PERMISSIONS);
             ApplicationInfo app = installed.applicationInfo;
             facts.add("safPackage", Status.PRESENT);
             facts.add("safSystem", app == null ? null : (app.flags
@@ -162,18 +164,37 @@ final class NumericPreferencesSafDiagnostics {
                     : UserHandle.getUserHandleForUid(app.uid).equals(Process.myUserHandle()));
             facts.add("safTargetSdk", app == null ? null : app.targetSdkVersion);
             facts.add("safVersion", installed.getLongVersionCode());
+            boolean queryAllRequested = false;
+            if (installed.requestedPermissions != null) {
+                for (String permission : installed.requestedPermissions) {
+                    if (Manifest.permission.QUERY_ALL_PACKAGES.equals(permission)) {
+                        queryAllRequested = true;
+                        break;
+                    }
+                }
+            }
+            facts.add("safQueryAllRequested", queryAllRequested);
         } catch (PackageManager.NameNotFoundException missing) {
             facts.add("safPackage", Status.NOT_VISIBLE_OR_MISSING);
+            facts.add("safQueryAllRequested", null);
         } catch (SecurityException denied) {
             facts.add("safPackage", Status.SECURITY_DENIED);
+            facts.add("safQueryAllRequested", null);
         } catch (RuntimeException failed) {
             facts.add("safPackage", Status.LOOKUP_FAILED);
+            facts.add("safQueryAllRequested", null);
         }
         try {
             facts.add("safManageDocuments", pm.checkPermission(Manifest.permission.MANAGE_DOCUMENTS,
                     observedPackage) == PackageManager.PERMISSION_GRANTED);
         } catch (RuntimeException failed) {
             facts.add("safManageDocuments", Status.LOOKUP_FAILED);
+        }
+        try {
+            facts.add("safQueryAllGranted", pm.checkPermission(Manifest.permission.QUERY_ALL_PACKAGES,
+                    observedPackage) == PackageManager.PERMISSION_GRANTED);
+        } catch (RuntimeException failed) {
+            facts.add("safQueryAllGranted", Status.LOOKUP_FAILED);
         }
     }
 
@@ -183,34 +204,11 @@ final class NumericPreferencesSafDiagnostics {
         // Historical, filtered log window, not an atomic record of this failing operation.
         // executeShellCommand and FD reads have no local hard timeout. No polling/retry/thread.
         // COMPLETE means stream EOF only: this API supplies no shell exit status.
-        ByteArrayOutputStream captured = new ByteArrayOutputStream();
-        LogStatus status = LogStatus.UNAVAILABLE;
-        if (automation != null) {
-            try {
-                ParcelFileDescriptor descriptor = automation.executeShellCommand(LOG_COMMAND);
-                if (descriptor != null) {
-                    try (InputStream input = new ParcelFileDescriptor.AutoCloseInputStream(descriptor)) {
-                        byte[] buffer = new byte[4096];
-                        while (captured.size() < MAX_LOG_BYTES) {
-                            int count = input.read(buffer, 0, Math.min(buffer.length, MAX_LOG_BYTES - captured.size()));
-                            if (count == -1) { status = LogStatus.COMPLETE; break; }
-                            if (count == 0) { status = LogStatus.IO_ERROR; break; }
-                            captured.write(buffer, 0, count);
-                        }
-                        if (captured.size() == MAX_LOG_BYTES) status = LogStatus.BYTE_BOUND;
-                    }
-                }
-            } catch (IOException failed) {
-                status = LogStatus.IO_ERROR;
-            } catch (RuntimeException | AssertionError failed) {
-                status = LogStatus.UNAVAILABLE;
-            }
-        }
-        LogClassifier observed = LogClassifier.classify(
-                new String(captured.toByteArray(), StandardCharsets.UTF_8), status == LogStatus.COMPLETE);
+        ShellOutput captured = readShell(automation, LOG_COMMAND);
+        LogClassifier observed = LogClassifier.classify(captured.text, captured.status == LogStatus.COMPLETE);
         facts.add("providerLogWindow", "HISTORICAL_BOUNDED_NOT_ATOMIC");
-        facts.add("providerLogStatus", status);
-        facts.add("providerLogBytes", captured.size());
+        facts.add("providerLogStatus", captured.status);
+        facts.add("providerLogBytes", captured.bytes);
         facts.add("logAuthoritySeen", observed.authoritySeen);
         facts.add("logFailureSeen", observed.failureSeen);
         facts.add("logProviderInfoMissing", observed.providerInfoMissing);
@@ -225,6 +223,96 @@ final class NumericPreferencesSafDiagnostics {
         facts.add("logIllegalStateClass", observed.illegalStateClass);
         facts.add("logFileNotFoundClass", observed.fileNotFoundClass);
         facts.add("logOtherExceptionClass", observed.otherExceptionClass);
+    }
+
+    private static void samplePackageDump(UiAutomation automation, Facts facts) {
+        // Fixed test-package metadata only, not a query as SAF or proof of effective visibility.
+        // This separate bounded stream has the same lack of a local hard IPC/read timeout.
+        ShellOutput captured = readShell(automation, PACKAGE_COMMAND);
+        PackageClassifier observed = PackageClassifier.classify(
+                captured.text, captured.status == LogStatus.COMPLETE);
+        facts.add("testPkgDumpStatus", captured.status);
+        facts.add("testPkgDumpBytes", captured.bytes);
+        facts.add("testForceDeclared", observed.declared);
+        facts.add("testForceOverride", observed.override);
+    }
+
+    private static final class ShellOutput {
+        final String text;
+        final int bytes;
+        final LogStatus status;
+
+        ShellOutput(ByteArrayOutputStream captured, LogStatus status) {
+            this.text = new String(captured.toByteArray(), StandardCharsets.UTF_8);
+            this.bytes = captured.size();
+            this.status = status;
+        }
+    }
+
+    private static ShellOutput readShell(UiAutomation automation, String fixedCommand) {
+        ByteArrayOutputStream captured = new ByteArrayOutputStream();
+        LogStatus status = LogStatus.UNAVAILABLE;
+        if (automation != null) {
+            try {
+                ParcelFileDescriptor descriptor = automation.executeShellCommand(fixedCommand);
+                if (descriptor != null) {
+                    try (InputStream input = new ParcelFileDescriptor.AutoCloseInputStream(descriptor)) {
+                        byte[] buffer = new byte[4096];
+                        while (captured.size() < MAX_SHELL_BYTES) {
+                            int count = input.read(buffer, 0, Math.min(buffer.length, MAX_SHELL_BYTES - captured.size()));
+                            if (count == -1) { status = LogStatus.COMPLETE; break; }
+                            if (count == 0) { status = LogStatus.IO_ERROR; break; }
+                            captured.write(buffer, 0, count);
+                        }
+                        if (captured.size() == MAX_SHELL_BYTES) status = LogStatus.BYTE_BOUND;
+                    }
+                }
+            } catch (IOException failed) {
+                status = LogStatus.IO_ERROR;
+            } catch (RuntimeException | AssertionError failed) {
+                status = LogStatus.UNAVAILABLE;
+            }
+        }
+        return new ShellOutput(captured, status);
+    }
+
+    /** Only accepts the exact test-package section and the platform's complete fixed field. */
+    static final class PackageClassifier {
+        private static final Pattern PACKAGE = Pattern.compile(
+                "^  Package \\[" + Pattern.quote(TEST_PACKAGE) + "\\] \\([0-9a-fA-F]+\\):$");
+        private static final Pattern FORCE = Pattern.compile(
+                "^    forceQueryable=(true|false)( \\(override=true\\))?$");
+        Boolean declared, override;
+
+        static PackageClassifier classify(String text, boolean complete) {
+            PackageClassifier result = new PackageClassifier();
+            if (!complete) return result;
+            boolean inPackage = false;
+            int sections = 0, fields = 0;
+            for (String line : text.split("\n")) {
+                if (PACKAGE.matcher(line).matches()) {
+                    sections++;
+                    inPackage = true;
+                    continue;
+                }
+                if (!line.isEmpty() && !line.startsWith("    ")) inPackage = false;
+                if (!inPackage) continue;
+                if (!line.startsWith("    forceQueryable=")) continue;
+                fields++;
+                Matcher parsed = FORCE.matcher(line);
+                if (parsed.matches()) {
+                    result.declared = "true".equals(parsed.group(1));
+                    result.override = parsed.group(2) != null;
+                } else {
+                    return new PackageClassifier();
+                }
+            }
+            if (sections != 1 || fields != 1) {
+                result.declared = null;
+                result.override = null;
+            }
+            return result;
+        }
     }
 
     /** Pure classifier: no Android calls, and no original line survives in the returned facts. */

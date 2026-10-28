@@ -25,14 +25,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 继续补齐导航来源拒绝验证：精确核对系统Settings及真实Intent候选，排除默认桌面和resolver占位；单次调用及原暂停、零派发断言保持，失败前附有界无内容诊断。测试APK与lint通过（0错误、46警告），264/API身份不变；新源码八档2112项及唯一录像待运行，31e1的导航失败保留，工程检查点9/20。
+**本次更新：** 导航来源验证源码1f9f的唯一整体录像已核验归档：32.651秒、410296字节、22张实际PNG，13阶段与8次确认通过；普通Fixture录像不执行Settings拒绝用例。测试APK/lint通过，264/API身份保持；同源码2112项完整设备回归仍在执行，原31e1失败保留，工程检查点9/20。
 
-**记录时间：** 2026-10-28T14:30:44Z
+**记录时间：** 2026-10-28T14:40:17Z
 
 [最近测试截图与清单](screenshots/40698819944-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40698819944)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/40698837804-1/demo.mp4) · [录制与验证清单](screenshots/demos/40698837804-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40698837804)。
-录制版本：[`31e14e233`](https://github.com/ecojust/Agent-OS/commit/31e14e233d79d56de8b16f0ee702193abe5cd266)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/40706746603-1/demo.mp4) · [录制与验证清单](screenshots/demos/40706746603-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40706746603)。
+录制版本：[`1f9f773ae`](https://github.com/ecojust/Agent-OS/commit/1f9f773ae8513ddad19193bfdb511c26ad68e9b2)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 | 检查点 | 状态 |
 | --- | --- |

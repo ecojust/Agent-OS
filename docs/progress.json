@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-28T05:06:54Z",
-  "note": "为API36唯一视觉代次失败加入默认关闭的有限诊断，原安全判定/三轮/5秒/guard断言不变；296项脚本、测试APK与lint通过。固定专项待云端运行，原1967/1968全量失败和3cff真实录像均保留，检查点45%。",
+  "updated_at": "2026-10-28T05:15:27Z",
+  "note": "81f固定视觉代次诊断8/8通过（低API拒绝路径、高API实际正例），16张真实PNG已核验，旧API36原因仍未知；同源码37.981秒/443342字节录像已归档。完整1968项正在运行，原失败保留，检查点45%。",
   "latest_evidence": {
-    "path": "screenshots/40633417256-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40633417256"
+    "path": "screenshots/40636096797-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40636096797"
   },
   "checkpoints": [
     {
@@ -66,7 +66,7 @@
       "name": "Android 11–17 API 行为矩阵",
       "status": "in_progress",
       "evidence": "screenshots/40625516651-1/manifest.json",
-      "scope": "Latest full source3cff90d62/run40633417256: 1967/1968 passed, one API36 same-height status visual-generation failure (expected42/actual43), zero errors/skips/missing; all 246 identities/API preserved. Font-scale case passes on all eight APIs in this full and in diagnostic40632979448, including exact original-setting/effective-font restoration. Last completely passing full remains source5c71d4a48/run40625516651, 1960/1960. Prior failures preserved; the single new generation change has no proven cause. More font/Activity/rotation/screen-reader, phone, real-model, broad-app, performance-budget and ROM acceptance remain incomplete."
+      "scope": "Last completed full source3cff90d62/run40633417256:1967/1968 passed, one API36 same-height status visual-generation failure (expected42/actual43), zero errors/skips/missing; all246 identities/API preserved. Last completely passing full remains source5c71d4a48/run40625516651,1960/1960. Source81f0548d3 adds only bounded invalidation diagnostics and passes selected8/run40636096797 (API30–33 unsupported rejection, API34–37 actual positive); no failure trace was printed and old cause remains unknown. Exact81f full1968/run40636551126 is running. More font/Activity/rotation/screen-reader, phone, real-model, broad-app, performance-budget and ROM acceptance remain incomplete."
     },
     {
       "id": "performance",
@@ -89,8 +89,8 @@
       "id": "continuous_actions",
       "name": "普通操作连续执行与接管",
       "status": "in_progress",
-      "evidence": "screenshots/demos/40633395073-1/manifest.json",
-      "scope": "Source3cff90d62 actual API35 walkthrough passes 13 required phases and 8 confirmations with a local synthetic HTTP model; pause/resume/stop, edits and navigation recorded with secure flags retained. Full run40633417256 passes controller/approval cases including actual pending-approval screen-off/wake across eight APIs, but its complete result is1967/1968 with one API36 visual-generation failure. This ordinary video excludes font-scale changes, screen-off and protected task diagnostics. Not unrestricted execution, actual-model or phone acceptance."
+      "evidence": "screenshots/demos/40636167819-1/manifest.json",
+      "scope": "Source81f0548d3 actual API35 walkthrough passes13 required phases and8 confirmations with a local synthetic HTTP model; pause/resume/stop, edits and navigation recorded with secure flags retained. The default-off invalidation observer is not installed in this video. Prior source3cff full40633417256 passes controller/approval and pending-approval screen-off/wake cases across eight APIs, but its full result is1967/1968 with one visual-generation failure. Exact81f full40636551126 is running. Ordinary video excludes font-scale, screen-off, visual-probe and protected task diagnostics; not actual-model or phone acceptance."
     },
     {
       "id": "model_acceptance",
@@ -130,9 +130,9 @@
     }
   ],
   "latest_demo": {
-    "path": "screenshots/demos/40633395073-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40633395073",
-    "source_sha": "3cff90d62fe181fdee9c83b6348ea4becd6ac121",
+    "path": "screenshots/demos/40636167819-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40636167819",
+    "source_sha": "81f0548d3be3f2372f492b9dcdcb865bbbb8cfb6",
     "status": "passed"
   }
 }

@@ -25,14 +25,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 为API36唯一视觉代次失败加入默认关闭的有限诊断，原安全判定/三轮/5秒/guard断言不变；296项脚本、测试APK与lint通过。固定专项待云端运行，原1967/1968全量失败和3cff真实录像均保留，检查点45%。
+**本次更新：** 81f固定视觉代次诊断8/8通过（低API拒绝路径、高API实际正例），16张真实PNG已核验，旧API36原因仍未知；同源码37.981秒/443342字节录像已归档。完整1968项正在运行，原失败保留，检查点45%。
 
-**记录时间：** 2026-10-28T05:06:54Z
+**记录时间：** 2026-10-28T05:15:27Z
 
-[最近测试截图与清单](screenshots/40633417256-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40633417256)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40636096797-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40636096797)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/40633395073-1/demo.mp4) · [录制与验证清单](screenshots/demos/40633395073-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40633395073)。
-录制版本：[`3cff90d62`](https://github.com/ecojust/Agent-OS/commit/3cff90d62fe181fdee9c83b6348ea4becd6ac121)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/40636167819-1/demo.mp4) · [录制与验证清单](screenshots/demos/40636167819-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40636167819)。
+录制版本：[`81f0548d3`](https://github.com/ecojust/Agent-OS/commit/81f0548d3be3f2372f492b9dcdcb865bbbb8cfb6)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 | 检查点 | 状态 |
 | --- | --- |

@@ -1,0 +1,58 @@
+2026-10-28T16:03:47.1803595Z   | Report: app/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 12-_app-.xml
+2026-10-28T16:03:47.1805375Z   | Suite: dev.agentos.app.AgentControllerInstrumentedTest
+2026-10-28T16:03:47.1807568Z   | Test: dev.agentos.app.NumericPreferencesInstrumentedTest.recreatedBrokerDoesNotReopenThePickerOrAdoptAnOrphanedTransfer
+2026-10-28T16:03:47.1809706Z   | Kind: failure / 
+2026-10-28T16:03:47.1810337Z   | java.lang.AssertionError: The selected actual SAF node must still exist
+2026-10-28T16:03:47.1811098Z   | at org.junit.Assert.fail(Assert.java:89)
+2026-10-28T16:03:47.1811719Z   | at org.junit.Assert.assertTrue(Assert.java:42)
+2026-10-28T16:03:47.1812588Z   | at dev.agentos.app.NumericPreferencesInstrumentedTest.clickNode(NumericPreferencesInstrumentedTest.java:692)
+2026-10-28T16:03:47.1813716Z   | at dev.agentos.app.NumericPreferencesInstrumentedTest.-$$Nest$smclickNode(Unknown Source:0)
+2026-10-28T16:03:47.1814924Z   | at dev.agentos.app.NumericPreferencesInstrumentedTest$Session.selectProviderRoot(NumericPreferencesInstrumentedTest.java:537)
+2026-10-28T16:03:47.1816661Z   | at dev.agentos.app.NumericPreferencesInstrumentedTest.recreatedBrokerDoesNotReopenThePickerOrAdoptAnOrphanedTransfer(NumericPreferencesInstrumentedTest.java:205)
+2026-10-28T16:03:47.1818365Z   | Report: app/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 12-_app-.xml
+2026-10-28T16:03:47.1819189Z   | Suite: dev.agentos.app.AgentControllerInstrumentedTest
+2026-10-28T16:03:47.1820240Z   | Test: dev.agentos.app.NumericPreferencesInstrumentedTest.oldPickerResultsCannotReachARecreatedMainOrClearANewerOwner
+2026-10-28T16:03:47.1821195Z   | Kind: failure / 
+2026-10-28T16:03:47.1821815Z   | java.lang.SecurityException: Injecting to another application requires INJECT_EVENTS permission
+2026-10-28T16:03:47.1822535Z   | at android.os.Parcel.createExceptionOrNull(Parcel.java:2426)
+2026-10-28T16:03:47.1823017Z   | at android.os.Parcel.createException(Parcel.java:2410)
+2026-10-28T16:03:47.1823477Z   | at android.os.Parcel.readException(Parcel.java:2393)
+2026-10-28T16:03:47.1823897Z   | at android.os.Parcel.readException(Parcel.java:2335)
+2026-10-28T16:03:47.1824474Z   | at android.hardware.input.IInputManager$Stub$Proxy.injectInputEvent(IInputManager.java:1339)
+2026-10-28T16:03:47.1825175Z   | at android.hardware.input.InputManager.injectInputEvent(InputManager.java:1091)
+2026-10-28T16:03:47.1825776Z   | at android.app.Instrumentation.sendKeySync(Instrumentation.java:1091)
+2026-10-28T16:03:47.1826356Z   | at android.app.Instrumentation.sendKeyDownUpSync(Instrumentation.java:1101)
+2026-10-28T16:03:47.1827171Z   | at dev.agentos.app.NumericPreferencesInstrumentedTest$Session.cancelSystemPicker(NumericPreferencesInstrumentedTest.java:561)
+2026-10-28T16:03:47.1828826Z   | at dev.agentos.app.NumericPreferencesInstrumentedTest.oldPickerResultsCannotReachARecreatedMainOrClearANewerOwner(NumericPreferencesInstrumentedTest.java:171)
+2026-10-28T16:03:47.1829693Z   | ... 33 trimmed
+2026-10-28T16:03:47.1830027Z   | Caused by: android.os.RemoteException: Remote stack trace:
+2026-10-28T16:03:47.1830682Z   | at com.android.server.input.InputManagerService.injectInputEventInternal(InputManagerService.java:877)
+2026-10-28T16:03:47.1831504Z   | at com.android.server.input.InputManagerService.injectInputEvent(InputManagerService.java:829)
+2026-10-28T16:03:47.1832201Z   | at android.hardware.input.IInputManager$Stub.onTransact(IInputManager.java:573)
+2026-10-28T16:03:47.1832752Z   | at android.os.Binder.execTransactInternal(Binder.java:1179)
+2026-10-28T16:03:47.1833197Z   | at android.os.Binder.execTransact(Binder.java:1143)
+2026-10-28T16:03:47.1833542Z   | 
+2026-10-28T16:03:47.1833978Z   | Report: app/build/outputs/androidTest-results/connected/debug/TEST-emulator-5554 - 12-_app-.xml
+2026-10-28T16:03:47.1834578Z   | Suite: dev.agentos.app.AgentControllerInstrumentedTest
+2026-10-28T16:03:47.1835472Z   | Test: dev.agentos.app.NumericPreferencesInstrumentedTest.malformedOversizedAndCancelledImportsLeaveTheOriginalDraftAndSavedStateUntouched
+2026-10-28T16:03:47.1836292Z   | Kind: failure / 
+2026-10-28T16:03:47.1836748Z   | java.lang.SecurityException: Injecting to another application requires INJECT_EVENTS permission
+2026-10-28T16:03:47.1837364Z   | at android.os.Parcel.createExceptionOrNull(Parcel.java:2426)
+2026-10-28T16:03:47.1838124Z   | at android.os.Parcel.createException(Parcel.java:2410)
+2026-10-28T16:03:47.1838553Z   | at android.os.Parcel.readException(Parcel.java:2393)
+2026-10-28T16:03:47.1838968Z   | at android.os.Parcel.readException(Parcel.java:2335)
+2026-10-28T16:03:47.1839530Z   | at android.hardware.input.IInputManager$Stub$Proxy.injectInputEvent(IInputManager.java:1339)
+2026-10-28T16:03:47.1840206Z   | at android.hardware.input.InputManager.injectInputEvent(InputManager.java:1091)
+2026-10-28T16:03:47.1840808Z   | at android.app.Instrumentation.sendKeySync(Instrumentation.java:1091)
+2026-10-28T16:03:47.1841385Z   | at android.app.Instrumentation.sendKeyDownUpSync(Instrumentation.java:1101)
+2026-10-28T16:03:47.1842202Z   | at dev.agentos.app.NumericPreferencesInstrumentedTest$Session.cancelSystemPicker(NumericPreferencesInstrumentedTest.java:561)
+2026-10-28T16:03:47.1843570Z   | at dev.agentos.app.NumericPreferencesInstrumentedTest.malformedOversizedAndCancelledImportsLeaveTheOriginalDraftAndSavedStateUntouched(NumericPreferencesInstrumentedTest.java:150)
+2026-10-28T16:03:47.1844574Z   | ... 33 trimmed
+2026-10-28T16:03:47.1844906Z   | Caused by: android.os.RemoteException: Remote stack trace:
+2026-10-28T16:03:47.1845563Z   | at com.android.server.input.InputManagerService.injectInputEventInternal(InputManagerService.java:877)
+2026-10-28T16:03:47.1846373Z   | at com.android.server.input.InputManagerService.injectInputEvent(InputManagerService.java:829)
+2026-10-28T16:03:47.1847379Z   | at android.hardware.input.IInputManager$Stub.onTransact(IInputManager.java:573)
+2026-10-28T16:03:47.1848548Z   | at android.os.Binder.execTransactInternal(Binder.java:1179)
+2026-10-28T16:03:47.1849307Z   | at android.os.Binder.execTransact(Binder.java:1143)
+2026-10-28T16:03:47.1849941Z   | 
+2026-10-28T16:03:47.1850409Z Parsed 1 Android reports; found 3 failure/error entries.

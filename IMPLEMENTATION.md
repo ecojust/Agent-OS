@@ -9,7 +9,7 @@
 | 构建基础 | Java 17、最低 API 30、编译/目标 API 35，固定版本 Gradle Wrapper 与分发校验值 |
 | 任务运行时 | 单前台任务、版本化工具请求、暂停/停止、执行代次、累计预算、参数校验、重复请求去重、未知写结果停止 |
 | 本机任务预算 | 折叠设置模型轮次、工具次数与活动秒数；加密保存、严格格式校验及旧配置默认读取。启动核对保存值，排队和执行共用上限，运行期间冻结修改；新增14项回归已在八档模拟器通过 |
-| 数值偏好文件 | 通过系统 SAF 导出四项数值或预览导入，只填当前草稿，不携带连接、密钥、授权或任务。严格 4 KiB 格式、一次性结果所属关系和独立单槽文件线程；核心333项、APK及lint通过，新增6项真实SAF/生命周期回归待八档执行，见[验收范围](docs/validation/numeric-preferences.md) |
+| 数值偏好文件 | 通过系统 SAF 导出四项数值或预览导入，只填当前草稿，不携带连接、密钥、授权或任务。严格 4 KiB 格式、一次性结果所属关系和独立单槽文件线程；核心333项、APK及lint通过，新增6项首轮八档26通过、22失败，测试驱动修复待验证，见[验收范围](docs/validation/numeric-preferences.md) |
 | 本次任务用量 | 展示原RunControl的实际模型轮次、工具调用、活动/暂停/待确认时间及原预算；结束时冻结、清空时移除、旧任务不能改写新记录。主页面前台最多每秒只刷新统计区域；6项真实Controller/UI回归在第四十九轮八档48/48通过；此前两轮辅助器失败完整保留 |
 | 服务端Token用量 | 统一模型网关按任务登记调用，输入/输出/总计分别显示有效报告小计与覆盖次数；缺失、冲突和溢出不伪造数值，终态冻结、清空与新任务隔离。核心314项、脚本314项及APK/lint通过；新增3项八档24/24通过，整套另有API34窗口事件失败，见[验收范围](docs/validation/task-token-usage.md) |
 | 本次任务操作回执 | 六种既有写工具的实际提交/接受/未验证状态，最多200项纯内存快照；停止保留未决未知，清空与新任务隔离旧记录。原生受保护只读页面不触发额外操作；新回执16/16及原三次写操作8/8在八档完整回归中通过，见[验收范围](docs/validation/task-action-receipts.md) |
@@ -145,7 +145,8 @@ Windows 使用 `gradlew.bat`。默认 APK 输出到 `app/build/outputs/apk/debug
 
 | 范围 | 已核实结果与入口 |
 | --- | --- |
-| 最近完整回归 | 源码`1f9f773ae`，八档 **2112/2112通过**，零失败、错误、跳过和缺失；[运行与调试APK](https://github.com/ecojust/Agent-OS/actions/runs/40706713295)、[逐项原始证据](screenshots/40706713295-1/manifest.json)。原31e1的2111/2112及[导航失败](docs/validation/diagnostics/navigation-origin-40698819944/README.md)保留，本轮不证明其历史根因已确定 |
+| 最新八档回归 | 数值偏好源码`41e44b000`，固定2160项中2057通过、37失败、66缺失（API32超时且无JUnit）；新增六项26通过、22失败。[原运行](https://github.com/ecojust/Agent-OS/actions/runs/40719564182)、[原始证据](screenshots/40719564182-1/manifest.json)、[结果与诊断范围](docs/validation/numeric-preferences.md#首轮八档结果保留失败与缺失)，尚未通过模块验收 |
+| 最近全部通过基线 | 源码`1f9f773ae`，八档 **2112/2112通过**，零失败、错误、跳过和缺失；[运行与调试APK](https://github.com/ecojust/Agent-OS/actions/runs/40706713295)、[逐项原始证据](screenshots/40706713295-1/manifest.json)。原31e1的2111/2112及[导航失败](docs/validation/diagnostics/navigation-origin-40698819944/README.md)保留，本轮不证明其历史根因已确定 |
 | 此前完整通过基线 | 源码`4b87c9a28`，八档1992/1992通过；[原运行](https://github.com/ecojust/Agent-OS/actions/runs/40664625632)、[原始证据](screenshots/40664625632-1/manifest.json)，不改写为本轮结果 |
 | 配置恢复 | 源码28a4，核心299/299、脚本314/314、APK/lint通过；新增6项八档 **48/48通过**，整套另有1项旧窗口事件失败；[验收范围及限制](docs/validation/configuration-recovery.md) |
 | 服务端Token用量 | 源码52ce，核心314/314、脚本314/314及构建检查通过；新增3项八档 **24/24通过**，整套另有1项窗口事件失败；[验收范围及限制](docs/validation/task-token-usage.md) |
@@ -154,7 +155,7 @@ Windows 使用 `gradlew.bat`。默认 APK 输出到 `app/build/outputs/apk/debug
 | 导航来源验证 | 源码1f9f，仅强化已有测试，生产不变；相关测试APK/lint通过，Settings来源用例 **8/8**、原三项风险用例 **24/24**，均在完整2112/2112中通过；[前置身份与诊断边界](docs/validation/navigation-origin-verification.md) |
 | 操作回执 | 源码4b87，完整核心299/299、脚本304/304、APK/lint通过；新回执16/16及强化的真实三次写操作8/8在同源码完整矩阵通过；[固定验收范围](docs/validation/task-action-receipts.md) |
 | 字体缩放专项 | 源码14c主Activity与控制窗各8/8通过；[Activity](screenshots/40646422586-1/manifest.json)、[控制窗](screenshots/40646425323-1/manifest.json)，完整回归中也均通过 |
-| 整体实际操作演示 | 源码1f9f、API35本地合成模型流程通过，32.651秒；[录像](screenshots/demos/40706746603-1/demo.mp4)及[范围说明](docs/validation/operation-demo.md#导航来源验证源码的整体演示)。普通Fixture录像不运行Settings来源拒绝测试，专项语义另行验收 |
+| 整体实际操作演示 | 数值偏好源码41e44、API35本地合成模型流程通过，35.347秒、427,699字节；[录像](screenshots/demos/40719665055-1/demo.mp4)及[范围说明](docs/validation/operation-demo.md#数值偏好源码的整体演示)。普通Fixture录像不覆盖受保护配置与数值偏好页面，专项语义另行验收 |
 | 第三方应用开发探针 | 独立v4源码5436为 **24/32通过、8失败**；[原始结果](screenshots/third-party-40674357809-1/manifest.json)，与v3的22/32、v2的31/32分开统计；本轮配置恢复没有重跑或改写这些结果 |
 | 待定位的历史现象 | 先前API33图像资格等待、API36视觉事件代次及专用原生捕获TIMEOUT未确定完整根因；后续通过不改写原失败，逐轮原始记录保留 |
 | 交付边界 | Android11+开发APK；普通构建尚未开放截图与坐标手势，真实模型、厂商真机、性能预算、正式签名及可刷写系统镜像未验收 |

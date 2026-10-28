@@ -1,0 +1,262 @@
+2026-10-28T15:55:18.8574328Z emulator-5554 - 12 Tests 120/270 completed. (0 skipped) (0 failed)
+2026-10-28T15:55:19.0752504Z ERROR        | Failed to find ColorBuffer: 2685
+2026-10-28T15:55:19.0753131Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T15:55:19.8763806Z ERROR        | Failed to find ColorBuffer: 2696
+2026-10-28T15:55:19.8764558Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T15:55:20.7073941Z ERROR        | Failed to find ColorBuffer: 2710
+2026-10-28T15:55:20.7074713Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T15:55:22.3485783Z ERROR        | Failed to find ColorBuffer: 2735
+2026-10-28T15:55:22.3486505Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T15:55:23.9772040Z ERROR        | Failed to find ColorBuffer: 2753
+2026-10-28T15:55:23.9772675Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T15:55:25.7576081Z 
+2026-10-28T15:55:25.7576550Z > Task :app:connectedDebugAndroidTest
+2026-10-28T15:55:25.7576807Z 
+2026-10-28T15:55:25.7579802Z dev.agentos.app.NumericPreferencesInstrumentedTest > recreatedBrokerDoesNotReopenThePickerOrAdoptAnOrphanedTransfer[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T15:55:25.7580655Z 	java.lang.SecurityException: Injecting to another application requires INJECT_EVENTS permission
+2026-10-28T15:55:25.7581350Z 	at android.os.Parcel.createExceptionOrNull(Parcel.java:2426)
+2026-10-28T15:55:28.8573561Z 
+2026-10-28T15:55:28.8574251Z emulator-5554 - 12 Tests 124/270 completed. (0 skipped) (1 failed)
+2026-10-28T15:56:10.7574644Z 
+2026-10-28T15:56:10.7575150Z > Task :app:connectedDebugAndroidTest
+2026-10-28T15:56:10.7575409Z 
+2026-10-28T15:56:10.7576459Z dev.agentos.app.NumericPreferencesInstrumentedTest > oldPickerResultsCannotReachARecreatedMainOrClearANewerOwner[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T15:56:10.7579029Z 	java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.agentos.app/.MainActivity } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1793202925097 and now the last time the queue went idle was: 1793202926093. If these numbers are the same your activity might be hogging the event queue.
+2026-10-28T15:56:10.7581536Z 	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+2026-10-28T15:56:18.8573528Z 
+2026-10-28T15:56:18.8574227Z emulator-5554 - 12 Tests 125/270 completed. (0 skipped) (2 failed)
+2026-10-28T15:56:55.8573895Z 
+2026-10-28T15:56:55.8574714Z > Task :app:connectedDebugAndroidTest
+2026-10-28T15:56:55.8575070Z 
+2026-10-28T15:56:55.8576168Z dev.agentos.app.NumericPreferencesInstrumentedTest > cancelledProviderIoKeepsItsProcessSlotUntilActualCloseWithoutBlockingMainWork[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T15:56:55.8578690Z 	java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.agentos.app/.MainActivity } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1793202970134 and now the last time the queue went idle was: 1793202971131. If these numbers are the same your activity might be hogging the event queue.
+2026-10-28T15:56:55.8580634Z 	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+2026-10-28T15:56:58.8573201Z 
+2026-10-28T15:56:58.8574005Z emulator-5554 - 12 Tests 126/270 completed. (0 skipped) (3 failed)
+2026-10-28T15:57:40.8573239Z 
+2026-10-28T15:57:40.8573943Z > Task :app:connectedDebugAndroidTest
+2026-10-28T15:57:40.8574193Z 
+2026-10-28T15:57:40.8575071Z dev.agentos.app.NumericPreferencesInstrumentedTest > malformedOversizedAndCancelledImportsLeaveTheOriginalDraftAndSavedStateUntouched[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T15:57:40.8577322Z 	java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.agentos.app/.MainActivity } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1793203015168 and now the last time the queue went idle was: 1793203016167. If these numbers are the same your activity might be hogging the event queue.
+2026-10-28T15:57:40.8579274Z 	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+2026-10-28T15:57:48.8573687Z 
+2026-10-28T15:57:48.8574530Z emulator-5554 - 12 Tests 127/270 completed. (0 skipped) (4 failed)
+2026-10-28T15:58:25.8573877Z 
+2026-10-28T15:58:25.8574610Z > Task :app:connectedDebugAndroidTest
+2026-10-28T15:58:25.8574932Z 
+2026-10-28T15:58:25.8575777Z dev.agentos.app.NumericPreferencesInstrumentedTest > realSafExportWritesTheCapturedFourFieldSnapshotWithoutConfigurationAuthority[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T15:58:25.8577921Z 	java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.agentos.app/.MainActivity } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1793203060217 and now the last time the queue went idle was: 1793203061212. If these numbers are the same your activity might be hogging the event queue.
+2026-10-28T15:58:25.8579953Z 	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+2026-10-28T15:58:28.8573240Z 
+2026-10-28T15:58:28.8574011Z emulator-5554 - 12 Tests 128/270 completed. (0 skipped) (5 failed)
+2026-10-28T15:59:10.9573945Z 
+2026-10-28T15:59:10.9576653Z > Task :app:connectedDebugAndroidTest
+2026-10-28T15:59:10.9576926Z 
+2026-10-28T15:59:10.9578057Z dev.agentos.app.NumericPreferencesInstrumentedTest > realSafImportPreviewsAndAppliesOnlyFourUnsavedNumericFields[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T15:59:10.9581159Z 	java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.agentos.app/.MainActivity } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1793203105252 and now the last time the queue went idle was: 1793203106245. If these numbers are the same your activity might be hogging the event queue.
+2026-10-28T15:59:10.9583174Z 	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+2026-10-28T15:59:12.8342497Z ERROR        | Failed to find ColorBuffer: 2779
+2026-10-28T15:59:12.8343113Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T15:59:14.5306179Z ERROR        | Failed to find ColorBuffer: 2794
+2026-10-28T15:59:14.5306729Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T15:59:18.8573559Z 
+2026-10-28T15:59:18.8574201Z emulator-5554 - 12 Tests 134/270 completed. (0 skipped) (6 failed)
+2026-10-28T15:59:59.9573814Z 
+2026-10-28T15:59:59.9574390Z > Task :app:connectedDebugAndroidTest
+2026-10-28T15:59:59.9574651Z 
+2026-10-28T15:59:59.9575426Z dev.agentos.app.OutputTokenUiInstrumentedTest > invalidOutputLimitsRemainVisibleAndCannotSaveOrIssueAnyKindOfProbe[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T15:59:59.9578188Z 	java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.agentos.app/.MainActivity } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1793203154250 and now the last time the queue went idle was: 1793203154250. If these numbers are the same your activity might be hogging the event queue.
+2026-10-28T15:59:59.9581801Z 	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+2026-10-28T16:00:08.8573612Z 
+2026-10-28T16:00:08.8574289Z emulator-5554 - 12 Tests 135/270 completed. (0 skipped) (7 failed)
+2026-10-28T16:00:44.9573691Z 
+2026-10-28T16:00:44.9574581Z > Task :app:connectedDebugAndroidTest
+2026-10-28T16:00:44.9574852Z 
+2026-10-28T16:00:44.9575733Z dev.agentos.app.OutputTokenUiInstrumentedTest > selectedValueReachesDraftToolDraftImageAndActuallySavedImageHttpRequests[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T16:00:44.9577831Z 	java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.agentos.app/.MainActivity } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1793203199275 and now the last time the queue went idle was: 1793203199275. If these numbers are the same your activity might be hogging the event queue.
+2026-10-28T16:00:44.9579733Z 	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+2026-10-28T16:00:48.8573321Z 
+2026-10-28T16:00:48.8574330Z emulator-5554 - 12 Tests 136/270 completed. (0 skipped) (8 failed)
+2026-10-28T16:01:29.9573528Z 
+2026-10-28T16:01:29.9574817Z > Task :app:connectedDebugAndroidTest
+2026-10-28T16:01:29.9575069Z 
+2026-10-28T16:01:29.9575879Z dev.agentos.app.OutputTokenUiInstrumentedTest > changingTheLimitRevokesAnOldHttpPromptAndTheActualSavedVisionRecord[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T16:01:29.9578805Z 	java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.agentos.app/.MainActivity } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1793203244289 and now the last time the queue went idle was: 1793203244289. If these numbers are the same your activity might be hogging the event queue.
+2026-10-28T16:01:29.9580715Z 	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+2026-10-28T16:01:30.7817954Z ERROR        | Failed to find ColorBuffer: 2813
+2026-10-28T16:01:30.7818571Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:01:33.9002793Z ERROR        | Failed to find ColorBuffer: 2842
+2026-10-28T16:01:33.9003411Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:01:34.5167569Z ERROR        | Failed to find ColorBuffer: 2850
+2026-10-28T16:01:34.5168591Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:01:37.7335748Z ERROR        | Failed to find ColorBuffer: 2873
+2026-10-28T16:01:37.7337048Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:01:38.6718618Z ERROR        | Failed to find ColorBuffer: 2883
+2026-10-28T16:01:38.6719260Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:01:38.8574144Z 
+2026-10-28T16:01:38.8575188Z emulator-5554 - 12 Tests 140/270 completed. (0 skipped) (9 failed)
+2026-10-28T16:01:39.5336204Z ERROR        | Failed to find ColorBuffer: 2893
+2026-10-28T16:01:39.5336850Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:01:40.5335953Z ERROR        | Failed to find ColorBuffer: 2912
+2026-10-28T16:01:40.5337022Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:01:40.8669603Z ERROR        | Failed to find ColorBuffer: 2926
+2026-10-28T16:01:40.8670248Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:01:43.7002558Z ERROR        | Failed to find ColorBuffer: 2994
+2026-10-28T16:01:43.7003633Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:01:48.8573952Z emulator-5554 - 12 Tests 148/270 completed. (0 skipped) (9 failed)
+2026-10-28T16:01:50.3913299Z ERROR        | Failed to find ColorBuffer: 3009
+2026-10-28T16:01:50.3913760Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:01:57.3172282Z ERROR        | Failed to find ColorBuffer: 3023
+2026-10-28T16:01:57.3173268Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:01:57.7249730Z ERROR        | Failed to find ColorBuffer: 3052
+2026-10-28T16:01:57.7250671Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:01:58.5838467Z ERROR        | Failed to find ColorBuffer: 3061
+2026-10-28T16:01:58.5839459Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:01:59.1144630Z ERROR        | Failed to find ColorBuffer: 3069
+2026-10-28T16:01:59.1145314Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:02:00.3559626Z ERROR        | Failed to find ColorBuffer: 3081
+2026-10-28T16:02:00.3560283Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:02:01.3263668Z ERROR        | Failed to find ColorBuffer: 3096
+2026-10-28T16:02:01.3264323Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:02:02.0967186Z ERROR        | Failed to find ColorBuffer: 3109
+2026-10-28T16:02:02.0967943Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:02:02.9238844Z ERROR        | Failed to find ColorBuffer: 3120
+2026-10-28T16:02:02.9239627Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:02:03.7095109Z ERROR        | Failed to find ColorBuffer: 3128
+2026-10-28T16:02:03.7095680Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:02:04.4875108Z ERROR        | Failed to find ColorBuffer: 3138
+2026-10-28T16:02:04.4875708Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:02:05.4141737Z ERROR        | Failed to find ColorBuffer: 3154
+2026-10-28T16:02:05.4142394Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:02:06.0608192Z ERROR        | Failed to find ColorBuffer: 3166
+2026-10-28T16:02:06.0608667Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:02:07.0172255Z ERROR        | Failed to find ColorBuffer: 3177
+2026-10-28T16:02:07.0172959Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:02:08.8573782Z emulator-5554 - 12 Tests 163/270 completed. (0 skipped) (9 failed)
+2026-10-28T16:02:52.6573398Z 
+2026-10-28T16:02:52.6576176Z > Task :app:connectedDebugAndroidTest
+2026-10-28T16:02:52.6576576Z 
+2026-10-28T16:02:52.6577474Z dev.agentos.app.SavedVisionProbeUiInstrumentedTest > sameValueSaveAndLaterConnectionEditsInvalidateTheActualSuccessfulOwner[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T16:02:52.6579601Z 	java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.agentos.app/.MainActivity } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1793203326957 and now the last time the queue went idle was: 1793203327203. If these numbers are the same your activity might be hogging the event queue.
+2026-10-28T16:02:52.6581809Z 	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+2026-10-28T16:02:58.8573412Z 
+2026-10-28T16:02:58.8574046Z emulator-5554 - 12 Tests 164/270 completed. (0 skipped) (10 failed)
+2026-10-28T16:03:37.6573399Z 
+2026-10-28T16:03:37.6574241Z > Task :app:connectedDebugAndroidTest
+2026-10-28T16:03:37.6574551Z 
+2026-10-28T16:03:37.6575395Z dev.agentos.app.SavedVisionProbeUiInstrumentedTest > anIndependentRealProbeSupersedesTheIdleUiRecordWithoutALeaseChangeOrUiPoke[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T16:03:37.6577522Z 	java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.agentos.app/.MainActivity } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1793203371993 and now the last time the queue went idle was: 1793203371993. If these numbers are the same your activity might be hogging the event queue.
+2026-10-28T16:03:37.6579494Z 	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+2026-10-28T16:03:38.8573401Z 
+2026-10-28T16:03:38.8574056Z emulator-5554 - 12 Tests 165/270 completed. (0 skipped) (11 failed)
+2026-10-28T16:04:22.6574655Z 
+2026-10-28T16:04:22.6577191Z > Task :app:connectedDebugAndroidTest
+2026-10-28T16:04:22.6577521Z 
+2026-10-28T16:04:22.6580585Z dev.agentos.app.SavedVisionProbeUiInstrumentedTest > editingThenRestoringAFieldStillUsesDraftTestingUntilTheUserActuallySaves[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T16:04:22.6583367Z 	java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.agentos.app/.MainActivity } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1793203417015 and now the last time the queue went idle was: 1793203417015. If these numbers are the same your activity might be hogging the event queue.
+2026-10-28T16:04:22.6585824Z 	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+2026-10-28T16:04:28.8573638Z 
+2026-10-28T16:04:28.8574378Z emulator-5554 - 12 Tests 166/270 completed. (0 skipped) (12 failed)
+2026-10-28T16:05:07.7573746Z 
+2026-10-28T16:05:07.7574533Z > Task :app:connectedDebugAndroidTest
+2026-10-28T16:05:07.7574856Z 
+2026-10-28T16:05:07.7576220Z dev.agentos.app.SavedVisionProbeUiInstrumentedTest > anExternalSavedConfigurationInvalidatesItsUiOwnerAndExplicitResaveCanEstablishANewOne[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T16:05:07.7578950Z 	java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.agentos.app/.MainActivity } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1793203462037 and now the last time the queue went idle was: 1793203462037. If these numbers are the same your activity might be hogging the event queue.
+2026-10-28T16:05:07.7580891Z 	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+2026-10-28T16:05:08.8573708Z 
+2026-10-28T16:05:08.8574490Z emulator-5554 - 12 Tests 167/270 completed. (0 skipped) (13 failed)
+2026-10-28T16:05:52.7573424Z 
+2026-10-28T16:05:52.7573953Z > Task :app:connectedDebugAndroidTest
+2026-10-28T16:05:52.7574201Z 
+2026-10-28T16:05:52.7574950Z dev.agentos.app.SavedVisionProbeUiInstrumentedTest > anUnverifiedRealRetestCannotKeepThePreviousSavedSuccess[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T16:05:52.7577015Z 	java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.agentos.app/.MainActivity } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1793203507064 and now the last time the queue went idle was: 1793203507064. If these numbers are the same your activity might be hogging the event queue.
+2026-10-28T16:05:52.7578879Z 	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+2026-10-28T16:05:58.8573396Z 
+2026-10-28T16:05:58.8573993Z emulator-5554 - 12 Tests 168/270 completed. (0 skipped) (14 failed)
+2026-10-28T16:06:37.7573471Z 
+2026-10-28T16:06:37.7574003Z > Task :app:connectedDebugAndroidTest
+2026-10-28T16:06:37.7574267Z 
+2026-10-28T16:06:37.7575161Z dev.agentos.app.SavedVisionProbeUiInstrumentedTest > loadedSavedConfigurationKeepsItsVerifiedOwnerAfterTheButtonBecomesIdleAndToolTesting[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T16:06:37.7577317Z 	java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.agentos.app/.MainActivity } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1793203552092 and now the last time the queue went idle was: 1793203552092. If these numbers are the same your activity might be hogging the event queue.
+2026-10-28T16:06:37.7579635Z 	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+2026-10-28T16:06:38.8573798Z 
+2026-10-28T16:06:38.8574555Z emulator-5554 - 12 Tests 169/270 completed. (0 skipped) (15 failed)
+2026-10-28T16:07:22.8587733Z 
+2026-10-28T16:07:22.8588758Z > Task :app:connectedDebugAndroidTest
+2026-10-28T16:07:22.8589138Z 
+2026-10-28T16:07:22.8590328Z dev.agentos.app.SavedVisionProbeUiInstrumentedTest > cancelAndLeavingTheActivityDiscardDelayedSavedProbeReplies[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T16:07:22.8594337Z 	java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.agentos.app/.MainActivity } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1793203597118 and now the last time the queue went idle was: 1793203597118. If these numbers are the same your activity might be hogging the event queue.
+2026-10-28T16:07:22.8597923Z 	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+2026-10-28T16:07:23.8668730Z ERROR        | Failed to find ColorBuffer: 3201
+2026-10-28T16:07:23.8669371Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:07:24.6432503Z ERROR        | Failed to find ColorBuffer: 3211
+2026-10-28T16:07:24.6433142Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:07:25.4771264Z ERROR        | Failed to find ColorBuffer: 3226
+2026-10-28T16:07:25.4771856Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:07:26.2770867Z ERROR        | Failed to find ColorBuffer: 3234
+2026-10-28T16:07:26.2771562Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:07:27.0959053Z ERROR        | Failed to find ColorBuffer: 3249
+2026-10-28T16:07:27.0959665Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:07:27.8733146Z ERROR        | Failed to find ColorBuffer: 3263
+2026-10-28T16:07:27.8733971Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:07:28.6914768Z ERROR        | Failed to find ColorBuffer: 3274
+2026-10-28T16:07:28.6915705Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:07:28.8613050Z 
+2026-10-28T16:07:28.8625138Z emulator-5554 - 12 Tests 187/270 completed. (0 skipped) (16 failed)
+2026-10-28T16:07:29.4724071Z ERROR        | Failed to find ColorBuffer: 3282
+2026-10-28T16:07:29.4724648Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:07:30.3027150Z ERROR        | Failed to find ColorBuffer: 3298
+2026-10-28T16:07:30.3027608Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:07:31.1865579Z ERROR        | Failed to find ColorBuffer: 3309
+2026-10-28T16:07:31.1866505Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:07:32.7219596Z ERROR        | Failed to find ColorBuffer: 3322
+2026-10-28T16:07:32.7220590Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:07:38.8574160Z emulator-5554 - 12 Tests 189/270 completed. (0 skipped) (16 failed)
+2026-10-28T16:08:17.8584761Z 
+2026-10-28T16:08:17.8585647Z > Task :app:connectedDebugAndroidTest
+2026-10-28T16:08:17.8585972Z 
+2026-10-28T16:08:17.8587081Z dev.agentos.app.TaskActionReceiptsInstrumentedTest > replacementLeavingAndClearInvalidateOldReceiptDialogsAndTaskHistory[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T16:08:17.8590429Z 	java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.agentos.app/.MainActivity } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1793203652129 and now the last time the queue went idle was: 1793203680103. If these numbers are the same your activity might be hogging the event queue.
+2026-10-28T16:08:17.8593364Z 	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+2026-10-28T16:08:18.8573282Z 
+2026-10-28T16:08:18.8574050Z emulator-5554 - 12 Tests 190/270 completed. (0 skipped) (17 failed)
+2026-10-28T16:08:19.2393191Z ERROR        | Failed to find ColorBuffer: 3342
+2026-10-28T16:08:19.2394702Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:09:04.7573439Z 
+2026-10-28T16:09:04.7574171Z > Task :app:connectedDebugAndroidTest
+2026-10-28T16:09:04.7574494Z 
+2026-10-28T16:09:04.7575502Z dev.agentos.app.TaskActionReceiptsInstrumentedTest > rejectedHttpActionRemainsUnsubmittedAndItsSecurePreviewIsReadOnly[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T16:09:04.7578134Z 	java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.agentos.app/.MainActivity } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1793203698726 and now the last time the queue went idle was: 1793203740103. If these numbers are the same your activity might be hogging the event queue.
+2026-10-28T16:09:04.7580071Z 	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+2026-10-28T16:09:06.4438298Z ERROR        | Failed to find ColorBuffer: 3368
+2026-10-28T16:09:06.4438909Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:09:08.8584191Z 
+2026-10-28T16:09:08.8585839Z emulator-5554 - 12 Tests 193/270 completed. (0 skipped) (18 failed)
+2026-10-28T16:09:14.6906401Z ERROR        | Failed to find ColorBuffer: 3428
+2026-10-28T16:09:14.6907189Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:09:16.1202138Z ERROR        | Failed to find ColorBuffer: 3446
+2026-10-28T16:09:16.1202829Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:09:18.8573726Z emulator-5554 - 12 Tests 202/270 completed. (0 skipped) (18 failed)
+2026-10-28T16:10:01.2573891Z 
+2026-10-28T16:10:01.2577548Z > Task :app:connectedDebugAndroidTest
+2026-10-28T16:10:01.2578190Z 
+2026-10-28T16:10:01.2579494Z dev.agentos.app.TaskBudgetUiInstrumentedTest > encryptedSaveFreezesBudgetFieldsAndIgnoresLateProgrammaticEdits[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T16:10:01.2583360Z 	java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.agentos.app/.MainActivity } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1793203755500 and now the last time the queue went idle was: 1793203800203. If these numbers are the same your activity might be hogging the event queue.
+2026-10-28T16:10:01.2586845Z 	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+2026-10-28T16:10:01.9859064Z ERROR        | Failed to find ColorBuffer: 3461
+2026-10-28T16:10:01.9859554Z ERROR        | Failed to bind to texture: invalid color buffer.
+2026-10-28T16:10:08.8573563Z 
+2026-10-28T16:10:08.8574272Z emulator-5554 - 12 Tests 203/270 completed. (0 skipped) (19 failed)
+2026-10-28T16:10:47.0573869Z 
+2026-10-28T16:10:47.0574458Z > Task :app:connectedDebugAndroidTest
+2026-10-28T16:10:47.0574716Z 
+2026-10-28T16:10:47.0575649Z dev.agentos.app.TaskBudgetUiInstrumentedTest > defaultsAndSelectedBudgetSurviveAnExplicitSaveAndReopen[emulator-5554 - 12] [31mFAILED [0m
+2026-10-28T16:10:47.0579578Z 	java.lang.RuntimeException: Could not launch intent Intent { flg=0x10000000 cmp=dev.agentos.app/.MainActivity } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1793203801365 and now the last time the queue went idle was: 1793203802253. If these numbers are the same your activity might be hogging the event queue.
+2026-10-28T16:10:47.0582871Z 	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+2026-10-28T16:10:48.8573613Z 
+2026-10-28T16:10:48.8574386Z emulator-5554 - 12 Tests 204/270 completed. (0 skipped) (20 failed)
+2026-10-28T16:11:16.1385457Z ##[error]API 32 instrumentation exceeded 1200s; exit 124. Partial test results remain partial.
+2026-10-28T16:11:17.5120905Z No Android XML reports were produced; inspect the emulator step logs.
+2026-10-28T16:11:17.7598737Z API 32: collected, 172 screenshots; Gradle exit=124
+2026-10-28T16:11:17.8651933Z API 32: performance diagnostics collected; Gradle exit=124; not a performance budget acceptance
+2026-10-28T16:11:17.8764516Z ##[error]The process '/usr/bin/sh' failed with exit code 124

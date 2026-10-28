@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "api": 32,
+  "testClass": "dev.agentos.app.ConfigurationRecoveryUiInstrumentedTest",
+  "testName": "leavingDuringRetryDiscardsLateResultsUntilAnotherExplicitRead",
+  "assertionResult": "pass",
+  "testResult": "pass",
+  "status": "pass",
+  "startedAt": 1793202788190,
+  "finishedAt": 1793202789617,
+  "captures": [
+    {
+      "stage": "protected-late-read-discarded-after-leaving",
+      "capturedAt": 1793202789000,
+      "status": "blocked",
+      "captureError": "secure_configuration_recovery_capture_not_attempted"
+    },
+    {
+      "stage": "protected-explicit-retry-after-return",
+      "capturedAt": 1793202789048,
+      "status": "blocked",
+      "captureError": "secure_configuration_recovery_capture_not_attempted"
+    },
+    {
+      "stage": "finished",
+      "capturedAt": 1793202789617,
+      "status": "blocked",
+      "captureError": "secure_configuration_recovery_capture_not_attempted"
+    }
+  ]
+}

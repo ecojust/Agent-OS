@@ -89,6 +89,8 @@ public final class MainActivity extends Activity implements AgentController.List
     private String[] budgetTexts = {"30", "100", "600"};
     private boolean hideCurrentResult;
     private boolean wasRunning;
+    private AgentController.TaskInputState taskInputState;
+    private boolean retainedTaskCleared;
     private SettingsStore store;
     private SettingsStore.SavedSettings draft = new SettingsStore.SavedSettings();
     private AgentController controller;
@@ -166,14 +168,17 @@ public final class MainActivity extends Activity implements AgentController.List
     private static final class UiDraft {
         final SettingsStore.SavedSettings settings;
         final String task;
+        final AgentController.TaskInputState taskInput;
         final String maxOutputTokensText;
         final boolean expanded;
         final boolean budgetExpanded;
         final String[] budgetTexts;
-        UiDraft(SettingsStore.SavedSettings settings, String task, String maxOutputTokensText, boolean expanded,
+        UiDraft(SettingsStore.SavedSettings settings, String task, AgentController.TaskInputState taskInput,
+                String maxOutputTokensText, boolean expanded,
                 boolean budgetExpanded, String[] budgetTexts) {
             this.settings = settings;
             this.task = task;
+            this.taskInput = taskInput;
             this.maxOutputTokensText = maxOutputTokensText;
             this.expanded = expanded;
             this.budgetExpanded = budgetExpanded;
@@ -244,8 +249,13 @@ public final class MainActivity extends Activity implements AgentController.List
 
     @Override public Object onRetainNonConfigurationInstance() {
         if (!ready || storageDamaged) return null;
+        AgentController.TaskInputState current = controller.getTaskInputState();
+        // An off-screen host may have missed completion/clear publications. Never
+        // give its old text the identity of a newer input lifetime.
+        String task = taskInputState != null && taskInputState.matches(current)
+                && !(wasRunning && !current.running) ? taskField.getText().toString() : "";
         // Rotation retains these values in process memory only, never an instance-state file.
-        return new UiDraft(readDraft(), taskField.getText().toString(), maxOutputTokensField.getText().toString(),
+        return new UiDraft(readDraft(), task, current, maxOutputTokensField.getText().toString(),
                 modelExpanded, budgetExpanded, budgetTexts);
     }
 
@@ -517,6 +527,9 @@ public final class MainActivity extends Activity implements AgentController.List
         clearButton.setId(R.id.clear_task);
         clearButton.setOnClickListener(view -> {
             if (controller.getState().running) return;
+            // Even a cancelled owner still draining can reject the Controller
+            // clear. This explicit local clear must invalidate its pending input.
+            retainedTaskCleared = true;
             taskField.setText("");
             controller.clearCompletedTask();
             hideCurrentResult = true;
@@ -639,7 +652,12 @@ public final class MainActivity extends Activity implements AgentController.List
                     draft = next;
                     if (retainedDraft != null && next.profileId.equals(retainedDraft.settings.profileId)) {
                         draft = retainedDraft.settings;
-                        taskField.setText(retainedDraft.task);
+                        AgentController.TaskInputState current = controller.getTaskInputState();
+                        if (!retainedTaskCleared && taskInputState != null && taskInputState.matches(current)
+                                && retainedDraft.taskInput.matches(current)) {
+                            taskField.setText(retainedDraft.task);
+                            taskInputState = current;
+                        }
                     }
                     bindDraft();
                     if (retainedDraft != null && next.profileId.equals(retainedDraft.settings.profileId)) {
@@ -790,6 +808,10 @@ public final class MainActivity extends Activity implements AgentController.List
                     // Request dismissal before the worker starts observing. This is
                     // asynchronous; the device's final obstruction guard still applies.
                     controller.start(model, goal, allowed, settings.executionMode, settings.taskBudget, configurationLease);
+                    // Only this host's successful admission can bind its goal to
+                    // the new lifetime. A task may already have ended on its worker.
+                    taskInputState = controller.getTaskInputState();
+                    if (!taskInputState.running) taskField.setText("");
                     messageText.setVisibility(View.GONE);
                 } catch (RuntimeException error) {
                     showMessage("任务未启动。请确认手机已解锁、操作服务已开启，且没有其他任务运行。", true);
@@ -1106,6 +1128,8 @@ public final class MainActivity extends Activity implements AgentController.List
                 ? "测试当前填写的图像理解" : "测试已保存配置的图像理解");
         renderProbeResult();
         AgentController.State state = controller.getState();
+        if (taskInputState != null && !taskInputState.matches(state.taskInput)) taskField.setText("");
+        taskInputState = state.taskInput;
         renderTaskUsage(state.usage, false);
         taskDiagnosticsButton.setEnabled(state.usage != null);
         taskActionReceiptsButton.setEnabled(state.usage != null);

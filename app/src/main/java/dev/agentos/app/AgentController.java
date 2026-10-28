@@ -60,6 +60,21 @@ public final class AgentController {
         }
     }
 
+    /** Process-local input ownership only; neither identity nor task text is persisted or exported. */
+    public static final class TaskInputState {
+        private final Object identity;
+        public final boolean running;
+
+        private TaskInputState(Object identity, boolean running) {
+            this.identity = identity;
+            this.running = running;
+        }
+
+        public boolean matches(TaskInputState other) {
+            return other != null && identity == other.identity && running == other.running;
+        }
+    }
+
     public static final class State {
         public final String status;
         public final boolean running;
@@ -74,10 +89,12 @@ public final class AgentController {
         public final VisualQualification visualQualification;
         public final TaskResult.Kind resultKind;
         public final String resultCode;
+        public final TaskInputState taskInput;
 
         State(String status, boolean running, boolean paused, String approval, String approvalId,
               List<String> log, String summary, TaskUsage usage, boolean visualRequested,
-              VisualQualification visualQualification, TaskResult.Kind resultKind, String resultCode) {
+              VisualQualification visualQualification, TaskResult.Kind resultKind, String resultCode,
+              TaskInputState taskInput) {
             this.status = status;
             this.running = running;
             this.paused = paused;
@@ -90,6 +107,7 @@ public final class AgentController {
             this.visualQualification = visualQualification;
             this.resultKind = resultKind;
             this.resultCode = resultCode;
+            this.taskInput = taskInput;
         }
     }
 
@@ -109,6 +127,7 @@ public final class AgentController {
     private long generation;
     private long stopGeneration = -1, stoppedEpoch = -1, stoppedDispatchAttempts = -1;
     private RunControl control;
+    private Object taskInputIdentity = new Object();
     private TaskBudget usageBudget;
     private TaskUsage completedUsage;
     private TaskResult.Kind completedResultKind;
@@ -185,13 +204,23 @@ public final class AgentController {
 
     public State getState() {
         synchronized (lock) {
-            return new State(status, control != null && !control.isCancelled(),
+            TaskInputState input = taskInputStateLocked();
+            return new State(status, input.running,
                     control != null && control.isPaused(),
                     pending == null ? "" : pending.description,
                     pending == null ? "" : pending.id, log, summary, taskUsageLocked(),
                     taskVisual == null ? completedVisualRequested : taskVisual.requested,
-                    visualQualificationLocked(), completedResultKind, completedResultCode);
+                    visualQualificationLocked(), completedResultKind, completedResultCode, input);
         }
+    }
+
+    /** Pure memory snapshot for a UI draft; never starts, resumes, clears or publishes a task. */
+    public TaskInputState getTaskInputState() {
+        synchronized (lock) { return taskInputStateLocked(); }
+    }
+
+    private TaskInputState taskInputStateLocked() {
+        return new TaskInputState(taskInputIdentity, control != null && !control.isCancelled());
     }
 
     /** Lightweight foreground polling: no log copy, publication, View, storage, Binder or network work. */
@@ -331,6 +360,7 @@ public final class AgentController {
             if (control != null) throw new IllegalStateException("已有任务正在运行，请先停止。");
             session = ++generation;
             control = active;
+            taskInputIdentity = new Object();
             usageBudget = taskBudget;
             completedUsage = null;
             completedResultKind = null;
@@ -605,6 +635,7 @@ public final class AgentController {
             PerformanceTrace.mark(PerformanceTrace.Stage.STOP_EPOCH_INVALIDATED,
                     cancelled.getExecutionEpoch(), cancelled.getDispatchAttempts());
             control = null;
+            taskInputIdentity = new Object();
             configuration = null;
             clearOverlayCallbacksLocked();
             ++generation;
@@ -715,6 +746,7 @@ public final class AgentController {
         completedResultCode = "CONFIGURATION_CHANGED";
         releaseVisualQualificationLocked(active);
         control = null;
+        taskInputIdentity = new Object();
         configuration = null;
         clearOverlayCallbacksLocked();
         pending = null;
@@ -742,6 +774,7 @@ public final class AgentController {
             completedResultCode = TaskDiagnostics.safeTerminalCode(result.code);
             releaseVisualQualificationLocked(control);
             control = null;
+            taskInputIdentity = new Object();
             configuration = null;
             clearOverlayCallbacksLocked();
             pending = null;
@@ -817,6 +850,7 @@ public final class AgentController {
     public void clearCompletedTask() {
         synchronized (lock) {
             if (control != null) return;
+            taskInputIdentity = new Object();
             summary = ""; log.clear(); status = "准备就绪";
             completedUsage = null;
             completedResultKind = null;

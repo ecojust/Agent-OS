@@ -66,9 +66,16 @@
 
 安全区修正源码b6fd的[原拖动／审批收缩专项](../../screenshots/40631512822-1/manifest.json)8/8通过，但[字体专项](../../screenshots/40631510591-1/manifest.json)仅4/8通过：API30–33均在最后恢复原字体配置超时，仍计为失败。源码3cff仅修正测试清理，生产安全区修正不变；其后8/8通过不抹去这四项失败。四项失败的具体raw差异原先未记录，恢复失败的具体根因仍未证明。
 
+
+## 主Activity真实字体变化：用例完成，八档验证待执行
+
+[MainActivityFontScaleInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/MainActivityFontScaleInstrumentedTest.java) 的 `realSystemFontScaleRecreatesSecureActivityAndRetainsOnlyInMemoryDraft` 使用系统设置1.0→1.3触发真实Activity替换，同profile内存草稿在重建后保留，主动finish再打开回到已保存配置且任务为空。核对新旧窗口安全标志、输入控件不保存View状态、实际最终saved-state Bundle无固定合成敏感marker、原始偏好与配置lease不变，以及真实Controller与模型请求保持空闲基线。关键开始／保存按钮经实际View滚动核对48dp、安全区与完整标签；该过程不触发保存或执行任务，也不冒充物理点击。
+
+本用例八档均执行真实字体变化，不沿用visual-generation专项的低API不支持分支。安全界面保留固定原因的blocked记录，不尝试截图，不解除FLAG_SECURE；无PNG不等于测试跳过。原字体raw与实际配置仍在既有同一个10秒恢复期限内恢复；结束前清理全部所见Activity及其worker，再恢复原存储。当前只完成代码与本地检查安排，八档专项、完整247×8＝1976项和该源码普通录像均待实际结果；不以源码数量代替通过数量，不扩展为进程死亡、最大字体、旋转、读屏或真机验收。
+
 ## 分开的后续验证
 
-- **下一项独立验证：** 主Activity在真实系统字体变化后的重建、草稿恢复规则和安全窗口保护，目前尚无这一组合的专项用例；已有主动 `recreate()` 和独立安全标志检查不替代该场景。服务控件1.0→1.3专项已经通过，其他字体样本、横竖屏后关键操作可达、实际读屏服务共存仍按 [R8](../DESIGN_RULES.md#r8-统一交互与可访问性) 分别安排，不合并为本次专项通过。
+- **当前独立验证：** 新增主Activity真实系统字体变化、同profile内存草稿恢复、finish后丢弃草稿及安全窗口的组合用例，固定范围 `activity-font-scale-diagnostic`，八档结果待运行；已有主动 `recreate()` 不替代该场景。服务控件1.0→1.3专项已经通过，其他字体样本、横竖屏后关键操作可达、实际读屏服务共存仍按 [R8](../DESIGN_RULES.md#r8-统一交互与可访问性) 分别安排。
 - **独立应用回归：** [固定第三方应用探针](third-party-smoke.md)保留 API31 Notes/off 的键盘准备失败与原32组合。其定位和复测属于应用检查点，不计入执行器合成应用矩阵。
 - **外部条件：** 真实模型任务需要可用的实际服务配置；厂商与低资源验收需要对应设备；AOSP、OTA及恢复需要明确参考机型、地区变体、启动链与恢复资料；正式交付还需签名和维护条件。APK试用不要求解锁 Bootloader。
 - **未公开能力：** 普通 APK 的截图及坐标点击／滑动入口仍未开放。内部视觉链路和低API“不支持”断言分别记录，不算公开能力的正向通过，也不因新增本表而扩大 `api_matrix` 的范围。

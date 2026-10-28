@@ -2,6 +2,7 @@
 
 import base64
 import copy
+import hashlib
 import io
 import json
 import os
@@ -129,7 +130,8 @@ class EvidenceTests(unittest.TestCase):
                       "screen-off-diagnostic --class AnotherClass",
                       "task-report-focus-diagnostic --class AnotherClass",
                       "font-scale-diagnostic --class AnotherClass",
-                      "visual-generation-diagnostic --class AnotherClass", "future-scope"):
+                      "visual-generation-diagnostic --class AnotherClass",
+                      "activity-font-scale-diagnostic --class AnotherClass", "future-scope"):
             with self.subTest(scope=scope):
                 self.check_test_exit("30", 30, scope=scope, expected_exit=2, invalid_scope=True)
 
@@ -245,7 +247,7 @@ class EvidenceTests(unittest.TestCase):
         collector.verify_capture_scope({}, "full")  # Original full captures remain readable.
 
     def diagnostic_archive(self, lanes, scope=collector.DIAGNOSTIC_SCOPE, artifact_scope=None, manifest_selection=None,
-                           run_overrides=None):
+                           run_overrides=None, manifest_captures=None):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             (root / "incoming").mkdir()
@@ -267,7 +269,7 @@ class EvidenceTests(unittest.TestCase):
                            "unreadableReports": 0, "selection": selection,
                            "selectedTests": 1, "unexpectedTests": 0}}
                 tests = [] if status == "skipped" else [{"testClass": test_class, "testName": method,
-                          "testResult": "fail" if status == "failed" else "pass", "captures": []}]
+                          "testResult": "fail" if status == "failed" else "pass", "captures": manifest_captures or []}]
                 (folder / "capture.json").write_text(json.dumps(capture))
                 (folder / "screenshots/manifest.json").write_text(json.dumps({"tests": tests}))
                 artifacts.append({"name": folder.name, "expired": False})
@@ -881,6 +883,137 @@ class EvidenceTests(unittest.TestCase):
             with self.subTest(event=event, title=title), self.assertRaises(subprocess.CalledProcessError):
                 self.diagnostic_archive({"36": "passed"}, collector.VISUAL_GENERATION_SCOPE,
                                         run_overrides={"event": event, "display_title": title})
+
+    def test_activity_font_scale_shell_selects_only_its_fixed_case_and_preserves_failure(self):
+        self.assertEqual("dev.agentos.app.MainActivityFontScaleInstrumentedTest#realSystemFontScaleRecreatesSecureActivityAndRetainsOnlyInMemoryDraft",
+                         collector.ACTIVITY_FONT_SCALE_TEST)
+        self.check_test_exit("33", 33, scope=collector.ACTIVITY_FONT_SCALE_SCOPE)
+
+    def test_activity_font_scale_scope_requires_its_exact_manual_title_and_matching_capture(self):
+        run = source_run()
+        run["display_title"] = publisher.ACTIVITY_FONT_SCALE_TITLE
+        self.assertEqual("full", publisher.android_execution_scope(run))
+        run["event"] = "workflow_dispatch"
+        self.assertEqual(collector.ACTIVITY_FONT_SCALE_SCOPE, publisher.android_execution_scope(run))
+        run["display_title"] += " --class Other"
+        with self.assertRaises(ValueError):
+            publisher.android_execution_scope(run)
+        for record in ({}, {"executionScope": collector.DIAGNOSTIC_SCOPE,
+                            "testSelection": collector.DIAGNOSTIC_TEST},
+                       {"executionScope": collector.ACTIVITY_FONT_SCALE_SCOPE,
+                        "testSelection": collector.DIAGNOSTIC_TEST}):
+            with self.subTest(record=record), self.assertRaises(ValueError):
+                collector.verify_capture_scope(record, collector.ACTIVITY_FONT_SCALE_SCOPE)
+        self.assertEqual(collector.DIAGNOSTIC_TEST, collector.test_selection(collector.DIAGNOSTIC_SCOPE))
+        self.assertEqual("full-suite", collector.test_selection("full"))
+
+    def test_activity_font_scale_finalize_preserves_scope_without_reports_and_cannot_relabel(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            command = ["python3", str(SCRIPTS / "collect_android_evidence.py"), "finalize",
+                       "--matrix-label", "33", "--scope", collector.ACTIVITY_FONT_SCALE_SCOPE]
+            subprocess.run(command, cwd=root, check=True, capture_output=True, text=True)
+            path = root / "test-evidence/api-33/capture.json"
+            original = path.read_bytes()
+            record = json.loads(original)
+            self.assertEqual(collector.ACTIVITY_FONT_SCALE_TEST, record["testSelection"])
+            self.assertEqual(collector.ACTIVITY_FONT_SCALE_TEST, record["junit"]["selection"])
+            self.assertEqual(0, record["junit"]["selectedTests"])
+            for scope in ("full", *collector.DIAGNOSTIC_SELECTIONS):
+                if scope == collector.ACTIVITY_FONT_SCALE_SCOPE:
+                    continue
+                result = subprocess.run(command[:-1] + [scope], cwd=root, capture_output=True, text=True)
+                self.assertNotEqual(0, result.returncode)
+                self.assertEqual(original, path.read_bytes())
+
+    def test_activity_font_scale_archive_keeps_all_missing_and_mixed_lanes_in_its_eight_case_scope(self):
+        for lanes, counts in (({label: "passed" for label in publisher.EXPECTED_MATRIX},
+                               {"passed": 8, "failed": 0, "unverified": 0}),
+                              ({}, {"passed": 0, "failed": 0, "unverified": 8}),
+                              ({"30": "passed", "33": "failed", "37.0": "skipped"},
+                               {"passed": 1, "failed": 1, "unverified": 6})):
+            with self.subTest(lanes=lanes):
+                manifest, readme = self.diagnostic_archive(lanes, collector.ACTIVITY_FONT_SCALE_SCOPE)
+                self.assertEqual(collector.ACTIVITY_FONT_SCALE_SCOPE, manifest["executionScope"])
+                self.assertEqual(collector.ACTIVITY_FONT_SCALE_TEST, manifest["testSelection"])
+                self.assertEqual((1, 8), (manifest["expectedTestsPerApi"], manifest["expectedTests"]))
+                self.assertEqual(8, len(manifest["apis"]))
+                self.assertEqual(counts, manifest["diagnosticCaseCounts"])
+                self.assertFalse(manifest["fullSuiteAcceptance"])
+                for text in (manifest["scope"], readme):
+                    self.assertIn("real system font-scale changes on all eight API lanes", text)
+                    self.assertIn("Protected-window captures may be blocked", text)
+                    self.assertNotIn("unsupported native-source rejection path", text)
+                self.assertIn("# Activity Font Scale Diagnostic Evidence", readme)
+                self.assertIn(collector.ACTIVITY_FONT_SCALE_TEST, readme)
+                self.assertIn("not counted as passed", readme)
+                self.assertNotIn(collector.DIAGNOSTIC_TEST, readme)
+
+    def test_activity_font_scale_archive_rejects_other_scope_and_wrong_manifest_case(self):
+        for scope in ("full", *collector.DIAGNOSTIC_SELECTIONS):
+            if scope == collector.ACTIVITY_FONT_SCALE_SCOPE:
+                continue
+            with self.subTest(scope=scope), self.assertRaises(subprocess.CalledProcessError):
+                self.diagnostic_archive({"33": "passed"}, collector.ACTIVITY_FONT_SCALE_SCOPE,
+                                        artifact_scope=scope)
+        for selection in collector.DIAGNOSTIC_SELECTIONS.values():
+            if selection == collector.ACTIVITY_FONT_SCALE_TEST:
+                continue
+            with self.subTest(selection=selection), self.assertRaises(subprocess.CalledProcessError):
+                self.diagnostic_archive({"33": "passed"}, collector.ACTIVITY_FONT_SCALE_SCOPE,
+                                        manifest_selection=selection)
+
+    def test_activity_font_scale_original_xml_is_required_and_cannot_mix_cases_or_borrow_old_selection(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            test_class, method = collector.ACTIVITY_FONT_SCALE_TEST.split("#")
+            xml = root / "result.xml"
+            case = f'<testcase classname="{test_class}" name="{method}"/>'
+            xml.write_text('<testsuite>' + case + '</testsuite>')
+            capture = {"junit": collector.junit_summary(root, collector.ACTIVITY_FONT_SCALE_TEST), "gradleExitCode": 0}
+            tests = [{"testClass": test_class, "testName": method, "testResult": "pass"}]
+            job = {"conclusion": "success"}
+            self.assertEqual("passed", publisher.diagnostic_result(capture, tests, job, collector.ACTIVITY_FONT_SCALE_SCOPE))
+            self.assertEqual("unverified", publisher.diagnostic_result(capture, [], job, collector.ACTIVITY_FONT_SCALE_SCOPE))
+            with self.assertRaises(ValueError):
+                publisher.diagnostic_result(capture, tests, job, collector.DIAGNOSTIC_SCOPE)
+            old_class, old_method = collector.DIAGNOSTIC_TEST.split("#")
+            for body in (f'<testcase classname="{old_class}" name="{old_method}"/>',
+                         case + f'<testcase classname="{old_class}" name="{old_method}"/>',
+                         case + case):
+                xml.write_text('<testsuite>' + body + '</testsuite>')
+                capture["junit"] = collector.junit_summary(root, collector.ACTIVITY_FONT_SCALE_TEST)
+                with self.subTest(body=body), self.assertRaises(ValueError):
+                    publisher.diagnostic_result(capture, tests, job, collector.ACTIVITY_FONT_SCALE_SCOPE)
+
+    def test_activity_font_scale_captures_cannot_be_relabelled_as_full_for_manual_or_push_runs(self):
+        for event, title in (("push", publisher.ACTIVITY_FONT_SCALE_TITLE),
+                             ("workflow_dispatch", "Android checks")):
+            with self.subTest(event=event, title=title), self.assertRaises(subprocess.CalledProcessError):
+                self.diagnostic_archive({"36": "passed"}, collector.ACTIVITY_FONT_SCALE_SCOPE,
+                                        run_overrides={"event": event, "display_title": title})
+
+    def test_activity_font_scale_preserves_protected_blocked_json_without_inventing_pngs(self):
+        blocked = {"stage": "protected-activity", "status": "blocked",
+                   "captureError": "secure_activity_font_scale_capture_not_attempted"}
+        manifest, readme = self.diagnostic_archive(
+                {label: "passed" for label in publisher.EXPECTED_MATRIX},
+                collector.ACTIVITY_FONT_SCALE_SCOPE, manifest_captures=[blocked])
+        self.assertEqual({"passed": 8, "failed": 0, "unverified": 0}, manifest["diagnosticCaseCounts"])
+        self.assertFalse(manifest["fullSuiteAcceptance"])
+        test_class, method = collector.ACTIVITY_FONT_SCALE_TEST.split("#")
+        expected = json.dumps({"tests": [{"testClass": test_class, "testName": method,
+                              "testResult": "pass", "captures": [blocked]}]}).encode()
+        for api in manifest["apis"]:
+            self.assertEqual(0, api["screenshotCount"])
+            self.assertEqual((1, 0, 1, 0), (api["recordedTests"], api["testsWithScreenshots"],
+                             api["testsWithoutScreenshots"], api["unrecordedTests"]))
+            self.assertEqual({"capture.json", "screenshots/manifest.json"},
+                             {item["path"] for item in api["files"]})
+            record = next(item for item in api["files"] if item["path"] == "screenshots/manifest.json")
+            self.assertEqual(len(expected), record["bytes"])
+            self.assertEqual(hashlib.sha256(expected).hexdigest(), record["sha256"])
+        self.assertIn("JSON case results do not require a PNG", readme)
 
     def test_archive_keeps_missing_lanes_and_source_failure(self):
         with tempfile.TemporaryDirectory() as temp:

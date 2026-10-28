@@ -160,7 +160,7 @@ public final class FontScaleControlWindowInstrumentedTest {
         }
     }
 
-    private static final class OriginalFont {
+    static final class OriginalFont {
         final String raw;
         final float actual;
         OriginalFont(DeviceHarness device) {
@@ -209,7 +209,7 @@ public final class FontScaleControlWindowInstrumentedTest {
         return Settings.System.getString(device.context.getContentResolver(), Settings.System.FONT_SCALE);
     }
 
-    private static void changeFont(DeviceHarness device, String raw, float expected) throws Exception {
+    static void changeFont(DeviceHarness device, String raw, float expected) throws Exception {
         assertTrue("Only the two declared synthetic font samples may be installed", "1.0".equals(raw) || "1.3".equals(raw));
         long deadline = SystemClock.elapsedRealtime() + 10_000;
         device.shell("settings --user current put system font_scale " + raw);

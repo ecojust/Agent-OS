@@ -62,3 +62,5 @@ python3 -m unittest discover -s scripts -p test_check_apk_upgrade.py -v
 本次本地实际执行为 **22/22通过，22.090秒，零失败、错误或跳过**；真实SDK集成组确实执行。两份脚本与独立审查冻结逐字节相同，[原始测试日志、实际正例报告及输入摘要](diagnostics/apk-upgrade-preflight-local/README.md)已归档。没有重跑未改的核心333项或原314项脚本，也没有运行设备安装测试；纯CLI验证没有UI截图。源码518621d4的唯一整体应用录像已录制并归档，35.867秒、444,016字节；[录像及范围](operation-demo.md#离线apk预检源码的整体演示)只覆盖普通Fixture应用流程，不替代此CLI的实际验签报告。
 
 后续测试驱动源码eee60的完整CI [40745270296](https://github.com/ecojust/Agent-OS/actions/runs/40745270296)已执行新的342项脚本，58.431秒、零失败/错误/跳过；增加的六项属于仪器测试执行边界，本CLI仍为原22项。[原始步骤](diagnostics/numeric-preferences-40745270296/build-script-tests.original.txt)与设备侧六项失败分别记录。
+
+最新24b9的 [40750181658](https://github.com/ecojust/Agent-OS/actions/runs/40750181658)再次实际完成相同342项脚本，68.718秒、零跳过，本CLI代码及22项范围不变；[原始步骤](diagnostics/numeric-preferences-40750181658/build-script-tests.original.txt)已归档。该轮八档设备2160项也全部通过，仍不替代本工具范围之外的真机安装、升级或正式签名验收。

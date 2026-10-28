@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-28T02:20:57Z",
-  "note": "本轮7af1ac979真实操作录像已归档并双重核验：38.352秒、445156字节，13阶段与8次确认完成；README更新准确源码视频链接。八档专项8/8，1952项完整回归运行中，进度45%。",
+  "updated_at": "2026-10-28T02:35:15Z",
+  "note": "本轮同源码完整八档1952/1952通过，零失败/错误/跳过/缺失；4158原始载荷与2174张PNG两次独立复核，1045条blocked保留。同版本真实录像已链接；未验收的字体/旋转/读屏/真机等保持原状态，工程检查点45%。",
   "latest_evidence": {
-    "path": "screenshots/40619742505-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40619742505"
+    "path": "screenshots/40620143610-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40620143610"
   },
   "checkpoints": [
     {
@@ -65,8 +65,8 @@
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
       "status": "in_progress",
-      "evidence": "screenshots/40545656099-1/manifest.json",
-      "scope": "Source1a72395:1935/1936 passed across eight emulators; one API33 TaskVisionQualification first-approval wait failed, zero errors/skips/missing. Both enhanced control-drag and real-controller approval cases pass across all eight APIs (16/16), including fresh approval after legacy reattachment. Failure-state details are not present in the original report; cause unresolved. Dedicated image, real-model, phone, broad-app and performance acceptance remain separate."
+      "evidence": "screenshots/40620143610-1/manifest.json",
+      "scope": "Source7af1ac979/run40620143610: 1952/1952 passed on eight API30-37 emulators, zero failures/errors/skips/missing by collected JUnit summaries and all case records. API30 status test explicitly prepares the unchanged UiAutomation node cache. Font-scale, rotation, screen-reader coexistence and actual screen-off acceptance remain incomplete; not phone, real-model, broad-app, performance-budget or ROM acceptance."
     },
     {
       "id": "performance",
@@ -89,8 +89,8 @@
       "id": "continuous_actions",
       "name": "普通操作连续执行与接管",
       "status": "in_progress",
-      "evidence": "screenshots/demos/40544423996-1/manifest.json",
-      "scope": "Source1a72395 actual API35 walkthrough covers confirmed edits, navigation and pause/resume/stop using a local synthetic HTTP model. Enhanced real-button Controller case passes on all eight APIs, including API30–32 drag invalidation and fresh approval. Not unrestricted continuous execution or real-model/phone acceptance."
+      "evidence": "screenshots/demos/40619745356-1/manifest.json",
+      "scope": "Source7af1ac979 actual API35 walkthrough passes 13 required phases and 8 confirmations with a local synthetic HTTP model; current pause/resume/stop, edits and navigation recorded. Full run40620143610 also passes the existing controller/approval cases across eight APIs. Not unrestricted execution, actual-model or phone acceptance."
     },
     {
       "id": "model_acceptance",

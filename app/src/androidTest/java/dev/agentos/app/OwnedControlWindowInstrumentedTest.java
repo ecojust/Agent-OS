@@ -5,6 +5,8 @@ import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.view.Display;
 import android.view.Gravity;
@@ -29,8 +31,10 @@ import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -653,11 +657,32 @@ public final class OwnedControlWindowInstrumentedTest {
     private static void assertAccessibleStatus(DeviceHarness device, String status, boolean paused) throws Exception {
         AgentAccessibilityService service = device.service;
         long deadline = SystemClock.elapsedRealtime() + 5_000;
-        safeMain(device, () -> service.showOverlay(status, paused, ""));
+        AtomicReference<StatusPublication> publication = new AtomicReference<>();
+        safeMain(device, () -> {
+            service.showOverlay(status, paused, "");
+            // Bind diagnostics to this publication's actual host. Capture failure
+            // must not change the successful test path or the identity deadline.
+            try { publication.set(new StatusPublication(service)); }
+            catch (RuntimeException | AssertionError unavailable) { /* Report unavailable only if waiting fails. */ }
+        });
         requireRegistrationTime(deadline);
         CompletableFuture<AgentAccessibilityService.OwnedControlWindowIdentity> pending = service.acquireOwnedControlWindowIdentity();
         AgentAccessibilityService.OwnedControlWindowIdentity owned;
         try { owned = pending.get(Math.max(1, deadline - SystemClock.elapsedRealtime()), TimeUnit.MILLISECONDS); }
+        catch (Exception failure) {
+            boolean futureDone = pending.isDone();
+            boolean futureCancelled = pending.isCancelled();
+            boolean futureExceptional = pending.isCompletedExceptionally();
+            // Preserve the failure-time flags, then stop the original waiter
+            // before spending any time on diagnostic collection.
+            pending.cancel(false);
+            if (failure instanceof InterruptedException) Thread.currentThread().interrupt();
+            String diagnostic;
+            try { diagnostic = failedStatusIdentityDiagnostic(service, publication.get(),
+                    futureDone, futureCancelled, futureExceptional, status, paused); }
+            catch (RuntimeException | AssertionError unavailable) { diagnostic = "diagnostic=unavailable"; }
+            throw new AssertionError("Owned status identity wait failed after publication; " + diagnostic, failure);
+        }
         finally { pending.cancel(false); }
         requireRegistrationTime(deadline);
         String expectedText = "Agent · " + status;
@@ -722,6 +747,117 @@ public final class OwnedControlWindowInstrumentedTest {
             SystemClock.sleep(40);
         }
         fail("The real owned control window did not publish its current accessible status within five seconds");
+    }
+
+    /** References and generations only; no observation, registration request or diagnostic text. */
+    private static final class StatusPublication {
+        final View panel;
+        final TextView title;
+        final Object callbacks;
+        final long connection, attachment, callback;
+        StatusPublication(AgentAccessibilityService service) {
+            panel = (View) controlField(service, "overlay");
+            title = (TextView) controlField(service, "statusView");
+            callbacks = controlField(service, "callbacks");
+            connection = (Long) controlField(service, "connectionGeneration");
+            attachment = (Long) controlField(service, "controlAttachmentGeneration");
+            callback = (Long) controlField(service, "callbackGeneration");
+        }
+    }
+
+    /** Only after the original get failed; 500ms is a diagnostic bound, never extra identity-wait time. */
+    private static String failedStatusIdentityDiagnostic(AgentAccessibilityService service,
+            StatusPublication original, boolean futureDone, boolean futureCancelled, boolean futureExceptional,
+            String status, boolean paused) {
+        String prefix = "stage=published_waiting_for_identity,requestedPaused=" + paused
+                + ",futureDone=" + futureDone + ",futureCancelled=" + futureCancelled
+                + ",futureExceptional=" + futureExceptional
+                + ",serviceCurrent=" + (AgentAccessibilityService.getInstance() == service)
+                + ",serviceConnected=" + service.isConnected();
+        if (original == null) return prefix + ",main=publication_binding_unavailable";
+        if (Thread.currentThread().isInterrupted()) return prefix + ",main=interrupted";
+        Handler handler = new Handler(Looper.getMainLooper());
+        CountDownLatch finished = new CountDownLatch(1);
+        AtomicBoolean active = new AtomicBoolean(true);
+        AtomicReference<String> snapshot = new AtomicReference<>("main=unavailable");
+        long expires = SystemClock.uptimeMillis() + 500;
+        Runnable read = () -> {
+            try {
+                if (!active.get() || SystemClock.uptimeMillis() >= expires) return;
+                if (AgentAccessibilityService.getInstance() != service) {
+                    snapshot.set("main=service_replaced"); return;
+                }
+                // Compare references before touching Views. A queued callback may
+                // never inspect a later task's host, even on the same service.
+                if (controlField(service, "overlay") != original.panel
+                        || controlField(service, "statusView") != original.title
+                        || controlField(service, "callbacks") != original.callbacks
+                        || (Long) controlField(service, "connectionGeneration") != original.connection
+                        || (Long) controlField(service, "controlAttachmentGeneration") != original.attachment
+                        || (Long) controlField(service, "callbackGeneration") != original.callback) {
+                    snapshot.set("main=publication_owner_changed"); return;
+                }
+                if (!active.get() || SystemClock.uptimeMillis() >= expires) return;
+                View panel = original.panel;
+                Rect bounds = new Rect();
+                if (panel != null) {
+                    int[] point = new int[2]; panel.getLocationOnScreen(point);
+                    bounds.set(point[0], point[1], point[0] + panel.getWidth(), point[1] + panel.getHeight());
+                }
+                AgentAccessibilityService.OwnedControlWindowIdentity identity =
+                        (AgentAccessibilityService.OwnedControlWindowIdentity) controlField(service, "currentControlWindowIdentity");
+                Object registration = controlField(service, "controlWindowRegistration");
+                snapshot.set("main=captured,connected=" + controlField(service, "connected")
+                        + ",overlayPresent=" + (panel != null)
+                        + ",attached=" + (panel != null && panel.isAttachedToWindow())
+                        + ",shown=" + (panel != null && panel.isShown())
+                        + ",laidOut=" + (panel != null && panel.isLaidOut())
+                        + ",layoutRequested=" + (panel != null && panel.isLayoutRequested())
+                        + ",bounds=" + bounds.toShortString()
+                        + ",callbacksPresent=" + (original.callbacks != null)
+                        + ",registrationPresent=" + (registration != null)
+                        + ",registrationWindowId=" + registrationNumber(registration, "windowId")
+                        + ",registrationDisplayId=" + registrationNumber(registration, "displayId")
+                        + ",registrationConnection=" + registrationNumber(registration, "connectionGeneration")
+                        + ",registrationAttachment=" + registrationNumber(registration, "attachmentGeneration")
+                        + ",removalPending=" + controlField(service, "controlRemovalPending")
+                        + ",pausedMatches=" + ((Boolean) controlField(service, "currentPaused") == paused)
+                        + ",statusMatches=" + status.equals(controlField(service, "currentStatus"))
+                        + ",textMatches=" + (original.title != null && ("Agent · " + status).contentEquals(original.title.getText()))
+                        + ",identityPresent=" + (identity != null)
+                        + ",windowId=" + (identity == null ? -1 : identity.windowId)
+                        + ",displayId=" + (identity == null ? -1 : identity.displayId)
+                        + ",identityBounds=" + (identity == null ? "none" : identity.copyBounds().toShortString())
+                        + ",connectionGeneration=" + original.connection
+                        + ",attachmentGeneration=" + original.attachment
+                        + ",callbackGeneration=" + original.callback
+                        + ",controlGeneration=" + controlField(service, "controlGeneration")
+                        + ",displayedCallbackGeneration=" + controlField(service, "displayedCallbackGeneration")
+                        + ",visualGeneration=" + controlField(service, "visualGeneration"));
+            } catch (RuntimeException | AssertionError unavailable) {
+                snapshot.set("main=capture_failed");
+            } finally { finished.countDown(); }
+        };
+        try {
+            if (!handler.post(read)) return prefix + ",main=post_rejected";
+            long remaining = expires - SystemClock.uptimeMillis();
+            if (remaining <= 0 || !finished.await(remaining, TimeUnit.MILLISECONDS)) return prefix + ",main=timed_out";
+            return prefix + "," + snapshot.get();
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            return prefix + ",main=interrupted";
+        } finally {
+            active.set(false);
+            handler.removeCallbacks(read);
+        }
+    }
+
+    private static long registrationNumber(Object registration, String fieldName) {
+        if (registration == null) return -1;
+        try {
+            Field field = registration.getClass().getDeclaredField(fieldName);
+            field.setAccessible(true); return ((Number) field.get(registration)).longValue();
+        } catch (ReflectiveOperationException unavailable) { return -1; }
     }
 
     private static AgentAccessibilityService.OwnedControlWindowIdentity identity(AgentAccessibilityService service) throws Exception {

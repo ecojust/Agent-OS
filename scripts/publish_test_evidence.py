@@ -22,8 +22,13 @@ MAX_FILES = 8000
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 DIAGNOSTIC_TITLE = "Android checks [owned-control-diagnostic]"
 QUALIFICATION_TITLE = "Android checks [task-qualification-diagnostic]"
+CONTROL_STATUS_TITLE = "Android checks [control-status-diagnostic]"
 DIAGNOSTIC_TITLES = {DIAGNOSTIC_TITLE: android_evidence.DIAGNOSTIC_SCOPE,
-                     QUALIFICATION_TITLE: android_evidence.QUALIFICATION_SCOPE}
+                     QUALIFICATION_TITLE: android_evidence.QUALIFICATION_SCOPE,
+                     CONTROL_STATUS_TITLE: android_evidence.CONTROL_STATUS_SCOPE}
+DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
+                    android_evidence.QUALIFICATION_SCOPE: "Task Qualification",
+                    android_evidence.CONTROL_STATUS_SCOPE: "Control Status"}
 
 
 def android_execution_scope(run: dict) -> str:
@@ -231,7 +236,7 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         return
     execution_scope = android_execution_scope(run)
     diagnostic = execution_scope in android_evidence.DIAGNOSTIC_SELECTIONS
-    diagnostic_name = "Task Qualification" if execution_scope == android_evidence.QUALIFICATION_SCOPE else "Owned Control"
+    diagnostic_name = DIAGNOSTIC_NAMES.get(execution_scope)
     output = Path("screenshots") / f"{run_id}-{attempt}"
     if output.exists():
         raise ValueError("this run's evidence directory already exists")

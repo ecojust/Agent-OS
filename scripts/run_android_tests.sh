@@ -18,6 +18,9 @@ case "$test_scope" in
   task-qualification-diagnostic)
     selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.TaskVisionQualificationInstrumentedTest#optedInTaskUsesItsOwnRealProbeAndResumeNeverRenewsTheOldQualification)
     ;;
+  control-status-diagnostic)
+    selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.OwnedControlWindowInstrumentedTest#ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow)
+    ;;
   *) echo "Invalid Android test scope" >&2; exit 2 ;;
 esac
 if [[ ! "$matrix_label" =~ ^(3[0-6]|37\.0)$ ]]; then

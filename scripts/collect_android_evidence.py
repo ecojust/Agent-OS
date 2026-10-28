@@ -20,7 +20,10 @@ DIAGNOSTIC_TEST = "dev.agentos.app.OwnedControlWindowInstrumentedTest#changedPre
 
 QUALIFICATION_SCOPE = "task-qualification-diagnostic"
 QUALIFICATION_TEST = "dev.agentos.app.TaskVisionQualificationInstrumentedTest#optedInTaskUsesItsOwnRealProbeAndResumeNeverRenewsTheOldQualification"
-DIAGNOSTIC_SELECTIONS = {DIAGNOSTIC_SCOPE: DIAGNOSTIC_TEST, QUALIFICATION_SCOPE: QUALIFICATION_TEST}
+CONTROL_STATUS_SCOPE = "control-status-diagnostic"
+CONTROL_STATUS_TEST = "dev.agentos.app.OwnedControlWindowInstrumentedTest#ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow"
+DIAGNOSTIC_SELECTIONS = {DIAGNOSTIC_SCOPE: DIAGNOSTIC_TEST, QUALIFICATION_SCOPE: QUALIFICATION_TEST,
+                        CONTROL_STATUS_SCOPE: CONTROL_STATUS_TEST}
 
 
 def test_selection(scope: str) -> str:

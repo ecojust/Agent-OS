@@ -23,12 +23,15 @@ PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 DIAGNOSTIC_TITLE = "Android checks [owned-control-diagnostic]"
 QUALIFICATION_TITLE = "Android checks [task-qualification-diagnostic]"
 CONTROL_STATUS_TITLE = "Android checks [control-status-diagnostic]"
+SCREEN_OFF_TITLE = "Android checks [screen-off-diagnostic]"
 DIAGNOSTIC_TITLES = {DIAGNOSTIC_TITLE: android_evidence.DIAGNOSTIC_SCOPE,
                      QUALIFICATION_TITLE: android_evidence.QUALIFICATION_SCOPE,
-                     CONTROL_STATUS_TITLE: android_evidence.CONTROL_STATUS_SCOPE}
+                     CONTROL_STATUS_TITLE: android_evidence.CONTROL_STATUS_SCOPE,
+                     SCREEN_OFF_TITLE: android_evidence.SCREEN_OFF_SCOPE}
 DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
                     android_evidence.QUALIFICATION_SCOPE: "Task Qualification",
-                    android_evidence.CONTROL_STATUS_SCOPE: "Control Status"}
+                    android_evidence.CONTROL_STATUS_SCOPE: "Control Status",
+                    android_evidence.SCREEN_OFF_SCOPE: "Screen Off"}
 
 
 def android_execution_scope(run: dict) -> str:

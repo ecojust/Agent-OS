@@ -125,7 +125,8 @@ class EvidenceTests(unittest.TestCase):
 
     def test_arbitrary_test_filters_and_unknown_scopes_do_not_start_devices_or_gradle(self):
         for scope in ("SomeClass#someMethod", "owned-control-diagnostic --class AnotherClass", "task-qualification-diagnostic --class AnotherClass",
-                      "control-status-diagnostic --class AnotherClass", "future-scope"):
+                      "control-status-diagnostic --class AnotherClass",
+                      "screen-off-diagnostic --class AnotherClass", "future-scope"):
             with self.subTest(scope=scope):
                 self.check_test_exit("30", 30, scope=scope, expected_exit=2, invalid_scope=True)
 
@@ -482,6 +483,94 @@ class EvidenceTests(unittest.TestCase):
                 capture["junit"] = collector.junit_summary(root, collector.CONTROL_STATUS_TEST)
                 with self.subTest(body=body), self.assertRaises(ValueError):
                     publisher.diagnostic_result(capture, tests, job, collector.CONTROL_STATUS_SCOPE)
+
+    def test_screen_off_shell_selects_only_its_fixed_case_and_preserves_failure(self):
+        self.assertEqual("dev.agentos.app.AgentControllerInstrumentedTest#actualScreenOffStopsPendingApprovalAndWakeDoesNotResumeIt",
+                         collector.SCREEN_OFF_TEST)
+        self.check_test_exit("33", 33, scope=collector.SCREEN_OFF_SCOPE)
+
+    def test_screen_off_scope_requires_its_exact_manual_title_and_matching_capture(self):
+        run = source_run()
+        run["display_title"] = publisher.SCREEN_OFF_TITLE
+        self.assertEqual("full", publisher.android_execution_scope(run))
+        run["event"] = "workflow_dispatch"
+        self.assertEqual(collector.SCREEN_OFF_SCOPE, publisher.android_execution_scope(run))
+        run["display_title"] += " --class Other"
+        with self.assertRaises(ValueError):
+            publisher.android_execution_scope(run)
+        for record in ({}, {"executionScope": collector.DIAGNOSTIC_SCOPE,
+                            "testSelection": collector.DIAGNOSTIC_TEST},
+                       {"executionScope": collector.SCREEN_OFF_SCOPE,
+                        "testSelection": collector.DIAGNOSTIC_TEST}):
+            with self.subTest(record=record), self.assertRaises(ValueError):
+                collector.verify_capture_scope(record, collector.SCREEN_OFF_SCOPE)
+        self.assertEqual(collector.DIAGNOSTIC_TEST, collector.test_selection(collector.DIAGNOSTIC_SCOPE))
+        self.assertEqual("full-suite", collector.test_selection("full"))
+
+    def test_screen_off_finalize_preserves_scope_without_reports_and_cannot_relabel(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            command = ["python3", str(SCRIPTS / "collect_android_evidence.py"), "finalize",
+                       "--matrix-label", "33", "--scope", collector.SCREEN_OFF_SCOPE]
+            subprocess.run(command, cwd=root, check=True, capture_output=True, text=True)
+            path = root / "test-evidence/api-33/capture.json"
+            original = path.read_bytes()
+            record = json.loads(original)
+            self.assertEqual(collector.SCREEN_OFF_TEST, record["testSelection"])
+            self.assertEqual(collector.SCREEN_OFF_TEST, record["junit"]["selection"])
+            self.assertEqual(0, record["junit"]["selectedTests"])
+            for scope in ("full", collector.DIAGNOSTIC_SCOPE, collector.QUALIFICATION_SCOPE, collector.CONTROL_STATUS_SCOPE):
+                result = subprocess.run(command[:-1] + [scope], cwd=root, capture_output=True, text=True)
+                self.assertNotEqual(0, result.returncode)
+                self.assertEqual(original, path.read_bytes())
+
+    def test_screen_off_archive_keeps_all_missing_and_mixed_lanes_in_its_eight_case_scope(self):
+        for lanes, counts in (({}, {"passed": 0, "failed": 0, "unverified": 8}),
+                              ({"30": "passed", "33": "failed", "37.0": "skipped"},
+                               {"passed": 1, "failed": 1, "unverified": 6})):
+            with self.subTest(lanes=lanes):
+                manifest, readme = self.diagnostic_archive(lanes, collector.SCREEN_OFF_SCOPE)
+                self.assertEqual(collector.SCREEN_OFF_SCOPE, manifest["executionScope"])
+                self.assertEqual(collector.SCREEN_OFF_TEST, manifest["testSelection"])
+                self.assertEqual((1, 8), (manifest["expectedTestsPerApi"], manifest["expectedTests"]))
+                self.assertEqual(8, len(manifest["apis"]))
+                self.assertEqual(counts, manifest["diagnosticCaseCounts"])
+                self.assertFalse(manifest["fullSuiteAcceptance"])
+                self.assertIn("# Screen Off Diagnostic Evidence", readme)
+                self.assertIn(collector.SCREEN_OFF_TEST, readme)
+                self.assertIn("not counted as passed", readme)
+                self.assertNotIn(collector.DIAGNOSTIC_TEST, readme)
+
+    def test_screen_off_archive_rejects_other_scope_and_wrong_manifest_case(self):
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.diagnostic_archive({"33": "passed"}, collector.SCREEN_OFF_SCOPE,
+                                    artifact_scope=collector.DIAGNOSTIC_SCOPE)
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.diagnostic_archive({"33": "passed"}, collector.SCREEN_OFF_SCOPE,
+                                    manifest_selection=collector.DIAGNOSTIC_TEST)
+
+    def test_screen_off_original_xml_is_required_and_cannot_mix_cases_or_borrow_old_selection(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            test_class, method = collector.SCREEN_OFF_TEST.split("#")
+            xml = root / "result.xml"
+            case = f'<testcase classname="{test_class}" name="{method}"/>'
+            xml.write_text('<testsuite>' + case + '</testsuite>')
+            capture = {"junit": collector.junit_summary(root, collector.SCREEN_OFF_TEST), "gradleExitCode": 0}
+            tests = [{"testClass": test_class, "testName": method, "testResult": "pass"}]
+            job = {"conclusion": "success"}
+            self.assertEqual("passed", publisher.diagnostic_result(capture, tests, job, collector.SCREEN_OFF_SCOPE))
+            self.assertEqual("unverified", publisher.diagnostic_result(capture, [], job, collector.SCREEN_OFF_SCOPE))
+            with self.assertRaises(ValueError):
+                publisher.diagnostic_result(capture, tests, job, collector.DIAGNOSTIC_SCOPE)
+            old_class, old_method = collector.DIAGNOSTIC_TEST.split("#")
+            for body in (f'<testcase classname="{old_class}" name="{old_method}"/>',
+                         case + f'<testcase classname="{old_class}" name="{old_method}"/>',
+                         case + case):
+                xml.write_text('<testsuite>' + body + '</testsuite>')
+                capture["junit"] = collector.junit_summary(root, collector.SCREEN_OFF_TEST)
+                with self.subTest(body=body), self.assertRaises(ValueError):
+                    publisher.diagnostic_result(capture, tests, job, collector.SCREEN_OFF_SCOPE)
 
     def test_archive_keeps_missing_lanes_and_source_failure(self):
         with tempfile.TemporaryDirectory() as temp:

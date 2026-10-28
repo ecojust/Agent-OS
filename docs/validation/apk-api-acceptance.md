@@ -19,14 +19,16 @@
 | 连续导航模式只允许已声明的普通导航省去逐次确认 | [ContinuousNavigationInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/ContinuousNavigationInstrumentedTest.java)：`launchScrollAndHomeChangeTheRealUiWithoutAnApproval`、`textClickAndBackStillRequireDistinctApprovalsInNavigationMode`、`rejectingInputCannotBeBypassedWithAnyNavigationTool` | 点击、输入与返回仍需确认，不代表任意连续自动操作 |
 | 任务诊断由用户预览／复制，旧预览不能操作替代任务 | [TaskDiagnosticsInstrumentedTest](../../app/src/androidTest/java/dev/agentos/app/TaskDiagnosticsInstrumentedTest.java)：`activePreviewIsFrozenRedactedExplicitlyCopiedAndCanStopItsOriginalTask`、`completedCodeSurvivesButClearReplacementAndLeavingInvalidateOldDialogActions` | 诊断与预算数字不代表性能预算或完成动作数量 |
 
-## 最小下一步：实际熄屏停止
+## 实际熄屏停止：用例已实现，设备结果待验证
 
-当前生产服务已有屏幕广播及交互／锁屏状态检查；测试中的 `DeviceHarness` 只在初始化和清理时唤醒、解除专用模拟器键盘锁，没有触发真实熄屏并验证停止的仪器用例。先完成当前源码的完整回归，再新增一个 `actualScreenOffStopsPendingApprovalAndWakeDoesNotResumeIt` 用例，复用现有控制器测试设施：
+生产服务已有屏幕广播及交互／锁屏状态检查；先前 `DeviceHarness` 只在初始化和清理时唤醒、解除专用模拟器键盘锁。完整回归40620143610之后新增了 `actualScreenOffStopsPendingApprovalAndWakeDoesNotResumeIt`，复用现有控制器测试设施。此新增用例不属于先前1952项结果，实际设备执行尚待验证：
 
 1. 使用 `DeviceHarness`、本地 `REJECT_CLICK` 场景与真实保存配置，等待实际控制窗和待确认请求；记录原审批、原 Controller 的 `RunControl`、请求次数及 `Count: 0`，确认派发次数为零。
 2. 确认实际亮屏后只发送一次 `input keyevent 223`，在固定期限内分别确认 `PowerManager.isInteractive()==false` 与任务停止。核对审批清除、原任务取消、`STOPPED/TASK_STOPPED` 及零派发；不发送伪造屏幕广播、不直接调用停止来制造通过。
 3. 唤醒并解除专用模拟器键盘锁，尝试旧审批与恢复入口，确认旧任务不恢复、没有新模型请求、原派发仍为零、实际计数仍为零。不得重新启动或重置 Fixture 来读取结果，否则可能抹去副作用。前后保存真实合成界面截图，熄屏状态由断言记录，不把黑屏作为可用截图。
 4. 失败先保留有界状态与计数，再在 `finally` 唤醒、清理任务并恢复原配置和无障碍设置。等待超时保持失败，不重发熄屏或放宽保护。
+
+`android.yml` 的 `screen-off-diagnostic` 只选择这个用例，API30–37八档共8项；工作流标题、原JUnit选择和截图清单核对同一范围。完整套件新增1项后为每档245项、共1960项，只有实际执行和原始结果核验后才记录通过。专项或编译通过均不替代完整回归。
 
 这只验证待确认阶段的实际熄屏与唤醒后不恢复。无凭据模拟器不保证安全键盘锁处于锁定状态，因此不能据此报告密码锁屏验收；模型等待或已提交动作中的熄屏也属于其他场景。
 

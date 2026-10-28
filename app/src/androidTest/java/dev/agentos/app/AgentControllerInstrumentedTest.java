@@ -1,9 +1,11 @@
 package dev.agentos.app;
 
+import android.app.KeyguardManager;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.PowerManager;
 import android.os.SystemClock;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Button;
@@ -18,6 +20,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.agentos.core.TaskBudget;
 import dev.agentos.core.RunControl;
+import dev.agentos.core.TaskDiagnostics;
+import dev.agentos.core.TaskResult;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -622,6 +626,164 @@ public final class AgentControllerInstrumentedTest {
                 screenshots.capture("rejection-left-counter-unchanged");
             } finally { clear(device, controller); }
         }
+    }
+
+    @Test public void actualScreenOffStopsPendingApprovalAndWakeDoesNotResumeIt() throws Exception {
+        try (DeviceHarness device = new DeviceHarness();
+             LocalControllerModelServer server = new LocalControllerModelServer(LocalControllerModelServer.Scenario.REJECT_CLICK);
+             ControllerTestSettings settings = new ControllerTestSettings(device.context, server)) {
+            AgentController controller = AgentController.get(device.context);
+            PowerManager power = device.context.getSystemService(PowerManager.class);
+            KeyguardManager keyguard = device.context.getSystemService(KeyguardManager.class);
+            AtomicReference<RunControl> original = new AtomicReference<>();
+            String phase = "preparing";
+            int requestBaseline = -1;
+            boolean observedScreenOff = false;
+            AssertionError reportedFailure = null;
+            try {
+                assertNotNull(power);
+                assertNotNull(keyguard);
+                assertTrue("The synthetic device must initially be interactive", power.isInteractive());
+                assertFalse("The synthetic device must initially be unlocked", keyguard.isKeyguardLocked());
+                start(device, controller, settings, "Request one synthetic counter increment and wait for confirmation.");
+                AgentController.State pending = awaitApproval(controller, server);
+                awaitExpandedApproval(device, controller, pending, SystemClock.elapsedRealtime() + 5_000);
+                safeMain(device, () -> {
+                    assertEquals(pending.approvalId, controller.getState().approvalId);
+                    original.set((RunControl) objectField(controller, AgentController.class, "control"));
+                    assertNotNull(original.get());
+                });
+                RunControl owner = original.get();
+                long originalEpoch = owner.getExecutionEpoch();
+                assertFalse(owner.isCancelled());
+                assertFalse(owner.isPaused());
+                assertEquals(0, owner.getDispatchAttempts());
+                requestBaseline = server.requestCount();
+                assertTrue(requestBaseline >= 1 && requestBaseline <= 1 + LocalControllerModelServer.MAX_WRITE_REPLANS);
+                assertEquals("Count: 0", fixtureText(device, "counter_value"));
+                screenshots.capture("pending-approval-before-actual-screen-off");
+                phase = "approval_visible";
+                assertEquals(pending.approvalId, controller.getState().approvalId);
+                assertTrue(controller.getState().running);
+                assertTrue(power.isInteractive());
+                assertEquals(0, owner.getDispatchAttempts());
+
+                // One real SLEEP input only. No forged broadcast, approval or
+                // controller.stop() participates in the measured transition.
+                long stoppedDeadline = SystemClock.elapsedRealtime() + 10_000;
+                phase = "sleep_sent";
+                device.shell("input keyevent 223");
+                while (power.isInteractive() && SystemClock.elapsedRealtime() < stoppedDeadline) {
+                    server.assertHealthy();
+                    Thread.sleep(25);
+                }
+                observedScreenOff = !power.isInteractive();
+                assertTrue("The real SLEEP key did not make the device noninteractive", observedScreenOff);
+                assertTrue("Screen-off must be observed within the original deadline", SystemClock.elapsedRealtime() < stoppedDeadline);
+                phase = "screen_off_observed";
+                while (!screenOffTaskStopped(controller.getState(), owner)
+                        && SystemClock.elapsedRealtime() < stoppedDeadline) {
+                    server.assertHealthy();
+                    Thread.sleep(25);
+                }
+                assertScreenOffTaskStopped(controller, owner, originalEpoch);
+                assertTrue("The original task must stop within the original deadline", SystemClock.elapsedRealtime() < stoppedDeadline);
+                assertFalse("The task must stop before this test wakes the device", power.isInteractive());
+                assertEquals(requestBaseline, server.requestCount());
+                phase = "stopped_while_screen_off";
+                // Screen-off state is proved by the platform and task assertions,
+                // not by archiving a black screenshot as usable visual evidence.
+
+                phase = "waking";
+                wakeSyntheticDevice(device, power, keyguard);
+                assertScreenOffTaskStopped(controller, owner, originalEpoch);
+                safeMain(device, () -> {
+                    controller.approve(pending.approvalId, true);
+                    controller.pauseResume();
+                });
+                phase = "old_approval_and_resume_attempted";
+                assertFalse("Wake, the old approval or the resume entry must not request another model plan",
+                        server.receivedAnotherRequest(requestBaseline, 500));
+                assertEquals(requestBaseline, server.requestCount());
+                assertScreenOffTaskStopped(controller, owner, originalEpoch);
+                // Read the same foreground fixture without relaunching/resetting it.
+                assertEquals("Count: 0", fixtureText(device, "counter_value"));
+                assertEquals(0, owner.getDispatchAttempts());
+                server.assertHealthy();
+                screenshots.capture("actual-wake-left-original-counter-unchanged");
+                phase = "verified";
+            } catch (Exception | AssertionError failure) {
+                // Freeze bounded metadata before wake, stop or configuration cleanup.
+                String diagnostic = "Actual screen-off assertion failed before cleanup; diagnostic=unavailable";
+                Throwable diagnosticFailure = null;
+                try { diagnostic = screenOffFailureDiagnostic(
+                        phase, observedScreenOff, power, controller, original.get(), server, requestBaseline); }
+                catch (RuntimeException | AssertionError unavailable) { diagnosticFailure = unavailable; }
+                reportedFailure = new AssertionError(diagnostic, failure);
+                if (diagnosticFailure != null) reportedFailure.addSuppressed(diagnosticFailure);
+                throw reportedFailure;
+            } finally {
+                Throwable cleanupFailure = null;
+                try { wakeSyntheticDevice(device, power, keyguard); }
+                catch (Exception | AssertionError failure) { cleanupFailure = failure; }
+                try { clear(device, controller); }
+                catch (Exception | AssertionError failure) {
+                    if (cleanupFailure == null) cleanupFailure = failure;
+                    else cleanupFailure.addSuppressed(failure);
+                }
+                if (cleanupFailure != null) {
+                    if (reportedFailure != null) reportedFailure.addSuppressed(cleanupFailure);
+                    else throw new AssertionError("Could not restore the synthetic device after screen-off testing", cleanupFailure);
+                }
+            }
+        }
+    }
+
+    private static boolean screenOffTaskStopped(AgentController.State state, RunControl owner) {
+        return owner.isCancelled() && !state.running && !state.paused
+                && state.approvalId.isEmpty() && state.approval.isEmpty()
+                && state.resultKind == TaskResult.Kind.STOPPED && "TASK_STOPPED".equals(state.resultCode)
+                && state.usage != null && state.usage.finished && owner.getTaskId().equals(state.usage.taskId);
+    }
+
+    private static void assertScreenOffTaskStopped(AgentController controller, RunControl owner, long originalEpoch) {
+        AgentController.State state = controller.getState();
+        assertTrue("Actual screen-off must finish the original task as STOPPED/TASK_STOPPED", screenOffTaskStopped(state, owner));
+        assertTrue("Screen-off must invalidate the original execution epoch", owner.getExecutionEpoch() > originalEpoch);
+        assertEquals("The original Controller task must never dispatch the pending write", 0, owner.getDispatchAttempts());
+        assertFalse(owner.hasInFlightDispatch());
+        TaskDiagnostics diagnostic = controller.getTaskDiagnostics();
+        assertNotNull(diagnostic);
+        assertEquals(owner.getTaskId(), diagnostic.taskId);
+        assertEquals(TaskDiagnostics.Phase.FINISHED, diagnostic.phase);
+        assertEquals(TaskResult.Kind.STOPPED, diagnostic.resultKind);
+        assertEquals("TASK_STOPPED", diagnostic.resultCode);
+    }
+
+    private static void wakeSyntheticDevice(DeviceHarness device, PowerManager power, KeyguardManager keyguard) throws Exception {
+        try { device.shell("input keyevent 224"); }
+        finally { device.shell("wm dismiss-keyguard"); }
+        assertNotNull(power);
+        assertNotNull(keyguard);
+        long deadline = SystemClock.elapsedRealtime() + 5_000;
+        while ((!power.isInteractive() || keyguard.isKeyguardLocked()) && SystemClock.elapsedRealtime() < deadline) Thread.sleep(25);
+        assertTrue("The synthetic device did not wake", power.isInteractive());
+        assertFalse("The synthetic device keyguard was not dismissed", keyguard.isKeyguardLocked());
+    }
+
+    private static String screenOffFailureDiagnostic(String phase, boolean observedScreenOff, PowerManager power,
+            AgentController controller, RunControl owner, LocalControllerModelServer server, int requestsBefore) {
+        AgentController.State state = controller.getState();
+        return "Actual screen-off assertion failed before cleanup; phase=" + phase
+                + ",screenOffObserved=" + observedScreenOff + ",interactive=" + (power == null ? "unavailable" : power.isInteractive())
+                + ",running=" + state.running + ",paused=" + state.paused + ",approvalPending=" + !state.approvalId.isEmpty()
+                + ",resultKind=" + state.resultKind + ",resultCode=" + TaskDiagnostics.safeTerminalCode(state.resultCode)
+                + ",ownerPresent=" + (owner != null) + ",ownerCancelled=" + (owner != null && owner.isCancelled())
+                + ",ownerEpoch=" + (owner == null ? -1 : owner.getExecutionEpoch())
+                + ",dispatchAttempts=" + (owner == null ? -1 : owner.getDispatchAttempts())
+                + ",usageFinished=" + (state.usage != null && state.usage.finished)
+                + ",usageMatchesOwner=" + (owner != null && state.usage != null && owner.getTaskId().equals(state.usage.taskId))
+                + ",requestsBefore=" + requestsBefore + ",requestsNow=" + server.requestCount();
     }
 
     @Test public void theDefaultRoundBudgetStopsBeforeRequestingTheNextWritePlan() throws Exception {

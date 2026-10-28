@@ -21,6 +21,9 @@ case "$test_scope" in
   control-status-diagnostic)
     selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.OwnedControlWindowInstrumentedTest#ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow)
     ;;
+  screen-off-diagnostic)
+    selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.AgentControllerInstrumentedTest#actualScreenOffStopsPendingApprovalAndWakeDoesNotResumeIt)
+    ;;
   *) echo "Invalid Android test scope" >&2; exit 2 ;;
 esac
 if [[ ! "$matrix_label" =~ ^(3[0-6]|37\.0)$ ]]; then

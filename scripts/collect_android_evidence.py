@@ -22,8 +22,10 @@ QUALIFICATION_SCOPE = "task-qualification-diagnostic"
 QUALIFICATION_TEST = "dev.agentos.app.TaskVisionQualificationInstrumentedTest#optedInTaskUsesItsOwnRealProbeAndResumeNeverRenewsTheOldQualification"
 CONTROL_STATUS_SCOPE = "control-status-diagnostic"
 CONTROL_STATUS_TEST = "dev.agentos.app.OwnedControlWindowInstrumentedTest#ownedIdentityAndControlLeaseMatchTheActuallyRegisteredWindow"
+SCREEN_OFF_SCOPE = "screen-off-diagnostic"
+SCREEN_OFF_TEST = "dev.agentos.app.AgentControllerInstrumentedTest#actualScreenOffStopsPendingApprovalAndWakeDoesNotResumeIt"
 DIAGNOSTIC_SELECTIONS = {DIAGNOSTIC_SCOPE: DIAGNOSTIC_TEST, QUALIFICATION_SCOPE: QUALIFICATION_TEST,
-                        CONTROL_STATUS_SCOPE: CONTROL_STATUS_TEST}
+                        CONTROL_STATUS_SCOPE: CONTROL_STATUS_TEST, SCREEN_OFF_SCOPE: SCREEN_OFF_TEST}
 
 
 def test_selection(scope: str) -> str:

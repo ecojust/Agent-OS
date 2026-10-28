@@ -13,7 +13,7 @@
 | 服务端Token用量 | 统一模型网关按任务登记调用，输入/输出/总计分别显示有效报告小计与覆盖次数；缺失、冲突和溢出不伪造数值，终态冻结、清空与新任务隔离。核心314项、脚本314项及APK/lint通过；新增3项八档24/24通过，整套另有API34窗口事件失败，见[验收范围](docs/validation/task-token-usage.md) |
 | 本次任务操作回执 | 六种既有写工具的实际提交/接受/未验证状态，最多200项纯内存快照；停止保留未决未知，清空与新任务隔离旧记录。原生受保护只读页面不触发额外操作；新回执16/16及原三次写操作8/8在八档完整回归中通过，见[验收范围](docs/validation/task-action-receipts.md) |
 | 连续导航 | 本机显式选择并加密保存模式，仅启动、滚动、主页可省去逐次确认；返回、点击和输入仍需确认。完整观察、授权和最终派发校验保留，旧配置不会自动启用 |
-| 导航来源拒绝验证 | 既有设置页用例改为核对实际Intent候选、系统应用与独立聚焦窗口；失败前附有界无内容返回/派发诊断，原单次调用及暂停、零派发断言保留。仅测试代码变更，测试APK及lint通过，设备结果待验证，见[验证范围](docs/validation/navigation-origin-verification.md) |
+| 导航来源拒绝验证 | 既有设置页用例改为核对实际Intent候选、系统应用与独立聚焦窗口；失败前附有界无内容返回/派发诊断，原单次调用及暂停、零派发断言保留。仅测试代码变更，测试APK及lint通过；强化用例八档8/8、原风险用例24/24及整套2112/2112通过。失败诊断本轮未触发，历史根因未倒推，见[验证范围](docs/validation/navigation-origin-verification.md) |
 | 提交状态 | 绑定原代次的单次本地提交凭据，取消后保留在途状态直至原执行线程结算；不将本地准入当作系统接受，不让停止等待远端调用 |
 | 控制条与设备通道 | 主线程发布不可变控制条几何凭据，布局/回调/连接变化立即失效；进程级单工作线程占用门跨服务实例保留，原调用返回后才释放 |
 | 控制状态发布 | 相同任务与审批复用回调，完全相同的可见状态不重复重排控制条；旧任务回调不能操作新任务。真实内容、审批、回调和布局变化仍撤销旧凭据；新增4项 Android 回归在第三十二轮八档全部通过 |
@@ -144,12 +144,13 @@ Windows 使用 `gradlew.bat`。默认 APK 输出到 `app/build/outputs/apk/debug
 
 | 范围 | 已核实结果与入口 |
 | --- | --- |
-| 最近完整回归 | 源码`31e14e233`，八档 **2111/2112通过、1失败**；API35既有导航来源拒绝用例失败，零错误、跳过和缺失；[运行与调试APK](https://github.com/ecojust/Agent-OS/actions/runs/40698819944)、[逐项原始证据](screenshots/40698819944-1/manifest.json)、[原始失败及证据边界](docs/validation/diagnostics/navigation-origin-40698819944/README.md) |
+| 最近完整回归 | 源码`1f9f773ae`，八档 **2112/2112通过**，零失败、错误、跳过和缺失；[运行与调试APK](https://github.com/ecojust/Agent-OS/actions/runs/40706713295)、[逐项原始证据](screenshots/40706713295-1/manifest.json)。原31e1的2111/2112及[导航失败](docs/validation/diagnostics/navigation-origin-40698819944/README.md)保留，本轮不证明其历史根因已确定 |
 | 此前完整通过基线 | 源码`4b87c9a28`，八档1992/1992通过；[原运行](https://github.com/ecojust/Agent-OS/actions/runs/40664625632)、[原始证据](screenshots/40664625632-1/manifest.json)，不改写为本轮结果 |
 | 配置恢复 | 源码28a4，核心299/299、脚本314/314、APK/lint通过；新增6项八档 **48/48通过**，整套另有1项旧窗口事件失败；[验收范围及限制](docs/validation/configuration-recovery.md) |
 | 服务端Token用量 | 源码52ce，核心314/314、脚本314/314及构建检查通过；新增3项八档 **24/24通过**，整套另有1项窗口事件失败；[验收范围及限制](docs/validation/task-token-usage.md) |
 | 原生表单可访问性 | 源码c5b8，核心314/314、脚本314/314及构建检查通过；新增3项八档 **24/24通过**，整套另有1项API35窗口事件失败；[平台节点验收范围及限制](docs/validation/form-accessibility.md) |
 | 任务输入生命周期 | 源码31e1，核心314/314、脚本314/314及构建检查通过；新增3项八档 **24/24通过**，整套另有1项API35导航拒绝失败；[真实重建与草稿清理范围](docs/validation/task-input-draft.md) |
+| 导航来源验证 | 源码1f9f，仅强化已有测试，生产不变；相关测试APK/lint通过，Settings来源用例 **8/8**、原三项风险用例 **24/24**，均在完整2112/2112中通过；[前置身份与诊断边界](docs/validation/navigation-origin-verification.md) |
 | 操作回执 | 源码4b87，完整核心299/299、脚本304/304、APK/lint通过；新回执16/16及强化的真实三次写操作8/8在同源码完整矩阵通过；[固定验收范围](docs/validation/task-action-receipts.md) |
 | 字体缩放专项 | 源码14c主Activity与控制窗各8/8通过；[Activity](screenshots/40646422586-1/manifest.json)、[控制窗](screenshots/40646425323-1/manifest.json)，完整回归中也均通过 |
 | 整体实际操作演示 | 源码1f9f、API35本地合成模型流程通过，32.651秒；[录像](screenshots/demos/40706746603-1/demo.mp4)及[范围说明](docs/validation/operation-demo.md#导航来源验证源码的整体演示)。普通Fixture录像不运行Settings来源拒绝测试，专项语义另行验收 |

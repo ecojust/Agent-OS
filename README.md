@@ -25,14 +25,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 3cff真实字体1.0→1.3及原设置恢复专项8/8通过，零失败/跳过/缺失；32张真实PNG及逐案结果已核验归档。完整1968项同源码回归正在运行，新版录像归档核验中，旧失败与视频原样保留，检查点45%。
+**本次更新：** 3cff字体恢复专项8/8通过，同源码真实整体录像已核验归档：36.035秒、432821字节、13阶段/8次确认，安全标志保持。1968项完整回归仍运行；旧失败与视频保留，检查点45%。
 
-**记录时间：** 2026-10-28T04:43:46Z
+**记录时间：** 2026-10-28T04:49:48Z
 
 [最近测试截图与清单](screenshots/40632979448-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40632979448)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/40631598544-1/demo.mp4) · [录制与验证清单](screenshots/demos/40631598544-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40631598544)。
-录制版本：[`b6fd6243f`](https://github.com/ecojust/Agent-OS/commit/b6fd6243f11f1660aa496be10e09e980b005021c)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/40633395073-1/demo.mp4) · [录制与验证清单](screenshots/demos/40633395073-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40633395073)。
+录制版本：[`3cff90d62`](https://github.com/ecojust/Agent-OS/commit/3cff90d62fe181fdee9c83b6348ea4becd6ac121)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 | 检查点 | 状态 |
 | --- | --- |

@@ -148,7 +148,7 @@ Windows 使用 `gradlew.bat`。默认 APK 输出到 `app/build/outputs/apk/debug
 | 服务端Token用量 | 源码52ce，核心314/314、脚本314/314及构建检查通过；新增3项八档 **24/24通过**，整套另有1项窗口事件失败；[验收范围及限制](docs/validation/task-token-usage.md) |
 | 操作回执 | 源码4b87，完整核心299/299、脚本304/304、APK/lint通过；新回执16/16及强化的真实三次写操作8/8在同源码完整矩阵通过；[固定验收范围](docs/validation/task-action-receipts.md) |
 | 字体缩放专项 | 源码14c主Activity与控制窗各8/8通过；[Activity](screenshots/40646422586-1/manifest.json)、[控制窗](screenshots/40646425323-1/manifest.json)，完整回归中也均通过 |
-| 整体实际操作演示 | 源码52ce、API35本地合成模型流程通过，38.584秒；[录像](screenshots/demos/40684345203-1/demo.mp4)及[范围说明](docs/validation/operation-demo.md#token用量源码的整体演示)。受保护Token用量页面及数值由独立测试验证，不在普通录像中展示 |
+| 整体实际操作演示 | 源码c5b8、API35本地合成模型流程通过，33.343秒；[录像](screenshots/demos/40690798714-1/demo.mp4)及[范围说明](docs/validation/operation-demo.md#原生表单可访问性源码的整体演示)。受保护表单语义由独立测试验证，不在普通录像中展示 |
 | 第三方应用开发探针 | 独立v4源码5436为 **24/32通过、8失败**；[原始结果](screenshots/third-party-40674357809-1/manifest.json)，与v3的22/32、v2的31/32分开统计；本轮配置恢复没有重跑或改写这些结果 |
 | 待定位的历史现象 | 先前API33图像资格等待、API36视觉事件代次及专用原生捕获TIMEOUT未确定完整根因；后续通过不改写原失败，逐轮原始记录保留 |
 | 交付边界 | Android11+开发APK；普通构建尚未开放截图与坐标手势，真实模型、厂商真机、性能预算、正式签名及可刷写系统镜像未验收 |

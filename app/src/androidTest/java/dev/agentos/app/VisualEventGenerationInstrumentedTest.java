@@ -61,35 +61,188 @@ public final class VisualEventGenerationInstrumentedTest {
     @Test public void actualSameHeightStatusEventsPreserveTheOriginalLocalGuardAcrossRepeatedPublications() throws Exception {
         try (Environment env = new Environment("CapturePatternActivity")) {
             if (unsupported(env)) return;
-            env.main(() -> env.device.service.showOverlay("Phase 100", false, ""));
-            controls(env.device); env.device.awaitUiIdle();
-            try (Input input = env.input("status-publication-guard")) {
-                input.prepare(); input.transfer();
-                DisclosureGuard guard = input.validate(SystemClock.elapsedRealtime() + 5_000);
-                long generation = env.device.service.visualEventGeneration();
-                AgentAccessibilityService.OwnedControlWindowIdentity original = env.device.service.getOwnedControlWindowIdentity();
-                assertNotNull(original); assertTrue(guard.isCurrent(env.device.control, input.request.executionEpoch));
-                for (String status : new String[] {"Phase 101", "Phase 102", "Phase 103"}) {
-                    AccessibilityEvent delivered = env.device.automation.executeAndWaitForEvent(
-                            () -> env.main(() -> env.device.service.showOverlay(status, false, "")),
-                            event -> event.getWindowId() == original.windowId
-                                    && (event.getEventType() == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED
-                                    || event.getEventType() == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
-                                    && (event.getContentChangeTypes() & AccessibilityEvent.CONTENT_CHANGE_TYPE_TEXT) != 0),
-                            5_000);
-                    try { assertEquals(original.windowId, delivered.getWindowId()); }
-                    finally { delivered.recycle(); }
-                    AgentAccessibilityService.ControlLease current = controls(env.device);
-                    env.device.awaitUiIdle(); env.instrumentation.waitForIdleSync();
-                    assertEquals("The positive is specifically a same-frame status update", original.copyBounds(), current.copyBounds());
-                    assertEquals("A real owned cosmetic event must not revoke this generation", generation,
-                            env.device.service.visualEventGeneration());
-                    assertTrue("The original local image guard must survive the actual status publication",
-                            guard.isCurrent(env.device.control, input.request.executionEpoch));
+            try (VisualInvalidationProbe diagnostic = new VisualInvalidationProbe(env)) {
+                try {
+                    diagnostic.install();
+                    env.main(() -> env.device.service.showOverlay("Phase 100", false, ""));
+                    controls(env.device); env.device.awaitUiIdle();
+                    try (Input input = env.input("status-publication-guard")) {
+                        input.prepare(); input.transfer();
+                        DisclosureGuard guard = input.validate(SystemClock.elapsedRealtime() + 5_000);
+                        long generation = env.device.service.visualEventGeneration();
+                        AgentAccessibilityService.OwnedControlWindowIdentity original = env.device.service.getOwnedControlWindowIdentity();
+                        diagnostic.baseline(generation, original);
+                        assertNotNull(original); assertTrue(guard.isCurrent(env.device.control, input.request.executionEpoch));
+                        int round = 0;
+                        for (String status : new String[] {"Phase 101", "Phase 102", "Phase 103"}) {
+                            diagnostic.round = ++round;
+                            AccessibilityEvent delivered = env.device.automation.executeAndWaitForEvent(
+                                    () -> env.main(() -> env.device.service.showOverlay(status, false, "")),
+                                    event -> event.getWindowId() == original.windowId
+                                            && (event.getEventType() == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED
+                                            || event.getEventType() == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
+                                            && (event.getContentChangeTypes() & AccessibilityEvent.CONTENT_CHANGE_TYPE_TEXT) != 0),
+                                    5_000);
+                            try { diagnostic.matched(delivered); assertEquals(original.windowId, delivered.getWindowId()); }
+                            finally { delivered.recycle(); }
+                            AgentAccessibilityService.ControlLease current = controls(env.device);
+                            diagnostic.controls(current);
+                            env.device.awaitUiIdle(); env.instrumentation.waitForIdleSync();
+                            assertEquals("The positive is specifically a same-frame status update", original.copyBounds(), current.copyBounds());
+                            assertEquals("A real owned cosmetic event must not revoke this generation", generation,
+                                    env.device.service.visualEventGeneration());
+                            assertTrue("The original local image guard must survive the actual status publication",
+                                    guard.isCurrent(env.device.control, input.request.executionEpoch));
+                        }
+                        assertEquals(0, env.device.control.getDispatchAttempts());
+                    }
+                    env.assertDrained(); screenshots.capture("real-owned-status-events-preserve-local-image-guard-no-native-capture-or-http");
+                } catch (AssertionError failure) {
+                    throw diagnostic.report(failure);
+                } catch (Exception failure) {
+                    diagnostic.attach(failure);
+                    throw failure;
                 }
-                assertEquals(0, env.device.control.getDispatchAttempts());
             }
-            env.assertDrained(); screenshots.capture("real-owned-status-events-preserve-local-image-guard-no-native-capture-or-http");
+        }
+    }
+
+    /** Bounded failure evidence only. It neither classifies events nor changes any guard. */
+    private static final class VisualInvalidationProbe implements AgentAccessibilityService.VisualInvalidationObserver, AutoCloseable {
+        private static final int CAPACITY = 8, MAX_SERVICE_FRAMES = 6, MAX_STACK_CHARACTERS = 512;
+        private final Environment env;
+        private final InvalidationRecord[] records = new InvalidationRecord[CAPACITY];
+        private int next, retained;
+        private long total, baseline = -1;
+        private boolean installed, samplingFailed;
+        private String matched = "none";
+        private boolean controlsSampled, controlWindowMatches, controlAttachmentMatches;
+        private volatile int round;
+        private volatile AgentAccessibilityService.OwnedControlWindowIdentity original;
+
+        VisualInvalidationProbe(Environment env) { this.env = env; }
+        void install() {
+            env.main(() -> env.device.service.setVisualInvalidationObserverForTesting(this));
+            installed = true;
+        }
+        synchronized void baseline(long generation, AgentAccessibilityService.OwnedControlWindowIdentity identity) {
+            baseline = generation; original = identity;
+        }
+        synchronized void matched(AccessibilityEvent event) {
+            try {
+                matched = "round=" + round + ",type=" + event.getEventType() + ",content=" + event.getContentChangeTypes()
+                        + ",windowChanges=" + event.getWindowChanges() + ",windowId=" + event.getWindowId();
+            } catch (Throwable unavailable) { samplingFailed = true; }
+        }
+        synchronized void controls(AgentAccessibilityService.ControlLease current) {
+            try {
+                controlsSampled = true;
+                controlWindowMatches = original != null && current.windowId == original.windowId;
+                controlAttachmentMatches = original != null && current.matchesOriginalAttachment(original);
+            } catch (Throwable unavailable) { samplingFailed = true; }
+        }
+        @Override public void onInvalidated(long before, long after, int type, int content, int windowChanges, int windowId) {
+            synchronized (this) { total++; }
+            try {
+                if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
+                    throw new IllegalStateException("Diagnostic View sampling requires main");
+                }
+                AgentAccessibilityService service = env.device.service;
+                View panel = (View) read(service, "overlay");
+                Object registration = read(service, "controlWindowRegistration");
+                AgentAccessibilityService.OwnedControlWindowIdentity current =
+                        (AgentAccessibilityService.OwnedControlWindowIdentity) read(service, "currentControlWindowIdentity");
+                AgentAccessibilityService.OwnedControlWindowIdentity visual =
+                        (AgentAccessibilityService.OwnedControlWindowIdentity) read(service, "visualControlGeometry");
+                AgentAccessibilityService.OwnedControlWindowIdentity start = original;
+                Rect bounds = new Rect();
+                if (panel != null) {
+                    int[] location = new int[2]; panel.getLocationOnScreen(location);
+                    bounds.set(location[0], location[1], location[0] + panel.getWidth(), location[1] + panel.getHeight());
+                }
+                String local = "panel=" + (panel != null) + ",attached=" + (panel != null && panel.isAttachedToWindow())
+                        + ",shown=" + (panel != null && panel.isShown()) + ",laidOut=" + (panel != null && panel.isLaidOut())
+                        + ",layoutRequested=" + (panel != null && panel.isLayoutRequested()) + ",bounds=" + bounds.toShortString()
+                        + ",registration=" + (registration != null) + ",identity=" + (current != null)
+                        + ",originalCurrent=" + (start != null && current == start)
+                        + ",originalRegistration=" + (start != null && registration == read(start, "registration"))
+                        + ",visual=" + (visual != null)
+                        + ",visualRegistration=" + (visual != null && registration == read(visual, "registration"))
+                        + ",eventMatchesVisual=" + (visual != null && windowId == visual.windowId)
+                        + ",boundsMatchVisual=" + (visual != null && bounds.equals(visual.copyBounds()));
+                StringBuilder calls = new StringBuilder();
+                int frames = 0;
+                String serviceClass = AgentAccessibilityService.class.getName();
+                for (StackTraceElement frame : Thread.currentThread().getStackTrace()) {
+                    String owner = frame.getClassName();
+                    if (!owner.equals(serviceClass) && !owner.startsWith(serviceClass + "$")) continue;
+                    String method = frame.getMethodName();
+                    if (method.length() > 64) method = method.substring(0, 64);
+                    String call = (frames == 0 ? "" : ";") + method + ":" + frame.getLineNumber();
+                    if (calls.length() + call.length() > MAX_STACK_CHARACTERS) break;
+                    calls.append(call);
+                    if (++frames == MAX_SERVICE_FRAMES) break;
+                }
+                InvalidationRecord record = new InvalidationRecord(before, after, round, type, content, windowChanges, windowId,
+                        local, calls.toString());
+                synchronized (this) {
+                    records[next] = record; next = (next + 1) % CAPACITY;
+                    retained = Math.min(CAPACITY, retained + 1);
+                }
+            } catch (Throwable unavailable) { synchronized (this) { samplingFailed = true; } }
+        }
+        private synchronized String snapshot() {
+            StringBuilder result = new StringBuilder("Visual invalidations: baseline=").append(baseline)
+                    .append(",round=").append(round).append(",total=").append(total).append(",dropped=").append(total - retained)
+                    .append(",samplingFailed=").append(samplingFailed).append(",matched={").append(matched)
+                    .append("},controlsSampled=").append(controlsSampled).append(",controlWindowMatches=").append(controlWindowMatches)
+                    .append(",controlAttachmentMatches=").append(controlAttachmentMatches);
+            for (int i = 0; i < retained; i++) {
+                InvalidationRecord record = records[(next - retained + i + CAPACITY) % CAPACITY];
+                result.append("\nround=").append(record.round).append(",generation=").append(record.before).append("->").append(record.after)
+                        .append(",relativeAfterBaseline=").append(baseline < 0 ? "unknown" : Long.toString(record.after - baseline))
+                        .append(",type=").append(record.type).append(",content=").append(record.content)
+                        .append(",windowChanges=").append(record.windowChanges).append(",windowId=").append(record.windowId)
+                        .append(',').append(record.local).append(",calls=").append(record.calls);
+            }
+            return result.toString();
+        }
+        private String failureSnapshot() {
+            try { return snapshot(); }
+            catch (Throwable unavailable) { return "Visual invalidations: samplingFailed=true,snapshot=unavailable"; }
+        }
+        AssertionError report(AssertionError failure) {
+            return new AssertionError(failure.getMessage() + "\n" + failureSnapshot(), failure);
+        }
+        void attach(Exception failure) {
+            try { failure.addSuppressed(new VisualDiagnosticSnapshot(failureSnapshot())); }
+            catch (Throwable unavailable) { /* Preserve the original exception object and classification. */ }
+        }
+        @Override public void close() {
+            if (installed) {
+                env.main(() -> env.device.service.setVisualInvalidationObserverForTesting(null));
+                installed = false;
+            }
+            synchronized (this) {
+                java.util.Arrays.fill(records, null); next = retained = 0; total = 0; baseline = -1;
+                original = null; round = 0; matched = "none"; samplingFailed = false;
+                controlsSampled = controlWindowMatches = controlAttachmentMatches = false;
+            }
+        }
+    }
+
+    private static final class VisualDiagnosticSnapshot extends Exception {
+        VisualDiagnosticSnapshot(String snapshot) { super(snapshot, null, false, false); }
+    }
+
+    private static final class InvalidationRecord {
+        final long before, after;
+        final int round, type, content, windowChanges, windowId;
+        final String local, calls;
+        InvalidationRecord(long before, long after, int round, int type, int content, int windowChanges, int windowId,
+                           String local, String calls) {
+            this.before = before; this.after = after; this.round = round; this.type = type; this.content = content;
+            this.windowChanges = windowChanges; this.windowId = windowId; this.local = local; this.calls = calls;
         }
     }
 

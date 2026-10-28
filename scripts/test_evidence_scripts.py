@@ -128,7 +128,8 @@ class EvidenceTests(unittest.TestCase):
                       "control-status-diagnostic --class AnotherClass",
                       "screen-off-diagnostic --class AnotherClass",
                       "task-report-focus-diagnostic --class AnotherClass",
-                      "font-scale-diagnostic --class AnotherClass", "future-scope"):
+                      "font-scale-diagnostic --class AnotherClass",
+                      "visual-generation-diagnostic --class AnotherClass", "future-scope"):
             with self.subTest(scope=scope):
                 self.check_test_exit("30", 30, scope=scope, expected_exit=2, invalid_scope=True)
 
@@ -243,12 +244,14 @@ class EvidenceTests(unittest.TestCase):
             collector.verify_capture_scope({}, collector.DIAGNOSTIC_SCOPE)
         collector.verify_capture_scope({}, "full")  # Original full captures remain readable.
 
-    def diagnostic_archive(self, lanes, scope=collector.DIAGNOSTIC_SCOPE, artifact_scope=None, manifest_selection=None):
+    def diagnostic_archive(self, lanes, scope=collector.DIAGNOSTIC_SCOPE, artifact_scope=None, manifest_selection=None,
+                           run_overrides=None):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             (root / "incoming").mkdir()
             run = source_run()
             run.update(event="workflow_dispatch", display_title=next(title for title, value in publisher.DIAGNOSTIC_TITLES.items() if value == scope))
+            run.update(run_overrides or {})
             artifact_scope = artifact_scope or scope
             selection = collector.test_selection(artifact_scope)
             artifacts, jobs = [], []
@@ -769,6 +772,115 @@ class EvidenceTests(unittest.TestCase):
                 capture["junit"] = collector.junit_summary(root, collector.FONT_SCALE_TEST)
                 with self.subTest(body=body), self.assertRaises(ValueError):
                     publisher.diagnostic_result(capture, tests, job, collector.FONT_SCALE_SCOPE)
+
+    def test_visual_generation_shell_selects_only_its_fixed_case_and_preserves_failure(self):
+        self.assertEqual("dev.agentos.app.VisualEventGenerationInstrumentedTest#actualSameHeightStatusEventsPreserveTheOriginalLocalGuardAcrossRepeatedPublications",
+                         collector.VISUAL_GENERATION_TEST)
+        self.check_test_exit("33", 33, scope=collector.VISUAL_GENERATION_SCOPE)
+
+    def test_visual_generation_scope_requires_its_exact_manual_title_and_matching_capture(self):
+        run = source_run()
+        run["display_title"] = publisher.VISUAL_GENERATION_TITLE
+        self.assertEqual("full", publisher.android_execution_scope(run))
+        run["event"] = "workflow_dispatch"
+        self.assertEqual(collector.VISUAL_GENERATION_SCOPE, publisher.android_execution_scope(run))
+        run["display_title"] += " --class Other"
+        with self.assertRaises(ValueError):
+            publisher.android_execution_scope(run)
+        for record in ({}, {"executionScope": collector.DIAGNOSTIC_SCOPE,
+                            "testSelection": collector.DIAGNOSTIC_TEST},
+                       {"executionScope": collector.VISUAL_GENERATION_SCOPE,
+                        "testSelection": collector.DIAGNOSTIC_TEST}):
+            with self.subTest(record=record), self.assertRaises(ValueError):
+                collector.verify_capture_scope(record, collector.VISUAL_GENERATION_SCOPE)
+        self.assertEqual(collector.DIAGNOSTIC_TEST, collector.test_selection(collector.DIAGNOSTIC_SCOPE))
+        self.assertEqual("full-suite", collector.test_selection("full"))
+
+    def test_visual_generation_finalize_preserves_scope_without_reports_and_cannot_relabel(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            command = ["python3", str(SCRIPTS / "collect_android_evidence.py"), "finalize",
+                       "--matrix-label", "33", "--scope", collector.VISUAL_GENERATION_SCOPE]
+            subprocess.run(command, cwd=root, check=True, capture_output=True, text=True)
+            path = root / "test-evidence/api-33/capture.json"
+            original = path.read_bytes()
+            record = json.loads(original)
+            self.assertEqual(collector.VISUAL_GENERATION_TEST, record["testSelection"])
+            self.assertEqual(collector.VISUAL_GENERATION_TEST, record["junit"]["selection"])
+            self.assertEqual(0, record["junit"]["selectedTests"])
+            for scope in ("full", *collector.DIAGNOSTIC_SELECTIONS):
+                if scope == collector.VISUAL_GENERATION_SCOPE:
+                    continue
+                result = subprocess.run(command[:-1] + [scope], cwd=root, capture_output=True, text=True)
+                self.assertNotEqual(0, result.returncode)
+                self.assertEqual(original, path.read_bytes())
+
+    def test_visual_generation_archive_keeps_all_missing_and_mixed_lanes_in_its_eight_case_scope(self):
+        for lanes, counts in (({label: "passed" for label in publisher.EXPECTED_MATRIX},
+                               {"passed": 8, "failed": 0, "unverified": 0}),
+                              ({}, {"passed": 0, "failed": 0, "unverified": 8}),
+                              ({"30": "passed", "33": "failed", "37.0": "skipped"},
+                               {"passed": 1, "failed": 1, "unverified": 6})):
+            with self.subTest(lanes=lanes):
+                manifest, readme = self.diagnostic_archive(lanes, collector.VISUAL_GENERATION_SCOPE)
+                self.assertEqual(collector.VISUAL_GENERATION_SCOPE, manifest["executionScope"])
+                self.assertEqual(collector.VISUAL_GENERATION_TEST, manifest["testSelection"])
+                self.assertEqual((1, 8), (manifest["expectedTestsPerApi"], manifest["expectedTests"]))
+                self.assertEqual(8, len(manifest["apis"]))
+                self.assertEqual(counts, manifest["diagnosticCaseCounts"])
+                self.assertFalse(manifest["fullSuiteAcceptance"])
+                for text in (manifest["scope"], readme):
+                    self.assertIn("API30–33 exercise only the unsupported native-source rejection path", text)
+                    self.assertIn("API34–37.0 exercise the actual cosmetic-event/local-guard positive path", text)
+                    self.assertIn("would not mean that all eight APIs exercised that positive path", text)
+                self.assertIn("# Visual Generation Diagnostic Evidence", readme)
+                self.assertIn(collector.VISUAL_GENERATION_TEST, readme)
+                self.assertIn("not counted as passed", readme)
+                self.assertNotIn(collector.DIAGNOSTIC_TEST, readme)
+
+    def test_visual_generation_archive_rejects_other_scope_and_wrong_manifest_case(self):
+        for scope in ("full", *collector.DIAGNOSTIC_SELECTIONS):
+            if scope == collector.VISUAL_GENERATION_SCOPE:
+                continue
+            with self.subTest(scope=scope), self.assertRaises(subprocess.CalledProcessError):
+                self.diagnostic_archive({"33": "passed"}, collector.VISUAL_GENERATION_SCOPE,
+                                        artifact_scope=scope)
+        for selection in collector.DIAGNOSTIC_SELECTIONS.values():
+            if selection == collector.VISUAL_GENERATION_TEST:
+                continue
+            with self.subTest(selection=selection), self.assertRaises(subprocess.CalledProcessError):
+                self.diagnostic_archive({"33": "passed"}, collector.VISUAL_GENERATION_SCOPE,
+                                        manifest_selection=selection)
+
+    def test_visual_generation_original_xml_is_required_and_cannot_mix_cases_or_borrow_old_selection(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            test_class, method = collector.VISUAL_GENERATION_TEST.split("#")
+            xml = root / "result.xml"
+            case = f'<testcase classname="{test_class}" name="{method}"/>'
+            xml.write_text('<testsuite>' + case + '</testsuite>')
+            capture = {"junit": collector.junit_summary(root, collector.VISUAL_GENERATION_TEST), "gradleExitCode": 0}
+            tests = [{"testClass": test_class, "testName": method, "testResult": "pass"}]
+            job = {"conclusion": "success"}
+            self.assertEqual("passed", publisher.diagnostic_result(capture, tests, job, collector.VISUAL_GENERATION_SCOPE))
+            self.assertEqual("unverified", publisher.diagnostic_result(capture, [], job, collector.VISUAL_GENERATION_SCOPE))
+            with self.assertRaises(ValueError):
+                publisher.diagnostic_result(capture, tests, job, collector.DIAGNOSTIC_SCOPE)
+            old_class, old_method = collector.DIAGNOSTIC_TEST.split("#")
+            for body in (f'<testcase classname="{old_class}" name="{old_method}"/>',
+                         case + f'<testcase classname="{old_class}" name="{old_method}"/>',
+                         case + case):
+                xml.write_text('<testsuite>' + body + '</testsuite>')
+                capture["junit"] = collector.junit_summary(root, collector.VISUAL_GENERATION_TEST)
+                with self.subTest(body=body), self.assertRaises(ValueError):
+                    publisher.diagnostic_result(capture, tests, job, collector.VISUAL_GENERATION_SCOPE)
+
+    def test_visual_generation_captures_cannot_be_relabelled_as_full_for_manual_or_push_runs(self):
+        for event, title in (("push", publisher.VISUAL_GENERATION_TITLE),
+                             ("workflow_dispatch", "Android checks")):
+            with self.subTest(event=event, title=title), self.assertRaises(subprocess.CalledProcessError):
+                self.diagnostic_archive({"36": "passed"}, collector.VISUAL_GENERATION_SCOPE,
+                                        run_overrides={"event": event, "display_title": title})
 
     def test_archive_keeps_missing_lanes_and_source_failure(self):
         with tempfile.TemporaryDirectory() as temp:

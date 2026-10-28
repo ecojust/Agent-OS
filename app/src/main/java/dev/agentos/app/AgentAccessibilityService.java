@@ -212,6 +212,12 @@ public final class AgentAccessibilityService extends AccessibilityService {
 
     private static volatile AgentAccessibilityService instance;
     private final Handler main = new Handler(Looper.getMainLooper());
+    interface VisualInvalidationObserver {
+        void onInvalidated(long before, long after, int eventType, int contentChanges,
+                           int windowChanges, int windowId);
+    }
+    // Explicit instrumentation only; no event, node, text or observer is retained by default.
+    private VisualInvalidationObserver visualInvalidationObserver;
     private OverlayCallbacks callbacks;
     private LinearLayout overlay;
     // Main-only global bounds, independent of the overlay's z-order-filtered insets.
@@ -360,8 +366,29 @@ public final class AgentAccessibilityService extends AccessibilityService {
                 && visualGeneration == original && isConnected();
     }
 
-    private void invalidateVisualEvents() {
+    void setVisualInvalidationObserverForTesting(VisualInvalidationObserver observer) {
+        if (Looper.myLooper() != Looper.getMainLooper()) throw new IllegalStateException("Visual diagnostics require main");
+        if (observer != null && visualInvalidationObserver != null && visualInvalidationObserver != observer) {
+            throw new IllegalStateException("Visual diagnostics already installed");
+        }
+        visualInvalidationObserver = observer;
+    }
+
+    private void invalidateVisualEvents() { invalidateVisualEvents(null); }
+
+    private void invalidateVisualEvents(AccessibilityEvent event) {
+        long before = visualGeneration;
         if (visualGeneration != Long.MAX_VALUE) visualGeneration++;
+        VisualInvalidationObserver observer = visualInvalidationObserver;
+        if (observer != null) {
+            try {
+                observer.onInvalidated(before, visualGeneration,
+                        event == null ? -1 : event.getEventType(),
+                        event == null ? -1 : event.getContentChangeTypes(),
+                        event == null ? -1 : event.getWindowChanges(),
+                        event == null ? -1 : event.getWindowId());
+            } catch (Throwable ignored) { /* Diagnostics cannot interrupt the original invalidation path. */ }
+        }
     }
 
     public boolean isDeviceReady() {
@@ -1439,7 +1466,7 @@ public final class AgentAccessibilityService extends AccessibilityService {
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
         // Invalidate before review handling or the existing deferred readiness check.
         // Unexpected event kinds are conservative too; no event source is queried.
-        if (event == null || !isCurrentOwnedCosmeticEvent(event)) invalidateVisualEvents();
+        if (event == null || !isCurrentOwnedCosmeticEvent(event)) invalidateVisualEvents(event);
         if (event == null) return;
         SecureImageReviewOverlay review = reviewHost;
         if (review != null) review.onAccessibilityEvent(event.getEventType(), event.getWindowId(),

@@ -1,7 +1,7 @@
 name: Android checks
 # A fixed diagnostic label remains identifiable even when no emulator artifact exists.
 # Empty preserves GitHub's existing push/PR/full-dispatch display title.
-run-name: ${{ github.event_name == 'workflow_dispatch' && (inputs.scope == 'owned-control-diagnostic' && 'Android checks [owned-control-diagnostic]' || inputs.scope == 'task-qualification-diagnostic' && 'Android checks [task-qualification-diagnostic]' || inputs.scope == 'control-status-diagnostic' && 'Android checks [control-status-diagnostic]' || inputs.scope == 'screen-off-diagnostic' && 'Android checks [screen-off-diagnostic]' || inputs.scope == 'task-report-focus-diagnostic' && 'Android checks [task-report-focus-diagnostic]' || inputs.scope == 'font-scale-diagnostic' && 'Android checks [font-scale-diagnostic]') || '' }}
+run-name: ${{ github.event_name == 'workflow_dispatch' && (inputs.scope == 'owned-control-diagnostic' && 'Android checks [owned-control-diagnostic]' || inputs.scope == 'task-qualification-diagnostic' && 'Android checks [task-qualification-diagnostic]' || inputs.scope == 'control-status-diagnostic' && 'Android checks [control-status-diagnostic]' || inputs.scope == 'screen-off-diagnostic' && 'Android checks [screen-off-diagnostic]' || inputs.scope == 'task-report-focus-diagnostic' && 'Android checks [task-report-focus-diagnostic]' || inputs.scope == 'font-scale-diagnostic' && 'Android checks [font-scale-diagnostic]' || inputs.scope == 'visual-generation-diagnostic' && 'Android checks [visual-generation-diagnostic]') || '' }}
 
 on:
   push:
@@ -14,7 +14,7 @@ on:
         required: true
         default: full
         type: choice
-        options: [full, owned-control-diagnostic, task-qualification-diagnostic, control-status-diagnostic, screen-off-diagnostic, task-report-focus-diagnostic, font-scale-diagnostic]
+        options: [full, owned-control-diagnostic, task-qualification-diagnostic, control-status-diagnostic, screen-off-diagnostic, task-report-focus-diagnostic, font-scale-diagnostic, visual-generation-diagnostic]
 
 permissions:
   contents: read

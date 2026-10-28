@@ -26,18 +26,24 @@ CONTROL_STATUS_TITLE = "Android checks [control-status-diagnostic]"
 SCREEN_OFF_TITLE = "Android checks [screen-off-diagnostic]"
 TASK_REPORT_FOCUS_TITLE = "Android checks [task-report-focus-diagnostic]"
 FONT_SCALE_TITLE = "Android checks [font-scale-diagnostic]"
+VISUAL_GENERATION_TITLE = "Android checks [visual-generation-diagnostic]"
+VISUAL_GENERATION_COVERAGE = ("API30–33 exercise only the unsupported native-source rejection path. "
+                              "API34–37.0 exercise the actual cosmetic-event/local-guard positive path. "
+                              "Eight passing selected cases would not mean that all eight APIs exercised that positive path.")
 DIAGNOSTIC_TITLES = {DIAGNOSTIC_TITLE: android_evidence.DIAGNOSTIC_SCOPE,
                      QUALIFICATION_TITLE: android_evidence.QUALIFICATION_SCOPE,
                      CONTROL_STATUS_TITLE: android_evidence.CONTROL_STATUS_SCOPE,
                      SCREEN_OFF_TITLE: android_evidence.SCREEN_OFF_SCOPE,
                      TASK_REPORT_FOCUS_TITLE: android_evidence.TASK_REPORT_FOCUS_SCOPE,
-                     FONT_SCALE_TITLE: android_evidence.FONT_SCALE_SCOPE}
+                     FONT_SCALE_TITLE: android_evidence.FONT_SCALE_SCOPE,
+                     VISUAL_GENERATION_TITLE: android_evidence.VISUAL_GENERATION_SCOPE}
 DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
                     android_evidence.QUALIFICATION_SCOPE: "Task Qualification",
                     android_evidence.CONTROL_STATUS_SCOPE: "Control Status",
                     android_evidence.SCREEN_OFF_SCOPE: "Screen Off",
                     android_evidence.TASK_REPORT_FOCUS_SCOPE: "Task Report Focus",
-                    android_evidence.FONT_SCALE_SCOPE: "Font Scale"}
+                    android_evidence.FONT_SCALE_SCOPE: "Font Scale",
+                    android_evidence.VISUAL_GENERATION_SCOPE: "Visual Generation"}
 
 
 def android_execution_scope(run: dict) -> str:
@@ -383,12 +389,16 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
     if review:
         manifest.update({"archiveMode": "review_branch", "mainlineAcceptance": False,
                          "scope": "Development branch evidence awaiting review; not mainline acceptance. " + manifest["scope"]})
+    if execution_scope == android_evidence.VISUAL_GENERATION_SCOPE:
+        manifest["scope"] += " " + VISUAL_GENERATION_COVERAGE
     (output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     lines = ["# " + (diagnostic_name + " Diagnostic Evidence" if diagnostic else "Android Test Evidence"), "", f"Source run: {manifest['sourceRun']['url']}", "",
              f"Source commit: `{run['head_sha']}` · Attempt: {attempt}", "",
              "These screenshots show synthetic test scenarios. Missing screenshots and failed tests remain visible in the manifest.", ""]
     if review:
         lines += [f"Source branch: `{run['head_branch']}`. Development branch evidence awaiting review; not mainline acceptance.", ""]
+    if execution_scope == android_evidence.VISUAL_GENERATION_SCOPE:
+        lines += [VISUAL_GENERATION_COVERAGE, ""]
     if diagnostic:
         lines += [f"Execution scope: `{execution_scope}`. Only `{android_evidence.test_selection(execution_scope)}` was selected.", "",
                   "The diagnostic denominator is 8 cases (8 APIs × 1 test); missing, skipped and unexecuted cases remain unverified. "

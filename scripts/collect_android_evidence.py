@@ -28,9 +28,12 @@ TASK_REPORT_FOCUS_SCOPE = "task-report-focus-diagnostic"
 TASK_REPORT_FOCUS_TEST = "dev.agentos.app.TaskDiagnosticsInstrumentedTest#completedCodeSurvivesButClearReplacementAndLeavingInvalidateOldDialogActions"
 FONT_SCALE_SCOPE = "font-scale-diagnostic"
 FONT_SCALE_TEST = "dev.agentos.app.FontScaleControlWindowInstrumentedTest#realSystemFontScaleRebuildsControlsAndRevokesOldWindow"
+VISUAL_GENERATION_SCOPE = "visual-generation-diagnostic"
+VISUAL_GENERATION_TEST = "dev.agentos.app.VisualEventGenerationInstrumentedTest#actualSameHeightStatusEventsPreserveTheOriginalLocalGuardAcrossRepeatedPublications"
 DIAGNOSTIC_SELECTIONS = {DIAGNOSTIC_SCOPE: DIAGNOSTIC_TEST, QUALIFICATION_SCOPE: QUALIFICATION_TEST,
                         CONTROL_STATUS_SCOPE: CONTROL_STATUS_TEST, SCREEN_OFF_SCOPE: SCREEN_OFF_TEST,
-                        TASK_REPORT_FOCUS_SCOPE: TASK_REPORT_FOCUS_TEST, FONT_SCALE_SCOPE: FONT_SCALE_TEST}
+                        TASK_REPORT_FOCUS_SCOPE: TASK_REPORT_FOCUS_TEST, FONT_SCALE_SCOPE: FONT_SCALE_TEST,
+                        VISUAL_GENERATION_SCOPE: VISUAL_GENERATION_TEST}
 
 
 def test_selection(scope: str) -> str:

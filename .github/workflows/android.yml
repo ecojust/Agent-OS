@@ -37,8 +37,6 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Verify README progress
         run: python3 scripts/update_progress.py --check
-      - name: Test evidence collection boundaries
-        run: python3 -m unittest discover -s scripts -p 'test_*.py'
       - name: Prepare preinstalled Android SDK
         shell: bash
         run: |
@@ -51,6 +49,8 @@ jobs:
           echo "$sdk_root/platform-tools" >> "$GITHUB_PATH"
           "$sdk_manager" --version
           printf 'y\n%.0s' {1..100} | "$sdk_manager" --sdk_root="$sdk_root" 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Test evidence collection boundaries
+        run: python3 -m unittest discover -s scripts -p 'test_*.py'
       - name: Test, inspect and build
         run: ./gradlew --no-daemon :core:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
       - name: Upload verification reports

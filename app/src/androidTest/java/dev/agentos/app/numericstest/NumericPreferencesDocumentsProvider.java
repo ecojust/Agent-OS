@@ -53,6 +53,24 @@ public final class NumericPreferencesDocumentsProvider extends DocumentsProvider
             Document.COLUMN_DISPLAY_NAME, Document.COLUMN_MIME_TYPE, Document.COLUMN_FLAGS,
             Document.COLUMN_SIZE, Document.COLUMN_LAST_MODIFIED};
 
+    // Process-lifetime observations, deliberately independent of configure/reset:
+    // DocumentsUI may query/cache roots before a synthetic session is configured.
+    private static final Object ROOT_DIAGNOSTICS_LOCK = new Object();
+    private static int rootsQueryEntered, rootsQueryReturned;
+    private static boolean rootsQueryCountersSaturated;
+    private static RootQueryDiagnostic latestRootsQuery, completedRootsQuery;
+    private enum RootsOutcome { NOT_QUERIED, IN_PROGRESS, RETURNED, REJECTED, ERROR }
+    private enum CallerCheck {
+        NOT_CHECKED, TARGET_ALLOWED, SPECIAL_UID_REJECTED, MANAGE_PERMISSION_REJECTED,
+        NO_VISIBLE_PACKAGES, NO_SYSTEM_PACKAGE, SYSTEM_ALLOWED, LOOKUP_ERROR
+    }
+    private static final class RootQueryDiagnostic {
+        RootsOutcome outcome = RootsOutcome.IN_PROGRESS;
+        CallerCheck callerCheck = CallerCheck.NOT_CHECKED;
+        int packageCount = -1, applicationInfoCount, lookupMissCount;
+        boolean rejected;
+    }
+
     private final Object lock = new Object();
     private Handler closeHandler;
     private File inputFile, outputFile;
@@ -112,19 +130,53 @@ public final class NumericPreferencesDocumentsProvider extends DocumentsProvider
     }
 
     private void requireAllowedCaller() {
+        requireAllowedCaller(null);
+    }
+
+    private void requireAllowedCaller(RootQueryDiagnostic diagnostic) {
         int uid = Binder.getCallingUid();
-        if (uid == targetUid()) return;
-        if (uid == 0 || uid == 2000 || getContext().checkPermission(Manifest.permission.MANAGE_DOCUMENTS,
-                Binder.getCallingPid(), uid) != PackageManager.PERMISSION_GRANTED)
-            throw new SecurityException("Only the target or system SAF may access synthetic documents");
-        String[] packages = getContext().getPackageManager().getPackagesForUid(uid);
-        if (packages != null) for (String name : packages) {
-            try {
-                ApplicationInfo info = getContext().getPackageManager().getApplicationInfo(name, 0);
-                if ((info.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0) return;
-            } catch (PackageManager.NameNotFoundException ignored) { /* Reject unresolved identities. */ }
+        try {
+            if (uid == targetUid()) {
+                if (diagnostic != null) diagnostic.callerCheck = CallerCheck.TARGET_ALLOWED;
+                return;
+            }
+            if (uid == 0 || uid == 2000) {
+                rejectRootCaller(diagnostic, CallerCheck.SPECIAL_UID_REJECTED);
+                throw new SecurityException("Only the target or system SAF may access synthetic documents");
+            }
+            if (getContext().checkPermission(Manifest.permission.MANAGE_DOCUMENTS,
+                    Binder.getCallingPid(), uid) != PackageManager.PERMISSION_GRANTED) {
+                rejectRootCaller(diagnostic, CallerCheck.MANAGE_PERMISSION_REJECTED);
+                throw new SecurityException("Only the target or system SAF may access synthetic documents");
+            }
+            String[] packages = getContext().getPackageManager().getPackagesForUid(uid);
+            if (diagnostic != null) diagnostic.packageCount = packages == null ? 0 : packages.length;
+            if (packages != null) for (String name : packages) {
+                try {
+                    if (diagnostic != null) diagnostic.applicationInfoCount++;
+                    ApplicationInfo info = getContext().getPackageManager().getApplicationInfo(name, 0);
+                    if ((info.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0) {
+                        if (diagnostic != null) diagnostic.callerCheck = CallerCheck.SYSTEM_ALLOWED;
+                        return;
+                    }
+                } catch (PackageManager.NameNotFoundException ignored) {
+                    if (diagnostic != null) diagnostic.lookupMissCount++;
+                    // Preserve the original rejection of unresolved identities.
+                }
+            }
+            rejectRootCaller(diagnostic, packages == null || packages.length == 0
+                    ? CallerCheck.NO_VISIBLE_PACKAGES : CallerCheck.NO_SYSTEM_PACKAGE);
+            throw new SecurityException("System SAF installation identity is required");
+        } finally {
+            // Unexpected original lookup exceptions propagate unchanged. Record
+            // only a fixed category, never their message, cause or package value.
+            if (diagnostic != null && diagnostic.callerCheck == CallerCheck.NOT_CHECKED)
+                diagnostic.callerCheck = CallerCheck.LOOKUP_ERROR;
         }
-        throw new SecurityException("System SAF installation identity is required");
+    }
+
+    private static void rejectRootCaller(RootQueryDiagnostic diagnostic, CallerCheck check) {
+        if (diagnostic != null) { diagnostic.callerCheck = check; diagnostic.rejected = true; }
     }
 
     private boolean hasGrant(String documentId, int flags) {
@@ -238,6 +290,20 @@ public final class NumericPreferencesDocumentsProvider extends DocumentsProvider
 
     private Bundle state() {
         Bundle out = new Bundle();
+        synchronized (ROOT_DIAGNOSTICS_LOCK) {
+            RootQueryDiagnostic observed = completedRootsQuery;
+            RootsOutcome outcome = observed != null ? observed.outcome
+                    : latestRootsQuery == null ? RootsOutcome.NOT_QUERIED : RootsOutcome.IN_PROGRESS;
+            out.putInt("rootsQueryEntered", rootsQueryEntered);
+            out.putInt("rootsQueryReturned", rootsQueryReturned);
+            out.putBoolean("rootsQueryCountersSaturated", rootsQueryCountersSaturated);
+            out.putString("rootsQueryLastOutcome", outcome.name());
+            out.putString("rootsQueryLastCallerCheck", (observed == null
+                    ? CallerCheck.NOT_CHECKED : observed.callerCheck).name());
+            out.putInt("rootsQueryLastPackageCount", observed == null ? -1 : observed.packageCount);
+            out.putInt("rootsQueryLastApplicationInfoCount", observed == null ? 0 : observed.applicationInfoCount);
+            out.putInt("rootsQueryLastLookupMissCount", observed == null ? 0 : observed.lookupMissCount);
+        }
         out.putInt("targetUid", targetUid()); out.putInt("providerUid", Process.myUid());
         out.putLong("generation", generation); out.putBoolean("configured", session != null);
         Session s = session;
@@ -290,17 +356,40 @@ public final class NumericPreferencesDocumentsProvider extends DocumentsProvider
     }
 
     @Override public Cursor queryRoots(String[] projection) {
-        requireAllowedCaller();
-        MatrixCursor cursor = new MatrixCursor(projection == null ? ROOT_COLUMNS : projection);
-        MatrixCursor.RowBuilder row = cursor.newRow();
-        column(row, cursor, Root.COLUMN_ROOT_ID, ROOT_ID); column(row, cursor, Root.COLUMN_DOCUMENT_ID, ROOT_ID);
-        column(row, cursor, Root.COLUMN_TITLE, ROOT_TITLE);
-        column(row, cursor, Root.COLUMN_FLAGS,
-                Root.FLAG_SUPPORTS_CREATE | Root.FLAG_SUPPORTS_IS_CHILD | Root.FLAG_LOCAL_ONLY);
-        column(row, cursor, Root.COLUMN_MIME_TYPES, MIME_TYPE);
-        column(row, cursor, Root.COLUMN_AVAILABLE_BYTES, 1024L * 1024);
-        cursor.setNotificationUri(getContext().getContentResolver(), DocumentsContract.buildRootsUri(AUTHORITY));
-        return cursor;
+        RootQueryDiagnostic diagnostic = new RootQueryDiagnostic();
+        synchronized (ROOT_DIAGNOSTICS_LOCK) {
+            if (rootsQueryEntered < Integer.MAX_VALUE) rootsQueryEntered++;
+            else rootsQueryCountersSaturated = true;
+            latestRootsQuery = diagnostic;
+            completedRootsQuery = null;
+        }
+        boolean returned = false;
+        try {
+            requireAllowedCaller(diagnostic);
+            MatrixCursor cursor = new MatrixCursor(projection == null ? ROOT_COLUMNS : projection);
+            MatrixCursor.RowBuilder row = cursor.newRow();
+            column(row, cursor, Root.COLUMN_ROOT_ID, ROOT_ID); column(row, cursor, Root.COLUMN_DOCUMENT_ID, ROOT_ID);
+            column(row, cursor, Root.COLUMN_TITLE, ROOT_TITLE);
+            column(row, cursor, Root.COLUMN_FLAGS,
+                    Root.FLAG_SUPPORTS_CREATE | Root.FLAG_SUPPORTS_IS_CHILD | Root.FLAG_LOCAL_ONLY);
+            column(row, cursor, Root.COLUMN_MIME_TYPES, MIME_TYPE);
+            column(row, cursor, Root.COLUMN_AVAILABLE_BYTES, 1024L * 1024);
+            cursor.setNotificationUri(getContext().getContentResolver(), DocumentsContract.buildRootsUri(AUTHORITY));
+            returned = true;
+            return cursor;
+        } finally {
+            diagnostic.outcome = returned ? RootsOutcome.RETURNED
+                    : diagnostic.rejected ? RootsOutcome.REJECTED : RootsOutcome.ERROR;
+            synchronized (ROOT_DIAGNOSTICS_LOCK) {
+                if (returned) {
+                    if (rootsQueryReturned < Integer.MAX_VALUE) rootsQueryReturned++;
+                    else rootsQueryCountersSaturated = true;
+                }
+                // A slower older query must not overwrite the newest query's
+                // in-progress or completed snapshot. Published facts are final.
+                if (latestRootsQuery == diagnostic) completedRootsQuery = diagnostic;
+            }
+        }
     }
 
     @Override public Cursor queryDocument(String documentId, String[] projection) throws FileNotFoundException {

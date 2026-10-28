@@ -1,5 +1,6 @@
 package dev.agentos.app;
 
+import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Activity;
 import android.app.Application;
@@ -15,7 +16,6 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Process;
 import android.os.SystemClock;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -507,20 +507,171 @@ public final class NumericPreferencesInstrumentedTest {
                 if (root != null) try {
                     if (isSystemSaf(root)) {
                         List<AccessibilityNodeInfo> found = new ArrayList<>();
-                        int[] traversal = {0, 0};
+                        int[] traversal = {0, 0, 0};
                         find(root, predicate, found, traversal, 0);
                         if (traversal[0] > 1500 || traversal[1] != 0) {
                             for (AccessibilityNodeInfo value : found) value.recycle();
                             fail("Actual SAF hierarchy exceeded the bounded selector traversal");
                         }
-                        if (found.size() == 1) return found.get(0);
+                        if (found.size() == 1 && traversal[2] == 0) return found.get(0);
                         for (AccessibilityNodeInfo value : found) value.recycle();
-                        assertTrue("The requested SAF control must be unique in its current window", found.isEmpty());
+                        assertTrue("The requested SAF control must be unique in its current window", found.size() < 2);
                     }
                 } finally { root.recycle(); }
                 SystemClock.sleep(25);
             } while (SystemClock.elapsedRealtime() < deadline);
             return null;
+        }
+        SafReady prepareSafAction(Predicate<AccessibilityNodeInfo> predicate, String boundary,
+                                  boolean scroll, SafDiagnostic diagnostic) {
+            diagnostic.operation = scroll ? "ROOTS_SCROLL" : "TARGET_CLICK";
+            diagnostic.preparation = "NO_ROOT"; diagnostic.matches = -1; diagnostic.refresh = -1;
+            diagnostic.window = -1; diagnostic.bounds.setEmpty();
+            AccessibilityNodeInfo root = automation.getRootInActiveWindow();
+            if (root == null) return null;
+            List<AccessibilityNodeInfo> found = new ArrayList<>();
+            try {
+                diagnostic.window = root.getWindowId();
+                if (!isSystemSaf(root)) { diagnostic.preparation = "NOT_SYSTEM_SAF"; return null; }
+                if (!root.refresh()) { diagnostic.preparation = "ROOT_STALE"; return null; }
+                if (!isSystemSaf(root)) { diagnostic.preparation = "NOT_SYSTEM_SAF"; return null; }
+                String packageName = String.valueOf(root.getPackageName());
+                int window = root.getWindowId();
+                int[] traversal = {0, 0, 0};
+                find(root, predicate, found, traversal, 0);
+                diagnostic.matches = found.size();
+                if (traversal[0] > 1500 || traversal[1] != 0)
+                    throw safFailure("SAF traversal exceeded its original bound", diagnostic);
+                if (found.size() > 1) throw safFailure("SAF target is not unique", diagnostic);
+                if (traversal[2] != 0) { diagnostic.preparation = "INCOMPLETE_TREE"; return null; }
+                if (found.isEmpty()) { diagnostic.preparation = "NO_MATCH"; return null; }
+                AccessibilityNodeInfo selected = found.get(0);
+                diagnostic.refresh = selected.refresh() ? 1 : 0;
+                if (diagnostic.refresh == 0) { diagnostic.preparation = "TARGET_STALE"; return null; }
+                selected.getBoundsInScreen(diagnostic.bounds);
+                if (!sameSafWindow(selected, window, packageName) || !selected.isVisibleToUser()
+                        || !selected.isEnabled() || !predicate.test(selected)) {
+                    diagnostic.preparation = "TARGET_CHANGED"; return null;
+                }
+                AccessibilityNodeInfo action = AccessibilityNodeInfo.obtain(selected);
+                try {
+                    for (int depth = 0; action != null && depth < (scroll ? 1 : 7); depth++) {
+                        if (!action.refresh()) { diagnostic.preparation = "ANCESTOR_STALE"; return null; }
+                        if (!sameSafWindow(action, window, packageName) || !action.isVisibleToUser() || !action.isEnabled()) {
+                            diagnostic.preparation = "ANCESTOR_CHANGED"; return null;
+                        }
+                        // A root row must not turn into an action on its whole list or outside it.
+                        if (!scroll && boundary != null && String.valueOf(action.getViewIdResourceName()).endsWith(boundary)) break;
+                        if (scroll ? action.isScrollable() : action.isClickable()) {
+                            SafReady ready = new SafReady(selected, action, window, packageName, boundary, scroll);
+                            if (!ready.completeList) {
+                                ready.close(); diagnostic.preparation = "LIST_INCOMPLETE"; return null;
+                            }
+                            diagnostic.preparation = "READY";
+                            return ready;
+                        }
+                        AccessibilityNodeInfo parent = action.getParent(); action.recycle(); action = parent;
+                    }
+                    diagnostic.preparation = "NO_ACTIONABLE_ANCESTOR";
+                    return null;
+                } finally { if (action != null) action.recycle(); }
+            } finally {
+                for (AccessibilityNodeInfo value : found) value.recycle();
+                root.recycle();
+            }
+        }
+        void clickSaf(String phase, Predicate<AccessibilityNodeInfo> predicate, String boundary, boolean scrollRoots) {
+            long deadline = SystemClock.elapsedRealtime() + 5_000;
+            SafDiagnostic diagnostic = new SafDiagnostic(phase);
+            SafReady previous = null, previousList = null, lastScrolled = null;
+            boolean scrollingStopped = false;
+            try {
+                do {
+                    SafReady ready = prepareSafAction(predicate, boundary, false, diagnostic);
+                    if (ready != null) {
+                        if (previousList != null) { previousList.close(); previousList = null; }
+                        boolean stable = previous != null && ready.sameGeometryAndContext(previous);
+                        if (previous != null) previous.close(); previous = ready;
+                        if (!stable) diagnostic.preparation = "TARGET_NOT_STABLE";
+                        else if (!ready.revalidate(predicate, diagnostic)) { previous.close(); previous = null; }
+                        else if (!isCurrentSafWindow(ready)) {
+                            diagnostic.preparation = "CURRENT_WINDOW_CHANGED"; previous.close(); previous = null;
+                        } else if (SystemClock.elapsedRealtime() < deadline) {
+                            diagnostic.actionAttempted = true;
+                            diagnostic.actionResult = ready.action.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                            // Even false/unknown dispatch is never replayed. Callers retain their real postconditions.
+                            if (!diagnostic.actionResult) throw safFailure("The single SAF click returned false", diagnostic);
+                            return;
+                        }
+                    } else {
+                        if (previous != null) { previous.close(); previous = null; }
+                        if (scrollRoots && "NO_MATCH".equals(diagnostic.preparation) && !scrollingStopped && diagnostic.scrolls < 4) {
+                            SafReady list = prepareSafAction(Session::isRootsList, null, true, diagnostic);
+                            if (list != null) {
+                                // A successful scroll must produce observed list progress before another is allowed.
+                                // The desired row is always searched first, whether or not a scroll event was delivered.
+                                boolean sameScrollContext = lastScrolled == null || list.sameGeometryAndContext(lastScrolled);
+                                boolean progressed = sameScrollContext && (lastScrolled == null || !list.sameListContents(lastScrolled));
+                                boolean stable = previousList != null && list.sameGeometryAndContext(previousList)
+                                        && list.sameListContents(previousList);
+                                if (previousList != null) previousList.close(); previousList = list;
+                                if (!sameScrollContext) diagnostic.preparation = "SCROLL_CONTEXT_CHANGED";
+                                else if (!progressed) diagnostic.preparation = "SCROLL_PROGRESS_PENDING";
+                                else if (!stable) diagnostic.preparation = "LIST_NOT_STABLE";
+                                else if (!list.revalidate(Session::isRootsList, diagnostic)) { previousList.close(); previousList = null; }
+                                else if (!isCurrentSafWindow(list)) {
+                                    diagnostic.preparation = "CURRENT_WINDOW_CHANGED"; previousList.close(); previousList = null;
+                                } else if (SystemClock.elapsedRealtime() < deadline) {
+                                    diagnostic.scrolls++;
+                                    diagnostic.scrollResult = list.action.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD);
+                                    scrollingStopped = !diagnostic.scrollResult;
+                                    if (lastScrolled != null) lastScrolled.close();
+                                    lastScrolled = list; previousList = null;
+                                }
+                            } else if (previousList != null) { previousList.close(); previousList = null; }
+                        } else if (previousList != null) { previousList.close(); previousList = null; }
+                    }
+                    long remaining = deadline - SystemClock.elapsedRealtime();
+                    if (remaining > 0) SystemClock.sleep(Math.min(25, remaining));
+                } while (SystemClock.elapsedRealtime() < deadline);
+                throw safFailure("The actual SAF target was not ready within its original deadline", diagnostic);
+            } finally {
+                if (previous != null) previous.close();
+                if (previousList != null) previousList.close();
+                if (lastScrolled != null) lastScrolled.close();
+            }
+        }
+        static boolean isRootsList(AccessibilityNodeInfo node) {
+            return node.isVisibleToUser() && node.isEnabled()
+                    && String.valueOf(node.getViewIdResourceName()).endsWith(":id/roots_list");
+        }
+        boolean isCurrentSafWindow(SafReady ready) {
+            AccessibilityNodeInfo root = automation.getRootInActiveWindow();
+            if (root == null) return false;
+            try { return root.refresh() && isSystemSaf(root) && sameSafWindow(root, ready.window, ready.packageName); }
+            finally { root.recycle(); }
+        }
+        AssertionError safFailure(String fixedMessage, SafDiagnostic diagnostic) {
+            String providerDiagnostic;
+            try {
+                // Existing control IPC, with bounded output only; this does not claim a hard Binder deadline.
+                Bundle state = state();
+                providerDiagnostic = ",rootsEntered=" + state.getInt("rootsQueryEntered", -1)
+                        + ",rootsReturned=" + state.getInt("rootsQueryReturned", -1)
+                        + ",rootsOutcome=" + fixedValue(state.getString("rootsQueryLastOutcome"),
+                        "NOT_QUERIED", "IN_PROGRESS", "RETURNED", "REJECTED", "ERROR")
+                        + ",rootsCaller=" + fixedValue(state.getString("rootsQueryLastCallerCheck"),
+                        "NOT_CHECKED", "TARGET_ALLOWED", "SPECIAL_UID_REJECTED", "MANAGE_PERMISSION_REJECTED",
+                        "NO_VISIBLE_PACKAGES", "NO_SYSTEM_PACKAGE", "SYSTEM_ALLOWED", "LOOKUP_ERROR")
+                        + ",rootsPackages=" + state.getInt("rootsQueryLastPackageCount", -1)
+                        + ",rootsApplications=" + state.getInt("rootsQueryLastApplicationInfoCount", -1)
+                        + ",rootsLookupMisses=" + state.getInt("rootsQueryLastLookupMissCount", -1)
+                        + ",rootsCountersSaturated=" + state.getBoolean("rootsQueryCountersSaturated")
+                        + ",providerDiagnosticSampled=true";
+            } catch (RuntimeException | AssertionError unavailable) {
+                providerDiagnostic = ",providerDiagnosticSampled=false";
+            }
+            return new AssertionError(fixedMessage + "; " + diagnostic + providerDiagnostic);
         }
         void selectProviderRoot() {
             Predicate<AccessibilityNodeInfo> providerRoot = node -> node.isVisibleToUser() && node.isEnabled()
@@ -529,21 +680,18 @@ public final class NumericPreferencesInstrumentedTest {
             AccessibilityNodeInfo root = findSaf(providerRoot, 100);
             if (root == null) {
                 String description = drawerDescription();
-                AccessibilityNodeInfo drawer = findSaf(node -> node.isVisibleToUser() && node.isEnabled() && node.isClickable()
-                        && description.contentEquals(node.getContentDescription() == null ? "" : node.getContentDescription()), 5_000);
-                assertNotNull("The real DocumentsUI navigation drawer control was not exposed", drawer); clickNode(drawer);
-                root = findSaf(providerRoot, 5_000);
-            }
-            assertNotNull("The test DocumentsProvider root was not offered by real SAF", root); clickNode(root);
+                clickSaf("DRAWER", node -> node.isVisibleToUser() && node.isEnabled() && node.isClickable()
+                        && description.contentEquals(node.getContentDescription() == null ? "" : node.getContentDescription()), null, false);
+            } else root.recycle();
+            clickSaf("PROVIDER_ROOT", providerRoot, ":id/roots_list", true);
             AccessibilityNodeInfo input = findSaf(node -> node.isVisibleToUser()
                     && NumericPreferencesDocumentsProvider.INPUT_NAME.contentEquals(node.getText() == null ? "" : node.getText()), 5_000);
             assertNotNull("The actual provider document was not listed", input); input.recycle();
         }
         void chooseImport() {
             selectProviderRoot();
-            AccessibilityNodeInfo input = findSaf(node -> node.isVisibleToUser()
-                    && NumericPreferencesDocumentsProvider.INPUT_NAME.contentEquals(node.getText() == null ? "" : node.getText()), 5_000);
-            assertNotNull(input); clickNode(input);
+            clickSaf("IMPORT_DOCUMENT", node -> node.isVisibleToUser()
+                    && NumericPreferencesDocumentsProvider.INPUT_NAME.contentEquals(node.getText() == null ? "" : node.getText()), null, false);
         }
         void chooseExport() {
             selectProviderRoot();
@@ -552,13 +700,13 @@ public final class NumericPreferencesInstrumentedTest {
             assertNotNull("The actual create-document filename editor was not offered", filename);
             try { assertEquals("numeric-preferences.json", String.valueOf(filename.getText())); }
             finally { filename.recycle(); }
-            AccessibilityNodeInfo save = findSaf(node -> node.isVisibleToUser() && node.isEnabled()
-                    && "android:id/button1".equals(node.getViewIdResourceName()) && hasAncestor(node, ":id/container_save"), 5_000);
-            assertNotNull("The real SAF create-document Save control was not offered", save); clickNode(save);
+            clickSaf("EXPORT_SAVE", node -> node.isVisibleToUser() && node.isEnabled()
+                    && "android:id/button1".equals(node.getViewIdResourceName()) && hasAncestor(node, ":id/container_save"), ":id/container_save", false);
         }
         void cancelSystemPicker() {
             assertTrue("Back must be sent to the actual system picker", safRootAvailable());
-            instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
+            assertTrue("The single system SAF Back action must be accepted",
+                    automation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK));
         }
         String drawerDescription() {
             AccessibilityNodeInfo root = automation.getRootInActiveWindow();
@@ -664,41 +812,126 @@ public final class NumericPreferencesInstrumentedTest {
         }
     }
 
+    private static boolean sameSafWindow(AccessibilityNodeInfo node, int window, String packageName) {
+        return node.getWindowId() == window && packageName.contentEquals(node.getPackageName() == null ? "" : node.getPackageName());
+    }
+    private static String fixedValue(String actual, String... allowed) {
+        for (String value : allowed) if (value.equals(actual)) return value;
+        return "UNAVAILABLE";
+    }
+    private static final class SafDiagnostic {
+        final String phase;
+        final Rect bounds = new Rect();
+        String operation = "TARGET_CLICK", preparation = "NOT_OBSERVED";
+        int matches = -1, window = -1, refresh = -1, scrolls;
+        boolean actionAttempted, actionResult, scrollResult;
+        SafDiagnostic(String phase) { this.phase = phase; }
+        @Override public String toString() {
+            return "phase=" + phase + ",operation=" + operation + ",preparation=" + preparation + ",matches=" + matches + ",window=" + window
+                    + ",bounds=" + bounds.toShortString() + ",refresh=" + refresh + ",actionAttempted=" + actionAttempted
+                    + ",actionResult=" + actionResult + ",scrolls=" + scrolls + ",scrollResult=" + scrollResult;
+        }
+    }
+    private static final class SafReady implements AutoCloseable {
+        final AccessibilityNodeInfo selected, action, firstChild, lastChild;
+        final int window, childCount;
+        final String packageName, boundary;
+        final boolean scroll, completeList;
+        final Rect bounds = new Rect(), actionBounds = new Rect(), firstBounds = new Rect(), lastBounds = new Rect();
+        SafReady(AccessibilityNodeInfo selected, AccessibilityNodeInfo action, int window, String packageName, String boundary, boolean scroll) {
+            this.selected = AccessibilityNodeInfo.obtain(selected); this.action = AccessibilityNodeInfo.obtain(action);
+            this.window = window; this.packageName = packageName; this.boundary = boundary; this.scroll = scroll;
+            selected.getBoundsInScreen(bounds); action.getBoundsInScreen(actionBounds);
+            childCount = scroll ? action.getChildCount() : 0;
+            boolean boundedChildren = childCount > 0 && childCount <= 150;
+            firstChild = boundedChildren ? action.getChild(0) : null;
+            lastChild = boundedChildren ? action.getChild(childCount - 1) : null;
+            completeList = !scroll || boundedChildren && snapshotListEndpoint(firstChild, firstBounds)
+                    && snapshotListEndpoint(lastChild, lastBounds);
+        }
+        boolean snapshotListEndpoint(AccessibilityNodeInfo node, Rect snapshot) {
+            if (node == null || !node.refresh() || !sameSafWindow(node, window, packageName)) return false;
+            node.getBoundsInScreen(snapshot);
+            return !snapshot.isEmpty();
+        }
+        boolean sameGeometryAndContext(SafReady other) {
+            return window == other.window && packageName.equals(other.packageName)
+                    && selected.equals(other.selected) && action.equals(other.action)
+                    && bounds.equals(other.bounds) && actionBounds.equals(other.actionBounds);
+        }
+        boolean sameListContents(SafReady other) {
+            return completeList && other.completeList && childCount == other.childCount
+                    && sameNode(firstChild, other.firstChild) && sameNode(lastChild, other.lastChild)
+                    && firstBounds.equals(other.firstBounds) && lastBounds.equals(other.lastBounds);
+        }
+        boolean revalidate(Predicate<AccessibilityNodeInfo> predicate, SafDiagnostic diagnostic) {
+            diagnostic.refresh = selected.refresh() ? 1 : 0;
+            if (diagnostic.refresh == 0) { diagnostic.preparation = "TARGET_STALE"; return false; }
+            selected.getBoundsInScreen(diagnostic.bounds);
+            if (!sameSafWindow(selected, window, packageName) || !selected.isVisibleToUser() || !selected.isEnabled()
+                    || !bounds.equals(diagnostic.bounds) || !predicate.test(selected)) {
+                diagnostic.preparation = "TARGET_CHANGED"; return false;
+            }
+            if (!action.refresh()) { diagnostic.preparation = "ANCESTOR_STALE"; return false; }
+            Rect actualBounds = new Rect(); action.getBoundsInScreen(actualBounds);
+            if (!sameSafWindow(action, window, packageName) || !action.isVisibleToUser() || !action.isEnabled()
+                    || !actionBounds.equals(actualBounds) || !(scroll ? action.isScrollable() : action.isClickable())) {
+                diagnostic.preparation = "ANCESTOR_CHANGED"; return false;
+            }
+            AccessibilityNodeInfo ancestor = AccessibilityNodeInfo.obtain(selected);
+            boolean sameAncestry = false;
+            try {
+                for (int depth = 0; ancestor != null && depth < 7; depth++) {
+                    if (!ancestor.refresh() || !sameSafWindow(ancestor, window, packageName)) break;
+                    if (boundary != null && String.valueOf(ancestor.getViewIdResourceName()).endsWith(boundary)) break;
+                    if (ancestor.equals(action)) { sameAncestry = true; break; }
+                    AccessibilityNodeInfo parent = ancestor.getParent(); ancestor.recycle(); ancestor = parent;
+                }
+            } finally { if (ancestor != null) ancestor.recycle(); }
+            if (!sameAncestry) { diagnostic.preparation = "ANCESTRY_CHANGED"; return false; }
+            if (scroll) {
+                try (SafReady current = new SafReady(selected, action, window, packageName, boundary, true)) {
+                    if (!current.completeList) { diagnostic.preparation = "LIST_INCOMPLETE"; return false; }
+                    if (!sameListContents(current)) { diagnostic.preparation = "LIST_MOVING"; return false; }
+                }
+            }
+            diagnostic.preparation = "READY"; return true;
+        }
+        static boolean sameNode(AccessibilityNodeInfo first, AccessibilityNodeInfo second) {
+            return first == null ? second == null : first.equals(second);
+        }
+        @Override public void close() {
+            selected.recycle(); action.recycle();
+            if (firstChild != null) firstChild.recycle();
+            if (lastChild != null) lastChild.recycle();
+        }
+    }
     private static void find(AccessibilityNodeInfo node, Predicate<AccessibilityNodeInfo> predicate,
                              List<AccessibilityNodeInfo> matches, int[] visited, int depth) {
         if (depth > 30) { visited[1] = 1; return; }
         if (++visited[0] > 1500 || matches.size() > 1) return;
         if (predicate.test(node)) matches.add(AccessibilityNodeInfo.obtain(node));
-        for (int i = 0; i < Math.min(node.getChildCount(), 150); i++) {
+        int childCount = node.getChildCount();
+        if (childCount > 150) { visited[1] = 1; return; }
+        for (int i = 0; i < childCount; i++) {
             AccessibilityNodeInfo child = node.getChild(i);
-            if (child == null) continue;
+            if (child == null) { visited[2]++; continue; }
             try { find(child, predicate, matches, visited, depth + 1); }
             finally { child.recycle(); }
         }
     }
     private static boolean hasAncestor(AccessibilityNodeInfo child, String suffix) {
+        int window = child.getWindowId();
+        String packageName = String.valueOf(child.getPackageName());
         AccessibilityNodeInfo parent = child.getParent();
         try {
             for (int i = 0; parent != null && i < 15; i++) {
+                if (!parent.refresh() || !sameSafWindow(parent, window, packageName)) return false;
                 if (String.valueOf(parent.getViewIdResourceName()).endsWith(suffix)) return true;
                 AccessibilityNodeInfo next = parent.getParent(); parent.recycle(); parent = next;
             }
             return false;
         } finally { if (parent != null) parent.recycle(); }
-    }
-    private static void clickNode(AccessibilityNodeInfo selected) {
-        AccessibilityNodeInfo node = selected;
-        try {
-            assertTrue("The selected actual SAF node must still exist", node.refresh());
-            assertTrue("The selected actual SAF node must remain visible", node.isVisibleToUser());
-            for (int depth = 0; depth < 7; depth++) {
-                if (node.isClickable() && node.isEnabled()) { assertTrue(node.performAction(AccessibilityNodeInfo.ACTION_CLICK)); return; }
-                AccessibilityNodeInfo parent = node.getParent();
-                if (parent == null) break;
-                node.recycle(); node = parent;
-            }
-            fail("The actual SAF node had no enabled clickable ancestor");
-        } finally { node.recycle(); }
     }
     private static void assertSecure(Activity activity) {
         assertTrue("Protected configuration and transfer windows must keep FLAG_SECURE",

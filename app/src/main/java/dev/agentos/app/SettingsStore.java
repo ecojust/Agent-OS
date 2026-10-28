@@ -43,6 +43,23 @@ import javax.crypto.spec.GCMParameterSpec;
 
 /** Stores only configuration. Task text, observations, and screenshots are never persisted here. */
 public final class SettingsStore {
+    /** Fixed UI recovery categories; none implies that damaged keys or data can be repaired. */
+    public enum LoadFailureReason { UNSUPPORTED_FORMAT, UNREADABLE, STORAGE_UNCERTAIN }
+
+    /** No provider error, encrypted bytes, credentials or raw format value are retained. */
+    public static final class LoadException extends IOException {
+        public final LoadFailureReason reason;
+
+        private LoadException(LoadFailureReason reason) {
+            super(reason == LoadFailureReason.UNSUPPORTED_FORMAT
+                    ? "当前版本不支持已保存的配置格式；原配置已保留。请使用支持该格式的应用版本。"
+                    : reason == LoadFailureReason.STORAGE_UNCERTAIN
+                    ? "上次配置写入结果无法确认；重新读取不能解除此状态，请明确重置后重新配置。"
+                    : "无法读取已保存的配置；原配置已保留。可手动重新读取，或明确重置后重新配置。");
+            this.reason = reason;
+        }
+    }
+
     private static final Object KEY_LOCK = new Object();
     private static final Object STORAGE_LOCK = new Object();
     private static final int MAX_ENVELOPE_LENGTH = 200_000;
@@ -104,18 +121,18 @@ public final class SettingsStore {
                     }
                     loaded = new LoadedSettings(parsed.settings, state.published.lease);
                 }
-            } catch (IOException error) {
+            } catch (IOException | RuntimeException error) {
                 synchronized (state.lock) {
                     invalidated = detachWatchersLocked();
                     Published current = state.published;
                     state.published = new Published(current.generation + 1, null, false, false, null, null);
                 }
-                failure = error;
+                failure = error instanceof LoadException ? (LoadException) error : new LoadException(LoadFailureReason.UNREADABLE);
             }
         }
         notifyInvalidated(invalidated);
         if (failure != null) throw failure;
-        if (loaded.lease != null && !isCurrent(loaded.lease)) throw new IOException("配置在读取期间已改变，请重新读取。");
+        if (loaded.lease != null && !isCurrent(loaded.lease)) throw new LoadException(LoadFailureReason.UNREADABLE);
         return loaded;
     }
 
@@ -134,7 +151,14 @@ public final class SettingsStore {
         if (encoded.length() > MAX_ENVELOPE_LENGTH) throw new IOException("已保存配置的大小异常。请重新保存配置。");
         try {
             JSONObject envelope = new JSONObject(encoded);
-            if (envelope.getInt("version") != 1) throw new IOException("此版本无法读取已保存的模型配置。");
+            Object version = envelope.opt("version");
+            // Numeric getters coerce strings and truncate fractions. A recognized
+            // format requires an actual integer; never guess a migration target.
+            if (!(version instanceof Integer) && !(version instanceof Long))
+                throw new LoadException(LoadFailureReason.UNREADABLE);
+            long formatVersion = ((Number) version).longValue();
+            if (formatVersion > 1) throw new LoadException(LoadFailureReason.UNSUPPORTED_FORMAT);
+            if (formatVersion != 1) throw new LoadException(LoadFailureReason.UNREADABLE);
             byte[] iv = Base64.decode(envelope.getString("iv"), Base64.NO_WRAP);
             byte[] ciphertext = Base64.decode(envelope.getString("ciphertext"), Base64.NO_WRAP);
             if (iv.length != 12 || ciphertext.length < 16) throw new IOException("已保存配置不完整。");
@@ -424,8 +448,10 @@ public final class SettingsStore {
 
     private void requireReadable() throws IOException {
         Published current = state.published;
-        if (current.fault) throw new IOException("上次存储结果无法确认，请先明确重置本机配置。");
-        if (current.mutating) throw new IOException("配置正在修改，请稍后重试。");
+        // This guard stays outside loadWithLease's read-failure invalidation:
+        // a manual reload must not clear an uncertain write or an active mutation.
+        if (current.fault) throw new LoadException(LoadFailureReason.STORAGE_UNCERTAIN);
+        if (current.mutating) throw new LoadException(LoadFailureReason.UNREADABLE);
     }
 
     private void requireMutation(Mutation mutation) throws IOException {

@@ -81,6 +81,8 @@ public final class MainActivity extends Activity implements AgentController.List
     private boolean ready;
     private boolean busy;
     private boolean storageDamaged;
+    private long configurationLoadGeneration;
+    private boolean manualConfigurationLoad;
     private boolean suppressModeChange;
     private boolean modelExpanded = true;
     private boolean budgetExpanded, suppressBudgetChange;
@@ -111,7 +113,7 @@ public final class MainActivity extends Activity implements AgentController.List
         if (!this.resumed || destroyed || taskUsageView == null) return;
         renderTaskUsage(controller.getTaskUsage(), true);
     };
-    private Button serviceButton, modelToggle, saveButton, resetButton, appsButton, startButton, pauseButton, stopButton, clearButton, allowButton, denyButton;
+    private Button serviceButton, modelToggle, saveButton, reloadButton, resetButton, appsButton, startButton, pauseButton, stopButton, clearButton, allowButton, denyButton;
     private RadioGroup executionModes;
     private final List<View> configurationViews = new ArrayList<>();
     private String boundApprovalId = "";
@@ -206,6 +208,7 @@ public final class MainActivity extends Activity implements AgentController.List
 
     @Override protected void onPause() {
         resumed = false;
+        if (manualConfigurationLoad) configurationLoadGeneration++;
         closeTaskDiagnostics(true);
         closeTaskActionReceipts(true);
         main.removeCallbacks(taskUsageRefresh);
@@ -366,6 +369,11 @@ public final class MainActivity extends Activity implements AgentController.List
         saveButton.setOnClickListener(view -> saveConfiguration(false));
         configurationViews.add(saveButton);
         marginAdd(modelFields, saveButton, 12);
+        reloadButton = button("保留配置并重新读取", 0, false);
+        reloadButton.setId(R.id.reload_settings);
+        reloadButton.setVisibility(View.GONE);
+        reloadButton.setOnClickListener(view -> retryConfigurationRead());
+        marginAdd(modelFields, reloadButton, 8);
         resetButton = button("重置本机配置", 0, false);
         resetButton.setId(R.id.reset_settings);
         resetButton.setTextColor(color(R.color.agent_error));
@@ -537,7 +545,39 @@ public final class MainActivity extends Activity implements AgentController.List
     }
 
     private void loadConfiguration() {
+        loadConfiguration(false);
+    }
+
+    private void retryConfigurationRead() {
+        if (!storageDamaged || !resumed || destroyed || isFinishing() || busy
+                || modelProbe != null || controller.getState().running) return;
+        // A recovery read is not a saved model test or a retained editor draft.
+        retainedDraft = null;
+        savedConfigurationLease = null;
+        savedConfigurationGeneration = -1;
+        invalidateSavedProbe("已失效，请重新测试");
+        dismissProbeTrustDialog();
+        renderProbeResult();
+        showMessage("正在重新读取本机配置，原副本保持不变…", false);
+        loadConfiguration(true);
+    }
+
+    private static String configurationReadFailure(IOException error) {
+        SettingsStore.LoadFailureReason reason = error instanceof SettingsStore.LoadException
+                ? ((SettingsStore.LoadException) error).reason : SettingsStore.LoadFailureReason.UNREADABLE;
+        if (reason == SettingsStore.LoadFailureReason.UNSUPPORTED_FORMAT)
+            return "此应用版本无法读取已保存的配置格式。原副本已保留，请使用支持该格式的应用版本。重新读取不会转换或覆盖配置；重置会删除本机配置。";
+        if (reason == SettingsStore.LoadFailureReason.STORAGE_UNCERTAIN)
+            return "上次配置写入结果无法确认，执行已禁用。原存储状态已保留，重新读取不能解除此故障；如需重新配置，请单独确认重置。";
+        return "无法读取已保存的配置，原副本已保留。请解锁设备后选择“保留配置并重新读取”；仍无法读取时可单独确认重置，再重新配置。";
+    }
+
+    private void loadConfiguration(boolean manual) {
+        final long loadGeneration = ++configurationLoadGeneration;
+        final long uiGeneration = configurationGeneration;
+        manualConfigurationLoad = manual;
         busy = true;
+        renderState();
         storageWorker.execute(() -> {
             if (destroyed) return;
             SettingsStore loadedStore = null;
@@ -557,8 +597,12 @@ public final class MainActivity extends Activity implements AgentController.List
                 loaded.allowedPackages.retainAll(valid);
                 loaded.grants.keySet().retainAll(valid);
             } catch (IOException error) {
-                failure = "无法读取已保存的配置。原副本已保留，请在模型连接中选择“重置本机配置”后重新设置。";
+                loaded = null;
+                loadedLease = null;
+                failure = configurationReadFailure(error);
             } catch (RuntimeException error) {
+                loaded = null;
+                loadedLease = null;
                 failure = "当前资料无法执行任务。首版仅支持已解锁的设备所有者个人资料。";
             }
             SettingsStore nextStore = loadedStore;
@@ -567,11 +611,20 @@ public final class MainActivity extends Activity implements AgentController.List
             String errorText = failure;
             main.post(() -> {
                 if (destroyed) return;
+                manualConfigurationLoad = false;
+                if (manual && (loadGeneration != configurationLoadGeneration || uiGeneration != configurationGeneration
+                        || !resumed || isFinishing() || controller.getState().running || modelProbe != null)) {
+                    busy = false;
+                    showMessage("重新读取已取消，原副本保持不变。返回此页面后可再次手动读取。", false);
+                    renderState();
+                    return;
+                }
                 store = nextStore;
                 busy = false;
                 ready = nextStore != null;
-                storageDamaged = next == null;
-                if (next != null) {
+                boolean staleLease = manual && nextLease != null && !SettingsStore.isCurrent(nextLease);
+                storageDamaged = next == null || staleLease;
+                if (!storageDamaged) {
                     boolean retained = retainedDraft != null && next.profileId.equals(retainedDraft.settings.profileId);
                     draft = next;
                     if (retainedDraft != null && next.profileId.equals(retainedDraft.settings.profileId)) {
@@ -593,7 +646,13 @@ public final class MainActivity extends Activity implements AgentController.List
                     savedConfigurationGeneration = !retained && revoked.isEmpty() && nextLease != null
                             ? configurationGeneration : -1;
                     if (!revoked.isEmpty()) showMessage("有 " + revoked.size() + " 个应用的安装身份已变化，授权已取消。需要继续操作时，请重新选择这些应用。", true);
-                } else showMessage(errorText, true);
+                    else if (manual) showMessage("已重新读取本机配置，未启动任务或模型测试。请检查设置后手动操作。", false);
+                } else {
+                    savedConfigurationLease = null;
+                    savedConfigurationGeneration = -1;
+                    modelExpanded = true;
+                    showMessage(staleLease ? "配置在读取期间已改变，未应用本次结果。请再次手动读取。" : errorText, true);
+                }
                 updateModelPanel();
                 renderState();
             });
@@ -980,12 +1039,14 @@ public final class MainActivity extends Activity implements AgentController.List
     }
 
     private void confirmReset() {
-        if (store == null || busy || modelProbe != null || controller.getState().running) return;
+        if (store == null || !resumed || destroyed || isFinishing() || busy || modelProbe != null || controller.getState().running) return;
+        final long loadGeneration = configurationLoadGeneration;
         new AlertDialog.Builder(this).setTitle("重置本机配置？")
                 .setMessage("会删除本机保存的模型地址、密钥、模型名称和应用授权，并重置执行模式和任务预算。此操作不会删除目标应用的数据，也不会删除已发送到模型服务的数据。")
                 .setNegativeButton("保留配置", null)
                 .setPositiveButton("删除并重新配置", (dialog, which) -> {
-                    if (destroyed || controller.getState().running) return;
+                    if (destroyed || !resumed || isFinishing() || busy || modelProbe != null
+                            || controller.getState().running || loadGeneration != configurationLoadGeneration) return;
                     invalidateSavedProbe("已失效，请重新测试");
                     savedConfigurationLease = null;
                     savedConfigurationGeneration = -1;
@@ -1053,6 +1114,8 @@ public final class MainActivity extends Activity implements AgentController.List
         maxOutputTokensField.setEnabled(editable);
         taskField.setEnabled(editable && !probing);
         resetButton.setEnabled(store != null && !busy && !state.running && !probing);
+        reloadButton.setVisibility(storageDamaged ? View.VISIBLE : View.GONE);
+        reloadButton.setEnabled(storageDamaged && resumed && !isFinishing() && !busy && !state.running && !probing);
         serviceButton.setEnabled(!state.running && !busy && !probing);
         compatibilityButton.setEnabled(!state.running && !busy && !probing);
         modelToggle.setEnabled(!probing);

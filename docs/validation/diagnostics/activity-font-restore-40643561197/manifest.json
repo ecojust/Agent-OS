@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "kind": "original-ci-activity-font-restoration-failure-excerpts",
+  "sourceRun": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 40643561197,
+    "attempt": 1,
+    "commit": "b7bb92b438c5d8d3ebc0d72deec8c33e7689aab6",
+    "event": "workflow_dispatch",
+    "branch": "master",
+    "title": "Android checks",
+    "workflowPath": ".github/workflows/android.yml",
+    "conclusion": "failure",
+    "finishedAt": "2026-10-28T06:38:19Z",
+    "url": "https://github.com/ecojust/Agent-OS/actions/runs/40643561197"
+  },
+  "executionScope": "full",
+  "testSelection": "full-suite",
+  "fullSuiteAcceptance": false,
+  "mainlineAcceptance": false,
+  "sourceLogArchive": {
+    "url": "https://api.github.com/repos/ecojust/Agent-OS/actions/runs/40643561197/logs",
+    "fileName": "activity-font-full-40643561197-logs.zip",
+    "bytes": 556815,
+    "sha256": "c28c5b54e44b0fbd37080098c4b203137384d30b32b9a9bf2ee676da25ea08fd"
+  },
+  "caseCounts": {
+    "source": "Original Exercise logs and Print Android failure details output; no raw JUnit XML downloaded or reparsed",
+    "expectedPerApi": 247,
+    "expectedTotal": 1976,
+    "started": 1976,
+    "finished": 1976,
+    "printedFailureEntries": 2,
+    "printedErrorEntries": 0,
+    "skipped": null,
+    "unrecorded": null
+  },
+  "failurePhase": "finally cleanup: restore original raw font setting and effective scale",
+  "entries": [
+    {
+      "matrixLabel": "32",
+      "sourceJob": {
+        "id": 122667056151,
+        "name": "emulator-tests (32)",
+        "url": "https://github.com/ecojust/Agent-OS/actions/runs/40643561197/job/122667056151",
+        "conclusion": "failure"
+      },
+      "sourceLogMember": "emulator-tests (32)/10_Print Android failure details.txt",
+      "sourceLogMemberBytes": 2771,
+      "sourceLogMemberSha256": "3f36312ac56ec352487bfc2b0ded3eeacba8e032212efa7c3a54fc3a1acdf7ff",
+      "sourceLineStart": 20,
+      "sourceLineEnd": 28,
+      "sourceLineCount": 9,
+      "sourceTrailingWhitespaceLinesPreserved": [
+        22
+      ],
+      "file": "api32-failure.txt",
+      "bytes": 1282,
+      "sha256": "808f7ce9f4c3f02d3bdbbb8c7e14cbf0350b6c9973542748a118d96f9dc2de85",
+      "startedTests": 247,
+      "finishedTests": 247,
+      "parsedAndroidReports": 1,
+      "printedFailures": 1,
+      "printedErrors": 0,
+      "reportedSuite": "dev.agentos.app.AgentControllerInstrumentedTest",
+      "failedTest": "dev.agentos.app.MainActivityFontScaleInstrumentedTest#realSystemFontScaleRecreatesSecureActivityAndRetainsOnlyInMemoryDraft",
+      "restoreStackLocation": "FontScaleControlWindowInstrumentedTest.java:198",
+      "awaiterStackLocation": "FontScaleControlWindowInstrumentedTest.java:234",
+      "testCleanupStackLocation": "MainActivityFontScaleInstrumentedTest.java:152",
+      "expectedRaw": "absent",
+      "expectedScale": 1.0,
+      "lastRaw": "1.0",
+      "lastServiceScale": 1.0,
+      "lastApplicationScale": 1.0
+    },
+    {
+      "matrixLabel": "33",
+      "sourceJob": {
+        "id": 122667056186,
+        "name": "emulator-tests (33)",
+        "url": "https://github.com/ecojust/Agent-OS/actions/runs/40643561197/job/122667056186",
+        "conclusion": "failure"
+      },
+      "sourceLogMember": "emulator-tests (33)/10_Print Android failure details.txt",
+      "sourceLogMemberBytes": 2771,
+      "sourceLogMemberSha256": "74cd1f245da654c87e0720b4602f64084c4dcc16bda1d4c14660fb7cdad71cb1",
+      "sourceLineStart": 20,
+      "sourceLineEnd": 28,
+      "sourceLineCount": 9,
+      "sourceTrailingWhitespaceLinesPreserved": [
+        22
+      ],
+      "file": "api33-failure.txt",
+      "bytes": 1282,
+      "sha256": "44575dee0f36bfe8acfc5b814bceadc01c146da08ba009a27d7466ddd13ca011",
+      "startedTests": 247,
+      "finishedTests": 247,
+      "parsedAndroidReports": 1,
+      "printedFailures": 1,
+      "printedErrors": 0,
+      "reportedSuite": "dev.agentos.app.AgentControllerInstrumentedTest",
+      "failedTest": "dev.agentos.app.MainActivityFontScaleInstrumentedTest#realSystemFontScaleRecreatesSecureActivityAndRetainsOnlyInMemoryDraft",
+      "restoreStackLocation": "FontScaleControlWindowInstrumentedTest.java:198",
+      "awaiterStackLocation": "FontScaleControlWindowInstrumentedTest.java:234",
+      "testCleanupStackLocation": "MainActivityFontScaleInstrumentedTest.java:152",
+      "expectedRaw": "absent",
+      "expectedScale": 1.0,
+      "lastRaw": "1.0",
+      "lastServiceScale": 1.0,
+      "lastApplicationScale": 1.0
+    }
+  ]
+}

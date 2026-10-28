@@ -76,7 +76,7 @@
 
 两轮测试契约失败保持原样：[8b97首轮](../../screenshots/40640583322-1/manifest.json)0/8，baseline时误断言RadioButton.performClick返回true；[原日志](diagnostics/activity-font-radio-40640583322/)未记录当时checked值。修正为单次真实点击后核对按钮、分组与草稿状态。[2691第二轮](../../screenshots/40641436998-1/manifest.json)0/8，实际替换后UI草稿检查已通过，但恢复后系统交接对象非空断言失败；[原日志](diagnostics/activity-font-retention-40641436998/)保留。Android在performResume中清空交接引用，测试现于真实postCreated采样，再检查原对象身份；fresh-open的空值也在创建时检查。生产行为、原安全及期限断言均未改，不把后来的通过写回旧记录。
 
-同b7bb[普通录像](../../screenshots/demos/40642313167-1/demo.mp4)39.064秒、457,501字节、22张流程PNG已核验；其13阶段和8确认通过，安全标志保留，使用本地合成模型，不执行字体专项。相同精确源码的[完整1976项40643561197](https://github.com/ecojust/Agent-OS/actions/runs/40643561197)正在运行，不能用8项专项替代247×8完整结果；既有完整基线保持81f的1968/1968。
+同b7bb[普通录像](../../screenshots/demos/40642313167-1/demo.mp4)39.064秒、457,501字节、22张流程PNG已核验；其13阶段和8确认通过，安全标志保留，使用本地合成模型，不执行字体专项。相同精确源码的[完整1976项40643561197](https://github.com/ecojust/Agent-OS/actions/runs/40643561197)实际1974/1976通过，API32／33的该新用例在最后原raw恢复失败：原记录应不存在，最后raw为1.0但service/app比例已为1.0；新增用例在整套中为6/8，不用专项8/8替代。[全量归档](../../screenshots/40643561197-1/manifest.json)4239载荷、46,323,541字节、2231PNG已独立核验，零错误、跳过、缺失。1077条blocked及24次既有空界面安全标志例外保留；8份性能通过仍非预算验收。[原始连续日志](diagnostics/activity-font-restore-40643561197/)保留，持久化写回时点待修正。完整通过基线仍为81f的1968/1968。
 
 ## 分开的后续验证
 

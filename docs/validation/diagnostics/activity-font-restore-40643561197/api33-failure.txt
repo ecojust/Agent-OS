@@ -1,0 +1,9 @@
+2026-10-28T06:33:58.4039243Z   | Suite: dev.agentos.app.AgentControllerInstrumentedTest
+2026-10-28T06:33:58.4040714Z   | Test: dev.agentos.app.MainActivityFontScaleInstrumentedTest.realSystemFontScaleRecreatesSecureActivityAndRetainsOnlyInMemoryDraft
+2026-10-28T06:33:58.4042033Z   | Kind: failure / 
+2026-10-28T06:33:58.4043524Z   | java.lang.AssertionError: System setting and actual service/application font configuration did not agree within ten seconds;expectedRaw=absent,expectedScale=1.0,last={raw=1.0,serviceScale=1.0,applicationScale=1.0}
+2026-10-28T06:33:58.4046490Z   | at dev.agentos.app.FontScaleControlWindowInstrumentedTest.awaitFont(FontScaleControlWindowInstrumentedTest.java:234)
+2026-10-28T06:33:58.4047990Z   | at dev.agentos.app.FontScaleControlWindowInstrumentedTest.-$$Nest$smawaitFont(Unknown Source:0)
+2026-10-28T06:33:58.4049287Z   | at dev.agentos.app.FontScaleControlWindowInstrumentedTest$OriginalFont.restore(FontScaleControlWindowInstrumentedTest.java:198)
+2026-10-28T06:33:58.4051106Z   | at dev.agentos.app.MainActivityFontScaleInstrumentedTest.realSystemFontScaleRecreatesSecureActivityAndRetainsOnlyInMemoryDraft(MainActivityFontScaleInstrumentedTest.java:152)
+2026-10-28T06:33:58.4052504Z Parsed 1 Android reports; found 1 failure/error entries.

@@ -1074,3 +1074,14 @@ Android CompoundButton.performClick先toggle，再返回父View的点击处理�
 同源码普通[录像40642313167](https://github.com/ecojust/Agent-OS/actions/runs/40642313167)及[归档40642781994](https://github.com/ecojust/Agent-OS/actions/runs/40642781994)成功。[清单](screenshots/demos/40642313167-1/manifest.json)30载荷、1,190,706字节、22张320×640实际PNG已核验；[视频](screenshots/demos/40642313167-1/demo.mp4)39.064秒、640×1280、457,501字节，完整解码与实际帧检查通过。普通操作1/1、13阶段及8确认通过，安全标志未清除，模型为本地合成HTTP服务；不执行本次字体用例、不替代专项或真机／真实模型验收。
 
 相同b7bb精确源码的[完整1976项40643561197](https://github.com/ecojust/Agent-OS/actions/runs/40643561197)已启动；完整247身份／档从源码冻结，不把预期数量当通过数。当前已完成完整基线仍为81f的1968/1968；前次API36视觉代次失败原因仍未知，不借新专项通过消除原问题。检查点保持9/20（45%）。
+
+
+### 完整1976项：保留两项字体原始记录恢复失败
+
+源码 `b7bb92b438c5d8d3ebc0d72deec8c33e7689aab6` 的[完整运行40643561197](https://github.com/ecojust/Agent-OS/actions/runs/40643561197)在八档各执行247项，**1974/1976通过、2失败，零错误、跳过、不可读报告和缺失记录**。API30、31、34、35、36、37.0各247项通过；API32、33各246/247，两项均为新增MainActivity字体用例最后恢复原设置。预期原font_scale行不存在，最后raw却是1.0；service/application实际比例均已为1.0。原十秒期限失败保留，不能以实际字号已正确而忽略原raw未恢复，也不能用此前专项8/8替代整套。
+
+[原始全量归档](screenshots/40643561197-1/manifest.json)4239载荷、46,323,541字节、2231张真实PNG（2227张320×640、4张831×1662）经独立完整文件集合、大小/SHA-256与解码核验；原源码冻结的247身份／档与逐案JSON及采集器JUnit摘要完全一致。1077条blocked保留固定原因，新Activity字体用例每档三个过程阶段加终态均未尝试PNG，共32条；失败两档终态为failed，其余六档finished。24次临时清除安全标志仍仅限既有16个空设备诊断阶段和8个空主界面阶段，其他捕获保留保护。8份性能诊断采集并通过，budgetAcceptance仍false。
+
+[两份原始连续日志](docs/validation/diagnostics/activity-font-restore-40643561197/)按字节保留Suite到Parsed，原Suite字段虽为AgentController仍不改写；实际Test字段与cause指向MainActivityFontScale的OriginalFont.restore。整ZIP／member／行范围和摘录校验值均记录，不冒称独立重解析原XML。日志没有记录设置行被写回的精确时序或调用者；源码中的异步规范化回写须单独分析，不能由最终raw直接补造事件序列。
+
+准确b7bb的39.064秒普通录像继续保留，不代表字体清理成功。当前完整通过基线仍为81f的1968/1968；本轮新增模块在整套中为6/8，原两轮测试契约失败及此前API36未解释视觉代次失败保持原样。下一步明确字体持久化写回的可观察完成条件，保持原期限与原raw严格检查，不增加盲重试。

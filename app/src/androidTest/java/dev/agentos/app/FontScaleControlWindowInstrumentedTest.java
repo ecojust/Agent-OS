@@ -181,21 +181,20 @@ public final class FontScaleControlWindowInstrumentedTest {
             long deadline = SystemClock.elapsedRealtime() + 10_000;
             // The exact provider row (including absence) and effective resources
             // are separate restoration targets. A font change can itself persist
-            // a canonical numeric row, so publish the original effective scale
-            // before restoring absence or the original numeric spelling.
+            // a canonical numeric row, so observe that controlled writeback before
+            // restoring absence or the original numeric spelling.
             // Both stages share the original ten-second deadline. Even a failed
             // first stage must attempt to restore the exact original provider row.
             String effectiveRaw = Float.toString(actual);
             Throwable failure = null;
             try {
-                device.shell("settings --user current put system font_scale " + effectiveRaw);
-                awaitFont(device, effectiveRaw, actual, deadline);
+                publishFont(device, effectiveRaw, actual, deadline);
             } catch (Exception | AssertionError failed) { failure = failed; }
             finally {
                 try {
                     device.shell(raw == null ? "settings --user current delete system font_scale"
                             : "settings --user current put system font_scale " + raw);
-                    awaitFont(device, raw, actual, deadline);
+                    awaitFont(device, raw, actual, deadline, "original_row", raw);
                 } catch (Exception | AssertionError failed) {
                     if (failure == null) failure = failed; else failure.addSuppressed(failed);
                 }
@@ -211,12 +210,34 @@ public final class FontScaleControlWindowInstrumentedTest {
 
     static void changeFont(DeviceHarness device, String raw, float expected) throws Exception {
         assertTrue("Only the two declared synthetic font samples may be installed", "1.0".equals(raw) || "1.3".equals(raw));
+        assertEquals("The declared raw sample must match its effective target", Float.toString(expected), raw);
         long deadline = SystemClock.elapsedRealtime() + 10_000;
-        device.shell("settings --user current put system font_scale " + raw);
-        awaitFont(device, raw, expected, deadline);
+        publishFont(device, raw, expected, deadline);
     }
 
-    private static void awaitFont(DeviceHarness device, String raw, float expected, long deadline) throws Exception {
+    private static void publishFont(DeviceHarness device, String canonical, float expected, long deadline) throws Exception {
+        FontSnapshot before = onMain(device, () -> new FontSnapshot(readFont(device),
+                device.service.getResources().getConfiguration().fontScale,
+                device.context.getResources().getConfiguration().fontScale));
+        boolean changesScale = Float.compare(before.service, expected) != 0
+                || Float.compare(before.application, expected) != 0;
+        // The provider preserves this spelling; a real scale change makes Android
+        // asynchronously persist Float.toString(target). Its distinct spelling
+        // lets this test observe that write, including targets using an exponent.
+        String requested = changesScale ? "+" + canonical : canonical;
+        assertEquals("The font write marker must preserve the exact target float",
+                Float.floatToIntBits(expected), Float.floatToIntBits(Float.parseFloat(requested)));
+        // Equal effective scales do not trigger framework persistence. On the
+        // successful controlled path, each preceding scale change has already
+        // observed its matching writeback. This is not a global queue-idle claim;
+        // an earlier failure remains a failure even if best-effort cleanup works.
+        device.shell("settings --user current put system font_scale " + requested);
+        awaitFont(device, canonical, expected, deadline,
+                changesScale ? "canonical_writeback" : "canonical_without_scale_change", requested);
+    }
+
+    private static void awaitFont(DeviceHarness device, String raw, float expected, long deadline,
+                                  String stage, String requested) throws Exception {
         FontSnapshot latest = null;
         while (SystemClock.elapsedRealtime() < deadline) {
             latest = onMain(device, () -> new FontSnapshot(readFont(device),
@@ -230,7 +251,8 @@ public final class FontScaleControlWindowInstrumentedTest {
         // Reuse the last main-thread poll. Do not post additional
         // diagnostic work after timeout or read settings other than font_scale.
         throw new AssertionError("System setting and actual service/application font configuration did not agree within ten seconds"
-                + ";expectedRaw=" + fontToken(raw) + ",expectedScale=" + expected
+                + ";stage=" + stage + ",requestedRaw=" + fontToken(requested)
+                + ",expectedRaw=" + fontToken(raw) + ",expectedScale=" + expected
                 + ",last=" + (latest == null ? "unavailable" : latest.diagnostic()));
     }
 

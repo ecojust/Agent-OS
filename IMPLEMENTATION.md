@@ -1085,3 +1085,14 @@ Android CompoundButton.performClick先toggle，再返回父View的点击处理�
 [两份原始连续日志](docs/validation/diagnostics/activity-font-restore-40643561197/)按字节保留Suite到Parsed，原Suite字段虽为AgentController仍不改写；实际Test字段与cause指向MainActivityFontScale的OriginalFont.restore。整ZIP／member／行范围和摘录校验值均记录，不冒称独立重解析原XML。日志没有记录设置行被写回的精确时序或调用者；源码中的异步规范化回写须单独分析，不能由最终raw直接补造事件序列。
 
 准确b7bb的39.064秒普通录像继续保留，不代表字体清理成功。当前完整通过基线仍为81f的1968/1968；本轮新增模块在整套中为6/8，原两轮测试契约失败及此前API36未解释视觉代次失败保持原样。下一步明确字体持久化写回的可观察完成条件，保持原期限与原raw严格检查，不增加盲重试。
+
+
+### 明确受控字体持久化的完成条件
+
+独立核对AOSP11／12／12L／13／14／16／17实现：[updateFontScaleIfNeeded](https://android.googlesource.com/platform/frameworks/base/+/android-12.1.0_r27/services/core/java/com/android/server/wm/ActivityTaskManagerService.java#4432)在数值相等时直接返回，真实变化才触发异步持久化；[Settings.putConfigurationForUser](https://android.googlesource.com/platform/frameworks/base/+/android-12.1.0_r27/core/java/android/provider/Settings.java#3931)最终按Float.toString写回规范字符串。应用资源同步不等于该写回完成。原失败只记录最终raw，未直接记录覆盖的时序，不能补造具体写者事件。
+
+共享字体测试辅助器现在在每次真实数值变化时只写一次等值但不同拼写的 `+` 加规范数字，严格等待框架规范字符串及服务／应用资源同时匹配。每次自控变化都完成这一检查后才进入下一次；数值已相同时直接写规范值，不等待不会发生的回写。判断变化使用精确Float.compare，写入前核对浮点位值一致，支持指数拼写。该条件仅用于专用模拟器上的受控字体序列，不宣称任意系统队列空闲；失败传播中的资源与全局状态可能不同，原失败必须保留。
+
+OriginalFont仍保存实际原比例，不把缺失行一律当1.0；API37还可能有设备默认比例。恢复阶段与最后单次原raw写回／delete共用原十秒期限，最后一步始终在finally尝试；无额外重试、字体往返、固定等待或时限延长。原始缺失状态／数字拼写严格匹配，前阶段失败不能被后阶段成功擦去。生产代码、两个实际字体用例正文、Activity关闭顺序、布局／身份／存储／安全检查均未改，失败诊断只增加字体阶段及所请求的数字。
+
+独立审查、最终APK及lint32秒通过，两Java源码构建前后hash一致；12个普通、小数、指数、极小／极大及相邻float样本的leading-plus字符串逐位一致。共享helper影响服务控制窗与主Activity，下一步在同一源码分别运行两个固定八档字体专项，再完整1976项与普通录像。当前完整结果仍为b7bb的1974/1976，不提前宣布修正通过。

@@ -1038,3 +1038,10 @@ API30–32在真实手势曾移动且结束后，确认旧控制窗实际移除�
 [完整原始归档](screenshots/40640583322-1/manifest.json)32载荷、24,188字节已独立核对完整文件集合、大小/SHA-256、逐案JSON与采集器JUnit摘要。八条捕获均为固定策略 `secure_activity_font_draft_capture_not_attempted` 的failed阶段blocked记录，PNG为0，没有尝试受保护截图或清除安全标志；blocked不等于测试跳过。8份性能附件invalid，专项与整套计数分开；完整1976项尚未启动，现有完整通过基线保持81f的1968/1968。
 
 同源码普通[录像40640618487](https://github.com/ecojust/Agent-OS/actions/runs/40640618487)及[归档40640972317](https://github.com/ecojust/Agent-OS/actions/runs/40640972317)成功。[清单](screenshots/demos/40640618487-1/manifest.json)30载荷、1,153,615字节、22张320×640真实PNG已核验；[视频](screenshots/demos/40640618487-1/demo.mp4)32.885秒、640×1280、410,653字节，完整解码及实际帧检查通过。普通操作1/1、13阶段、8确认通过，使用本地合成HTTP模型并保留安全标志。录像不执行新Activity字体用例，不代替其八档失败，也不代表真机或真实模型验收。
+
+
+### 修正单选按钮准备检查：核对实际状态
+
+Android CompoundButton.performClick先toggle，再返回父View的点击处理结果；本界面通过RadioGroup.OnCheckedChangeListener更新模式，没有给该RadioButton安装OnClickListener。原断言错误地要求返回true。现仍只调用一次真实performClick，随后精确检查RadioButton选中、RadioGroup选择编号和实际内存draft.executionMode均为连续导航；不直接设置选中状态或草稿来绕过真实监听器。
+
+仅此测试文件的import和准备段改变，生产代码、同profile内存保留、最终Bundle扫描、持久化／Controller／模型请求、布局、安全窗口及原时限断言均保留。原8档失败继续保留，旧日志未保存当时checked值，不补写该次状态。独立审查、最终APK和lint32秒通过，源码构建前后hash一致；新版八档专项、完整1976项和普通录像待执行，当前README视频仍准确标记8b97。

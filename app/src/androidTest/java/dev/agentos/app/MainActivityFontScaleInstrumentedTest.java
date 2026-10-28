@@ -19,6 +19,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.ScrollView;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -188,7 +189,14 @@ public final class MainActivityFontScaleInstrumentedTest {
         editor(activity, R.id.task_budget_rounds).setText("19");
         editor(activity, R.id.task_budget_tools).setText("1001");
         editor(activity, R.id.task_budget_seconds).setText("241");
-        assertTrue(activity.findViewById(R.id.execution_mode_continuous_navigation).performClick());
+        RadioButton continuous = activity.findViewById(R.id.execution_mode_continuous_navigation);
+        // CompoundButton toggles before returning whether an OnClickListener handled the click.
+        continuous.performClick();
+        assertTrue("The real radio click must select continuous navigation", continuous.isChecked());
+        assertEquals(R.id.execution_mode_continuous_navigation,
+                ((RadioGroup) activity.findViewById(R.id.confirm_actions)).getCheckedRadioButtonId());
+        assertEquals(ActionConfirmationPolicy.Mode.CONTINUOUS_NAVIGATION,
+                ((SettingsStore.SavedSettings) field(activity, "draft")).executionMode);
     }
 
     private static void assertDraft(MainActivity activity, String profile, String endpoint, boolean retained) {

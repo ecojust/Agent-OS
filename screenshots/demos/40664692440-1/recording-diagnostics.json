@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "kind": "agent-os-demo-recording-diagnostics",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "4b87c9a28662772ce8aff50fdd95f31fd9402b07",
+    "runId": 40664692440,
+    "attempt": 1
+  },
+  "failures": [],
+  "probes": [
+    {
+      "stage": "raw_probe",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "{\n    \"programs\": [\n\n    ],\n    \"streams\": [\n        {\n            \"codec_name\": \"h264\",\n            \"codec_type\": \"video\",\n            \"codec_tag_string\": \"avc1\",\n            \"width\": 320,\n            \"height\": 640,\n            \"pix_fmt\": \"yuv420p\"\n        },\n        {\n            \"codec_type\": \"data\",\n            \"codec_tag_string\": \"mett\"\n        },\n        {\n            \"codec_type\": \"data\",\n            \"codec_tag_string\": \"mett\"\n        }\n    ],\n    \"format\": {\n        \"duration\": \"37.406022\"\n    }\n}\n"
+    },
+    {
+      "stage": "encoded_probe",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "{\n    \"programs\": [\n\n    ],\n    \"streams\": [\n        {\n            \"codec_name\": \"h264\",\n            \"codec_type\": \"video\",\n            \"codec_tag_string\": \"avc1\",\n            \"width\": 640,\n            \"height\": 1280,\n            \"pix_fmt\": \"yuv420p\"\n        }\n    ],\n    \"format\": {\n        \"duration\": \"37.555646\"\n    }\n}\n"
+    }
+  ],
+  "recorder": {
+    "started": true,
+    "exitCode": 0,
+    "stderr": {
+      "text": "",
+      "truncated": false,
+      "complete": true
+    }
+  }
+}

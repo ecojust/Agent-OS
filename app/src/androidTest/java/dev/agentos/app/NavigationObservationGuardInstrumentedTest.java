@@ -2,6 +2,10 @@ package dev.agentos.app;
 
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
@@ -147,29 +151,265 @@ public final class NavigationObservationGuardInstrumentedTest {
              ControllerTestSettings settings = new ControllerTestSettings(device.context, server, Mode.CONTINUOUS_NAVIGATION);
              PerformanceTrace.Session trace = PerformanceTrace.startDiagnostics()) {
             AtomicInteger approvals = new AtomicInteger();
-            AndroidDeviceTools tools = guardedTools(device, settings, approvals);
-            device.context.startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            device.awaitUiIdle();
-            JsonObject before = awaitObservation(tools, device.control, data -> {
-                String app = string(data, "packageName");
-                return !app.isEmpty() && !FIXTURE.equals(app) && !device.context.getPackageName().equals(app);
-            });
-            assertFalse(before.get("scoped").getAsBoolean());
-            assertEquals(0, before.getAsJsonArray("nodes").size());
-            assertFalse("The focused Settings page itself must be rejected, without another overlay", before.get("hasOcclusion").getAsBoolean());
-            String focusedPackage = actualFocusedPackage(device);
-            assertEquals(string(before, "packageName"), focusedPackage);
-            JsonObject args = new JsonObject(); args.addProperty("packageName", FIXTURE);
-            try { tools.execute("launch_app", args, device.control); fail("Automatic launch replaced an unknown focused window"); }
-            catch (TaskControlException paused) { assertEquals("TASK_PAUSED", paused.getCode()); }
-            assertTrue(device.control.isPaused());
-            assertEquals(0, approvals.get());
-            assertEquals(0, device.control.getDispatchAttempts());
-            assertEquals(focusedPackage, actualFocusedPackage(device));
-            assertNoDispatch(trace);
-            assertEquals(0, server.requestCount());
-            screenshots.capture("continuous-navigation-rejects-unscoped-focused-settings");
+            NavigationDiagnostic diagnostic = new NavigationDiagnostic();
+            try {
+                AndroidDeviceTools tools = guardedTools(device, settings, approvals);
+                resolveSettingsOrigin(device, diagnostic);
+                diagnostic.phase("settings_launch");
+                // Keep the actual implicit launch. Resolution alone is not proof
+                // that this package subsequently owns the focused window.
+                device.context.startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                device.awaitUiIdle();
+                diagnostic.phase("settings_observation");
+                JsonObject before = awaitSettingsObservation(tools, device, diagnostic);
+                assertFalse(before.get("scoped").getAsBoolean());
+                assertEquals(0, before.getAsJsonArray("nodes").size());
+                assertFalse("The focused Settings page itself must be rejected, without another overlay", before.get("hasOcclusion").getAsBoolean());
+                FocusedOrigin focused = focusedOrigin(device, diagnostic);
+                diagnostic.values.add("beforeFocus", focused.metadata());
+                assertEquals("The independent focused application must be the resolved system Settings", "SETTINGS", focused.classification);
+                assertEquals(before.get("windowId").getAsInt(), focused.windowId);
+                assertEquals(focused.windowId, focused.rootWindowId);
+                JsonObject args = new JsonObject(); args.addProperty("packageName", FIXTURE);
+                diagnostic.phase("launch_app");
+                diagnostic.values.addProperty("epochBefore", device.control.getExecutionEpoch());
+                diagnostic.traceStart = trace.events().size();
+                diagnostic.values.addProperty("outcome", "ENTERED");
+                try {
+                    JsonObject returned = tools.execute("launch_app", args, device.control);
+                    diagnostic.values.addProperty("outcome", "RETURNED");
+                    diagnostic.recordResult("return", returned);
+                    // A normal stale/unsupported/unsubmitted return still fails:
+                    // only the original TASK_PAUSED exception satisfies this case.
+                    fail("Automatic launch returned without the required source interruption");
+                } catch (TaskControlException paused) {
+                    diagnostic.values.addProperty("outcome", "CONTROL_EXCEPTION");
+                    diagnostic.values.addProperty("exceptionCode", fixedCode(paused.getCode()));
+                    assertEquals("TASK_PAUSED", paused.getCode());
+                }
+                diagnostic.phase("post_launch_assertions");
+                assertTrue(device.control.isPaused());
+                assertEquals(0, approvals.get());
+                assertEquals(0, device.control.getDispatchAttempts());
+                FocusedOrigin after = focusedOrigin(device, diagnostic);
+                diagnostic.values.add("afterFocus", after.metadata());
+                assertEquals("The original Settings package must retain focus", focused.classification, after.classification);
+                assertNoDispatch(trace);
+                assertEquals(0, server.requestCount());
+                screenshots.capture("continuous-navigation-rejects-unscoped-focused-settings");
+            } catch (Exception | AssertionError failure) {
+                // This catch runs inside the resources' lifetime, before DeviceHarness
+                // cancels the control or removes its windows. Keep the original failure.
+                diagnostic.attach(failure, device, server, approvals, trace);
+                throw failure;
+            }
         }
+    }
+
+    private static void resolveSettingsOrigin(DeviceHarness device, NavigationDiagnostic diagnostic) {
+        PackageManager manager = device.context.getPackageManager();
+        Intent homeIntent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
+        ResolveInfo home = manager.resolveActivity(homeIntent, PackageManager.MATCH_DEFAULT_ONLY);
+        diagnostic.homePackage = resolvedPackage(manager, homeIntent, home,
+                "Default HOME must resolve to one enabled exported activity");
+        assertFalse("Default HOME must not be a resolver or a test application",
+                "android".equals(diagnostic.homePackage) || FIXTURE.equals(diagnostic.homePackage)
+                        || device.context.getPackageName().equals(diagnostic.homePackage));
+        Intent settingsIntent = new Intent(Settings.ACTION_SETTINGS);
+        ResolveInfo settings = manager.resolveActivity(settingsIntent, PackageManager.MATCH_DEFAULT_ONLY);
+        // Ordinary target-context visibility only. A missing resolution is a setup
+        // failure, never grounds to add privileges or guess com.android.settings.
+        diagnostic.settingsPackage = resolvedPackage(manager, settingsIntent, settings,
+                "System Settings must be visible and resolve to an enabled exported activity");
+        assertTrue("The resolved Settings application must have system installation identity",
+                (settings.activityInfo.applicationInfo.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0);
+        assertFalse("Settings must not resolve to HOME, a resolver or either test application",
+                diagnostic.settingsPackage.equals(diagnostic.homePackage) || "android".equals(diagnostic.settingsPackage)
+                        || FIXTURE.equals(diagnostic.settingsPackage) || device.context.getPackageName().equals(diagnostic.settingsPackage));
+        diagnostic.values.addProperty("resolvedSystemSettings", true);
+    }
+
+    private static String resolvedPackage(PackageManager manager, Intent intent, ResolveInfo resolved, String failure) {
+        assertTrue(failure, resolved != null && resolved.activityInfo != null && resolved.activityInfo.applicationInfo != null
+                && resolved.activityInfo.enabled && resolved.activityInfo.exported && resolved.activityInfo.applicationInfo.enabled
+                && resolved.activityInfo.name != null && !resolved.activityInfo.name.isEmpty()
+                && resolved.activityInfo.packageName != null && !resolved.activityInfo.packageName.isEmpty());
+        List<ResolveInfo> candidates = manager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+        assertTrue("Intent resolution requires a bounded visible candidate list", candidates != null && candidates.size() <= 32);
+        int matches = 0;
+        for (ResolveInfo candidate : candidates) {
+            if (candidate.activityInfo != null
+                    && resolved.activityInfo.packageName.equals(candidate.activityInfo.packageName)
+                    && resolved.activityInfo.name.equals(candidate.activityInfo.name)) matches++;
+        }
+        // A synthetic resolver (including an OEM-configured one) is not a real
+        // candidate for this intent. Multiple candidates with a real default are fine.
+        assertEquals("The resolved component must match exactly one actual intent candidate", 1, matches);
+        return resolved.activityInfo.packageName;
+    }
+
+    /** Same eight-second, two-equal-revision read preparation, without content dumps on timeout. */
+    private static JsonObject awaitSettingsObservation(AndroidDeviceTools tools, DeviceHarness device,
+                                                       NavigationDiagnostic diagnostic) throws Exception {
+        long deadline = SystemClock.elapsedRealtime() + 8_000;
+        String previousRevision = "";
+        while (SystemClock.elapsedRealtime() < deadline) {
+            JsonObject result = tools.execute("observe", new JsonObject(), device.control);
+            diagnostic.recordResult("observe", result);
+            if (result != null && "TRUE".equals(booleanField(result, "ok"))
+                    && result.has("data") && result.get("data").isJsonObject()) {
+                JsonObject data = result.getAsJsonObject("data");
+                String revision = string(data, "revision");
+                diagnostic.values.addProperty("observedOrigin", diagnostic.classify(string(data, "packageName"), device));
+                if (!revision.isEmpty() && revision.equals(previousRevision)
+                        && diagnostic.settingsPackage.equals(string(data, "packageName"))
+                        && "TRUE".equals(booleanField(data, "focused")) && SystemClock.elapsedRealtime() < deadline) return data;
+                previousRevision = revision;
+            }
+            long remaining = deadline - SystemClock.elapsedRealtime();
+            if (remaining > 0) SystemClock.sleep(Math.min(100, remaining));
+        }
+        throw new AssertionError("No stable observation of the precisely resolved Settings application within eight seconds");
+    }
+
+    private static final class FocusedOrigin {
+        String classification = "NO_FOCUS";
+        int count, windowId = -1, rootWindowId = -1, type = -1;
+        JsonObject metadata() {
+            JsonObject value = new JsonObject(); value.addProperty("class", classification);
+            value.addProperty("focusedCount", count); value.addProperty("windowId", windowId);
+            value.addProperty("rootWindowId", rootWindowId); value.addProperty("type", type); return value;
+        }
+    }
+
+    /** One bounded window-list read and at most one root; no titles, text, children or cache writes. */
+    private static FocusedOrigin focusedOrigin(DeviceHarness device, NavigationDiagnostic diagnostic) {
+        FocusedOrigin result = new FocusedOrigin();
+        List<AccessibilityWindowInfo> windows = device.service.getWindows();
+        if (windows == null) { result.classification = "UNAVAILABLE"; return result; }
+        try {
+            if (windows.size() > 32) { result.classification = "WINDOW_LIMIT"; return result; }
+            AccessibilityWindowInfo focused = null;
+            for (AccessibilityWindowInfo window : windows) if (window.isFocused()) { result.count++; focused = window; }
+            if (result.count == 0) return result;
+            if (result.count != 1) { result.classification = "AMBIGUOUS"; return result; }
+            result.windowId = focused.getId(); result.type = focused.getType();
+            if (result.type != AccessibilityWindowInfo.TYPE_APPLICATION) { result.classification = "NON_APPLICATION"; return result; }
+            AccessibilityNodeInfo root = focused.getRoot();
+            if (root == null) { result.classification = "NO_ROOT"; return result; }
+            try {
+                result.rootWindowId = root.getWindowId();
+                result.classification = root.getPackageName() == null ? "NO_PACKAGE"
+                        : diagnostic.classify(root.getPackageName().toString(), device);
+                return result;
+            } finally { root.recycle(); }
+        } finally { for (AccessibilityWindowInfo window : windows) window.recycle(); }
+    }
+
+    private static String booleanField(JsonObject object, String field) {
+        if (object == null || !object.has(field)) return "MISSING";
+        JsonElement value = object.get(field);
+        if (value.isJsonNull()) return "NULL";
+        if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isBoolean()) return "INVALID";
+        return value.getAsBoolean() ? "TRUE" : "FALSE";
+    }
+
+    private static String fixedCode(String code) {
+        if (code == null) return "NULL";
+        switch (code) {
+            case "TASK_PAUSED": case "TASK_STOPPED": case "STALE_OBSERVATION": case "CAPABILITY_UNAVAILABLE":
+            case "PERMISSION_DENIED": case "USER_DENIED": case "INVALID_ARGUMENT": case "OUTCOME_UNKNOWN": case "TIMEOUT":
+            case "CONFIGURATION_CHANGED": case "BUDGET_EXCEEDED": return code;
+            default: return "OTHER";
+        }
+    }
+
+    private static final class NavigationDiagnostic {
+        final JsonObject values = new JsonObject();
+        String settingsPackage, homePackage;
+        int traceStart = -1;
+        NavigationDiagnostic() {
+            phase("resolve_origin"); values.addProperty("outcome", "NOT_CALLED");
+            values.addProperty("resolvedSystemSettings", false);
+        }
+        void phase(String phase) { values.addProperty("phase", phase); }
+        String classify(String name, DeviceHarness device) {
+            if (name == null || name.isEmpty()) return "NO_PACKAGE";
+            if (name.equals(settingsPackage)) return "SETTINGS";
+            if (name.equals(homePackage)) return "HOME";
+            if (FIXTURE.equals(name)) return "FIXTURE";
+            if (device.context.getPackageName().equals(name)) return "AGENT";
+            return "OTHER";
+        }
+        void recordResult(String key, JsonObject result) {
+            try {
+                JsonObject metadata = new JsonObject();
+                String code = "MISSING";
+                if (result != null && result.has("code")) {
+                    JsonElement value = result.get("code");
+                    code = value.isJsonNull() ? "NULL" : value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()
+                            ? fixedCode(value.getAsString()) : "INVALID";
+                }
+                metadata.addProperty("code", code);
+                for (String flag : new String[]{"ok", "submitted", "dispatchSubmitted", "dispatchAccepted", "accepted"})
+                    metadata.addProperty(flag, booleanField(result, flag));
+                values.add(key, metadata);
+            } catch (RuntimeException | AssertionError sampling) { values.addProperty("resultSampling", samplingClass(sampling)); }
+        }
+        void attach(Throwable failure, DeviceHarness device, LocalControllerModelServer server, AtomicInteger approvals,
+                    PerformanceTrace.Session trace) {
+            try {
+                if ("ENTERED".equals(string(values, "outcome"))) values.addProperty("outcome", "THREW_OTHER");
+                synchronized (device.control) {
+                    values.addProperty("epochAfter", device.control.getExecutionEpoch());
+                    values.addProperty("paused", device.control.isPaused());
+                    values.addProperty("cancelled", device.control.isCancelled());
+                    values.addProperty("inFlight", device.control.hasInFlightDispatch());
+                    values.addProperty("dispatchAttempts", device.control.getDispatchAttempts());
+                }
+                values.addProperty("approvals", approvals.get()); values.addProperty("httpRequests", server.requestCount());
+                values.addProperty("traceOverwritten", trace.overwrittenCount());
+                List<PerformanceTrace.Event> events = trace.events();
+                if (trace.overwrittenCount() == 0) {
+                    JsonObject counts = new JsonObject();
+                    int finals = 0, completed = 0, local = 0, owned = 0, revision = 0, dispatch = 0;
+                    for (int index = Math.max(0, traceStart); index < events.size(); index++) {
+                        PerformanceTrace.Event event = events.get(index);
+                        switch (event.stage) {
+                            case SNAPSHOT_FINAL_LAUNCH: finals++; if (event.nodeCount >= 0) completed++; break;
+                            case LOCAL_CONTROL_STALE: local++; break;
+                            case OWNED_WINDOW_MISMATCH: owned++; break;
+                            case OBSERVATION_REVISION_MISMATCH: revision++; break;
+                            case DEVICE_DISPATCH_ATTEMPT: dispatch++; break;
+                            default: break;
+                        }
+                    }
+                    // Failed snapshot construction also emits an event with nodeCount=-1.
+                    // No event does not prove a stage never began; stale can be unmarked.
+                    counts.addProperty("scope", traceStart < 0 ? "PREPARATION" : "CALL_TO_FAILURE");
+                    counts.addProperty("finalEvents", finals); counts.addProperty("finalCompleted", completed);
+                    counts.addProperty("localStale", local); counts.addProperty("ownedMismatch", owned);
+                    counts.addProperty("revisionMismatch", revision); counts.addProperty("dispatchEvents", dispatch);
+                    values.add("trace", counts);
+                }
+                try { values.add("failureFocusBeforeCleanup", focusedOrigin(device, this).metadata()); }
+                catch (RuntimeException | AssertionError sampling) { values.addProperty("focusSampling", samplingClass(sampling)); }
+                String snapshot = values.toString();
+                failure.addSuppressed(new NavigationSnapshot(snapshot.length() < 2000 ? snapshot : "{\"diagnostic\":\"SIZE_LIMIT\"}"));
+            } catch (RuntimeException | AssertionError sampling) {
+                try { failure.addSuppressed(new NavigationSnapshot("{\"diagnostic\":\"UNAVAILABLE\"}")); }
+                catch (RuntimeException | AssertionError ignored) { /* Never replace the original failure. */ }
+            }
+        }
+    }
+
+    private static final class NavigationSnapshot extends Exception {
+        NavigationSnapshot(String message) { super(message, null, false, false); }
+    }
+
+    private static String samplingClass(Throwable failure) {
+        String name = failure.getClass().getSimpleName();
+        return name.substring(0, Math.min(80, name.length()));
     }
 
     private static AndroidDeviceTools guardedTools(DeviceHarness device, ControllerTestSettings settings,
@@ -218,17 +458,4 @@ public final class NavigationObservationGuardInstrumentedTest {
         throw new AssertionError("Independent fixture evidence is unavailable for " + id);
     }
 
-    private static String actualFocusedPackage(DeviceHarness device) {
-        List<AccessibilityWindowInfo> windows = device.service.getWindows();
-        try {
-            for (AccessibilityWindowInfo window : windows) {
-                if (!window.isFocused()) continue;
-                AccessibilityNodeInfo root = window.getRoot();
-                if (root == null) continue;
-                try { return root.getPackageName() == null ? "" : root.getPackageName().toString(); }
-                finally { root.recycle(); }
-            }
-        } finally { for (AccessibilityWindowInfo window : windows) window.recycle(); }
-        throw new AssertionError("No real focused window remains");
-    }
 }

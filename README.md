@@ -25,11 +25,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 将系统非配置对象采样移至真实postCreated回调，保留对象身份/草稿/安全及原时限检查；APK/lint50秒通过。两轮0/8原证据保留，新版八档、1976项及录像待运行；当前视频为准确2691，检查点45%。
+**本次更新：** 归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。
 
-**记录时间：** 2026-10-28T06:10:31Z
+**记录时间：** 2026-10-28T06:24:28Z
 
-[最近测试截图与清单](screenshots/40641436998-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40641436998)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40642275055-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40642275055)。通过、失败及未截图原因见清单。
 
 **整体操作演示：** [播放视频](screenshots/demos/40641491474-1/demo.mp4) · [录制与验证清单](screenshots/demos/40641491474-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40641491474)。
 录制版本：[`2691e5d78`](https://github.com/ecojust/Agent-OS/commit/2691e5d782c88dbefcc23bd93b627ea9e80bdf72)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。

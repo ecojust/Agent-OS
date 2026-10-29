@@ -13,7 +13,6 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Rect;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Process;
 import android.os.SystemClock;
@@ -335,8 +334,13 @@ public final class NumericPreferencesInstrumentedTest {
                 AccessibilityServiceInfo info = automation.getServiceInfo();
                 originalAutomationFlags = info.flags;
                 // Resource IDs and non-actionable container ancestry belong to this test's own SAF selectors.
-                info.flags |= AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS | AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS;
+                // Request window tracking explicitly, independently of an earlier test's UiAutomation flags.
+                info.flags |= AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS | AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS
+                        | AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
                 automation.setServiceInfo(info); automationConfigured = true;
+                // Nonvisual metadata records the request and prior flag only, not successful picker access.
+                screenshots.capture("protected-saf-interactive-windows-requested-prior-"
+                        + ((originalAutomationFlags & AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS) == 0 ? "0" : "1"));
                 awaitClientIdle();
                 provider("reset", null);
                 Bundle process = state();
@@ -423,104 +427,9 @@ public final class NumericPreferencesInstrumentedTest {
             try {
                 await(() -> safRootAvailable(rootDiagnostic), "The real system DocumentsUI never became foreground");
             } catch (AssertionError failure) {
-                String probe = "";
-                if (Build.VERSION.SDK_INT == 32 && rootDiagnostic.observations > 0
-                        && rootDiagnostic.nullRoots == rootDiagnostic.observations) {
-                    probe = "; safRootFlagProbe={" + probeNullSafRootFlags() + "}";
-                }
-                throw new AssertionError(failure.getMessage() + "; lastSafRoot={" + rootDiagnostic + "}" + probe, failure);
+                throw new AssertionError(failure.getMessage() + "; lastSafRoot={" + rootDiagnostic + "}", failure);
             }
             return host;
-        }
-        /** Failure-only ordered observations; never resumes the failed picker operation. */
-        String probeNullSafRootFlags() {
-            final long started = SystemClock.elapsedRealtime(), deadline = started + 2_000;
-            final int retrieve = AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
-            final String[] stages = {"BASELINE", "SAME_FLAGS_RESET", "RETRIEVE_ON", "ORIGINAL_FLAGS", "RETRIEVE_ON_AGAIN"};
-            StringBuilder observations = new StringBuilder();
-            AccessibilityServiceInfo info = null;
-            int originalFlags = -1;
-            boolean restoreNeeded = false;
-            String stop = "COMPLETED", restore = "NOT_REQUIRED", initializationError = "NONE";
-            try {
-                info = automation.getServiceInfo();
-                if (info == null) stop = "INITIAL_SERVICE_INFO_NULL";
-                else {
-                    originalFlags = info.flags;
-                    if ((originalFlags & retrieve) != 0) stop = "SKIPPED_RETRIEVE_ALREADY_SET";
-                    else for (int i = 0; i < stages.length; i++) {
-                        if (Thread.currentThread().isInterrupted()) { stop = "INTERRUPTED"; break; }
-                        if (SystemClock.elapsedRealtime() >= deadline) { stop = "START_BUDGET_EXPIRED"; break; }
-                        int requestedFlags = i == 2 || i == 4 ? originalFlags | retrieve : originalFlags;
-                        int actualFlags = -1, windowId = -1;
-                        String rootNull = "NOT_READ", role = "UNKNOWN", error = "NONE", operation = "SET_FLAGS";
-                        AccessibilityNodeInfo root = null;
-                        try {
-                            if (i != 0) {
-                                info.flags = requestedFlags;
-                                restoreNeeded = true;
-                                // Same-flags reset also updates server state; it is not a pure cache control.
-                                automation.setServiceInfo(info);
-                            }
-                            operation = "SETTLE";
-                            SystemClock.sleep(100);
-                            if (Thread.currentThread().isInterrupted()) { stop = "INTERRUPTED"; break; }
-                            if (SystemClock.elapsedRealtime() >= deadline) { stop = "START_BUDGET_EXPIRED"; break; }
-                            operation = "READ_FLAGS";
-                            AccessibilityServiceInfo actual = automation.getServiceInfo();
-                            if (actual == null) { error = "SERVICE_INFO_NULL"; stop = "STEP_ERROR"; break; }
-                            actualFlags = actual.flags;
-                            if (Thread.currentThread().isInterrupted()) { stop = "INTERRUPTED"; break; }
-                            if (SystemClock.elapsedRealtime() >= deadline) { stop = "START_BUDGET_EXPIRED"; break; }
-                            operation = "READ_ROOT";
-                            root = automation.getRootInActiveWindow();
-                            rootNull = root == null ? "TRUE" : "FALSE";
-                            if (root != null) {
-                                operation = "READ_ROOT_METADATA";
-                                windowId = root.getWindowId();
-                                SafRootAvailabilityDiagnostic candidate = new SafRootAvailabilityDiagnostic();
-                                candidate.packageRole(String.valueOf(root.getPackageName()));
-                                role = candidate.lastRole; // Candidate only; no package/permission lookup or content read.
-                            }
-                        } catch (RuntimeException | AssertionError diagnosticFailure) {
-                            error = fixedProbeError(diagnosticFailure); stop = "STEP_ERROR";
-                        } finally {
-                            if (root != null) try { root.recycle(); }
-                            catch (RuntimeException | AssertionError diagnosticFailure) {
-                                operation = "RECYCLE_ROOT"; error = fixedProbeError(diagnosticFailure); stop = "STEP_ERROR";
-                            }
-                            if (observations.length() != 0) observations.append(',');
-                            observations.append('{').append("stage=").append(stages[i])
-                                    .append(",requestedFlags=").append(requestedFlags).append(",actualFlags=").append(actualFlags)
-                                    .append(",rootNull=").append(rootNull).append(",role=").append(role).append(",windowId=").append(windowId)
-                                    .append(",operation=").append(operation).append(",error=").append(error)
-                                    .append(",elapsedMs=").append(SystemClock.elapsedRealtime() - started).append('}');
-                        }
-                        if (!"NONE".equals(error)) break;
-                    }
-                }
-            } catch (RuntimeException | AssertionError diagnosticFailure) {
-                initializationError = fixedProbeError(diagnosticFailure); stop = "INITIALIZATION_ERROR";
-            } finally {
-                if (restoreNeeded) try {
-                    info.flags = originalFlags;
-                    automation.setServiceInfo(info);
-                    AccessibilityServiceInfo actual = automation.getServiceInfo();
-                    restore = actual == null ? "SERVICE_INFO_NULL" : actual.flags == originalFlags ? "RESTORED" : "FLAGS_MISMATCH";
-                } catch (RuntimeException | AssertionError diagnosticFailure) {
-                    restore = "ERROR_" + fixedProbeError(diagnosticFailure);
-                }
-            }
-            // The budget limits new observation calls, not in-flight platform calls or mandatory restoration.
-            return "originalFlags=" + originalFlags + ",steps=[" + observations + "],stop=" + stop
-                    + ",initializationError=" + initializationError + ",restore=" + restore
-                    + ",elapsedMs=" + (SystemClock.elapsedRealtime() - started);
-        }
-        String fixedProbeError(Throwable failure) {
-            if (failure instanceof SecurityException) return "SECURITY";
-            if (failure instanceof UnsupportedOperationException) return "UNSUPPORTED";
-            if (failure instanceof IllegalStateException) return "ILLEGAL_STATE";
-            return failure instanceof AssertionError ? "ASSERTION" : "RUNTIME";
         }
         void preview(Host broker) {
             await(() -> read(() -> broker.resumed && !broker.destroyed && broker.activity.hasWindowFocus()

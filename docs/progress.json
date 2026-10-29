@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-29T15:47:16Z",
-  "note": "归档修正后导入单案7/8和36.5秒普通演示；API32原10秒内473次根全空，追加保留失败的有界flags诊断对照，编译/审查通过。完整修正回归七档成功、API30失败，原报告归档中。",
+  "updated_at": "2026-10-29T15:58:07Z",
+  "note": "归档完整2167/2168及API32失败后flags对照；SAF48/48但恢复分支未触发，旋转有限重观察耗尽仍失败。显式初始化测试窗口跟踪、移除临时探针并补旋转固定追踪，强制编译和审查通过；新回归/录像待执行。",
   "latest_evidence": {
-    "path": "screenshots/40898449432-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40898449432"
+    "path": "screenshots/40902279945-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40902279945"
   },
   "checkpoints": [
     {
@@ -84,10 +84,10 @@
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
       "status": "in_progress",
-      "evidence": "screenshots/40898449432-1/manifest.json",
-      "scope": "Latest exacte923dd269/run40898449432 full:271 identities/API x8=2168,2163pass/5fail,zero errors/skips/missing/extra/duplicates/unreadable. API30 268/271:rotation,SAF export/import fail;API31 269/271:SAF cancellation preparation/export fail;other6 APIs271/271. All4 SAF failures directly show post-idle selected-node REFRESH_FALSE at depth0,visited0,mask0,before click;underlying platform invalidation cause and old-run same cause remain unproven. Rotation7/8,API30 task stopped after stale observation rejection;do not treat current detached controls as proof of trigger.4472 payloads/47247751 bytes/2272 PNG verified,1441blocked,24 prior secure exceptions unchanged;8 performance reports diagnostic-only. Same-source isolated import run40898458626 is7/8:API32 times out awaiting a verified SAF root before rootsLayout;do not pool runs. Current test-only fix discards full stale target/action snapshots and reobserves within original5s/all gates;begin-root classifications add no platform reads;compiled/reviewed,new device verification pending. Latest fully passing full baseline remains24b9/run40750181658:2160/2160;all old failed runs retained. Remaining API-only boundaries:MainActivity rotation drafts,multiwindow/PiP,process-death,in-flight upgrade;completion list needs freezing.Real-model/phone/ROM/broad-app/performance are separate checkpoints.",
-      "details": "已推进：四项SAF目标刷新失败已改为原5秒内完整重观测；修正后完整回归七档通过、API30失败待原报告核验。独立导入7/8，API32已明确473次活动根全空，新增失败后窗口检索标志对照待执行。未完成：旋转停止原因、冷启动空根及主界面旋转草稿、多窗口/PiP、进程终止、执行中升级。下一步：核验恢复证据与对照结果，冻结剩余必测清单。",
-      "updated_at": "2026-10-29T15:47:16Z"
+      "evidence": "screenshots/40902279945-1/manifest.json",
+      "scope": "Latest exact42db0baf3/run40902279945 full:271 identities/API x8=2168,2167pass/1fail,zero errors/skips/missing/extra/duplicates/unreadable. Only API30 rotation fails;other7 APIs271/271. Old270 subset2160/2160;SAF6x8=48/48 but ZERO refresh-reobserved markers:nonrecurrence does not prove the new recovery branch executed or the intermittent cause was eradicated.4473 payloads/47775308 bytes/2273 PNG verified,1445blocked,24 prior secure exceptions unchanged;8 performance reports diagnostic-only. Rotation terminal FAILED/STALE_OBSERVATION and matched TYPE_TEXT RETURNED STALE NO/NO imply old write refusal followed by bounded read-only reobservation exhaustion,zero dispatch/one HTTP request;exact stale category remains unknown. Independent import exact42db/run40902327883 remains7/8,API32 473NULL roots. Exactdc1b/run40905112472 remains7/8;API32 466NULL roots then ordered post-failure probe:baseline/same-flags65554 null;retrieve65618 first returns candidate window12,OFF andON retain12;flags restored,original failure preserved. This supports tracking initialization,not direct permission gating or pure-cache causality. Current test setup explicitly requests interactive windows in the existing flags update and restores originalflags;temporary probe removed,rotation bounded numeric trace added;final compile/review passed,new runtime verification pending. All old failures retained. Remaining API-only boundaries:MainActivity rotation drafts,multiwindow/PiP,process-death,in-flight upgrade;completion list needs freezing.Real-model/phone/ROM/broad-app/performance are separate checkpoints.",
+      "details": "最新完整2167/2168，SAF48/48但恢复标记0，不能认定间歇失效已消除；唯一API30旋转失败已定位到旧写拒绝后的有限重观察耗尽。API32单案空根对照支持窗口跟踪初始化差异，已显式初始化并补旋转细类追踪，编译通过。未完成：新回归及主界面旋转草稿、多窗口/PiP、进程终止、执行中升级。下一步：核验冷启动和拒绝类别，冻结剩余必测清单。",
+      "updated_at": "2026-10-29T15:58:07Z"
     },
     {
       "id": "performance",

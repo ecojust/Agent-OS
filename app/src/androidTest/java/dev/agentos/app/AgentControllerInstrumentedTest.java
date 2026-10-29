@@ -815,6 +815,7 @@ public final class AgentControllerInstrumentedTest {
             AgentController controller = AgentController.get(device.context);
             RotationTestSettings rotation = new RotationTestSettings(device);
             AtomicReference<RunControl> original = new AtomicReference<>();
+            PerformanceTrace.Session rotationTrace = null;
             String phase = "portrait_preparation";
             Throwable primary = null;
             try {
@@ -874,6 +875,9 @@ public final class AgentControllerInstrumentedTest {
                 phase = "old_observation_rejected";
                 // Exercise the current confirmation UI for the old request. Its
                 // old observation/attachment must be refused before any dispatch.
+                // Never replace an existing diagnostic owner; startDiagnostics
+                // rejects overlap, and finally closes only this test's session.
+                rotationTrace = PerformanceTrace.startDiagnostics();
                 long staleDeadline = SystemClock.elapsedRealtime() + 15_000;
                 clickExpandedApproval(device, controller, pending, after, staleDeadline);
                 AgentController.State fresh = null;
@@ -955,6 +959,9 @@ public final class AgentControllerInstrumentedTest {
                         + ",lastReceipt=" + (lastReceipt == null ? "NOT_AVAILABLE" : lastReceipt.action.name()
                                 + ":" + lastReceipt.stage.name() + ":" + TaskDiagnostics.safeTerminalCode(lastReceipt.code)
                                 + ":submitted=" + lastReceipt.submitted.name() + ":accepted=" + lastReceipt.accepted.name());
+                String traceDiagnostic;
+                try { traceDiagnostic = rotationTraceDiagnostic(rotationTrace); }
+                catch (RuntimeException | AssertionError unavailable) { traceDiagnostic = "rotationTrace={sample=UNAVAILABLE}"; }
                 String windows;
                 try { windows = rotationWindowDiagnostic(device, controller); }
                 catch (RuntimeException | AssertionError unavailable) { windows = "window_sample_unavailable"; }
@@ -962,11 +969,12 @@ public final class AgentControllerInstrumentedTest {
                         + ",ownerPresent=" + (owner != null) + ",dispatchAttempts=" + (owner == null ? -1 : owner.getDispatchAttempts())
                         + ",requests=" + server.requestCount() + ",running=" + failureState.running
                         + ",paused=" + failureState.paused + ",approvalPending=" + !failureState.approvalId.isEmpty()
-                        + classification + ";" + windows, failure);
+                        + classification + ";" + traceDiagnostic + ";" + windows, failure);
                 try { screenshots.capture("rotation-failure-before-restoration"); }
                 catch (Throwable captureFailure) { reported.addSuppressed(captureFailure); }
                 primary = reported; throw reported;
             } finally {
+                if (rotationTrace != null) rotationTrace.close();
                 Throwable cleanup = null;
                 try {
                     clear(device, controller);
@@ -995,6 +1003,46 @@ public final class AgentControllerInstrumentedTest {
         assertFalse(owner.hasInFlightDispatch());
         assertEquals(0, server.acceptedWriteCount());
         server.assertHealthy();
+    }
+
+    /** Completed numeric events only; no extra observation, wait, or performance-budget claim. */
+    private static String rotationTraceDiagnostic(PerformanceTrace.Session trace) {
+        if (trace == null) return "rotationTrace={enabled=false}";
+        List<PerformanceTrace.Event> events;
+        long overwritten;
+        synchronized (trace) {
+            events = trace.events();
+            overwritten = trace.overwrittenCount();
+        }
+        int observations = 0, localStale = 0, ownedMismatch = 0, revisionMismatch = 0, selected = 0;
+        long observeNanos = 0, maxObserveNanos = 0;
+        StringBuilder sequence = new StringBuilder();
+        for (PerformanceTrace.Event event : events) {
+            switch (event.stage) {
+                case SNAPSHOT_OBSERVE:
+                    observations++; observeNanos += event.durationNanos;
+                    maxObserveNanos = Math.max(maxObserveNanos, event.durationNanos); break;
+                case LOCAL_CONTROL_STALE: localStale++; break;
+                case OWNED_WINDOW_MISMATCH: ownedMismatch++; break;
+                case OBSERVATION_REVISION_MISMATCH: revisionMismatch++; break;
+                default: continue;
+            }
+            if (selected++ < 16) {
+                if (sequence.length() > 0) sequence.append('|');
+                sequence.append(event.stage.name()).append('@')
+                        .append((event.startNanos - trace.startedNanos) / 1_000_000)
+                        .append('+').append(event.durationNanos / 1_000_000);
+            }
+        }
+        // The recorder appends on completion, not start; in-flight spans are absent.
+        // An overwritten ring cannot establish an exact whole-session count.
+        return "rotationTrace={enabled=true,sample=COMPLETED_EVENTS_BEFORE_WINDOW_DIAGNOSTICS"
+                + ",capacity=" + PerformanceTrace.CAPACITY + ",retained=" + events.size() + ",overwritten=" + overwritten
+                + ",SNAPSHOT_OBSERVE=" + observations + ",observeTotalUs=" + observeNanos / 1_000
+                + ",observeMaxUs=" + maxObserveNanos / 1_000 + ",LOCAL_CONTROL_STALE=" + localStale
+                + ",OWNED_WINDOW_MISMATCH=" + ownedMismatch + ",OBSERVATION_REVISION_MISMATCH=" + revisionMismatch
+                + ",sequenceOrder=COMPLETION,sequenceTime=START_MS_PLUS_DURATION_MS,sequenceShown=" + Math.min(16, selected)
+                + ",sequenceOmitted=" + Math.max(0, selected - 16) + ",sequence=" + sequence + "}";
     }
 
     /** Failure-only metadata; never refresh nodes, acquire a new identity or retry the assertion. */

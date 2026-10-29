@@ -51,6 +51,28 @@ API32 的[原始失败](diagnostics/numeric-import-40898458626-api32/README.md)�
 
 这是有顺序、可能影响后续状态的观察：[每次重设还会清理客户端缓存](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.1.0_r1/core/java/android/app/UiAutomation.java#636)，关闭窗口跟踪时服务端[仍保留活动窗口编号](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.1.0_r1/services/accessibility/java/com/android/server/accessibility/AccessibilityWindowManager.java#511)。因此同 flags 重设不是纯缓存对照，恢复原 flags 也不等于回到冷启动状态；2 秒并非同步平台调用或必要恢复操作的硬超时。普通流程录像保持 `42db0baf3` 的真实来源，不能将它改称此失败后诊断的录像。
 
+### 修正后完整回归与窗口跟踪对照结果
+
+源码 `42db0baf3` 的[完整归档 40902279945](../../screenshots/40902279945-1/manifest.json)已核验：2167/2168 通过，唯一失败为 API30 旋转，其余七档各 271/271；旧 270 项子集为 2160/2160，数值偏好六案为 48/48。4473 个载荷共 47,775,308 字节、2273 张 PNG 的大小、摘要与完整解码通过，1445 条 blocked 及 24 次既有安全截图例外保留，没有缺失、额外、重复、错误、跳过或不可读报告。八份性能报告仍仅作诊断。
+
+**本轮实际恢复标记为 0。** 八档数值偏好的 96 条原捕获记录均为原业务阶段及 finished，未出现 `protected-saf-root-refresh-reobserved-*`。因此 48/48 只能证明本轮 SAF 未复现旧失败，不能证明新恢复分支曾实际执行或间歇问题已经彻底消除。
+
+[API30 旋转的原始失败](diagnostics/numeric-full-40902279945-api30/README.md)已进一步定位：原输入回执为 `TYPE_TEXT:RETURNED:STALE_OBSERVATION:submitted=NO:accepted=NO`，终止快照为 `FAILED/STALE_OBSERVATION`、派发 0、模型请求 1。现有执行链在旧写被拒绝后立即重新观察；`AgentRunner.refresh()` 最多尝试六次，2 秒内允许启动新尝试，只有该有限观察耗尽路径生成此次终止码。随后 `finish()` 才取消 owner 并移除控制窗。不能将旧写拒绝本身或事后的控件脱离当作停止原因，也不能断言实际恰好执行六次。旋转整体仍失败；具体是焦点、节点、控制身份或窗口几何拒绝还需细分。
+
+诊断源码 `dc1b0e06f19156aec463ff672ca174327df4f448` 的[独立运行 40905112472](../../screenshots/40905112472-1/manifest.json)仍保留 7/8、API32 原失败；同样为 32 个载荷、26,480 字节、0 PNG、15 条 blocked，来源与摘要均核验。原 10 秒观测为 466/466 空根，失败后的[五步原始对照](diagnostics/numeric-import-40905112472-api32/README.md)如下，511 毫秒完成，所有步骤无错误且最后 flags 恢复成功：
+
+| 顺序 | 请求/实际 flags | 根结果 |
+| --- | --- | --- |
+| 原状态 | 65554 / 65554 | null |
+| 同 flags 重设 | 65554 / 65554 | null |
+| 首次请求窗口检索 | 65618 / 65618 | AOSP DocumentsUI 候选，窗口 12 |
+| 恢复原 flags | 65554 / 65554 | 同一候选窗口 12 |
+| 再次请求窗口检索 | 65618 / 65618 | 同一候选窗口 12 |
+
+这支持窗口跟踪初始化差异，不支持“直接权限门槛”或“纯客户端缓存”归因；候选包角色尚未在探针内重新核验权限，关闭后也未证明底层状态回到起点。原测试没有继续导入，结果仍是失败。
+
+据此本次让测试在原来的那一次 `setServiceInfo` 中显式请求 `FLAG_RETRIEVE_INTERACTIVE_WINDOWS`，不再依赖前序截图触发初始化；结束时仍恢复原 flags，身份、文件授权、期限和所有业务断言不变。新增 `protected-saf-interactive-windows-requested-prior-0/1` 只记原是否已请求及本次设置已返回，不代表整案通过。临时五步探针已移除，原始失败与对照证据保留。另在旋转测试中使用已有有界 `PerformanceTrace` 记录观察及三类固定拒绝标记，保留 4096 条容量/覆盖计数、最多 16 条事件次序；只在失败时报告，在原 finally 关闭，不增加平台读取或等待，不改原断言和预算。最终两份 Java 源码固定后强制编译 28 个任务全部执行、22 秒成功，独立审查通过；新的独立导入及完整回归待执行。
+
 本模块实现[设计规则 R5/R6](../DESIGN_RULES.md)中的普通数值偏好迁移。任务预算区域新增导入、导出入口，通过系统文件选择器访问用户选定的文档。导入先展示四项数值，确认后只填入当前草稿；只有原有的保存设置或开始任务操作才持久化并应用。配置读取失败、任务进行中或模型探测期间不开放新操作。
 
 ## 文件契约

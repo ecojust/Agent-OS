@@ -1,0 +1,14 @@
+  | Report: /tmp/agent-os-junit-947vy7lu/report-01.xml
+  | Suite: dev.agentos.app.NumericPreferencesInstrumentedTest
+  | Test: dev.agentos.app.NumericPreferencesInstrumentedTest.realSafImportPreviewsAndAppliesOnlyFourUnsavedNumericFields
+  | Kind: failure / 
+  | java.lang.AssertionError: The real system DocumentsUI never became foreground; lastSafRoot={lastResult=NULL_ROOT,lastRole=UNKNOWN,observations=466,nullRoots=466,nonSystemApps=0,permissionDenied=0,packageNotFound=0,verifiedRoots=0}; safRootFlagProbe={originalFlags=65554,steps=[{stage=BASELINE,requestedFlags=65554,actualFlags=65554,rootNull=TRUE,role=UNKNOWN,windowId=-1,operation=READ_ROOT,error=NONE,elapsedMs=101},{stage=SAME_FLAGS_RESET,requestedFlags=65554,actualFlags=65554,rootNull=TRUE,role=UNKNOWN,windowId=-1,operation=READ_ROOT,error=NONE,elapsedMs=203},{stage=RETRIEVE_ON,requestedFlags=65618,actualFlags=65618,rootNull=FALSE,role=AOSP_DOCUMENTS_UI_CANDIDATE,windowId=12,operation=READ_ROOT_METADATA,error=NONE,elapsedMs=305},{stage=ORIGINAL_FLAGS,requestedFlags=65554,actualFlags=65554,rootNull=FALSE,role=AOSP_DOCUMENTS_UI_CANDIDATE,windowId=12,operation=READ_ROOT_METADATA,error=NONE,elapsedMs=409},{stage=RETRIEVE_ON_AGAIN,requestedFlags=65618,actualFlags=65618,rootNull=FALSE,role=AOSP_DOCUMENTS_UI_CANDIDATE,windowId=12,operation=READ_ROOT_METADATA,error=NONE,elapsedMs=511}],stop=COMPLETED,initializationError=NONE,restore=RESTORED,elapsedMs=511}
+  | at dev.agentos.app.NumericPreferencesInstrumentedTest$Session.begin(NumericPreferencesInstrumentedTest.java:431)
+  | at dev.agentos.app.NumericPreferencesInstrumentedTest.realSafImportPreviewsAndAppliesOnlyFourUnsavedNumericFields(NumericPreferencesInstrumentedTest.java:75)
+  | ... 33 trimmed
+  | Caused by: java.lang.AssertionError: The real system DocumentsUI never became foreground
+  | at org.junit.Assert.fail(Assert.java:89)
+  | at dev.agentos.app.NumericPreferencesInstrumentedTest$Session.await(NumericPreferencesInstrumentedTest.java:1034)
+  | at dev.agentos.app.NumericPreferencesInstrumentedTest$Session.begin(NumericPreferencesInstrumentedTest.java:424)
+  | ... 35 more
+Parsed 1 Android reports; found 1 failure/error entries.

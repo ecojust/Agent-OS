@@ -8,13 +8,15 @@
 
 ## 演示视频
 
-每类只列最新的已验证录像，链接直接指向视频文件；旧版本及失败记录保留在[录像档案](screenshots/demos/)。均为专用 API 35 模拟器的实际连续录屏，单个文件小于 100 MB。
+每类只列最新的可播放录像，链接直接指向视频文件；旧版本及失败记录保留在[录像档案](screenshots/demos/)。均为专用 API 35 模拟器的实际连续录屏，单个文件小于 100 MB。
 
 | 类型 | 视频文件 | 展示内容与结果 | 录制源码 |
 | --- | --- | --- | --- |
-| 普通任务与用户接管 | [播放视频 · 36.7 秒](screenshots/demos/40834468768-1/demo.mp4) | 输入、保存、导航，以及暂停、恢复、停止；13 个阶段通过。合成 Fixture 应用与本地测试模型 | [`db1943a8a`](https://github.com/ecojust/Agent-OS/commit/db1943a8afa46ad21d72ba6198614a383a042d3f) |
+| 真实 APK 日常流程 | [计算器与 Notes · 53.2 秒](screenshots/demos/probes-40876724393-1/video/demo.mp4) | 计算 2+3、创建笔记、保存并重启读回；Agent 关闭与空闲两态，[4/4 通过](screenshots/demos/probes-40876724393-1/manifest.json) | [`aee3d4e01`](https://github.com/ecojust/Agent-OS/commit/aee3d4e015ab864fada973b8bb8c67bb0c90227e) |
+| 计算器页面观察 | [播放视频 · 33.2 秒](screenshots/demos/probes-40876724624-1/video/demo.mp4) | 普通页面、菜单、历史、设置和单位换算的生产观察与允许/拒绝判断，[5/5 通过](screenshots/demos/probes-40876724624-1/manifest.json) | [`aee3d4e01`](https://github.com/ecojust/Agent-OS/commit/aee3d4e015ab864fada973b8bb8c67bb0c90227e) |
+| 普通任务与用户接管 | [播放视频 · 33.2 秒](screenshots/demos/40876724536-1/demo.mp4) | 输入、保存、导航，以及确认、暂停、恢复、停止；[13 个阶段通过](screenshots/demos/40876724536-1/manifest.json) | [`aee3d4e01`](https://github.com/ecojust/Agent-OS/commit/aee3d4e015ab864fada973b8bb8c67bb0c90227e) |
 
-真实 APK 日常流程及计算器页面观察的专项录像正在准备，取得实际视频后加入本表。录像范围与测试证据见[操作演示说明](docs/validation/operation-demo.md)。
+前两类由测试程序操作官方原版 APK；普通任务演示使用合成 Fixture 应用与本地测试模型。各自的录制范围与测试证据见[操作演示说明](docs/validation/operation-demo.md)。
 
 ## 项目范围
 
@@ -41,14 +43,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 三类API35实际录像已按源码aee3d4e01启动；归档补充保留仪器初始化失败的原始诊断，四项业务仍列未验证，不虚增测试项。19项归档边界检查通过，新视频待归档。
+**本次更新：** 已归档三类API35实际连续录像并在README分类直链：Calculator/Notes日常流程53.221秒、4/4通过；计算器页面观察33.233秒、5/5通过；普通任务与接管33.227秒、13阶段通过。每类只列最新版本，原历史与八档失败保留，检查点9/20。
 
-**记录时间：** 2026-10-29T12:52:39Z
+**记录时间：** 2026-10-29T13:02:44Z
 
 [最近测试截图与清单](screenshots/third-party-40834304846-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40834304846)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/40834468768-1/demo.mp4) · [录制与验证清单](screenshots/demos/40834468768-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40834468768)。
-录制版本：[`db1943a8a`](https://github.com/ecojust/Agent-OS/commit/db1943a8afa46ad21d72ba6198614a383a042d3f)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/40876724536-1/demo.mp4) · [录制与验证清单](screenshots/demos/40876724536-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40876724536)。
+录制版本：[`aee3d4e01`](https://github.com/ecojust/Agent-OS/commit/aee3d4e015ab864fada973b8bb8c67bb0c90227e)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 | 检查点 | 状态 |
 | --- | --- |

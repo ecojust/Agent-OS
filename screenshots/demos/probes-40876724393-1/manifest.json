@@ -1,0 +1,249 @@
+{
+  "schemaVersion": 1,
+  "kind": "agent-os-probe-video-archive",
+  "archivedAt": "2026-10-29T12:59:47.372215+00:00",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "aee3d4e015ab864fada973b8bb8c67bb0c90227e",
+    "runId": 40876724393,
+    "attempt": 1
+  },
+  "sourceRunUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40876724393",
+  "sourceWorkflow": ".github/workflows/third-party-smoke.yml",
+  "sourceBranch": "master",
+  "sourceRunConclusion": "success",
+  "job": {
+    "id": 123458326697,
+    "name": "probe (35)",
+    "conclusion": "success"
+  },
+  "profile": "third-party-app-set",
+  "apiLevel": 35,
+  "scope": "Actual official Calculator 1.4.0 and Notes 1.7.0 UI operations on API35 in Agent off/idle states; no Agent execution, upgrade, physical-device or release acceptance.",
+  "status": "passed",
+  "recordingStatus": "passed",
+  "probeStatus": "passed",
+  "fullSuiteAcceptance": false,
+  "expectedTests": 4,
+  "matrixExpectedTests": 32,
+  "recordedMatrixLabels": [
+    "35"
+  ],
+  "caseCounts": {
+    "passed": 4,
+    "failed": 0,
+    "unverified": 0
+  },
+  "cases": [
+    {
+      "name": "calculator-1.4.0/off",
+      "appId": "calculator-1.4.0",
+      "state": "off",
+      "status": "passed"
+    },
+    {
+      "name": "calculator-1.4.0/idle",
+      "appId": "calculator-1.4.0",
+      "state": "idle",
+      "status": "passed"
+    },
+    {
+      "name": "notes-1.7.0/off",
+      "appId": "notes-1.7.0",
+      "state": "off",
+      "status": "passed"
+    },
+    {
+      "name": "notes-1.7.0/idle",
+      "appId": "notes-1.7.0",
+      "state": "idle",
+      "status": "passed"
+    }
+  ],
+  "probe": {
+    "status": "passed",
+    "driverStatus": "passed",
+    "cases": [
+      {
+        "name": "calculator-1.4.0/off",
+        "appId": "calculator-1.4.0",
+        "state": "off",
+        "status": "passed"
+      },
+      {
+        "name": "calculator-1.4.0/idle",
+        "appId": "calculator-1.4.0",
+        "state": "idle",
+        "status": "passed"
+      },
+      {
+        "name": "notes-1.7.0/off",
+        "appId": "notes-1.7.0",
+        "state": "off",
+        "status": "passed"
+      },
+      {
+        "name": "notes-1.7.0/idle",
+        "appId": "notes-1.7.0",
+        "state": "idle",
+        "status": "passed"
+      }
+    ],
+    "captureCounts": {
+      "captured": 4,
+      "blocked": 4
+    },
+    "sampleId": "calculator-1.4.0-notes-1.7.0-v4",
+    "instrumentation": {
+      "available": true,
+      "terminalCases": {
+        "notesWithAgentDisabled": "passed",
+        "notesWithAgentBoundAndIdle": "passed",
+        "calculatorWithAgentBoundAndIdle": "passed",
+        "calculatorWithAgentDisabled": "passed"
+      }
+    }
+  },
+  "recording": {
+    "schemaVersion": 1,
+    "kind": "agent-os-probe-video",
+    "source": {
+      "repository": "ecojust/Agent-OS",
+      "runId": 40876724393,
+      "attempt": 1,
+      "commit": "aee3d4e015ab864fada973b8bb8c67bb0c90227e"
+    },
+    "profile": "third-party-app-set",
+    "apiLevel": 35,
+    "status": "passed",
+    "recordingStatus": "recorded",
+    "callbackOutcome": "returned",
+    "callbackErrorClass": null,
+    "callbackElapsedMs": 52825,
+    "callbackStartedAfterRecorderMs": 447,
+    "callbackFinishedAfterRecorderMs": 53272,
+    "timeLimitSeconds": 120,
+    "secureFlagsPreserved": true,
+    "testOutcomeIndependent": true,
+    "coverage": {
+      "status": "covered",
+      "recorderAliveBeforeCallback": true,
+      "recorderAliveAfterCallback": true,
+      "durationToleranceMs": 1500
+    },
+    "rawVideo": {
+      "bytes": 2846905,
+      "sha256": "9e5e4b7f5a48b1e893fb0a89b40b67a639e146d82788fc712eae1e67358cc061",
+      "durationMs": 53168,
+      "width": 320,
+      "height": 640,
+      "codec": "h264",
+      "pixelFormat": "yuv420p"
+    },
+    "rawRetained": false,
+    "video": {
+      "bytes": 823124,
+      "sha256": "4b941fc78e4ab535610a922889ac7e23878c9c81cefd8d4405966d1387d97270",
+      "durationMs": 53221,
+      "width": 640,
+      "height": 1280,
+      "codec": "h264",
+      "pixelFormat": "yuv420p"
+    },
+    "recorder": {
+      "started": true,
+      "exitCode": 0,
+      "stderr": {
+        "text": "",
+        "truncated": false,
+        "complete": true
+      }
+    },
+    "failures": [],
+    "probes": [
+      {
+        "stage": "raw_probe",
+        "status": "completed",
+        "exitCode": 0,
+        "stdout": "{\n    \"programs\": [\n\n    ],\n    \"streams\": [\n        {\n            \"codec_name\": \"h264\",\n            \"codec_type\": \"video\",\n            \"codec_tag_string\": \"avc1\",\n            \"width\": 320,\n            \"height\": 640,\n            \"pix_fmt\": \"yuv420p\"\n        },\n        {\n            \"codec_type\": \"data\",\n            \"codec_tag_string\": \"mett\"\n        },\n        {\n            \"codec_type\": \"data\",\n            \"codec_tag_string\": \"mett\"\n        }\n    ],\n    \"format\": {\n        \"duration\": \"53.167678\"\n    }\n}\n"
+      },
+      {
+        "stage": "encoded_probe",
+        "status": "completed",
+        "exitCode": 0,
+        "stdout": "{\n    \"programs\": [\n\n    ],\n    \"streams\": [\n        {\n            \"codec_name\": \"h264\",\n            \"codec_type\": \"video\",\n            \"codec_tag_string\": \"avc1\",\n            \"width\": 640,\n            \"height\": 1280,\n            \"pix_fmt\": \"yuv420p\"\n        }\n    ],\n    \"format\": {\n        \"duration\": \"53.221328\"\n    }\n}\n"
+      }
+    ]
+  },
+  "video": {
+    "bytes": 823124,
+    "sha256": "4b941fc78e4ab535610a922889ac7e23878c9c81cefd8d4405966d1387d97270",
+    "durationMs": 53221,
+    "width": 640,
+    "height": 1280,
+    "codec": "h264",
+    "pixelFormat": "yuv420p"
+  },
+  "videoPath": "video/demo.mp4",
+  "artifacts": {
+    "probe": {
+      "name": "third-party-smoke-v4-api-35-attempt-1",
+      "id": 12898443047,
+      "status": "archived"
+    },
+    "video": {
+      "name": "probe-video-third-party-app-set-api-35-attempt-1",
+      "id": 12898094808,
+      "status": "archived"
+    }
+  },
+  "fileCount": 9,
+  "totalBytes": 1153677,
+  "files": [
+    {
+      "path": "probe/calculator-1.4.0-idle-before-0.png",
+      "bytes": 23687,
+      "sha256": "bcfe5f9a7dfdf84606d2a43018b583cb43c422fe2e0d8601f9445649f6557c96"
+    },
+    {
+      "path": "probe/calculator-1.4.0-idle-result-1.png",
+      "bytes": 24341,
+      "sha256": "d57e76806bcbd292115598e51b5b94699879d48c0beff2261be4bf20c52214fd"
+    },
+    {
+      "path": "probe/calculator-1.4.0-off-before-0.png",
+      "bytes": 23687,
+      "sha256": "bcfe5f9a7dfdf84606d2a43018b583cb43c422fe2e0d8601f9445649f6557c96"
+    },
+    {
+      "path": "probe/calculator-1.4.0-off-result-1.png",
+      "bytes": 24341,
+      "sha256": "d57e76806bcbd292115598e51b5b94699879d48c0beff2261be4bf20c52214fd"
+    },
+    {
+      "path": "probe/instrumentation.json",
+      "bytes": 2886,
+      "sha256": "3b2d13456073b19294e91d13a46f846685b9f33cf8e724e385a1e30dd5c8a07d"
+    },
+    {
+      "path": "probe/report.json",
+      "bytes": 116640,
+      "sha256": "9b423f8dd8939b08887b000e8fffb6a86fe2330dd23343340b970568339ce1a9"
+    },
+    {
+      "path": "probe/ui-results.json",
+      "bytes": 112355,
+      "sha256": "5a66bf31450a60db01880ed3888278d03259f0f67e14cc60a15990eaa10e5243"
+    },
+    {
+      "path": "video/demo.mp4",
+      "bytes": 823124,
+      "sha256": "4b941fc78e4ab535610a922889ac7e23878c9c81cefd8d4405966d1387d97270"
+    },
+    {
+      "path": "video/recording.json",
+      "bytes": 2616,
+      "sha256": "6914419806a1ddae94525f0b93da93ac1781f4f9683b0a341330c8caf3db2b8a"
+    }
+  ]
+}

@@ -2,6 +2,10 @@
 
 Source audit and implemented candidate, 2026-10-27. The internal adapter uses this policy, but the UI and service capture permission remain disabled. The actual page-predicate results are scoped below; they do not certify the complete capture-to-model path.
 
+## Actual API35 test video, 2026-10-29
+
+Source `aee3d4e015ab864fada973b8bb8c67bb0c90227e`, [run40876724624](https://github.com/ecojust/Agent-OS/actions/runs/40876724624), repeats the same five page cases on API35, all passed. The [continuous video](../screenshots/demos/probes-40876724624-1/video/demo.mp4) is 33.233 seconds and 1,027,665 bytes; [its manifest](../screenshots/demos/probes-40876724624-1/manifest.json) preserves the original cases, screenshots and separate recording result. File hashes, full video decoding and sampled actual frames were reviewed. Secure flags remain enabled. Production `observe` and page policy are exercised; test code prepares the pages, and model requests remain zero. This one-API recording does not replace or rerun the four-API result below. The [README video index](../README.md#演示视频) lists only the latest video for each actual test type.
+
 ## Current-source real-APK verification, 2026-10-29
 
 At the user's request to install and test real APKs, [run 40834465238](https://github.com/ecojust/Agent-OS/actions/runs/40834465238) tested exact source `db1943a8afa46ad21d72ba6198614a383a042d3f` with the same unmodified official Calculator 1.4.0 APK. All **20/20 cases** passed: five fixed identities on each of API 34, 35, 36, 37.0, with zero failed or unverified cases. Each original instrumentation transcript reports `OK (5 tests)`. This is separate from the two-app off/idle installation probe and does not add a third application to that sample.

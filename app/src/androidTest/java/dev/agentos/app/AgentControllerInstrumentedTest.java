@@ -1,5 +1,6 @@
 package dev.agentos.app;
 
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.KeyguardManager;
 import android.graphics.Insets;
 import android.graphics.Rect;
@@ -210,7 +211,8 @@ public final class AgentControllerInstrumentedTest {
         }
 
         for (LocalControllerModelServer.Scenario scenario : new LocalControllerModelServer.Scenario[]{
-                LocalControllerModelServer.Scenario.SAVE_AND_COUNT, LocalControllerModelServer.Scenario.REJECT_CLICK}) {
+                LocalControllerModelServer.Scenario.SAVE_AND_COUNT, LocalControllerModelServer.Scenario.REJECT_CLICK,
+                LocalControllerModelServer.Scenario.ROTATION_INPUT}) {
             try (LocalControllerModelServer server = new LocalControllerModelServer(scenario)) {
                 JsonObject current = singlePlan(server.respond(planningRequest(syntheticObservation("r1", false, false, 0), null, null), 1));
                 Set<String> callIds = new HashSet<>(); callIds.add(planId(current));
@@ -246,6 +248,27 @@ public final class AgentControllerInstrumentedTest {
                 assertThrows(IOException.class, () -> server.respond(planningRequest(syntheticObservation("r3", false, false, 0), planId(retry), result), 3));
                 assertEquals(2, server.writePlanCount());
                 assertFalse(server.finalStateObserved());
+            }
+        }
+
+        // A landscape viewport need not expose the counter. The scoped rotation
+        // planner still requires a visible editor and a definitely unsubmitted
+        // stale result; accepted/unknown actions must never be replayed.
+        for (String rejected : rejectionResults) {
+            try (LocalControllerModelServer server = LocalControllerModelServer.forPlanningOnly(
+                    LocalControllerModelServer.Scenario.ROTATION_INPUT)) {
+                JsonObject first = singlePlan(server.respond(planningRequest(rotationEditorObservation("portrait"), null, null), 1));
+                JsonObject retry = singlePlan(server.respond(planningRequest(rotationEditorObservation("landscape"), planId(first), stale), 2));
+                assertNotEquals(planId(first), planId(retry));
+                assertEquals("type_text", retry.getAsJsonObject("function").get("name").getAsString());
+                JsonObject arguments = JsonParser.parseString(retry.getAsJsonObject("function").get("arguments").getAsString()).getAsJsonObject();
+                assertEquals("landscape", arguments.get("expectedRevision").getAsString());
+                assertEquals("edit_value-landscape", arguments.get("nodeId").getAsString());
+                assertEquals(LocalControllerModelServer.TEXT, arguments.get("text").getAsString());
+                JsonObject result = rejected == null ? null : JsonParser.parseString(rejected).getAsJsonObject();
+                assertThrows(IOException.class, () -> server.respond(planningRequest(rotationEditorObservation("latest"), planId(retry), result), 3));
+                assertEquals(2, server.writePlanCount());
+                assertEquals(0, server.acceptedWriteCount());
             }
         }
 
@@ -540,6 +563,16 @@ public final class AgentControllerInstrumentedTest {
         JsonObject request = new JsonObject(); request.add("messages", messages); return request;
     }
 
+    private static JsonObject rotationEditorObservation(String revision) {
+        JsonObject observed = syntheticObservation(revision, false, false, 0);
+        JsonArray editorOnly = new JsonArray();
+        for (JsonElement value : observed.getAsJsonArray("nodes")) {
+            if ((DeviceHarness.FIXTURE + ":id/edit_value").equals(value.getAsJsonObject().get("viewId").getAsString()))
+                editorOnly.add(value);
+        }
+        observed.add("nodes", editorOnly); return observed;
+    }
+
     private static JsonObject singlePlan(JsonObject response) {
         JsonArray plans = response.getAsJsonArray("choices").get(0).getAsJsonObject().getAsJsonObject("message").getAsJsonArray("tool_calls");
         assertEquals(1, plans.size()); return plans.get(0).getAsJsonObject();
@@ -772,7 +805,7 @@ public final class AgentControllerInstrumentedTest {
 
     @Test public void realRotationRejectsOldApprovalAndKeepsControlsReachable() throws Exception {
         try (DeviceHarness device = new DeviceHarness();
-             LocalControllerModelServer server = new LocalControllerModelServer(LocalControllerModelServer.Scenario.REJECT_CLICK);
+             LocalControllerModelServer server = new LocalControllerModelServer(LocalControllerModelServer.Scenario.ROTATION_INPUT);
              ControllerTestSettings settings = new ControllerTestSettings(device.context, server)) {
             AgentController controller = AgentController.get(device.context);
             RotationTestSettings rotation = new RotationTestSettings(device);
@@ -784,7 +817,8 @@ public final class AgentControllerInstrumentedTest {
                 // Only preparation relaunches/reset the fixture. No relaunch after
                 // the measured rotation, which may itself recreate its Activity.
                 device.launch("FixtureActivity");
-                start(device, controller, settings, "Request one synthetic counter increment and wait for confirmation.");
+                String originalEditorText = fixtureText(device, "edit_value");
+                start(device, controller, settings, "Prepare synthetic text input and wait for confirmation.");
                 AgentController.State pending = awaitApproval(controller, server);
                 ExpandedApproval before = awaitExpandedApproval(device, controller, pending,
                         SystemClock.elapsedRealtime() + 5_000);
@@ -806,6 +840,11 @@ public final class AgentControllerInstrumentedTest {
                 screenshots.capture("portrait-pending-approval-before-real-rotation");
 
                 phase = "system_rotation";
+                // Android 11's same-process UiAutomation screenshot can retain
+                // node cache entries across the next real window replacement.
+                // Match the existing font-change fixture's preparation: reapply
+                // unchanged test service info before starting the measured change.
+                prepareRotationApi30Cache(device);
                 rotation.change(1);
                 assertTrue(rotation.snapshot().matches(1));
                 ExpandedApproval after = awaitExpandedApproval(device, controller, pending,
@@ -884,15 +923,19 @@ public final class AgentControllerInstrumentedTest {
                 assertFalse(server.receivedAnotherRequest(stoppedRequests, 350));
                 assertFalse(controller.getState().running);
                 assertRotationHasNotWritten(owner, server);
-                assertEquals("Count: 0", fixtureText(device, "counter_value"));
+                assertEquals(originalEditorText, fixtureText(device, "edit_value"));
                 screenshots.capture("landscape-stopped-old-approvals-cannot-resume");
                 phase = "verified";
             } catch (Exception | AssertionError failure) {
                 RunControl owner = original.get();
+                String windows;
+                try { windows = rotationWindowDiagnostic(device, controller); }
+                catch (RuntimeException | AssertionError unavailable) { windows = "window_sample_unavailable"; }
                 AssertionError reported = new AssertionError("Real rotation failed before restoration; phase=" + phase
                         + ",ownerPresent=" + (owner != null) + ",dispatchAttempts=" + (owner == null ? -1 : owner.getDispatchAttempts())
                         + ",requests=" + server.requestCount() + ",running=" + controller.getState().running
-                        + ",paused=" + controller.getState().paused + ",approvalPending=" + !controller.getState().approvalId.isEmpty(), failure);
+                        + ",paused=" + controller.getState().paused + ",approvalPending=" + !controller.getState().approvalId.isEmpty()
+                        + ";" + windows, failure);
                 try { screenshots.capture("rotation-failure-before-restoration"); }
                 catch (Throwable captureFailure) { reported.addSuppressed(captureFailure); }
                 primary = reported; throw reported;
@@ -925,6 +968,77 @@ public final class AgentControllerInstrumentedTest {
         assertFalse(owner.hasInFlightDispatch());
         assertEquals(0, server.acceptedWriteCount());
         server.assertHealthy();
+    }
+
+    private static void prepareRotationApi30Cache(DeviceHarness device) {
+        if (Build.VERSION.SDK_INT != 30) return;
+        AccessibilityServiceInfo unchanged = device.automation.getServiceInfo();
+        assertNotNull("API30 preparation needs the existing UiAutomation configuration", unchanged);
+        device.automation.setServiceInfo(unchanged);
+    }
+
+    /** Failure-only metadata; never refresh nodes, acquire a new identity or retry the assertion. */
+    private static String rotationWindowDiagnostic(DeviceHarness device, AgentController controller) {
+        AtomicReference<String> viewState = new AtomicReference<>("main_sample_unavailable");
+        AtomicReference<AgentAccessibilityService.OwnedControlWindowIdentity> published = new AtomicReference<>();
+        CountDownLatch sampled = new CountDownLatch(1);
+        Handler main = new Handler(Looper.getMainLooper());
+        Runnable sample = () -> {
+            try {
+                AgentAccessibilityService.OwnedControlWindowIdentity identity = device.service.getOwnedControlWindowIdentity();
+                published.set(identity);
+                View panel = (View) controlField(device.service, "overlay");
+                Button approve = (Button) controlField(device.service, "approveButton");
+                viewState.set("owned={connected=" + device.service.isConnected()
+                        + ",orientation=" + device.service.getResources().getConfiguration().orientation
+                        + ",identity=" + (identity != null)
+                        + ",current=" + device.service.isOwnedControlWindowCurrent(identity)
+                        + ",id=" + (identity == null ? -1 : identity.windowId)
+                        + ",publishedBounds=" + (identity == null ? "missing" : identity.copyBounds().toShortString())
+                        + ",actualBounds=" + device.service.controlBounds().toShortString()
+                        + ",panelAttached=" + (panel != null && panel.isAttachedToWindow())
+                        + ",panelLayoutPending=" + (panel != null && panel.isLayoutRequested())
+                        + ",approveAttached=" + (approve != null && approve.isAttachedToWindow())
+                        + ",approveShown=" + (approve != null && approve.isShown())
+                        + ",approveEnabled=" + (approve != null && approve.isEnabled())
+                        + ",approvalMatches=" + controller.getState().approval.equals(controlField(device.service, "currentApproval"))
+                        + ",callbacksMatch=" + controlField(device.service, "callbackGeneration").equals(
+                                controlField(device.service, "displayedCallbackGeneration")) + "}");
+            } catch (RuntimeException | AssertionError unavailable) { viewState.set("main_sample_unavailable"); }
+            finally { sampled.countDown(); }
+        };
+        if (main.post(sample)) {
+            try {
+                if (!sampled.await(1, TimeUnit.SECONDS)) { main.removeCallbacks(sample); viewState.set("main_sample_timeout"); }
+            } catch (InterruptedException interrupted) {
+                main.removeCallbacks(sample); Thread.currentThread().interrupt(); return "window_sample_interrupted";
+            }
+        }
+        StringBuilder result = new StringBuilder(viewState.get());
+        List<AccessibilityWindowInfo> windows = device.service.getWindows();
+        if (windows == null) return result.append(";windows=unavailable").toString();
+        try {
+            result.append(";windowCount=").append(windows.size());
+            for (int index = 0; index < Math.min(16, windows.size()) && result.length() < 2800; index++) {
+                AccessibilityWindowInfo window = windows.get(index);
+                Rect bounds = new Rect(); window.getBoundsInScreen(bounds);
+                result.append(";window={id=").append(window.getId()).append(",type=").append(window.getType())
+                        .append(",display=").append(window.getDisplayId()).append(",focused=").append(window.isFocused())
+                        .append(",bounds=").append(bounds.toShortString());
+                AgentAccessibilityService.OwnedControlWindowIdentity identity = published.get();
+                if (window.getType() == AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY
+                        || identity != null && window.getId() == identity.windowId) {
+                    AccessibilityNodeInfo root = window.getRoot();
+                    result.append(",rootPresent=").append(root != null);
+                    if (root != null) try {
+                        result.append(",rootWindowId=").append(root.getWindowId()).append(",rootIsAgent=")
+                                .append(device.service.getPackageName().contentEquals(root.getPackageName() == null ? "" : root.getPackageName()));
+                    } finally { root.recycle(); }
+                }
+                result.append('}');
+            }
+        } finally { for (AccessibilityWindowInfo window : windows) window.recycle(); }
+        return result.substring(0, Math.min(result.length(), 3000));
     }
 
     private static RotationControls awaitRotationControls(DeviceHarness device) throws Exception {

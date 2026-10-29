@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /** Deterministic protocol fixture. It neither contacts nor evaluates a real language model. */
 final class LocalControllerModelServer implements AutoCloseable {
-    enum Scenario { SAVE_AND_COUNT, REJECT_CLICK, EXHAUST_ROUND_BUDGET, CONTINUOUS_NAVIGATION, QUALIFICATION_PENDING, DEMO_NAVIGATION, DEMO_CONTROL_PENDING }
+    enum Scenario { SAVE_AND_COUNT, REJECT_CLICK, ROTATION_INPUT, EXHAUST_ROUND_BUDGET, CONTINUOUS_NAVIGATION, QUALIFICATION_PENDING, DEMO_NAVIGATION, DEMO_CONTROL_PENDING }
     static final String SYNTHETIC_KEY = "controller-test-only-key";
     static final String MODEL = "synthetic-controller-model";
     static final String TEXT = "Controller integration sample";
@@ -242,16 +242,26 @@ final class LocalControllerModelServer implements AutoCloseable {
             require(++writePlans <= 8, "Qualification fixture exceeded its bounded planning attempts");
             return tool("click", nodeArguments(observed, "increment"), round);
         }
-        if (scenario == Scenario.REJECT_CLICK) {
+        if (scenario == Scenario.REJECT_CLICK || scenario == Scenario.ROTATION_INPUT) {
             if (pendingWriteCallId != null) {
                 JsonObject result = matchingResult(request, pendingWriteCallId);
                 require(definitelyUnsubmittedStale(result),
                         "Rejection scenario requested another plan without an explicitly unsubmitted stale result");
                 require(++staleReplans <= MAX_WRITE_REPLANS, "Unsubmitted stale plans exceeded the fixture replan limit");
             }
-            require("Count: 0".equals(nodeText(observed, "counter_value")), "Rejected fixture action changed the counter");
+            if (scenario == Scenario.ROTATION_INPUT) {
+                // The counter is below the landscape viewport. This dedicated
+                // rotation scenario uses the editor visible in both orientations,
+                // without weakening the ordinary counter scenario's contract.
+                require(!TEXT.equals(nodeText(observed, "edit_value")), "Unapproved rotation input changed the editor");
+            } else require("Count: 0".equals(nodeText(observed, "counter_value")), "Rejected fixture action changed the counter");
             require(++writePlans <= 1 + MAX_WRITE_REPLANS, "Rejection scenario exceeded the fixture plan limit");
             pendingWriteCallId = "script-round-" + round;
+            if (scenario == Scenario.ROTATION_INPUT) {
+                JsonObject args = nodeArguments(observed, "edit_value");
+                args.addProperty("text", TEXT);
+                return tool("type_text", args, round);
+            }
             return tool("click", nodeArguments(observed, "increment"), round);
         }
         if (pendingWriteCallId != null && !pendingWriteAccepted) {

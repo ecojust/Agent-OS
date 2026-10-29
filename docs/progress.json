@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-29T04:46:04Z",
-  "note": "归档旧8e04完整回归2163/2168：旋转7/8、旧子集2156/2160；5失败及原始日志保留，4469载荷/2269PNG核验，24既有安全例外不变。新433旋转v2专项8/8已核验，同源码完整回归仍运行；检查点9/20。",
+  "updated_at": "2026-10-29T04:57:14Z",
+  "note": "旋转v2专项与同源码完整回归内均8/8通过；完整矩阵2167/2168，唯一API30文件导入布局识别失败未计通过。4473载荷/2273PNG、逐案/JUnit汇总及源码身份已核验，36.295秒录像已归档，历史失败保留；检查点仍9/20（45%）。",
   "latest_evidence": {
-    "path": "screenshots/40818515711-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40818515711"
+    "path": "screenshots/40818512531-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40818512531"
   },
   "checkpoints": [
     {
@@ -65,8 +65,8 @@
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
       "status": "in_progress",
-      "evidence": "screenshots/40750181658-1/manifest.json",
-      "scope": "Latest exact24b9/run40750181658:270 unchanged identities/API x8=2160pass;zero failures/errors/skips/unreadable/missing/extra/duplicates. Numeric48pass with96 protected blocked/0PNG;old2112pass.2231 actualPNG/1445blocked;24 original secure exceptions unchanged. Scripts342 actualpass/0skip;all9jobs pass;8performance reports diagnostic-only,not budget acceptance. Previous four numeric failed/partial runs retained,including oldVisual external-window failure;its nonrecurrence is not a proven historical cause fix. Acceptance limited to this six-case numeric contract and exact synthetic emulator matrix;physical-phone/model/ROM/broad-app/performance acceptance remain unverified. Independent same-signer upgrade exactaf26/run40814465552:8/8 dedicated x86_64 API30–37 cases passed;352 payloads/405830 bytes;one v1-to-v2 replacement per lane,settings/Keystore/original grant retained and stopped task not restored. Original770244 run40757994473 remains0pass/7failed/1unverified. Separate from24b9 full2160;in-flight replacement,format migration,process death and rotation remain unverified."
+      "evidence": "screenshots/40818512531-1/manifest.json",
+      "scope": "Latest exact43381e/run40818512531:271 identities/API x8=2168,2167pass/1fail,zero errors/skips/missing/extra/duplicates/unreadable. Rotation v2 passes8/8 within full and separately8/8 in run40818515711:real portrait-to-landscape,pending old request explicitly unsubmitted STALE_OBSERVATION,new observation/approval,exact platform registration after replan,actual pause/stop listeners and zero dispatch. This changes test ordering,not product protection,and does not prove the original preapproval platform-registration contract. Old270 subset2159/2160;API30 realSafImportPreviewsAndAppliesOnlyFourUnsavedNumericFields fails UNKNOWN_ROOTS_LAYOUT before click.4473 payloads/47481305 bytes/2273 PNG verified,1444blocked,24 prior secure exceptions unchanged;8 performance reports diagnostic-only. Old8e04 full2163/2168 and initial rotation0/8,7/8 remain;nonrecurrence is not root-cause repair. Latest fully passing full baseline remains24b9/run40750181658:2160/2160. Independent same-signer upgrade exactaf26/run40814465552 passes8/8 with original failed run retained;not pooled into full counts. MainActivity rotation drafts,multiwindow/PiP,process-death,in-flight upgrade,real-model/phone/ROM/broad-app/performance acceptance remain unverified."
     },
     {
       "id": "performance",

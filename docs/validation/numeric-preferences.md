@@ -39,6 +39,18 @@ API32 的[原始失败](diagnostics/numeric-import-40898458626-api32/README.md)�
 
 旋转失败另补终止状态诊断：在原窗口诊断之前读取既有任务状态、取消/代次、线程中断标记及与原 owner 匹配的末条动作回执，输出固定分类而不输出任务标识或内容。这些读取并非原子快照，也不是失败瞬间的值；不增加等待或平台读取，不更改原动作、断言或恢复。当前日志只能确认尚未派发时任务已停止，事后控制窗脱离不能证明是停止触发原因。新增诊断与 SAF 修正已一同通过 Java 编译及独立审查，待同源回归。
 
+### 修正后独立导入：API32 的根始终为空
+
+源码 `42db0baf3528ff33dd1beaa4da1cb32dc54c16f4` 的专项 [40902327883](../../screenshots/40902327883-1/manifest.json) 仍为 7/8 通过，API32 失败。32 个载荷共 26,480 字节，来源、文件集合、摘要及逐案/JUnit 结果均核验；0 PNG、15 条保护性 blocked，无额外或缺失用例。此次专项没有任何 `protected-saf-root-refresh-reobserved-*` 阶段，所以七个通过的单案尚不能证明新恢复分支执行过。
+
+[API32 原始分类](diagnostics/numeric-import-40902327883-api32/README.md)为 473 次观测全部 `NULL_ROOT`，非系统应用、权限拒绝、包查询失败及已核验根计数均为 0。问题发生在布局及 Provider 根目录选择之前，与 `REFRESH_FALSE` 分开追踪。同源完整运行 `40902279945` 的 API32 作业通过；完整归档正在核验，不能将其与专项拼接成一次通过。
+
+源码检查发现单案没有构造会启用生产无障碍服务的 `DeviceHarness`，自己的 UiAutomation 只请求节点 ID 和非重要节点；完整运行前面的普通截图则会设置且保留 `FLAG_RETRIEVE_INTERACTIVE_WINDOWS`。Android 12L 的[取根接口](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.1.0_r1/core/java/android/view/accessibility/AccessibilityInteractionClient.java#279)不直接检查这个标志，但[服务管理器](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.1.0_r1/services/accessibility/java/com/android/server/accessibility/AccessibilityManagerService.java#2198)据此启动全局窗口跟踪。这是待实测的初始化差异候选，不是权限拒绝的证据。
+
+下一步增加仅 API32 全部读根为空之后的失败诊断：依次读原状态、同 flags 重设、开启窗口检索、恢复原 flags、再次开启，每步最多一次根读取和固定 100 毫秒等待，2 秒限制新观察调用的启动，最终恢复原 flags。原测试仍失败，不继续导入或点击。仅输出 flags、空根标记、固定包角色候选和窗口编号，不读页面正文或截图。该对照已编译并独立审查，设备结果待采集。
+
+这是有顺序、可能影响后续状态的观察：[每次重设还会清理客户端缓存](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.1.0_r1/core/java/android/app/UiAutomation.java#636)，关闭窗口跟踪时服务端[仍保留活动窗口编号](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-12.1.0_r1/services/accessibility/java/com/android/server/accessibility/AccessibilityWindowManager.java#511)。因此同 flags 重设不是纯缓存对照，恢复原 flags 也不等于回到冷启动状态；2 秒并非同步平台调用或必要恢复操作的硬超时。普通流程录像保持 `42db0baf3` 的真实来源，不能将它改称此失败后诊断的录像。
+
 本模块实现[设计规则 R5/R6](../DESIGN_RULES.md)中的普通数值偏好迁移。任务预算区域新增导入、导出入口，通过系统文件选择器访问用户选定的文档。导入先展示四项数值，确认后只填入当前草稿；只有原有的保存设置或开始任务操作才持久化并应用。配置读取失败、任务进行中或模型探测期间不开放新操作。
 
 ## 文件契约

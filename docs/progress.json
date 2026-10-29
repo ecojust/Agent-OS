@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-29T15:30:26Z",
-  "note": "定位并修正SAF失效快照的原期限内重新准备；补系统根等待分类和旋转终止状态诊断，编译/审查通过。已归档修正前完整2163/2168、单案7/8及37.3秒普通演示；修正后回归与录像待执行。",
+  "updated_at": "2026-10-29T15:47:16Z",
+  "note": "归档修正后导入单案7/8和36.5秒普通演示；API32原10秒内473次根全空，追加保留失败的有界flags诊断对照，编译/审查通过。完整修正回归七档成功、API30失败，原报告归档中。",
   "latest_evidence": {
     "path": "screenshots/40898449432-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40898449432"
@@ -86,8 +86,8 @@
       "status": "in_progress",
       "evidence": "screenshots/40898449432-1/manifest.json",
       "scope": "Latest exacte923dd269/run40898449432 full:271 identities/API x8=2168,2163pass/5fail,zero errors/skips/missing/extra/duplicates/unreadable. API30 268/271:rotation,SAF export/import fail;API31 269/271:SAF cancellation preparation/export fail;other6 APIs271/271. All4 SAF failures directly show post-idle selected-node REFRESH_FALSE at depth0,visited0,mask0,before click;underlying platform invalidation cause and old-run same cause remain unproven. Rotation7/8,API30 task stopped after stale observation rejection;do not treat current detached controls as proof of trigger.4472 payloads/47247751 bytes/2272 PNG verified,1441blocked,24 prior secure exceptions unchanged;8 performance reports diagnostic-only. Same-source isolated import run40898458626 is7/8:API32 times out awaiting a verified SAF root before rootsLayout;do not pool runs. Current test-only fix discards full stale target/action snapshots and reobserves within original5s/all gates;begin-root classifications add no platform reads;compiled/reviewed,new device verification pending. Latest fully passing full baseline remains24b9/run40750181658:2160/2160;all old failed runs retained. Remaining API-only boundaries:MainActivity rotation drafts,multiwindow/PiP,process-death,in-flight upgrade;completion list needs freezing.Real-model/phone/ROM/broad-app/performance are separate checkpoints.",
-      "details": "最新完整2163/2168通过：API30/31四项SAF失败已定位为点击前目标刷新失败，已修正原5秒内重新完整准备；API30旋转任务停止仍待查。单案7/8，API32等待系统根超时已补分类。未完成：修正后八档验收、主界面旋转草稿、多窗口/PiP、进程终止、执行中升级。下一步：核验恢复记录并追踪独立失败，冻结剩余必测清单。",
-      "updated_at": "2026-10-29T15:28:03Z"
+      "details": "已推进：四项SAF目标刷新失败已改为原5秒内完整重观测；修正后完整回归七档通过、API30失败待原报告核验。独立导入7/8，API32已明确473次活动根全空，新增失败后窗口检索标志对照待执行。未完成：旋转停止原因、冷启动空根及主界面旋转草稿、多窗口/PiP、进程终止、执行中升级。下一步：核验恢复证据与对照结果，冻结剩余必测清单。",
+      "updated_at": "2026-10-29T15:47:16Z"
     },
     {
       "id": "performance",
@@ -118,10 +118,10 @@
       "id": "continuous_actions",
       "name": "普通操作连续执行与接管",
       "status": "in_progress",
-      "evidence": "screenshots/demos/40898464299-1/manifest.json",
-      "scope": "Latest exacte923dd269/run40898464299 API35 ordinary walkthrough:13 required phases and8 confirmations passed,37.263s/467259B,local synthetic HTTP model,secure flags retained. Only launch_app/scroll/home may use explicitly selected continuous navigation; click/type_text/back still require step confirmation. This is not real-model, phone or unrestricted continuous-write acceptance. Third-party videos have separate source-bound cases and do not replace this Fixture contract; this ordinary video does not prove SAF failure repair.",
-      "details": "已验证：启动/滚动/主页可选择免确认，暂停/恢复/停止及最新API35普通流程13阶段、8次确认通过，37.3秒录像已归档。未完成：点击、输入、返回仍逐次确认，普通写操作连续执行尚未验收。下一步：明确支持的写操作范围并补端到端接管验证。",
-      "updated_at": "2026-10-29T15:16:54Z"
+      "evidence": "screenshots/demos/40902334050-1/manifest.json",
+      "scope": "Latest exact42db0baf3/run40902334050 API35 ordinary walkthrough:13 required phases and8 confirmations passed,36.521s/468269B,local synthetic HTTP model,secure flags retained. Only launch_app/scroll/home may use explicitly selected continuous navigation; click/type_text/back still require step confirmation. This is not real-model, phone or unrestricted continuous-write acceptance. Third-party videos retain separate source-bound cases. This ordinary video does not prove SAF,rotation or full-matrix repair.",
+      "details": "已验证：启动/滚动/主页可选择免确认，暂停/恢复/停止及最新API35普通流程13阶段、8次确认通过，36.5秒录像已归档。未完成：点击、输入、返回仍逐次确认，普通写操作连续执行尚未验收。下一步：明确支持的写操作范围并补端到端接管验证。",
+      "updated_at": "2026-10-29T15:44:19Z"
     },
     {
       "id": "model_acceptance",
@@ -178,9 +178,9 @@
     }
   ],
   "latest_demo": {
-    "path": "screenshots/demos/40898464299-1",
-    "source_sha": "e923dd2697bfde3d4d57e46f216d5933a7f0b878",
+    "path": "screenshots/demos/40902334050-1",
+    "source_sha": "42db0baf3528ff33dd1beaa4da1cb32dc54c16f4",
     "status": "passed",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40898464299"
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40902334050"
   }
 }

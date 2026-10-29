@@ -1,0 +1,14 @@
+  | Report: /tmp/agent-os-junit-hk5grfh3/report-01.xml
+  | Suite: dev.agentos.app.NumericPreferencesInstrumentedTest
+  | Test: dev.agentos.app.NumericPreferencesInstrumentedTest.realSafImportPreviewsAndAppliesOnlyFourUnsavedNumericFields
+  | Kind: failure / 
+  | java.lang.AssertionError: The real system DocumentsUI never became foreground; lastSafRoot={lastResult=NULL_ROOT,lastRole=UNKNOWN,observations=473,nullRoots=473,nonSystemApps=0,permissionDenied=0,packageNotFound=0,verifiedRoots=0}
+  | at dev.agentos.app.NumericPreferencesInstrumentedTest$Session.begin(NumericPreferencesInstrumentedTest.java:425)
+  | at dev.agentos.app.NumericPreferencesInstrumentedTest.realSafImportPreviewsAndAppliesOnlyFourUnsavedNumericFields(NumericPreferencesInstrumentedTest.java:74)
+  | ... 33 trimmed
+  | Caused by: java.lang.AssertionError: The real system DocumentsUI never became foreground
+  | at org.junit.Assert.fail(Assert.java:89)
+  | at dev.agentos.app.NumericPreferencesInstrumentedTest$Session.await(NumericPreferencesInstrumentedTest.java:938)
+  | at dev.agentos.app.NumericPreferencesInstrumentedTest$Session.begin(NumericPreferencesInstrumentedTest.java:423)
+  | ... 35 more
+Parsed 1 Android reports; found 1 failure/error entries.

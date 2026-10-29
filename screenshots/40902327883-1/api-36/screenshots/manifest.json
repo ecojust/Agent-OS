@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "api": 36,
+  "runId": "1793288004662-ee15b175",
+  "scope": "Dedicated synthetic Android fixture and verified empty application UI only",
+  "jvmTests": "No UI; no screenshot is claimed for JVM tests",
+  "tests": [
+    {
+      "schemaVersion": 1,
+      "api": 36,
+      "testClass": "dev.agentos.app.NumericPreferencesInstrumentedTest",
+      "testName": "realSafImportPreviewsAndAppliesOnlyFourUnsavedNumericFields",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793288004663,
+      "finishedAt": 1793288011389,
+      "captures": [
+        {
+          "stage": "protected-real-saf-preview-unsaved-import-and-explicit-save",
+          "capturedAt": 1793288010722,
+          "status": "blocked",
+          "captureError": "secure_numeric_preferences_capture_not_attempted"
+        },
+        {
+          "stage": "finished",
+          "capturedAt": 1793288011389,
+          "status": "blocked",
+          "captureError": "secure_numeric_preferences_capture_not_attempted"
+        }
+      ]
+    }
+  ]
+}

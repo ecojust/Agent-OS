@@ -43,9 +43,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 归档完整2167/2168及API32失败后flags对照；SAF48/48但恢复分支未触发，旋转有限重观察耗尽仍失败。显式初始化测试窗口跟踪、移除临时探针并补旋转固定追踪，强制编译和审查通过；新回归/录像待执行。
+**本次更新：** Archive actual API35 walkthrough evidence; local synthetic model, secure flags preserved
 
-**记录时间：** 2026-10-29T15:58:07Z
+**记录时间：** 2026-10-29T16:04:52Z
 
 [最近测试截图与清单](screenshots/40902279945-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40902279945)。通过、失败及未截图原因见清单。
 

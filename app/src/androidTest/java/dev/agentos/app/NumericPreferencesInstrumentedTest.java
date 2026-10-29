@@ -297,7 +297,7 @@ public final class NumericPreferencesInstrumentedTest {
         }
     }
 
-    private static final class Session implements AutoCloseable, Application.ActivityLifecycleCallbacks {
+    private final class Session implements AutoCloseable, Application.ActivityLifecycleCallbacks {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         final Context context = instrumentation.getTargetContext();
         final UiAutomation automation = instrumentation.getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
@@ -418,7 +418,12 @@ public final class NumericPreferencesInstrumentedTest {
                 return null;
             });
             assertNotNull(host); main(() -> assertSecure(host.activity));
-            await(() -> safRootAvailable(), "The real system DocumentsUI never became foreground");
+            SafRootAvailabilityDiagnostic rootDiagnostic = new SafRootAvailabilityDiagnostic();
+            try {
+                await(() -> safRootAvailable(rootDiagnostic), "The real system DocumentsUI never became foreground");
+            } catch (AssertionError failure) {
+                throw new AssertionError(failure.getMessage() + "; lastSafRoot={" + rootDiagnostic + "}", failure);
+            }
             return host;
         }
         void preview(Host broker) {
@@ -533,19 +538,37 @@ public final class NumericPreferencesInstrumentedTest {
                 "The remote provider did not observe actual descriptor closure"); }
 
         boolean safRootAvailable() {
+            return safRootAvailable(null);
+        }
+        boolean safRootAvailable(SafRootAvailabilityDiagnostic diagnostic) {
+            if (diagnostic != null) diagnostic.beginSample();
             AccessibilityNodeInfo root = automation.getRootInActiveWindow();
-            if (root == null) return false;
-            try { return isSystemSaf(root); } finally { root.recycle(); }
+            if (root == null) {
+                if (diagnostic != null) diagnostic.record("NULL_ROOT");
+                return false;
+            }
+            try { return isSystemSaf(root, diagnostic); } finally { root.recycle(); }
         }
         boolean isSystemSaf(AccessibilityNodeInfo root) {
+            return isSystemSaf(root, null);
+        }
+        boolean isSystemSaf(AccessibilityNodeInfo root, SafRootAvailabilityDiagnostic diagnostic) {
             String name = String.valueOf(root.getPackageName());
+            if (diagnostic != null) diagnostic.packageRole(name);
             try {
                 ApplicationInfo info = context.getPackageManager().getApplicationInfo(name, 0);
-                boolean verified = (info.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0
-                        && context.getPackageManager().checkPermission("android.permission.MANAGE_DOCUMENTS", name) == PackageManager.PERMISSION_GRANTED;
+                boolean system = (info.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
+                boolean verified = system && context.getPackageManager().checkPermission("android.permission.MANAGE_DOCUMENTS", name) == PackageManager.PERMISSION_GRANTED;
+                if (diagnostic != null) {
+                    if ("UNKNOWN".equals(diagnostic.lastRole)) diagnostic.lastRole = system ? "SYSTEM_OTHER" : "OTHER_APP";
+                    diagnostic.record(verified ? "VERIFIED" : system ? "MANAGE_DOCUMENTS_DENIED" : "NON_SYSTEM_APP");
+                }
                 if (verified) lastVerifiedSafPackage = name;
                 return verified;
-            } catch (PackageManager.NameNotFoundException unavailable) { return false; }
+            } catch (PackageManager.NameNotFoundException unavailable) {
+                if (diagnostic != null) diagnostic.record("PACKAGE_NOT_FOUND");
+                return false;
+            }
         }
         AccessibilityNodeInfo findSaf(Predicate<AccessibilityNodeInfo> predicate, long millis) {
             long deadline = SystemClock.elapsedRealtime() + millis;
@@ -666,12 +689,17 @@ public final class NumericPreferencesInstrumentedTest {
                             String rootsLayout = "PROVIDER_ROOT".equals(phase) ? rootsLayout(ready.selected, diagnostic) : "NOT_APPLICABLE";
                             if ("UNKNOWN".equals(rootsLayout)) {
                                 diagnostic.preparation = "UNKNOWN_ROOTS_LAYOUT";
-                                throw safFailure("The actual SAF root row has no recognized drawer or rail context", diagnostic);
-                            }
-                            // Recheck layout and the actual active window after any idle wait,
-                            // then finish all other reads before the final target/action refresh.
-                            // A false dispatch is still a failure, not evidence permitting another click.
-                            if (!isCurrentSafWindow(ready)) {
+                                if (!"REFRESH_FALSE".equals(diagnostic.rootsLayoutExit))
+                                    throw safFailure("The actual SAF root row has no recognized drawer or rail context", diagnostic);
+                                diagnostic.recordRootsRefreshFailure();
+                                // Discard both target/action owners, not just the failed ancestor.
+                                // The original loop must observe a new root and two stable samples
+                                // before another idle wait and every original pre-click check.
+                                previous.close(); previous = null;
+                            } else if (!isCurrentSafWindow(ready)) {
+                                // Recheck the actual active window after any idle wait,
+                                // then finish all reads before the final target/action refresh.
+                                // A false dispatch remains a failure, never a click replay.
                                 diagnostic.preparation = "CURRENT_WINDOW_CHANGED"; previous.close(); previous = null;
                             } else {
                                 if (SystemClock.elapsedRealtime() >= deadline) { diagnostic.preparation = "DEADLINE_EXPIRED"; break; }
@@ -684,6 +712,9 @@ public final class NumericPreferencesInstrumentedTest {
                                     lastSafPhase = phase + "_CLICK_ACCEPTED";
                                     if ("PROVIDER_ROOT".equals(phase)) {
                                         selectedRootsLayout = rootsLayout; selectedSafWindow = ready.window; selectedSafPackage = ready.packageName;
+                                        if (diagnostic.rootsRefreshFailures > 0)
+                                            screenshots.capture("protected-saf-root-refresh-reobserved-" + diagnostic.rootsRefreshFailures
+                                                    + "-depth-" + diagnostic.lastRootsRefreshDepth);
                                     }
                                     return;
                                 }
@@ -1082,6 +1113,36 @@ public final class NumericPreferencesInstrumentedTest {
             if (filename != null) { filename.recycle(); filename = null; }
         }
     }
+    /** Fixed metadata from the original begin-wait reads; no extra window or package lookup. */
+    private static final class SafRootAvailabilityDiagnostic {
+        String lastResult = "NOT_SAMPLED", lastRole = "UNKNOWN";
+        // The original ten-second wait sleeps twenty milliseconds between observations.
+        int observations, nullRoots, nonSystemApps, permissionDenied, packageNotFound, verifiedRoots;
+        void beginSample() {
+            observations++; lastResult = "READING_ROOT"; lastRole = "UNKNOWN";
+        }
+        void packageRole(String name) {
+            if ("dev.agentos.app".equals(name)) lastRole = "TARGET_APP_OR_BROKER";
+            else if ("com.android.documentsui".equals(name)) lastRole = "AOSP_DOCUMENTS_UI_CANDIDATE";
+            else if ("com.google.android.documentsui".equals(name)) lastRole = "GOOGLE_DOCUMENTS_UI_CANDIDATE";
+        }
+        void record(String result) {
+            lastResult = result;
+            switch (result) {
+                case "NULL_ROOT": nullRoots++; break;
+                case "NON_SYSTEM_APP": nonSystemApps++; break;
+                case "MANAGE_DOCUMENTS_DENIED": permissionDenied++; break;
+                case "PACKAGE_NOT_FOUND": packageNotFound++; break;
+                case "VERIFIED": verifiedRoots++; break;
+                default: break;
+            }
+        }
+        @Override public String toString() {
+            return "lastResult=" + lastResult + ",lastRole=" + lastRole + ",observations=" + observations
+                    + ",nullRoots=" + nullRoots + ",nonSystemApps=" + nonSystemApps + ",permissionDenied=" + permissionDenied
+                    + ",packageNotFound=" + packageNotFound + ",verifiedRoots=" + verifiedRoots;
+        }
+    }
     private static final class SafDiagnostic {
         final String phase;
         final Rect bounds = new Rect(), actionBounds = new Rect();
@@ -1089,8 +1150,17 @@ public final class NumericPreferencesInstrumentedTest {
         int matches = -1, window = -1, refresh = -1, scrolls, actionDepth = -1, actionMask;
         String rootsLayoutExit = "NOT_SAMPLED", rootsLayoutResult = "UNKNOWN";
         int rootsLayoutDepth = -1, rootsLayoutVisited, rootsLayoutMask;
+        // Retain earlier discarded snapshots even if a later preparation fails elsewhere.
+        // The original five-second loop and its sleep bound the number of observations.
+        int rootsRefreshFailures, lastRootsRefreshDepth = -1, lastRootsRefreshVisited = -1, lastRootsRefreshMask = -1;
         boolean actionAttempted, actionResult, scrollResult, actionClickable, actionSelected, idleAttempted, idleObserved;
         SafDiagnostic(String phase) { this.phase = phase; }
+        void recordRootsRefreshFailure() {
+            rootsRefreshFailures++;
+            lastRootsRefreshDepth = rootsLayoutDepth;
+            lastRootsRefreshVisited = rootsLayoutVisited;
+            lastRootsRefreshMask = rootsLayoutMask;
+        }
         void recordAction(AccessibilityNodeInfo node) {
             actionMask = fixedActionMask(node); actionClickable = node.isClickable(); actionSelected = node.isSelected();
             node.getBoundsInScreen(actionBounds);
@@ -1104,7 +1174,9 @@ public final class NumericPreferencesInstrumentedTest {
                     + ",idleAttempted=" + idleAttempted + ",idleObserved=" + idleObserved
                     + ",rootsLayoutDepth=" + rootsLayoutDepth + ",rootsLayoutVisited=" + rootsLayoutVisited
                     + ",rootsLayoutMask=" + rootsLayoutMask + ",rootsLayoutExit=" + rootsLayoutExit
-                    + ",rootsLayoutResult=" + rootsLayoutResult;
+                    + ",rootsLayoutResult=" + rootsLayoutResult + ",rootsRefreshFailures=" + rootsRefreshFailures
+                    + ",lastRootsRefreshDepth=" + lastRootsRefreshDepth + ",lastRootsRefreshVisited=" + lastRootsRefreshVisited
+                    + ",lastRootsRefreshMask=" + lastRootsRefreshMask;
         }
     }
     private static boolean advertisesClick(AccessibilityNodeInfo node) {

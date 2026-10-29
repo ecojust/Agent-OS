@@ -933,14 +933,36 @@ public final class AgentControllerInstrumentedTest {
                 phase = "verified";
             } catch (Exception | AssertionError failure) {
                 RunControl owner = original.get();
+                // Failure classification only. These existing in-memory values are
+                // sampled separately, not atomically or at the failed check itself.
+                // Capture before the later window diagnostics; never wait for work.
+                AgentController.State failureState = controller.getState();
+                TaskActionReceipts receipts = controller.getTaskActionReceipts();
+                boolean receiptOwnerMatches = owner != null && receipts != null && owner.getTaskId().equals(receipts.taskId);
+                TaskActionReceipts.Entry lastReceipt = receiptOwnerMatches && !receipts.entries.isEmpty()
+                        ? receipts.entries.get(receipts.entries.size() - 1) : null;
+                String classification = ",failureSnapshot=NON_ATOMIC_BEFORE_WINDOW_DIAGNOSTICS"
+                        + ",resultKind=" + (failureState.resultKind == null ? "NONE" : failureState.resultKind.name())
+                        + ",resultCode=" + TaskDiagnostics.safeTerminalCode(failureState.resultCode)
+                        + ",statusClass=" + controllerStatusClass(failureState.status)
+                        + ",summaryClass=" + controllerSummaryClass(failureState.summary)
+                        + ",ownerCancelled=" + (owner != null && owner.isCancelled())
+                        + ",ownerEpoch=" + (owner == null ? -1 : owner.getExecutionEpoch())
+                        + ",testThreadInterrupted=" + Thread.currentThread().isInterrupted()
+                        + ",receiptOwnerMatches=" + receiptOwnerMatches
+                        + ",receiptFrozen=" + (receipts != null && receipts.frozen)
+                        + ",receiptCount=" + (receipts == null ? -1 : receipts.entries.size())
+                        + ",lastReceipt=" + (lastReceipt == null ? "NOT_AVAILABLE" : lastReceipt.action.name()
+                                + ":" + lastReceipt.stage.name() + ":" + TaskDiagnostics.safeTerminalCode(lastReceipt.code)
+                                + ":submitted=" + lastReceipt.submitted.name() + ":accepted=" + lastReceipt.accepted.name());
                 String windows;
                 try { windows = rotationWindowDiagnostic(device, controller); }
                 catch (RuntimeException | AssertionError unavailable) { windows = "window_sample_unavailable"; }
                 AssertionError reported = new AssertionError("Real rotation failed before restoration; phase=" + phase
                         + ",ownerPresent=" + (owner != null) + ",dispatchAttempts=" + (owner == null ? -1 : owner.getDispatchAttempts())
-                        + ",requests=" + server.requestCount() + ",running=" + controller.getState().running
-                        + ",paused=" + controller.getState().paused + ",approvalPending=" + !controller.getState().approvalId.isEmpty()
-                        + ";" + windows, failure);
+                        + ",requests=" + server.requestCount() + ",running=" + failureState.running
+                        + ",paused=" + failureState.paused + ",approvalPending=" + !failureState.approvalId.isEmpty()
+                        + classification + ";" + windows, failure);
                 try { screenshots.capture("rotation-failure-before-restoration"); }
                 catch (Throwable captureFailure) { reported.addSuppressed(captureFailure); }
                 primary = reported; throw reported;

@@ -29,14 +29,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 新增开发APK原地升级验证：固定旧源码v1到真实候选v2，独立探针、单次更新驱动和八档归档已实现；新脚本35+31项、APK构建/应用lint及实物验签通过，原本地失败保留。设备专项与新源码录像待执行；旧2160/2160仍绑定24b9，检查点9/20（45%）。
+**本次更新：** Archive actual API35 walkthrough evidence; local synthetic model, secure flags preserved
 
-**记录时间：** 2026-10-28T19:50:23Z
+**记录时间：** 2026-10-29T03:49:16Z
 
 [最近测试截图与清单](screenshots/40750181658-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40750181658)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/40733609989-1/demo.mp4) · [录制与验证清单](screenshots/demos/40733609989-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40733609989)。
-录制版本：[`518621d4d`](https://github.com/ecojust/Agent-OS/commit/518621d4db2a0a7dd9098fa6e7b5a36d434d2d1c)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/40758002470-1/demo.mp4) · [录制与验证清单](screenshots/demos/40758002470-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40758002470)。
+录制版本：[`770244810`](https://github.com/ecojust/Agent-OS/commit/770244810333a089370863aa8244fff56adc12cc)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 | 检查点 | 状态 |
 | --- | --- |

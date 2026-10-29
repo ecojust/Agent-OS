@@ -43,11 +43,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 归档完整2167/2168及API32失败后flags对照；SAF48/48但恢复分支未触发，旋转有限重观察耗尽仍失败。显式初始化测试窗口跟踪、移除临时探针并补旋转固定追踪，强制编译和审查通过；新回归/录像待执行。
+**本次更新：** 归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。
 
-**记录时间：** 2026-10-29T15:58:07Z
+**记录时间：** 2026-10-29T16:04:39Z
 
-[最近测试截图与清单](screenshots/40902279945-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40902279945)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40907079764-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40907079764)。通过、失败及未截图原因见清单。
 
 **整体操作演示：** [播放视频](screenshots/demos/40902334050-1/demo.mp4) · [录制与验证清单](screenshots/demos/40902334050-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40902334050)。
 录制版本：[`42db0baf3`](https://github.com/ecojust/Agent-OS/commit/42db0baf3528ff33dd1beaa4da1cb32dc54c16f4)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。

@@ -30,6 +30,11 @@ VISUAL_GENERATION_TITLE = "Android checks [visual-generation-diagnostic]"
 ACTIVITY_FONT_SCALE_TITLE = "Android checks [activity-font-scale-diagnostic]"
 ROTATION_TITLE = "Android checks [rotation-diagnostic]"
 NUMERIC_IMPORT_TITLE = "Android checks [numeric-import-diagnostic]"
+NAVIGATION_ORIGIN_TITLE = "Android checks [navigation-origin-diagnostic]"
+NAVIGATION_ORIGIN_COVERAGE = ("This case exercises an automatic launch attempt from a real unscoped system Settings window "
+                              "on all eight API lanes. It requires TASK_PAUSED, zero approval callbacks and dispatch attempts, "
+                              "and retained Settings focus. Protected or missing captures remain explicit; "
+                              "case results do not require a PNG. A standalone pass does not resolve a failure in the full suite.")
 NUMERIC_IMPORT_COVERAGE = ("This case exercises the real system file picker, numeric-preference preview and "
                            "application of only four unsaved numeric fields on all eight API lanes. "
                            "Protected captures remain blocked without clearing FLAG_SECURE; "
@@ -53,7 +58,8 @@ DIAGNOSTIC_TITLES = {DIAGNOSTIC_TITLE: android_evidence.DIAGNOSTIC_SCOPE,
                      VISUAL_GENERATION_TITLE: android_evidence.VISUAL_GENERATION_SCOPE,
                      ACTIVITY_FONT_SCALE_TITLE: android_evidence.ACTIVITY_FONT_SCALE_SCOPE,
                      ROTATION_TITLE: android_evidence.ROTATION_SCOPE,
-                     NUMERIC_IMPORT_TITLE: android_evidence.NUMERIC_IMPORT_SCOPE}
+                     NUMERIC_IMPORT_TITLE: android_evidence.NUMERIC_IMPORT_SCOPE,
+                     NAVIGATION_ORIGIN_TITLE: android_evidence.NAVIGATION_ORIGIN_SCOPE}
 DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
                     android_evidence.QUALIFICATION_SCOPE: "Task Qualification",
                     android_evidence.CONTROL_STATUS_SCOPE: "Control Status",
@@ -63,7 +69,8 @@ DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
                     android_evidence.VISUAL_GENERATION_SCOPE: "Visual Generation",
                     android_evidence.ACTIVITY_FONT_SCALE_SCOPE: "Activity Font Scale",
                     android_evidence.ROTATION_SCOPE: "Rotation",
-                    android_evidence.NUMERIC_IMPORT_SCOPE: "Numeric Import"}
+                    android_evidence.NUMERIC_IMPORT_SCOPE: "Numeric Import",
+                    android_evidence.NAVIGATION_ORIGIN_SCOPE: "Navigation Origin"}
 
 
 def android_execution_scope(run: dict) -> str:
@@ -417,6 +424,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         manifest["scope"] += " " + ROTATION_COVERAGE
     if execution_scope == android_evidence.NUMERIC_IMPORT_SCOPE:
         manifest["scope"] += " " + NUMERIC_IMPORT_COVERAGE
+    if execution_scope == android_evidence.NAVIGATION_ORIGIN_SCOPE:
+        manifest["scope"] += " " + NAVIGATION_ORIGIN_COVERAGE
     (output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     lines = ["# " + (diagnostic_name + " Diagnostic Evidence" if diagnostic else "Android Test Evidence"), "", f"Source run: {manifest['sourceRun']['url']}", "",
              f"Source commit: `{run['head_sha']}` · Attempt: {attempt}", "",
@@ -431,6 +440,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         lines += [ROTATION_COVERAGE, ""]
     if execution_scope == android_evidence.NUMERIC_IMPORT_SCOPE:
         lines += [NUMERIC_IMPORT_COVERAGE, ""]
+    if execution_scope == android_evidence.NAVIGATION_ORIGIN_SCOPE:
+        lines += [NAVIGATION_ORIGIN_COVERAGE, ""]
     if diagnostic:
         lines += [f"Execution scope: `{execution_scope}`. Only `{android_evidence.test_selection(execution_scope)}` was selected.", "",
                   "The diagnostic denominator is 8 cases (8 APIs × 1 test); missing, skipped and unexecuted cases remain unverified. "

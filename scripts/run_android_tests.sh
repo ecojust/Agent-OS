@@ -42,6 +42,9 @@ case "$test_scope" in
   numeric-import-diagnostic)
     selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.NumericPreferencesInstrumentedTest#realSafImportPreviewsAndAppliesOnlyFourUnsavedNumericFields)
     ;;
+  navigation-origin-diagnostic)
+    selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.NavigationObservationGuardInstrumentedTest#anUnscopedSettingsWindowCannotBeReplacedByAnAutomaticLaunch)
+    ;;
   *) echo "Invalid Android test scope" >&2; exit 2 ;;
 esac
 if [[ ! "$matrix_label" =~ ^(3[0-6]|37\.0)$ ]]; then

@@ -36,12 +36,15 @@ ROTATION_SCOPE = "rotation-diagnostic"
 ROTATION_TEST = "dev.agentos.app.AgentControllerInstrumentedTest#realRotationRejectsOldApprovalAndKeepsControlsReachable"
 NUMERIC_IMPORT_SCOPE = "numeric-import-diagnostic"
 NUMERIC_IMPORT_TEST = "dev.agentos.app.NumericPreferencesInstrumentedTest#realSafImportPreviewsAndAppliesOnlyFourUnsavedNumericFields"
+NAVIGATION_ORIGIN_SCOPE = "navigation-origin-diagnostic"
+NAVIGATION_ORIGIN_TEST = "dev.agentos.app.NavigationObservationGuardInstrumentedTest#anUnscopedSettingsWindowCannotBeReplacedByAnAutomaticLaunch"
 DIAGNOSTIC_SELECTIONS = {DIAGNOSTIC_SCOPE: DIAGNOSTIC_TEST, QUALIFICATION_SCOPE: QUALIFICATION_TEST,
                         CONTROL_STATUS_SCOPE: CONTROL_STATUS_TEST, SCREEN_OFF_SCOPE: SCREEN_OFF_TEST,
                         TASK_REPORT_FOCUS_SCOPE: TASK_REPORT_FOCUS_TEST, FONT_SCALE_SCOPE: FONT_SCALE_TEST,
                         VISUAL_GENERATION_SCOPE: VISUAL_GENERATION_TEST,
                         ACTIVITY_FONT_SCALE_SCOPE: ACTIVITY_FONT_SCALE_TEST, ROTATION_SCOPE: ROTATION_TEST,
-                        NUMERIC_IMPORT_SCOPE: NUMERIC_IMPORT_TEST}
+                        NUMERIC_IMPORT_SCOPE: NUMERIC_IMPORT_TEST,
+                        NAVIGATION_ORIGIN_SCOPE: NAVIGATION_ORIGIN_TEST}
 
 
 def test_selection(scope: str) -> str:

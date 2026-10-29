@@ -1,5 +1,21 @@
 # 连续导航来源拒绝的前置验证与诊断
 
+## 本次 API37 复现与诊断输出修正（2026-10-29）
+
+源码 `309c2f759f14fabd44e268ef40fa9cb070016614` 的[完整运行 40906944025](../../screenshots/40906944025-1/manifest.json) 为 2167/2168，唯一失败是 API37 的 `anUnscopedSettingsWindowCannotBeReplacedByAnAutomaticLaunch`。[原报告](diagnostics/numeric-full-40906944025-api37/README.md)仅保留“Automatic launch returned without the required source interruption”，后续暂停、零派发等断言没有执行。失败截图记录当时 Settings 仍在前台，但它不是调用时状态，也不能代替提交证据。
+
+该测试原本已经采样返回码、布尔标记、派发计数、trace及窗口分类，并作为 `NavigationSnapshot` 挂在 suppressed 异常中。完整作业日志和 JUnit 输出都没有这些字段，且没有截断提示。核对实际 runner 1.6.2 字节码后确认：`InstrumentationResultPrinter → StackTrimmer → Throwables.getTrimmedStackTrace` 对这类无 cause 的顶层断言不保留 suppressed，所以诊断没有进入可用报告。
+
+本次只调整诊断传输：同一份严格小于 2000 字符的固定 JSON 同时进入 `AssertionError` 顶层消息，保留原断言文字、原 Throwable cause 及原 suppressed；其他 Exception 仍重抛原对象。没有新平台读取、重新采样、延时、动作重试或断言放宽。只有原 `TASK_PAUSED`、暂停、零审批、零派发、Settings 保持焦点及零 HTTP 等全部条件成立，测试才通过；普通错误返回仍然失败。
+
+Java 编译 13 秒成功，输入 SHA 前后相同且独立审查通过。另使用实际 runner 1.6.2 的 `StackTrimmer.getTrimmedStackTrace` 与 JUnit 4.13.2 做宿主验证：旧 suppressed JSON 被裁掉，新顶层 JSON 和原断言被保留。验证使用合成 Throwable，只证明诊断传输兼容性，不代表此次 API37 的真实返回值、派发情况或产品根因。
+
+新增固定 `navigation-origin-diagnostic` 对照，只选择原方法，八档各一案；`fullSuiteAcceptance=false`，失败、缺失和 blocked 截图均保留。完整矩阵仍为原 271 案/API，API30 原安装准备不变。相关宿主检查 103/103、actionlint、Bash 语法及独立复核通过；单案设备结果待执行。此次仅诊断输出和选择器改动，不为此重录普通演示，沿用已归档的 `309c2f759` 失败尝试及 `42db0baf3` 最近成功视频的原始来源。
+
+`tools.execute()` 正常返回可能是未提交的错误；唯一 `startActivity` 位于实际派发路径内。派发准入计数、派发 trace、返回值及最终前台各自证明的内容不同。现有原始字段缺失，不能把失败文案解释为安全检查绕过，后续也不能用单案通过倒推这次完整运行已修复。
+
+## 历史验证
+
 本模块针对[源码31e1的API35原始失败](diagnostics/navigation-origin-40698819944/README.md)补齐测试证据。该次完整矩阵为2111/2112通过：导航来源拒绝用例只记录了“未抛预期暂停异常”，没有保存调用返回值，也没有确认实际前台是设置页。不能据断言文案认定曾经发生越界启动。
 
 ## 验证目标

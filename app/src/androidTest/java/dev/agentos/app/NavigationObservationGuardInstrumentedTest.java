@@ -200,7 +200,12 @@ public final class NavigationObservationGuardInstrumentedTest {
             } catch (Exception | AssertionError failure) {
                 // This catch runs inside the resources' lifetime, before DeviceHarness
                 // cancels the control or removes its windows. Keep the original failure.
-                diagnostic.attach(failure, device, server, approvals, trace);
+                String snapshot = diagnostic.attach(failure, device, server, approvals, trace);
+                if (failure instanceof AssertionError) {
+                    // AndroidJUnitRunner trims suppressed diagnostics from this assertion's
+                    // report. Reuse the same bounded sample in its top-level message.
+                    throw new AssertionError(failure.getMessage() + "\nnavigationDiagnostic=" + snapshot, failure);
+                }
                 throw failure;
             }
         }
@@ -356,8 +361,8 @@ public final class NavigationObservationGuardInstrumentedTest {
                 values.add(key, metadata);
             } catch (RuntimeException | AssertionError sampling) { values.addProperty("resultSampling", samplingClass(sampling)); }
         }
-        void attach(Throwable failure, DeviceHarness device, LocalControllerModelServer server, AtomicInteger approvals,
-                    PerformanceTrace.Session trace) {
+        String attach(Throwable failure, DeviceHarness device, LocalControllerModelServer server, AtomicInteger approvals,
+                      PerformanceTrace.Session trace) {
             try {
                 if ("ENTERED".equals(string(values, "outcome"))) values.addProperty("outcome", "THREW_OTHER");
                 synchronized (device.control) {
@@ -395,10 +400,14 @@ public final class NavigationObservationGuardInstrumentedTest {
                 try { values.add("failureFocusBeforeCleanup", focusedOrigin(device, this).metadata()); }
                 catch (RuntimeException | AssertionError sampling) { values.addProperty("focusSampling", samplingClass(sampling)); }
                 String snapshot = values.toString();
-                failure.addSuppressed(new NavigationSnapshot(snapshot.length() < 2000 ? snapshot : "{\"diagnostic\":\"SIZE_LIMIT\"}"));
+                String boundedSnapshot = snapshot.length() < 2000 ? snapshot : "{\"diagnostic\":\"SIZE_LIMIT\"}";
+                failure.addSuppressed(new NavigationSnapshot(boundedSnapshot));
+                return boundedSnapshot;
             } catch (RuntimeException | AssertionError sampling) {
-                try { failure.addSuppressed(new NavigationSnapshot("{\"diagnostic\":\"UNAVAILABLE\"}")); }
+                String snapshot = "{\"diagnostic\":\"UNAVAILABLE\"}";
+                try { failure.addSuppressed(new NavigationSnapshot(snapshot)); }
                 catch (RuntimeException | AssertionError ignored) { /* Never replace the original failure. */ }
+                return snapshot;
             }
         }
     }

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "api": 36,
+  "runId": "1793291547471-0dee4125",
+  "scope": "Dedicated synthetic Android fixture and verified empty application UI only",
+  "jvmTests": "No UI; no screenshot is claimed for JVM tests",
+  "tests": [
+    {
+      "schemaVersion": 1,
+      "api": 36,
+      "testClass": "dev.agentos.app.NavigationObservationGuardInstrumentedTest",
+      "testName": "anUnscopedSettingsWindowCannotBeReplacedByAnAutomaticLaunch",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793291547472,
+      "finishedAt": 1793291553266,
+      "captures": [
+        {
+          "stage": "continuous-navigation-rejects-unscoped-focused-settings",
+          "capturedAt": 1793291553185,
+          "foregroundPackage": "com.android.settings",
+          "status": "blocked",
+          "captureError": "foreground_is_not_an_approved_synthetic_test_screen"
+        },
+        {
+          "stage": "finished",
+          "capturedAt": 1793291553245,
+          "foregroundPackage": "com.android.settings",
+          "status": "blocked",
+          "captureError": "foreground_is_not_an_approved_synthetic_test_screen"
+        }
+      ]
+    }
+  ]
+}

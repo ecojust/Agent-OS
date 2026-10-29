@@ -29,14 +29,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 保留真实旋转首轮0/8通过与原始截图；API35日志证明旧动作已未提交拒绝，随后合成模型查找横屏不可见计数器失败。正在修正测试目标，未更改产品保护；检查点9/20。
+**本次更新：** 归档a611源码普通API35录像，真实载荷摘要与完整解码通过；不替代旋转专项0/8结果。补录API30新控制窗登记超时原始诊断，与API35合成目标不可见分别记录；修正及复测继续，检查点9/20。
 
-**记录时间：** 2026-10-29T04:15:05Z
+**记录时间：** 2026-10-29T04:17:34Z
 
 [最近测试截图与清单](screenshots/40816128028-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40816128028)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/40814467952-1/demo.mp4) · [录制与验证清单](screenshots/demos/40814467952-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40814467952)。
-录制版本：[`af26e5ad9`](https://github.com/ecojust/Agent-OS/commit/af26e5ad9a64ffb12cf35d29a3587f18f67307d2)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/40816130900-1/demo.mp4) · [录制与验证清单](screenshots/demos/40816130900-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40816130900)。
+录制版本：[`a6112fe73`](https://github.com/ecojust/Agent-OS/commit/a6112fe73a094735168a4e751ecb790ffb3ce7f7)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 | 检查点 | 状态 |
 | --- | --- |

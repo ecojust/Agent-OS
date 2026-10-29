@@ -1,0 +1,12 @@
+  | Report: /tmp/agent-os-junit-q7buu88g/report-01.xml
+  | Suite: dev.agentos.app.AgentControllerInstrumentedTest
+  | Test: dev.agentos.app.AgentControllerInstrumentedTest.realRotationRejectsOldApprovalAndKeepsControlsReachable
+  | Kind: failure / 
+  | java.lang.AssertionError: Real rotation failed before restoration; phase=system_rotation,ownerPresent=true,dispatchAttempts=0,requests=1,running=true,paused=false,approvalPending=true
+  | at dev.agentos.app.AgentControllerInstrumentedTest.realRotationRejectsOldApprovalAndKeepsControlsReachable(AgentControllerInstrumentedTest.java:895)
+  | ... 33 trimmed
+  | Caused by: java.lang.AssertionError: Displayed approval did not reach its actual current accessibility window within the original deadline
+  | at dev.agentos.app.AgentControllerInstrumentedTest.awaitExpandedApproval(AgentControllerInstrumentedTest.java:405)
+  | at dev.agentos.app.AgentControllerInstrumentedTest.realRotationRejectsOldApprovalAndKeepsControlsReachable(AgentControllerInstrumentedTest.java:811)
+  | ... 34 more
+Parsed 1 Android reports; found 1 failure/error entries.

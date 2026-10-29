@@ -5,9 +5,12 @@ import json
 import os
 from pathlib import Path
 import struct
+import subprocess
+import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 import zlib
 
 import pinned_calculator_page as page
@@ -61,6 +64,73 @@ def collect(files, directory):
 
 
 class PinnedPageDriverTests(unittest.TestCase):
+    def test_recording_opt_in_is_only_standard_api35_and_keeps_evidence_separate(self):
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / 'cases'; video = Path(temp) / 'video'
+            args = SimpleNamespace(api='35', output=output, video_output=video)
+            self.assertEqual(video, page.video_output(args, page))
+            self.assertIsNone(page.video_output(SimpleNamespace(api='34', output=output), page))
+            for api in ('34', '36', '37.0'):
+                with self.subTest(api=api), self.assertRaises(base.ProbeError):
+                    page.video_output(SimpleNamespace(api=api, output=output, video_output=video), page)
+            with self.assertRaises(base.ProbeError):
+                page.video_output(args, SimpleNamespace(KIND='pinned-window-disclosure'))
+            for target in (output, output / 'video', Path(temp)):
+                with self.subTest(target=target), self.assertRaises(base.ProbeError):
+                    page.video_output(SimpleNamespace(api='35', output=output, video_output=target), page)
+            link = Path(temp) / 'linked-cases'; link.symlink_to(output, target_is_directory=True)
+            with self.assertRaises(base.ProbeError):
+                page.video_output(SimpleNamespace(api='35', output=output, video_output=link), page)
+            self.assertFalse(output.exists()); self.assertFalse(video.exists())
+
+    def test_invalid_recording_scope_is_rejected_before_device_or_evidence_operations(self):
+        args = SimpleNamespace(api='34', output=Path('/unused/cases'), video_output=Path('/unused/video'))
+        with patch.object(page.base, 'ensure_directory') as directory, patch.object(page.base, 'run_command') as command:
+            with self.assertRaises(base.ProbeError): page.run(args, BINDING)
+        directory.assert_not_called(); command.assert_not_called()
+
+    def test_recording_wraps_the_unchanged_bounded_call_and_preserves_success_or_failure_output(self):
+        command = ['python3', 'run_bounded_instrumentation.py', '--timeout-seconds', '360', '--', 'adb', 'shell', 'am', 'instrument']
+        for code, stdout in ((0, b'OK (5 tests)\n'), (1, b'FAILURES!!!\nTests run: 5, Failures: 1\n')):
+            original = subprocess.CompletedProcess(command, code, stdout=stdout)
+            recorder = Mock(side_effect=lambda *args: args[-1]())
+            with self.subTest(code=code), patch.dict(sys.modules, {'probe_video': SimpleNamespace(record_call=recorder)}), \
+                    patch.object(page.subprocess, 'run', return_value=original) as invoke:
+                result = page.run_instrumentation(command, BINDING, 35, '/sdk/adb', SERIAL, Path('/separate/video'))
+            self.assertIs(original, result)
+            self.assertEqual(code == 0, page.instrument_result(result.stdout.decode(), result.returncode))
+            invoke.assert_called_once_with(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=440, check=False)
+            self.assertEqual(1, recorder.call_count)
+            self.assertEqual((Path('/separate/video'), BINDING, 'pinned-calculator-page', 35, '/sdk/adb', SERIAL),
+                             recorder.call_args.args[:-1])
+
+    def test_recording_preserves_the_original_instrumentation_exception(self):
+        original = subprocess.TimeoutExpired(['original-command'], 440)
+        recorder = Mock(side_effect=lambda *args: args[-1]())
+        with patch.dict(sys.modules, {'probe_video': SimpleNamespace(record_call=recorder)}), \
+                patch.object(page.subprocess, 'run', side_effect=original) as invoke:
+            with self.assertRaises(subprocess.TimeoutExpired) as caught:
+                page.run_instrumentation(['original-command'], BINDING, 35, '/sdk/adb', SERIAL, Path('/separate/video'))
+        self.assertIs(original, caught.exception); invoke.assert_called_once(); recorder.assert_called_once()
+
+    def test_default_runner_never_initializes_a_recorder(self):
+        original = subprocess.CompletedProcess(['original-command'], 0, stdout=b'OK (5 tests)\n')
+        recorder = Mock(side_effect=AssertionError('No recording was requested'))
+        with patch.dict(sys.modules, {'probe_video': SimpleNamespace(record_call=recorder)}), \
+                patch.object(page.subprocess, 'run', return_value=original) as invoke:
+            self.assertIs(original, page.run_instrumentation(['original-command'], BINDING, 35, '/sdk/adb', SERIAL))
+        invoke.assert_called_once(); recorder.assert_not_called()
+
+    def test_cli_passes_recording_opt_in_without_changing_the_fixed_case_selection(self):
+        arguments = ['run', '--api', '35', '--output', '/cases', '--sdk-root', '/sdk', '--agent-apk', '/agent.apk',
+                     '--fixture-apk', '/fixture.apk', '--test-apk', '/tests.apk', '--calculator-apk', '/calculator.apk',
+                     '--video-output', '/video']
+        with patch.dict(os.environ, environment(), clear=True), patch.object(page, 'run', return_value=True) as invoke:
+            self.assertEqual(0, page.main(arguments))
+        self.assertEqual(Path('/video'), invoke.call_args.args[0].video_output)
+        self.assertEqual('35', invoke.call_args.args[0].api)
+        self.assertEqual(BINDING, invoke.call_args.args[1]); self.assertEqual(5, len(page.CASES))
+
     def test_only_the_explicit_trusted_dispatch_may_operate_devices(self):
         self.assertEqual(BINDING, page.source(environment()))
         for key, value in [('GITHUB_ACTIONS', 'false'), ('GITHUB_REPOSITORY', 'foreign/fork'),

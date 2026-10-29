@@ -1,0 +1,79 @@
+name: Archive real APK test videos
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Completed third-party or pinned-page recording run
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: probe-video-archive-${{ inputs.source_run_id }}
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Select the original recording and test artifacts
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+        run: |
+          [[ "$SOURCE_RUN_ID" =~ ^[1-9][0-9]{0,18}$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > "$RUNNER_TEMP/probe-run.json"
+          attempt=$(python3 -c 'import json,os; v=json.load(open(os.environ["RUNNER_TEMP"]+"/probe-run.json"))["run_attempt"]; assert type(v) is int and 0<v<1000000; print(v)')
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/attempts/$attempt/jobs?per_page=100" > "$RUNNER_TEMP/probe-jobs.json"
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/probe-artifacts.json"
+          python3 scripts/probe_video_archive.py select --run "$RUNNER_TEMP/probe-run.json" --jobs "$RUNNER_TEMP/probe-jobs.json" --artifacts "$RUNNER_TEMP/probe-artifacts.json" --github-output "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.source.outputs.source_sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        if: steps.source.outputs.artifact_ids != ''
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.source.outputs.source_run }}
+          artifact-ids: ${{ steps.source.outputs.artifact_ids }}
+          path: ${{ runner.temp }}/probe-incoming
+      - name: Verify the complete video and original test results
+        run: |
+          bash scripts/ensure_demo_video_tools.sh
+          python3 scripts/probe_video_archive.py archive --run "$RUNNER_TEMP/probe-run.json" --jobs "$RUNNER_TEMP/probe-jobs.json" --artifacts "$RUNNER_TEMP/probe-artifacts.json" --incoming "$RUNNER_TEMP/probe-incoming"
+          python3 scripts/update_progress.py --note '归档API35真实APK专项连续录像及同次原始测试结果；保留安全窗口与失败状态，等待README分类索引复核。'
+          python3 scripts/update_progress.py --check
+      - name: Commit the immutable video evidence branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN: ${{ steps.source.outputs.source_run }}
+          ATTEMPT: ${{ steps.source.outputs.attempt }}
+          EVIDENCE_PATH: ${{ steps.source.outputs.evidence_path }}
+        run: |
+          branch="evidence/probe-video-$SOURCE_RUN-$ATTEMPT"
+          gh auth setup-git
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            echo 'Evidence already exists; refusing to overwrite it.'
+            exit 1
+          fi
+          git switch -c "$branch"
+          git config user.name agent
+          git config user.email 30574854+ecojust@users.noreply.github.com
+          git add -- "$EVIDENCE_PATH" README.md docs/progress.json docs/diagrams/development-progress.svg
+          git diff --cached --check
+          git commit -m "Archive real APK video for run $SOURCE_RUN [skip ci]"
+          git push origin "HEAD:refs/heads/$branch"
+          echo "Evidence: https://github.com/$GITHUB_REPOSITORY/tree/$branch/$EVIDENCE_PATH" >> "$GITHUB_STEP_SUMMARY"

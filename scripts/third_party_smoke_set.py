@@ -223,6 +223,55 @@ def validate_ui_results(data, source, api, serial, lock):
     return entries
 
 
+def run_instrumentation(command, args, source, adb, serial):
+    """Optionally record the unchanged four-case invocation into another artifact.
+
+    Keep the callback result separately so even a recorder error after execution
+    cannot replace the compatibility result or cause a second UI invocation.
+    """
+    called = False
+    result = None
+    failure = None
+
+    def execute():
+        nonlocal called, result, failure
+        require(not called, 'Do not repeat the compatibility instrumentation')
+        called = True
+        try:
+            result = base.run_command(command, timeout=600)
+            return result
+        except Exception as error:
+            failure = error
+            raise
+
+    requested = getattr(args, 'video_output', None)
+    if requested is None:
+        return execute()
+    try:
+        require(args.api == '35', 'Only the representative API35 run may record')
+        video = Path(requested)
+        location, evidence = video.resolve(), Path(args.output).resolve()
+        require(location != evidence and location not in evidence.parents and evidence not in location.parents,
+                'Video and original probe evidence must use separate directories')
+        from probe_video import record_call
+    except (ValueError, OSError, ImportError):
+        # No safe recording destination/module is available. The workflow's
+        # independent video artifact remains missing; never turn that into a UI
+        # retry or a different four-case result.
+        print('Third-party video preparation unavailable; running the unchanged probe')
+        return execute()
+    try:
+        record_call(video, source, 'third-party-app-set', 35, adb, serial, execute)
+    except Exception:
+        if failure is None:
+            print('Third-party recording unavailable; preserving the original probe result')
+    if not called:
+        return execute()
+    if failure is not None:
+        raise failure
+    return result
+
+
 def run_probe(args, lock, source):
     report = empty_report(lock, source, args.api)
     directory = base.ensure_directory(args.output)
@@ -271,7 +320,7 @@ def run_probe(args, lock, source):
         for key, value in parameters.items(): command.extend(['-e', key, value])
         command.append(base.PROBE_PACKAGE + '.test/androidx.test.runner.AndroidJUnitRunner')
         try:
-            output = base.run_command(command, timeout=600); command_completed = True
+            output = run_instrumentation(command, args, source, adb, serial); command_completed = True
         except Exception as error:
             output = 'Instrumentation command failed: ' + type(error).__name__ + ': ' + str(error)[:1600]; command_completed = False
         (directory / 'instrumentation.json').write_text(json.dumps({'commandCompleted': command_completed, 'output': output}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
@@ -319,6 +368,8 @@ def main(argv=None):
         command.add_argument('--output', type=Path, required=True)
         if name == 'run':
             command.add_argument('--sdk-root', required=True)
+            command.add_argument('--video-output', type=Path,
+                                 help='Optional independent continuous recording artifact (API35 only)')
             for flag in ('agent-apk', 'probe-apk', 'test-apk', 'calculator-apk', 'notes-apk'):
                 command.add_argument('--' + flag, type=Path, required=True)
         if name == 'finalize':

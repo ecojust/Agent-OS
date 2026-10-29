@@ -179,8 +179,34 @@ def collect_cases(adb, serial, directory, binding, api, command=base.run_command
     return results
 
 
+def video_output(args, profile):
+    """Only the standard API35 page suite may opt into its separate recording artifact."""
+    target = getattr(args, 'video_output', None)
+    if target is None:
+        return None
+    require(profile is sys.modules[__name__] and args.api == '35',
+            'Recording is limited to the standard API35 pinned page suite')
+    target = Path(target)
+    evidence = Path(args.output).resolve(); recording = target.resolve()
+    require(evidence != recording and evidence not in recording.parents and recording not in evidence.parents,
+            'Recording and original page evidence must use separate nonoverlapping directories')
+    return target
+
+
+def run_instrumentation(command, binding, api, adb, serial, recording=None):
+    def invoke():
+        # Preserve the original wrapper, output, exception and 440-second host
+        # deadline. Recording has its own budget and never changes a test result.
+        return subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=440, check=False)
+    if recording is None:
+        return invoke()
+    from probe_video import record_call
+    return record_call(recording, binding, 'pinned-calculator-page', api, adb, serial, invoke)
+
+
 def run(args, binding, profile=None):
     profile = sys.modules[__name__] if profile is None else profile
+    recording = video_output(args, profile)
     output = base.ensure_directory(args.output); report = profile.empty_report(binding, args.api); base.write_report(output, report); write_capture(output, empty_capture(args.api))
     instrumentation_exit = None
     api = APIS[args.api]; stage = 'device_preflight'; adb = str(Path(args.sdk_root) / 'platform-tools/adb'); serial = None
@@ -226,7 +252,7 @@ def run(args, binding, profile=None):
                    '--timeout-seconds', '360', '--termination-grace-seconds', '10', '--', *command]
         # The existing wrapper owns timeout/process cleanup; preserve its actual output
         # and exit code even on failure, rather than manufacturing a JUnit report.
-        result = subprocess.run(bounded, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=440, check=False)
+        result = run_instrumentation(bounded, binding, api, adb, serial, recording)
         require(len(result.stdout) <= 1024 * 1024, 'Instrumentation output exceeded its bound')
         text = result.stdout.decode('utf-8', 'replace'); instrumentation_exit = result.returncode
         instrument_ok = profile.instrument_result(text, instrumentation_exit)
@@ -266,6 +292,8 @@ def main(argv=None):
         if name == 'run':
             child.add_argument('--sdk-root', required=True)
             for flag in ('agent-apk', 'fixture-apk', 'test-apk', 'calculator-apk'): child.add_argument('--' + flag, type=Path, required=True)
+            child.add_argument('--video-output', type=Path,
+                               help='Separate optional recording directory; standard API35 page suite only')
         if name == 'finalize': child.add_argument('--outcome', choices=('success', 'failure', 'cancelled', 'skipped', 'unknown'), required=True)
     args = parser.parse_args(argv); binding = source()
     if args.command == 'run': return 0 if run(args, binding) else 1

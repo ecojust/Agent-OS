@@ -1,7 +1,14 @@
 name: Pinned Calculator page predicate
+run-name: ${{ inputs.record_video && 'Pinned Calculator page predicate [API35 video]' || '' }}
 
 on:
   workflow_dispatch:
+    inputs:
+      record_video:
+        description: Record all five unchanged page cases on API35 only (not the four-API matrix)
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -27,6 +34,7 @@ jobs:
           python3 scripts/update_progress.py --check
           python3 -m unittest discover -s scripts -p 'test_pinned*.py'
           python3 -m unittest discover -s scripts -p 'test_evidence_scripts.py'
+          python3 -m unittest discover -s scripts -p 'test_probe_video*.py'
       - name: Prepare Android SDK
         run: |
           sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
@@ -53,7 +61,7 @@ jobs:
       fail-fast: false
       max-parallel: 3
       matrix:
-        api: ['34', '35', '36', '37.0']
+        api: ${{ fromJSON(inputs.record_video && '["35"]' || '["34","35","36","37.0"]') }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -88,6 +96,10 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      - name: Prepare continuous recording tools
+        if: inputs.record_video
+        continue-on-error: true
+        run: bash scripts/ensure_demo_video_tools.sh
       - name: Evaluate actual pinned pages with the default production service
         id: instrumentation
         uses: reactivecircus/android-emulator-runner@v2
@@ -104,7 +116,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: |
             python3 scripts/configure_emulator_phone.py --avd-name agent-os-pinned-page --check
-            python3 scripts/pinned_calculator_page.py run --api '${{ matrix.api }}' --output "$RUNNER_TEMP/pinned-page-evidence/api-${{ matrix.api }}" --sdk-root "$ANDROID_HOME" --calculator-apk "$RUNNER_TEMP/calculator-1.4.0.apk" --agent-apk "$RUNNER_TEMP/pinned-page-apks/app/build/outputs/apk/debug/app-debug.apk" --fixture-apk "$RUNNER_TEMP/pinned-page-apks/fixture/build/outputs/apk/debug/fixture-debug.apk" --test-apk "$RUNNER_TEMP/pinned-page-apks/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk"
+            python3 scripts/pinned_calculator_page.py run --api '${{ matrix.api }}' --output "$RUNNER_TEMP/pinned-page-evidence/api-${{ matrix.api }}" --sdk-root "$ANDROID_HOME" --calculator-apk "$RUNNER_TEMP/calculator-1.4.0.apk" --agent-apk "$RUNNER_TEMP/pinned-page-apks/app/build/outputs/apk/debug/app-debug.apk" --fixture-apk "$RUNNER_TEMP/pinned-page-apks/fixture/build/outputs/apk/debug/fixture-debug.apk" --test-apk "$RUNNER_TEMP/pinned-page-apks/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk" ${{ inputs.record_video && '--video-output "$RUNNER_TEMP/probe-video"' || '' }}
       - name: Preserve failed, blocked and unexecuted evidence
         if: always()
         env:
@@ -116,6 +128,13 @@ jobs:
           name: screenshots-api-${{ matrix.api }}-attempt-${{ github.run_attempt }}
           path: ${{ runner.temp }}/pinned-page-evidence/api-${{ matrix.api }}/
           if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: always() && inputs.record_video
+        with:
+          name: probe-video-pinned-calculator-page-api-35-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/probe-video/
+          if-no-files-found: warn
           retention-days: 30
       - uses: actions/upload-artifact@v4
         if: failure()

@@ -251,6 +251,23 @@ class ProbeVideoArchive(unittest.TestCase):
         write(folder / 'instrumentation.json', value)
         self.reject('Foreign app-set instrumentation')
 
+    def test_before_class_failure_preserves_four_unverified_business_cases(self):
+        folder, _ = self.prepare()
+        lock = archive.appset.load_lock()
+        value = app_fixture.report(lock, '35', passed=False)
+        value.update(status='failed', device={'apiLevel': 35, 'serial': 'emulator-5554', 'abi': 'x86_64'})
+        write(folder / 'ui-results.json', app_fixture.ui_from_report(lock, value))
+        value['uiResultsSha256'] = hashlib.sha256((folder / 'ui-results.json').read_bytes()).hexdigest()
+        write(folder / 'report.json', value)
+        write(folder / 'instrumentation.json', {'commandCompleted': True, 'output':
+            'INSTRUMENTATION_STATUS: class=' + archive.APPSET_CLASS + '\n'
+            'INSTRUMENTATION_STATUS: test=initializationError\nINSTRUMENTATION_STATUS: numtests=1\n'
+            'INSTRUMENTATION_STATUS_CODE: -2\nINSTRUMENTATION_CODE: -1\n'})
+        result = self.execute()
+        self.assertEqual({'passed': 0, 'failed': 0, 'unverified': 4}, result['caseCounts'])
+        self.assertEqual(('failed', 'unverified'), (result['status'], result['probeStatus']))
+        self.assertEqual(1, len(result['probe']['instrumentation']['setupDiagnosticBlocks']))
+
     def test_passed_probe_needs_all_five_install_receipts_and_frozen_signature(self):
         folder, _ = self.prepare()
         value = json.loads((folder / 'report.json').read_text())

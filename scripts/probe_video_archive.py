@@ -170,7 +170,8 @@ def appset_receipts(report, states, files, lock):
             require(by_name.get(name, {}).get('status') == 'passed', 'Successful probe lacks passed driver receipt: ' + name)
         for name in ('install_agent', 'install_probe', 'install_probe_tests'):
             require(re.fullmatch(r'[0-9a-f]{64}', str(by_name[name].get('sha256', ''))), 'Invalid installed CI-built APK digest')
-    terminals, starts, pending = {}, set(), {}
+    terminals, starts, pending, setup_diagnostics = {}, set(), {}, []
+    has_ui_pass = any(status == 'passed' for app_states in states.values() for status in app_states.values())
     value = None
     if 'instrumentation.json' in files:
         value = bounded.json_data(files['instrumentation.json']['data'])
@@ -183,6 +184,14 @@ def appset_receipts(report, states, files, lock):
                 continue
             code = re.fullmatch(r'INSTRUMENTATION_STATUS_CODE: (-?\d+)', line)
             if code:
+                if (report['status'] != 'passed' and not has_ui_pass
+                        and pending.get('test') not in APPSET_METHODS.values()):
+                    # BeforeClass/runner failures can prevent all four business
+                    # cases. Preserve that raw diagnostic without inventing a
+                    # fifth case or promoting the unexecuted fixed denominator.
+                    setup_diagnostics.append({'class': pending.get('class'), 'test': pending.get('test'), 'code': int(code[1])})
+                    pending = {}
+                    continue
                 require(pending.get('class') == APPSET_CLASS and pending.get('test') in APPSET_METHODS.values()
                         and pending.get('numtests') == '4', 'Foreign app-set instrumentation case or denominator')
                 method, status = pending['test'], int(code[1])
@@ -206,7 +215,7 @@ def appset_receipts(report, states, files, lock):
                 and not any(token in value['output'] for token in ('FAILURES!!!', 'INSTRUMENTATION_FAILED', 'shortMsg=', 'Process crashed'))
                 and re.findall(r'^INSTRUMENTATION_CODE: (-?\d+)\s*$', value['output'], re.M) == ['-1'],
                 'Successful app-set summary contradicts its original instrumentation')
-    return {'available': value is not None, 'terminalCases': terminals}
+    return {'available': value is not None, 'terminalCases': terminals, 'setupDiagnosticBlocks': setup_diagnostics}
 
 
 def validate_probe(folder, source, profile, run):

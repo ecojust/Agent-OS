@@ -1,0 +1,14 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/ecojust/Agent-OS/blob/2b22c27cb779780e05117998d053e6051b0fc49f/.github",
+    "start_line": 22,
+    "start_column": null,
+    "end_line": 22,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "Android job diagnostic 1",
+    "message": "  | Report: /tmp/agent-os-junit-4q7__twt/report-01.xml\n  | Suite: dev.agentos.app.AgentControllerInstrumentedTest\n  | Test: dev.agentos.app.AgentControllerInstrumentedTest.realRotationRejectsOldApprovalAndKeepsControlsReachable\n  | Kind: failure / \n  | java.lang.AssertionError: Real rotation failed before restoration; phase=system_rotation,ownerPresent=true,dispatchAttempts=0,requests=1,running=true,paused=false,approvalPending=true;owned={connected=true,orientation=2,identity=true,current=true,id=11,publishedBounds=[110,36][530,242],actualBounds=[110,36][530,242],panelAttached=true,panelLayoutPending=false,approveAttached=true,approveShown=true,approveEnabled=true,approvalMatches=true,callbacksMatch=true};windowCount=3;window={id=11,type=4,display=0,focused=false,bounds=[110,36][532,244],rootPresent=true,rootWindowId=11,rootIsAgent=true};window={id=2,type=3,display=0,focused=false,bounds=[0,0][642,26]};window={id=10,type=1,display=0,focused=true,bounds=[0,0][642,322]}\n  | at dev.agentos.app.AgentControllerInstrumentedTest.realRotationRejectsOldApprovalAndKeepsControlsReachable(AgentControllerInstrumentedTest.java:937)\n  | ... 33 trimmed\n  | Caused by: java.lang.AssertionError: Displayed approval did not reach its actual current accessibility window within the original deadline\n  | at dev.agentos.app.AgentControllerInstrumentedTest.awaitExpandedApproval(AgentControllerInstrumentedTest.java:428)\n  | at dev.agentos.app.AgentControllerInstrumentedTest.realRotationRejectsOldApprovalAndKeepsControlsReachable(AgentControllerInstrumentedTest.java:850)\n  | ... 34 more\nParsed 1 Android reports; found 1 failure/error entries.\n",
+    "raw_details": ""
+  }
+]

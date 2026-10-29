@@ -1,5 +1,24 @@
 # 数值偏好文件导入导出
 
+## 当前 SAF 失败定位：增加分类诊断
+
+最新已归档的完整矩阵仍为 [40818512531](../../screenshots/40818512531-1/manifest.json)：2167/2168 通过，唯一失败是 API30 的普通导入用例。其[原始失败记录](diagnostics/rotation-full-40818512531-api30/README.md)发生在点击测试 Provider 根目录之前，`actionAttempted=false`；尚未进入文件读取或预览，不能据此判定产品导入逻辑有缺陷。
+
+旧日志将祖先节点刷新失败、窗口或包变化、祖先不足以及布局标记缺失均归为 `UNKNOWN_ROOTS_LAYOUT`。其中 `refresh=1` 属于更早的点击准备阶段，不代表随后祖先遍历成功。历史完整运行中，导出和取消准备也曾在这一位置失败；同一组 SAF 测试源码亦曾完整通过。尚无证据证明旋转用例、前序测试清理、固定侧栏或无障碍缓存是根因。
+
+本轮只给原祖先遍历增加固定诊断字段，不增加平台读取，不改变刷新、回收、点击、等待、重试或成功条件；生产代码和安全窗口保持原样。新增字段如下：
+
+| 字段 | 含义 |
+| --- | --- |
+| `rootsLayoutDepth` / `rootsLayoutVisited` | 最后尝试的零起始层级，以及刷新和上下文检查均通过的节点数 |
+| `rootsLayoutMask` | 原判定已观察到的标记：drawer=1、drawer_layout=2、rail=4 |
+| `rootsLayoutExit` | `REFRESH_FALSE`、`CONTEXT_CHANGED`、`PARENT_NULL` 或 `DEPTH_LIMIT`；未执行时为 `NOT_SAMPLED` |
+| `rootsLayoutResult` | 原判定结果 `UNKNOWN`、`DRAWER` 或 `RAIL` |
+
+`PARENT_NULL` 只表示此次遍历未取得父节点，不证明获得了完整层级。下一步在同一源码上执行完整矩阵（271×8）及固定导入单案 `numeric-import-diagnostic`（1×8），对比前序测试的影响。API30 专项沿用完整矩阵已有的固定测试 APK `--force-queryable` 安装准备，不修改生产权限。专项归档单列分母，`fullSuiteAcceptance=false`，保护页面仍记录 blocked。单案通过或一次完整矩阵不复现均不能证明旧失败根因已修复。
+
+本地测试 Java 编译已通过；专项选择、归档及 watchdog 的相关宿主检查 97/97 通过，另 98 项相关归档、视频和性能脚本检查通过。运行结果待实际执行后补充，本节不将源码审查或编译当作设备验证。
+
 本模块实现[设计规则 R5/R6](../DESIGN_RULES.md)中的普通数值偏好迁移。任务预算区域新增导入、导出入口，通过系统文件选择器访问用户选定的文档。导入先展示四项数值，确认后只填入当前草稿；只有原有的保存设置或开始任务操作才持久化并应用。配置读取失败、任务进行中或模型探测期间不开放新操作。
 
 ## 文件契约

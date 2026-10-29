@@ -663,7 +663,7 @@ public final class NumericPreferencesInstrumentedTest {
                                 }
                             }
                             if (SystemClock.elapsedRealtime() >= deadline) { diagnostic.preparation = "DEADLINE_EXPIRED"; break; }
-                            String rootsLayout = "PROVIDER_ROOT".equals(phase) ? rootsLayout(ready.selected) : "NOT_APPLICABLE";
+                            String rootsLayout = "PROVIDER_ROOT".equals(phase) ? rootsLayout(ready.selected, diagnostic) : "NOT_APPLICABLE";
                             if ("UNKNOWN".equals(rootsLayout)) {
                                 diagnostic.preparation = "UNKNOWN_ROOTS_LAYOUT";
                                 throw safFailure("The actual SAF root row has no recognized drawer or rail context", diagnostic);
@@ -990,21 +990,46 @@ public final class NumericPreferencesInstrumentedTest {
         return String.valueOf(node.getViewIdResourceName()).endsWith(suffix);
     }
     private static String rootsLayout(AccessibilityNodeInfo selected) {
+        return rootsLayout(selected, null);
+    }
+    private static String rootsLayout(AccessibilityNodeInfo selected, SafDiagnostic diagnostic) {
+        if (diagnostic != null) {
+            diagnostic.rootsLayoutDepth = -1; diagnostic.rootsLayoutVisited = 0; diagnostic.rootsLayoutMask = 0;
+            diagnostic.rootsLayoutExit = "NOT_SAMPLED"; diagnostic.rootsLayoutResult = "UNKNOWN";
+        }
         int window = selected.getWindowId();
         String packageName = String.valueOf(selected.getPackageName());
         boolean drawer = false, drawerLayout = false, rail = false;
         AccessibilityNodeInfo node = AccessibilityNodeInfo.obtain(selected);
         try {
             for (int depth = 0; node != null && depth < 15; depth++) {
-                if (!node.refresh() || !sameSafWindow(node, window, packageName)) return "UNKNOWN";
+                if (diagnostic != null) diagnostic.rootsLayoutDepth = depth;
+                if (!node.refresh()) {
+                    if (diagnostic != null) diagnostic.rootsLayoutExit = "REFRESH_FALSE";
+                    return "UNKNOWN";
+                }
+                if (!sameSafWindow(node, window, packageName)) {
+                    if (diagnostic != null) diagnostic.rootsLayoutExit = "CONTEXT_CHANGED";
+                    return "UNKNOWN";
+                }
+                if (diagnostic != null) diagnostic.rootsLayoutVisited++;
                 drawer |= idEndsWith(node, ":id/drawer_roots");
                 drawerLayout |= idEndsWith(node, ":id/drawer_layout");
                 rail |= idEndsWith(node, ":id/nav_rail_container_roots");
+                // Fixed bits from the existing checks only: drawer=1, drawer layout=2, rail=4.
+                if (diagnostic != null) diagnostic.rootsLayoutMask = (drawer ? 1 : 0) | (drawerLayout ? 2 : 0) | (rail ? 4 : 0);
                 AccessibilityNodeInfo parent = node.getParent(); node.recycle(); node = parent;
             }
+            // A null parent is only this traversal's result, not proof of a complete hierarchy.
+            if (diagnostic != null) diagnostic.rootsLayoutExit = node == null ? "PARENT_NULL" : "DEPTH_LIMIT";
             // container_roots alone is also used by fixed sidebars and proves no drawer.
-            if (rail && !drawer) return "RAIL";
-            return drawer && drawerLayout && !rail ? "DRAWER" : "UNKNOWN";
+            if (rail && !drawer) {
+                if (diagnostic != null) diagnostic.rootsLayoutResult = "RAIL";
+                return "RAIL";
+            }
+            String result = drawer && drawerLayout && !rail ? "DRAWER" : "UNKNOWN";
+            if (diagnostic != null) diagnostic.rootsLayoutResult = result;
+            return result;
         } finally { if (node != null) node.recycle(); }
     }
     private static final class SafDirectory implements AutoCloseable {
@@ -1062,6 +1087,8 @@ public final class NumericPreferencesInstrumentedTest {
         final Rect bounds = new Rect(), actionBounds = new Rect();
         String operation = "TARGET_CLICK", preparation = "NOT_OBSERVED";
         int matches = -1, window = -1, refresh = -1, scrolls, actionDepth = -1, actionMask;
+        String rootsLayoutExit = "NOT_SAMPLED", rootsLayoutResult = "UNKNOWN";
+        int rootsLayoutDepth = -1, rootsLayoutVisited, rootsLayoutMask;
         boolean actionAttempted, actionResult, scrollResult, actionClickable, actionSelected, idleAttempted, idleObserved;
         SafDiagnostic(String phase) { this.phase = phase; }
         void recordAction(AccessibilityNodeInfo node) {
@@ -1074,7 +1101,10 @@ public final class NumericPreferencesInstrumentedTest {
                     + ",actionResult=" + actionResult + ",scrolls=" + scrolls + ",scrollResult=" + scrollResult
                     + ",actionDepth=" + actionDepth + ",actionMask=" + actionMask + ",actionClickable=" + actionClickable
                     + ",actionSelected=" + actionSelected + ",actionBounds=" + actionBounds.toShortString()
-                    + ",idleAttempted=" + idleAttempted + ",idleObserved=" + idleObserved;
+                    + ",idleAttempted=" + idleAttempted + ",idleObserved=" + idleObserved
+                    + ",rootsLayoutDepth=" + rootsLayoutDepth + ",rootsLayoutVisited=" + rootsLayoutVisited
+                    + ",rootsLayoutMask=" + rootsLayoutMask + ",rootsLayoutExit=" + rootsLayoutExit
+                    + ",rootsLayoutResult=" + rootsLayoutResult;
         }
     }
     private static boolean advertisesClick(AccessibilityNodeInfo node) {

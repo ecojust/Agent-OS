@@ -132,7 +132,8 @@ class EvidenceTests(unittest.TestCase):
                       "font-scale-diagnostic --class AnotherClass",
                       "visual-generation-diagnostic --class AnotherClass",
                       "activity-font-scale-diagnostic --class AnotherClass",
-                      "rotation-diagnostic --class AnotherClass", "future-scope"):
+                      "rotation-diagnostic --class AnotherClass",
+                      "numeric-import-diagnostic --class AnotherClass", "future-scope"):
             with self.subTest(scope=scope):
                 self.check_test_exit("30", 30, scope=scope, expected_exit=2, invalid_scope=True)
 
@@ -151,12 +152,14 @@ class EvidenceTests(unittest.TestCase):
                 'if [ "$1 $2 $3 $4" = "shell settings put global" ]; then '
                 'printf "%s\\n" "$5=$6" >> "$FAKE_SETTINGS_LOG"; exit 0; fi\n'
                 f'if [ "$1 $2 $3 $4" = "shell settings get global" ]; then echo {animation_value}; exit 0; fi\n'
-                'if [ "$*" = "install -r -t --force-queryable app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk" ]; then exit 0; fi\n'
+                'if [ "$*" = "install -r -t --force-queryable app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk" ]; then '
+                'printf "%s\\n" "install dev.agentos.app.test" >> provider-preparation.txt; exit 0; fi\n'
                 'exit 1\n')
             adb.chmod(0o755)
             gradle = root / "gradlew"
             gradle.write_text("#!/bin/sh\n"
-                "if [ \"$*\" = \"--no-daemon :app:assembleDebugAndroidTest\" ]; then exit 0; fi\n"
+                "if [ \"$*\" = \"--no-daemon :app:assembleDebugAndroidTest\" ]; then "
+                "printf '%s\\n' 'assemble test APK' >> provider-preparation.txt; exit 0; fi\n"
                 "touch gradle-started\nprintf '%s\\n' \"$@\" > gradle-args.txt\nexit 7\n")
             gradle.chmod(0o755)
             env = os.environ.copy()
@@ -177,6 +180,7 @@ class EvidenceTests(unittest.TestCase):
                 self.assertFalse((root / "gradle-started").exists())
                 self.assertFalse((root / "animation-settings.txt").exists())
                 self.assertFalse((root / "test-evidence").exists())
+                self.assertFalse((root / "provider-preparation.txt").exists())
                 return
             record = json.loads((root / f"test-evidence/api-{matrix_label}/capture.json").read_text())
             self.assertEqual(expected_exit, record["gradleExitCode"])
@@ -189,6 +193,12 @@ class EvidenceTests(unittest.TestCase):
             self.assertIn("No Android XML reports were produced", result.stdout)
             self.assertEqual(expected_exit == 7, (root / "gradle-started").exists())
             if expected_exit == 7:
+                preparation = root / "provider-preparation.txt"
+                if matrix_label == "30" and (scope or "full") in ("full", collector.NUMERIC_IMPORT_SCOPE):
+                    self.assertEqual(["assemble test APK", "install dev.agentos.app.test"],
+                                     preparation.read_text().splitlines())
+                else:
+                    self.assertFalse(preparation.exists())
                 arguments = (root / "gradle-args.txt").read_text().splitlines()
                 selectors = [value for value in arguments if value.startswith("-Pandroid.testInstrumentationRunnerArguments.")]
                 self.assertEqual(1, len(selectors))
@@ -1150,6 +1160,116 @@ class EvidenceTests(unittest.TestCase):
             self.assertEqual(len(expected), record["bytes"])
             self.assertEqual(hashlib.sha256(expected).hexdigest(), record["sha256"])
         self.assertIn("case results are separate from PNG counts", readme)
+
+    def test_numeric_import_shell_selects_only_its_fixed_case_and_preserves_failure(self):
+        self.assertEqual("dev.agentos.app.NumericPreferencesInstrumentedTest#realSafImportPreviewsAndAppliesOnlyFourUnsavedNumericFields",
+                         collector.NUMERIC_IMPORT_TEST)
+        self.check_test_exit("30", 30, scope=collector.NUMERIC_IMPORT_SCOPE)
+        self.check_test_exit("31", 31, scope=collector.NUMERIC_IMPORT_SCOPE)
+        self.check_test_exit("37.0", 37, scope=collector.NUMERIC_IMPORT_SCOPE)
+
+    def test_numeric_import_archive_requires_exact_scope_and_case_and_cannot_masquerade_as_full(self):
+        run = source_run()
+        run.update(event="workflow_dispatch", display_title=publisher.NUMERIC_IMPORT_TITLE)
+        self.assertEqual(collector.NUMERIC_IMPORT_SCOPE, publisher.android_execution_scope(run))
+        run["display_title"] += " --class Other"
+        with self.assertRaises(ValueError):
+            publisher.android_execution_scope(run)
+        for event, title in (("push", publisher.NUMERIC_IMPORT_TITLE),
+                             ("workflow_dispatch", "Android checks")):
+            with self.subTest(event=event), self.assertRaises(subprocess.CalledProcessError):
+                self.diagnostic_archive({"30": "passed"}, collector.NUMERIC_IMPORT_SCOPE,
+                                        run_overrides={"event": event, "display_title": title})
+        for scope in ("full", *collector.DIAGNOSTIC_SELECTIONS):
+            if scope == collector.NUMERIC_IMPORT_SCOPE:
+                continue
+            with self.subTest(scope=scope), self.assertRaises(subprocess.CalledProcessError):
+                self.diagnostic_archive({"30": "passed"}, collector.NUMERIC_IMPORT_SCOPE,
+                                        artifact_scope=scope)
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.diagnostic_archive({"30": "passed"}, collector.NUMERIC_IMPORT_SCOPE,
+                                    manifest_selection=collector.ROTATION_TEST)
+
+    def test_numeric_import_finalize_keeps_missing_reports_and_refuses_relabelling(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            command = ["python3", str(SCRIPTS / "collect_android_evidence.py"), "finalize",
+                       "--matrix-label", "30", "--scope", collector.NUMERIC_IMPORT_SCOPE]
+            subprocess.run(command, cwd=root, check=True, capture_output=True, text=True)
+            path = root / "test-evidence/api-30/capture.json"
+            original = path.read_bytes()
+            record = json.loads(original)
+            self.assertEqual(collector.NUMERIC_IMPORT_TEST, record["testSelection"])
+            self.assertEqual(collector.NUMERIC_IMPORT_TEST, record["junit"]["selection"])
+            self.assertEqual(0, record["junit"]["selectedTests"])
+            for scope in ("full", *collector.DIAGNOSTIC_SELECTIONS):
+                if scope == collector.NUMERIC_IMPORT_SCOPE:
+                    continue
+                result = subprocess.run(command[:-1] + [scope], cwd=root, capture_output=True, text=True)
+                self.assertNotEqual(0, result.returncode)
+                self.assertEqual(original, path.read_bytes())
+
+    def test_numeric_import_archive_keeps_missing_failed_and_skipped_in_eight_case_denominator(self):
+        for lanes, counts in (({label: "passed" for label in publisher.EXPECTED_MATRIX},
+                               {"passed": 8, "failed": 0, "unverified": 0}),
+                              ({}, {"passed": 0, "failed": 0, "unverified": 8}),
+                              ({"30": "failed", "33": "passed", "37.0": "skipped"},
+                               {"passed": 1, "failed": 1, "unverified": 6})):
+            with self.subTest(lanes=lanes):
+                manifest, readme = self.diagnostic_archive(lanes, collector.NUMERIC_IMPORT_SCOPE)
+                self.assertEqual(collector.NUMERIC_IMPORT_SCOPE, manifest["executionScope"])
+                self.assertEqual(collector.NUMERIC_IMPORT_TEST, manifest["testSelection"])
+                self.assertEqual((1, 8), (manifest["expectedTestsPerApi"], manifest["expectedTests"]))
+                self.assertEqual(8, len(manifest["apis"]))
+                self.assertEqual(counts, manifest["diagnosticCaseCounts"])
+                self.assertFalse(manifest["fullSuiteAcceptance"])
+                self.assertIn("# Numeric Import Diagnostic Evidence", readme)
+                self.assertIn(collector.NUMERIC_IMPORT_TEST, readme)
+                self.assertIn("not counted as passed", readme)
+                for text in (manifest["scope"], readme):
+                    self.assertIn("A standalone pass does not resolve a failure in the full suite", text)
+                    self.assertNotIn("portrait-to-landscape", text)
+
+    def test_numeric_import_requires_original_xml_and_rejects_duplicate_or_unrelated_cases(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            test_class, method = collector.NUMERIC_IMPORT_TEST.split("#")
+            xml = root / "result.xml"
+            case = f'<testcase classname="{test_class}" name="{method}"/>'
+            xml.write_text('<testsuite>' + case + '</testsuite>')
+            capture = {"junit": collector.junit_summary(root, collector.NUMERIC_IMPORT_TEST), "gradleExitCode": 0}
+            tests = [{"testClass": test_class, "testName": method, "testResult": "pass"}]
+            job = {"conclusion": "success"}
+            self.assertEqual("passed", publisher.diagnostic_result(capture, tests, job, collector.NUMERIC_IMPORT_SCOPE))
+            self.assertEqual("unverified", publisher.diagnostic_result(capture, [], job, collector.NUMERIC_IMPORT_SCOPE))
+            other = f'<testcase classname="{test_class}" name="otherNumericImportCase"/>'
+            for body in (other, case + other, case + case):
+                xml.write_text('<testsuite>' + body + '</testsuite>')
+                capture["junit"] = collector.junit_summary(root, collector.NUMERIC_IMPORT_TEST)
+                with self.subTest(body=body), self.assertRaises(ValueError):
+                    publisher.diagnostic_result(capture, tests, job, collector.NUMERIC_IMPORT_SCOPE)
+
+    def test_numeric_import_preserves_protected_blocked_evidence_without_inventing_pngs(self):
+        blocked = {"stage": "protected-activity", "status": "blocked",
+                   "captureError": "secure_numeric_preferences_capture_not_attempted"}
+        manifest, readme = self.diagnostic_archive(
+                {label: "passed" for label in publisher.EXPECTED_MATRIX},
+                collector.NUMERIC_IMPORT_SCOPE, manifest_captures=[blocked])
+        self.assertEqual({"passed": 8, "failed": 0, "unverified": 0}, manifest["diagnosticCaseCounts"])
+        self.assertFalse(manifest["fullSuiteAcceptance"])
+        test_class, method = collector.NUMERIC_IMPORT_TEST.split("#")
+        expected = json.dumps({"tests": [{"testClass": test_class, "testName": method,
+                              "testResult": "pass", "captures": [blocked]}]}).encode()
+        for api in manifest["apis"]:
+            self.assertEqual(0, api["screenshotCount"])
+            self.assertEqual((1, 0, 1, 0), (api["recordedTests"], api["testsWithScreenshots"],
+                             api["testsWithoutScreenshots"], api["unrecordedTests"]))
+            self.assertEqual({"capture.json", "screenshots/manifest.json"},
+                             {item["path"] for item in api["files"]})
+            record = next(item for item in api["files"] if item["path"] == "screenshots/manifest.json")
+            self.assertEqual((len(expected), hashlib.sha256(expected).hexdigest()),
+                             (record["bytes"], record["sha256"]))
+        self.assertIn("Protected captures remain blocked without clearing FLAG_SECURE", readme)
 
     def test_archive_keeps_missing_lanes_and_source_failure(self):
         with tempfile.TemporaryDirectory() as temp:

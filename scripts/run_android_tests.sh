@@ -39,6 +39,9 @@ case "$test_scope" in
   rotation-diagnostic)
     selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.AgentControllerInstrumentedTest#realRotationRejectsOldApprovalAndKeepsControlsReachable)
     ;;
+  numeric-import-diagnostic)
+    selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.NumericPreferencesInstrumentedTest#realSafImportPreviewsAndAppliesOnlyFourUnsavedNumericFields)
+    ;;
   *) echo "Invalid Android test scope" >&2; exit 2 ;;
 esac
 if [[ ! "$matrix_label" =~ ^(3[0-6]|37\.0)$ ]]; then
@@ -129,9 +132,10 @@ test_command=(./gradlew --no-daemon
   -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true
   "${selection[@]}"
   :fixture:installDebug :app:connectedDebugAndroidTest)
-if [[ "$matrix_label" == '30' && "$test_scope" == 'full' ]]; then
+if [[ "$matrix_label" == '30' && ( "$test_scope" == 'full' || "$test_scope" == 'numeric-import-diagnostic' ) ]]; then
   # The pinned API30 DocumentsUI lacks QUERY_ALL_PACKAGES. Make only the synthetic
   # test APK discoverable; AGP marks helper APKs, but not its own test APK, this way.
+  # The fixed numeric-import diagnostic needs the same provider setup as full.
   # The following build and install remain children of the original watchdog.
   # A normal same-package Gradle update preserves this installation override.
   test_command=(bash -e -c '

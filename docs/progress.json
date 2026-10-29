@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-29T14:59:14Z",
-  "note": "检查点表新增详细进度和逐项UTC更新时间：11项未完成均列出已验证结果、剩余问题或外部条件及下一步，20项附可追溯依据。生成器16项测试与一致性检查通过；仅修改对应条目时刷新其时间，验收状态仍为9/20，三类实际视频保留原来源。",
+  "updated_at": "2026-10-29T15:07:54Z",
+  "note": "为API30 SAF失败增加不改变判定的祖先分类诊断和八档导入单案对照；本地编译与脚本检查通过，设备对照及本次录像待执行。",
   "latest_evidence": {
     "path": "screenshots/third-party-40834304846-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40834304846"
@@ -86,8 +86,8 @@
       "status": "in_progress",
       "evidence": "screenshots/40818512531-1/manifest.json",
       "scope": "Latest exact43381e/run40818512531:271 identities/API x8=2168,2167pass/1fail,zero errors/skips/missing/extra/duplicates/unreadable. Rotation v2 passes8/8 within full and separately8/8 in run40818515711:real portrait-to-landscape,pending old request explicitly unsubmitted STALE_OBSERVATION,new observation/approval,exact platform registration after replan,actual pause/stop listeners and zero dispatch. This changes test ordering,not product protection,and does not prove the original preapproval platform-registration contract. Old270 subset2159/2160;API30 realSafImportPreviewsAndAppliesOnlyFourUnsavedNumericFields fails UNKNOWN_ROOTS_LAYOUT before click.4473 payloads/47481305 bytes/2273 PNG verified,1444blocked,24 prior secure exceptions unchanged;8 performance reports diagnostic-only. Old8e04 full2163/2168 and initial rotation0/8,7/8 remain;nonrecurrence is not root-cause repair. Latest fully passing full baseline remains24b9/run40750181658:2160/2160. Independent same-signer upgrade exactaf26/run40814465552 passes8/8 with original failed run retained;not pooled into full counts. Remaining API-only boundaries:MainActivity rotation drafts,multiwindow/PiP,process-death,in-flight upgrade;the required completion list still needs freezing.Real-model/phone/ROM/broad-app/performance acceptance belong to separate checkpoints,not prerequisites for this emulator API checkpoint.",
-      "details": "已验证：八档共2167/2168通过，API30为270/271，其余七档各271/271，旋转v2为8/8。未完成：API30文件导入准备报 UNKNOWN_ROOTS_LAYOUT；主界面旋转草稿、多窗口/PiP、进程终止和执行中升级边界待补。下一步：固定本阶段必测清单，定位失败后补测并重跑八档。",
-      "updated_at": "2026-10-29T14:56:24Z"
+      "details": "已验证：八档2167/2168通过，唯一失败为API30导入点击前的UNKNOWN_ROOTS_LAYOUT；已补祖先刷新/上下文/布局分类诊断，编译及相关脚本检查通过。未完成：根因待同源完整矩阵与导入单案对照；主界面旋转草稿、多窗口/PiP、进程终止和执行中升级边界待补。下一步：读取分类结果定位失败，固定剩余必测清单。",
+      "updated_at": "2026-10-29T15:07:54Z"
     },
     {
       "id": "performance",

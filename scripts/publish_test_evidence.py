@@ -28,6 +28,11 @@ TASK_REPORT_FOCUS_TITLE = "Android checks [task-report-focus-diagnostic]"
 FONT_SCALE_TITLE = "Android checks [font-scale-diagnostic]"
 VISUAL_GENERATION_TITLE = "Android checks [visual-generation-diagnostic]"
 ACTIVITY_FONT_SCALE_TITLE = "Android checks [activity-font-scale-diagnostic]"
+ROTATION_TITLE = "Android checks [rotation-diagnostic]"
+ROTATION_COVERAGE = ("This case exercises real portrait-to-landscape rotation during pending approval on all eight API lanes. "
+                     "It checks stale approval rejection and reachable task controls; it does not establish "
+                     "all-orientation, multiwindow, physical-device or performance acceptance. "
+                     "Protected or missing captures remain explicit; case results are separate from PNG counts.")
 ACTIVITY_FONT_SCALE_COVERAGE = ("This case exercises real system font-scale changes on all eight API lanes. "
                                 "Protected-window captures may be blocked; JSON case results do not require a PNG.")
 VISUAL_GENERATION_COVERAGE = ("API30–33 exercise only the unsupported native-source rejection path. "
@@ -40,7 +45,8 @@ DIAGNOSTIC_TITLES = {DIAGNOSTIC_TITLE: android_evidence.DIAGNOSTIC_SCOPE,
                      TASK_REPORT_FOCUS_TITLE: android_evidence.TASK_REPORT_FOCUS_SCOPE,
                      FONT_SCALE_TITLE: android_evidence.FONT_SCALE_SCOPE,
                      VISUAL_GENERATION_TITLE: android_evidence.VISUAL_GENERATION_SCOPE,
-                     ACTIVITY_FONT_SCALE_TITLE: android_evidence.ACTIVITY_FONT_SCALE_SCOPE}
+                     ACTIVITY_FONT_SCALE_TITLE: android_evidence.ACTIVITY_FONT_SCALE_SCOPE,
+                     ROTATION_TITLE: android_evidence.ROTATION_SCOPE}
 DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
                     android_evidence.QUALIFICATION_SCOPE: "Task Qualification",
                     android_evidence.CONTROL_STATUS_SCOPE: "Control Status",
@@ -48,7 +54,8 @@ DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
                     android_evidence.TASK_REPORT_FOCUS_SCOPE: "Task Report Focus",
                     android_evidence.FONT_SCALE_SCOPE: "Font Scale",
                     android_evidence.VISUAL_GENERATION_SCOPE: "Visual Generation",
-                    android_evidence.ACTIVITY_FONT_SCALE_SCOPE: "Activity Font Scale"}
+                    android_evidence.ACTIVITY_FONT_SCALE_SCOPE: "Activity Font Scale",
+                    android_evidence.ROTATION_SCOPE: "Rotation"}
 
 
 def android_execution_scope(run: dict) -> str:
@@ -398,6 +405,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         manifest["scope"] += " " + VISUAL_GENERATION_COVERAGE
     if execution_scope == android_evidence.ACTIVITY_FONT_SCALE_SCOPE:
         manifest["scope"] += " " + ACTIVITY_FONT_SCALE_COVERAGE
+    if execution_scope == android_evidence.ROTATION_SCOPE:
+        manifest["scope"] += " " + ROTATION_COVERAGE
     (output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     lines = ["# " + (diagnostic_name + " Diagnostic Evidence" if diagnostic else "Android Test Evidence"), "", f"Source run: {manifest['sourceRun']['url']}", "",
              f"Source commit: `{run['head_sha']}` · Attempt: {attempt}", "",
@@ -408,6 +417,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         lines += [VISUAL_GENERATION_COVERAGE, ""]
     if execution_scope == android_evidence.ACTIVITY_FONT_SCALE_SCOPE:
         lines += [ACTIVITY_FONT_SCALE_COVERAGE, ""]
+    if execution_scope == android_evidence.ROTATION_SCOPE:
+        lines += [ROTATION_COVERAGE, ""]
     if diagnostic:
         lines += [f"Execution scope: `{execution_scope}`. Only `{android_evidence.test_selection(execution_scope)}` was selected.", "",
                   "The diagnostic denominator is 8 cases (8 APIs × 1 test); missing, skipped and unexecuted cases remain unverified. "

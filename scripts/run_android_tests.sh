@@ -36,6 +36,9 @@ case "$test_scope" in
   activity-font-scale-diagnostic)
     selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.MainActivityFontScaleInstrumentedTest#realSystemFontScaleRecreatesSecureActivityAndRetainsOnlyInMemoryDraft)
     ;;
+  rotation-diagnostic)
+    selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.AgentControllerInstrumentedTest#realRotationRejectsOldApprovalAndKeepsControlsReachable)
+    ;;
   *) echo "Invalid Android test scope" >&2; exit 2 ;;
 esac
 if [[ ! "$matrix_label" =~ ^(3[0-6]|37\.0)$ ]]; then

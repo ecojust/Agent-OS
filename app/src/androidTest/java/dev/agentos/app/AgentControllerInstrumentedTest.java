@@ -1,6 +1,7 @@
 package dev.agentos.app;
 
 import android.app.KeyguardManager;
+import android.graphics.Insets;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Handler;
@@ -11,7 +12,11 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Button;
 import android.widget.TextView;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowInsets;
+import android.view.WindowManager;
+import android.view.WindowMetrics;
 import android.view.accessibility.AccessibilityWindowInfo;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.gson.JsonArray;
@@ -763,6 +768,223 @@ public final class AgentControllerInstrumentedTest {
                 }
             }
         }
+    }
+
+    @Test public void realRotationRejectsOldApprovalAndKeepsControlsReachable() throws Exception {
+        try (DeviceHarness device = new DeviceHarness();
+             LocalControllerModelServer server = new LocalControllerModelServer(LocalControllerModelServer.Scenario.REJECT_CLICK);
+             ControllerTestSettings settings = new ControllerTestSettings(device.context, server)) {
+            AgentController controller = AgentController.get(device.context);
+            RotationTestSettings rotation = new RotationTestSettings(device);
+            AtomicReference<RunControl> original = new AtomicReference<>();
+            String phase = "portrait_preparation";
+            Throwable primary = null;
+            try {
+                rotation.change(0);
+                // Only preparation relaunches/reset the fixture. No relaunch after
+                // the measured rotation, which may itself recreate its Activity.
+                device.launch("FixtureActivity");
+                start(device, controller, settings, "Request one synthetic counter increment and wait for confirmation.");
+                AgentController.State pending = awaitApproval(controller, server);
+                ExpandedApproval before = awaitExpandedApproval(device, controller, pending,
+                        SystemClock.elapsedRealtime() + 5_000);
+                RotationControls portrait = awaitRotationControls(device);
+                AtomicReference<Button> oldReject = new AtomicReference<>();
+                safeMain(device, () -> {
+                    oldReject.set((Button) controlField(device.service, "rejectButton"));
+                    assertNotNull(oldReject.get());
+                    original.set((RunControl) objectField(controller, AgentController.class, "control"));
+                    assertNotNull(original.get());
+                    assertEquals(pending.approvalId, controller.getState().approvalId);
+                    assertSame(before.button, controlField(device.service, "approveButton"));
+                });
+                RunControl owner = original.get();
+                long epoch = owner.getExecutionEpoch();
+                int priorStale = (Integer) objectField(server, LocalControllerModelServer.class, "staleReplans");
+                assertTrue(rotation.snapshot().matches(0));
+                assertRotationHasNotWritten(owner, server);
+                screenshots.capture("portrait-pending-approval-before-real-rotation");
+
+                phase = "system_rotation";
+                rotation.change(1);
+                assertTrue(rotation.snapshot().matches(1));
+                ExpandedApproval after = awaitExpandedApproval(device, controller, pending,
+                        SystemClock.elapsedRealtime() + 5_000);
+                RotationControls landscape = awaitRotationControls(device);
+                safeMain(device, () -> {
+                    assertFalse("Real configuration change must detach the old controls", portrait.panel.isAttachedToWindow());
+                    assertNotSame(portrait.panel, landscape.panel);
+                    assertFalse(device.service.isOwnedControlWindowCurrent(before.identity));
+                    assertTrue(device.service.isOwnedControlWindowCurrent(after.identity));
+                    // Old installed listeners may still be called by a stale View
+                    // owner. They must not approve, reject, pause or stop this task.
+                    before.button.performClick(); oldReject.get().performClick();
+                    portrait.pause.performClick(); portrait.stop.performClick();
+                    assertEquals(pending.approvalId, controller.getState().approvalId);
+                    assertSame(owner, objectField(controller, AgentController.class, "control"));
+                    owner.checkExecutionEpoch(epoch);
+                    assertFalse(owner.isPaused());
+                    assertRotationHasNotWritten(owner, server);
+                });
+                screenshots.capture("landscape-current-controls-old-view-listeners-inert");
+
+                phase = "old_observation_rejected";
+                // Exercise the current confirmation UI for the old request. Its
+                // old observation/attachment must be refused before any dispatch.
+                long staleDeadline = SystemClock.elapsedRealtime() + 15_000;
+                clickExpandedApproval(device, controller, pending, after, staleDeadline);
+                AgentController.State fresh = null;
+                while (SystemClock.elapsedRealtime() < staleDeadline) {
+                    server.assertHealthy();
+                    assertRotationHasNotWritten(owner, server);
+                    owner.checkExecutionEpoch(epoch);
+                    AgentController.State state = controller.getState();
+                    assertTrue("A refused stale plan must keep the task available for re-observation", state.running);
+                    int stale = (Integer) objectField(server, LocalControllerModelServer.class, "staleReplans");
+                    if (stale > priorStale && !state.approvalId.isEmpty() && !pending.approvalId.equals(state.approvalId)) {
+                        fresh = state; break;
+                    }
+                    Thread.sleep(25);
+                }
+                assertNotNull("Real HTTP loop must report explicitly unsubmitted STALE_OBSERVATION and request a new approval", fresh);
+                ExpandedApproval freshApproval = awaitExpandedApproval(device, controller, fresh,
+                        SystemClock.elapsedRealtime() + 5_000);
+                String freshId = fresh.approvalId;
+                safeMain(device, () -> {
+                    controller.approve(pending.approvalId, true);
+                    assertEquals("The old approval ID cannot authorize the fresh request", freshId, controller.getState().approvalId);
+                    assertTrue(device.service.isOwnedControlWindowCurrent(freshApproval.identity));
+                    assertRotationHasNotWritten(owner, server);
+                });
+
+                phase = "landscape_pause_stop";
+                RotationControls current = awaitRotationControls(device);
+                // Geometry checks prove visible 48dp controls. performClick tests
+                // their real installed listeners, not physical touch hit testing.
+                safeMain(device, () -> assertTrue(current.pause.performClick()));
+                long pauseDeadline = SystemClock.elapsedRealtime() + 5_000;
+                while (!controller.getState().paused && SystemClock.elapsedRealtime() < pauseDeadline) Thread.sleep(25);
+                assertTrue(controller.getState().paused);
+                assertTrue(owner.isPaused());
+                assertTrue(owner.getExecutionEpoch() > epoch);
+                assertTrue(controller.getState().approvalId.isEmpty());
+                assertRotationHasNotWritten(owner, server);
+                screenshots.capture("landscape-current-pause-control-invalidates-pending-approval");
+                RotationControls paused = awaitRotationControls(device);
+                safeMain(device, () -> assertTrue(paused.stop.performClick()));
+                awaitStopped(controller, server, 5_000);
+                assertTrue(owner.isCancelled());
+                assertEquals(TaskResult.Kind.STOPPED, controller.getState().resultKind);
+                assertEquals("TASK_STOPPED", controller.getState().resultCode);
+                int stoppedRequests = server.requestCount();
+                safeMain(device, () -> {
+                    controller.approve(freshId, true); controller.approve(pending.approvalId, true);
+                    controller.pauseResume();
+                });
+                assertFalse(server.receivedAnotherRequest(stoppedRequests, 350));
+                assertFalse(controller.getState().running);
+                assertRotationHasNotWritten(owner, server);
+                assertEquals("Count: 0", fixtureText(device, "counter_value"));
+                screenshots.capture("landscape-stopped-old-approvals-cannot-resume");
+                phase = "verified";
+            } catch (Exception | AssertionError failure) {
+                RunControl owner = original.get();
+                AssertionError reported = new AssertionError("Real rotation failed before restoration; phase=" + phase
+                        + ",ownerPresent=" + (owner != null) + ",dispatchAttempts=" + (owner == null ? -1 : owner.getDispatchAttempts())
+                        + ",requests=" + server.requestCount() + ",running=" + controller.getState().running
+                        + ",paused=" + controller.getState().paused + ",approvalPending=" + !controller.getState().approvalId.isEmpty(), failure);
+                try { screenshots.capture("rotation-failure-before-restoration"); }
+                catch (Throwable captureFailure) { reported.addSuppressed(captureFailure); }
+                primary = reported; throw reported;
+            } finally {
+                Throwable cleanup = null;
+                try {
+                    clear(device, controller);
+                    ThreadPoolExecutor worker = (ThreadPoolExecutor) objectField(controller, AgentController.class, "worker");
+                    long drainDeadline = SystemClock.elapsedRealtime() + 5_000;
+                    while ((worker.getActiveCount() != 0 || !worker.getQueue().isEmpty())
+                            && SystemClock.elapsedRealtime() < drainDeadline) Thread.sleep(25);
+                    assertEquals("Original task worker must leave before rotation/settings restoration", 0, worker.getActiveCount());
+                    assertTrue(worker.getQueue().isEmpty());
+                }
+                catch (Exception | AssertionError failure) { cleanup = failure; }
+                try { rotation.restore(); }
+                catch (Exception | AssertionError failure) {
+                    if (cleanup == null) cleanup = failure; else cleanup.addSuppressed(failure);
+                }
+                if (cleanup != null) {
+                    if (primary != null) primary.addSuppressed(cleanup);
+                    else throw new AssertionError("Could not restore original rotation and settings", cleanup);
+                }
+            }
+        }
+    }
+
+    private static void assertRotationHasNotWritten(RunControl owner, LocalControllerModelServer server) {
+        assertEquals("The actual Controller task must never dispatch the obsolete or unapproved action", 0, owner.getDispatchAttempts());
+        assertFalse(owner.hasInFlightDispatch());
+        assertEquals(0, server.acceptedWriteCount());
+        server.assertHealthy();
+    }
+
+    private static RotationControls awaitRotationControls(DeviceHarness device) throws Exception {
+        long deadline = SystemClock.elapsedRealtime() + 5_000;
+        while (SystemClock.elapsedRealtime() < deadline) {
+            AtomicReference<RotationControls> candidate = new AtomicReference<>();
+            safeMain(device, () -> {
+                AgentAccessibilityService.OwnedControlWindowIdentity identity = device.service.getOwnedControlWindowIdentity();
+                ViewGroup panel = (ViewGroup) controlField(device.service, "overlay");
+                if (identity == null || !device.service.isOwnedControlWindowCurrent(identity) || panel == null
+                        || !panel.isAttachedToWindow() || !panel.isLaidOut() || panel.isLayoutRequested()
+                        || !identity.copyBounds().equals(device.service.controlBounds())) return;
+                RotationControls actual = new RotationControls(identity, panel,
+                        (Button) controlField(device.service, "pauseButton"),
+                        (Button) ((ViewGroup) panel.getChildAt(1)).getChildAt(1));
+                actual.assertReachable(device); candidate.set(actual);
+            });
+            RotationControls actual = candidate.get();
+            if (actual != null && registeredExpandedWindow(device, actual.identity)
+                    && device.service.isOwnedControlWindowCurrent(actual.identity)
+                    && SystemClock.elapsedRealtime() < deadline) return actual;
+            Thread.sleep(25);
+        }
+        throw new AssertionError("Current rotation controls did not register with reachable geometry");
+    }
+
+    private static final class RotationControls {
+        final AgentAccessibilityService.OwnedControlWindowIdentity identity;
+        final ViewGroup panel;
+        final Button pause, stop;
+        RotationControls(AgentAccessibilityService.OwnedControlWindowIdentity identity, ViewGroup panel, Button pause, Button stop) {
+            this.identity = identity; this.panel = panel; this.pause = pause; this.stop = stop;
+        }
+        void assertReachable(DeviceHarness device) {
+            WindowManager manager = device.service.getSystemService(WindowManager.class); assertNotNull(manager);
+            WindowMetrics metrics = manager.getCurrentWindowMetrics();
+            Insets insets = metrics.getWindowInsets().getInsetsIgnoringVisibility(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+            Rect safe = new Rect(metrics.getBounds());
+            safe.set(safe.left + insets.left, safe.top + insets.top, safe.right - insets.right, safe.bottom - insets.bottom);
+            Rect panelBounds = rotationViewBounds(panel);
+            assertEquals(identity.copyBounds(), panelBounds);
+            assertFalse(safe.isEmpty());
+            assertTrue("Control panel must fit actual rotation safe bounds; panel=" + panelBounds + ",safe=" + safe, safe.contains(panelBounds));
+            int minimum = Math.round(48 * device.service.getResources().getDisplayMetrics().density);
+            for (Button button : new Button[]{pause, stop}) {
+                assertNotNull(button);
+                assertTrue(button.isAttachedToWindow() && button.isShown() && button.isEnabled() && button.isClickable());
+                assertTrue(button.getWidth() >= minimum && button.getHeight() >= minimum);
+                Rect visible = new Rect(); assertTrue(button.getLocalVisibleRect(visible));
+                assertEquals(new Rect(0, 0, button.getWidth(), button.getHeight()), visible);
+                assertTrue(panelBounds.contains(rotationViewBounds(button)));
+            }
+            assertEquals("停止", stop.getText().toString());
+            assertTrue("暂停".contentEquals(pause.getText()) || "继续".contentEquals(pause.getText()));
+        }
+    }
+
+    private static Rect rotationViewBounds(View view) {
+        int[] position = new int[2]; view.getLocationOnScreen(position);
+        return new Rect(position[0], position[1], position[0] + view.getWidth(), position[1] + view.getHeight());
     }
 
     private static boolean screenOffTaskStopped(AgentController.State state, RunControl owner) {

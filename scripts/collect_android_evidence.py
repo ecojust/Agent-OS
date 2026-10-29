@@ -32,11 +32,13 @@ VISUAL_GENERATION_SCOPE = "visual-generation-diagnostic"
 VISUAL_GENERATION_TEST = "dev.agentos.app.VisualEventGenerationInstrumentedTest#actualSameHeightStatusEventsPreserveTheOriginalLocalGuardAcrossRepeatedPublications"
 ACTIVITY_FONT_SCALE_SCOPE = "activity-font-scale-diagnostic"
 ACTIVITY_FONT_SCALE_TEST = "dev.agentos.app.MainActivityFontScaleInstrumentedTest#realSystemFontScaleRecreatesSecureActivityAndRetainsOnlyInMemoryDraft"
+ROTATION_SCOPE = "rotation-diagnostic"
+ROTATION_TEST = "dev.agentos.app.AgentControllerInstrumentedTest#realRotationRejectsOldApprovalAndKeepsControlsReachable"
 DIAGNOSTIC_SELECTIONS = {DIAGNOSTIC_SCOPE: DIAGNOSTIC_TEST, QUALIFICATION_SCOPE: QUALIFICATION_TEST,
                         CONTROL_STATUS_SCOPE: CONTROL_STATUS_TEST, SCREEN_OFF_SCOPE: SCREEN_OFF_TEST,
                         TASK_REPORT_FOCUS_SCOPE: TASK_REPORT_FOCUS_TEST, FONT_SCALE_SCOPE: FONT_SCALE_TEST,
                         VISUAL_GENERATION_SCOPE: VISUAL_GENERATION_TEST,
-                        ACTIVITY_FONT_SCALE_SCOPE: ACTIVITY_FONT_SCALE_TEST}
+                        ACTIVITY_FONT_SCALE_SCOPE: ACTIVITY_FONT_SCALE_TEST, ROTATION_SCOPE: ROTATION_TEST}
 
 
 def test_selection(scope: str) -> str:

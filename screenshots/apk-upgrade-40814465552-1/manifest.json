@@ -1,0 +1,2526 @@
+{
+  "schemaVersion": 1,
+  "kind": "agentos-apk-upgrade-smoke-evidence",
+  "archivedAt": "2026-10-29T04:00:37.175260+00:00",
+  "sourceRun": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 40814465552,
+    "attempt": 1,
+    "commit": "af26e5ad9a64ffb12cf35d29a3587f18f67307d2",
+    "url": "https://github.com/ecojust/Agent-OS/actions/runs/40814465552",
+    "conclusion": "success",
+    "event": "workflow_dispatch",
+    "branch": "master"
+  },
+  "baselineSource": "b1fd337262775a505327088975a3320fe323f034",
+  "expectedMatrixLabels": [
+    "30",
+    "31",
+    "32",
+    "33",
+    "34",
+    "35",
+    "36",
+    "37.0"
+  ],
+  "caseId": "same-signer-in-place-upgrade-v1",
+  "expectedCombinationCount": 8,
+  "apis": [
+    {
+      "matrixLabel": "30",
+      "apiLevel": 30,
+      "caseId": "same-signer-in-place-upgrade-v1",
+      "status": "passed",
+      "reason": null,
+      "captureCounts": {
+        "blocked": 2
+      },
+      "screenshotCount": 0,
+      "files": [
+        {
+          "path": "build-manifest.json",
+          "bytes": 1265,
+          "sha256": "f78000fb592ac6804eca84e1840fddee3c42e491ff503882af1aea5ee7fdb32f"
+        },
+        {
+          "path": "preflight.json",
+          "bytes": 1190,
+          "sha256": "e41ba3388b2f9aee1acf4a25efe4cc73213f3d60fa98265b7ba1879327164dc2"
+        },
+        {
+          "path": "report.json",
+          "bytes": 10538,
+          "sha256": "74e356b1daa8a46f4b41c1adfc78c15e2ef8aaa3d3e04ed8bccbd85bf7c42b28"
+        },
+        {
+          "path": "seed-receipt.json",
+          "bytes": 1117,
+          "sha256": "71eb470fc4625340647cfba8ecd78898707113a0c60efb200014def78770eb87"
+        },
+        {
+          "path": "signing-certificate.der",
+          "bytes": 834,
+          "sha256": "d4368bf2e2a570c8a883aafbdaa6a10612fcbcaf424d61a2b4490040e3bf62ae"
+        },
+        {
+          "path": "verify-receipt.json",
+          "bytes": 1087,
+          "sha256": "eab8e81c91c40872a1c1e792e92640ce65757535988dc5dc140a85c4c068967a"
+        },
+        {
+          "path": "commands/01-devices.json",
+          "bytes": 236,
+          "sha256": "e72b62d8793146b78dab3f6891b696472c356aac69cd216b664d181ad0eb4c3c"
+        },
+        {
+          "path": "commands/02-property-0.json",
+          "bytes": 179,
+          "sha256": "52c2aef6b213689f00f8f1201174f287d9578fcf903f9d51cb5ab925036d1612"
+        },
+        {
+          "path": "commands/03-property-1.json",
+          "bytes": 179,
+          "sha256": "2e37ba7d78ab599081379b6b66196363baf5a7a455a8d16a025bf12f850ac236"
+        },
+        {
+          "path": "commands/04-property-2.json",
+          "bytes": 179,
+          "sha256": "0d5a14fd88a7e570a17dd12580073b8f2bdc3a462f84dc472b06ec3e0830d696"
+        },
+        {
+          "path": "commands/05-property-3.json",
+          "bytes": 187,
+          "sha256": "bc55dde66bfcdd46fdda1e4d7a7e88dae339191e7b6e07ce70cfd13ec27b9ebd"
+        },
+        {
+          "path": "commands/06-property-4.json",
+          "bytes": 179,
+          "sha256": "be580498c5436c9f7d13fa8cd66be4cd26fdd1bb52652e0e7fbfccf9dccb8e5d"
+        },
+        {
+          "path": "commands/07-property-5.json",
+          "bytes": 299,
+          "sha256": "73eac44db1a6b46344a155ddb6fa458376e90f1af5424a85bebd49d1c4afaeb5"
+        },
+        {
+          "path": "commands/08-current-user.json",
+          "bytes": 182,
+          "sha256": "ae289d896dabbc34dcfaf354a0d0701ea7ebef41ddeeba4e9441ce9def3d4b9c"
+        },
+        {
+          "path": "commands/09-users.json",
+          "bytes": 223,
+          "sha256": "754229a4ad2f3fab9cc9441f67cc719e8525208e5e6649592d522c1a104aec34"
+        },
+        {
+          "path": "commands/10-fresh-packages.json",
+          "bytes": 9004,
+          "sha256": "095d65bed420249f5787e9f28eab8291f4d2d0a8e2ab4bef253512a8c310d9a8"
+        },
+        {
+          "path": "commands/11-install-baseline.json",
+          "bytes": 232,
+          "sha256": "5d98da95a83a6229ee253808229bb5e591a8e2a71d17f0b4c352ab040269b7d2"
+        },
+        {
+          "path": "commands/12-install-fixture.json",
+          "bytes": 230,
+          "sha256": "0e29f91f0a7675a540f78595f9b7299453af74a0ae45374369884179bc6443a4"
+        },
+        {
+          "path": "commands/13-install-probe.json",
+          "bytes": 228,
+          "sha256": "df1c13ef5047d1f7cd20506e6ca22e940167447f7648776fb0a073af1173900a"
+        },
+        {
+          "path": "commands/14-baseline-package.json",
+          "bytes": 5894,
+          "sha256": "b0c450e4081ccb0ffb7d64d068c074a1855916a3a8f30023872a643ebf46d915"
+        },
+        {
+          "path": "commands/15-baseline-path.json",
+          "bytes": 307,
+          "sha256": "463ab3c817966b72a82c89559489c038df28ba2d5512beff81b7570419b89f64"
+        },
+        {
+          "path": "commands/16-baseline-pull.json",
+          "bytes": 378,
+          "sha256": "8c9b20f28971a324ce3fd97bc29701a184f1ea95315d41c3cc3b458c153c5dda"
+        },
+        {
+          "path": "commands/17-accessibility-list-before.json",
+          "bytes": 199,
+          "sha256": "f2f9896a8014017b645953b44403acb7d04313309347d46c657415552a80285b"
+        },
+        {
+          "path": "commands/18-accessibility-flag-before.json",
+          "bytes": 195,
+          "sha256": "5cb46dcfe2bf0f19f4ab111e71b34f49a88d71c72a8788237a1db37cb26e11e0"
+        },
+        {
+          "path": "commands/19-wake-screen.json",
+          "bytes": 178,
+          "sha256": "1661f442ef8a8a31ecffb56eb5fd76c2ebfb5846ea97cdff352347a75c347f82"
+        },
+        {
+          "path": "commands/20-dismiss-keyguard.json",
+          "bytes": 182,
+          "sha256": "421a71771c00b66c7ed5d1456f89cbdc5408a9f68ed4c58dc5e8662b20dfde74"
+        },
+        {
+          "path": "commands/21-accessibility-list-enable.json",
+          "bytes": 191,
+          "sha256": "86e4dec6aa2f1189f4aa48b2ec12034b1285b08f3bdda388a3939dea18269ec9"
+        },
+        {
+          "path": "commands/22-accessibility-flag-enable.json",
+          "bytes": 191,
+          "sha256": "af1cdb11d641f8f93ef97b5b683b3eeff07c3ccae43db6f4d24b709692ad1a17"
+        },
+        {
+          "path": "commands/23-accessibility-list-after.json",
+          "bytes": 270,
+          "sha256": "58acdf0ed9b34338e9975c388ba7b49309f20a9d0af27d366486074a7149b1c7"
+        },
+        {
+          "path": "commands/24-accessibility-flag-after.json",
+          "bytes": 194,
+          "sha256": "6339654f107a64bf023f1bc0960852998c35c8211984a57592d07269c9334823"
+        },
+        {
+          "path": "commands/25-reverse-add.json",
+          "bytes": 184,
+          "sha256": "bedbe37c1c9b36805573770ad82c212c30114c485fb9023330343bca6167063f"
+        },
+        {
+          "path": "commands/26-seed-instrumentation.json",
+          "bytes": 2617,
+          "sha256": "0bfdc24abc92789da1512c1d9ea407410065ef5c577c5d7125839a0db5f5e307"
+        },
+        {
+          "path": "commands/27-baseline-launch.json",
+          "bytes": 403,
+          "sha256": "c073db03e9fea62f3e9a8a71324cd6a432c5cd3a4902e9550085ec318c52c036"
+        },
+        {
+          "path": "commands/28-baseline-pid.json",
+          "bytes": 186,
+          "sha256": "15e9de33006265077e45ef8d36fa7727b72dec4381785264fde6503b46f5a5f9"
+        },
+        {
+          "path": "commands/29-replace-candidate.json",
+          "bytes": 232,
+          "sha256": "e84d791c1ed81574f665ac7eb53e2d61ba19980c3f731507de5022418013621a"
+        },
+        {
+          "path": "commands/30-candidate-package.json",
+          "bytes": 5899,
+          "sha256": "381d0043c5a689d3983760576fdedb32cef0e0ffe7cd4a17ca0695b7f57d3074"
+        },
+        {
+          "path": "commands/31-candidate-path.json",
+          "bytes": 308,
+          "sha256": "6dc8b98d377d614485a0a6dda44a532466d9d64c280600d53ef75e17a9551ca6"
+        },
+        {
+          "path": "commands/32-candidate-pull.json",
+          "bytes": 379,
+          "sha256": "984e77888d85ce57d7b370babc0c5b00e5c6c5066f2dd52448aab9df16fea075"
+        },
+        {
+          "path": "commands/33-verify-instrumentation.json",
+          "bytes": 2595,
+          "sha256": "6cf43ad6eb663ce80903a9e57da095947acd67b7cd750e50430437c44f4967e8"
+        },
+        {
+          "path": "commands/34-reverse-remove.json",
+          "bytes": 179,
+          "sha256": "e5742c82101b1e992b7a7fb8fa213b02530d1f3da5a846485ef178fbc33a8dd1"
+        },
+        {
+          "path": "commands/35-accessibility-list-restore.json",
+          "bytes": 212,
+          "sha256": "49dc57c8cda79277ce99fb05e600b987592c5b5480e7bd30ef42e14647dcc1c9"
+        },
+        {
+          "path": "commands/36-accessibility-flag-restore.json",
+          "bytes": 192,
+          "sha256": "92acc45caf0e5dc97603f64efdd593cc3fad5b990001f25fdbb63b9e0df3e575"
+        },
+        {
+          "path": "commands/37-accessibility-list-restored.json",
+          "bytes": 201,
+          "sha256": "959463fec8017900ce226bf90b65513908b229cc5792d7959b3173fb2cdb6817"
+        },
+        {
+          "path": "commands/38-accessibility-flag-restored.json",
+          "bytes": 197,
+          "sha256": "7dba8ab31c386322fed4244376bb090687bdc368d8fe1aa2d9cfec157dfb684c"
+        }
+      ],
+      "artifactId": 12871926776,
+      "artifactDigest": "sha256:c502b2308d46d53d9a35ccdf87d6e62949aad65c8d8546b66852c7d4f13e4525",
+      "device": {
+        "abi": "x86_64",
+        "apiLevel": 30,
+        "bootQemu": "",
+        "emulatorVersion": "37.2.12",
+        "fingerprint": "Android/sdk_phone_x86_64/generic_x86_64:11/RSR1.210722.013.A2/10067904:userdebug/test-keys",
+        "kernelQemu": "1",
+        "ownerUser": 0,
+        "serial": "emulator-5554"
+      },
+      "phases": [
+        {
+          "name": "bundle_preflight",
+          "status": "passed"
+        },
+        {
+          "name": "device_preflight",
+          "status": "passed"
+        },
+        {
+          "name": "fresh_install_precondition",
+          "status": "passed"
+        },
+        {
+          "name": "install_baseline",
+          "status": "passed"
+        },
+        {
+          "name": "install_fixture",
+          "status": "passed"
+        },
+        {
+          "name": "install_probe",
+          "status": "passed"
+        },
+        {
+          "name": "baseline_identity",
+          "status": "passed"
+        },
+        {
+          "name": "service_setup",
+          "status": "passed"
+        },
+        {
+          "name": "model_setup",
+          "status": "passed"
+        },
+        {
+          "name": "seed_baseline",
+          "status": "passed"
+        },
+        {
+          "name": "baseline_main_process",
+          "status": "passed"
+        },
+        {
+          "name": "replace_candidate",
+          "status": "passed"
+        },
+        {
+          "name": "candidate_identity",
+          "status": "passed"
+        },
+        {
+          "name": "verify_candidate",
+          "status": "passed"
+        },
+        {
+          "name": "cleanup",
+          "status": "passed"
+        }
+      ],
+      "executionAttempted": true,
+      "workflowOutcome": "success"
+    },
+    {
+      "matrixLabel": "31",
+      "apiLevel": 31,
+      "caseId": "same-signer-in-place-upgrade-v1",
+      "status": "passed",
+      "reason": null,
+      "captureCounts": {
+        "blocked": 2
+      },
+      "screenshotCount": 0,
+      "files": [
+        {
+          "path": "build-manifest.json",
+          "bytes": 1265,
+          "sha256": "f78000fb592ac6804eca84e1840fddee3c42e491ff503882af1aea5ee7fdb32f"
+        },
+        {
+          "path": "preflight.json",
+          "bytes": 1190,
+          "sha256": "e41ba3388b2f9aee1acf4a25efe4cc73213f3d60fa98265b7ba1879327164dc2"
+        },
+        {
+          "path": "report.json",
+          "bytes": 10544,
+          "sha256": "d6bcbe13721154a58f005b766589d58193e1279536596e9dc826233749f49ee6"
+        },
+        {
+          "path": "seed-receipt.json",
+          "bytes": 1117,
+          "sha256": "9aa480505bf379d78b8c760ca5272e00403f6e34dc8ecf3c33895b17cce2e306"
+        },
+        {
+          "path": "signing-certificate.der",
+          "bytes": 834,
+          "sha256": "d4368bf2e2a570c8a883aafbdaa6a10612fcbcaf424d61a2b4490040e3bf62ae"
+        },
+        {
+          "path": "verify-receipt.json",
+          "bytes": 1087,
+          "sha256": "84f51a0aa61bb7721f51bc801a1ee46a872bd2b63f7a9e3c7adb39b6a0a3d7c0"
+        },
+        {
+          "path": "commands/01-devices.json",
+          "bytes": 236,
+          "sha256": "e72b62d8793146b78dab3f6891b696472c356aac69cd216b664d181ad0eb4c3c"
+        },
+        {
+          "path": "commands/02-property-0.json",
+          "bytes": 180,
+          "sha256": "9169bff671696fb1c81f5ef547c4ed25c1a08d69847a393b645f2b7b08a42b4e"
+        },
+        {
+          "path": "commands/03-property-1.json",
+          "bytes": 180,
+          "sha256": "d8356eabba667904800a9a8f0cafddccd83405e43b7171bccd69ddb2f965913c"
+        },
+        {
+          "path": "commands/04-property-2.json",
+          "bytes": 180,
+          "sha256": "5c4c8ebf617968b5df01e6e4e44e5c2b5d1cee66e5703b71653b033036ad39a1"
+        },
+        {
+          "path": "commands/05-property-3.json",
+          "bytes": 188,
+          "sha256": "ce8c05e62ef99156f979d4762276a952e0f349984f371c3e32fc080a12ebb535"
+        },
+        {
+          "path": "commands/06-property-4.json",
+          "bytes": 180,
+          "sha256": "23e6c09f317034af6c0577e1fe79446ab83d0951b30a99169b26357a67ef2509"
+        },
+        {
+          "path": "commands/07-property-5.json",
+          "bytes": 304,
+          "sha256": "eedf148c2544b430cd083804940fb3ca1fa9bb7528f158b0c72b0fe745cba380"
+        },
+        {
+          "path": "commands/08-current-user.json",
+          "bytes": 182,
+          "sha256": "2232d43d1da1ad8197b44fdbb198e7a8bbb960b413cd1b520ae9b8faf7cf2e10"
+        },
+        {
+          "path": "commands/09-users.json",
+          "bytes": 223,
+          "sha256": "99a554188be2fb79645927698bcd4bfc236f3dfaa1288341f96d353a493ce7b2"
+        },
+        {
+          "path": "commands/10-fresh-packages.json",
+          "bytes": 7356,
+          "sha256": "248e4b3c2763315a420011f620495a3ac32392de0df63e8f101df1d18db989bd"
+        },
+        {
+          "path": "commands/11-install-baseline.json",
+          "bytes": 232,
+          "sha256": "2076df934afbd82ab50d90187f214ffa29176561e7cf19206b5545ae7d718cc4"
+        },
+        {
+          "path": "commands/12-install-fixture.json",
+          "bytes": 230,
+          "sha256": "e02382f9d805086742731e403671a0c4bc9f3a31eb7a0aaae671db452d70289a"
+        },
+        {
+          "path": "commands/13-install-probe.json",
+          "bytes": 228,
+          "sha256": "1e97b39ba0824c2c5110220cd3491f90bd8defc69fc360756928952bcd59faba"
+        },
+        {
+          "path": "commands/14-baseline-package.json",
+          "bytes": 7802,
+          "sha256": "2baa89a8af1f22ada208a717166720a557655271c969429f0bfc5e6fe1619a00"
+        },
+        {
+          "path": "commands/15-baseline-path.json",
+          "bytes": 307,
+          "sha256": "39a8265c614402484208a18696d7139cbc232676af49fbdf1d6d25e337cce290"
+        },
+        {
+          "path": "commands/16-baseline-pull.json",
+          "bytes": 379,
+          "sha256": "a500df5fbe354b67d8c52338b5ed02593d1db8f89a1206282a64c134bbb8832b"
+        },
+        {
+          "path": "commands/17-accessibility-list-before.json",
+          "bytes": 199,
+          "sha256": "acbd3497692153d24b7a2cb2399b9232529c100911b901b7b0863e8cab5d8396"
+        },
+        {
+          "path": "commands/18-accessibility-flag-before.json",
+          "bytes": 195,
+          "sha256": "5798cd594b50f34cfd6b26be6ce28423d8da5685e648acb915ddaa76bfbabbff"
+        },
+        {
+          "path": "commands/19-wake-screen.json",
+          "bytes": 177,
+          "sha256": "8c95946a45cd3c78d52897386790af1878033b5d53e849c4296e16c37a21a4ec"
+        },
+        {
+          "path": "commands/20-dismiss-keyguard.json",
+          "bytes": 182,
+          "sha256": "bdb59be33f66ad6f612e8e3f90a9aed8fa9870188ad84d88d18204eed36b2818"
+        },
+        {
+          "path": "commands/21-accessibility-list-enable.json",
+          "bytes": 191,
+          "sha256": "eb190137c91e3445293cc69a22ca0174e4886180a0f8c715aca0d8be8c6573be"
+        },
+        {
+          "path": "commands/22-accessibility-flag-enable.json",
+          "bytes": 191,
+          "sha256": "960328547acae152563a510bd9f823036e5308394be2657fd73176f1ad36c61e"
+        },
+        {
+          "path": "commands/23-accessibility-list-after.json",
+          "bytes": 270,
+          "sha256": "e3b81ab625d0551ee45d6083ee043e4b2f94e89612120a79e074588d76b04df4"
+        },
+        {
+          "path": "commands/24-accessibility-flag-after.json",
+          "bytes": 194,
+          "sha256": "90dfe9f66737e452029fe314533e57add88021380a826f76d632103cdd9f8639"
+        },
+        {
+          "path": "commands/25-reverse-add.json",
+          "bytes": 184,
+          "sha256": "da02dde97e0affb02e04f72cb5f30a70b768d4b356217b428b0ebe923472b7e5"
+        },
+        {
+          "path": "commands/26-seed-instrumentation.json",
+          "bytes": 2617,
+          "sha256": "dbe5e046ec168b5694930c754addec47fe98352822736ad7ab54d31537e93269"
+        },
+        {
+          "path": "commands/27-baseline-launch.json",
+          "bytes": 398,
+          "sha256": "aab408acc24a499ffbf60341e1253580156701be06a03541e54f32bc46de1f0c"
+        },
+        {
+          "path": "commands/28-baseline-pid.json",
+          "bytes": 186,
+          "sha256": "7bc269e6684731d4bedb28e460b67c68c3849d42159f38d2ef7cf64155bdc4c9"
+        },
+        {
+          "path": "commands/29-replace-candidate.json",
+          "bytes": 233,
+          "sha256": "4ecda347870cc249b3cd0f3852c1e267b01ab554231a92e114b6f854c0adc0f6"
+        },
+        {
+          "path": "commands/30-candidate-package.json",
+          "bytes": 8211,
+          "sha256": "705f50a9d431d0400bfd9aa4913da1c56bee697f4b8e6c31c3dd2bee3e0b26c2"
+        },
+        {
+          "path": "commands/31-candidate-path.json",
+          "bytes": 308,
+          "sha256": "616cb9e432976b4c82b25571e07c84f75c242db7f32170e7df9c4e339a88fc72"
+        },
+        {
+          "path": "commands/32-candidate-pull.json",
+          "bytes": 380,
+          "sha256": "c63e7e90af8adc960e462152ac381fe34a8b52f69fe0b962e89af8a34c07d254"
+        },
+        {
+          "path": "commands/33-verify-instrumentation.json",
+          "bytes": 2595,
+          "sha256": "cd7c2b186d855e033d8076d81831bcadfd991796195813f40316ea9cf5b060d1"
+        },
+        {
+          "path": "commands/34-reverse-remove.json",
+          "bytes": 179,
+          "sha256": "e5742c82101b1e992b7a7fb8fa213b02530d1f3da5a846485ef178fbc33a8dd1"
+        },
+        {
+          "path": "commands/35-accessibility-list-restore.json",
+          "bytes": 212,
+          "sha256": "96e5165b245646365aba41d56558abb6dada451a08bdd4185255557e1a67f968"
+        },
+        {
+          "path": "commands/36-accessibility-flag-restore.json",
+          "bytes": 192,
+          "sha256": "25bc76a20b796bae711eb8da0cfdebd9d5c0542a858d4cafbd7964ecda47756f"
+        },
+        {
+          "path": "commands/37-accessibility-list-restored.json",
+          "bytes": 201,
+          "sha256": "c8681261dc794dc6484705d79b33cfcf1f43731ecb860a9268198aa566ac9ac0"
+        },
+        {
+          "path": "commands/38-accessibility-flag-restored.json",
+          "bytes": 197,
+          "sha256": "e07e623572cad89da87782c16e242c2ebfee0ef74fb739ee7dd096640e7a454e"
+        }
+      ],
+      "artifactId": 12872315489,
+      "artifactDigest": "sha256:2e0cbe5dbd411649ef867260672d27791e0bc118f669dd0d6f878042866fc4c1",
+      "device": {
+        "abi": "x86_64",
+        "apiLevel": 31,
+        "bootQemu": "1",
+        "emulatorVersion": "37.2.12",
+        "fingerprint": "Android/sdk_phone64_x86_64/emulator64_x86_64:12/SE1A.220826.006.A1/10064458:userdebug/test-keys",
+        "kernelQemu": "1",
+        "ownerUser": 0,
+        "serial": "emulator-5554"
+      },
+      "phases": [
+        {
+          "name": "bundle_preflight",
+          "status": "passed"
+        },
+        {
+          "name": "device_preflight",
+          "status": "passed"
+        },
+        {
+          "name": "fresh_install_precondition",
+          "status": "passed"
+        },
+        {
+          "name": "install_baseline",
+          "status": "passed"
+        },
+        {
+          "name": "install_fixture",
+          "status": "passed"
+        },
+        {
+          "name": "install_probe",
+          "status": "passed"
+        },
+        {
+          "name": "baseline_identity",
+          "status": "passed"
+        },
+        {
+          "name": "service_setup",
+          "status": "passed"
+        },
+        {
+          "name": "model_setup",
+          "status": "passed"
+        },
+        {
+          "name": "seed_baseline",
+          "status": "passed"
+        },
+        {
+          "name": "baseline_main_process",
+          "status": "passed"
+        },
+        {
+          "name": "replace_candidate",
+          "status": "passed"
+        },
+        {
+          "name": "candidate_identity",
+          "status": "passed"
+        },
+        {
+          "name": "verify_candidate",
+          "status": "passed"
+        },
+        {
+          "name": "cleanup",
+          "status": "passed"
+        }
+      ],
+      "executionAttempted": true,
+      "workflowOutcome": "success"
+    },
+    {
+      "matrixLabel": "32",
+      "apiLevel": 32,
+      "caseId": "same-signer-in-place-upgrade-v1",
+      "status": "passed",
+      "reason": null,
+      "captureCounts": {
+        "blocked": 2
+      },
+      "screenshotCount": 0,
+      "files": [
+        {
+          "path": "build-manifest.json",
+          "bytes": 1265,
+          "sha256": "f78000fb592ac6804eca84e1840fddee3c42e491ff503882af1aea5ee7fdb32f"
+        },
+        {
+          "path": "preflight.json",
+          "bytes": 1190,
+          "sha256": "e41ba3388b2f9aee1acf4a25efe4cc73213f3d60fa98265b7ba1879327164dc2"
+        },
+        {
+          "path": "report.json",
+          "bytes": 10541,
+          "sha256": "bfecfe1c0882409bbb2d036b0304acb4cc9b1f26965bb9c80d7bdb59330e0786"
+        },
+        {
+          "path": "seed-receipt.json",
+          "bytes": 1117,
+          "sha256": "6e8f09311d4a4b2e2a3ad2202970dc4498f49c06b2c8da2a8179c5d2ef778ed4"
+        },
+        {
+          "path": "signing-certificate.der",
+          "bytes": 834,
+          "sha256": "d4368bf2e2a570c8a883aafbdaa6a10612fcbcaf424d61a2b4490040e3bf62ae"
+        },
+        {
+          "path": "verify-receipt.json",
+          "bytes": 1087,
+          "sha256": "e607979be5ad2a58a956c010e6e9acfe680484b218c4033ecece327e9ee61ff8"
+        },
+        {
+          "path": "commands/01-devices.json",
+          "bytes": 236,
+          "sha256": "e72b62d8793146b78dab3f6891b696472c356aac69cd216b664d181ad0eb4c3c"
+        },
+        {
+          "path": "commands/02-property-0.json",
+          "bytes": 180,
+          "sha256": "4ab5a2b9819dd2efc4c93d7086a213e3fa7f9f281f783e047da26cf9e14b8788"
+        },
+        {
+          "path": "commands/03-property-1.json",
+          "bytes": 180,
+          "sha256": "5c181a731f76474907be95c3c4adf86aebc9bdee63177b19f83649d4e9116f7d"
+        },
+        {
+          "path": "commands/04-property-2.json",
+          "bytes": 180,
+          "sha256": "8ab81867f16630968047055607d2d34efc8ee132665537205e12433a8caa0a3f"
+        },
+        {
+          "path": "commands/05-property-3.json",
+          "bytes": 188,
+          "sha256": "644cd1de8bac3a3ac1ba2fcefe1f0d2ad25e03a45cd252d0f6b2b247348306b5"
+        },
+        {
+          "path": "commands/06-property-4.json",
+          "bytes": 180,
+          "sha256": "a378c23ef919730637312b6a62f4c6367a5389e8b117d0dcb32b74bbed76ef1c"
+        },
+        {
+          "path": "commands/07-property-5.json",
+          "bytes": 300,
+          "sha256": "6ac49570cdc3519286d9f0047b832fc0c3d334b5dbbc20ae8052051b9fc1cc6e"
+        },
+        {
+          "path": "commands/08-current-user.json",
+          "bytes": 182,
+          "sha256": "9da58c32229a8ca7bc0c04b37fe71c0d64f155264339e864a81bf3f8f32f6f02"
+        },
+        {
+          "path": "commands/09-users.json",
+          "bytes": 223,
+          "sha256": "6ebde08f1acedb903ac646ebe00f0d0451dc5d88c7cad0a265a4c5ef1b37dc4d"
+        },
+        {
+          "path": "commands/10-fresh-packages.json",
+          "bytes": 7356,
+          "sha256": "d83effcc4f6c7363a8eaa5e89c6a71890bc6ab6d7af6af6cc7889d0f667421c9"
+        },
+        {
+          "path": "commands/11-install-baseline.json",
+          "bytes": 231,
+          "sha256": "72ef10e46cb3d69c93d5e3f385158d6f7de4835f5c6786a921a013c13cbb779a"
+        },
+        {
+          "path": "commands/12-install-fixture.json",
+          "bytes": 230,
+          "sha256": "ede3e953e19294f76fa7ac79eabfe8d1112d0234e85a6dedccfccbcef8591b36"
+        },
+        {
+          "path": "commands/13-install-probe.json",
+          "bytes": 228,
+          "sha256": "5d6e1f5e9e33af62dd68e8d212b24e630f0ef6064be5ecdf8b1abc3cb9036da1"
+        },
+        {
+          "path": "commands/14-baseline-package.json",
+          "bytes": 7406,
+          "sha256": "9be05b049aa94f36ee786bd470bce3a8e8e64cf0655898ee28de7a9b30852099"
+        },
+        {
+          "path": "commands/15-baseline-path.json",
+          "bytes": 307,
+          "sha256": "594792f8369c36fcdaa6470b85c4719189a12524feabbd3fb1fa4f7d25db8ae7"
+        },
+        {
+          "path": "commands/16-baseline-pull.json",
+          "bytes": 379,
+          "sha256": "959083e387f54c8c4b4f470949fb8e6416e0bd52bbd2310fc013a634aa71b875"
+        },
+        {
+          "path": "commands/17-accessibility-list-before.json",
+          "bytes": 199,
+          "sha256": "68b72925120878f86f59a5cd3d0144ca51050954c87818550d54dd6407b34430"
+        },
+        {
+          "path": "commands/18-accessibility-flag-before.json",
+          "bytes": 195,
+          "sha256": "86372da983b1503bdc414d30b8fb91833ddbc8be0c056dde4ecc9d7a9a1794f3"
+        },
+        {
+          "path": "commands/19-wake-screen.json",
+          "bytes": 177,
+          "sha256": "f35851d9460bbb82a86daf10a93ec4a53ba8229785d53f682062c8da0ce5888b"
+        },
+        {
+          "path": "commands/20-dismiss-keyguard.json",
+          "bytes": 182,
+          "sha256": "be1ffebfef8466283bf3d5177cc80453bf2e701b4fceea5a603d2509d17caef6"
+        },
+        {
+          "path": "commands/21-accessibility-list-enable.json",
+          "bytes": 191,
+          "sha256": "a70b71b81c8a945912de6689dd3edf9c0a13073808e51dd08314db667019aeb4"
+        },
+        {
+          "path": "commands/22-accessibility-flag-enable.json",
+          "bytes": 191,
+          "sha256": "f5a07c1eebfbeee75307aef97b7993bbf966a5f355051d6a760b450bc5a4819d"
+        },
+        {
+          "path": "commands/23-accessibility-list-after.json",
+          "bytes": 270,
+          "sha256": "f24ca917d45969f97d5f5c8015d1181669117650ffb748eb968b8e9ebdcc4266"
+        },
+        {
+          "path": "commands/24-accessibility-flag-after.json",
+          "bytes": 194,
+          "sha256": "90dfe9f66737e452029fe314533e57add88021380a826f76d632103cdd9f8639"
+        },
+        {
+          "path": "commands/25-reverse-add.json",
+          "bytes": 185,
+          "sha256": "70a553b49cbc8d9882adf4ef97dddb2c96e022afc3ba990152d53cc21f7b7046"
+        },
+        {
+          "path": "commands/26-seed-instrumentation.json",
+          "bytes": 2617,
+          "sha256": "5870daea9d95dd7510da1b30445f2c04f50c213b15860ca37ce83322fc8254c7"
+        },
+        {
+          "path": "commands/27-baseline-launch.json",
+          "bytes": 398,
+          "sha256": "10b09931bae0f8fbbbecaa8720a4e1840b018ddcacaef305d0d5ebf2641d006b"
+        },
+        {
+          "path": "commands/28-baseline-pid.json",
+          "bytes": 186,
+          "sha256": "753018fd1d4b3ecfda29edb43adc7cb81bc26f2cfdd70a78210c372df76cc9d6"
+        },
+        {
+          "path": "commands/29-replace-candidate.json",
+          "bytes": 232,
+          "sha256": "e7ba0abaa23884fd61b3a403777b37eae45781dbee5b9b12ab4833bbc19a83a9"
+        },
+        {
+          "path": "commands/30-candidate-package.json",
+          "bytes": 8011,
+          "sha256": "cdd9c074d5eac121472c25fcf0fc6003d916f840bde17648700f5c2ab54da17d"
+        },
+        {
+          "path": "commands/31-candidate-path.json",
+          "bytes": 308,
+          "sha256": "86d91c82f92f8e784bbe5c378915b19220098e7b5d7a7e73127a30807d215349"
+        },
+        {
+          "path": "commands/32-candidate-pull.json",
+          "bytes": 380,
+          "sha256": "47320e25f8158fc4f299f67d7de8e5c3783cb87651c42b10299e5d684b033328"
+        },
+        {
+          "path": "commands/33-verify-instrumentation.json",
+          "bytes": 2595,
+          "sha256": "a13374c55e3c6b9679ff7d00db6f51c12ff731fe57fbdd05d1f4f7974bf8633d"
+        },
+        {
+          "path": "commands/34-reverse-remove.json",
+          "bytes": 179,
+          "sha256": "e5742c82101b1e992b7a7fb8fa213b02530d1f3da5a846485ef178fbc33a8dd1"
+        },
+        {
+          "path": "commands/35-accessibility-list-restore.json",
+          "bytes": 212,
+          "sha256": "d8bf7dac89de96f02fbd192b438044f46c4ee904eff78e1ad1b6338efc27677f"
+        },
+        {
+          "path": "commands/36-accessibility-flag-restore.json",
+          "bytes": 192,
+          "sha256": "de22ae6a26cc61e4e4312b6a1e22ce1523fceb9dda9881e8ac296a85e8a10095"
+        },
+        {
+          "path": "commands/37-accessibility-list-restored.json",
+          "bytes": 201,
+          "sha256": "3dcc3eb80b3c3419ec90ff037c1f72ddea895bc3c5169c72afe46212a527844b"
+        },
+        {
+          "path": "commands/38-accessibility-flag-restored.json",
+          "bytes": 197,
+          "sha256": "e07e623572cad89da87782c16e242c2ebfee0ef74fb739ee7dd096640e7a454e"
+        }
+      ],
+      "artifactId": 12871478478,
+      "artifactDigest": "sha256:4ba8cac433fbfc66bb6b691c9c6c5709f5c0a5c3bdbddf7a04135227c77d6985",
+      "device": {
+        "abi": "x86_64",
+        "apiLevel": 32,
+        "bootQemu": "1",
+        "emulatorVersion": "37.2.12",
+        "fingerprint": "Android/sdk_phone64_x86_64/emulator64_x86_64:12/SE1B.240122.005/11418786:userdebug/test-keys",
+        "kernelQemu": "1",
+        "ownerUser": 0,
+        "serial": "emulator-5554"
+      },
+      "phases": [
+        {
+          "name": "bundle_preflight",
+          "status": "passed"
+        },
+        {
+          "name": "device_preflight",
+          "status": "passed"
+        },
+        {
+          "name": "fresh_install_precondition",
+          "status": "passed"
+        },
+        {
+          "name": "install_baseline",
+          "status": "passed"
+        },
+        {
+          "name": "install_fixture",
+          "status": "passed"
+        },
+        {
+          "name": "install_probe",
+          "status": "passed"
+        },
+        {
+          "name": "baseline_identity",
+          "status": "passed"
+        },
+        {
+          "name": "service_setup",
+          "status": "passed"
+        },
+        {
+          "name": "model_setup",
+          "status": "passed"
+        },
+        {
+          "name": "seed_baseline",
+          "status": "passed"
+        },
+        {
+          "name": "baseline_main_process",
+          "status": "passed"
+        },
+        {
+          "name": "replace_candidate",
+          "status": "passed"
+        },
+        {
+          "name": "candidate_identity",
+          "status": "passed"
+        },
+        {
+          "name": "verify_candidate",
+          "status": "passed"
+        },
+        {
+          "name": "cleanup",
+          "status": "passed"
+        }
+      ],
+      "executionAttempted": true,
+      "workflowOutcome": "success"
+    },
+    {
+      "matrixLabel": "33",
+      "apiLevel": 33,
+      "caseId": "same-signer-in-place-upgrade-v1",
+      "status": "passed",
+      "reason": null,
+      "captureCounts": {
+        "blocked": 2
+      },
+      "screenshotCount": 0,
+      "files": [
+        {
+          "path": "build-manifest.json",
+          "bytes": 1265,
+          "sha256": "f78000fb592ac6804eca84e1840fddee3c42e491ff503882af1aea5ee7fdb32f"
+        },
+        {
+          "path": "preflight.json",
+          "bytes": 1190,
+          "sha256": "e41ba3388b2f9aee1acf4a25efe4cc73213f3d60fa98265b7ba1879327164dc2"
+        },
+        {
+          "path": "report.json",
+          "bytes": 10541,
+          "sha256": "5358366c581594c4accd94a38acd8d22d2687b7fd545994f553dbaf178679b18"
+        },
+        {
+          "path": "seed-receipt.json",
+          "bytes": 1117,
+          "sha256": "62aad4dd31b3d8a7419abd0638357b7a8fdd99bb64eab20a7ce934e15dbc6298"
+        },
+        {
+          "path": "signing-certificate.der",
+          "bytes": 834,
+          "sha256": "d4368bf2e2a570c8a883aafbdaa6a10612fcbcaf424d61a2b4490040e3bf62ae"
+        },
+        {
+          "path": "verify-receipt.json",
+          "bytes": 1087,
+          "sha256": "3d6e23acb57cda5b9e418d76609e978ef7d4e856c377d8665f8d5ffdaedcf6f6"
+        },
+        {
+          "path": "commands/01-devices.json",
+          "bytes": 236,
+          "sha256": "e72b62d8793146b78dab3f6891b696472c356aac69cd216b664d181ad0eb4c3c"
+        },
+        {
+          "path": "commands/02-property-0.json",
+          "bytes": 180,
+          "sha256": "06ef6ba93786265b044c6880cb1742394b57bf5ffb276a716d10a0f632ed0d71"
+        },
+        {
+          "path": "commands/03-property-1.json",
+          "bytes": 180,
+          "sha256": "067bc5b9d1dd405621a1e43b28965b2e9efba1bfb4107543667846d3ca7b7edd"
+        },
+        {
+          "path": "commands/04-property-2.json",
+          "bytes": 180,
+          "sha256": "42eb075136885283c530132ee8315ad5711dc674d761795f96541b4546223ce9"
+        },
+        {
+          "path": "commands/05-property-3.json",
+          "bytes": 188,
+          "sha256": "58e6b370121d33ebbccba20b4b4f15c94f38c7f4939aea8deb648fd19d0c5b43"
+        },
+        {
+          "path": "commands/06-property-4.json",
+          "bytes": 180,
+          "sha256": "7f2db5e032b34baf05f2bd2103c741fd94f595d210d8d502a9b29c1b263db9cb"
+        },
+        {
+          "path": "commands/07-property-5.json",
+          "bytes": 300,
+          "sha256": "c88b0e38e99607eed3cfe87f5de332f57e9c60d4c370913f8cd5267c6a6e3067"
+        },
+        {
+          "path": "commands/08-current-user.json",
+          "bytes": 182,
+          "sha256": "319825d22e7fe32dd07b3d48fcf315756541bc08c88115bbf04e56729d9521ef"
+        },
+        {
+          "path": "commands/09-users.json",
+          "bytes": 223,
+          "sha256": "1db58501a53d258305136c58372ce75ca4d120cdc12d2cfe7229c0669f55845f"
+        },
+        {
+          "path": "commands/10-fresh-packages.json",
+          "bytes": 8524,
+          "sha256": "ce16393cbb249a7057116d7338d5c35cc0bdc5b50676a77a2393482273150df4"
+        },
+        {
+          "path": "commands/11-install-baseline.json",
+          "bytes": 232,
+          "sha256": "0cce47c5f362be7861834e463dcd7bf946a7d3014245d22dc9e0c9bed1fa0b25"
+        },
+        {
+          "path": "commands/12-install-fixture.json",
+          "bytes": 231,
+          "sha256": "8849ca4da5f27d7dee38398fc0c6cd8ba69d3533dd6d8a2f3c0fda2d41de4c82"
+        },
+        {
+          "path": "commands/13-install-probe.json",
+          "bytes": 229,
+          "sha256": "c4fdda7e85d9e1627fe1c3d4d1fee574b752d10047a1c00b23af21145d90dbe8"
+        },
+        {
+          "path": "commands/14-baseline-package.json",
+          "bytes": 5798,
+          "sha256": "810718f44879068838312b8d49355e0afd8b8a667d48a1fb16a5fddb8934e8fa"
+        },
+        {
+          "path": "commands/15-baseline-path.json",
+          "bytes": 307,
+          "sha256": "72d7fcf5a88851b8cf8d9c1af06160995ef0ce9bc2834d7814e8a7288b77e9a5"
+        },
+        {
+          "path": "commands/16-baseline-pull.json",
+          "bytes": 379,
+          "sha256": "9b76775c73f8d02796fce3188d2fae67dbf75494879a6baee660f3521a7fa51f"
+        },
+        {
+          "path": "commands/17-accessibility-list-before.json",
+          "bytes": 199,
+          "sha256": "94e1d99ba588064b4d7ac7939e900a7fffc2e4b2de7b502a1e6fa8d75d0a00b1"
+        },
+        {
+          "path": "commands/18-accessibility-flag-before.json",
+          "bytes": 195,
+          "sha256": "b7e386935d7f2936df4aa1ea312882a33f559f8a522a362634cf0aba0790ce41"
+        },
+        {
+          "path": "commands/19-wake-screen.json",
+          "bytes": 177,
+          "sha256": "c2d1651086c7703f1ceced9a512eaf6d88332ef03128070b9acf7ab8199b53e1"
+        },
+        {
+          "path": "commands/20-dismiss-keyguard.json",
+          "bytes": 182,
+          "sha256": "80a57d4fdde3d540d002f4d50f7f625179885e57e27f24c9a55716aace5a22dd"
+        },
+        {
+          "path": "commands/21-accessibility-list-enable.json",
+          "bytes": 191,
+          "sha256": "89429e7d606deb5ed60f99b8e31cdcd61c0eca06c7867951af1c371f852a98a5"
+        },
+        {
+          "path": "commands/22-accessibility-flag-enable.json",
+          "bytes": 191,
+          "sha256": "5fb69ac3a1bbf20dc06ebfbc441dc476fd763b2fccdaa7ba0a9378cc7bd2c65d"
+        },
+        {
+          "path": "commands/23-accessibility-list-after.json",
+          "bytes": 270,
+          "sha256": "851307659bece200a29b8513025c37a65c3b343159ed8220704019e167a0408d"
+        },
+        {
+          "path": "commands/24-accessibility-flag-after.json",
+          "bytes": 194,
+          "sha256": "30d15aabc46d408436de0ac6a87f2e4280a8b3ac107ab1de9ba677f46f571e01"
+        },
+        {
+          "path": "commands/25-reverse-add.json",
+          "bytes": 184,
+          "sha256": "653d55b79a47dd26efcaf3553c1ceca5270e4b57ccb2b23504cfcc7d85f244c6"
+        },
+        {
+          "path": "commands/26-seed-instrumentation.json",
+          "bytes": 2617,
+          "sha256": "bbe7958560219010a7957d4f7d89ff27be2d1cd9d6c7754b43984f3d223d0f0d"
+        },
+        {
+          "path": "commands/27-baseline-launch.json",
+          "bytes": 398,
+          "sha256": "c54a05dbd9fb40f4198ed897de9130276d7b76b6ae8591dafde2235b66505d65"
+        },
+        {
+          "path": "commands/28-baseline-pid.json",
+          "bytes": 186,
+          "sha256": "1f8c0674908e1b7ccbcbffc3cb8f9bf0d05d400cd4a7dd709dc6503e06bdbc3a"
+        },
+        {
+          "path": "commands/29-replace-candidate.json",
+          "bytes": 233,
+          "sha256": "585191b022ace528e572772734843bd4855ae3e8782628caa5457b1f584be193"
+        },
+        {
+          "path": "commands/30-candidate-package.json",
+          "bytes": 6203,
+          "sha256": "756d756ac608e02a6963b1fa0e7708f547df0bcab2acf3ba90246148ab7d0a06"
+        },
+        {
+          "path": "commands/31-candidate-path.json",
+          "bytes": 308,
+          "sha256": "b657e662c53e3f9ff5f10a37c8d3ae42f454fe54b5628e8679bd48b7ff3c248f"
+        },
+        {
+          "path": "commands/32-candidate-pull.json",
+          "bytes": 380,
+          "sha256": "395e1b480e33eb337775d77e94c8fffd6cb069d1bbade360e16be795a70f8b06"
+        },
+        {
+          "path": "commands/33-verify-instrumentation.json",
+          "bytes": 2595,
+          "sha256": "fa1e876625c22aeed91c6048ccdb2d7168108f14fea29dcc95ce06a2b70263bb"
+        },
+        {
+          "path": "commands/34-reverse-remove.json",
+          "bytes": 179,
+          "sha256": "e5742c82101b1e992b7a7fb8fa213b02530d1f3da5a846485ef178fbc33a8dd1"
+        },
+        {
+          "path": "commands/35-accessibility-list-restore.json",
+          "bytes": 212,
+          "sha256": "96e5165b245646365aba41d56558abb6dada451a08bdd4185255557e1a67f968"
+        },
+        {
+          "path": "commands/36-accessibility-flag-restore.json",
+          "bytes": 192,
+          "sha256": "d65ad37ccf1a5c529e4955f1ceb14cf5380b72be688dc59c869c28712086a72f"
+        },
+        {
+          "path": "commands/37-accessibility-list-restored.json",
+          "bytes": 201,
+          "sha256": "0131e5ffe6d7afec224793f64b36e7ee77d95f16c9f9ab0e0b132e078cc8a82c"
+        },
+        {
+          "path": "commands/38-accessibility-flag-restored.json",
+          "bytes": 197,
+          "sha256": "dffb119dfadfecd81f2817cc0b5270f59832f05223130c5da084ce81440fb494"
+        }
+      ],
+      "artifactId": 12871419563,
+      "artifactDigest": "sha256:09957f5d03884e060d87f078b9719949ffb9ded15d7b29c548daf43d141a03ec",
+      "device": {
+        "abi": "x86_64",
+        "apiLevel": 33,
+        "bootQemu": "1",
+        "emulatorVersion": "37.2.12",
+        "fingerprint": "Android/sdk_phone64_x86_64/emulator64_x86_64:13/TE1A.220922.034/10940250:userdebug/test-keys",
+        "kernelQemu": "1",
+        "ownerUser": 0,
+        "serial": "emulator-5554"
+      },
+      "phases": [
+        {
+          "name": "bundle_preflight",
+          "status": "passed"
+        },
+        {
+          "name": "device_preflight",
+          "status": "passed"
+        },
+        {
+          "name": "fresh_install_precondition",
+          "status": "passed"
+        },
+        {
+          "name": "install_baseline",
+          "status": "passed"
+        },
+        {
+          "name": "install_fixture",
+          "status": "passed"
+        },
+        {
+          "name": "install_probe",
+          "status": "passed"
+        },
+        {
+          "name": "baseline_identity",
+          "status": "passed"
+        },
+        {
+          "name": "service_setup",
+          "status": "passed"
+        },
+        {
+          "name": "model_setup",
+          "status": "passed"
+        },
+        {
+          "name": "seed_baseline",
+          "status": "passed"
+        },
+        {
+          "name": "baseline_main_process",
+          "status": "passed"
+        },
+        {
+          "name": "replace_candidate",
+          "status": "passed"
+        },
+        {
+          "name": "candidate_identity",
+          "status": "passed"
+        },
+        {
+          "name": "verify_candidate",
+          "status": "passed"
+        },
+        {
+          "name": "cleanup",
+          "status": "passed"
+        }
+      ],
+      "executionAttempted": true,
+      "workflowOutcome": "success"
+    },
+    {
+      "matrixLabel": "34",
+      "apiLevel": 34,
+      "caseId": "same-signer-in-place-upgrade-v1",
+      "status": "passed",
+      "reason": null,
+      "captureCounts": {
+        "blocked": 2
+      },
+      "screenshotCount": 0,
+      "files": [
+        {
+          "path": "build-manifest.json",
+          "bytes": 1265,
+          "sha256": "f78000fb592ac6804eca84e1840fddee3c42e491ff503882af1aea5ee7fdb32f"
+        },
+        {
+          "path": "preflight.json",
+          "bytes": 1190,
+          "sha256": "e41ba3388b2f9aee1acf4a25efe4cc73213f3d60fa98265b7ba1879327164dc2"
+        },
+        {
+          "path": "report.json",
+          "bytes": 10533,
+          "sha256": "b288df35bd96692037abdf08e30d2f34601e50a05c9dcb9e7c970bd2f2e77de8"
+        },
+        {
+          "path": "seed-receipt.json",
+          "bytes": 1117,
+          "sha256": "33ab9160e589673d9bb503d17ddaecf1116f59e7b2e77bf1a83d02e89dd6059e"
+        },
+        {
+          "path": "signing-certificate.der",
+          "bytes": 834,
+          "sha256": "d4368bf2e2a570c8a883aafbdaa6a10612fcbcaf424d61a2b4490040e3bf62ae"
+        },
+        {
+          "path": "verify-receipt.json",
+          "bytes": 1087,
+          "sha256": "6931d16b0d6220bbacad9edd7b1941b8a69a2de7d4f14ceee5df0b79ca7061f9"
+        },
+        {
+          "path": "commands/01-devices.json",
+          "bytes": 236,
+          "sha256": "500286e83eff6f5c2202f3150ab8bb13d8a3f2c829cf42a6e8fabdd5e38939c6"
+        },
+        {
+          "path": "commands/02-property-0.json",
+          "bytes": 180,
+          "sha256": "c53a9ecb34e50d7636e235865a4bb390500f49f8b3efff74bbd7c79206bb0672"
+        },
+        {
+          "path": "commands/03-property-1.json",
+          "bytes": 180,
+          "sha256": "1bd511ef86cb7ce7cdb2ff3af9d371f0f479ac22c59b01cae76eb37c294d24fd"
+        },
+        {
+          "path": "commands/04-property-2.json",
+          "bytes": 180,
+          "sha256": "b3f3b398b3598fda2266323de2e2ad969a3250a57b9966dd22a818a21ab22c70"
+        },
+        {
+          "path": "commands/05-property-3.json",
+          "bytes": 188,
+          "sha256": "58e6b370121d33ebbccba20b4b4f15c94f38c7f4939aea8deb648fd19d0c5b43"
+        },
+        {
+          "path": "commands/06-property-4.json",
+          "bytes": 180,
+          "sha256": "6f34e77aec8331efde2f8a093783c4288aa2923ebf3096ac50befa3c03694706"
+        },
+        {
+          "path": "commands/07-property-5.json",
+          "bytes": 292,
+          "sha256": "4559505e8baa2dea250b5a0c0b3275a5d3d7c0dc225b0a55867c5d085952df00"
+        },
+        {
+          "path": "commands/08-current-user.json",
+          "bytes": 182,
+          "sha256": "cb37913df7cc6deacdaf2e39855a50f126375ea52b479302a89ee13adca21a27"
+        },
+        {
+          "path": "commands/09-users.json",
+          "bytes": 223,
+          "sha256": "a335d02bf82d5a37fa108755726cf1ccfc6cf59ba1b4587b8e68cc82578665d5"
+        },
+        {
+          "path": "commands/10-fresh-packages.json",
+          "bytes": 9496,
+          "sha256": "55f2e86fa7a7e8b96a75b7056ccfd1737f2fe3e10b42380afb618fe24ff42621"
+        },
+        {
+          "path": "commands/11-install-baseline.json",
+          "bytes": 232,
+          "sha256": "9d3bbd3a3f9a792b1716f0deed27325fb62b2ea74277e98fb6dd4a4657f37dc2"
+        },
+        {
+          "path": "commands/12-install-fixture.json",
+          "bytes": 231,
+          "sha256": "cf6c16f7c0a3ecbed5aa69055d0f4bc9c35f8ad78ce67f06e379a51ca6d39545"
+        },
+        {
+          "path": "commands/13-install-probe.json",
+          "bytes": 229,
+          "sha256": "609dc722a3e980d07eec15bab7b2e34751de7b7614910d56d4acda3e04c3e2c4"
+        },
+        {
+          "path": "commands/14-baseline-package.json",
+          "bytes": 5871,
+          "sha256": "f1a6a48cf585b6ad79edfd01890191afa333199918354103bf8f958c9d117fb8"
+        },
+        {
+          "path": "commands/15-baseline-path.json",
+          "bytes": 307,
+          "sha256": "1136fb49abf5cd299e9bfa4b5a8863701b6f91c9851e96a2a3fc8f6ad8ba06f2"
+        },
+        {
+          "path": "commands/16-baseline-pull.json",
+          "bytes": 379,
+          "sha256": "278598b0b3f328d3485fecc332fd7c3ad2a437bc06d0a93d8bd675dd7d2e2e4d"
+        },
+        {
+          "path": "commands/17-accessibility-list-before.json",
+          "bytes": 199,
+          "sha256": "9d095e4817865c3d43ac9e1359da9b5250f74d9ecf08c1f75b54d14b777446fe"
+        },
+        {
+          "path": "commands/18-accessibility-flag-before.json",
+          "bytes": 195,
+          "sha256": "d6d967e70cfb846068888fdb369d9d635376de277d70516f7fdb67b7bef57c55"
+        },
+        {
+          "path": "commands/19-wake-screen.json",
+          "bytes": 177,
+          "sha256": "f74a255f237279ad841a8cb7bfefa3beb37b4682db9bee6e33fa117822162dc3"
+        },
+        {
+          "path": "commands/20-dismiss-keyguard.json",
+          "bytes": 182,
+          "sha256": "eae9172fe68aaab8fe338b8cbbc0b24167b418af89535f29c07db92b9822d8d7"
+        },
+        {
+          "path": "commands/21-accessibility-list-enable.json",
+          "bytes": 191,
+          "sha256": "8bbc044633757f157e1daf6e7ea5a4d9fcca6ea746f1de5d6e5fe1ae7f72242d"
+        },
+        {
+          "path": "commands/22-accessibility-flag-enable.json",
+          "bytes": 191,
+          "sha256": "8fcd672734e9da19abade4a53e576ced4a815edd27744d3b74170a4e0694a995"
+        },
+        {
+          "path": "commands/23-accessibility-list-after.json",
+          "bytes": 270,
+          "sha256": "b7331d2abc9cd94b4485a500ac3aa283070e4c1eaa94324948d753542248f992"
+        },
+        {
+          "path": "commands/24-accessibility-flag-after.json",
+          "bytes": 194,
+          "sha256": "85ca18aeffa8b4656bc77fbef9ed408d69213fa9b85defe82e7fe035ed79ea2b"
+        },
+        {
+          "path": "commands/25-reverse-add.json",
+          "bytes": 184,
+          "sha256": "4c08a52b796eb32d6be115f78141308ae642ac7e442083f6698891befc60f56c"
+        },
+        {
+          "path": "commands/26-seed-instrumentation.json",
+          "bytes": 2617,
+          "sha256": "fdcc9916678685a6eb539b769709b7ca9e6fc4a4c5e61f00b16feed94c3c0fc8"
+        },
+        {
+          "path": "commands/27-baseline-launch.json",
+          "bytes": 403,
+          "sha256": "52c2a4f54314950ebe12300327e8266f379b5871f661234895f12f2a63076057"
+        },
+        {
+          "path": "commands/28-baseline-pid.json",
+          "bytes": 186,
+          "sha256": "cc064cbfb1fd90a9391e726f149b0119d21f78e7d213ee4647254230ef7ea996"
+        },
+        {
+          "path": "commands/29-replace-candidate.json",
+          "bytes": 233,
+          "sha256": "a6a21de62762145a5bc4f3d7cc3fd8a7f41e2c7f50e342b94bb6c1e74c58277b"
+        },
+        {
+          "path": "commands/30-candidate-package.json",
+          "bytes": 5955,
+          "sha256": "9c743b3a935267a884774557283dbbc43bed3796864371d776a390a24ac20534"
+        },
+        {
+          "path": "commands/31-candidate-path.json",
+          "bytes": 308,
+          "sha256": "4e2f2de1efaca7c60a9632d86e8b78b588fe3e748df09d8c94c435ec0f86ce6e"
+        },
+        {
+          "path": "commands/32-candidate-pull.json",
+          "bytes": 380,
+          "sha256": "a0f53ba0a1d8d412b394bed0a3e4f9dd405fd5dd22648a74c8fcbfe974df1533"
+        },
+        {
+          "path": "commands/33-verify-instrumentation.json",
+          "bytes": 2595,
+          "sha256": "f55f44397cde4c66f4177d7c2d7b118c9a86c5897c7bf5a822a21d9b01fb90f8"
+        },
+        {
+          "path": "commands/34-reverse-remove.json",
+          "bytes": 179,
+          "sha256": "e70acf03177df0088b135e316cad24c9050111ec6fb218e83332efe469871424"
+        },
+        {
+          "path": "commands/35-accessibility-list-restore.json",
+          "bytes": 212,
+          "sha256": "b9c3887eeb931db86f8311efa3c700dc70a376ec6283282102751fdef18c3b67"
+        },
+        {
+          "path": "commands/36-accessibility-flag-restore.json",
+          "bytes": 192,
+          "sha256": "2fce4ccf215336b99f7bdd5c32e6d6c2955ba489c45545a34806cb04631b51b1"
+        },
+        {
+          "path": "commands/37-accessibility-list-restored.json",
+          "bytes": 201,
+          "sha256": "ae8304e511a7ab4a3862d97efd757b094b39e71945e50a4cb8f373bb4720f5a5"
+        },
+        {
+          "path": "commands/38-accessibility-flag-restored.json",
+          "bytes": 197,
+          "sha256": "d7c5868ac88b91be0125fffcf24a1f734f5265ae86ecc5e8f083f914f8a5a4a7"
+        }
+      ],
+      "artifactId": 12871499323,
+      "artifactDigest": "sha256:db081b4791b0064451917423d2a2c5b718223b2d3ceb518111508ab481373c3c",
+      "device": {
+        "abi": "x86_64",
+        "apiLevel": 34,
+        "bootQemu": "1",
+        "emulatorVersion": "37.2.12",
+        "fingerprint": "Android/sdk_phone64_x86_64/emu64x:14/UE1A.230829.036.A1/11228894:userdebug/test-keys",
+        "kernelQemu": "1",
+        "ownerUser": 0,
+        "serial": "emulator-5554"
+      },
+      "phases": [
+        {
+          "name": "bundle_preflight",
+          "status": "passed"
+        },
+        {
+          "name": "device_preflight",
+          "status": "passed"
+        },
+        {
+          "name": "fresh_install_precondition",
+          "status": "passed"
+        },
+        {
+          "name": "install_baseline",
+          "status": "passed"
+        },
+        {
+          "name": "install_fixture",
+          "status": "passed"
+        },
+        {
+          "name": "install_probe",
+          "status": "passed"
+        },
+        {
+          "name": "baseline_identity",
+          "status": "passed"
+        },
+        {
+          "name": "service_setup",
+          "status": "passed"
+        },
+        {
+          "name": "model_setup",
+          "status": "passed"
+        },
+        {
+          "name": "seed_baseline",
+          "status": "passed"
+        },
+        {
+          "name": "baseline_main_process",
+          "status": "passed"
+        },
+        {
+          "name": "replace_candidate",
+          "status": "passed"
+        },
+        {
+          "name": "candidate_identity",
+          "status": "passed"
+        },
+        {
+          "name": "verify_candidate",
+          "status": "passed"
+        },
+        {
+          "name": "cleanup",
+          "status": "passed"
+        }
+      ],
+      "executionAttempted": true,
+      "workflowOutcome": "success"
+    },
+    {
+      "matrixLabel": "35",
+      "apiLevel": 35,
+      "caseId": "same-signer-in-place-upgrade-v1",
+      "status": "passed",
+      "reason": null,
+      "captureCounts": {
+        "blocked": 2
+      },
+      "screenshotCount": 0,
+      "files": [
+        {
+          "path": "build-manifest.json",
+          "bytes": 1265,
+          "sha256": "f78000fb592ac6804eca84e1840fddee3c42e491ff503882af1aea5ee7fdb32f"
+        },
+        {
+          "path": "preflight.json",
+          "bytes": 1190,
+          "sha256": "e41ba3388b2f9aee1acf4a25efe4cc73213f3d60fa98265b7ba1879327164dc2"
+        },
+        {
+          "path": "report.json",
+          "bytes": 10530,
+          "sha256": "dce1c2f2f3e1a8c0e2618b647647d342431f2e52f3021c91fe9f8f527a50b858"
+        },
+        {
+          "path": "seed-receipt.json",
+          "bytes": 1117,
+          "sha256": "b7a13146dfb31c59bc41abbff8779da264a240b5eb53a79b91d44966f2906e9b"
+        },
+        {
+          "path": "signing-certificate.der",
+          "bytes": 834,
+          "sha256": "d4368bf2e2a570c8a883aafbdaa6a10612fcbcaf424d61a2b4490040e3bf62ae"
+        },
+        {
+          "path": "verify-receipt.json",
+          "bytes": 1087,
+          "sha256": "599502d5116afc3e44c5ae6a9efa73b9549b1b65bfc1c4368d18f96919e80fe3"
+        },
+        {
+          "path": "commands/01-devices.json",
+          "bytes": 236,
+          "sha256": "8214a7c64a9caba08295a89b99c1e08f22235bf4f420e796d994a4abd4588a22"
+        },
+        {
+          "path": "commands/02-property-0.json",
+          "bytes": 179,
+          "sha256": "52c2aef6b213689f00f8f1201174f287d9578fcf903f9d51cb5ab925036d1612"
+        },
+        {
+          "path": "commands/03-property-1.json",
+          "bytes": 180,
+          "sha256": "7bc71018e7273b84a92bec27dbc105727be48ca0b975174477a546ddf335a8e1"
+        },
+        {
+          "path": "commands/04-property-2.json",
+          "bytes": 180,
+          "sha256": "b82011396061ba86aaa221daec7f1ead5fd404f62dfcd6cfdb2222241eaca52d"
+        },
+        {
+          "path": "commands/05-property-3.json",
+          "bytes": 188,
+          "sha256": "e5db3cb0167f59641b1f726db988361f4b5988fae3c9fdbd3b613a2065216b85"
+        },
+        {
+          "path": "commands/06-property-4.json",
+          "bytes": 180,
+          "sha256": "0c58c60cfc4a730b49392feb471408871b8527f5c16e2058b932b2b158d02e03"
+        },
+        {
+          "path": "commands/07-property-5.json",
+          "bytes": 288,
+          "sha256": "5bce443c7863d453651cd452693f1ee8a9fdbb38495e34e8038454106131c2fc"
+        },
+        {
+          "path": "commands/08-current-user.json",
+          "bytes": 182,
+          "sha256": "e533a7cd36c8ff00b2f5d4790993f6bf6454ef68f6bf8f07d32932f4d786f9b8"
+        },
+        {
+          "path": "commands/09-users.json",
+          "bytes": 223,
+          "sha256": "ce354f2dc4b0737780220b8d3ee06c90e32519092b0570c620d0d2980ff3c5e4"
+        },
+        {
+          "path": "commands/10-fresh-packages.json",
+          "bytes": 9940,
+          "sha256": "be63f0d82f2d3acbacbcf910253989d467b77d0898d1a34487cffebe6f8286b7"
+        },
+        {
+          "path": "commands/11-install-baseline.json",
+          "bytes": 231,
+          "sha256": "eccc489869f9c7c6888a3ebe44cf600ed7657091ce09b407a8947edc5a22bf35"
+        },
+        {
+          "path": "commands/12-install-fixture.json",
+          "bytes": 230,
+          "sha256": "de29139316f6089b898e2bc09dedec68f6851c8730ba49866c7b9f49e86f31d4"
+        },
+        {
+          "path": "commands/13-install-probe.json",
+          "bytes": 228,
+          "sha256": "10d007cd958f553160e2c42cd5471e33dc7c0fa24876d33ca3bcf0fc9481bab3"
+        },
+        {
+          "path": "commands/14-baseline-package.json",
+          "bytes": 6046,
+          "sha256": "b4d517143716f251e8eb1a6439e8b546e549993e4d0cc94bb5faf149f94300d1"
+        },
+        {
+          "path": "commands/15-baseline-path.json",
+          "bytes": 307,
+          "sha256": "5f51d71b147db03caac953d2ccbbcd91aec97e8a9e90f94c23f87e6cd8397ec7"
+        },
+        {
+          "path": "commands/16-baseline-pull.json",
+          "bytes": 379,
+          "sha256": "7928203e67460e0621886ce66b5b0f451b21f109245fc619c71a886bd75bfadd"
+        },
+        {
+          "path": "commands/17-accessibility-list-before.json",
+          "bytes": 199,
+          "sha256": "b1a9fb09d2cc2d3673d84c454c3397129d360d095eb3a23c3e31a1d88e200696"
+        },
+        {
+          "path": "commands/18-accessibility-flag-before.json",
+          "bytes": 195,
+          "sha256": "2f10633fe7875290486db0ccc15fb8b3b4b6146a0f4a3c8ddee01078c13eb65e"
+        },
+        {
+          "path": "commands/19-wake-screen.json",
+          "bytes": 177,
+          "sha256": "2bbb5f16e19c2e40cd7d0fb00596356dc74e6ae6da6228538c888f34b30a9e5f"
+        },
+        {
+          "path": "commands/20-dismiss-keyguard.json",
+          "bytes": 182,
+          "sha256": "7b337933d36b1d9b0fc40989e1f5bbafd6216afd8d8987569ee21fc80ee24734"
+        },
+        {
+          "path": "commands/21-accessibility-list-enable.json",
+          "bytes": 191,
+          "sha256": "a8aca68f27e25793d08e2df41f12a67bc9e6d8b808276c2bd87f9e963ecba774"
+        },
+        {
+          "path": "commands/22-accessibility-flag-enable.json",
+          "bytes": 191,
+          "sha256": "9e54785b453e9ea5eb90f0598c54890b046b3730cb5c63f6d87577833a87483b"
+        },
+        {
+          "path": "commands/23-accessibility-list-after.json",
+          "bytes": 270,
+          "sha256": "8c9f2c9dbe85f9b6b09c7504ce94d3233f75628dfb6c953674d49dc9631d417d"
+        },
+        {
+          "path": "commands/24-accessibility-flag-after.json",
+          "bytes": 194,
+          "sha256": "003dfd2c3bedcc079c9982c0810c9628c94c80ecb3d11dd2e5208895f2325aae"
+        },
+        {
+          "path": "commands/25-reverse-add.json",
+          "bytes": 184,
+          "sha256": "8e4b3e6610841d256bc921ce3b7ab3e05d5cfda7d9297a160c19cdff34515f81"
+        },
+        {
+          "path": "commands/26-seed-instrumentation.json",
+          "bytes": 2617,
+          "sha256": "17e1c653847e065c75c6025a02633442c0b616e8ca1adb56c8f8fd2b98d2e8b9"
+        },
+        {
+          "path": "commands/27-baseline-launch.json",
+          "bytes": 399,
+          "sha256": "1b673c8306161f6067175cb1e385ab2fa0b6ffc6d53a8a1c8b96106232e9fa82"
+        },
+        {
+          "path": "commands/28-baseline-pid.json",
+          "bytes": 186,
+          "sha256": "5a1244d2f58d7b05af3ad8656aebc955449ef808374d22d310749903c6545211"
+        },
+        {
+          "path": "commands/29-replace-candidate.json",
+          "bytes": 233,
+          "sha256": "91c650a32807bf7e3eecda5b0ac1f7186c6ba42d7c09faba890b9154d66f7a26"
+        },
+        {
+          "path": "commands/30-candidate-package.json",
+          "bytes": 6051,
+          "sha256": "6dbda1da46674a66d38a1273b0c7367da44903940a5c6173f58ef9b3cee6fdcd"
+        },
+        {
+          "path": "commands/31-candidate-path.json",
+          "bytes": 308,
+          "sha256": "3b44a1b49d8286d41e9983d2117072ce210a82ae4e21cff6b038ce7f9e7b49bf"
+        },
+        {
+          "path": "commands/32-candidate-pull.json",
+          "bytes": 380,
+          "sha256": "14ab708ed8e8ef37250ddfdf555ae3c16813b0d4b86e55dc9d0e36adf0d019c9"
+        },
+        {
+          "path": "commands/33-verify-instrumentation.json",
+          "bytes": 2595,
+          "sha256": "68b6bc72eaaea1ccbc63cd336c7b046aa57c6f9a506f3328dfe77ab36a768bb4"
+        },
+        {
+          "path": "commands/34-reverse-remove.json",
+          "bytes": 179,
+          "sha256": "451000ae579dbedfef340e8ccaed273c1ae28265dca92753f320a155063c8201"
+        },
+        {
+          "path": "commands/35-accessibility-list-restore.json",
+          "bytes": 212,
+          "sha256": "e294e254f86f973d00b8a608f55a8936e557ec6bcc625459ce1393ec7d288fb3"
+        },
+        {
+          "path": "commands/36-accessibility-flag-restore.json",
+          "bytes": 192,
+          "sha256": "de22ae6a26cc61e4e4312b6a1e22ce1523fceb9dda9881e8ac296a85e8a10095"
+        },
+        {
+          "path": "commands/37-accessibility-list-restored.json",
+          "bytes": 201,
+          "sha256": "1ea2ae12b1d34fe8f64562ce93246def132cca5701aafa752aa432d6ed5e83c7"
+        },
+        {
+          "path": "commands/38-accessibility-flag-restored.json",
+          "bytes": 197,
+          "sha256": "7dba8ab31c386322fed4244376bb090687bdc368d8fe1aa2d9cfec157dfb684c"
+        }
+      ],
+      "artifactId": 12871951951,
+      "artifactDigest": "sha256:9c8a14e09971a5c3bdbc27f02972b6c74fe3d5e281f20f8cd2b1e27c8745f9a3",
+      "device": {
+        "abi": "x86_64",
+        "apiLevel": 35,
+        "bootQemu": "1",
+        "emulatorVersion": "37.2.12",
+        "fingerprint": "Android/sdk_phone64_x86_64/emu64x:15/AE3A.240806.019/12368160:userdebug/test-keys",
+        "kernelQemu": "1",
+        "ownerUser": 0,
+        "serial": "emulator-5554"
+      },
+      "phases": [
+        {
+          "name": "bundle_preflight",
+          "status": "passed"
+        },
+        {
+          "name": "device_preflight",
+          "status": "passed"
+        },
+        {
+          "name": "fresh_install_precondition",
+          "status": "passed"
+        },
+        {
+          "name": "install_baseline",
+          "status": "passed"
+        },
+        {
+          "name": "install_fixture",
+          "status": "passed"
+        },
+        {
+          "name": "install_probe",
+          "status": "passed"
+        },
+        {
+          "name": "baseline_identity",
+          "status": "passed"
+        },
+        {
+          "name": "service_setup",
+          "status": "passed"
+        },
+        {
+          "name": "model_setup",
+          "status": "passed"
+        },
+        {
+          "name": "seed_baseline",
+          "status": "passed"
+        },
+        {
+          "name": "baseline_main_process",
+          "status": "passed"
+        },
+        {
+          "name": "replace_candidate",
+          "status": "passed"
+        },
+        {
+          "name": "candidate_identity",
+          "status": "passed"
+        },
+        {
+          "name": "verify_candidate",
+          "status": "passed"
+        },
+        {
+          "name": "cleanup",
+          "status": "passed"
+        }
+      ],
+      "executionAttempted": true,
+      "workflowOutcome": "success"
+    },
+    {
+      "matrixLabel": "36",
+      "apiLevel": 36,
+      "caseId": "same-signer-in-place-upgrade-v1",
+      "status": "passed",
+      "reason": null,
+      "captureCounts": {
+        "blocked": 2
+      },
+      "screenshotCount": 0,
+      "files": [
+        {
+          "path": "build-manifest.json",
+          "bytes": 1265,
+          "sha256": "f78000fb592ac6804eca84e1840fddee3c42e491ff503882af1aea5ee7fdb32f"
+        },
+        {
+          "path": "preflight.json",
+          "bytes": 1190,
+          "sha256": "e41ba3388b2f9aee1acf4a25efe4cc73213f3d60fa98265b7ba1879327164dc2"
+        },
+        {
+          "path": "report.json",
+          "bytes": 10534,
+          "sha256": "b8be79aa09a25a1313f19608460583e66700668ef2db13a15f725d5171c64559"
+        },
+        {
+          "path": "seed-receipt.json",
+          "bytes": 1117,
+          "sha256": "6277df5451ab1f0f7a677cf75171d0b85fe4b97547cbb4f5481e0463792e6aca"
+        },
+        {
+          "path": "signing-certificate.der",
+          "bytes": 834,
+          "sha256": "d4368bf2e2a570c8a883aafbdaa6a10612fcbcaf424d61a2b4490040e3bf62ae"
+        },
+        {
+          "path": "verify-receipt.json",
+          "bytes": 1087,
+          "sha256": "e70135d5113c174003c6e6fb38001cedde3621c7d05bbe51f5ed5aaa620b600c"
+        },
+        {
+          "path": "commands/01-devices.json",
+          "bytes": 236,
+          "sha256": "500286e83eff6f5c2202f3150ab8bb13d8a3f2c829cf42a6e8fabdd5e38939c6"
+        },
+        {
+          "path": "commands/02-property-0.json",
+          "bytes": 180,
+          "sha256": "6d115e2b57d8b24902a0ce8b4c2a1830682489edbd0fc9be7325561f4efc787e"
+        },
+        {
+          "path": "commands/03-property-1.json",
+          "bytes": 180,
+          "sha256": "747f01d48deab40f484f06a7340b47e8bd6e20b88e68502385a8996816a4c8a9"
+        },
+        {
+          "path": "commands/04-property-2.json",
+          "bytes": 180,
+          "sha256": "59ab5449b9220b32a927c1e1572dc55dd4fa67384a3387a6209221c1c406a9e7"
+        },
+        {
+          "path": "commands/05-property-3.json",
+          "bytes": 189,
+          "sha256": "0e64aeda017ffdcf31eb2d071a5448d7d6d1deca3d2503029b2e154e3f05f4cf"
+        },
+        {
+          "path": "commands/06-property-4.json",
+          "bytes": 180,
+          "sha256": "4b7e79f13b06a02b3f321dd6d99cd197899001bc39aab7f8867e50c7fd27eb23"
+        },
+        {
+          "path": "commands/07-property-5.json",
+          "bytes": 292,
+          "sha256": "47ae2caa816f6aaa4f0a928661dd07fc90eddb3917ce4c04b5c435c57fbba11b"
+        },
+        {
+          "path": "commands/08-current-user.json",
+          "bytes": 183,
+          "sha256": "cf43d3a3721a1504d5d90f3597c73fa0dd52184385c58c681edd7934426e23ba"
+        },
+        {
+          "path": "commands/09-users.json",
+          "bytes": 223,
+          "sha256": "2a07f534ae34c2fd8ea2f966f5180f1f8e9b2ca3802b1a83d9ecbe75a5ff8b7a"
+        },
+        {
+          "path": "commands/10-fresh-packages.json",
+          "bytes": 10048,
+          "sha256": "1ce773808e3757c54c900c09ed3d6ead9799720f1da9b955e19a2965613943ae"
+        },
+        {
+          "path": "commands/11-install-baseline.json",
+          "bytes": 232,
+          "sha256": "53b92f9bbe2bbbeaed52b9fc9a40bd6ec514b3db24ff6ce327db66df09896cda"
+        },
+        {
+          "path": "commands/12-install-fixture.json",
+          "bytes": 231,
+          "sha256": "5fbc4feaa8073114ab0b200c4e8925f07fe7cf2a8946a10ccdf959ad12a6a224"
+        },
+        {
+          "path": "commands/13-install-probe.json",
+          "bytes": 230,
+          "sha256": "4614136d644948043d17a49ff9ffa2ea41852aff3a6dab02c4102c0c1c5ad89c"
+        },
+        {
+          "path": "commands/14-baseline-package.json",
+          "bytes": 6075,
+          "sha256": "b0cb9d0612ee93792ea1280092536df0ea0eb9ed230d5f29c88377ab00070b93"
+        },
+        {
+          "path": "commands/15-baseline-path.json",
+          "bytes": 307,
+          "sha256": "88fee1445fd6e9aec01a248ec67cf298f2e1cee2267077c19d472d577a4b727e"
+        },
+        {
+          "path": "commands/16-baseline-pull.json",
+          "bytes": 379,
+          "sha256": "a85f2068f90c41109da107482ba4f946372a68d61dba8df43230d561dbadf91f"
+        },
+        {
+          "path": "commands/17-accessibility-list-before.json",
+          "bytes": 199,
+          "sha256": "1b470f06b856b987c5b1756a88c3e34e208f498774c0f27dd311512d552dc1b3"
+        },
+        {
+          "path": "commands/18-accessibility-flag-before.json",
+          "bytes": 196,
+          "sha256": "7d7301ee07daa90171fd7f2e3fed3d8bc1000a69e0bc621f1ec7413c40130077"
+        },
+        {
+          "path": "commands/19-wake-screen.json",
+          "bytes": 177,
+          "sha256": "3d51663ad3de3d9aca532a74fb80de528c60aa7f519c028034a3075edbb5c308"
+        },
+        {
+          "path": "commands/20-dismiss-keyguard.json",
+          "bytes": 183,
+          "sha256": "5792b609a01789dfb3c129613369e34602d0d44cfe6946865ea32760024ffe31"
+        },
+        {
+          "path": "commands/21-accessibility-list-enable.json",
+          "bytes": 191,
+          "sha256": "4b519d7af7e3d3814e96b6ce9821247e571b23ac0818e86ce93ed811e4469d2d"
+        },
+        {
+          "path": "commands/22-accessibility-flag-enable.json",
+          "bytes": 191,
+          "sha256": "35475d8f2f5a5ae1ae1ef3cfde4c6735b7da88b49aae4920358eb420de6eb7bd"
+        },
+        {
+          "path": "commands/23-accessibility-list-after.json",
+          "bytes": 270,
+          "sha256": "8060eb337afa7c54a1e4fb6e5422caa365b32458d5979007877064adb382359e"
+        },
+        {
+          "path": "commands/24-accessibility-flag-after.json",
+          "bytes": 194,
+          "sha256": "89f29d80327697ed523a2e627e2c964b109fca1bb09bd3a983ad3fc8f659bb91"
+        },
+        {
+          "path": "commands/25-reverse-add.json",
+          "bytes": 184,
+          "sha256": "b7274100eb5b9326ec3a6138d4a5ccc1666766d8807c01e6b76496678c94db64"
+        },
+        {
+          "path": "commands/26-seed-instrumentation.json",
+          "bytes": 2617,
+          "sha256": "84a75de744c1dec319d3488c847cb5001e7a75ca0e8ca7369a50361bdcbefa38"
+        },
+        {
+          "path": "commands/27-baseline-launch.json",
+          "bytes": 403,
+          "sha256": "45104a7b01eb23f1983a8f2a3d7c8c89d85a230f8117b1baba435937e3701b07"
+        },
+        {
+          "path": "commands/28-baseline-pid.json",
+          "bytes": 186,
+          "sha256": "02e774266e1c9c9326e15afc85a58acfddf8a1e716c27a61886d55c5b26cb1e2"
+        },
+        {
+          "path": "commands/29-replace-candidate.json",
+          "bytes": 233,
+          "sha256": "fe238889b0d0486e2526584be8651c782ae4219917dade23d2f12ee57bbfbd7d"
+        },
+        {
+          "path": "commands/30-candidate-package.json",
+          "bytes": 6079,
+          "sha256": "c26753ad46e2c043b03bbe12c45a481aac4aac492553a949c098843e05782bc0"
+        },
+        {
+          "path": "commands/31-candidate-path.json",
+          "bytes": 308,
+          "sha256": "fe71dba2fa2d20eeafc0c5d31e235ff033d9187aaf449efc6af843311e1dc5a8"
+        },
+        {
+          "path": "commands/32-candidate-pull.json",
+          "bytes": 380,
+          "sha256": "c6e6eb9106c4821263567ef5ceccd2cd68726459519c96cd4917f12b129c6928"
+        },
+        {
+          "path": "commands/33-verify-instrumentation.json",
+          "bytes": 2595,
+          "sha256": "505c80854dc9e7778059b4cf05c379b2cc28b580f1c54d38fe01786dd2276433"
+        },
+        {
+          "path": "commands/34-reverse-remove.json",
+          "bytes": 179,
+          "sha256": "e70acf03177df0088b135e316cad24c9050111ec6fb218e83332efe469871424"
+        },
+        {
+          "path": "commands/35-accessibility-list-restore.json",
+          "bytes": 212,
+          "sha256": "c5c7c2aa16471aad21200cbf80eafbea94f93db5c77ef30e4c8408465f73a63b"
+        },
+        {
+          "path": "commands/36-accessibility-flag-restore.json",
+          "bytes": 192,
+          "sha256": "ee1104705b42ba566bf58b5063078b94bbc532ebb5f41e72b3d2c67bd6801de0"
+        },
+        {
+          "path": "commands/37-accessibility-list-restored.json",
+          "bytes": 201,
+          "sha256": "441f9c8a78722ea09a9117aef0b141f15018a59182a4de51b5492dfcf16a2008"
+        },
+        {
+          "path": "commands/38-accessibility-flag-restored.json",
+          "bytes": 197,
+          "sha256": "d7c5868ac88b91be0125fffcf24a1f734f5265ae86ecc5e8f083f914f8a5a4a7"
+        }
+      ],
+      "artifactId": 12871413790,
+      "artifactDigest": "sha256:6632787d305236d73fc16a7493cb45e07a37b65506e6e08ebc78ab08e86e1e80",
+      "device": {
+        "abi": "x86_64",
+        "apiLevel": 36,
+        "bootQemu": "1",
+        "emulatorVersion": "37.2.12",
+        "fingerprint": "Android/sdk_phone64_x86_64/emu64x:16/BE2A.250530.026.D1/13818094:userdebug/test-keys",
+        "kernelQemu": "1",
+        "ownerUser": 0,
+        "serial": "emulator-5554"
+      },
+      "phases": [
+        {
+          "name": "bundle_preflight",
+          "status": "passed"
+        },
+        {
+          "name": "device_preflight",
+          "status": "passed"
+        },
+        {
+          "name": "fresh_install_precondition",
+          "status": "passed"
+        },
+        {
+          "name": "install_baseline",
+          "status": "passed"
+        },
+        {
+          "name": "install_fixture",
+          "status": "passed"
+        },
+        {
+          "name": "install_probe",
+          "status": "passed"
+        },
+        {
+          "name": "baseline_identity",
+          "status": "passed"
+        },
+        {
+          "name": "service_setup",
+          "status": "passed"
+        },
+        {
+          "name": "model_setup",
+          "status": "passed"
+        },
+        {
+          "name": "seed_baseline",
+          "status": "passed"
+        },
+        {
+          "name": "baseline_main_process",
+          "status": "passed"
+        },
+        {
+          "name": "replace_candidate",
+          "status": "passed"
+        },
+        {
+          "name": "candidate_identity",
+          "status": "passed"
+        },
+        {
+          "name": "verify_candidate",
+          "status": "passed"
+        },
+        {
+          "name": "cleanup",
+          "status": "passed"
+        }
+      ],
+      "executionAttempted": true,
+      "workflowOutcome": "success"
+    },
+    {
+      "matrixLabel": "37.0",
+      "apiLevel": 37,
+      "caseId": "same-signer-in-place-upgrade-v1",
+      "status": "passed",
+      "reason": null,
+      "captureCounts": {
+        "blocked": 2
+      },
+      "screenshotCount": 0,
+      "files": [
+        {
+          "path": "build-manifest.json",
+          "bytes": 1265,
+          "sha256": "f78000fb592ac6804eca84e1840fddee3c42e491ff503882af1aea5ee7fdb32f"
+        },
+        {
+          "path": "preflight.json",
+          "bytes": 1190,
+          "sha256": "e41ba3388b2f9aee1acf4a25efe4cc73213f3d60fa98265b7ba1879327164dc2"
+        },
+        {
+          "path": "report.json",
+          "bytes": 10536,
+          "sha256": "8962b0cff22bd8c2eb6ad6032157dc06fd777538325b7615117da751bc234a2c"
+        },
+        {
+          "path": "seed-receipt.json",
+          "bytes": 1117,
+          "sha256": "48a0fb89ff3542a58ea2cf45b991c3a47e6063b57ab3b7673a8a85d679e70539"
+        },
+        {
+          "path": "signing-certificate.der",
+          "bytes": 834,
+          "sha256": "d4368bf2e2a570c8a883aafbdaa6a10612fcbcaf424d61a2b4490040e3bf62ae"
+        },
+        {
+          "path": "verify-receipt.json",
+          "bytes": 1087,
+          "sha256": "21b30f6acdeb5cb1f3bc806025d3a58c1dec11718d04be641480084fa01dae2c"
+        },
+        {
+          "path": "commands/01-devices.json",
+          "bytes": 236,
+          "sha256": "500286e83eff6f5c2202f3150ab8bb13d8a3f2c829cf42a6e8fabdd5e38939c6"
+        },
+        {
+          "path": "commands/02-property-0.json",
+          "bytes": 180,
+          "sha256": "55d44732cb1c51467de13e7e8c8c917fa24c4d36c995a942f321b56dfad9a093"
+        },
+        {
+          "path": "commands/03-property-1.json",
+          "bytes": 180,
+          "sha256": "08628af4f4ffde82c2b4540bb1c3b9e22dba48dd75bfa1d7659f682845c281d1"
+        },
+        {
+          "path": "commands/04-property-2.json",
+          "bytes": 180,
+          "sha256": "9701950ee4c25a7a0b19579f25b35a646a6b67f5dd1b264366b3e8c3cc96fe1d"
+        },
+        {
+          "path": "commands/05-property-3.json",
+          "bytes": 188,
+          "sha256": "0a5344c8db8629f692c3c8c01b9cfb7aad1dca53e8661f489181d7dade471cc0"
+        },
+        {
+          "path": "commands/06-property-4.json",
+          "bytes": 180,
+          "sha256": "8156b3f18ebb2026401ed240e96f8e1166b6643ebd336bfacd8ce9e11dfda21e"
+        },
+        {
+          "path": "commands/07-property-5.json",
+          "bytes": 292,
+          "sha256": "4fbc51b4d1f866cbe4763e60a366d5a42a5edaa517b2b1742766240c0ab0d840"
+        },
+        {
+          "path": "commands/08-current-user.json",
+          "bytes": 183,
+          "sha256": "bddfdf8a3cabfba600ddb2c3f2832fdaab94e1f25b3d302b3c23d85615b4951a"
+        },
+        {
+          "path": "commands/09-users.json",
+          "bytes": 223,
+          "sha256": "5362d1c8a09cf1cbed5ba72752ac9516d616a5ff0c234cf708ba6a765309279c"
+        },
+        {
+          "path": "commands/10-fresh-packages.json",
+          "bytes": 10237,
+          "sha256": "9d5de4e4d76233cc4e0112075af5f57e9af5682c3605e182a9729ca6e2a65985"
+        },
+        {
+          "path": "commands/11-install-baseline.json",
+          "bytes": 232,
+          "sha256": "20409314eac694715b4ce8af5747ced0de0e516d03b1ec96d66f541ae402dada"
+        },
+        {
+          "path": "commands/12-install-fixture.json",
+          "bytes": 231,
+          "sha256": "d2e007a83c06b7fce131025dacef269b4da3c32ee7a6326dcdb559c37cf2a9b8"
+        },
+        {
+          "path": "commands/13-install-probe.json",
+          "bytes": 230,
+          "sha256": "f2c0758da5847e7a9b788f9eb2d06e71f3fd42aec4eb61b5da3755e88efa8ac0"
+        },
+        {
+          "path": "commands/14-baseline-package.json",
+          "bytes": 6342,
+          "sha256": "76676298fec0f79bd53de9e9ebd43636cc7576e8eb738f225f6291e0ec4380f2"
+        },
+        {
+          "path": "commands/15-baseline-path.json",
+          "bytes": 307,
+          "sha256": "7a85642d1ae0bae6971008e6389a74377af9d99d579ed5f35bc2cc4b4d078836"
+        },
+        {
+          "path": "commands/16-baseline-pull.json",
+          "bytes": 379,
+          "sha256": "3dc40f52de47bf28953d5c09acd245145f4afd53db3cda2ff1b8fa5ac5c207a9"
+        },
+        {
+          "path": "commands/17-accessibility-list-before.json",
+          "bytes": 199,
+          "sha256": "9d095e4817865c3d43ac9e1359da9b5250f74d9ecf08c1f75b54d14b777446fe"
+        },
+        {
+          "path": "commands/18-accessibility-flag-before.json",
+          "bytes": 195,
+          "sha256": "d162e3d74ce82d855f10bad7a06e47a10ed89c836e1e4cf64bf3e961d0bc9df6"
+        },
+        {
+          "path": "commands/19-wake-screen.json",
+          "bytes": 177,
+          "sha256": "2bbb5f16e19c2e40cd7d0fb00596356dc74e6ae6da6228538c888f34b30a9e5f"
+        },
+        {
+          "path": "commands/20-dismiss-keyguard.json",
+          "bytes": 182,
+          "sha256": "161971d42dd5070004b19a0731bb68ee9bf00593360cfee8968de216287b07e3"
+        },
+        {
+          "path": "commands/21-accessibility-list-enable.json",
+          "bytes": 191,
+          "sha256": "5dc2d9aa60a04689fc1e9cad411f2179853b904685ef3be3165c37128223fa56"
+        },
+        {
+          "path": "commands/22-accessibility-flag-enable.json",
+          "bytes": 191,
+          "sha256": "d842fd14aa348369b4cf4572e50b77f76f18434b45ebf92a083c62767af5baad"
+        },
+        {
+          "path": "commands/23-accessibility-list-after.json",
+          "bytes": 270,
+          "sha256": "324a9265a3ac2214ba6d2e047aab6be384f54c9a83495fe16cb76c1848257d91"
+        },
+        {
+          "path": "commands/24-accessibility-flag-after.json",
+          "bytes": 194,
+          "sha256": "7754de9d5652d14ee8af2e4a5b0d85512399476ab5a5fe91a5a333476c8e7565"
+        },
+        {
+          "path": "commands/25-reverse-add.json",
+          "bytes": 184,
+          "sha256": "1fae68eea31fc31bf7ff744f9b15587b62c41ec260d8fcb4b548ce5911b76bc5"
+        },
+        {
+          "path": "commands/26-seed-instrumentation.json",
+          "bytes": 2617,
+          "sha256": "140e0146525e0fcb6128b27f38f54364264f2ff906fa4e4510ee0309e25adb5a"
+        },
+        {
+          "path": "commands/27-baseline-launch.json",
+          "bytes": 403,
+          "sha256": "d8b44a58fc99bd8128437026cc2a970fb26e69ad4e54b1928e22960dfb29763c"
+        },
+        {
+          "path": "commands/28-baseline-pid.json",
+          "bytes": 186,
+          "sha256": "17c95895d5d731dca0cb9ad8c9f32d8466558b4df7215dd93661f1a1383b4f8e"
+        },
+        {
+          "path": "commands/29-replace-candidate.json",
+          "bytes": 233,
+          "sha256": "3b6e27f7b38d822ae047c3588d62bcaaa8162815a513fc12401ad7c68da25f4b"
+        },
+        {
+          "path": "commands/30-candidate-package.json",
+          "bytes": 6347,
+          "sha256": "bd03bc686c77d4ec71115e2a6d7e429f7fd58cf0f8b6b4b492e8de55c1cd4308"
+        },
+        {
+          "path": "commands/31-candidate-path.json",
+          "bytes": 309,
+          "sha256": "443bfbe90a625bc841ec743381c690bb943b94cb82cb961db29d88f1bf4c3ff0"
+        },
+        {
+          "path": "commands/32-candidate-pull.json",
+          "bytes": 380,
+          "sha256": "53fc4b12a86ea800c889f93b742b1459836fb688fa0923d924fcc0c956cfefc6"
+        },
+        {
+          "path": "commands/33-verify-instrumentation.json",
+          "bytes": 2591,
+          "sha256": "7c006fc4227fa5f86d31d07fa3569babcd40573e939e2ebaef8e7a87244cb52f"
+        },
+        {
+          "path": "commands/34-reverse-remove.json",
+          "bytes": 179,
+          "sha256": "e70acf03177df0088b135e316cad24c9050111ec6fb218e83332efe469871424"
+        },
+        {
+          "path": "commands/35-accessibility-list-restore.json",
+          "bytes": 212,
+          "sha256": "408ed4eceaead14e12530e54fd1608b803403683d23a13b2feace714fffa0216"
+        },
+        {
+          "path": "commands/36-accessibility-flag-restore.json",
+          "bytes": 192,
+          "sha256": "99e7f9b1938385efbea7364ee38626e66bad15c8c5112c173ab5e65a9d9f836c"
+        },
+        {
+          "path": "commands/37-accessibility-list-restored.json",
+          "bytes": 201,
+          "sha256": "c156ad0dda2de0a3f1c55f9855f5879e4dcfd5c837e49117168e2ed326055a3a"
+        },
+        {
+          "path": "commands/38-accessibility-flag-restored.json",
+          "bytes": 197,
+          "sha256": "0b86f680966d132092dd920c1689d7b3029df4b9e531dde3b8adc63987fe9e22"
+        }
+      ],
+      "artifactId": 12872151638,
+      "artifactDigest": "sha256:9d52eaa40068ed08beb5136f0bc0d82b9f5cd44a6d0ef6345d0f574468180b8b",
+      "device": {
+        "abi": "x86_64",
+        "apiLevel": 37,
+        "bootQemu": "1",
+        "emulatorVersion": "37.2.12",
+        "fingerprint": "Android/sdk_phone64_x86_64/emu64x:17/CE2A.260420.051.A3/16571990:userdebug/test-keys",
+        "kernelQemu": "1",
+        "ownerUser": 0,
+        "serial": "emulator-5554"
+      },
+      "phases": [
+        {
+          "name": "bundle_preflight",
+          "status": "passed"
+        },
+        {
+          "name": "device_preflight",
+          "status": "passed"
+        },
+        {
+          "name": "fresh_install_precondition",
+          "status": "passed"
+        },
+        {
+          "name": "install_baseline",
+          "status": "passed"
+        },
+        {
+          "name": "install_fixture",
+          "status": "passed"
+        },
+        {
+          "name": "install_probe",
+          "status": "passed"
+        },
+        {
+          "name": "baseline_identity",
+          "status": "passed"
+        },
+        {
+          "name": "service_setup",
+          "status": "passed"
+        },
+        {
+          "name": "model_setup",
+          "status": "passed"
+        },
+        {
+          "name": "seed_baseline",
+          "status": "passed"
+        },
+        {
+          "name": "baseline_main_process",
+          "status": "passed"
+        },
+        {
+          "name": "replace_candidate",
+          "status": "passed"
+        },
+        {
+          "name": "candidate_identity",
+          "status": "passed"
+        },
+        {
+          "name": "verify_candidate",
+          "status": "passed"
+        },
+        {
+          "name": "cleanup",
+          "status": "passed"
+        }
+      ],
+      "executionAttempted": true,
+      "workflowOutcome": "success"
+    }
+  ],
+  "stateCounts": {
+    "passed": 8,
+    "failed": 0,
+    "unverified": 0
+  },
+  "allUpgradeCasesPassed": true,
+  "scope": {
+    "deviceKind": "dedicated_emulator",
+    "phasesPerCombination": 2,
+    "signingPolicy": "same-current-certificate-pinned",
+    "temporaryDevelopmentCertificate": true,
+    "productionSigningValidated": false,
+    "signerRotationValidated": false,
+    "physicalDeviceValidated": false,
+    "releaseAccepted": false
+  },
+  "buildIdentityFileHashes": {
+    "build-manifest.json": "f78000fb592ac6804eca84e1840fddee3c42e491ff503882af1aea5ee7fdb32f",
+    "preflight.json": "e41ba3388b2f9aee1acf4a25efe4cc73213f3d60fa98265b7ba1879327164dc2",
+    "signing-certificate.der": "d4368bf2e2a570c8a883aafbdaa6a10612fcbcaf424d61a2b4490040e3bf62ae"
+  },
+  "fileCount": 352,
+  "totalBytes": 405830,
+  "screenshotCount": 0
+}

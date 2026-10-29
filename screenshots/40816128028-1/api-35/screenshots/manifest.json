@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "api": 35,
+  "runId": "1793247074749-72b02c09",
+  "scope": "Dedicated synthetic Android fixture and verified empty application UI only",
+  "jvmTests": "No UI; no screenshot is claimed for JVM tests",
+  "tests": [
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.AgentControllerInstrumentedTest",
+      "testName": "realRotationRejectsOldApprovalAndKeepsControlsReachable",
+      "assertionResult": "fail",
+      "testResult": "fail",
+      "status": "fail",
+      "startedAt": 1793247074751,
+      "finishedAt": 1793247079887,
+      "failureClass": "AssertionError",
+      "captures": [
+        {
+          "stage": "portrait-pending-approval-before-real-rotation",
+          "capturedAt": 1793247078732,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-realRotationRejectsOldApprovalAndKeepsControlsReachable-e340b098-portrait-pending-approval-before-real-rotation-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        },
+        {
+          "stage": "landscape-current-controls-old-view-listeners-inert",
+          "capturedAt": 1793247079377,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-realRotationRejectsOldApprovalAndKeepsControlsReachable-e340b098-landscape-current-controls-old-view-listeners-inert-1.png",
+          "width": 640,
+          "height": 320,
+          "secureWindowTemporarilyCleared": false
+        },
+        {
+          "stage": "rotation-failure-before-restoration",
+          "capturedAt": 1793247079592,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-realRotationRejectsOldApprovalAndKeepsControlsReachable-e340b098-rotation-failure-before-restoration-2.png",
+          "width": 640,
+          "height": 320,
+          "secureWindowTemporarilyCleared": false
+        },
+        {
+          "stage": "failed",
+          "capturedAt": 1793247079741,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-realRotationRejectsOldApprovalAndKeepsControlsReachable-e340b098-failed-3.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    }
+  ]
+}

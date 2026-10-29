@@ -1,0 +1,26 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/ecojust/Agent-OS/blob/a6112fe73a094735168a4e751ecb790ffb3ce7f7/.github",
+    "start_line": 22,
+    "start_column": null,
+    "end_line": 22,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "Android job diagnostic 1",
+    "message": "  | Report: /tmp/agent-os-junit-2i4sxb98/report-01.xml\n  | Suite: dev.agentos.app.AgentControllerInstrumentedTest\n  | Test: dev.agentos.app.AgentControllerInstrumentedTest.realRotationRejectsOldApprovalAndKeepsControlsReachable\n  | Kind: failure / \n  | java.lang.AssertionError: Real rotation failed before restoration; phase=old_observation_rejected,ownerPresent=true,dispatchAttempts=0,requests=2,running=false,paused=false,approvalPending=false\n  | at dev.agentos.app.AgentControllerInstrumentedTest.realRotationRejectsOldApprovalAndKeepsControlsReachable(AgentControllerInstrumentedTest.java:895)\n  | ... 33 trimmed\n  | Caused by: java.lang.AssertionError: Local protocol fixture failed: IOException; stage=plan-from-device-observation; phase=REJECT_CLICK; requests=2; refreshes=0; reason=Required synthetic fixture node is not visible: counter_value\n  | observation=windowId=13 focused=true scoped=true hasOcclusion=false truncated=false edit_value{text=other-length-9,obscured=false,enabled=true,focused=false,editable=true} saved_value{text=initial-saved,obscured=false,enabled=true,focused=false,editable=false} counter_value{missing}\n  | toolResults={call=script-round-1,ok=false,code=STALE_OBSERVATION,submitted=false,accepted=missing,dispatchSubmitted=false,dispatchAccepted=false}\n  | at dev.agentos.app.LocalControllerModelServer.assertHealthy(LocalControllerModelServer.java:139)\n  | at dev.agentos.app.AgentControllerInstrumentedTest.realRotationRejectsOldApprovalAndKeepsControlsReachable(AgentControllerInstrumentedTest.java:838)\n  | ... 34 more\n  | Caused by: java.io.IOException: Required synthetic fixture node is not visible: counter_value\n  | at dev.agentos.app.LocalControllerModelServer.node(LocalControllerModelServer.java:515)\n  | at dev.agentos.app.LocalControllerModelServ",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/ecojust/Agent-OS/blob/a6112fe73a094735168a4e751ecb790ffb3ce7f7/.github",
+    "start_line": 38,
+    "start_column": null,
+    "end_line": 38,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "Android job diagnostic 2",
+    "message": "er.nodeText(LocalControllerModelServer.java:518)\n  | at dev.agentos.app.LocalControllerModelServer.respond(LocalControllerModelServer.java:252)\n  | at dev.agentos.app.LocalControllerModelServer.serve(LocalControllerModelServer.java:166)\n  | at dev.agentos.app.LocalControllerModelServer.$r8$lambda$aseSXNAr1EUzi_8mts5swmbQ6qg(Unknown Source:0)\n  | at dev.agentos.app.LocalControllerModelServer$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)\n  | at java.lang.Thread.run(Thread.java:1012)\nParsed 1 Android reports; found 1 failure/error entries.\n",
+    "raw_details": ""
+  }
+]

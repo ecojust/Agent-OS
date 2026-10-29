@@ -1,0 +1,22 @@
+  | Report: /tmp/agent-os-junit-2i4sxb98/report-01.xml
+  | Suite: dev.agentos.app.AgentControllerInstrumentedTest
+  | Test: dev.agentos.app.AgentControllerInstrumentedTest.realRotationRejectsOldApprovalAndKeepsControlsReachable
+  | Kind: failure / 
+  | java.lang.AssertionError: Real rotation failed before restoration; phase=old_observation_rejected,ownerPresent=true,dispatchAttempts=0,requests=2,running=false,paused=false,approvalPending=false
+  | at dev.agentos.app.AgentControllerInstrumentedTest.realRotationRejectsOldApprovalAndKeepsControlsReachable(AgentControllerInstrumentedTest.java:895)
+  | ... 33 trimmed
+  | Caused by: java.lang.AssertionError: Local protocol fixture failed: IOException; stage=plan-from-device-observation; phase=REJECT_CLICK; requests=2; refreshes=0; reason=Required synthetic fixture node is not visible: counter_value
+  | observation=windowId=13 focused=true scoped=true hasOcclusion=false truncated=false edit_value{text=other-length-9,obscured=false,enabled=true,focused=false,editable=true} saved_value{text=initial-saved,obscured=false,enabled=true,focused=false,editable=false} counter_value{missing}
+  | toolResults={call=script-round-1,ok=false,code=STALE_OBSERVATION,submitted=false,accepted=missing,dispatchSubmitted=false,dispatchAccepted=false}
+  | at dev.agentos.app.LocalControllerModelServer.assertHealthy(LocalControllerModelServer.java:139)
+  | at dev.agentos.app.AgentControllerInstrumentedTest.realRotationRejectsOldApprovalAndKeepsControlsReachable(AgentControllerInstrumentedTest.java:838)
+  | ... 34 more
+  | Caused by: java.io.IOException: Required synthetic fixture node is not visible: counter_value
+  | at dev.agentos.app.LocalControllerModelServer.node(LocalControllerModelServer.java:515)
+  | at dev.agentos.app.LocalControllerModelServer.nodeText(LocalControllerModelServer.java:518)
+  | at dev.agentos.app.LocalControllerModelServer.respond(LocalControllerModelServer.java:252)
+  | at dev.agentos.app.LocalControllerModelServer.serve(LocalControllerModelServer.java:166)
+  | at dev.agentos.app.LocalControllerModelServer.$r8$lambda$aseSXNAr1EUzi_8mts5swmbQ6qg(Unknown Source:0)
+  | at dev.agentos.app.LocalControllerModelServer$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+  | at java.lang.Thread.run(Thread.java:1012)
+Parsed 1 Android reports; found 1 failure/error entries.

@@ -29,14 +29,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 旋转v2专项与同源码完整回归内均8/8通过；完整矩阵2167/2168，唯一API30文件导入布局识别失败未计通过。4473载荷/2273PNG、逐案/JUnit汇总及源码身份已核验，36.295秒录像已归档，历史失败保留；检查点仍9/20（45%）。
+**本次更新：** 已启动当前db194源码的两款官方真实APK安装/操作32组合与计算器生产页面观察20项测试，结果尚待完整归档。同期普通Fixture操作录像36.733秒、460043字节已核验归档，保留安全窗口；该录像不作为本轮真实APK操作证明，检查点9/20。
 
-**记录时间：** 2026-10-29T04:57:14Z
+**记录时间：** 2026-10-29T07:25:33Z
 
 [最近测试截图与清单](screenshots/40818512531-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40818512531)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/40818518510-1/demo.mp4) · [录制与验证清单](screenshots/demos/40818518510-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40818518510)。
-录制版本：[`43381e9e9`](https://github.com/ecojust/Agent-OS/commit/43381e9e9c67f1c6eb7c5fbf4ced0ed5e03fa9da)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/40834468768-1/demo.mp4) · [录制与验证清单](screenshots/demos/40834468768-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40834468768)。
+录制版本：[`db1943a8a`](https://github.com/ecojust/Agent-OS/commit/db1943a8afa46ad21d72ba6198614a383a042d3f)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 | 检查点 | 状态 |
 | --- | --- |

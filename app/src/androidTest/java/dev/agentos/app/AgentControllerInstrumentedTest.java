@@ -1,6 +1,5 @@
 package dev.agentos.app;
 
-import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.KeyguardManager;
 import android.graphics.Insets;
 import android.graphics.Rect;
@@ -846,16 +845,15 @@ public final class AgentControllerInstrumentedTest {
                 screenshots.capture("portrait-pending-approval-before-real-rotation");
 
                 phase = "system_rotation";
-                // Android 11's same-process UiAutomation screenshot can retain
-                // node cache entries across the next real window replacement.
-                // Match the existing font-change fixture's preparation: reapply
-                // unchanged test service info before starting the measured change.
-                prepareRotationApi30Cache(device);
                 rotation.change(1);
                 assertTrue(rotation.snapshot().matches(1));
-                ExpandedApproval after = awaitExpandedApproval(device, controller, pending,
+                // The real worker retains the device gate while awaiting approval.
+                // Check the actual installed controls here; exact platform window
+                // registration is required after the worker rejects/re-observes.
+                RotationPendingViews rotated = awaitRotationPendingViews(device, controller, pending, owner, epoch,
                         SystemClock.elapsedRealtime() + 5_000);
-                RotationControls landscape = awaitRotationControls(device);
+                ExpandedApproval after = rotated.approval;
+                RotationControls landscape = rotated.controls;
                 safeMain(device, () -> {
                     assertFalse("Real configuration change must detach the old controls", portrait.panel.isAttachedToWindow());
                     assertNotSame(portrait.panel, landscape.panel);
@@ -892,8 +890,10 @@ public final class AgentControllerInstrumentedTest {
                     Thread.sleep(25);
                 }
                 assertNotNull("Real HTTP loop must report explicitly unsubmitted STALE_OBSERVATION and request a new approval", fresh);
+                phase = "post_replan_platform_registration";
                 ExpandedApproval freshApproval = awaitExpandedApproval(device, controller, fresh,
                         SystemClock.elapsedRealtime() + 5_000);
+                RotationControls current = awaitRotationControls(device);
                 String freshId = fresh.approvalId;
                 safeMain(device, () -> {
                     controller.approve(pending.approvalId, true);
@@ -903,7 +903,6 @@ public final class AgentControllerInstrumentedTest {
                 });
 
                 phase = "landscape_pause_stop";
-                RotationControls current = awaitRotationControls(device);
                 // Geometry checks prove visible 48dp controls. performClick tests
                 // their real installed listeners, not physical touch hit testing.
                 safeMain(device, () -> assertTrue(current.pause.performClick()));
@@ -974,13 +973,6 @@ public final class AgentControllerInstrumentedTest {
         assertFalse(owner.hasInFlightDispatch());
         assertEquals(0, server.acceptedWriteCount());
         server.assertHealthy();
-    }
-
-    private static void prepareRotationApi30Cache(DeviceHarness device) {
-        if (Build.VERSION.SDK_INT != 30) return;
-        AccessibilityServiceInfo unchanged = device.automation.getServiceInfo();
-        assertNotNull("API30 preparation needs the existing UiAutomation configuration", unchanged);
-        device.automation.setServiceInfo(unchanged);
     }
 
     /** Failure-only metadata; never refresh nodes, acquire a new identity or retry the assertion. */
@@ -1108,6 +1100,55 @@ public final class AgentControllerInstrumentedTest {
         return ";server_" + scope + "={bytes=" + count + ",eof=" + eof + ",byteLimit=" + (count == byteLimit)
                 + ",timedOut=" + timedOut + ",matchedLines=" + matched + ",outputTruncated=" + outputTruncated
                 + ",missingFields=unknown" + selected + "}";
+    }
+
+    /** Only the first post-rotation pending approval uses local View readiness.
+     * The original worker owns the device gate until this real approval returns;
+     * this sampler neither reads nor refreshes accessibility windows. */
+    private static RotationPendingViews awaitRotationPendingViews(DeviceHarness device, AgentController controller,
+            AgentController.State expected, RunControl owner, long epoch, long taskDeadline) throws Exception {
+        long deadline = Math.min(taskDeadline, SystemClock.elapsedRealtime() + 5_000);
+        while (SystemClock.elapsedRealtime() < deadline) {
+            AtomicReference<RotationPendingViews> candidate = new AtomicReference<>();
+            safeMain(device, () -> {
+                assertSame("Rotation must retain the original task owner", owner,
+                        objectField(controller, AgentController.class, "control"));
+                owner.checkExecutionEpoch(epoch);
+                AgentController.State state = controller.getState();
+                assertTrue(state.running && !state.paused);
+                assertEquals("The pending approval must remain the same", expected.approvalId, state.approvalId);
+                AgentAccessibilityService.OwnedControlWindowIdentity identity = device.service.getOwnedControlWindowIdentity();
+                ViewGroup panel = (ViewGroup) controlField(device.service, "overlay");
+                Button approve = (Button) controlField(device.service, "approveButton");
+                if (identity == null || !device.service.isOwnedControlWindowCurrent(identity) || panel == null
+                        || !panel.isAttachedToWindow() || !panel.isLaidOut() || panel.isLayoutRequested()
+                        || approve == null || !approve.isAttachedToWindow() || !approve.isShown() || !approve.isEnabled()
+                        || !expected.approval.equals(controlField(device.service, "currentApproval"))
+                        || !controlField(device.service, "callbackGeneration").equals(
+                                controlField(device.service, "displayedCallbackGeneration"))
+                        || !identity.copyBounds().equals(device.service.controlBounds())) return;
+                RotationControls controls = new RotationControls(identity, panel,
+                        (Button) controlField(device.service, "pauseButton"),
+                        (Button) ((ViewGroup) panel.getChildAt(1)).getChildAt(1));
+                controls.assertReachable(device);
+                owner.checkExecutionEpoch(epoch);
+                candidate.set(new RotationPendingViews(new ExpandedApproval(identity, approve), controls));
+            });
+            RotationPendingViews actual = candidate.get();
+            owner.checkExecutionEpoch(epoch);
+            if (actual != null && device.service.isOwnedControlWindowCurrent(actual.approval.identity)
+                    && SystemClock.elapsedRealtime() < deadline) return actual;
+            Thread.sleep(25);
+        }
+        throw new AssertionError("Rotated pending approval Views did not reach current exact local geometry within the original deadline");
+    }
+
+    private static final class RotationPendingViews {
+        final ExpandedApproval approval;
+        final RotationControls controls;
+        RotationPendingViews(ExpandedApproval approval, RotationControls controls) {
+            this.approval = approval; this.controls = controls;
+        }
     }
 
     private static RotationControls awaitRotationControls(DeviceHarness device) throws Exception {

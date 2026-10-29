@@ -40,6 +40,7 @@ def report(api=37):
                               "mainThread": True, "nodeCount": -1, "snapshotJsonBytes": -1,
                               "truncated": False, "epoch": 1, "dispatchAttempts": 0}]}
                   for name, start in zip(performance.MODES, (100, 200, 300, 400))]}
+    value["modes"][1]["trace"] = []
     stop = value["modes"][-1]
     stop.update(stopEnqueuedNanos=420, stopStateAppliedNanos=447,
                 stopRequestToReceivedNanos=5, stopReceivedToInvalidatedNanos=5,
@@ -210,6 +211,57 @@ class PerformanceEvidenceTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             performance.validate_report(value, 37)
 
+    def test_passed_idle_rejects_recorded_work_but_failed_idle_keeps_it(self):
+        for stage in ("SNAPSHOT_OBSERVE", "DEVICE_DISPATCH_ATTEMPT", "MAIN_QUEUE"):
+            with self.subTest(stage=stage):
+                value = report()
+                idle = value["modes"][1]
+                idle["trace"] = [dict(value["modes"][0]["trace"][0], stage=stage, startNanos=210)]
+                original = copy.deepcopy(value)
+                with self.assertRaisesRegex(ValueError, "passed_idle_requires_empty_trace"):
+                    performance.validate_report(value, 37)
+                self.assertEqual(original, value)
+                # An overall failure cannot hide a contradictory passed phase.
+                value["status"] = "failed"
+                with self.assertRaisesRegex(ValueError, "passed_idle_requires_empty_trace"):
+                    performance.validate_report(value, 37)
+                idle["status"] = "failed"
+                self.assertIs(value, performance.validate_report(value, 37))
+                self.assertEqual(original["modes"][1]["trace"], idle["trace"])
+
+    def test_passed_approval_stop_rejects_any_dispatch_independent_of_event_order(self):
+        for dispatched_at in (410, 430, 450):
+            for insertion in (0, 3):
+                with self.subTest(dispatched_at=dispatched_at, insertion=insertion):
+                    value = report()
+                    stop = value["modes"][-1]
+                    event = dict(stop["trace"][0], stage="DEVICE_DISPATCH_ATTEMPT",
+                                 startNanos=dispatched_at, durationNanos=1, dispatchAttempts=1)
+                    stop["trace"].insert(insertion, event)
+                    original = copy.deepcopy(value)
+                    with self.assertRaisesRegex(ValueError, "passed_stop_requires_zero_dispatches"):
+                        performance.validate_report(value, 37)
+                    self.assertEqual(original, value)
+                    value["status"] = "failed"
+                    with self.assertRaisesRegex(ValueError, "passed_stop_requires_zero_dispatches"):
+                        performance.validate_report(value, 37)
+                    stop["status"] = "failed"
+                    self.assertIs(value, performance.validate_report(value, 37))
+                    self.assertEqual(original["modes"][-1]["trace"], stop["trace"])
+
+    def test_passed_stop_requires_measured_zero_dispatch_count(self):
+        for attempts in (-1, 1, 2 ** 63 - 1):
+            with self.subTest(attempts=attempts):
+                value = report()
+                stop = value["modes"][-1]
+                stop["trace"][1]["dispatchAttempts"] = attempts
+                with self.assertRaisesRegex(ValueError, "passed_stop_requires_zero_dispatches"):
+                    performance.validate_report(value, 37)
+                value["status"] = "failed"
+                stop["status"] = "failed"
+                self.assertIs(value, performance.validate_report(value, 37))
+                self.assertEqual(attempts, stop["trace"][1]["dispatchAttempts"])
+
     def test_json_reader_rejects_duplicates_nan_oversize_and_symlinks(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "report.json"
@@ -334,6 +386,43 @@ class PerformanceEvidenceTests(unittest.TestCase):
                 args = SimpleNamespace(repository=SOURCE["repository"], artifacts=artifacts, incoming=root / "incoming")
                 with self.assertRaises(ValueError):
                     publisher.archive_performance(args, source_run(), [job()], root / "output", {"bytes": 0, "files": 0})
+
+    def test_archive_checks_behavior_even_with_matching_hashes_and_preserves_failed_evidence(self):
+        for case in ("idle", "dispatch", "counter"):
+            for status in ("passed", "failed"):
+                with self.subTest(case=case, status=status), tempfile.TemporaryDirectory() as temporary:
+                    root = Path(temporary)
+                    source = write_artifact(root, status)
+                    value = performance.read_json(source / performance.REPORT_NAME)
+                    mode = value["modes"][1 if case == "idle" else -1]
+                    mode["status"] = status
+                    if case == "counter":
+                        mode["trace"][1]["dispatchAttempts"] = 1
+                    else:
+                        mode["trace"].insert(0, dict(value["modes"][0]["trace"][0],
+                            stage="DEVICE_DISPATCH_ATTEMPT", startNanos=mode["startedNanos"] + 50,
+                            dispatchAttempts=1))
+                    raw = (json.dumps(value, indent=2) + "\n").encode()
+                    (source / performance.REPORT_NAME).write_bytes(raw)
+                    capture = performance.read_json(source / "capture.json")
+                    capture["report"].update(bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+                    (source / "capture.json").write_text(json.dumps(capture))
+                    artifacts = root / "artifacts.json"
+                    artifacts.write_text(json.dumps({"artifacts": [artifact()]}))
+                    args = SimpleNamespace(repository=SOURCE["repository"], artifacts=artifacts,
+                                           incoming=root / "incoming")
+                    output = root / "output"
+                    budget = {"bytes": 0, "files": 0}
+                    if status == "passed":
+                        with self.assertRaisesRegex(ValueError, "passed_(idle|stop)_requires_"):
+                            publisher.archive_performance(args, source_run(), [job()], output, budget)
+                        self.assertEqual(0, budget["files"])
+                    else:
+                        archived = publisher.archive_performance(args, source_run(), [job()], output, budget)
+                        self.assertEqual("failed", archived["apis"][-1]["diagnosticStatus"])
+                        self.assertTrue(archived["diagnosticOnly"])
+                        self.assertFalse(archived["budgetAcceptance"])
+                        self.assertEqual(raw, (output / "performance/api-37.0" / performance.REPORT_NAME).read_bytes())
 
     def test_combined_archive_preserves_ui_and_test_counts(self):
         with tempfile.TemporaryDirectory() as temporary:

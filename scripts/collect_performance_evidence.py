@@ -84,6 +84,11 @@ def validate_stop_timing(mode):
         if (invalidated < received + received_event["durationNanos"]
                 or ui_event["startNanos"] < invalidated + invalidated_event["durationNanos"]):
             raise ValueError("inconsistent_stop_event_order")
+        # This trial stops while waiting for approval: no write may be submitted
+        # anywhere in its window. Check every event, not completion-list order.
+        if (invalidated_event["dispatchAttempts"] != 0
+                or any(event["stage"] == "DEVICE_DISPATCH_ATTEMPT" for event in mode["trace"])):
+            raise ValueError("passed_stop_requires_zero_dispatches")
 
 
 def validate_report(value, api):
@@ -168,6 +173,10 @@ def validate_report(value, api):
                     or event["startNanos"] + event["durationNanos"] > mode["endedNanos"]):
                 raise ValueError("trace_event_outside_mode_window")
         validate_stop_timing(mode)
+        # Match the device probe's assertion; syntactically valid diagnostics
+        # must not certify an idle phase that recorded execution work.
+        if mode["status"] == "passed" and mode["mode"] == "B_SERVICE_ON_IDLE" and trace:
+            raise ValueError("passed_idle_requires_empty_trace")
     return value
 
 

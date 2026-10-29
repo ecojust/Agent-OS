@@ -8,7 +8,11 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
+import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.system.Os;
+import android.system.OsConstants;
+import android.system.StructPollfd;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Button;
 import android.widget.TextView;
@@ -35,7 +39,9 @@ import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -1016,8 +1022,8 @@ public final class AgentControllerInstrumentedTest {
         }
         StringBuilder result = new StringBuilder(viewState.get());
         List<AccessibilityWindowInfo> windows = device.service.getWindows();
-        if (windows == null) return result.append(";windows=unavailable").toString();
-        try {
+        if (windows == null) result.append(";windows=unavailable");
+        else try {
             result.append(";windowCount=").append(windows.size());
             for (int index = 0; index < Math.min(16, windows.size()) && result.length() < 2800; index++) {
                 AccessibilityWindowInfo window = windows.get(index);
@@ -1038,7 +1044,70 @@ public final class AgentControllerInstrumentedTest {
                 result.append('}');
             }
         } finally { for (AccessibilityWindowInfo window : windows) window.recycle(); }
-        return result.substring(0, Math.min(result.length(), 3000));
+        String local = result.substring(0, Math.min(result.length(), 1900));
+        // Separate, later server observations: they do not replace the original
+        // failed predicate or prove the state at the exact assertion instant.
+        return local + boundedRotationServerDump(device, "animator", 450)
+                + boundedRotationServerDump(device, "windows", 1400)
+                + boundedRotationServerDump(device, "displays", 1100);
+    }
+
+    private static String boundedRotationServerDump(DeviceHarness device, String scope, int limit) {
+        assertTrue("animator".equals(scope) || "windows".equals(scope) || "displays".equals(scope));
+        StringBuilder selected = new StringBuilder();
+        int matched = 0, count = 0;
+        boolean eof = false, timedOut = false, outputTruncated = false;
+        final int byteLimit = 128 * 1024;
+        long started = SystemClock.elapsedRealtime();
+        try (ParcelFileDescriptor descriptor = device.automation.executeShellCommand("dumpsys -t 2 window " + scope);
+             ParcelFileDescriptor.AutoCloseInputStream input = new ParcelFileDescriptor.AutoCloseInputStream(descriptor)) {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            byte[] buffer = new byte[4096];
+            StructPollfd poll = new StructPollfd(); poll.fd = descriptor.getFileDescriptor();
+            poll.events = (short) (OsConstants.POLLIN | OsConstants.POLLHUP | OsConstants.POLLERR);
+            while (count < byteLimit) {
+                long remaining = started + 3_000 - SystemClock.elapsedRealtime();
+                if (remaining <= 0) { timedOut = true; break; }
+                if (Os.poll(new StructPollfd[]{poll}, (int) Math.min(remaining, 100)) == 0) continue;
+                int next = input.read(buffer, 0, Math.min(buffer.length, byteLimit - count));
+                if (next < 0) { eof = true; break; }
+                count += next; bytes.write(buffer, 0, next);
+            }
+            String window = "unselected";
+            for (String raw : bytes.toString(StandardCharsets.UTF_8.name()).split("\\r?\\n")) {
+                String line = raw.trim();
+                boolean header = line.matches("Window #[0-9]+.*");
+                if (header) window = line.contains("Agent OS task controls") ? "controls"
+                        : line.contains(DeviceHarness.FIXTURE) ? "fixture" : "unselected";
+                boolean include;
+                if ("windows".equals(scope)) {
+                    include = !"unselected".equals(window) && line.matches(
+                            "(?:mGlobalScale|mDsDx|mHScale|mVScale|mHaveMatrix|mFrame|mCompatFrame|mDrawState|mShownAlpha|mAnimatingExit|mOrientationChanging|mLastFreezeDuration)=.*");
+                } else if ("displays".equals(scope)) {
+                    include = line.equals("no ScreenRotationAnimation") || line.equals("mScreenRotationAnimation:")
+                            || line.matches("(?:mCurRotation|mOriginalWidth|mStarted|mRotateExitAnimation|mRotateEnterAnimation|mEnterTransformation|mSnapshotInitialMatrix|mDisplayFrozen|mRotation|mLastOrientation)=.*");
+                } else {
+                    include = line.startsWith("DisplayContentsAnimator #") || header && !"unselected".equals(window)
+                            || line.startsWith("mCurrentTime=") || line.startsWith("mBulkUpdateParams=");
+                    // Identify only the two fixed synthetic window roles. Arbitrary
+                    // window titles, page text and component descriptions stay local.
+                    if (header && include) line = "Window role=" + window;
+                }
+                if (!include) continue;
+                matched++;
+                String entry = ";" + ("windows".equals(scope) ? window + ":" : "")
+                        + line.substring(0, Math.min(line.length(), 400));
+                if (line.length() > 400) outputTruncated = true;
+                int available = Math.max(0, limit - 210 - selected.length());
+                if (entry.length() > available) outputTruncated = true;
+                selected.append(entry, 0, Math.min(entry.length(), available));
+            }
+        } catch (Exception unavailable) {
+            return ";server_" + scope + "={read=unavailable,bytes=" + count + ",state=unknown}";
+        }
+        return ";server_" + scope + "={bytes=" + count + ",eof=" + eof + ",byteLimit=" + (count == byteLimit)
+                + ",timedOut=" + timedOut + ",matchedLines=" + matched + ",outputTruncated=" + outputTruncated
+                + ",missingFields=unknown" + selected + "}";
     }
 
     private static RotationControls awaitRotationControls(DeviceHarness device) throws Exception {

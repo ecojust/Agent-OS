@@ -43,14 +43,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 为API30 SAF失败增加不改变判定的祖先分类诊断和八档导入单案对照；本地编译与脚本检查通过，设备对照及本次录像待执行。
+**本次更新：** Archive actual API35 walkthrough evidence; local synthetic model, secure flags preserved
 
-**记录时间：** 2026-10-29T15:07:54Z
+**记录时间：** 2026-10-29T15:14:58Z
 
 [最近测试截图与清单](screenshots/third-party-40834304846-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40834304846)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/40876724536-1/demo.mp4) · [录制与验证清单](screenshots/demos/40876724536-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40876724536)。
-录制版本：[`aee3d4e01`](https://github.com/ecojust/Agent-OS/commit/aee3d4e015ab864fada973b8bb8c67bb0c90227e)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/40898464299-1/demo.mp4) · [录制与验证清单](screenshots/demos/40898464299-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40898464299)。
+录制版本：[`e923dd269`](https://github.com/ecojust/Agent-OS/commit/e923dd2697bfde3d4d57e46f216d5933a7f0b878)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 最近更新时间记录该条状态或进度说明的修改时间，采用 UTC；测试发生时间以对应证据为准。
 

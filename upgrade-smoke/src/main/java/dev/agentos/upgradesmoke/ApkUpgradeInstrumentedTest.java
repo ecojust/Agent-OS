@@ -1,5 +1,6 @@
 package dev.agentos.upgradesmoke;
 
+import android.Manifest;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.ComponentName;
@@ -12,6 +13,7 @@ import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -50,11 +52,13 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 
 /** Two separately invoked processes around one real package replacement; never a schema migration. */
 @RunWith(AndroidJUnit4.class)
 public final class ApkUpgradeInstrumentedTest {
     private static final String TARGET = "dev.agentos.app", FIXTURE = "dev.agentos.fixture";
+    private static final String SERVICE = TARGET + "/" + TARGET + ".AgentAccessibilityService";
     private static final String BASELINE = "b1fd337262775a505327088975a3320fe323f034";
     private static final String KEY = "synthetic-upgrade-key", MODEL = "synthetic-upgrade-model";
     private static final int OUTPUT = 3072, ROUNDS = 17, TOOLS = 43;
@@ -67,10 +71,11 @@ public final class ApkUpgradeInstrumentedTest {
     private AgentController controller;
     private MainActivity activity;
     private ExecutorService storageWorker, diagnosticsWorker;
+    private boolean dedicatedBaselineVerified;
     private Stage stage = Stage.ARGUMENTS;
 
     private enum Stage { ARGUMENTS, DEVICE, EMPTY_BASELINE, SAVE, LOAD, MAIN_READY,
-        FIXTURE_READY, START, APPROVAL, STOP, DRAIN, VERIFY_FRESH, CLEANUP, RECEIPT }
+        SERVICE_BINDING, FIXTURE_READY, START, APPROVAL, STOP, DRAIN, VERIFY_FRESH, CLEANUP, RECEIPT }
 
     @Test public void seedBaseline() throws Exception { runPhase(true); }
     @Test public void verifyCandidate() throws Exception { runPhase(false); }
@@ -84,6 +89,7 @@ public final class ApkUpgradeInstrumentedTest {
             automation = instrumentation.getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
             stage = Stage.DEVICE;
             requireDedicatedDevice(seed ? 1 : 2);
+            dedicatedBaselineVerified = seed;
             controller = AgentController.get(context);
             assertFreshController();
             SettingsStore store = new SettingsStore(context);
@@ -242,9 +248,8 @@ public final class ApkUpgradeInstrumentedTest {
     }
 
     private void runAndStopOneTask(SettingsStore.LoadedSettings loaded) throws Exception {
+        bindBaselineService();
         stage = Stage.FIXTURE_READY;
-        await(() -> AgentAccessibilityService.getInstance() != null
-                && AgentAccessibilityService.getInstance().isConnected(), READY_MILLIS, "SERVICE_NOT_CONNECTED");
         context.startActivity(new Intent().setComponent(new ComponentName(FIXTURE, FIXTURE + ".FixtureActivity"))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
         automation.waitForIdle(500, 8000);
@@ -288,6 +293,75 @@ public final class ApkUpgradeInstrumentedTest {
                 "STOPPED_RECEIPT_NOT_RETAINED");
         check(!stopped.summary.isEmpty() && !stopped.log.isEmpty() && controller.getTaskDiagnostics() != null,
                 "STOPPED_MEMORY_SAMPLE_MISSING");
+    }
+
+    private void bindBaselineService() throws Exception {
+        stage = Stage.SERVICE_BINDING;
+        check(dedicatedBaselineVerified, "BASELINE_SERVICE_SETUP_ONLY");
+        // Starting instrumentation replaces the target process. A component that
+        // was enabled by the host can consequently remain enabled but unbound.
+        // Rebind once only during v1 preparation, before there is a task. Never
+        // repair service state in candidate verification or change another service.
+        automation.adoptShellPermissionIdentity(Manifest.permission.WRITE_SECURE_SETTINGS);
+        try {
+            check(SERVICE.equals(Settings.Secure.getString(context.getContentResolver(),
+                    Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES))
+                    && "1".equals(Settings.Secure.getString(context.getContentResolver(),
+                    Settings.Secure.ACCESSIBILITY_ENABLED)), "HOST_SERVICE_SETUP_CHANGED");
+            writeServiceSetting(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, "");
+        } finally {
+            automation.dropShellPermissionIdentity();
+        }
+        await(() -> AgentAccessibilityService.getInstance() == null && frameworkServiceDisabled(),
+                READY_MILLIS, "SERVICE_NOT_DISCONNECTED");
+        automation.adoptShellPermissionIdentity(Manifest.permission.WRITE_SECURE_SETTINGS);
+        try {
+            check("".equals(Settings.Secure.getString(context.getContentResolver(),
+                    Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)), "SERVICE_STATE_CHANGED_BEFORE_BIND");
+            writeServiceSetting(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, SERVICE);
+            writeServiceSetting(Settings.Secure.ACCESSIBILITY_ENABLED, "1");
+        } finally {
+            automation.dropShellPermissionIdentity();
+        }
+        await(() -> {
+            AgentAccessibilityService service = AgentAccessibilityService.getInstance();
+            return service != null && service.isConnected();
+        }, READY_MILLIS, "SERVICE_NOT_CONNECTED");
+    }
+
+    private boolean frameworkServiceDisabled() throws Exception {
+        // Read the framework's consumed enabled set, not just the provider value:
+        // an already-null instance would otherwise allow disable/enable changes
+        // to coalesce before AccessibilityManagerService observes the disable.
+        try (ParcelFileDescriptor descriptor = automation.executeShellCommand("dumpsys -t 2 accessibility");
+             InputStream input = new ParcelFileDescriptor.AutoCloseInputStream(descriptor)) {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int count;
+            while ((count = input.read(buffer)) != -1) {
+                check(bytes.size() + count <= 65536, "SERVICE_STATE_OUTPUT_LIMIT");
+                bytes.write(buffer, 0, count);
+            }
+            String dump = bytes.toString(StandardCharsets.UTF_8.name());
+            return Pattern.compile("attributes:\\{id=0(?:,|\\})").matcher(dump).find()
+                    && emptyServiceSection(dump, "Bound services:", "Enabled services:")
+                    && emptyServiceSection(dump, "Enabled services:", "Binding services:")
+                    && emptyServiceSection(dump, "Binding services:", "Crashed services:");
+        }
+    }
+
+    private static boolean emptyServiceSection(String dump, String start, String end) {
+        int first = dump.indexOf(start);
+        if (first < 0 || dump.indexOf(start, first + start.length()) >= 0) return false;
+        int last = dump.indexOf(end, first + start.length());
+        return last >= 0 && dump.substring(first + start.length(), last).trim().matches("\\{\\s*\\}");
+    }
+
+    private void writeServiceSetting(String key, String value) {
+        check(dedicatedBaselineVerified && (Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES.equals(key)
+                || Settings.Secure.ACCESSIBILITY_ENABLED.equals(key)), "SERVICE_SETTING_SCOPE_INVALID");
+        check(Settings.Secure.putString(context.getContentResolver(), key, value), "SERVICE_SETTING_WRITE_FAILED");
+        check(value.equals(Settings.Secure.getString(context.getContentResolver(), key)), "SERVICE_SETTING_READBACK_FAILED");
     }
 
     private RunControl currentOwner() throws Exception {

@@ -1,0 +1,17 @@
+  | Report: /tmp/agent-os-junit-gc180cyl/report-01.xml
+  | Suite: dev.agentos.app.AgentControllerInstrumentedTest
+  | Test: dev.agentos.app.VisualEventGenerationInstrumentedTest.actualSameHeightStatusEventsPreserveTheOriginalLocalGuardAcrossRepeatedPublications
+  | Kind: failure / 
+  | java.lang.AssertionError: A real owned cosmetic event must not revoke this generation expected:<45> but was:<46>
+  | Visual invalidations: baseline=45,round=3,total=1,dropped=0,samplingFailed=false,matched={round=3,type=2048,content=2,windowChanges=0,windowId=869},controlsSampled=true,controlWindowMatches=true,controlAttachmentMatches=true
+  | round=3,generation=45->46,relativeAfterBaseline=1,type=2048,content=4,windowChanges=0,windowId=6,panel=true,attached=true,shown=true,laidOut=true,layoutRequested=false,bounds=[12,36][308,148],registration=true,identity=true,originalCurrent=false,originalRegistration=true,visual=true,visualRegistration=true,eventMatchesVisual=false,boundsMatchVisual=true,calls=invalidateVisualEvents:385;onAccessibilityEvent:1469
+  | at dev.agentos.app.VisualEventGenerationInstrumentedTest$VisualInvalidationProbe.report(VisualEventGenerationInstrumentedTest.java:215)
+  | at dev.agentos.app.VisualEventGenerationInstrumentedTest.actualSameHeightStatusEventsPreserveTheOriginalLocalGuardAcrossRepeatedPublications(VisualEventGenerationInstrumentedTest.java:101)
+  | ... 33 trimmed
+  | Caused by: java.lang.AssertionError: A real owned cosmetic event must not revoke this generation expected:<45> but was:<46>
+  | at org.junit.Assert.fail(Assert.java:89)
+  | at org.junit.Assert.failNotEquals(Assert.java:835)
+  | at org.junit.Assert.assertEquals(Assert.java:647)
+  | at dev.agentos.app.VisualEventGenerationInstrumentedTest.actualSameHeightStatusEventsPreserveTheOriginalLocalGuardAcrossRepeatedPublications(VisualEventGenerationInstrumentedTest.java:92)
+  | ... 34 more
+Parsed 1 Android reports; found 1 failure/error entries.

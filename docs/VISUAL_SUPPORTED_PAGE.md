@@ -2,6 +2,14 @@
 
 Source audit and implemented candidate, 2026-10-27. The internal adapter uses this policy, but the UI and service capture permission remain disabled. The actual page-predicate results are scoped below; they do not certify the complete capture-to-model path.
 
+## Current-source real-APK verification, 2026-10-29
+
+At the user's request to install and test real APKs, [run40834465238](https://github.com/ecojust/Agent-OS/actions/runs/40834465238) tested exact source `db1943a8afa46ad21d72ba6198614a383a042d3f` with the same unmodified official Calculator 1.4.0 APK. All **20/20 cases** passed: five fixed identities on each of API34,35,36,37.0, with zero failed or unverified cases. Each original instrumentation transcript reports `OK (5 tests)`. This is separate from the two-app off/idle installation probe and does not add a third application to that sample.
+
+[The archive](../screenshots/40834465238-1/manifest.json) contains128 payloads and1,345,965bytes. Source/run/job/artifact identities, the complete file set, sizes, SHA-256 hashes, per-case results and all28 actual320×640PNG files were independently checked. The44 predicate stages contain28acceptances and16rejections:12 `UNSUPPORTED_GEOMETRY`,4 `HIGH_IMPACT_CONTENT`; these stages do not increase the20-case denominator. Each case verifies the official installed APK, absent capture capability, absent image/gesture tools and zero model requests.
+
+Test-only pinned captures retain28images and16 `nonfull_or_unknown_overlapping_window` blocked records; standard collection separately retains20 `foreground_is_not_an_approved_synthetic_test_screen` blocked records. No secure-window flag was cleared. An actual API35 computed-result image was visually reviewed and displays5, but its independently sampled frame does not prove the predicate's exact instant. Production `observe` and page policy are exercised; arithmetic/menu preparation uses test node actions, not an AgentController/model task. The ordinary Fixture walkthrough is separate evidence and does not demonstrate these real-APK flows.
+
 ## Decision and exact identity
 
 Support one page: the **ordinary, fully visible portrait calculator keypad with its current formula/result**, in the fixed official Fossify Calculator 1.4.0 FOSS APK. The user reviews the application's current style in the exact final PNG and approves that PNG once for the original model recipient. A custom font or color is not a separate permission boundary, and does not require reading the target's private preferences. The policy does not promise a generic sensitive-pixel classifier.

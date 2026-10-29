@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "kind": "pinned-calculator-page-predicate",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "db1943a8afa46ad21d72ba6198614a383a042d3f",
+    "runId": 40834465238,
+    "attempt": 1
+  },
+  "matrixLabel": "35",
+  "status": "passed",
+  "expectedTests": 5,
+  "scope": "Real pinned Calculator and production service page predicate only; capture permission disabled",
+  "cases": [
+    {
+      "name": "ordinaryZeroAndComputedResultUseTheActualProductionSnapshot",
+      "status": "passed",
+      "record": "pinned-page/ordinaryZeroAndComputedResultUseTheActualProductionSnapshot.case.json"
+    },
+    {
+      "name": "actualOverflowMenuIsNotTheUnopenedToolbar",
+      "status": "passed",
+      "record": "pinned-page/actualOverflowMenuIsNotTheUnopenedToolbar.case.json"
+    },
+    {
+      "name": "nonemptyHistoryIsRejectedAndReturningNeedsANewObservation",
+      "status": "passed",
+      "record": "pinned-page/nonemptyHistoryIsRejectedAndReturningNeedsANewObservation.case.json"
+    },
+    {
+      "name": "actualSettingsPageIsRejected",
+      "status": "passed",
+      "record": "pinned-page/actualSettingsPageIsRejected.case.json"
+    },
+    {
+      "name": "actualUnitConverterPageIsRejected",
+      "status": "passed",
+      "record": "pinned-page/actualUnitConverterPageIsRejected.case.json"
+    }
+  ],
+  "driverSteps": [
+    {
+      "name": "install_agent",
+      "status": "passed",
+      "sha256": "91a1c33341143228a13163186730dcc6b7b917eec965ceec4e4ce972716d57a0"
+    },
+    {
+      "name": "install_fixture",
+      "status": "passed",
+      "sha256": "7c15b3eaf046917e72b37f8a9ec397187f0ccb65c8ccba318cb945be1d2686f5"
+    },
+    {
+      "name": "install_tests",
+      "status": "passed",
+      "sha256": "5695fad4e431fe278d4dcebf1d0af1405eb0540b28de8cd21bb495202fa5ff33"
+    },
+    {
+      "name": "install_calculator",
+      "status": "passed",
+      "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed"
+    },
+    {
+      "name": "instrumentation",
+      "status": "passed"
+    }
+  ],
+  "emulatorVersion": "37.2.12",
+  "device": {
+    "serial": "emulator-5554",
+    "api": 35,
+    "properties": {
+      "ro.kernel.qemu": "1",
+      "ro.boot.qemu": "1",
+      "ro.build.version.sdk": "35",
+      "ro.product.cpu.abi": "x86_64",
+      "sys.boot_completed": "1"
+    }
+  },
+  "animations": {
+    "window_animation_scale": "1.0",
+    "transition_animation_scale": "1.0",
+    "animator_duration_scale": "1.0"
+  },
+  "verifiedDownload": {
+    "package": "org.fossify.math",
+    "versionCode": "10",
+    "versionName": "1.4.0",
+    "minSdk": 26,
+    "targetSdk": 36,
+    "abis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "x86",
+      "x86_64"
+    ],
+    "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+    "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+    "sizeBytes": 7047681
+  },
+  "instrumentation": {
+    "selectedClass": "dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest",
+    "expectedTests": 5,
+    "exitCode": 0,
+    "passed": true,
+    "log": "instrumentation.json",
+    "bytes": 3722,
+    "sha256": "810a1031ae067910123c38ed21fffdc3f72556e489bf2f1039e89def83080b89"
+  },
+  "emulatorStepOutcome": "success"
+}

@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-29T16:28:45Z",
-  "note": "归档完整2167/2168、导入独立8/8及非阻塞录像失败；两案SAF实际重观察后通过。修复API37导航失败诊断被runner裁剪的问题，保留原断言，新增八档单案对照；编译、真实runner宿主验证及103项脚本检查通过。",
+  "updated_at": "2026-10-29T16:56:04Z",
+  "note": "继续排查失败项：修正SAF失效节点准备和API32独立窗口初始化；最新同源完整2168/2168、导航独立8/8，原始证据已核验归档。旋转与导航旧间歇原因仍保留，检查点继续记录未完成边界。",
   "latest_evidence": {
-    "path": "screenshots/40906944025-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40906944025"
+    "path": "screenshots/40913005561-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40913005561"
   },
   "checkpoints": [
     {
@@ -84,10 +84,10 @@
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
       "status": "in_progress",
-      "evidence": "screenshots/40906944025-1/manifest.json",
-      "scope": "Latest exact309c2f759/run40906944025 full:271 identities/API x8=2168,2167pass/1fail,zero errors/skips/missing/extra/duplicates/unreadable. API30-36 each271/271;API37 NavigationObservationGuard#anUnscopedSettingsWindowCannotBeReplacedByAnAutomaticLaunch fails its required TASK_PAUSED contract. Original return/dispatch metadata absent because runner trims top-level suppressed;normal error return is not proof of launch. Current test-only change preserves the same bounded metadata in assertion message/cause plus fixed navigation-origin-diagnostic8case scope;compile/actual runner host transport check/103 script tests and review passed,device result pending. Rotation8/8 this run does not repair old42db API30 bounded-reobservation exhaustion. SAF48/48 with2 actual reobserved-1-depth-0 markers in passed API30 malformed/cancel and API35 export cases;48setup markers allprior1. Standalone exact309c/run40907079764 import8/8 allprior0 with original business assertions,32payload/30564B/24blocked/0PNG. Probe dc1b/run40905112472 and all old failures retained. Full4472payload/47431770B/2272PNG verified,1493blocked,24 prior secure exceptions unchanged;8performance reports diagnostic-only. Old270 subset2159/2160. Remaining API-only boundaries:MainActivity rotation drafts,multiwindow/PiP,process-death,in-flight upgrade;completion list needs freezing.Real-model/phone/ROM/broad-app/performance are separate checkpoints.",
-      "details": "最新完整2167/2168；SAF48/48并有两案真实重观察恢复，API32独立初始化修正8/8。旋转本轮8/8，旧间歇原因未认定修复。唯一API37导航来源拒绝失败的返回诊断被runner裁剪，已修输出并加八档专项待执行。未完成：导航失败、旋转细类、主界面旋转草稿、多窗口/PiP、进程终止、执行中升级。下一步：读取专项返回/派发证据并冻结剩余必测清单。",
-      "updated_at": "2026-10-29T16:28:45Z"
+      "evidence": "screenshots/40913005561-1/manifest.json",
+      "scope": "Latest exact3f2bf1da0556ee532c8d793073a0eeac313468ae/run40913005561 full:271 identities/API x8=2168/2168,zero failures/errors/skips/missing/extra/duplicates/unreadable;old270 subset2160/2160. Rotation and navigation each8/8;same-source fixed navigation-origin-diagnostic run40912125258 independently8/8,32payload/28892B/16blocked/0PNG/fullSuiteAcceptance=false. Neither run reproduced old309c API37 normal-return failure; bounded failure metadata now survives runner trimming in a host transport check,not yet exercised by a device failure. Old42db API30 rotation bounded-reobservation exhaustion remains unexplained at its window/control/revision subtype. SAF48/48,2 actual reobserved-1-depth-0 markers in passed API30 malformed/cancel and API31 export cases;48setup markers allprior1. Previous309c full recovery cases were API30 andAPI35 and remain separate. Standalone exact309c/run40907079764 import8/8 including API32,allprior0 with original business assertions,32payload/30564B/24blocked/0PNG. All old failures and dc1b ordered probe retained. Latest full4473payload/47236449B/2273PNG verified,1495blocked,24 prior secure exceptions unchanged;8performance reports diagnostic-only. Remaining API-only boundaries:MainActivity rotation drafts,multiwindow/PiP,process-death,in-flight upgrade;completion list needs freezing. Real-model/phone/ROM/broad-app/performance are separate checkpoints.",
+      "details": "最新同源完整2168/2168，导航独立8/8；SAF48/48，两案实际重新观察后通过；独立导入八档8/8（含API32）。旧旋转与导航本轮未复现，根因未关闭。未完成：历史失败细类、主界面旋转草稿、多窗口/PiP、进程终止、执行中升级。下一步：用新增诊断追踪间歇失败，冻结剩余必测清单并先补主界面真实旋转。",
+      "updated_at": "2026-10-29T16:56:04Z"
     },
     {
       "id": "performance",

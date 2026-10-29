@@ -41,14 +41,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 三类API35实际录像已按源码aee3d4e01启动；归档补充保留仪器初始化失败的原始诊断，四项业务仍列未验证，不虚增测试项。19项归档边界检查通过，新视频待归档。
+**本次更新：** Archive actual API35 walkthrough evidence; local synthetic model, secure flags preserved
 
-**记录时间：** 2026-10-29T12:52:39Z
+**记录时间：** 2026-10-29T12:56:57Z
 
 [最近测试截图与清单](screenshots/third-party-40834304846-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40834304846)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/40834468768-1/demo.mp4) · [录制与验证清单](screenshots/demos/40834468768-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40834468768)。
-录制版本：[`db1943a8a`](https://github.com/ecojust/Agent-OS/commit/db1943a8afa46ad21d72ba6198614a383a042d3f)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/40876724536-1/demo.mp4) · [录制与验证清单](screenshots/demos/40876724536-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40876724536)。
+录制版本：[`aee3d4e01`](https://github.com/ecojust/Agent-OS/commit/aee3d4e015ab864fada973b8bb8c67bb0c90227e)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 | 检查点 | 状态 |
 | --- | --- |

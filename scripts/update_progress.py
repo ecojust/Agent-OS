@@ -2,6 +2,7 @@
 """Generate the README progress section from explicit engineering checkpoints."""
 import argparse
 from datetime import datetime, timezone
+import html
 import json
 from pathlib import Path
 import re
@@ -19,13 +20,71 @@ def single_line(value):
     return " ".join(str(value).split()).replace("|", "\\|").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def render(data):
-    points = data["checkpoints"]
+def table_text(value):
+    text = html.escape(" ".join(str(value).split()), quote=False)
+    return re.sub(r"([\\`*_\[\]|])", r"\\\1", text)
+
+
+def validate_timestamp(value):
+    if not isinstance(value, str) or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", value):
+        raise ValueError("Checkpoint updated_at must use YYYY-MM-DDTHH:MM:SSZ (UTC)")
+    try:
+        datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+    except ValueError as error:
+        raise ValueError("Checkpoint updated_at must be a valid UTC date and time") from error
+
+
+def validate_checkpoints(points):
     ids = [item["id"] for item in points]
     if not points or len(ids) != len(set(ids)):
         raise ValueError("Checkpoints must be nonempty and have unique IDs")
     if any(item["status"] not in LABELS for item in points):
         raise ValueError("Unknown checkpoint status")
+    for item in points:
+        if "details" in item and not isinstance(item["details"], str):
+            raise ValueError("Checkpoint details must be text")
+        if "updated_at" in item:
+            validate_timestamp(item["updated_at"])
+
+
+def update_checkpoints(points, statuses, details, updated_at):
+    """Return edited rows; timestamp only their final status/details changes."""
+    validate_checkpoints(points)
+    validate_timestamp(updated_at)
+    lookup = {item["id"]: dict(item) for item in points}
+    for field, changes in (("status", statuses), ("details", details)):
+        for change in changes:
+            key, sep, value = change.partition("=")
+            if not sep or key not in lookup:
+                raise ValueError("Expected a known CHECKPOINT=VALUE")
+            if field == "status" and value not in LABELS:
+                raise ValueError("Unknown checkpoint status")
+            if field == "details":
+                value = value.strip()
+                if not value:
+                    raise ValueError("Checkpoint detail must not be empty")
+            lookup[key][field] = value
+    for original in points:
+        item = lookup[original["id"]]
+        if any(item.get(field) != original.get(field) for field in ("status", "details")):
+            item["updated_at"] = updated_at
+    return list(lookup.values())
+
+
+def checkpoint_evidence(value):
+    """Only link simple repository paths and this repository's HTTPS URLs."""
+    if not isinstance(value, str):
+        raise ValueError("Checkpoint evidence must be a repository path or HTTPS URL")
+    path = value.removeprefix("https://github.com/ecojust/Agent-OS/")
+    if (not re.fullmatch(r"[A-Za-z0-9._/-]+", path)
+            or any(part in ("", ".", "..") for part in path.split("/"))):
+        raise ValueError("Checkpoint evidence must be a safe repository path or repository HTTPS URL")
+    return f"[依据]({value})"
+
+
+def render(data):
+    points = data["checkpoints"]
+    validate_checkpoints(points)
     complete = sum(item["status"] == "complete" for item in points)
     total = len(points)
     percent = round(100 * complete / total)
@@ -64,9 +123,15 @@ def render(data):
             f"录制版本：[`{source[:9]}`](https://github.com/ecojust/Agent-OS/commit/{source})。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。", ""])
     else:
         lines.extend(["**整体操作演示：** 正在接入真实操作录制，完成后提供小于 100 MB 的视频与对应源码记录；尚未录制的过程不以示意动画代替。", ""])
-    lines.extend(["| 检查点 | 状态 |", "| --- | --- |"])
+    lines.extend(["最近更新时间记录该条状态或进度说明的修改时间，采用 UTC；测试发生时间以对应证据为准。", "",
+                  "| 检查点 | 状态 | 详细进度 | 最近更新时间（UTC） |", "| --- | --- | --- | --- |"])
     for item in points:
-        lines.append(f"| {single_line(item['name'])} | {LABELS[item['status']]} |")
+        detail = table_text(item.get("details") or item.get("reason") or "尚未记录详细进度")
+        if item.get("evidence"):
+            detail += " " + checkpoint_evidence(item["evidence"])
+        updated_at = item.get("updated_at")
+        when = updated_at.replace("T", " ").removesuffix("Z") if updated_at else "未记录"
+        lines.append(f"| {table_text(item['name'])} | {LABELS[item['status']]} | {detail} | {when} |")
     lines.extend(["", "依据：[进度源数据](docs/progress.json) · [实现与验证范围](IMPLEMENTATION.md) · [测试截图](screenshots/README.md) · [操作演示说明](docs/validation/operation-demo.md)。", END])
     return "\n".join(lines), svg
 
@@ -75,21 +140,22 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--note")
     parser.add_argument("--status", action="append", default=[], metavar="CHECKPOINT=STATUS")
+    parser.add_argument("--detail", action="append", default=[], metavar="CHECKPOINT=TEXT")
     parser.add_argument("--evidence-path")
     parser.add_argument("--run-url")
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    if args.check and (args.note or args.status or args.evidence_path or args.run_url):
+    if args.check and (args.note is not None or args.status or args.detail
+                       or args.evidence_path is not None or args.run_url is not None):
         parser.error("--check cannot modify progress")
     data = json.loads(DATA.read_text(encoding="utf-8"))
     if data.get("schema_version") != 1:
         parser.error("Unsupported progress format")
-    lookup = {item["id"]: item for item in data["checkpoints"]}
-    for change in args.status:
-        key, sep, value = change.partition("=")
-        if not sep or key not in lookup or value not in LABELS:
-            parser.error("Unknown checkpoint or status")
-        lookup[key]["status"] = value
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    try:
+        data["checkpoints"] = update_checkpoints(data["checkpoints"], args.status, args.detail, now)
+    except ValueError as error:
+        parser.error(str(error))
     if bool(args.evidence_path) != bool(args.run_url):
         parser.error("--evidence-path and --run-url are required together")
     if args.evidence_path:
@@ -106,9 +172,12 @@ def main():
             data["note"] = "归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。"
     if args.note:
         data["note"] = " ".join(args.note.split())
-    if args.note or args.status or args.evidence_path:
-        data["updated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
-    section, svg = render(data)
+    if args.note or args.status or args.detail or args.evidence_path:
+        data["updated_at"] = now
+    try:
+        section, svg = render(data)
+    except ValueError as error:
+        parser.error(str(error))
     previous = README.read_text(encoding="utf-8")
     if BEGIN in previous and END in previous:
         start, tail = previous.split(BEGIN, 1)

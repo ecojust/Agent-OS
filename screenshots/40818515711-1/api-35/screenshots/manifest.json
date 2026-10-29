@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "api": 35,
+  "runId": "1793248689501-1156adef",
+  "scope": "Dedicated synthetic Android fixture and verified empty application UI only",
+  "jvmTests": "No UI; no screenshot is claimed for JVM tests",
+  "tests": [
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.AgentControllerInstrumentedTest",
+      "testName": "realRotationRejectsOldApprovalAndKeepsControlsReachable",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793248689502,
+      "finishedAt": 1793248695078,
+      "captures": [
+        {
+          "stage": "portrait-pending-approval-before-real-rotation",
+          "capturedAt": 1793248693510,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-realRotationRejectsOldApprovalAndKeepsControlsReachable-93fe6353-portrait-pending-approval-before-real-rotation-0.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        },
+        {
+          "stage": "landscape-current-controls-old-view-listeners-inert",
+          "capturedAt": 1793248693835,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-realRotationRejectsOldApprovalAndKeepsControlsReachable-93fe6353-landscape-current-controls-old-view-listeners-inert-1.png",
+          "width": 640,
+          "height": 320,
+          "secureWindowTemporarilyCleared": false
+        },
+        {
+          "stage": "landscape-current-pause-control-invalidates-pending-approval",
+          "capturedAt": 1793248694322,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-realRotationRejectsOldApprovalAndKeepsControlsReachable-93fe6353-landscape-current-pause-control-invalidates-pending-approval-2.png",
+          "width": 640,
+          "height": 320,
+          "secureWindowTemporarilyCleared": false
+        },
+        {
+          "stage": "landscape-stopped-old-approvals-cannot-resume",
+          "capturedAt": 1793248694771,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-realRotationRejectsOldApprovalAndKeepsControlsReachable-93fe6353-landscape-stopped-old-approvals-cannot-resume-3.png",
+          "width": 640,
+          "height": 320,
+          "secureWindowTemporarilyCleared": false
+        },
+        {
+          "stage": "finished",
+          "capturedAt": 1793248694932,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-realRotationRejectsOldApprovalAndKeepsControlsReachable-93fe6353-finished-4.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    }
+  ]
+}

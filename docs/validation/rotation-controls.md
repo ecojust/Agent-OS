@@ -33,7 +33,7 @@
 
 [API35原始诊断](diagnostics/rotation-40816128028-api35/)证明实际旋转后的旧计划被明确拒绝为未提交的 `STALE_OBSERVATION`，任务派发0；随后原 `REJECT_CLICK` 合成模型要求读取横屏可视区域外的 `counter_value`，因此整个用例仍失败。修正采用独立 `ROTATION_INPUT` 场景，选择两种方向都可观察的 `edit_value`，提出但不执行输入，结束时核对原编辑文本。旧计数器场景及产品实现不改；仍要求严格未提交旧结果后才重新观察和规划，原派发、审批、窗口、接管及恢复断言不放宽。现有规划器回归增加“只有编辑框可见”的正例和未知/已接受写结果拒绝，不增加方法或改变271项分母。首轮合同与结果保留，不能将新的目标契约通过写回旧源码。
 
-[API30独立原始诊断](diagnostics/rotation-40816128028-api30/)确认在`system_rotation`阶段等待当前无障碍审批窗口超时，派发0、模型请求1，截图已为横屏。原日志不足以区分本地身份与平台缓存未就绪，不宣称已证明缓存根因。测试现只在API30的竖屏截图之后、实际旋转之前重新应用UiAutomation原有ServiceInfo，沿用既有字体测试的同进程节点缓存准备；不修改服务声明、原五秒窗口等待、观察校验或执行保护。失败时额外保存至多16个窗口及本地身份、布局、按钮状态等有界元数据，不采集页面正文、不刷新或重试失败断言。
+[API30独立原始诊断](diagnostics/rotation-40816128028-api30/)确认在`system_rotation`阶段等待当前无障碍审批窗口超时，派发0、模型请求1，截图已为横屏。原日志不足以区分本地身份与平台缓存未就绪，不宣称已证明缓存根因。第二轮测试曾只在API30的竖屏截图之后、实际旋转之前重新应用UiAutomation原有ServiceInfo，沿用既有字体测试的同进程节点缓存准备；不修改服务声明、原五秒窗口等待、观察校验或执行保护。失败时额外保存至多16个窗口及本地身份、布局、按钮状态等有界元数据，不采集页面正文、不刷新或重试失败断言。
 
 首轮源码的普通API35录像另已归档，36.082秒、428037字节，使用本地合成模型并保留安全窗口标志，不运行旋转用例，不替代0/8结果。修正源码设备复测与新录像仍待执行。
 
@@ -50,8 +50,16 @@ AOSP11旋转动画路径存在宽高扩大2像素的变换，与该形态一致�
 
 以下调整先于v2设备测试声明，改变检查顺序，不修改产品代码或把旧合同记为通过。原始v1的旋转后、批准前平台精确登记要求及其0/8、7/8结果继续保留；源码`8e04afa9092d00270c53485d3035ea0bcc1fb8fb`的[完整回归40817787638](https://github.com/ecojust/Agent-OS/actions/runs/40817787638)也仍使用v1。
 
-代码复核发现，测试的`registeredExpandedWindow()`直接读取`service.getWindows()`，而生产`AndroidDeviceTools.freshWindows()`会先刷新交互缓存再读窗口。AOSP11的[服务配置更新](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r48/core/java/android/accessibilityservice/AccessibilityService.java#1971)清理缓存，[窗口读取](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r48/core/java/android/view/accessibility/AccessibilityInteractionClient.java#314)可能先返回缓存；这些语义并不证明历史2像素差异的根因。实际执行器在等待确认期间仍持设备操作锁，测试线程不能越过该锁自行调用刷新。此前旋转前重新应用UiAutomation配置的准备步骤已证实无效，v2移除此步骤。
+代码复核发现，测试的`registeredExpandedWindow()`直接读取`service.getWindows()`，而生产`AndroidDeviceTools.freshWindows()`会先刷新交互缓存再读窗口。AOSP11的[服务配置更新](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r48/core/java/android/accessibilityservice/AccessibilityService.java#1971)清理缓存，[窗口读取](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r48/core/java/android/view/accessibility/AccessibilityInteractionClient.java#314)可能先返回缓存；这些语义并不证明历史2像素差异的根因。实际执行器在等待确认期间仍持设备操作锁，测试线程不能越过该锁自行调用刷新。此前旋转前重新应用UiAutomation配置的准备步骤未消除差异，v2移除此步骤。
 
-v2在旋转后的原五秒内，一次核对当前实际控件的身份、审批与回调、执行代次、已布局状态、精确View边界、安全区域及48dp尺寸，并验证旧监听器无效；这一阶段不再声称批准前无障碍窗口登记已精确。随后通过当前真实按钮批准旧请求，必须由原执行器返回明确未提交的`STALE_OBSERVATION`，再由真实HTTP流程重新观察并生成不同审批。只有此后原有平台窗口ID、类型、显示、精确边界、根节点及包名检查全部通过，才继续暂停与停止验证。所有阶段仍要求零派发、零接受写入和旧审批不可复用。
+v2在旋转后的原五秒预算内，取得当前实际控件的身份、审批与回调、执行代次、已布局状态及精确View边界的一致本地快照，核对暂停/停止按钮的安全区域和48dp尺寸；随后验证旧监听器无效。这一阶段不再声称批准前无障碍窗口登记已精确。随后通过当前真实按钮批准旧请求，必须由原执行器返回明确未提交的`STALE_OBSERVATION`，再由真实HTTP流程重新观察并生成不同审批。只有此后原有平台窗口ID、类型、显示、精确边界、根节点及包名检查全部通过，才继续暂停与停止验证。所有阶段仍要求零派发、零接受写入和旧审批不可复用。
 
 v2不由测试线程刷新缓存、不释放或抢占原工作线程的锁，不增大等待期限、增加边界容差或重建窗口。原其他用例与通用精确登记辅助方法保持不变；用例身份与完整回归分母仍为271项/API。v2专项、同源码完整回归及普通录像分别取得并记录结果，旧结果不能拼接为新合同通过。
+
+## v2专项实际结果
+
+精确源码`43381e9e9c67f1c6eb7c5fbf4ced0ed5e03fa9da`的[专项40818515711](https://github.com/ecojust/Agent-OS/actions/runs/40818515711)为**8/8通过**，零失败、错误、跳过、缺失、额外、重复和不可读记录。[原始归档](../../screenshots/40818515711-1/manifest.json)的72份载荷、1247921字节、40张实际PNG（16张竖屏、24张横屏）已核对完整集合、大小、SHA-256、解码、引用、逐案JSON和采集的JUnit汇总；9个源运行作业均成功。未取得本地原始XML，不将汇总核对称为独立重解析原XML。
+
+没有新增清除安全窗口标志的例外。API30暂停阶段的PNG仍显示审批画面，不能用该图证明暂停状态已经绘制；控制器暂停、代次失效和后续停止由实际设备断言核对，本案没有新增绘制同步或物理触摸命中验收。专项未运行性能探针，八份invalid采集状态不算性能通过，`fullSuiteAcceptance=false`保持原值。
+
+同源码[普通操作录像](../../screenshots/demos/40818518510-1/manifest.json)为36.295秒、437801字节，30份载荷及图像/视频解码核对通过，安全窗口保留；普通流程不执行旋转专项。同源码[完整271×8回归40818512531](https://github.com/ecojust/Agent-OS/actions/runs/40818512531)另行运行，不能用本专项八项推算其结果。原API30批准前2像素差异及旧完整回归的API33文件选择器失败仍保留各自来源，不把v2重排称为历史根因修复。

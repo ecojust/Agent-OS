@@ -14,6 +14,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.agentos.core.ActionConfirmationPolicy.Mode;
+import dev.agentos.core.RunControl;
 import dev.agentos.core.TaskControlException;
 import org.junit.Rule;
 import org.junit.Test;
@@ -21,6 +22,8 @@ import org.junit.runner.RunWith;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static dev.agentos.app.DeviceHarness.*;
@@ -209,6 +212,132 @@ public final class NavigationObservationGuardInstrumentedTest {
                 throw failure;
             }
         }
+    }
+
+    @Test public void aKnownUnscopedSettingsOriginStillPausesAfterControlWindowRecreation() throws Exception {
+        try (DeviceHarness device = new DeviceHarness();
+             LocalControllerModelServer server = new LocalControllerModelServer(LocalControllerModelServer.Scenario.REJECT_CLICK);
+             ControllerTestSettings settings = new ControllerTestSettings(device.context, server, Mode.CONTINUOUS_NAVIGATION);
+             PerformanceTrace.Session trace = PerformanceTrace.startDiagnostics()) {
+            AtomicInteger approvals = new AtomicInteger();
+            NavigationDiagnostic diagnostic = new NavigationDiagnostic();
+            diagnostic.values.addProperty("recreationVerified", false);
+            try {
+                AndroidDeviceTools tools = guardedTools(device, settings, approvals);
+                resolveSettingsOrigin(device, diagnostic);
+                diagnostic.phase("settings_launch");
+                device.context.startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                device.awaitUiIdle();
+                diagnostic.phase("settings_observation");
+                JsonObject before = awaitSettingsObservation(tools, device, diagnostic);
+                assertFalse(before.get("scoped").getAsBoolean());
+                assertEquals(0, before.getAsJsonArray("nodes").size());
+                assertFalse("Settings itself must be unscoped without another overlay", before.get("hasOcclusion").getAsBoolean());
+                FocusedOrigin focused = focusedOrigin(device, diagnostic);
+                diagnostic.values.add("beforeFocus", focused.metadata());
+                assertEquals("SETTINGS", focused.classification);
+                assertEquals(before.get("windowId").getAsInt(), focused.windowId);
+                assertEquals(focused.windowId, focused.rootWindowId);
+
+                RunControl owner = device.control;
+                long epoch = owner.getExecutionEpoch();
+                String profile = owner.getProfileId();
+                SettingsStore.ConfigurationLease configuration = settings.lease;
+                assertEquals(profile, string(before, "profileId"));
+                assertTrue(SettingsStore.isCurrent(configuration));
+                AgentAccessibilityService service = device.service;
+                diagnostic.phase("original_control_readiness");
+                AgentAccessibilityService.OwnedControlWindowIdentity originalIdentity =
+                        awaitRealControlWindow(service.acquireOwnedControlWindowIdentity());
+                AgentAccessibilityService.ControlLease originalLease = awaitRealControlWindow(service.acquireControlLease());
+                assertTrue(service.isOwnedControlWindowCurrent(originalIdentity));
+                assertTrue(service.isControlLeaseCurrent(originalLease));
+                assertTrue(originalLease.matchesOriginalAttachment(originalIdentity));
+
+                diagnostic.phase("control_recreation");
+                // Real removal and addView produce the replacement registration. No
+                // private identity, epoch, callback or platform metadata is fabricated.
+                device.instrumentation.runOnMainSync(() -> {
+                    service.hideOverlay();
+                    assertNull(service.getOwnedControlWindowIdentity());
+                    assertFalse(service.isOwnedControlWindowCurrent(originalIdentity));
+                    assertFalse(service.isControlLeaseCurrent(originalLease));
+                    service.showOverlay("Integration test", false, "");
+                    // hideOverlay clears package monitoring; restore this adapter's
+                    // original authorized set without replacing its observed baseline.
+                    service.watchPackages(Collections.singleton(FIXTURE));
+                });
+                diagnostic.phase("recreated_control_readiness");
+                AgentAccessibilityService.OwnedControlWindowIdentity recreatedIdentity =
+                        awaitRealControlWindow(service.acquireOwnedControlWindowIdentity());
+                AgentAccessibilityService.ControlLease recreatedLease = awaitRealControlWindow(service.acquireControlLease());
+                assertNotSame(originalIdentity, recreatedIdentity);
+                assertFalse(service.isOwnedControlWindowCurrent(originalIdentity));
+                assertFalse(service.isControlLeaseCurrent(originalLease));
+                assertTrue(service.isOwnedControlWindowCurrent(recreatedIdentity));
+                assertTrue(service.isControlLeaseCurrent(recreatedLease));
+                assertTrue(recreatedLease.matchesOriginalAttachment(recreatedIdentity));
+                assertFalse("A real new attachment must not match the old observation's controls",
+                        recreatedLease.matchesOriginalAttachment(originalIdentity));
+                assertSame(owner, device.control);
+                assertEquals(profile, owner.getProfileId());
+                assertEquals(profile, SettingsStore.currentProfileId(device.context));
+                assertSame(configuration, settings.lease);
+                assertTrue(SettingsStore.isCurrent(configuration));
+                assertEquals(epoch, owner.getExecutionEpoch());
+                assertFalse(owner.isPaused());
+                assertFalse(owner.isCancelled());
+                assertEquals(0, approvals.get());
+                assertEquals(0, owner.getDispatchAttempts());
+                assertEquals(0, server.requestCount());
+                FocusedOrigin ready = focusedOrigin(device, diagnostic);
+                diagnostic.values.add("recreatedFocus", ready.metadata());
+                assertEquals("Settings must retain the actual input focus after control recreation", "SETTINGS", ready.classification);
+                assertEquals(focused.windowId, ready.windowId);
+                assertEquals(ready.windowId, ready.rootWindowId);
+                diagnostic.values.addProperty("recreationVerified", true);
+
+                // Do not observe again: this single call must retain the successful
+                // Settings observation and its now-revoked control attachment.
+                JsonObject args = new JsonObject(); args.addProperty("packageName", FIXTURE);
+                diagnostic.phase("launch_app_after_recreation");
+                diagnostic.values.addProperty("epochBefore", epoch);
+                diagnostic.traceStart = trace.events().size();
+                diagnostic.values.addProperty("outcome", "ENTERED");
+                try {
+                    JsonObject returned = tools.execute("launch_app", args, owner, epoch);
+                    diagnostic.values.addProperty("outcome", "RETURNED");
+                    diagnostic.recordResult("return", returned);
+                    fail("Known unscoped Settings origin returned without the required source interruption after control recreation");
+                } catch (TaskControlException paused) {
+                    diagnostic.values.addProperty("outcome", "CONTROL_EXCEPTION");
+                    diagnostic.values.addProperty("exceptionCode", fixedCode(paused.getCode()));
+                    assertEquals("TASK_PAUSED", paused.getCode());
+                }
+                diagnostic.phase("post_launch_assertions");
+                assertTrue(owner.isPaused());
+                assertFalse(owner.isCancelled());
+                assertEquals(0, approvals.get());
+                assertEquals(0, owner.getDispatchAttempts());
+                assertNoDispatch(trace);
+                assertEquals(0, server.requestCount());
+                FocusedOrigin after = focusedOrigin(device, diagnostic);
+                diagnostic.values.add("afterFocus", after.metadata());
+                assertEquals("The original Settings package must retain focus", "SETTINGS", after.classification);
+                screenshots.capture("known-unscoped-origin-pauses-after-real-control-recreation");
+            } catch (Exception | AssertionError failure) {
+                String snapshot = diagnostic.attach(failure, device, server, approvals, trace);
+                if (failure instanceof AssertionError) {
+                    throw new AssertionError(failure.getMessage() + "\nnavigationDiagnostic=" + snapshot, failure);
+                }
+                throw failure;
+            }
+        }
+    }
+
+    private static <T> T awaitRealControlWindow(CompletableFuture<T> future) throws Exception {
+        try { return future.get(5, TimeUnit.SECONDS); }
+        finally { future.cancel(false); }
     }
 
     private static void resolveSettingsOrigin(DeviceHarness device, NavigationDiagnostic diagnostic) {

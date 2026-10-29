@@ -134,7 +134,8 @@ class EvidenceTests(unittest.TestCase):
                       "activity-font-scale-diagnostic --class AnotherClass",
                       "rotation-diagnostic --class AnotherClass",
                       "numeric-import-diagnostic --class AnotherClass",
-                      "navigation-origin-diagnostic --class AnotherClass", "future-scope"):
+                      "navigation-origin-diagnostic --class AnotherClass",
+                      "navigation-origin-rebuild-diagnostic --class AnotherClass", "future-scope"):
             with self.subTest(scope=scope):
                 self.check_test_exit("30", 30, scope=scope, expected_exit=2, invalid_scope=True)
 
@@ -1372,6 +1373,135 @@ class EvidenceTests(unittest.TestCase):
         expected = json.dumps({"tests": [{"testClass": test_class, "testName": method,
                               "testResult": "pass", "captures": [blocked]}]}).encode()
         for api in manifest["apis"]:
+            self.assertEqual(0, api["screenshotCount"])
+            self.assertEqual((1, 0, 1, 0), (api["recordedTests"], api["testsWithScreenshots"],
+                             api["testsWithoutScreenshots"], api["unrecordedTests"]))
+            self.assertEqual({"capture.json", "screenshots/manifest.json"},
+                             {item["path"] for item in api["files"]})
+            record = next(item for item in api["files"] if item["path"] == "screenshots/manifest.json")
+            self.assertEqual((len(expected), hashlib.sha256(expected).hexdigest()),
+                             (record["bytes"], record["sha256"]))
+        self.assertIn("case results do not require a PNG", readme)
+
+    def test_navigation_origin_rebuild_shell_selects_only_its_fixed_case_and_preserves_failure(self):
+        self.assertEqual("dev.agentos.app.NavigationObservationGuardInstrumentedTest#aKnownUnscopedSettingsOriginStillPausesAfterControlWindowRecreation",
+                         collector.NAVIGATION_ORIGIN_REBUILD_TEST)
+        self.check_test_exit("30", 30, scope=collector.NAVIGATION_ORIGIN_REBUILD_SCOPE)
+        self.check_test_exit("31", 31, scope=collector.NAVIGATION_ORIGIN_REBUILD_SCOPE)
+        self.check_test_exit("37.0", 37, scope=collector.NAVIGATION_ORIGIN_REBUILD_SCOPE)
+
+    def test_navigation_origin_rebuild_archive_requires_exact_scope_and_case_and_cannot_masquerade_as_full(self):
+        run = source_run()
+        run.update(event="workflow_dispatch", display_title=publisher.NAVIGATION_ORIGIN_REBUILD_TITLE)
+        self.assertEqual(collector.NAVIGATION_ORIGIN_REBUILD_SCOPE, publisher.android_execution_scope(run))
+        run["display_title"] += " --class Other"
+        with self.assertRaises(ValueError):
+            publisher.android_execution_scope(run)
+        for event, title in (("push", publisher.NAVIGATION_ORIGIN_REBUILD_TITLE),
+                             ("workflow_dispatch", "Android checks")):
+            with self.subTest(event=event), self.assertRaises(subprocess.CalledProcessError):
+                self.diagnostic_archive({"30": "passed"}, collector.NAVIGATION_ORIGIN_REBUILD_SCOPE,
+                                        run_overrides={"event": event, "display_title": title})
+        for scope in ("full", *collector.DIAGNOSTIC_SELECTIONS):
+            if scope == collector.NAVIGATION_ORIGIN_REBUILD_SCOPE:
+                continue
+            with self.subTest(scope=scope), self.assertRaises(subprocess.CalledProcessError):
+                self.diagnostic_archive({"30": "passed"}, collector.NAVIGATION_ORIGIN_REBUILD_SCOPE,
+                                        artifact_scope=scope)
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.diagnostic_archive({"30": "passed"}, collector.NAVIGATION_ORIGIN_REBUILD_SCOPE,
+                                    manifest_selection=collector.NAVIGATION_ORIGIN_TEST)
+
+    def test_navigation_origin_rebuild_finalize_keeps_missing_reports_and_refuses_relabelling(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            command = ["python3", str(SCRIPTS / "collect_android_evidence.py"), "finalize",
+                       "--matrix-label", "30", "--scope", collector.NAVIGATION_ORIGIN_REBUILD_SCOPE]
+            subprocess.run(command, cwd=root, check=True, capture_output=True, text=True)
+            path = root / "test-evidence/api-30/capture.json"
+            original = path.read_bytes()
+            record = json.loads(original)
+            self.assertEqual(collector.NAVIGATION_ORIGIN_REBUILD_TEST, record["testSelection"])
+            self.assertEqual(collector.NAVIGATION_ORIGIN_REBUILD_TEST, record["junit"]["selection"])
+            self.assertEqual(0, record["junit"]["selectedTests"])
+            for scope in ("full", *collector.DIAGNOSTIC_SELECTIONS):
+                if scope == collector.NAVIGATION_ORIGIN_REBUILD_SCOPE:
+                    continue
+                result = subprocess.run(command[:-1] + [scope], cwd=root, capture_output=True, text=True)
+                self.assertNotEqual(0, result.returncode)
+                self.assertEqual(original, path.read_bytes())
+
+    def test_navigation_origin_rebuild_archive_keeps_missing_failed_and_skipped_in_eight_case_denominator(self):
+        for lanes, counts in (({label: "passed" for label in publisher.EXPECTED_MATRIX},
+                               {"passed": 8, "failed": 0, "unverified": 0}),
+                              ({label: "failed" for label in publisher.EXPECTED_MATRIX},
+                               {"passed": 0, "failed": 8, "unverified": 0}),
+                              ({}, {"passed": 0, "failed": 0, "unverified": 8}),
+                              ({"30": "failed", "33": "passed", "37.0": "skipped"},
+                               {"passed": 1, "failed": 1, "unverified": 6})):
+            with self.subTest(lanes=lanes):
+                manifest, readme = self.diagnostic_archive(lanes, collector.NAVIGATION_ORIGIN_REBUILD_SCOPE)
+                self.assertEqual(collector.NAVIGATION_ORIGIN_REBUILD_SCOPE, manifest["executionScope"])
+                self.assertEqual(collector.NAVIGATION_ORIGIN_REBUILD_TEST, manifest["testSelection"])
+                self.assertEqual((1, 8), (manifest["expectedTestsPerApi"], manifest["expectedTests"]))
+                self.assertEqual(8, len(manifest["apis"]))
+                self.assertEqual((123, 2, "a" * 40, "failure"),
+                                 tuple(manifest["sourceRun"][key] for key in ("runId", "attempt", "commit", "conclusion")))
+                self.assertEqual(counts, manifest["diagnosticCaseCounts"])
+                self.assertFalse(manifest["fullSuiteAcceptance"])
+                self.assertIn("# Navigation Origin Rebuild Diagnostic Evidence", readme)
+                self.assertIn(collector.NAVIGATION_ORIGIN_REBUILD_TEST, readme)
+                self.assertIn("not counted as passed", readme)
+                for text in (manifest["scope"], readme):
+                    self.assertIn("a standalone pass does not resolve a historical full-suite failure", text)
+                    self.assertIn("STALE_OBSERVATION alone does not satisfy", text)
+                    self.assertNotIn("portrait-to-landscape", text)
+
+    def test_navigation_origin_rebuild_requires_original_xml_and_rejects_duplicate_or_unrelated_cases(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            test_class, method = collector.NAVIGATION_ORIGIN_REBUILD_TEST.split("#")
+            xml = root / "result.xml"
+            case = f'<testcase classname="{test_class}" name="{method}"/>'
+            xml.write_text('<testsuite>' + case + '</testsuite>')
+            capture = {"junit": collector.junit_summary(root, collector.NAVIGATION_ORIGIN_REBUILD_TEST), "gradleExitCode": 0}
+            tests = [{"testClass": test_class, "testName": method, "testResult": "pass"}]
+            job = {"conclusion": "success"}
+            self.assertEqual("passed", publisher.diagnostic_result(capture, tests, job, collector.NAVIGATION_ORIGIN_REBUILD_SCOPE))
+            self.assertEqual("unverified", publisher.diagnostic_result(capture, [], job, collector.NAVIGATION_ORIGIN_REBUILD_SCOPE))
+            other_class, other_method = collector.NAVIGATION_ORIGIN_TEST.split("#")
+            other = f'<testcase classname="{other_class}" name="{other_method}"/>'
+            for body in (other, case + other, case + case):
+                xml.write_text('<testsuite>' + body + '</testsuite>')
+                capture["junit"] = collector.junit_summary(root, collector.NAVIGATION_ORIGIN_REBUILD_TEST)
+                with self.subTest(body=body), self.assertRaises(ValueError):
+                    publisher.diagnostic_result(capture, tests, job, collector.NAVIGATION_ORIGIN_REBUILD_SCOPE)
+
+    def test_navigation_origin_rebuild_unreadable_xml_cannot_certify_a_green_case(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            test_class, method = collector.NAVIGATION_ORIGIN_REBUILD_TEST.split("#")
+            (root / "case.xml").write_text(f'<testsuite><testcase classname="{test_class}" name="{method}"/></testsuite>')
+            (root / "unreadable.xml").write_text("<testsuite")
+            capture = {"junit": collector.junit_summary(root, collector.NAVIGATION_ORIGIN_REBUILD_TEST), "gradleExitCode": 0}
+            tests = [{"testClass": test_class, "testName": method, "testResult": "pass"}]
+            self.assertEqual((1, 1), (capture["junit"]["selectedTests"], capture["junit"]["unreadableReports"]))
+            self.assertEqual("unverified", publisher.diagnostic_result(capture, tests, {"conclusion": "success"},
+                                                                      collector.NAVIGATION_ORIGIN_REBUILD_SCOPE))
+
+    def test_navigation_origin_rebuild_preserves_protected_blocked_evidence_without_inventing_pngs(self):
+        blocked = {"stage": "protected-activity", "status": "blocked",
+                   "captureError": "secure_window_capture_blocked"}
+        manifest, readme = self.diagnostic_archive(
+                {label: "failed" if label == "30" else "passed" for label in publisher.EXPECTED_MATRIX},
+                collector.NAVIGATION_ORIGIN_REBUILD_SCOPE, manifest_captures=[blocked])
+        self.assertEqual({"passed": 7, "failed": 1, "unverified": 0}, manifest["diagnosticCaseCounts"])
+        self.assertFalse(manifest["fullSuiteAcceptance"])
+        test_class, method = collector.NAVIGATION_ORIGIN_REBUILD_TEST.split("#")
+        for api in manifest["apis"]:
+            expected = json.dumps({"tests": [{"testClass": test_class, "testName": method,
+                                  "testResult": "fail" if api["matrixLabel"] == "30" else "pass",
+                                  "captures": [blocked]}]}).encode()
             self.assertEqual(0, api["screenshotCount"])
             self.assertEqual((1, 0, 1, 0), (api["recordedTests"], api["testsWithScreenshots"],
                              api["testsWithoutScreenshots"], api["unrecordedTests"]))

@@ -31,6 +31,14 @@ ACTIVITY_FONT_SCALE_TITLE = "Android checks [activity-font-scale-diagnostic]"
 ROTATION_TITLE = "Android checks [rotation-diagnostic]"
 NUMERIC_IMPORT_TITLE = "Android checks [numeric-import-diagnostic]"
 NAVIGATION_ORIGIN_TITLE = "Android checks [navigation-origin-diagnostic]"
+NAVIGATION_ORIGIN_REBUILD_TITLE = "Android checks [navigation-origin-rebuild-diagnostic]"
+NAVIGATION_ORIGIN_REBUILD_COVERAGE = ("This case preserves a real unscoped Settings observation across actual control-window removal and recreation "
+                                      "before one automatic launch attempt on all eight API lanes. It requires TASK_PAUSED, "
+                                      "zero approval callbacks and dispatch attempts, and retained Settings focus. "
+                                      "STALE_OBSERVATION alone does not satisfy the required source interruption. "
+                                      "Protected or missing captures remain explicit; case results do not require a PNG. "
+                                      "This controlled regression is distinct from the original navigation-origin diagnostic; "
+                                      "a standalone pass does not resolve a historical full-suite failure.")
 NAVIGATION_ORIGIN_COVERAGE = ("This case exercises an automatic launch attempt from a real unscoped system Settings window "
                               "on all eight API lanes. It requires TASK_PAUSED, zero approval callbacks and dispatch attempts, "
                               "and retained Settings focus. Protected or missing captures remain explicit; "
@@ -59,7 +67,8 @@ DIAGNOSTIC_TITLES = {DIAGNOSTIC_TITLE: android_evidence.DIAGNOSTIC_SCOPE,
                      ACTIVITY_FONT_SCALE_TITLE: android_evidence.ACTIVITY_FONT_SCALE_SCOPE,
                      ROTATION_TITLE: android_evidence.ROTATION_SCOPE,
                      NUMERIC_IMPORT_TITLE: android_evidence.NUMERIC_IMPORT_SCOPE,
-                     NAVIGATION_ORIGIN_TITLE: android_evidence.NAVIGATION_ORIGIN_SCOPE}
+                     NAVIGATION_ORIGIN_TITLE: android_evidence.NAVIGATION_ORIGIN_SCOPE,
+                     NAVIGATION_ORIGIN_REBUILD_TITLE: android_evidence.NAVIGATION_ORIGIN_REBUILD_SCOPE}
 DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
                     android_evidence.QUALIFICATION_SCOPE: "Task Qualification",
                     android_evidence.CONTROL_STATUS_SCOPE: "Control Status",
@@ -70,7 +79,8 @@ DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
                     android_evidence.ACTIVITY_FONT_SCALE_SCOPE: "Activity Font Scale",
                     android_evidence.ROTATION_SCOPE: "Rotation",
                     android_evidence.NUMERIC_IMPORT_SCOPE: "Numeric Import",
-                    android_evidence.NAVIGATION_ORIGIN_SCOPE: "Navigation Origin"}
+                    android_evidence.NAVIGATION_ORIGIN_SCOPE: "Navigation Origin",
+                    android_evidence.NAVIGATION_ORIGIN_REBUILD_SCOPE: "Navigation Origin Rebuild"}
 
 
 def android_execution_scope(run: dict) -> str:
@@ -426,6 +436,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         manifest["scope"] += " " + NUMERIC_IMPORT_COVERAGE
     if execution_scope == android_evidence.NAVIGATION_ORIGIN_SCOPE:
         manifest["scope"] += " " + NAVIGATION_ORIGIN_COVERAGE
+    if execution_scope == android_evidence.NAVIGATION_ORIGIN_REBUILD_SCOPE:
+        manifest["scope"] += " " + NAVIGATION_ORIGIN_REBUILD_COVERAGE
     (output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     lines = ["# " + (diagnostic_name + " Diagnostic Evidence" if diagnostic else "Android Test Evidence"), "", f"Source run: {manifest['sourceRun']['url']}", "",
              f"Source commit: `{run['head_sha']}` · Attempt: {attempt}", "",
@@ -442,6 +454,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         lines += [NUMERIC_IMPORT_COVERAGE, ""]
     if execution_scope == android_evidence.NAVIGATION_ORIGIN_SCOPE:
         lines += [NAVIGATION_ORIGIN_COVERAGE, ""]
+    if execution_scope == android_evidence.NAVIGATION_ORIGIN_REBUILD_SCOPE:
+        lines += [NAVIGATION_ORIGIN_REBUILD_COVERAGE, ""]
     if diagnostic:
         lines += [f"Execution scope: `{execution_scope}`. Only `{android_evidence.test_selection(execution_scope)}` was selected.", "",
                   "The diagnostic denominator is 8 cases (8 APIs × 1 test); missing, skipped and unexecuted cases remain unverified. "

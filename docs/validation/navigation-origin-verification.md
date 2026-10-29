@@ -1,5 +1,7 @@
 # 连续导航来源拒绝的前置验证与诊断
 
+新增的[控制窗真实重建前对照](matrix-stability.md#导航拒绝顺序的独立前对照)用于验证“已知禁止来源被较早的控件失效返回掩盖”这一具体顺序问题。它保留原方法，先在原生产实现上验证，结果尚未取得；旧 API37 的实际返回原因仍未知。
+
 ## 本次 API37 复现与诊断输出修正（2026-10-29）
 
 源码 `309c2f759f14fabd44e268ef40fa9cb070016614` 的[完整运行 40906944025](../../screenshots/40906944025-1/manifest.json) 为 2167/2168，唯一失败是 API37 的 `anUnscopedSettingsWindowCannotBeReplacedByAnAutomaticLaunch`。[原报告](diagnostics/numeric-full-40906944025-api37/README.md)仅保留“Automatic launch returned without the required source interruption”，后续暂停、零派发等断言没有执行。失败截图记录当时 Settings 仍在前台，但它不是调用时状态，也不能代替提交证据。

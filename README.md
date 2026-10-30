@@ -45,11 +45,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 实现活跃任务等价对照：八档48对/480任务、每任务CPU/耗时与端点PSS；编译/lint及664项宿主检查通过，设备实测与本版演示待执行
+**本次更新：** 归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。
 
-**记录时间：** 2026-10-30T13:00:59Z
+**记录时间：** 2026-10-30T13:10:28Z
 
-[最近测试截图与清单](screenshots/41052540296-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41052540296)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/41059787334-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41059787334)。通过、失败及未截图原因见清单。
 
 **整体操作演示：** [播放视频](screenshots/demos/41052543898-1/demo.mp4) · [录制与验证清单](screenshots/demos/41052543898-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41052543898)。
 录制版本：[`054be1f34`](https://github.com/ecojust/Agent-OS/commit/054be1f34f552771fb874eee6609f5d40f3466e3)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "api": 37,
+  "runId": "1793319655151-e1a70a78",
+  "scope": "Dedicated synthetic Android fixture and verified empty application UI only",
+  "jvmTests": "No UI; no screenshot is claimed for JVM tests",
+  "tests": [
+    {
+      "schemaVersion": 1,
+      "api": 37,
+      "testClass": "dev.agentos.app.NavigationObservationGuardInstrumentedTest",
+      "testName": "aKnownUnscopedSettingsOriginStillPausesAfterControlWindowRecreation",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793319655152,
+      "finishedAt": 1793319659436,
+      "captures": [
+        {
+          "stage": "known-unscoped-origin-pauses-after-real-control-recreation",
+          "capturedAt": 1793319659398,
+          "foregroundPackage": "com.android.settings",
+          "status": "blocked",
+          "captureError": "foreground_is_not_an_approved_synthetic_test_screen"
+        },
+        {
+          "stage": "finished",
+          "capturedAt": 1793319659432,
+          "foregroundPackage": "com.android.settings",
+          "status": "blocked",
+          "captureError": "foreground_is_not_an_approved_synthetic_test_screen"
+        }
+      ]
+    }
+  ]
+}

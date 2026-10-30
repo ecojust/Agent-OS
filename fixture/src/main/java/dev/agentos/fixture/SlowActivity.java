@@ -37,8 +37,9 @@ public final class SlowActivity extends Activity {
         increment.setText("Increment slow test counter");
         int[] clicks = {0};
         increment.setOnClickListener(view -> {
-            SlowReadBarrier.beforeActionReply(view.getContext(), barrierOwner);
+            Object actionTicket = SlowReadBarrier.beforeActionReply(view.getContext(), barrierOwner);
             count.setText("Count: " + ++clicks[0]);
+            SlowReadBarrier.afterActionEffect(actionTicket, clicks[0]);
         });
         content.addView(increment);
         content.addView(count);

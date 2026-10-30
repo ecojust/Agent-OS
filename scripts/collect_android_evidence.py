@@ -49,6 +49,9 @@ ACTIVE_PAIR_TEST = "dev.agentos.app.ActivePairedPerformanceInstrumentedTest#coll
 EXPERIENCE_SCOPE = "app-experience-diagnostic"
 EXPERIENCE_PILOT_SCOPE = "app-experience-pilot"
 EXPERIENCE_TEST = "dev.agentos.app.AppExperienceInstrumentedTest#collectTargetResourcesStartupAndFrames"
+BUSY_STOP_SCOPE = "busy-stop-diagnostic"
+BUSY_STOP_PILOT_SCOPE = "busy-stop-pilot"
+BUSY_STOP_TEST = "dev.agentos.app.BusyStopInstrumentedTest#collectBusyStopDiagnostics"
 DIAGNOSTIC_SELECTIONS = {DIAGNOSTIC_SCOPE: DIAGNOSTIC_TEST, QUALIFICATION_SCOPE: QUALIFICATION_TEST,
                         CONTROL_STATUS_SCOPE: CONTROL_STATUS_TEST, SCREEN_OFF_SCOPE: SCREEN_OFF_TEST,
                         TASK_REPORT_FOCUS_SCOPE: TASK_REPORT_FOCUS_TEST, FONT_SCALE_SCOPE: FONT_SCALE_TEST,
@@ -59,7 +62,8 @@ DIAGNOSTIC_SELECTIONS = {DIAGNOSTIC_SCOPE: DIAGNOSTIC_TEST, QUALIFICATION_SCOPE:
                         NAVIGATION_ORIGIN_REBUILD_SCOPE: NAVIGATION_ORIGIN_REBUILD_TEST,
                         IDLE_PAIR_SCOPE: IDLE_PAIR_TEST, STRESS_SCOPE: STRESS_TEST,
                         ACTIVE_PAIR_SCOPE: ACTIVE_PAIR_TEST,
-                        EXPERIENCE_SCOPE: EXPERIENCE_TEST, EXPERIENCE_PILOT_SCOPE: EXPERIENCE_TEST}
+                        EXPERIENCE_SCOPE: EXPERIENCE_TEST, EXPERIENCE_PILOT_SCOPE: EXPERIENCE_TEST,
+                        BUSY_STOP_SCOPE: BUSY_STOP_TEST, BUSY_STOP_PILOT_SCOPE: BUSY_STOP_TEST}
 
 
 def test_selection(scope: str) -> str:

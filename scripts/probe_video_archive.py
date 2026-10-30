@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Archive source-bound API35 real-APK probe recordings and their original results.
+"""Archive source-bound API35 probe recordings and their original results.
 
 This does not operate devices or update progress. A recording and the fixed probe
 have separate outcomes; neither certifies the other APIs or a release matrix.
@@ -21,6 +21,7 @@ import publish_test_evidence as publisher
 import third_party_smoke_archive as bounded
 import third_party_smoke_set as appset
 import third_party_smoke_set_archive as appset_archive
+import busy_stop_video as busy_video
 
 REPOSITORY = 'ecojust/Agent-OS'
 MAX_VIDEO_BYTES = 100_000_000
@@ -37,6 +38,11 @@ PROFILES = {
         'probePrefix': 'screenshots-api-35-attempt-', 'expectedTests': 5,
         'matrixExpectedTests': 20,
         'scope': 'Actual official Calculator 1.4.0 pages and production accessibility observe/page predicate on API35; no production image capability, visualAcceptance build, model task or physical-device acceptance.'},
+    busy_video.WORKFLOW: {
+        'profile': busy_video.PROFILE, 'job': busy_video.JOB,
+        'probePrefix': 'busy-stop-walkthrough-api-35-attempt-', 'expectedTests': 1,
+        'matrixExpectedTests': 1, 'expectedMatrixLabels': ['35'],
+        'scope': 'One synthetic Fixture real in-flight platform click stopped through the actual task overlay on API35, using a local deterministic model. Separate walkthrough: not a pilot/formal performance sample, not the held-model/MainActivity scenario, not complete UI presentation, API-matrix, physical-device or budget acceptance.'},
 }
 require = bounded.require
 APPSET_CLASS = 'dev.agentos.compat.ApplicationSetCompatibilityInstrumentedTest'
@@ -60,7 +66,7 @@ def entries(value, key):
 
 
 def select(run, jobs, artifacts):
-    require(isinstance(run, dict) and run.get('path') in PROFILES, 'Only the two fixed recording workflows are supported')
+    require(isinstance(run, dict) and run.get('path') in PROFILES, 'Only the fixed recording workflows are supported')
     profile = PROFILES[run['path']]
     repository, head = run.get('repository', {}), run.get('head_repository', {})
     require(isinstance(repository, dict) and isinstance(head, dict)
@@ -221,6 +227,9 @@ def appset_receipts(report, states, files, lock):
 def validate_probe(folder, source, profile, run):
     files = bounded.scan_files(folder, {'files': 0, 'bytes': 0})
     require('report.json' in files, 'Original probe report is missing')
+    if profile == busy_video.PROFILE:
+        report = bounded.json_data(files['report.json']['data'])
+        return busy_video.validate_probe(report, files, source), files
     if profile == 'third-party-app-set':
         require(all(name in ('report.json', 'ui-results.json', 'instrumentation.json') or name.endswith('.png') for name in files),
                 'Unexpected app-set probe payload')
@@ -276,6 +285,7 @@ def archive(run, jobs, artifacts, incoming, repo=None):
         payloads[kind] = files
     cases = original['cases'] if original else ([{'name': app + '/' + state, 'appId': app, 'state': state, 'status': 'unverified'}
         for app in appset.APP_IDS for state in appset.STATES] if contract['profile'] == 'third-party-app-set' else
+        [{'name': busy_video.METHOD, 'status': 'unverified'}] if contract['profile'] == busy_video.PROFILE else
         [{'name': name, 'status': 'unverified'} for name in pinned.CASES])
     counts = Counter(case['status'] for case in cases)
     require(len(cases) == contract['expectedTests'] and sum(counts.values()) == contract['expectedTests'], 'API35 fixed denominator changed')
@@ -303,6 +313,8 @@ def archive(run, jobs, artifacts, incoming, repo=None):
                             'status': 'archived' if kind in available else 'expired' if kind in selected['artifacts'] else 'unavailable'}
                       for kind in ('probe', 'video')},
         'fileCount': len(all_files), 'totalBytes': total, 'files': all_files}
+    if contract['profile'] == busy_video.PROFILE:
+        manifest.update(expectedMatrixLabels=contract['expectedMatrixLabels'], performanceSample=False)
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = Path(tempfile.mkdtemp(prefix='.probe-video-archive-', dir=destination.parent))
     try:

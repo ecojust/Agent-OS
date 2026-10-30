@@ -1,7 +1,7 @@
 name: Android checks
 # A fixed diagnostic label remains identifiable even when no emulator artifact exists.
 # Empty preserves GitHub's existing push/PR/full-dispatch display title.
-run-name: ${{ github.event_name == 'workflow_dispatch' && (inputs.scope == 'owned-control-diagnostic' && 'Android checks [owned-control-diagnostic]' || inputs.scope == 'task-qualification-diagnostic' && 'Android checks [task-qualification-diagnostic]' || inputs.scope == 'control-status-diagnostic' && 'Android checks [control-status-diagnostic]' || inputs.scope == 'screen-off-diagnostic' && 'Android checks [screen-off-diagnostic]' || inputs.scope == 'task-report-focus-diagnostic' && 'Android checks [task-report-focus-diagnostic]' || inputs.scope == 'font-scale-diagnostic' && 'Android checks [font-scale-diagnostic]' || inputs.scope == 'visual-generation-diagnostic' && 'Android checks [visual-generation-diagnostic]' || inputs.scope == 'activity-font-scale-diagnostic' && 'Android checks [activity-font-scale-diagnostic]' || inputs.scope == 'rotation-diagnostic' && 'Android checks [rotation-diagnostic]' || inputs.scope == 'numeric-import-diagnostic' && 'Android checks [numeric-import-diagnostic]' || inputs.scope == 'navigation-origin-diagnostic' && 'Android checks [navigation-origin-diagnostic]' || inputs.scope == 'navigation-origin-rebuild-diagnostic' && 'Android checks [navigation-origin-rebuild-diagnostic]' || inputs.scope == 'idle-pair-diagnostic' && 'Android checks [idle-pair-diagnostic]' || inputs.scope == 'stress-diagnostic' && 'Android checks [stress-diagnostic]' || inputs.scope == 'active-pair-diagnostic' && 'Android checks [active-pair-diagnostic]' || inputs.scope == 'app-experience-pilot' && 'Android checks [app-experience-pilot]' || inputs.scope == 'app-experience-diagnostic' && 'Android checks [app-experience-diagnostic]') || '' }}
+run-name: ${{ github.event_name == 'workflow_dispatch' && (inputs.scope == 'owned-control-diagnostic' && 'Android checks [owned-control-diagnostic]' || inputs.scope == 'task-qualification-diagnostic' && 'Android checks [task-qualification-diagnostic]' || inputs.scope == 'control-status-diagnostic' && 'Android checks [control-status-diagnostic]' || inputs.scope == 'screen-off-diagnostic' && 'Android checks [screen-off-diagnostic]' || inputs.scope == 'task-report-focus-diagnostic' && 'Android checks [task-report-focus-diagnostic]' || inputs.scope == 'font-scale-diagnostic' && 'Android checks [font-scale-diagnostic]' || inputs.scope == 'visual-generation-diagnostic' && 'Android checks [visual-generation-diagnostic]' || inputs.scope == 'activity-font-scale-diagnostic' && 'Android checks [activity-font-scale-diagnostic]' || inputs.scope == 'rotation-diagnostic' && 'Android checks [rotation-diagnostic]' || inputs.scope == 'numeric-import-diagnostic' && 'Android checks [numeric-import-diagnostic]' || inputs.scope == 'navigation-origin-diagnostic' && 'Android checks [navigation-origin-diagnostic]' || inputs.scope == 'navigation-origin-rebuild-diagnostic' && 'Android checks [navigation-origin-rebuild-diagnostic]' || inputs.scope == 'idle-pair-diagnostic' && 'Android checks [idle-pair-diagnostic]' || inputs.scope == 'stress-diagnostic' && 'Android checks [stress-diagnostic]' || inputs.scope == 'active-pair-diagnostic' && 'Android checks [active-pair-diagnostic]' || inputs.scope == 'app-experience-pilot' && 'Android checks [app-experience-pilot]' || inputs.scope == 'app-experience-diagnostic' && 'Android checks [app-experience-diagnostic]' || inputs.scope == 'busy-stop-pilot' && 'Android checks [busy-stop-pilot]' || inputs.scope == 'busy-stop-diagnostic' && 'Android checks [busy-stop-diagnostic]') || '' }}
 
 on:
   push:
@@ -14,7 +14,7 @@ on:
         required: true
         default: full
         type: choice
-        options: [full, owned-control-diagnostic, task-qualification-diagnostic, control-status-diagnostic, screen-off-diagnostic, task-report-focus-diagnostic, font-scale-diagnostic, visual-generation-diagnostic, activity-font-scale-diagnostic, rotation-diagnostic, numeric-import-diagnostic, navigation-origin-diagnostic, navigation-origin-rebuild-diagnostic, idle-pair-diagnostic, stress-diagnostic, active-pair-diagnostic, app-experience-pilot, app-experience-diagnostic]
+        options: [full, owned-control-diagnostic, task-qualification-diagnostic, control-status-diagnostic, screen-off-diagnostic, task-report-focus-diagnostic, font-scale-diagnostic, visual-generation-diagnostic, activity-font-scale-diagnostic, rotation-diagnostic, numeric-import-diagnostic, navigation-origin-diagnostic, navigation-origin-rebuild-diagnostic, idle-pair-diagnostic, stress-diagnostic, active-pair-diagnostic, app-experience-pilot, app-experience-diagnostic, busy-stop-pilot, busy-stop-diagnostic]
 
 permissions:
   contents: read
@@ -86,7 +86,7 @@ jobs:
 
   emulator-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && (inputs.scope == 'stress-diagnostic' || inputs.scope == 'app-experience-diagnostic') && 55 || 35 }}
+    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && (inputs.scope == 'stress-diagnostic' || inputs.scope == 'app-experience-diagnostic' || inputs.scope == 'busy-stop-diagnostic') && 55 || 35 }}
     env:
       ANDROID_TEST_SCOPE: ${{ github.event_name == 'workflow_dispatch' && inputs.scope || 'full' }}
     strategy:
@@ -201,6 +201,12 @@ jobs:
         env:
           EMULATOR_OUTCOME: ${{ steps.instrumentation.outcome }}
         run: python3 scripts/collect_app_experience_evidence.py finalize --matrix-label ${{ matrix.api-level }} --scope "$ANDROID_TEST_SCOPE" --step-outcome "${EMULATOR_OUTCOME:-unknown}"
+      - name: Finalize busy stop diagnostics
+        if: always() && startsWith(env.ANDROID_TEST_SCOPE, 'busy-stop-')
+        continue-on-error: true
+        env:
+          EMULATOR_OUTCOME: ${{ steps.instrumentation.outcome }}
+        run: python3 scripts/collect_busy_stop_evidence.py finalize --matrix-label ${{ matrix.api-level }} --scope "$ANDROID_TEST_SCOPE" --step-outcome "${EMULATOR_OUTCOME:-unknown}"
       - name: Upload emulator test reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -265,5 +271,13 @@ jobs:
         with:
           name: app-experience-reports-api-${{ matrix.api-level }}-attempt-${{ github.run_attempt }}
           path: app-experience-evidence/api-${{ matrix.api-level }}/
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Upload busy stop diagnostics
+        if: always() && startsWith(env.ANDROID_TEST_SCOPE, 'busy-stop-')
+        uses: actions/upload-artifact@v4
+        with:
+          name: busy-stop-reports-api-${{ matrix.api-level }}-attempt-${{ github.run_attempt }}
+          path: busy-stop-evidence/api-${{ matrix.api-level }}/
           if-no-files-found: warn
           retention-days: 30

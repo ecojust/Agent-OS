@@ -14,7 +14,7 @@ import uuid
 import demo_video as media
 import third_party_smoke as bounded
 
-PROFILES = ("third-party-app-set", "pinned-calculator-page")
+PROFILES = ("third-party-app-set", "pinned-calculator-page", "busy-stop-platform")
 TIME_LIMIT_SECONDS = 120
 MAX_RAW = 70_000_000
 COVERAGE_TOLERANCE_MS = 1500

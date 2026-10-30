@@ -626,7 +626,10 @@ public final class AgentController {
             if (control == null || (expectedTaskId != null && !expectedTaskId.equals(control.getTaskId()))) return false;
             stopTiming.finish();
             cancelled = control;
+            BusyStopProbe.stopPoint(cancelled, BusyStopProbe.STOP_OWNED_ENTRY);
             cancelled.cancel();
+            // Diagnostic upper bound: cancel's epoch mutation preceded hook completion and return.
+            BusyStopProbe.stopPoint(cancelled, BusyStopProbe.CANCEL_RETURN);
             freezeUsageLocked(cancelled);
             freezeActionReceiptsLocked();
             completedResultKind = TaskResult.Kind.STOPPED;
@@ -651,6 +654,7 @@ public final class AgentController {
             lock.notifyAll();
         }
         publish();
+        BusyStopProbe.stopPoint(cancelled, BusyStopProbe.STOP_RETURN);
         return true;
     }
 

@@ -140,7 +140,9 @@ class EvidenceTests(unittest.TestCase):
                       "stress-diagnostic --class AnotherClass",
                       "active-pair-diagnostic --class AnotherClass",
                       "app-experience-diagnostic --class AnotherClass",
-                      "app-experience-pilot --class AnotherClass", "future-scope"):
+                      "app-experience-pilot --class AnotherClass",
+                      "busy-stop-diagnostic --class AnotherClass",
+                      "busy-stop-pilot --class AnotherClass", "future-scope"):
             with self.subTest(scope=scope):
                 self.check_test_exit("30", 30, scope=scope, expected_exit=2, invalid_scope=True)
 
@@ -151,7 +153,8 @@ class EvidenceTests(unittest.TestCase):
             (root / "scripts").mkdir()
             for name in ("run_android_tests.sh", "run_bounded_instrumentation.py", "collect_android_evidence.py", "print_android_test_failures.py",
                          "collect_performance_evidence.py", "collect_idle_pair_evidence.py", "collect_stress_evidence.py",
-                         "collect_active_pair_evidence.py", "collect_app_experience_evidence.py", "experience_trace.py"):
+                         "collect_active_pair_evidence.py", "collect_app_experience_evidence.py", "experience_trace.py",
+                         "collect_busy_stop_evidence.py"):
                 (root / "scripts" / name).write_bytes((SCRIPTS / name).read_bytes())
             if scope in publisher.APP_EXPERIENCE_SCOPES:
                 # Exercise wrapper sequencing without a device or downloaded trace processor.
@@ -236,6 +239,16 @@ class EvidenceTests(unittest.TestCase):
                 self.assertEqual(["start", "stop"], (root / "trace-lifecycle.txt").read_text().splitlines())
             else:
                 self.assertFalse(experience_path.exists())
+            busy_stop_path = root / f"busy-stop-evidence/api-{matrix_label}/capture.json"
+            if scope in publisher.BUSY_STOP_SCOPES:
+                stop_capture = json.loads(busy_stop_path.read_text())
+                self.assertEqual(expected_exit, stop_capture["gradleExitCode"])
+                self.assertEqual(scope, stop_capture["executionScope"])
+                self.assertEqual("unavailable", stop_capture["captureStatus"])
+                self.assertEqual("unavailable", stop_capture["diagnosticStatus"])
+                self.assertIsNone(stop_capture["report"])
+            else:
+                self.assertFalse(busy_stop_path.exists())
             self.assertIn("No Android XML reports were produced", result.stdout)
             self.assertEqual(expected_exit == 7, (root / "gradle-started").exists())
             if expected_exit == 7:
@@ -247,15 +260,21 @@ class EvidenceTests(unittest.TestCase):
                     self.assertFalse(preparation.exists())
                 arguments = (root / "gradle-args.txt").read_text().splitlines()
                 selectors = [value for value in arguments if value.startswith("-Pandroid.testInstrumentationRunnerArguments.")]
-                self.assertEqual(2 if scope in publisher.APP_EXPERIENCE_SCOPES else 1, len(selectors))
+                self.assertEqual(2 if scope in (*publisher.APP_EXPERIENCE_SCOPES, *publisher.BUSY_STOP_SCOPES) else 1,
+                                 len(selectors))
                 if scope in collector.DIAGNOSTIC_SELECTIONS:
                     self.assertEqual("-Pandroid.testInstrumentationRunnerArguments.class=" + collector.test_selection(scope), selectors[0])
                     if scope in publisher.APP_EXPERIENCE_SCOPES:
                         profile = "pilot" if scope == publisher.APP_EXPERIENCE_PILOT_SCOPE else "formal"
                         self.assertEqual("-Pandroid.testInstrumentationRunnerArguments.experienceProfile=" + profile, selectors[1])
                         self.assertEqual("install experience APKs\n", (root / "experience-preparation.txt").read_text())
+                    if scope in publisher.BUSY_STOP_SCOPES:
+                        profile = "pilot" if scope == publisher.BUSY_STOP_PILOT_SCOPE else "formal"
+                        self.assertEqual("-Pandroid.testInstrumentationRunnerArguments.busyStopProfile=" + profile, selectors[1])
+                        self.assertFalse((root / "experience-preparation.txt").exists())
+                        self.assertFalse((root / "trace-lifecycle.txt").exists())
                 else:
-                    self.assertEqual("-Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest,dev.agentos.app.DemoWalkthroughInstrumentedTest,dev.agentos.app.PinnedWindowDisclosureInstrumentedTest,dev.agentos.app.IdlePairedPerformanceInstrumentedTest,dev.agentos.app.SegmentedStressInstrumentedTest,dev.agentos.app.ActivePairedPerformanceInstrumentedTest,dev.agentos.app.AppExperienceInstrumentedTest", selectors[0])
+                    self.assertEqual("-Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest,dev.agentos.app.DemoWalkthroughInstrumentedTest,dev.agentos.app.PinnedWindowDisclosureInstrumentedTest,dev.agentos.app.IdlePairedPerformanceInstrumentedTest,dev.agentos.app.SegmentedStressInstrumentedTest,dev.agentos.app.ActivePairedPerformanceInstrumentedTest,dev.agentos.app.AppExperienceInstrumentedTest,dev.agentos.app.BusyStopInstrumentedTest", selectors[0])
                 self.assertEqual(["window_animation_scale=1.0", "transition_animation_scale=1.0",
                     "animator_duration_scale=1.0"], (root / "animation-settings.txt").read_text().splitlines())
                 self.assertEqual(3, result.stdout.count("Emulator baseline:"))

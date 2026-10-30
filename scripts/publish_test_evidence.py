@@ -27,6 +27,7 @@ APP_EXPERIENCE_MAX_TOTAL_BYTES = 640 * 1024 * 1024
 APP_EXPERIENCE_MAX_LANE_BYTES = 80 * 1024 * 1024
 APP_EXPERIENCE_MAX_TRACE_BYTES = 256 * 1024 * 1024
 APP_EXPERIENCE_MAX_GZIP_BYTES = 64 * 1024 * 1024
+BUSY_STOP_MAX_LANE_BYTES = 8 * 1024 * 1024
 MAX_FILES = 8000
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 DIAGNOSTIC_TITLE = "Android checks [owned-control-diagnostic]"
@@ -49,6 +50,19 @@ APP_EXPERIENCE_PILOT_SCOPE = "app-experience-pilot"
 APP_EXPERIENCE_SCOPES = (APP_EXPERIENCE_SCOPE, APP_EXPERIENCE_PILOT_SCOPE)
 APP_EXPERIENCE_TITLE = "Android checks [app-experience-diagnostic]"
 APP_EXPERIENCE_PILOT_TITLE = "Android checks [app-experience-pilot]"
+BUSY_STOP_SCOPE = android_evidence.BUSY_STOP_SCOPE
+BUSY_STOP_PILOT_SCOPE = android_evidence.BUSY_STOP_PILOT_SCOPE
+BUSY_STOP_SCOPES = (BUSY_STOP_SCOPE, BUSY_STOP_PILOT_SCOPE)
+BUSY_STOP_TITLE = "Android checks [busy-stop-diagnostic]"
+BUSY_STOP_PILOT_TITLE = "Android checks [busy-stop-pilot]"
+BUSY_STOP_COVERAGE = (
+    "Two separate controlled scenarios use the real controller and actual stop buttons: an in-flight Fixture "
+    "platform action stopped from the overlay, and a held local HTTP model reply stopped from MainActivity. "
+    "Pilot plans two stops per scenario/API; formal plans one hundred, or 1600 stops across eight APIs. "
+    "Cancellation-observed bounds, platform-call return, target effect and ticket settlement remain distinct. "
+    "MainActivity natural stopped-state FrameMetrics measure HWUI completion, not physical presentation; "
+    "overlay removal is not a complete-frame measurement. Failed and missing planned trials remain explicit. "
+    "These diagnostics do not establish physical-device, all-workload, full-suite or performance-budget acceptance.")
 APP_EXPERIENCE_COVERAGE = (
     "Target Fixture and resident Agent CPU/PSS are measured separately. Startup uses matched Perfetto "
     "android_startups time_to_display observations; am start output and frame callbacks do not substitute for TTID. "
@@ -115,7 +129,9 @@ DIAGNOSTIC_TITLES = {DIAGNOSTIC_TITLE: android_evidence.DIAGNOSTIC_SCOPE,
                      STRESS_TITLE: android_evidence.STRESS_SCOPE,
                      ACTIVE_PAIR_TITLE: android_evidence.ACTIVE_PAIR_SCOPE,
                      APP_EXPERIENCE_TITLE: APP_EXPERIENCE_SCOPE,
-                     APP_EXPERIENCE_PILOT_TITLE: APP_EXPERIENCE_PILOT_SCOPE}
+                     APP_EXPERIENCE_PILOT_TITLE: APP_EXPERIENCE_PILOT_SCOPE,
+                     BUSY_STOP_TITLE: BUSY_STOP_SCOPE,
+                     BUSY_STOP_PILOT_TITLE: BUSY_STOP_PILOT_SCOPE}
 DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
                     android_evidence.QUALIFICATION_SCOPE: "Task Qualification",
                     android_evidence.CONTROL_STATUS_SCOPE: "Control Status",
@@ -132,7 +148,9 @@ DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
                     android_evidence.STRESS_SCOPE: "Segmented Stress",
                     android_evidence.ACTIVE_PAIR_SCOPE: "Active Task Pair",
                     APP_EXPERIENCE_SCOPE: "App Experience",
-                    APP_EXPERIENCE_PILOT_SCOPE: "App Experience Pilot"}
+                    APP_EXPERIENCE_PILOT_SCOPE: "App Experience Pilot",
+                    BUSY_STOP_SCOPE: "Busy Stop",
+                    BUSY_STOP_PILOT_SCOPE: "Busy Stop Pilot"}
 
 
 def android_execution_scope(run: dict) -> str:
@@ -308,6 +326,16 @@ def app_experience_artifacts(value, run: dict) -> list:
     selected = numeric_artifacts(value, run, "app-experience-reports", APP_EXPERIENCE_MAX_LANE_BYTES)
     if len(selected) > len(EXPECTED_MATRIX) or len({item["id"] for item in selected}) != len(selected):
         raise ValueError("app experience artifacts must identify unique fixed API lanes")
+    return selected
+
+
+def busy_stop_artifacts(value, run: dict) -> list:
+    if (run.get("path") != ".github/workflows/android.yml"
+            or android_execution_scope(run) not in BUSY_STOP_SCOPES):
+        return []
+    selected = numeric_artifacts(value, run, "busy-stop-reports", BUSY_STOP_MAX_LANE_BYTES)
+    if len(selected) > len(EXPECTED_MATRIX) or len({item["id"] for item in selected}) != len(selected):
+        raise ValueError("busy stop artifacts must identify unique fixed API lanes")
     return selected
 
 
@@ -522,6 +550,110 @@ def archive_app_experience(args, run, jobs, output, budget):
             "profile": profile, "scope": APP_EXPERIENCE_COVERAGE, "apis": records}
 
 
+def copy_busy_stop_payloads(payloads, destination: Path, budget: dict) -> list[dict]:
+    """Copy only already-validated bytes under the original shared archive cap."""
+    import collect_busy_stop_evidence as busy_stop
+    lane_bytes = sum(len(data) for data in payloads.values() if type(data) is bytes)
+    if (lane_bytes > BUSY_STOP_MAX_LANE_BYTES or budget["bytes"] + lane_bytes > MAX_TOTAL_BYTES
+            or budget["files"] + len(payloads) > MAX_FILES):
+        raise ValueError("busy stop evidence exceeds repository archive budget")
+    for name, data in payloads.items():
+        if type(name) is not str:
+            raise ValueError("unexpected busy stop payload name")
+        maximum = (busy_stop.MAX_CAPTURE_BYTES if name == "capture.json" else
+                   busy_stop.MAX_REPORT_BYTES if name == busy_stop.REPORT_NAME else
+                   busy_stop.MAX_TRIAL_BYTES if re.fullmatch(r"trial-[01][0-9]{2}\.json", name) else None)
+        if maximum is None or type(data) is not bytes or not 0 < len(data) <= maximum:
+            raise ValueError("unexpected or oversized busy stop payload")
+    copied = []
+    for name, data in sorted(payloads.items()):
+        target = destination / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+        target.chmod(0o644)
+        copied.append({"path": name, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()})
+    budget["bytes"] += lane_bytes
+    budget["files"] += len(payloads)
+    return copied
+
+
+def archive_busy_stop(args, run, jobs, output, budget):
+    # Legacy archive paths never acquire new collector or schema dependencies.
+    import collect_busy_stop_evidence as busy_stop
+    scope = android_execution_scope(run)
+    if run.get("path") != ".github/workflows/android.yml" or scope not in BUSY_STOP_SCOPES:
+        raise ValueError("busy stop attachments require a fixed diagnostic scope")
+    profile = busy_stop.profile_for_scope(scope)
+    trial_count = 2 * busy_stop.PROFILES[profile]
+    artifacts = {item["name"]: item for item in busy_stop_artifacts(read_json(args.artifacts), run)}
+    source_identity = {"repository": args.repository, "runId": run["id"],
+                       "attempt": run["run_attempt"], "commit": run["head_sha"]}
+    records, pending = [], []
+    for label in EXPECTED_MATRIX:
+        matches = [job for job in jobs if job.get("name") == f"emulator-tests ({label})"]
+        job = matches[0] if len(matches) == 1 else {}
+        record = {"matrixLabel": label, "apiLevel": int(label.split(".")[0]), "profile": profile,
+                  "jobConclusion": job.get("conclusion", "not_scheduled"),
+                  "captureStatus": "artifact_unavailable", "captureError": "no_current_busy_stop_artifact",
+                  "diagnosticStatus": None, "reportStatus": None, "files": []}
+        name = f"busy-stop-reports-api-{label}-attempt-{run['run_attempt']}"
+        artifact = artifacts.get(name)
+        if artifact is not None:
+            if (len(matches) != 1 or job.get("status") != "completed" or job.get("run_id") != run["id"]
+                    or job.get("run_attempt") != run["run_attempt"] or job.get("head_sha") != run["head_sha"]):
+                raise ValueError("busy stop job does not match source attempt")
+            start, finish, uploaded = (datetime.fromisoformat(value.replace("Z", "+00:00")) for value in
+                                      (job["started_at"], job["completed_at"], artifact["created_at"]))
+            if not start <= uploaded <= finish:
+                raise ValueError("busy stop artifact upload is outside its source job")
+            source = args.incoming / name
+            if (any(path.is_symlink() for path in (source, *source.parents))
+                    or ".." in source.parts or not source.is_dir()):
+                raise ValueError("expected busy stop artifact was not downloaded")
+            allowed = {"capture.json", busy_stop.REPORT_NAME}
+            allowed.update(f"trial-{index:03d}.json" for index in range(trial_count))
+            entries = list(source.iterdir())
+            if (len(entries) > len(allowed) or any(path.is_symlink() or not path.is_file()
+                    or path.name not in allowed for path in entries)
+                    or sum(path.stat().st_size for path in entries) > BUSY_STOP_MAX_LANE_BYTES):
+                raise ValueError("unexpected or oversized busy stop artifact files")
+            capture_path = source / "capture.json"
+            if not capture_path.is_file() or not 0 < capture_path.stat().st_size <= busy_stop.MAX_CAPTURE_BYTES:
+                raise ValueError("missing or oversized busy stop capture")
+            capture_bytes = capture_path.read_bytes()
+            capture = busy_stop.validate_capture(performance.strict_json(capture_bytes), label, source_identity, profile)
+            # Revalidate source, original statuses, every reference and trial;
+            # a capture's own successful label never authorizes its payloads.
+            payloads = busy_stop.validate_payloads(source, capture, label, source_identity, profile)
+            if {path.name for path in entries} != {"capture.json", *payloads}:
+                raise ValueError("busy stop capture payload set differs from archive")
+            for path, data in payloads.items():
+                if (path not in allowed or path == "capture.json" or type(data) is not bytes
+                        or (source / path).read_bytes() != data):
+                    raise ValueError("busy stop payload differs from its capture")
+            if capture["report"] is not None:
+                raw = performance.strict_json(payloads[busy_stop.REPORT_NAME])
+                reference = capture["report"]
+                data = payloads[busy_stop.REPORT_NAME]
+                if (reference["bytes"] != len(data) or reference["sha256"] != hashlib.sha256(data).hexdigest()
+                        or reference["status"] != raw["status"]):
+                    raise ValueError("raw busy stop report differs from its capture")
+                record["reportStatus"] = raw["status"]
+            record.update({"captureStatus": capture["captureStatus"], "captureError": capture["captureError"],
+                           "diagnosticStatus": capture["diagnosticStatus"], "actualSdkInt": capture["actualSdkInt"],
+                           "gradleExitCode": capture["gradleExitCode"],
+                           "declaredCiProfile": capture["declaredCiProfile"], "artifactId": artifact["id"]})
+            pending.append((record, {"capture.json": capture_bytes, **payloads}))
+        records.append(record)
+    if (budget["bytes"] + sum(len(data) for _, payloads in pending for data in payloads.values()) > MAX_TOTAL_BYTES
+            or budget["files"] + sum(len(payloads) for _, payloads in pending) > MAX_FILES):
+        raise ValueError("busy stop evidence exceeds repository archive budget")
+    for record, payloads in pending:
+        record["files"] = copy_busy_stop_payloads(payloads, output / "busy-stop" / f"api-{record['matrixLabel']}", budget)
+    return {"kind": "busy-stop-attachments", "diagnosticOnly": True, "budgetAcceptance": False,
+            "profile": profile, "scope": BUSY_STOP_COVERAGE, "apis": records}
+
+
 def archive_numeric_diagnostics(args, run, jobs, output, budget, artifacts, validator,
                                 prefix, directory, missing_error, kind, scope, *, segmented=False, active_pairs=False):
     source_identity = {"repository": args.repository, "runId": run["id"],
@@ -693,6 +825,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
                            if execution_scope == android_evidence.ACTIVE_PAIR_SCOPE else None)
     app_experience_records = (archive_app_experience(args, run, jobs, output, budget)
                               if execution_scope in APP_EXPERIENCE_SCOPES else None)
+    busy_stop_records = (archive_busy_stop(args, run, jobs, output, budget)
+                         if execution_scope in BUSY_STOP_SCOPES else None)
     manifest = {
         "schemaVersion": 1, "kind": "android-emulator-test-evidence",
         "archivedAt": datetime.now(timezone.utc).isoformat(),
@@ -716,6 +850,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         manifest["activeTaskPairs"] = active_pair_records
     if app_experience_records is not None:
         manifest["appExperience"] = app_experience_records
+    if busy_stop_records is not None:
+        manifest["busyStop"] = busy_stop_records
     if diagnostic:
         manifest.update({"expectedTestsPerApi": 1, "expectedTests": len(EXPECTED_MATRIX),
                          "diagnosticCaseCounts": {status: sum(record["diagnosticResult"] == status for record in records)
@@ -745,6 +881,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         manifest["scope"] += " " + ACTIVE_PAIR_COVERAGE
     if execution_scope in APP_EXPERIENCE_SCOPES:
         manifest["scope"] += " " + APP_EXPERIENCE_COVERAGE
+    if execution_scope in BUSY_STOP_SCOPES:
+        manifest["scope"] += " " + BUSY_STOP_COVERAGE
     (output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     lines = ["# " + (diagnostic_name + " Diagnostic Evidence" if diagnostic else "Android Test Evidence"), "", f"Source run: {manifest['sourceRun']['url']}", "",
              f"Source commit: `{run['head_sha']}` · Attempt: {attempt}", "",
@@ -771,6 +909,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         lines += [ACTIVE_PAIR_COVERAGE, ""]
     if execution_scope in APP_EXPERIENCE_SCOPES:
         lines += [APP_EXPERIENCE_COVERAGE, ""]
+    if execution_scope in BUSY_STOP_SCOPES:
+        lines += [BUSY_STOP_COVERAGE, ""]
     if diagnostic:
         lines += [f"Execution scope: `{execution_scope}`. Only `{android_evidence.test_selection(execution_scope)}` was selected.", "",
                   "The diagnostic denominator is 8 cases (8 APIs × 1 test); missing, skipped and unexecuted cases remain unverified. "
@@ -840,6 +980,20 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
                   "| --- | --- | --- | --- | --- |"]
         for item in app_experience_records["apis"]:
             link = (f"[JSON](app-experience/api-{item['matrixLabel']}/experience-diagnostics.json)"
+                    if item["reportStatus"] is not None else item["captureError"])
+            lines.append(f"| {item['matrixLabel']} | {item['captureStatus']} | {item['diagnosticStatus']} | {item['reportStatus']} | {link} |")
+        lines.append("")
+    if busy_stop_records is not None:
+        lines += ["## Busy Stop Diagnostics", "",
+                  f"Profile: `{busy_stop_records['profile']}`. Pilot data does not count toward the formal denominator. "
+                  "Two scenarios remain separate: in-flight platform action with overlay stop, and held local model reply "
+                  "with MainActivity stop. The latter alone measures a stopped-state HWUI frame. "
+                  "Original instrumented, collection and job statuses are retained separately. "
+                  "Committed failed/incomplete prefixes are preserved; later planned slots remain unavailable.", "",
+                  "| API | Collection | Evidence result | Instrumented report | Raw report |",
+                  "| --- | --- | --- | --- | --- |"]
+        for item in busy_stop_records["apis"]:
+            link = (f"[JSON](busy-stop/api-{item['matrixLabel']}/busy-stop-diagnostics.json)"
                     if item["reportStatus"] is not None else item["captureError"])
             lines.append(f"| {item['matrixLabel']} | {item['captureStatus']} | {item['diagnosticStatus']} | {item['reportStatus']} | {link} |")
         lines.append("")
@@ -1087,6 +1241,7 @@ def main() -> None:
         segmented_artifacts = stress_artifacts(read_json(args.artifacts), run)
         active_artifacts = active_pair_artifacts(read_json(args.artifacts), run)
         experience_artifacts = app_experience_artifacts(read_json(args.artifacts), run)
+        stop_artifacts = busy_stop_artifacts(read_json(args.artifacts), run)
         if args.github_output:
             with args.github_output.open("a") as output:
                 output.write(f"run_id={run_id}\nattempt={attempt}\n"
@@ -1097,6 +1252,7 @@ def main() -> None:
                              f"stress_artifact_ids={','.join(str(item['id']) for item in segmented_artifacts)}\n"
                              f"active_pair_artifact_ids={','.join(str(item['id']) for item in active_artifacts)}\n"
                              f"app_experience_artifact_ids={','.join(str(item['id']) for item in experience_artifacts)}\n"
+                             f"busy_stop_artifact_ids={','.join(str(item['id']) for item in stop_artifacts)}\n"
                              f"evidence_path=screenshots/{run_id}-{attempt}\n")
         print(f"Verified trusted source run {run_id}, attempt {attempt}")
     else:

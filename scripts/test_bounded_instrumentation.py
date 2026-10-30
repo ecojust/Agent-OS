@@ -25,7 +25,8 @@ class BoundedInstrumentationTests(unittest.TestCase):
         for name in ('run_android_tests.sh', 'run_bounded_instrumentation.py',
                      'print_android_test_failures.py', 'collect_android_evidence.py',
                      'collect_performance_evidence.py', 'collect_idle_pair_evidence.py',
-                     'collect_stress_evidence.py', 'collect_active_pair_evidence.py'):
+                     'collect_stress_evidence.py', 'collect_active_pair_evidence.py',
+                     'collect_busy_stop_evidence.py'):
             shutil.copyfile(SCRIPTS / name, self.root / 'scripts' / name)
         (self.root / 'bin').mkdir()
         adb = self.root / 'bin/adb'
@@ -67,7 +68,7 @@ result=int(mode)
 if assembling and not result:
  apk=Path('app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk');apk.parent.mkdir(parents=True,exist_ok=True);apk.write_bytes(b'synthetic APK only')
 if result and not assembling:
- report=Path('app/build/outputs/androidTest-results/partial.xml');report.parent.mkdir(parents=True)
+ report=Path('app/build/outputs/androidTest-results/partial.xml');report.parent.mkdir(parents=True,exist_ok=True)
  report.write_text('<testsuite><testcase name="existing_failure"><failure>synthetic failure</failure></testcase></testsuite>')
 sys.exit(result)
 ''')
@@ -130,6 +131,8 @@ sys.exit(result)
         self.assertFalse((self.root / 'stress-evidence').exists())
         self.assertFalse((self.root / 'active-pair-evidence').exists())
         self.assertIn('dev.agentos.app.ActivePairedPerformanceInstrumentedTest', excluded.split('=', 1)[1].split(','))
+        self.assertIn('dev.agentos.app.BusyStopInstrumentedTest', excluded.split('=', 1)[1].split(','))
+        self.assertFalse((self.root / 'busy-stop-evidence').exists())
 
     def test_stress_scope_has_its_own_longer_default_and_preserves_failed_measurement(self):
         self.env.pop('ANDROID_TEST_TIMEOUT_SECONDS')
@@ -174,8 +177,50 @@ sys.exit(result)
         self.assertEqual(1200, self.execution()['timeoutSeconds'])
         self.assertEqual('standard', self.execution()['timeoutProfile'])
 
+    def test_busy_stop_profiles_keep_fixed_arguments_and_original_failed_exit(self):
+        self.env.pop('ANDROID_TEST_TIMEOUT_SECONDS')
+        for profile, seconds, watchdog in [('pilot', 1200, 'standard'), ('formal', 2400, 'busy-stop')]:
+            scope = 'busy-stop-pilot' if profile == 'pilot' else 'busy-stop-diagnostic'
+            with self.subTest(profile=profile):
+                (self.root / 'gradle-calls.jsonl').unlink(missing_ok=True)
+                result = self.run_shell('23', scope=scope)
+                self.assertEqual(23, result.returncode, result.stderr)
+                self.assertEqual(seconds, self.execution()['timeoutSeconds'])
+                self.assertEqual(watchdog, self.execution()['timeoutProfile'])
+                calls = [json.loads(line) for line in (self.root / 'gradle-calls.jsonl').read_text().splitlines()]
+                self.assertEqual(1, len(calls))
+                self.assertIn('-Pandroid.testInstrumentationRunnerArguments.class='
+                              'dev.agentos.app.BusyStopInstrumentedTest#collectBusyStopDiagnostics', calls[0])
+                self.assertIn('-Pandroid.testInstrumentationRunnerArguments.busyStopProfile=' + profile, calls[0])
+                self.assert_collected(23)
+                capture = json.loads((self.root / 'busy-stop-evidence/api-30/capture.json').read_text())
+                self.assertEqual(23, capture['gradleExitCode'])
+                self.assertEqual(scope, capture['executionScope'])
+                self.assertEqual('unavailable', capture['diagnosticStatus'])
+                self.assertIsNone(capture['report'])
+                self.assertFalse((self.root / 'app-experience-evidence').exists())
+
+    def test_successful_device_case_without_required_busy_stop_evidence_fails_the_scope(self):
+        result = self.run_shell('0', scope='busy-stop-pilot')
+        self.assertEqual(1, result.returncode, result.stderr)
+        self.assertEqual('completed', self.execution()['status'])
+        self.assert_collected(0)  # Preserve the actual original instrumentation exit.
+        capture = json.loads((self.root / 'busy-stop-evidence/api-30/capture.json').read_text())
+        self.assertEqual(0, capture['gradleExitCode'])
+        self.assertNotEqual('passed', capture['diagnosticStatus'])
+        self.assertIsNone(capture['report'])
+
+    def test_busy_stop_timeout_is_not_hidden_by_failed_collection(self):
+        result = self.run_shell('hang', scope='busy-stop-pilot')
+        self.assertEqual(124, result.returncode, result.stderr)
+        self.assertEqual('timed_out', self.execution()['status'])
+        capture = json.loads((self.root / 'busy-stop-evidence/api-30/capture.json').read_text())
+        self.assertEqual(124, capture['gradleExitCode'])
+        self.assertNotEqual('passed', capture['diagnosticStatus'])
+
     def test_longer_timeout_requires_explicit_profile_and_remains_bounded(self):
-        for profile, seconds in [('standard', '1201'), ('standard', '2400'), ('segmented-stress', '2401')]:
+        for profile, seconds in [('standard', '1201'), ('standard', '2400'), ('segmented-stress', '2401'),
+                                 ('app-experience', '2401'), ('busy-stop', '2401')]:
             with self.subTest(profile=profile, seconds=seconds):
                 result = subprocess.run([sys.executable, 'scripts/run_bounded_instrumentation.py',
                                          '--matrix-label', '30', '--timeout-profile', profile,

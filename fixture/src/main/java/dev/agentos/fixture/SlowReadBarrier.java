@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.os.Process;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -75,6 +76,11 @@ final class SlowReadBarrier {
         result.putBoolean("expired", session.expired);
         result.putLong("startedNanos", session.startedNanos);
         result.putLong("finishedNanos", session.finishedNanos);
+        result.putInt("pid", Process.myPid());
+        result.putLong("barrierEnteredNanoTime", session.barrierEnteredNanoTime);
+        result.putLong("barrierExitedNanoTime", session.barrierExitedNanoTime);
+        result.putLong("effectWrittenNanoTime", session.effectWrittenNanoTime);
+        result.putInt("effectCount", session.effectCount);
         return result;
     }
 
@@ -82,16 +88,25 @@ final class SlowReadBarrier {
         beforeReply(context, owner, false);
     }
 
-    static void beforeActionReply(Context context, Object owner) {
-        beforeReply(context, owner, true);
+    static Object beforeActionReply(Context context, Object owner) {
+        return beforeReply(context, owner, true);
     }
 
-    private static void beforeReply(Context context, Object owner, boolean action) {
-        if (attachedOwner != owner) return;
+    /** Associates the actual mutation with the exact session entered, never a later barrier. */
+    static void afterActionEffect(Object ticket, int count) {
+        if (!(ticket instanceof Session)) return;
+        Session session = (Session) ticket;
+        session.effectCount = count;
+        session.effectWrittenNanoTime = System.nanoTime();
+    }
+
+    private static Object beforeReply(Context context, Object owner, boolean action) {
+        if (attachedOwner != owner) return null;
         Session session = active;
         if (session == null || session.action != action || session.release.getCount() == 0
-                || !session.claimed.compareAndSet(false, true)) return;
+                || !session.claimed.compareAndSet(false, true)) return null;
         session.startedNanos = SystemClock.elapsedRealtimeNanos();
+        session.barrierEnteredNanoTime = System.nanoTime();
         context.sendBroadcast(new Intent(action ? "dev.agentos.fixture.ACTION_REPLY_BLOCKED" : "dev.agentos.fixture.FINAL_ROOT_BLOCKED")
                 .setPackage("dev.agentos.app").putExtra("token", session.token)
                 .putExtra("startedNanos", session.startedNanos));
@@ -104,9 +119,11 @@ final class SlowReadBarrier {
             session.expired = true;
         } finally {
             session.finishedNanos = SystemClock.elapsedRealtimeNanos();
+            session.barrierExitedNanoTime = System.nanoTime();
             session.returned = true;
             session.finished.countDown();
         }
+        return session;
     }
 
     private static final class Session {
@@ -117,6 +134,8 @@ final class SlowReadBarrier {
         final AtomicBoolean claimed = new AtomicBoolean();
         volatile boolean returned, expired;
         volatile long startedNanos, finishedNanos;
+        volatile long barrierEnteredNanoTime = -1, barrierExitedNanoTime = -1, effectWrittenNanoTime = -1;
+        volatile int effectCount = -1;
         Session(String token, boolean action) { this.token = token; this.action = action; }
     }
 }

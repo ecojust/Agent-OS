@@ -12,7 +12,7 @@ if (( $# > 2 )); then
 fi
 case "$test_scope" in
   full)
-    selection=(-Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest,dev.agentos.app.DemoWalkthroughInstrumentedTest,dev.agentos.app.PinnedWindowDisclosureInstrumentedTest,dev.agentos.app.IdlePairedPerformanceInstrumentedTest,dev.agentos.app.SegmentedStressInstrumentedTest,dev.agentos.app.ActivePairedPerformanceInstrumentedTest,dev.agentos.app.AppExperienceInstrumentedTest)
+    selection=(-Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest,dev.agentos.app.DemoWalkthroughInstrumentedTest,dev.agentos.app.PinnedWindowDisclosureInstrumentedTest,dev.agentos.app.IdlePairedPerformanceInstrumentedTest,dev.agentos.app.SegmentedStressInstrumentedTest,dev.agentos.app.ActivePairedPerformanceInstrumentedTest,dev.agentos.app.AppExperienceInstrumentedTest,dev.agentos.app.BusyStopInstrumentedTest)
     ;;
   owned-control-diagnostic)
     selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.OwnedControlWindowInstrumentedTest#changedPresentationAndCallbacksStillRevokeTheActualControlOwner)
@@ -71,6 +71,16 @@ case "$test_scope" in
       watchdog_profile=app-experience
     fi
     ;;
+  busy-stop-diagnostic|busy-stop-pilot)
+    busy_stop_profile=formal
+    if [[ "$test_scope" == 'busy-stop-pilot' ]]; then busy_stop_profile=pilot; fi
+    selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.BusyStopInstrumentedTest#collectBusyStopDiagnostics
+      "-Pandroid.testInstrumentationRunnerArguments.busyStopProfile=$busy_stop_profile")
+    if [[ "$busy_stop_profile" == formal ]]; then
+      default_timeout_seconds=2400
+      watchdog_profile=busy-stop
+    fi
+    ;;
   *) echo "Invalid Android test scope" >&2; exit 2 ;;
 esac
 if [[ ! "$matrix_label" =~ ^(3[0-6]|37\.0)$ ]]; then
@@ -103,14 +113,14 @@ trap 'handle_signal 15' TERM
 
 collect_on_exit() {
   local result=$?
-  local experience_result=0
+  local required_evidence_result=0
   trap - EXIT
   trap '' INT TERM
   if [[ "$result" != 0 ]]; then
     python3 scripts/print_android_test_failures.py || true
   fi
   if [[ "$test_scope" == app-experience-* ]]; then
-    python3 scripts/run_app_experience_trace.py stop --matrix-label "$matrix_label" || experience_result=1
+    python3 scripts/run_app_experience_trace.py stop --matrix-label "$matrix_label" || required_evidence_result=1
   fi
   python3 scripts/collect_android_evidence.py collect --api "$api_level" --matrix-label "$matrix_label" --scope "$test_scope" --exit-code "$result" || true
   python3 scripts/collect_performance_evidence.py collect --matrix-label "$matrix_label" --exit-code "$result" || true
@@ -124,11 +134,14 @@ collect_on_exit() {
     python3 scripts/collect_active_pair_evidence.py collect --matrix-label "$matrix_label" --exit-code "$result" || true
   fi
   if [[ "$test_scope" == app-experience-* ]]; then
-    python3 scripts/collect_app_experience_evidence.py collect --matrix-label "$matrix_label" --scope "$test_scope" --exit-code "$result" || experience_result=1
+    python3 scripts/collect_app_experience_evidence.py collect --matrix-label "$matrix_label" --scope "$test_scope" --exit-code "$result" || required_evidence_result=1
+  fi
+  if [[ "$test_scope" == busy-stop-* ]]; then
+    python3 scripts/collect_busy_stop_evidence.py collect --matrix-label "$matrix_label" --scope "$test_scope" --exit-code "$result" || required_evidence_result=1
   fi
   # Preserve a failed instrumentation code. A successful device case alone
-  # cannot make this new scope green when its required trace is incomplete.
-  if [[ "$result" == 0 && "$experience_result" != 0 ]]; then result=1; fi
+  # cannot make a required-evidence scope green when its reports are incomplete.
+  if [[ "$result" == 0 && "$required_evidence_result" != 0 ]]; then result=1; fi
   exit "$result"
 }
 trap collect_on_exit EXIT
@@ -206,12 +219,12 @@ if [[ "$test_scope" == app-experience-* ]]; then
   ' agentos-app-experience "$matrix_label" "${test_command[@]}")
 fi
 
-# Twenty minutes normally; fixed stress and formal experience have forty minutes.
+# Twenty minutes normally; stress and formal experience/busy-stop have forty.
 # Then about one minute of watchdog diagnostics
 # (60s collection budget +1s final reap), <=10s TERM grace and <=2s final reap.
 # The existing collectors independently bound their adb reads to <=35s and <=25s.
 # Stress and active-pair each add a collector with a 60s total adb budget.
-# Stress and formal app experience each have a 55-minute CI job.
+# Stress and formal app experience/busy-stop each have a 55-minute CI job.
 # This reserves time for evidence; SDK/boot delays or the external job deadline
 # can still interrupt cleanup. A kernel-blocked process may survive SIGKILL.
 python3 scripts/run_bounded_instrumentation.py --matrix-label "$matrix_label" \

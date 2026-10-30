@@ -1188,13 +1188,23 @@ public final class AndroidDeviceTools implements ToolHandler {
             // Admission is a short local boundary, not a claim of system acceptance.
             // Stop never waits on the remote action; an admitted action may still
             // finish. Recheck observed cancellation immediately before entering it.
+            BusyStopProbe.Call busyStopCall = BusyStopProbe.disabled();
             try (RunControl.DispatchTicket ticket = control.beginDispatch(epoch)) {
                 ticket.checkExecutionEpoch();
                 requireCurrentConfiguration(control, epoch);
                 if (!service.isControlLeaseCurrent(controls)) throw diagnosticStale(PerformanceTrace.Stage.LOCAL_CONTROL_STALE, control, epoch);
                 PerformanceTrace.mark(PerformanceTrace.Stage.DEVICE_DISPATCH_ATTEMPT, epoch, control.getDispatchAttempts());
                 dispatch.started = true;
-                accepted = action.call();
+                busyStopCall = BusyStopProbe.entering(control, epoch);
+                try {
+                    accepted = action.call();
+                    busyStopCall.returned(accepted);
+                } catch (Exception | Error failure) {
+                    busyStopCall.threw();
+                    throw failure;
+                }
+            } finally {
+                busyStopCall.settled(control);
             }
         }
         if (!accepted) {

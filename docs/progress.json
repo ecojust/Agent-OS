@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-30T00:40:02Z",
-  "note": "导航拒绝顺序已修正：同案八档0/8→8/8，修正源完整2184/2184、三个导航用例各8/8。核心339项、CI脚本503项及普通录像13阶段通过。旋转与视觉本轮未复现，根因及剩余生命周期验收继续记录，检查点保持9/20。",
+  "updated_at": "2026-10-30T09:48:56Z",
+  "note": "固定三轮完整复测6548/6552：API30旋转三次失败，第二轮API35点击前身份失效，完成条件未满足，保持9/20。导航72/72、SAF144/144通过。已推进多轮性能统计工具，34项相关测试及24份真实诊断复算通过；README更新34.3秒普通演示。",
   "latest_evidence": {
-    "path": "screenshots/40978861976-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40978861976"
+    "path": "screenshots/41032285687-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41032285687"
   },
   "checkpoints": [
     {
@@ -84,18 +84,19 @@
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
       "status": "in_progress",
-      "evidence": "screenshots/40978861976-1/manifest.json",
-      "scope": "Exact b3e2cacfcc48c5819b0c25f9d8900b6d723c9f44 full run40978861976:273x8=2184/2184,zero failures/errors/skips/missing/extra/duplicates/unreadable. Original270 subset2160/2160;original Settings navigation,real control-rebuild refusal,fresh scoped observation replacement,and rotation each8/8;SAF48/48. Unique archive40980594033:4504payload/48098452B/2288PNG/1510blocked;24 prior secure exceptions unchanged;8performance reports diagnostic-only. SAF48setup allprior1;one actual reobserved-1-depth-0 recovery in passed API30 export;145 protected records. Navigation production fix records a successful observed origin solely for refusal,bound to owner/epoch/profile/config;target authorization and all final guards retained. Conditional pause prevents stale-epoch state changes;async UI notification remains separate. Byte-identical rebuild method:old74090a run40976664678 0/8 contract pass with8 verified target counterexamples;fixed b3e2 run40978858645 8/8,unique archive40979236639,32payload/29324B/16blocked/0PNG. Local core339 including6 new tests passed;CI503 script tests passed and core task executed,without independent CI core case count. Same-source ordinary demo40978865253 passed13phases/8confirmations. Prior exact8e repeated full runs40975741234/40975743980 both2166/2168 and all historical failures retained. Rotation rejection diagnostics added but not triggered in latest passing run;historical mismatch subtype unresolved. Visual positive global-generation assertion also assumes no unrelated external events;causal test amendment pending,external invalidation protection unchanged. Remaining:MainActivity rotation drafts,multiwindow/PiP,process death,in-flight external upgrade;real-model/phone/ROM/broad-app/performance are separate acceptance.",
-      "details": "已验证：导航拒绝顺序同案0/8→8/8；修正源2184/2184，原负例、重建负例、新观察正例各8/8，SAF48/48；核心339项、普通录像13阶段通过。未完成：旧API30旋转失配细类、视觉事件归因整改，以及主界面旋转草稿/多窗口/PiP/进程终止/执行中升级。本轮旋转8/8但无新失败诊断。下一步：取得旋转拒绝瞬间样本，补视觉单事件中性与外部撤销的独立验证。",
-      "updated_at": "2026-10-30T00:40:02Z"
+      "evidence": "docs/validation/matrix-repeat-2026-10-30.md",
+      "scope": "User requested three additional fixed complete runs before closing the current declared matrix if failures cannot reproduce. Exact710e54e701edb37a32efa28845f0cd5ed6ace936 has identical Android/product/test/build/workflow sources to priorb3e. Runs41032278433,41032282256,41032285687 each273/API over8 APIs:2183/2184,2182/2184,2183/2184,total6548/6552;four actual rotation failures,not accepted for closure. Zero missing/extra/duplicate/skipped/JUnit errors/unreadable. API30 all3:6 BOUNDS_MISMATCH each,17/18 reject-time actual[110,36,532,150] vs expected[110,36,530,148];round2 first actual bottom244. Old input explicitly unsubmitted STALE,dispatch0/request1. API35 round2 fails current-identity assertion before actual approval click;not the same observed failure path. Original270 subset6480/6480;three navigation cases72/72;SAF144/144;visual12 actual API34-37 positives plus12 lower-API unsupported passes. SAF setup144 allprior1;one actual depth0 recovery at round1 API32 normal import;round2/3 zero. All3 archives/hash/PNG/source checks valid;13508payload/144515210B/6860PNG,24 prior secure exceptions each. All503 host checks passed in each CI;core:test FROM-CACHE,app JVM NO-SOURCE. Production navigation before/after repair remains supported;rotation platform cause and API35 invalidation trigger remain open. No replacement runs or weakened guard/budget. Remaining lifecycle extensions:MainActivity rotation drafts,multiwindow/PiP,process death,in-flight external upgrade. Performance,real-model,apps,phones and ROM separately accepted.",
+      "details": "三轮已核验2183/2184、2182/2184、2183/2184，共6548/6552；未满足不复现后完成的条件。导航72/72、SAF144/144，视觉12实际正例及12不支持路径通过。未完成：API30三轮均六次边界失配（17/18次右/下+2px）；第二轮API35点击前身份失效；后续生命周期扩展。下一步：分别定位平台几何差异与控件失效触发点，保留原精度和观察预算。",
+      "updated_at": "2026-10-30T09:48:56Z"
     },
     {
       "id": "performance",
       "name": "三态性能测量与预算验收",
       "status": "in_progress",
-      "details": "已验证：八档完成关闭、空闲、执行及待确认停止诊断，全部仅作诊断，预算未验收。未完成：交替配对、持续压力、启动/完整帧、繁忙停止与设备资源预算。下一步：先补模拟器采集和统计，再做参考机资源、功耗与温升测量。",
-      "updated_at": "2026-10-29T14:56:24Z",
-      "evidence": "docs/PERFORMANCE.md"
+      "details": "已完成重复诊断汇总工具，17项新测试加17项既有测试通过；三轮24份有效性能报告按8个API分组，逐run数值和分布独立复算一致，保留完整运行失败。未完成：固定顺序短窗口不等于预算验收，交替配对、30分钟压力、目标应用进程、启动/完整帧及真机功耗温升仍缺。下一步：补采集合同与交替/长时数据，再做参考机预算。",
+      "updated_at": "2026-10-30T09:48:56Z",
+      "evidence": "docs/validation/performance-repeated-runs.md",
+      "scope": "New read-only repeated-performance CLI validates exact expected source and original manifest/capture/report hash chains,retains failed/missing samples,and groups by API/device fingerprint/CI profile/conditions.17 new host tests and17 existing performance-evidence tests passed. Three710e full archives yield24 eligible diagnostic lanes in8 groups of3,while retaining all3 full failures and4 failed jobs. Derived321826B report SHA2562ba2419c69e50f7a5ececc9015d038f67b35b976fd4473b948fb1a27735a4e62;independent calculations and deterministic regeneration match. CPU uses actual first/last sample span,PSS sampled means/maxima,within-run differences then run-level min/median/max. Fixed A_B_C_STOP,unequal workloads/durations,sampler and local model included,fixture process excluded;not alternating paired or budget acceptance. Remaining30-minute pressure,target-process/startup/full-frame sampling and physical resource/energy/thermal acceptance."
     },
     {
       "id": "visual_observation",
@@ -118,10 +119,10 @@
       "id": "continuous_actions",
       "name": "普通操作连续执行与接管",
       "status": "in_progress",
-      "evidence": "screenshots/demos/40902334050-1/manifest.json",
-      "scope": "Latest exact42db0baf3/run40902334050 API35 ordinary walkthrough:13 required phases and8 confirmations passed,36.521s/468269B,local synthetic HTTP model,secure flags retained. Only launch_app/scroll/home may use explicitly selected continuous navigation; click/type_text/back still require step confirmation. This is not real-model, phone or unrestricted continuous-write acceptance. Third-party videos retain separate source-bound cases. This ordinary video does not prove SAF,rotation or full-matrix repair. New exact309c2f759/run40907100293 ordinary attempt failed at ready with0 required phases completed;9payload/102142B preserved,failed video6.695s/62518B,1PNG. Independent file hashes/video and PNG decode passed but raw failed/not_revalidated status is unchanged;no re-recording. Failure means the ready control-availability condition was not met,not an identified cause or proof of the same cause as rotation. Latest successful demo remains exact42db/run40902334050.",
-      "details": "已验证：启动/滚动/主页可选择免确认，最近成功API35普通流程13阶段、8次确认通过，36.5秒录像保留。未完成：本次309c录像在ready阶段控制可用性检查失败、0阶段完成，已归档不重录；普通写操作连续执行仍未验收。下一步：定位启动可用性失败并明确写操作范围，补端到端接管验证。",
-      "updated_at": "2026-10-29T16:11:09Z"
+      "evidence": "screenshots/demos/41032413776-1/manifest.json",
+      "scope": "Latest exact710e54e701edb37a32efa28845f0cd5ed6ace936 ordinary API35 walkthrough41032413776 passed13 required phases,8 confirmations and1 direct instrumentation case. Unique archive41034152999:30payload/1151259B/22PNG;video34.296s/416591B640x1280,full decode/hash and actual frames checked,secure flags preserved,local synthetic HTTP model. This ordinary video does not exercise rotation and cannot replace failed3full matrices. Historical309c/run40907100293 ready failure retained;latest success does not identify its root cause. Only launch_app/scroll/home are eligible for explicitly selected continuous navigation;click/type_text/back still require step confirmation. Unrestricted continuous writes,real-model,physical devices and broad apps remain unaccepted.",
+      "details": "已验证：710e源码API35普通流程13阶段、8次确认通过，最新34.3秒录像已核验并保留安全标志；仅启动/滚动/主页可选免确认。历史ready失败原记录保留，普通视频不替代本次旋转失败。未完成：普通写操作连续执行和实际模型接管尚未验收。下一步：冻结连续写范围，补端到端接管与启动可用性验证。",
+      "updated_at": "2026-10-30T09:48:56Z"
     },
     {
       "id": "model_acceptance",
@@ -178,9 +179,9 @@
     }
   ],
   "latest_demo": {
-    "path": "screenshots/demos/40978865253-1",
-    "source_sha": "b3e2cacfcc48c5819b0c25f9d8900b6d723c9f44",
+    "path": "screenshots/demos/41032413776-1",
+    "source_sha": "710e54e701edb37a32efa28845f0cd5ed6ace936",
     "status": "passed",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40978865253"
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41032413776"
   }
 }

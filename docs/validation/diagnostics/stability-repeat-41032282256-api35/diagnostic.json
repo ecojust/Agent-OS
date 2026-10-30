@@ -1,0 +1,45 @@
+{
+  "source": "710e54e701edb37a32efa28845f0cd5ed6ace936",
+  "sourceRun": 41032282256,
+  "api": "35",
+  "originalJob": 123984620652,
+  "inspectRun": 41034177450,
+  "inspectJob": 123990841642,
+  "test": "dev.agentos.app.AgentControllerInstrumentedTest#realRotationRejectsOldApprovalAndKeepsControlsReachable",
+  "originalFailureCount": 1,
+  "checksAndOriginalJobAgreeExceptReportPath": true,
+  "originalJobExcerptLines": [
+    1558,
+    1584
+  ],
+  "failureSha256": "e014f4cdcb9e2dc4e16bb3146e69743f246a37703dc657aec083b88ad7fff024",
+  "observed": {
+    "phase": "old_observation_rejected",
+    "failureLocation": "clickExpandedApproval:373",
+    "failedAssertion": "isOwnedControlWindowCurrent(shown.identity)",
+    "beforePerformClickLine": 378,
+    "running": true,
+    "paused": false,
+    "approvalPending": true,
+    "ownerCancelled": false,
+    "ownerEpoch": 1,
+    "dispatchAttempts": 0,
+    "requests": 1,
+    "traceRetained": 0,
+    "traceOverwritten": 0,
+    "receiptFrozen": false,
+    "receipt": "TYPE_TEXT:WAITING_RESULT:NOT_RECORDED:submitted=UNKNOWN:accepted=UNKNOWN",
+    "actualViewBounds": [
+      86,
+      36,
+      506,
+      242
+    ],
+    "sampledPlatformControlBounds": [
+      57,
+      -25,
+      523,
+      323
+    ]
+  }
+}

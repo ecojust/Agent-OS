@@ -1,0 +1,27 @@
+  | Report: /tmp/agent-os-junit-_bnp4ubw/report-01.xml
+  | Suite: dev.agentos.app.AgentControllerInstrumentedTest
+  | Test: dev.agentos.app.AgentControllerInstrumentedTest.realRotationRejectsOldApprovalAndKeepsControlsReachable
+  | Kind: failure / 
+  | java.lang.AssertionError: Real rotation failed before restoration; phase=old_observation_rejected,ownerPresent=true,dispatchAttempts=0,requests=1,running=true,paused=false,approvalPending=true,failureSnapshot=NON_ATOMIC_BEFORE_WINDOW_DIAGNOSTICS,resultKind=NONE,resultCode=NOT_RECORDED,statusClass=OTHER,summaryClass=EMPTY,ownerCancelled=false,ownerEpoch=1,testThreadInterrupted=false,receiptOwnerMatches=true,receiptFrozen=false,receiptCount=1,lastReceipt=TYPE_TEXT:WAITING_RESULT:NOT_RECORDED:submitted=UNKNOWN:accepted=UNKNOWN;rotationTrace={enabled=true,sample=COMPLETED_EVENTS_BEFORE_WINDOW_DIAGNOSTICS,capacity=4096,retained=0,overwritten=0,SNAPSHOT_OBSERVE=0,observeTotalUs=0,observeMaxUs=0,LOCAL_CONTROL_STALE=0,OWNED_WINDOW_MISMATCH=0,OBSERVATION_REVISION_MISMATCH=0,sequenceOrder=COMPLETION,sequenceTime=START_MS_PLUS_DURATION_MS,sequenceShown=0,sequenceOmitted=0,sequence=};owned={connected=true,orientation=2,identity=false,current=false,id=-1,publishedBounds=missing,actualBounds=[86,36][506,242],panelAttached=true,panelLayoutPending=false,approveAttached=true,approveShown=true,approveEnabled=true,approvalMatches=true,callbacksMatch=true};windowCount=4;window={id=25,type=4,display=0,focused=false,bounds=[57,-25][523,323],rootPresent=true,rootWindowId=25,rootIsAgent=true};window={id=3,type=3,display=0,focused=false,bounds=[614,41][677,206]};window={id=6,type=3,display=0,focused=false,bounds=[-36,-109][565,154]};window={id=26,type=1,display=0,focused=true,bounds=[-36,-109][677,428]};server_animator={bytes=956,eof=true,byteLimit=false,timedOut=false,matchedLines=3,outputTruncated=false,missingFields=unknown;Window role=fixture;Window role=controls;mCurrentTime=69241 (56 ms ago)};server_windows={bytes=46969,eof=true,byteLimit=false,timedOut=false,matchedLines=0,outputTruncated=false,missingFields=unknown};server_displays={bytes=17982,eof=true,byteLimit=false,timedOut=false,matchedLines=3,outputTruncated=false,missingFields=unknown;no ScreenRotationAnimation;mLastOrientation=-1;mRotation=1 mDeferredRotationPauseCount=0}
+  | at dev.agentos.app.AgentControllerInstrumentedTest.realRotationRejectsOldApprovalAndKeepsControlsReachable(AgentControllerInstrumentedTest.java:971)
+  | ... 33 trimmed
+  | Caused by: java.lang.AssertionError
+  | at org.junit.Assert.fail(Assert.java:87)
+  | at org.junit.Assert.assertTrue(Assert.java:42)
+  | at org.junit.Assert.assertTrue(Assert.java:53)
+  | at dev.agentos.app.AgentControllerInstrumentedTest.lambda$clickExpandedApproval$9(AgentControllerInstrumentedTest.java:373)
+  | at dev.agentos.app.AgentControllerInstrumentedTest$$ExternalSyntheticLambda22.run(D8$$SyntheticClass:0)
+  | at dev.agentos.app.AgentControllerInstrumentedTest.lambda$safeMain$11(AgentControllerInstrumentedTest.java:472)
+  | at dev.agentos.app.AgentControllerInstrumentedTest$$ExternalSyntheticLambda24.run(D8$$SyntheticClass:0)
+  | at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:487)
+  | at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+  | at android.app.Instrumentation$SyncRunnable.run(Instrumentation.java:2612)
+  | at android.os.Handler.handleCallback(Handler.java:959)
+  | at android.os.Handler.dispatchMessage(Handler.java:100)
+  | at android.os.Looper.loopOnce(Looper.java:232)
+  | at android.os.Looper.loop(Looper.java:317)
+  | at android.app.ActivityThread.main(ActivityThread.java:8705)
+  | at java.lang.reflect.Method.invoke(Native Method)
+  | at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+  | at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)
+Parsed 1 Android reports; found 1 failure/error entries.

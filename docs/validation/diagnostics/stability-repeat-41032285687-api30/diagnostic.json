@@ -1,0 +1,133 @@
+{
+  "derivedFrom": "failure.txt; fields parsed from original rejection trace, not new sampling",
+  "runId": 41032285687,
+  "source": "710e54e701edb37a32efa28845f0cd5ed6ace936",
+  "attempt": 1,
+  "api": "30",
+  "case": "dev.agentos.app.AgentControllerInstrumentedTest#realRotationRejectsOldApprovalAndKeepsControlsReachable",
+  "phase": "old_observation_rejected",
+  "terminalResult": "FAILED/STALE_OBSERVATION",
+  "dispatchAttempts": 0,
+  "httpRequests": 1,
+  "ownerCancelled": true,
+  "ownerEpoch": 2,
+  "frozenMatchingReceipt": "TYPE_TEXT:RETURNED:STALE_OBSERVATION:submitted=NO:accepted=NO",
+  "trace": {
+    "capacity": 4096,
+    "retained": 65,
+    "overwritten": 0,
+    "completedObserveSpans": 6,
+    "observeTotalUs": 30922,
+    "observeMaxUs": 16172,
+    "localControlStale": 1,
+    "ownedWindowMismatch": 6,
+    "observationRevisionMismatch": 0,
+    "sequenceShown": 13,
+    "sequenceOmitted": 0,
+    "rejections": [
+      {
+        "startMs": 120,
+        "durationMs": 0,
+        "reason": "BOUNDS_MISMATCH",
+        "actualBounds": [
+          110,
+          36,
+          532,
+          150
+        ],
+        "expectedBounds": [
+          110,
+          36,
+          530,
+          148
+        ]
+      },
+      {
+        "startMs": 265,
+        "durationMs": 0,
+        "reason": "BOUNDS_MISMATCH",
+        "actualBounds": [
+          110,
+          36,
+          532,
+          150
+        ],
+        "expectedBounds": [
+          110,
+          36,
+          530,
+          148
+        ]
+      },
+      {
+        "startMs": 532,
+        "durationMs": 0,
+        "reason": "BOUNDS_MISMATCH",
+        "actualBounds": [
+          110,
+          36,
+          532,
+          150
+        ],
+        "expectedBounds": [
+          110,
+          36,
+          530,
+          148
+        ]
+      },
+      {
+        "startMs": 915,
+        "durationMs": 0,
+        "reason": "BOUNDS_MISMATCH",
+        "actualBounds": [
+          110,
+          36,
+          532,
+          150
+        ],
+        "expectedBounds": [
+          110,
+          36,
+          530,
+          148
+        ]
+      },
+      {
+        "startMs": 1448,
+        "durationMs": 0,
+        "reason": "BOUNDS_MISMATCH",
+        "actualBounds": [
+          110,
+          36,
+          532,
+          150
+        ],
+        "expectedBounds": [
+          110,
+          36,
+          530,
+          148
+        ]
+      },
+      {
+        "startMs": 2082,
+        "durationMs": 0,
+        "reason": "BOUNDS_MISMATCH",
+        "actualBounds": [
+          110,
+          36,
+          532,
+          150
+        ],
+        "expectedBounds": [
+          110,
+          36,
+          530,
+          148
+        ]
+      }
+    ]
+  },
+  "boundary": "All six events report right and bottom +2 px at rejection. Subsequent non-atomic window/server dumps are separate; root/platform cause is not established by the later detached control state or mAnimRunning=false."
+}

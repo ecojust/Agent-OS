@@ -1,0 +1,177 @@
+{
+  "kind": "derived-exact-rotation-refusal-diagnostic",
+  "source": "710e54e701edb37a32efa28845f0cd5ed6ace936",
+  "runId": 41032278433,
+  "attempt": 1,
+  "api": "30",
+  "sourceJobId": 123984610957,
+  "inspectionRunId": 41034228874,
+  "phase": "old_observation_rejected",
+  "resultKind": "FAILED",
+  "resultCode": "STALE_OBSERVATION",
+  "ownerCancelled": true,
+  "ownerEpoch": 2,
+  "dispatchAttempts": 0,
+  "httpRequests": 1,
+  "lastReceipt": "TYPE_TEXT:RETURNED:STALE_OBSERVATION:submitted=NO:accepted=NO",
+  "trace": {
+    "capacity": 4096,
+    "retained": 65,
+    "overwritten": 0,
+    "SNAPSHOT_OBSERVE": 6,
+    "observeTotalUs": 33384,
+    "observeMaxUs": 17835,
+    "LOCAL_CONTROL_STALE": 1,
+    "OWNED_WINDOW_MISMATCH": 6,
+    "OBSERVATION_REVISION_MISMATCH": 0,
+    "sequenceShown": 13,
+    "sequenceOmitted": 0
+  },
+  "refusalInstantEvents": [
+    {
+      "startMs": 127,
+      "durationMs": 0,
+      "reason": "BOUNDS_MISMATCH",
+      "actual": [
+        110,
+        36,
+        532,
+        150
+      ],
+      "expected": [
+        110,
+        36,
+        530,
+        148
+      ],
+      "actualMinusExpected": [
+        0,
+        0,
+        2,
+        2
+      ]
+    },
+    {
+      "startMs": 259,
+      "durationMs": 0,
+      "reason": "BOUNDS_MISMATCH",
+      "actual": [
+        110,
+        36,
+        532,
+        150
+      ],
+      "expected": [
+        110,
+        36,
+        530,
+        148
+      ],
+      "actualMinusExpected": [
+        0,
+        0,
+        2,
+        2
+      ]
+    },
+    {
+      "startMs": 524,
+      "durationMs": 0,
+      "reason": "BOUNDS_MISMATCH",
+      "actual": [
+        110,
+        36,
+        532,
+        150
+      ],
+      "expected": [
+        110,
+        36,
+        530,
+        148
+      ],
+      "actualMinusExpected": [
+        0,
+        0,
+        2,
+        2
+      ]
+    },
+    {
+      "startMs": 908,
+      "durationMs": 0,
+      "reason": "BOUNDS_MISMATCH",
+      "actual": [
+        110,
+        36,
+        532,
+        150
+      ],
+      "expected": [
+        110,
+        36,
+        530,
+        148
+      ],
+      "actualMinusExpected": [
+        0,
+        0,
+        2,
+        2
+      ]
+    },
+    {
+      "startMs": 1444,
+      "durationMs": 0,
+      "reason": "BOUNDS_MISMATCH",
+      "actual": [
+        110,
+        36,
+        532,
+        150
+      ],
+      "expected": [
+        110,
+        36,
+        530,
+        148
+      ],
+      "actualMinusExpected": [
+        0,
+        0,
+        2,
+        2
+      ]
+    },
+    {
+      "startMs": 2077,
+      "durationMs": 0,
+      "reason": "BOUNDS_MISMATCH",
+      "actual": [
+        110,
+        36,
+        532,
+        150
+      ],
+      "expected": [
+        110,
+        36,
+        530,
+        148
+      ],
+      "actualMinusExpected": [
+        0,
+        0,
+        2,
+        2
+      ]
+    }
+  ],
+  "limits": [
+    "Coordinates are preserved in the original rejection-point trace before post-failure window diagnostics, not inferred from cleanup geometry.",
+    "The same right/bottom +2 pixels was present in all six observed OWNED_WINDOW_MISMATCH events. This identifies the immediate failure condition, not the upstream platform cache/animation cause.",
+    "Owner/window/server fields are explicitly non-atomic later diagnostic snapshots and do not retrospectively establish the system state at refusal.",
+    "One initial LOCAL_CONTROL_STALE can correspond to the expected old write rejection; no write was dispatched.",
+    "Raw job excerpt keeps its original GitHub wrapper/timestamps and is not raw JUnit XML. Inspection chunks preserve the bounded JUnit summary as separate evidence."
+  ]
+}

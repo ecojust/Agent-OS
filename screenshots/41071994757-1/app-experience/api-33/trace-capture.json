@@ -1,0 +1,26 @@
+{
+  "compressed": {
+    "bytes": 578459,
+    "path": "trace.pftrace.gz",
+    "sha256": "745ce15a806bffd916f33bf427ee05394bb345a5c7b38e56fdbe2817d3001a11"
+  },
+  "config": "buffers { size_kb: 7168 fill_policy: RING_BUFFER }\nbuffers { size_kb: 1024 fill_policy: RING_BUFFER }\ndata_sources { config { name: \"linux.ftrace\" target_buffer: 0\n  ftrace_config {\n    atrace_categories: \"am\"\n    atrace_categories: \"view\"\n      atrace_apps: \"dev.agentos.fixture\"\n      atrace_apps: \"dev.agentos.app\"\n    ftrace_events: \"task/task_newtask\"\n    ftrace_events: \"task/task_rename\"\n    ftrace_events: \"sched/sched_process_exit\"\n    ftrace_events: \"sched/sched_process_free\"\n  }\n} }\ndata_sources { config { name: \"linux.process_stats\" target_buffer: 1\n  process_stats_config { scan_all_processes_on_start: true proc_stats_poll_ms: 1000 }\n} }\ndata_sources { config { name: \"android.packages_list\" target_buffer: 1 } }\ndata_sources { config { name: \"android.surfaceflinger.frametimeline\" target_buffer: 0 } }\nwrite_into_file: true\nfile_write_period_ms: 2500\nmax_file_size_bytes: 67108864\nflush_period_ms: 5000\nincremental_state_config { clear_period_ms: 5000 }\n",
+  "configDelivery": "stdin",
+  "configVersion": 2,
+  "error": null,
+  "kind": "agent-os-experience-trace-capture",
+  "pid": 2349,
+  "ready": true,
+  "schemaVersion": 3,
+  "startExitCode": 0,
+  "startMode": "--background-wait",
+  "startStderr": "",
+  "startStdout": "2349\n",
+  "status": "collected",
+  "stopped": true,
+  "trace": {
+    "bytes": 3114435,
+    "path": "trace.pftrace",
+    "sha256": "e8f02271bf4cfbbb556a692c41f28b93be1fab517656b2b9e0e279e182e0e79b"
+  }
+}

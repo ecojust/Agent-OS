@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "api": 35,
+  "runId": "1793370751067-59e24635",
+  "scope": "Dedicated synthetic Android fixture and verified empty application UI only",
+  "jvmTests": "No UI; no screenshot is claimed for JVM tests",
+  "tests": [
+    {
+      "schemaVersion": 1,
+      "api": 35,
+      "testClass": "dev.agentos.app.AppExperienceInstrumentedTest",
+      "testName": "collectTargetResourcesStartupAndFrames",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793370751074,
+      "finishedAt": 1793370778628,
+      "captures": [
+        {
+          "stage": "app-experience-sequence-before",
+          "capturedAt": 1793370752045,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "blocked",
+          "captureError": "capture_unavailable_or_blank_secure_surface_not_evidence"
+        },
+        {
+          "stage": "app-experience-sequence-after",
+          "capturedAt": 1793370778580,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-collectTargetResourcesStartupAndFrames-823fe967-app-experience-sequence-after-1.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        },
+        {
+          "stage": "finished",
+          "capturedAt": 1793370778607,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-35-collectTargetResourcesStartupAndFrames-823fe967-finished-2.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    }
+  ]
+}

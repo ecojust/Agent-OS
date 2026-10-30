@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-30T10:58:46Z",
-  "note": "新增同设备空闲A/B交替配对诊断与独立归档/统计，固定8API计划48对96窗；实际采集与本次普通录像待执行，检查点保持9/20。",
+  "updated_at": "2026-10-30T11:14:54Z",
+  "note": "同设备空闲A/B交替配对已实测：八档8/8、48对96窗通过，2016原始样本和2160派生数值独立核验一致；CI562项通过，38.1秒普通演示已更新。存在顺序相关差异，性能预算仍待验收，检查点保持9/20。",
   "latest_evidence": {
-    "path": "screenshots/41032285687-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41032285687"
+    "path": "screenshots/41044860496-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41044860496"
   },
   "checkpoints": [
     {
@@ -93,10 +93,10 @@
       "id": "performance",
       "name": "三态性能测量与预算验收",
       "status": "in_progress",
-      "details": "已完成旧24份报告复算；新增同设备AB/BA六对、12个20秒窗口采集与独立归档/统计，40项相关宿主测试通过。未完成：八档真实配对数据待采集，活跃等价流程、30分钟压力、目标进程、启动/完整帧和真机预算仍缺。下一步：固定源码跑8案/48对/96窗，核验原始来源并独立复算。",
-      "updated_at": "2026-10-30T10:58:46Z",
+      "details": "已验证：084d八档空闲交替配对8/8、48对96窗及2016采样通过，2160派生数值独立复算一致，CI562项通过。AB/BA内存差中位数方向相反，保留顺序差异且不判预算达标。未完成：30分钟压力、活跃等价流程、目标进程、启动/完整帧及真机功耗温升。下一步：增加有界分段记录与任务级结果，实施30分钟重复任务/启停压力测量。",
+      "updated_at": "2026-10-30T11:14:54Z",
       "evidence": "docs/validation/performance-idle-pairs.md",
-      "scope": "已完成旧四态多轮汇总，710e三轮24份诊断复算；新增独立同设备空闲交替配对采集：AB/BA六对、12个20秒窗口，8API计划48对96窗，固定专项不计入原273项/API完整矩阵。新增采集/统计/归档宿主40项通过，设备执行和真实数值待核验。仍为diagnosticOnly=true、budgetAcceptance=false；交替仅覆盖空闲，活跃等价流程、30分钟压力、目标进程、启动/完整帧及真机功耗温升未验收。"
+      "scope": "084d596e源码专项41044860496八档8/8，AB/BA六对/API：48对96窗全部通过、2016采样、192端点状态及0trace；65payload/1073884B/17PNG核验，7条before截图blocked原样保留，无安全标志例外。2160派生数值独立Fraction复算一致，保留AB/BA顺序相关差异；CI562项宿主实际通过无skip，core:test FROM-CACHE。旧710e三轮24份四态诊断与矩阵失败保留。初次归档参数错误41045898899保留，纠正后41046173408成功且未重跑设备。仍为diagnosticOnly=true、budgetAcceptance=false；30分钟压力、活跃等价流程、目标进程、启动/完整帧及真机功耗温升未验收。"
     },
     {
       "id": "visual_observation",
@@ -119,10 +119,10 @@
       "id": "continuous_actions",
       "name": "普通操作连续执行与接管",
       "status": "in_progress",
-      "evidence": "screenshots/demos/41032413776-1/manifest.json",
-      "scope": "Latest exact710e54e701edb37a32efa28845f0cd5ed6ace936 ordinary API35 walkthrough41032413776 passed13 required phases,8 confirmations and1 direct instrumentation case. Unique archive41034152999:30payload/1151259B/22PNG;video34.296s/416591B640x1280,full decode/hash and actual frames checked,secure flags preserved,local synthetic HTTP model. This ordinary video does not exercise rotation and cannot replace failed3full matrices. Historical309c/run40907100293 ready failure retained;latest success does not identify its root cause. Only launch_app/scroll/home are eligible for explicitly selected continuous navigation;click/type_text/back still require step confirmation. Unrestricted continuous writes,real-model,physical devices and broad apps remain unaccepted.",
-      "details": "已验证：710e源码API35普通流程13阶段、8次确认通过，最新34.3秒录像已核验并保留安全标志；仅启动/滚动/主页可选免确认。历史ready失败原记录保留，普通视频不替代本次旋转失败。未完成：普通写操作连续执行和实际模型接管尚未验收。下一步：冻结连续写范围，补端到端接管与启动可用性验证。",
-      "updated_at": "2026-10-30T09:48:56Z"
+      "evidence": "screenshots/demos/41044864399-1/manifest.json",
+      "scope": "084d596e源码的API35普通Fixture演示13阶段、8次确认、直接仪器1案通过；38.102秒、30payload/1203711B/22PNG来源与摘要/解码核验，安全标志保留，本地合成HTTP模型。继续仅对启动/滚动/主页开放可选免确认；普通写操作连续执行与真实模型接管未验收。录像不代替空闲配对数值或历史旋转失败。",
+      "details": "已验证：084d源码API35普通流程13阶段、8次确认通过，38.1秒录像已核验并保留安全标志；仅启动/滚动/主页可选免确认。历史ready和旋转失败继续保留，普通视频不替代性能数值。未完成：普通写操作连续执行和实际模型接管尚未验收。下一步：冻结连续写范围，补端到端接管与启动可用性验证。",
+      "updated_at": "2026-10-30T11:10:56Z"
     },
     {
       "id": "model_acceptance",
@@ -179,9 +179,9 @@
     }
   ],
   "latest_demo": {
-    "path": "screenshots/demos/41032413776-1",
-    "source_sha": "710e54e701edb37a32efa28845f0cd5ed6ace936",
+    "path": "screenshots/demos/41044864399-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41044864399",
     "status": "passed",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41032413776"
+    "source_sha": "084d596e00b50ca7cea603f6eaf94ad1c1a2dd64"
   }
 }

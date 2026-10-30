@@ -32,7 +32,7 @@ def probe(number=1, now=1_000_000_000, schema_version=1):
                  uid=10001, processInstance=identifier(number), activityInstance=identifier(number + 1000),
                  refreshHz=60.0, modeHz=60.0, displayId=0, editorText='', savedText='Saved: empty',
                  drawMatchMethod=experience.DRAW_METHODS[schema_version])
-    if schema_version == 2:
+    if schema_version >= 2:
         value.update(sequenceMismatchCount=0, zeroDrawingTimeCount=0)
     value.update({key: False for key in experience.STATUS_BOOL})
     value.update({key: 0 for key in experience.STATUS_INT})
@@ -42,6 +42,9 @@ def probe(number=1, now=1_000_000_000, schema_version=1):
                  drawNanoTime=now + 10_000_000, drawVsyncNs=now + 9_000_000,
                  drawTimeMillis=(now + 9_000_000) // 1_000_000, displayObservedNanoTime=now,
                  activityFrameCount=1, lastFrameVsyncNs=now + 9_000_000, lastFrameCallbackNanoTime=now + 11_000_000)
+    if schema_version == 3:
+        value.update(focusGainCount=1, focusLossCount=0, firstFocusGainNanoTime=now,
+                     lastFocusGainNanoTime=now, lastFocusLossNanoTime=0)
     return value
 
 
@@ -67,6 +70,11 @@ def launch(index=0, profile='pilot', schema_version=1):
         before.update(stopped=True, resumed=False, windowFocused=False, resumeCount=index - cold_count + 1,
                       drawVsyncNs=marker_start - 1_000_000, drawTimeMillis=(marker_start - 1_000_000) // 1_000_000)
         after['resumeCount'] = before['resumeCount'] + 1
+        if schema_version == 3:
+            before.update(focusGainCount=1, focusLossCount=1, firstFocusGainNanoTime=marker_start - 100_000_000,
+                          lastFocusGainNanoTime=marker_start - 100_000_000, lastFocusLossNanoTime=marker_start - 50_000_000)
+            after.update(focusGainCount=2, focusLossCount=1, firstFocusGainNanoTime=before['firstFocusGainNanoTime'],
+                         lastFocusLossNanoTime=before['lastFocusLossNanoTime'])
     value = dict(schemaVersion=schema_version, kind=experience.LAUNCH_KIND, index=index, pairIndex=pair, position=position,
                 arm=arm, startupType=startup_type, status='passed', startedNanos=start, endedNanos=start + 4_000_000_000,
                 marker=f'aos.experience.launch.{index}', driverPid=420, expectedPid=after['pid'], expectedStartupType=startup_type,
@@ -76,9 +84,37 @@ def launch(index=0, profile='pilot', schema_version=1):
                 launchStartedElapsedNanos=marker_start, launchEndedElapsedNanos=start + 3_000_000_000,
                 launchStartedNanoTime=marker_start, launchEndedNanoTime=start + 3_000_000_000,
                 amStartOutput='Status: ok\nTotalTime: 0\n', unavailableReason='')
-    if schema_version == 2:
+    if schema_version >= 2:
         value.update(homePackage='com.android.launcher3' if startup_type == 'hot' else '',
                      homeFocusedVerified=startup_type == 'hot')
+    if schema_version == 3:
+        add_readiness(value)
+    return value
+
+
+def readiness_observation(value, index, start, ready=True):
+    provider = [value['afterLaunch'][key] for key in experience.READINESS_PROVIDER_FIELDS]
+    checked = value['launchEndedNanoTime'] + start - value['launchEndedElapsedNanos']
+    connected = value['arm'] != experience.ARMS[0]
+    return dict(index=index, startedNanos=start, endedNanos=start + 10_000_000,
+                providerBefore=provider + [checked + 1_000_000], providerAfter=provider + [checked + 9_000_000],
+                agentBefore=[connected, connected, False, False, start + 2_000_000],
+                agentAfter=[connected, connected, False, False, start + 8_000_000],
+                a11y=dict(windowCount=2, focusedWindowCount=1, focusedWindowId=3, focusedWindowType=1,
+                          rootPresent=True, packageName=experience.TARGET_PACKAGE if ready else 'com.android.launcher3',
+                          editorMatchCount=1 if ready else -1, editorVisible=ready, ready=ready,
+                          reason='ready' if ready else 'package_mismatch'), reason='')
+
+
+def add_readiness(value, pending=0):
+    start = value['launchEndedElapsedNanos'] + 10_000_000
+    observations = [readiness_observation(value, i, start + i * 210_000_000, ready=i == pending)
+                    for i in range(pending + 1)]
+    end = observations[-1]['endedNanos'] + 1_000_000
+    value.update(readinessStartedNanos=start, readinessEndedNanos=end, readinessVerified=True,
+                 readinessFailureReason='', readinessObservations=observations)
+    value['endedNanos'] = max(value['endedNanos'], end + 1_000_000)
+    value['stateAfter'] = state(observations[-1]['agentAfter'][4], value['arm'])
     return value
 
 
@@ -164,7 +200,7 @@ def write_bundle(directory, api=37, profile='pilot', launches=None, trials=None,
 
 def write_trace(directory, value, mutate=None, config_version=None):
     directory = Path(directory)
-    trace_version = config_version if config_version is not None else 2 if value['schemaVersion'] == 2 else 1
+    trace_version = config_version if config_version is not None else value['schemaVersion'] if value['schemaVersion'] >= 2 else 1
     derived_version = 2 if trace_version >= 2 else 1
     raw_trace = b'SYNTHETIC UNIT TEST TRACE: not device evidence\n'
     zipped = gzip.compress(raw_trace, mtime=0)
@@ -230,6 +266,246 @@ class AppExperienceEvidenceTests(unittest.TestCase):
                 self.assertEqual(original, value)
                 other = 'formal' if profile == 'pilot' else 'pilot'
                 with self.assertRaises(ValueError): experience.validate_report(value, 37, other)
+
+    def test_v3_readiness_keeps_pending_reads_outside_the_original_startup_measurement(self):
+        for profile in ('pilot', 'formal'):
+            with self.subTest(profile=profile), tempfile.TemporaryDirectory() as temporary:
+                launches = [launch(i, profile, 3) for i in range(experience.conditions(profile)['launchCount'])]
+                marker = launches[0]['launchEndedElapsedNanos']
+                original = copy.deepcopy(launches[0]['afterLaunch'])
+                add_readiness(launches[0], pending=2)
+                value = write_bundle(temporary, profile=profile, schema_version=3, launches=launches)
+                capture = collected_capture(temporary, value)
+                payloads = experience.validate_payloads(temporary, capture, '37.0', SOURCE, profile)
+                self.assertEqual('passed', capture['diagnosticStatus'])
+                self.assertEqual([False, False, True], [x['a11y']['ready'] for x in launches[0]['readinessObservations']])
+                self.assertEqual(marker, launches[0]['launchEndedElapsedNanos'])
+                self.assertEqual(original, launches[0]['afterLaunch'])
+                self.assertEqual(500_000_000, json.loads(payloads['startup-ttid.json'])['launches'][0]['ttidNanos'])
+                self.assertEqual(4, json.loads(payloads['trace-capture.json'])['schemaVersion'])
+        for mutate in (lambda x: x.update(schemaVersion=2),
+                       lambda x: x['conditions'].update(a11yReadinessMaxObservations=15),
+                       lambda x: x['conditions'].update(a11yReadinessTimeoutMillis=3001),
+                       lambda x: x['conditions'].update(a11yReadinessIntervalMillis=True)):
+            value = report(schema_version=3); mutate(value)
+            with self.assertRaises(ValueError): experience.validate_report(value, 37)
+        value = launch(schema_version=3)
+        for key in experience.FOCUS_FIELDS:
+            invalid = copy.deepcopy(value); invalid['afterLaunch'].pop(key)
+            with self.assertRaises(ValueError): experience.validate_launch(invalid, 0, report(schema_version=3))
+        value = launch(schema_version=2); value.update({key: launch(schema_version=3)[key] for key in experience.READINESS_FIELDS})
+        with self.assertRaises(ValueError): experience.validate_launch(value, 0, report(schema_version=2))
+
+    def test_v3_partial_reads_preserve_the_real_prefix_without_inventing_ready(self):
+        order = ('providerBefore', 'agentBefore', 'a11y', 'agentAfter', 'providerAfter')
+        for retained in range(6):
+            with self.subTest(retained=retained):
+                value = launch(schema_version=3)
+                value.update(status='failed', readinessVerified=False, readinessFailureReason='observation_failed')
+                observation = value['readinessObservations'][0]
+                observation['reason'] = 'observation_failed'
+                for key in order[retained:]: observation[key] = None
+                agent = observation['agentAfter'] or observation['agentBefore']
+                value['stateAfter'] = (dict(zip(experience.STATE_FLAGS[:4], agent[:4])) if agent else None)
+                if agent:
+                    value['stateAfter'].update(checkedNanos=agent[4], fixtureFocused=bool(observation['a11y'] and observation['a11y']['ready']))
+                experience.validate_launch(value, 0, report(schema_version=3))
+                invalid = copy.deepcopy(value); invalid.update(status='passed', readinessVerified=True, readinessFailureReason='')
+                invalid['readinessObservations'][0]['reason'] = ''
+                if retained < 5:
+                    with self.assertRaises(ValueError): experience.validate_launch(invalid, 0, report(schema_version=3))
+        value = launch(schema_version=3); value['status'] = 'failed'
+        experience.validate_launch(value, 0, report(schema_version=3))  # A later outer sequence check can fail.
+        value = launch(schema_version=3)
+        value.update(status='failed', readinessStartedNanos=-1, readinessEndedNanos=-1, readinessVerified=False,
+                     readinessFailureReason='', readinessObservations=[], stateAfter=None)
+        experience.validate_launch(value, 0, report(schema_version=3))
+        value['readinessVerified'] = True
+        with self.assertRaises(ValueError): experience.validate_launch(value, 0, report(schema_version=3))
+
+    def test_v3_real_guard_failures_are_retained_and_cannot_be_relabelled_ready(self):
+        reasons = ('provider_identity_changed', 'provider_lifecycle_changed', 'provider_focus_changed',
+                   'provider_not_resumed_focused', 'agent_state_changed')
+        for side in ('Before', 'After'):
+            for reason in reasons:
+                with self.subTest(side=side, reason=reason):
+                    value = launch(schema_version=3)
+                    value.update(status='failed', readinessVerified=False, readinessFailureReason=reason)
+                    observation = value['readinessObservations'][0]; observation['reason'] = reason
+                    provider, agent = observation['provider' + side], observation['agent' + side]
+                    if reason == reasons[0]: provider[0] += 1
+                    elif reason == reasons[1]: provider[4] += 1
+                    elif reason == reasons[2]:
+                        provider[11] += 1; provider[14] = provider[18]; provider[17] = False
+                    elif reason == reasons[3]: provider[15] = False
+                    else: agent[0] = not agent[0]
+                    if side == 'Before':
+                        observation.update(a11y=None, agentAfter=None, providerAfter=None)
+                    last_agent = observation['agentAfter'] or observation['agentBefore']
+                    value['stateAfter'] = dict(zip(experience.STATE_FLAGS[:4], last_agent[:4]))
+                    value['stateAfter'].update(checkedNanos=last_agent[4], fixtureFocused=side == 'After')
+                    experience.validate_launch(value, 0, report(schema_version=3))
+                    invalid = copy.deepcopy(value); invalid.update(status='passed', readinessVerified=True, readinessFailureReason='')
+                    invalid['readinessObservations'][0]['reason'] = ''
+                    with self.assertRaises(ValueError): experience.validate_launch(invalid, 0, report(schema_version=3))
+                    invalid = copy.deepcopy(value); invalid['readinessObservations'].append(readiness_observation(value, 1, observation['endedNanos'] + 200_000_000))
+                    with self.assertRaises(ValueError): experience.validate_launch(invalid, 0, report(schema_version=3))
+
+    def test_v3_focus_loss_before_anchor_cannot_pass_after_recovery_but_resource_scope_is_unchanged(self):
+        for index in (0, 4):
+            value = launch(index, schema_version=3)
+            after = value['afterLaunch']; when = value['launchStartedNanoTime']
+            after.update(focusGainCount=after['focusGainCount'] + 1, focusLossCount=after['focusLossCount'] + 1,
+                         lastFocusLossNanoTime=when + 2_000_000, lastFocusGainNanoTime=when + 3_000_000)
+            add_readiness(value)
+            with self.assertRaisesRegex(ValueError, 'guard'): experience.validate_launch(value, index, report(schema_version=3))
+            value.update(status='failed', readinessVerified=False, readinessFailureReason='provider_focus_changed')
+            observation = value['readinessObservations'][0]
+            observation.update(reason='provider_focus_changed', a11y=None, agentAfter=None, providerAfter=None)
+            value['stateAfter'] = state(observation['agentBefore'][4], value['arm'], False)
+            experience.validate_launch(value, index, report(schema_version=3))
+        value = trial(schema_version=3)
+        value['targetAfter'].update(focusGainCount=2, focusLossCount=1,
+                                  lastFocusLossNanoTime=value['targetAfter']['endNanoTime'] - 1,
+                                  lastFocusGainNanoTime=value['targetAfter']['endNanoTime'])
+        experience.validate_trial(value, 0, report(schema_version=3))
+
+    def test_v3_timeout_preserves_late_reads_but_never_accepts_late_success(self):
+        for crossed in (False, True):
+            value = launch(schema_version=3)
+            deadline = value['readinessStartedNanos'] + 3_000_000_000
+            observation = value['readinessObservations'][0]
+            if crossed:
+                observation['endedNanos'] = deadline + 100
+                observation['agentAfter'][4] = deadline + 99
+                value['stateAfter']['checkedNanos'] = deadline + 99
+            else:
+                observation['a11y'].update(editorVisible=False, ready=False, reason='editor_not_visible')
+                value['stateAfter']['fixtureFocused'] = False
+            value.update(status='failed', readinessVerified=False, readinessFailureReason='a11y_timeout',
+                         readinessEndedNanos=deadline + 101, endedNanos=deadline + 102)
+            observation['reason'] = 'a11y_timeout'
+            experience.validate_launch(value, 0, report(schema_version=3))
+            invalid = copy.deepcopy(value); invalid.update(status='passed', readinessVerified=True, readinessFailureReason='')
+            invalid['readinessObservations'][0]['reason'] = ''
+            with self.assertRaises(ValueError): experience.validate_launch(invalid, 0, report(schema_version=3))
+        value = launch(schema_version=3)
+        value['readinessEndedNanos'] = value['readinessStartedNanos'] + 3_000_000_000
+        value['endedNanos'] = value['readinessEndedNanos'] + 1
+        with self.assertRaisesRegex(ValueError, 'verified_readiness'): experience.validate_launch(value, 0, report(schema_version=3))
+        value['readinessEndedNanos'] -= 1
+        experience.validate_launch(value, 0, report(schema_version=3))
+
+    def test_v3_clock_domains_are_independent_and_read_order_is_bounded(self):
+        value = launch(schema_version=3); add_readiness(value, pending=2)
+        # Suspend time offsets BOOTTIME from MONOTONIC. Never compare the two clocks directly.
+        offset = 10_000_000_000
+        for key in ('startedNanos', 'endedNanos', 'launchStartedElapsedNanos', 'launchEndedElapsedNanos',
+                    'readinessStartedNanos', 'readinessEndedNanos'): value[key] += offset
+        for key in ('stateBefore', 'stateAfter'): value[key]['checkedNanos'] += offset
+        for observation in value['readinessObservations']:
+            observation['startedNanos'] += offset; observation['endedNanos'] += offset
+            observation['agentBefore'][4] += offset; observation['agentAfter'][4] += offset
+        experience.validate_launch(value, 0, report(schema_version=3))
+        mutations = (
+            lambda x: x.update(readinessStartedNanos=x['launchEndedElapsedNanos'] - 1),
+            lambda x: x['readinessObservations'][1].update(index=0),
+            lambda x: x['readinessObservations'][1].update(startedNanos=x['readinessObservations'][0]['endedNanos'] + 199_999_999),
+            lambda x: x['readinessObservations'][1]['providerBefore'].__setitem__(18, x['launchEndedNanoTime'] - 1),
+            lambda x: x['readinessObservations'][1]['agentAfter'].__setitem__(4, x['readinessObservations'][1]['agentBefore'][4] - 1),
+            lambda x: x['readinessObservations'][0]['providerBefore'].__setitem__(15, 1),
+            lambda x: x['readinessObservations'][0]['agentBefore'].__setitem__(0, 0),
+            lambda x: x['readinessObservations'][0].update(providerBefore=None),
+            lambda x: x['readinessObservations'][0].update(a11y=copy.deepcopy(x['readinessObservations'][-1]['a11y'])),
+            lambda x: x['stateAfter'].update(checkedNanos=x['stateAfter']['checkedNanos'] + 1),
+            lambda x: x['readinessObservations'].extend([x['readinessObservations'][-1]] * 15),
+        )
+        for index, mutate in enumerate(mutations):
+            with self.subTest(index=index):
+                invalid = copy.deepcopy(value); mutate(invalid)
+                with self.assertRaises(ValueError): experience.validate_launch(invalid, 0, report(schema_version=3))
+
+    def test_v3_a11y_reason_is_recomputed_from_actual_window_and_editor_observations(self):
+        base = readiness_observation(launch(schema_version=3), 0, 4_010_000_000)['a11y']
+        cases = (
+            dict(windowCount=-1, focusedWindowCount=0, focusedWindowId=-1, focusedWindowType=-1,
+                 rootPresent=False, packageName='', editorMatchCount=-1, editorVisible=False, ready=False, reason='windows_unavailable'),
+            dict(windowCount=0, focusedWindowCount=0, focusedWindowId=-1, focusedWindowType=-1,
+                 rootPresent=False, packageName='', editorMatchCount=-1, editorVisible=False, ready=False, reason='focused_window_count'),
+            dict(focusedWindowType=2, rootPresent=False, packageName='', editorMatchCount=-1, editorVisible=False, ready=False, reason='focused_window_not_application'),
+            dict(rootPresent=False, packageName='', editorMatchCount=-1, editorVisible=False, ready=False, reason='root_missing'),
+            dict(packageName='com.android.launcher3', editorMatchCount=-1, editorVisible=False, ready=False, reason='package_mismatch'),
+            dict(editorMatchCount=0, editorVisible=False, ready=False, reason='editor_match_count'),
+            dict(editorVisible=False, ready=False, reason='editor_not_visible'),
+            dict(),
+        )
+        for changes in cases:
+            observation = dict(base, **changes); experience.validate_a11y(observation)
+            invalid = dict(observation, ready=not observation['ready'])
+            with self.assertRaises(ValueError): experience.validate_a11y(invalid)
+        for changes in (dict(windowCount=True), dict(editorMatchCount=1.0), dict(ready=1),
+                        dict(rootPresent=False), dict(focusedWindowCount=3), dict(packageName='x' * 257)):
+            with self.assertRaises(ValueError): experience.validate_a11y(dict(base, **changes))
+
+    def test_v3_all_seven_lifecycle_counters_are_guarded_including_same_identity_new_intent(self):
+        for offset in range(3, 10):
+            value = launch(schema_version=3)
+            observation = value['readinessObservations'][0]
+            self.assertEqual(19, len(observation['providerBefore']))
+            observation['providerBefore'][offset] += 1
+            value.update(status='failed', readinessVerified=False, readinessFailureReason='provider_lifecycle_changed')
+            observation.update(reason='provider_lifecycle_changed', a11y=None, agentAfter=None, providerAfter=None)
+            value['stateAfter'] = state(observation['agentBefore'][4], value['arm'], False)
+            experience.validate_launch(value, 0, report(schema_version=3))
+            invalid = copy.deepcopy(value); invalid.update(status='passed', readinessVerified=True, readinessFailureReason='')
+            invalid['readinessObservations'][0]['reason'] = ''
+            with self.assertRaises(ValueError): experience.validate_launch(invalid, 0, report(schema_version=3))
+        value = launch(schema_version=3)
+        value['afterLaunch']['focusGainCount'] = True
+        with self.assertRaises(ValueError): experience.validate_launch(value, 0, report(schema_version=3))
+
+    def test_v3_ready_accessibility_does_not_upgrade_an_unavailable_startup(self):
+        value = launch(schema_version=3)
+        value.update(status='unavailable', unavailableReason='unresolved_draw_observation')
+        value['afterLaunch'].update(unresolvedDrawCount=1, sequenceMismatchCount=1)
+        experience.validate_launch(value, 0, report(schema_version=3))
+        with tempfile.TemporaryDirectory() as temporary:
+            root = write_bundle(temporary, schema_version=3, launches=[value], trials=[], status='failed')
+            capture = collected_capture(temporary, root, exit_code=1)
+            payloads = experience.validate_payloads(temporary, capture, '37.0', SOURCE, 'pilot')
+            self.assertEqual('failed', capture['diagnosticStatus'])
+            self.assertIsNone(json.loads(payloads['startup-ttid.json'])['launches'][0]['ttidNanos'])
+            self.assertTrue(json.loads(payloads['launch-000.json'])['readinessVerified'])
+
+    def test_v3_controlled_capacity_fits_without_increasing_the_launch_cap(self):
+        # Capacity envelope, not a valid 16-read time sequence: the 3 s deadline can end it earlier.
+        value = launch(399, profile='formal', schema_version=3); add_readiness(value, pending=15)
+        value['amStartOutput'] = 'x' * 8192
+        for observation in value['readinessObservations'][:-1]:
+            observation['a11y']['packageName'] = 'a' * 256
+        # Long device uptime: preserve timestamp relationships, canonical UUIDs and actual counter widths.
+        shift = 10 ** 18
+        def timestamp_widths(item):
+            if type(item) is dict:
+                for key, child in item.items():
+                    if type(child) is int and child > 0 and key.endswith(('Nanos', 'NanoTime', 'Ns')):
+                        item[key] += shift
+                    else: timestamp_widths(child)
+            elif type(item) is list:
+                for child in item: timestamp_widths(child)
+        timestamp_widths(value)
+        for observation in value['readinessObservations']:
+            for side in ('Before', 'After'):
+                for offset in (12, 13, 14, 18):
+                    if observation['provider' + side][offset] > 0: observation['provider' + side][offset] += shift
+                observation['agent' + side][4] += shift
+        self.assertLessEqual(len(encoded(value)), experience.MAX_LAUNCH_BYTES)
+        self.assertEqual(32768, experience.MAX_LAUNCH_BYTES)
+        # The byte cap remains authoritative for unusually escape-heavy output too.
+        value['amStartOutput'] = '\0' * 8192
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / 'launch-399.json'; path.write_bytes(encoded(value))
+            with self.assertRaises(ValueError): experience.read_bounded(path, experience.MAX_LAUNCH_BYTES)
 
     def test_raw_v2_home_preparation_and_probe_causes_are_versioned(self):
         for profile in ('pilot', 'formal'):

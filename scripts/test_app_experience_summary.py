@@ -55,9 +55,12 @@ def probe(number, now, schema_version=1):
                   clicks=0, editCount=0, saveCount=0, incrementCount=0,
                   drawTimeMillis=(now + 9 * M) // M, displayObservedNanoTime=now, unresolvedDrawCount=0,
                   drawMatchMethod="post_OnDraw_View.getDrawingTime_equals_floor_FrameMetrics.VSYNC_TIMESTAMP_ms")
-    if schema_version == 2:
+    if schema_version >= 2:
         result.update(sequenceMismatchCount=0, zeroDrawingTimeCount=0,
                       drawMatchMethod="front_post_OnDraw_View.getDrawingTime_equals_floor_FrameMetrics.VSYNC_TIMESTAMP_ms")
+    if schema_version >= 3:
+        result.update(focusGainCount=1, focusLossCount=0, firstFocusGainNanoTime=now,
+                      lastFocusGainNanoTime=now, lastFocusLossNanoTime=0)
     for name in ("create", "start", "resume", "pause", "stop", "destroy", "newIntent"):
         result[name + "Count"] = int(name in ("create", "start", "resume"))
     for name in ("created", "started", "resumed", "paused", "stopped", "destroyed", "newIntent"):
@@ -68,6 +71,34 @@ def probe(number, now, schema_version=1):
 def state(at, arm, focused=True):
     return dict(checkedNanos=at, servicePresent=arm != ARMS[0], serviceConnected=arm != ARMS[0],
                 controllerRunning=False, controlAvailable=False, fixtureFocused=focused)
+
+
+def readiness_provider(probe_value, checked):
+    return [probe_value[key] for key in (
+        "pid", "processInstance", "activityInstance", "createCount", "startCount", "resumeCount", "pauseCount", "stopCount",
+        "destroyCount", "newIntentCount",
+        "focusGainCount", "focusLossCount", "firstFocusGainNanoTime", "lastFocusGainNanoTime", "lastFocusLossNanoTime",
+        "resumed", "stopped", "windowFocused")] + [checked]
+
+
+def readiness_observation(index, started, value, ready):
+    connected = value["arm"] != ARMS[0]
+    return dict(index=index, startedNanos=started, endedNanos=started + 5 * M,
+                providerBefore=readiness_provider(value["afterLaunch"], started + M),
+                providerAfter=readiness_provider(value["afterLaunch"], started + 4 * M),
+                agentBefore=[connected, connected, False, False, started + 2 * M],
+                agentAfter=[connected, connected, False, False, started + 3 * M],
+                a11y=dict(windowCount=1, focusedWindowCount=1, focusedWindowId=7, focusedWindowType=1,
+                          rootPresent=ready, packageName="dev.agentos.fixture" if ready else "",
+                          editorMatchCount=1 if ready else -1, editorVisible=ready, ready=ready,
+                          reason="ready" if ready else "root_missing"), reason="")
+
+
+def readiness_state_after(value):
+    observation = value["readinessObservations"][-1]
+    agent = observation["agentAfter"] or observation["agentBefore"]
+    value["stateAfter"] = dict(zip(("servicePresent", "serviceConnected", "controllerRunning", "controlAvailable"), agent[:4]),
+                               checkedNanos=agent[4], fixtureFocused=bool(observation["a11y"] and observation["a11y"]["ready"]))
 
 
 def launch(index, profile, schema_version=1):
@@ -84,6 +115,15 @@ def launch(index, profile, schema_version=1):
                       resumeCount=index - pair_count * 2 + 1,
                       drawVsyncNs=start + N - M, drawTimeMillis=(start + N - M) // M)
         after["resumeCount"] = before["resumeCount"] + 1
+        if schema_version >= 3:
+            prior_gains = index - pair_count * 2 + 1
+            first_gain = N + (pair_count * 2 - 1) * 5 * N + N + M
+            before.update(focusGainCount=prior_gains, focusLossCount=prior_gains,
+                          firstFocusGainNanoTime=first_gain, lastFocusGainNanoTime=start - 4 * N + M,
+                          lastFocusLossNanoTime=start + 100 * M)
+            after.update(focusGainCount=prior_gains + 1, focusLossCount=prior_gains,
+                         firstFocusGainNanoTime=first_gain, lastFocusGainNanoTime=start + N + M,
+                         lastFocusLossNanoTime=before["lastFocusLossNanoTime"])
     value = dict(schemaVersion=schema_version, kind="agent-app-experience-launch", index=index, pairIndex=pair,
                 position=index % 2, arm=arm, startupType="hot" if hot else "cold", status="passed",
                 startedNanos=start, endedNanos=start + 4 * N, marker=f"aos.experience.launch.{index}",
@@ -94,8 +134,15 @@ def launch(index, profile, schema_version=1):
                 launchStartedElapsedNanos=start + N, launchEndedElapsedNanos=start + 3 * N,
                 launchStartedNanoTime=start + N, launchEndedNanoTime=start + 3 * N,
                 amStartOutput="Status: ok\nTotalTime: 0\nWaitTime: 12\n", unavailableReason="")
-    if schema_version == 2:
+    if schema_version >= 2:
         value.update(homePackage="com.android.launcher3" if hot else "", homeFocusedVerified=hot)
+    if schema_version >= 3:
+        observations = [readiness_observation(0, start + 3 * N, value, False),
+                        readiness_observation(1, start + 3 * N + 205 * M, value, True)]
+        value.update(readinessStartedNanos=observations[0]["startedNanos"],
+                     readinessEndedNanos=observations[-1]["endedNanos"], readinessVerified=True,
+                     readinessFailureReason="", readinessObservations=observations)
+        readiness_state_after(value)
     return value
 
 
@@ -166,7 +213,7 @@ def trial(index, profile, api, schema_version=1):
 
 
 def trace_files(directory, report, launches, mutate=None, trace_status="collected", capture_version=None):
-    capture_version = (3 if report["schemaVersion"] == 2 else 1) if capture_version is None else capture_version
+    capture_version = {1: 1, 2: 3, 3: 4}[report["schemaVersion"]] if capture_version is None else capture_version
     config_version = {1: 1, 2: 1, 3: 2, 4: 3}[capture_version]
     trace_version = 2 if capture_version >= 3 else 1
     raw_trace = b"SYNTHETIC SUMMARY UNIT TEST DATA; NOT DEVICE EVIDENCE\n"
@@ -274,6 +321,139 @@ def rewrite_payload(root, name, alter, label="30", update_inner=False):
 
 
 class AppExperienceSummaryTests(unittest.TestCase):
+    def test_v3_formal_readiness_false_prefix_stays_outside_unchanged_ttid(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            value = summary.summarize(write_archive(temporary, profile="formal", schema_version=3), SHA)
+        self.assertTrue(value["formalDiagnosticComplete"])
+        self.assertEqual((3200, 3200, 144), (value["expectedLaunchCount"], value["validTtidCount"], value["resourceTrialCounts"]["passed"]))
+        for lane in value["lanes"]:
+            self.assertEqual(3, lane["report"]["schemaVersion"])
+            self.assertEqual(16, lane["report"]["conditions"]["a11yReadinessMaxObservations"])
+            self.assertEqual(3000, lane["report"]["conditions"]["a11yReadinessTimeoutMillis"])
+            self.assertEqual(200, lane["report"]["conditions"]["a11yReadinessIntervalMillis"])
+            sample = lane["launches"][0]
+            self.assertEqual(100, sample["ttidMillis"])
+            self.assertEqual(2, len(sample["readinessObservations"]))
+            self.assertEqual(19, len(sample["readinessObservations"][0]["providerBefore"]))
+            self.assertFalse(sample["readinessObservations"][0]["a11y"]["ready"])
+            self.assertTrue(sample["readinessObservations"][1]["a11y"]["ready"])
+            self.assertEqual(210 * M, sample["readinessEndedNanos"] - sample["readinessStartedNanos"])
+            self.assertGreaterEqual(sample["readinessStartedNanos"], sample["launchEndedElapsedNanos"])
+            self.assertEqual(sample["readinessObservations"][-1]["agentAfter"][4], sample["stateAfter"]["checkedNanos"])
+            self.assertEqual(194, lane["startupGroups"]["cold"]["allOrders"]["modes"][ARMS[0]]["ttidMillis"]["p95"])
+            self.assertEqual(395, lane["startupGroups"]["cold"]["allOrders"]["modes"][ARMS[1]]["ttidMillis"]["p95"])
+
+    def test_v3_readiness_timeout_preserves_formal_failure_and_unexecuted_suffix(self):
+        def alter(report, launches, trials):
+            report["status"] = "failed"; del launches[1:]; trials.clear()
+            value = launches[0]; started = value["readinessStartedNanos"]
+            observations = [readiness_observation(index, started + index * 205 * M, value, False) for index in range(15)]
+            observations[-1]["reason"] = "a11y_timeout"
+            value.update(status="failed", endedNanos=value["startedNanos"] + 7 * N,
+                         readinessEndedNanos=started + 3000 * M, readinessVerified=False,
+                         readinessFailureReason="a11y_timeout", readinessObservations=observations)
+            readiness_state_after(value)
+        with tempfile.TemporaryDirectory() as temporary:
+            value = summary.summarize(write_archive(temporary, profile="formal", schema_version=3, alter=alter), SHA)
+        self.assertEqual((3200, 8, 0), (value["expectedLaunchCount"], value["recordedLaunchCount"], value["validTtidCount"]))
+        self.assertEqual(dict(passed=0, failed=8, unavailable=0, not_executed=3192), value["launchCounts"])
+        self.assertEqual(144, value["resourceTrialCounts"]["not_executed"])
+        sample = value["lanes"][0]["launches"][0]
+        self.assertEqual(15, len(sample["readinessObservations"]))
+        self.assertEqual("a11y_timeout", sample["readinessFailureReason"])
+        self.assertFalse(sample["readinessVerified"])
+        self.assertIsNone(sample["ttidMillis"])
+
+    def test_v3_late_ready_observation_is_failed_not_a_success_after_deadline(self):
+        def alter(report, launches, trials):
+            report["status"] = "failed"; del launches[1:]; trials.clear()
+            value = launches[0]; started = value["readinessStartedNanos"]
+            last = value["readinessObservations"][-1]
+            last.update(endedNanos=started + 3003 * M, reason="a11y_timeout")
+            last["agentAfter"][4] = started + 3001 * M
+            last["providerAfter"][18] = started + 3002 * M
+            value.update(status="failed", endedNanos=value["startedNanos"] + 7 * N,
+                         readinessEndedNanos=last["endedNanos"], readinessVerified=False, readinessFailureReason="a11y_timeout")
+            readiness_state_after(value)
+        with tempfile.TemporaryDirectory() as temporary:
+            value = summary.summarize(write_archive(temporary, schema_version=3, alter=alter), SHA)
+        sample = value["lanes"][0]["launches"][0]
+        self.assertTrue(sample["readinessObservations"][-1]["a11y"]["ready"])
+        self.assertTrue(sample["stateAfter"]["fixtureFocused"])
+        self.assertEqual("failed", sample["status"])
+        self.assertFalse(sample["eligible"])
+        def relabelled(report, launches, trials):
+            alter(report, launches, trials)
+            launches[0].update(status="passed", readinessVerified=True, readinessFailureReason="")
+            launches[0]["readinessObservations"][-1]["reason"] = ""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = write_archive(temporary, schema_version=3, alter=relabelled)
+            with self.assertRaises(ValueError): summary.summarize(root, SHA)
+
+    def test_v3_real_focus_loss_is_terminal_and_cannot_be_relabelled_passed(self):
+        def focus_loss(value):
+            observation = value["readinessObservations"][0]
+            observation.update(providerAfter=None, agentAfter=None, a11y=None, reason="provider_focus_changed")
+            provider = observation["providerBefore"]
+            provider[11] += 1
+            provider[14] = provider[18] - 1
+            provider[17] = False
+            value.update(readinessObservations=[observation], readinessVerified=False,
+                         readinessEndedNanos=observation["endedNanos"], readinessFailureReason="provider_focus_changed")
+            readiness_state_after(value)
+        def failed(report, launches, trials):
+            report["status"] = "failed"; del launches[1:]; trials.clear()
+            launches[0]["status"] = "failed"; focus_loss(launches[0])
+        with tempfile.TemporaryDirectory() as temporary:
+            value = summary.summarize(write_archive(temporary, schema_version=3, alter=failed), SHA)
+        sample = value["lanes"][0]["launches"][0]
+        self.assertEqual("provider_focus_changed", sample["readinessFailureReason"])
+        self.assertEqual(1, len(sample["readinessObservations"]))
+        self.assertFalse(sample["readinessObservations"][0]["providerBefore"][17])
+        self.assertEqual(0, value["validTtidCount"])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = write_archive(temporary, schema_version=3,
+                                 alter=lambda report, launches, trials: focus_loss(launches[0]))
+            with self.assertRaises(ValueError): summary.summarize(root, SHA)
+
+    def test_v3_focus_loss_before_first_draw_cannot_be_hidden_by_recovery(self):
+        for index in (0, 4):
+            def recovered(report, launches, trials):
+                value = launches[index]; probe_value = value["afterLaunch"]
+                probe_value.update(focusGainCount=probe_value["focusGainCount"] + 1,
+                                   focusLossCount=probe_value["focusLossCount"] + 1,
+                                   lastFocusGainNanoTime=value["launchStartedNanoTime"] + 5 * M,
+                                   lastFocusLossNanoTime=value["launchStartedNanoTime"] + 4 * M)
+                # Every later observation is focused and agrees with the recovered
+                # snapshot; the immutable cold/hot anchor must still reject it.
+                for observation in value["readinessObservations"]:
+                    for key in ("providerBefore", "providerAfter"):
+                        observation[key] = readiness_provider(probe_value, observation[key][18])
+            with self.subTest(startup="cold" if index == 0 else "hot"), tempfile.TemporaryDirectory() as temporary:
+                root = write_archive(temporary, schema_version=3, alter=recovered)
+                with self.assertRaises(ValueError): summary.summarize(root, SHA)
+
+    def test_v3_same_identity_start_destroy_and_new_intent_changes_are_not_passed(self):
+        for counter in (4, 8, 9):
+            def hidden_change(report, launches, trials):
+                launches[0]["readinessObservations"][-1]["providerAfter"][counter] += 1
+            with self.subTest(counter=counter), tempfile.TemporaryDirectory() as temporary:
+                root = write_archive(temporary, schema_version=3, alter=hidden_change)
+                with self.assertRaises(ValueError): summary.summarize(root, SHA)
+        def retained_failure(report, launches, trials):
+            report["status"] = "failed"; del launches[1:]; trials.clear()
+            value = launches[0]
+            value.update(status="failed", readinessVerified=False, readinessFailureReason="provider_lifecycle_changed")
+            value["readinessObservations"][-1]["providerAfter"][9] += 1
+            value["readinessObservations"][-1]["reason"] = "provider_lifecycle_changed"
+        with tempfile.TemporaryDirectory() as temporary:
+            value = summary.summarize(write_archive(temporary, schema_version=3, alter=retained_failure), SHA)
+        sample = value["lanes"][0]["launches"][0]
+        self.assertEqual("provider_lifecycle_changed", sample["readinessFailureReason"])
+        self.assertTrue(sample["readinessObservations"][-1]["a11y"]["ready"])
+        self.assertEqual(1, sample["readinessObservations"][-1]["providerAfter"][9])
+        self.assertEqual(0, value["validTtidCount"])
+
     def test_capture_v4_formal_capacity_and_legacy_v2_capture_remain_distinct(self):
         for capture_version, profile, raw_version in ((2, "pilot", 1), (4, "formal", 2)):
             with self.subTest(capture_version=capture_version), tempfile.TemporaryDirectory() as temporary:

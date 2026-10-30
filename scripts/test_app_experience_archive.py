@@ -67,6 +67,131 @@ def rebind_capture(directory):
 
 
 class AppExperienceArchiveTests(unittest.TestCase):
+    def test_version_three_reports_keep_formal_counts_and_archive_verbatim(self):
+        for profile, launches, trials, file_count in (("pilot", 8, 3, 17), ("formal", 400, 18, 424)):
+            with self.subTest(profile=profile), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                directory, report = write_artifact(root, profile=profile, schema_version=3, trace_config_version=3)
+                self.assertEqual((3, launches, trials), (report["schemaVersion"], len(report["launches"]), len(report["trials"])))
+                self.assertEqual((16, 3000, 200), tuple(report["conditions"][key] for key in
+                                 ("a11yReadinessMaxObservations", "a11yReadinessTimeoutMillis", "a11yReadinessIntervalMillis")))
+                trace = json.loads((directory / "trace-capture.json").read_text())
+                derived = json.loads((directory / "startup-ttid.json").read_text())
+                self.assertEqual((4, 3, 2), (trace["schemaVersion"], trace["configVersion"], derived["schemaVersion"]))
+                with patch("subprocess.run", side_effect=AssertionError("archive executes data")):
+                    result = publisher.archive_app_experience(args_for(root), source_run(profile), [legacy.job()],
+                                                             root / "output", {"bytes": 0, "files": 0})
+                row = result["apis"][-1]
+                self.assertEqual(("collected", "passed", "passed"), (row["captureStatus"], row["diagnosticStatus"], row["reportStatus"]))
+                self.assertEqual(file_count, len(row["files"]))
+                for ref in row["files"]:
+                    data = (root / "output/app-experience/api-37.0" / ref["path"]).read_bytes()
+                    self.assertEqual((directory / ref["path"]).read_bytes(), data)
+                    self.assertEqual((len(data), hashlib.sha256(data).hexdigest()), (ref["bytes"], ref["sha256"]))
+
+    def test_version_three_rebound_invalid_observations_are_rejected(self):
+        import collect_app_experience_evidence as experience
+        import test_collect_app_experience_evidence as fixtures
+        mutations = {
+            "unverified_pass": lambda value: value.update(readinessVerified=False),
+            "missing_observations": lambda value: value.update(readinessObservations=[]),
+            "omitted_first_observation": lambda value: value["readinessObservations"][0].update(index=1),
+            "late_success": lambda value: value.update(readinessEndedNanos=value["readinessStartedNanos"] + 3_000_000_001),
+            "changed_identity": lambda value: value["readinessObservations"][-1]["providerAfter"].__setitem__(1, fixtures.identifier(999999)),
+            "changed_focus_count": lambda value: value["readinessObservations"][-1]["providerAfter"].__setitem__(10, 99),
+            "wrong_foreground_package": lambda value: value["readinessObservations"][-1]["a11y"].update(packageName="other.package"),
+            "nonready_success": lambda value: value["readinessObservations"][-1]["a11y"].update(ready=False),
+            "terminal_reason_on_pass": lambda value: value.update(readinessFailureReason="a11y_timeout"),
+            "mixed_probe_version": lambda value: value["afterLaunch"].update(schemaVersion=2),
+        }
+        for field in ("startCount", "destroyCount", "newIntentCount"):
+            position = experience.READINESS_PROVIDER_FIELDS.index(field)
+            mutations[f"changed_{field}"] = lambda value, position=position: value["readinessObservations"][-1]["providerAfter"].__setitem__(
+                position, value["readinessObservations"][-1]["providerAfter"][position] + 1)
+        for name, mutate in mutations.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                directory, report = write_artifact(root, profile="formal", schema_version=3, trace_config_version=3)
+                launch_path = directory / "launch-000.json"
+                value = json.loads(launch_path.read_text())
+                mutate(value)
+                data = fixtures.encoded(value)
+                launch_path.write_bytes(data)
+                # Rebind every enclosing hash. Rejection must come from strict
+                # observation semantics, not from a stale file reference.
+                report["launches"][0].update(bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+                (directory / experience.REPORT_NAME).write_bytes(fixtures.encoded(report))
+                rebind_capture(directory)
+                budget = {"bytes": 0, "files": 0}
+                with self.assertRaises(ValueError):
+                    publisher.archive_app_experience(args_for(root), source_run(), [legacy.job()], root / "output", budget)
+                self.assertEqual({"bytes": 0, "files": 0}, budget)
+                self.assertFalse((root / "output").exists())
+
+    def test_version_three_formal_archive_retains_pending_then_ready_observations(self):
+        import test_collect_app_experience_evidence as fixtures
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = root / "incoming" / artifact()["name"]
+            launches = [fixtures.launch(index, profile="formal", schema_version=3) for index in range(400)]
+            first_draw = copy.deepcopy(launches[0]["afterLaunch"])
+            marker = tuple(launches[0][key] for key in ("launchStartedNanoTime", "launchEndedNanoTime"))
+            fixtures.add_readiness(launches[0], pending=2)
+            report = fixtures.write_bundle(directory, profile="formal", launches=launches,
+                                           schema_version=3, trace_config_version=3)
+            capture = fixtures.collected_capture(directory, report)
+            (directory / "capture.json").write_bytes(fixtures.encoded(capture))
+            result = publisher.archive_app_experience(args_for(root), source_run(), [legacy.job()],
+                                                     root / "output", {"bytes": 0, "files": 0})
+            row = result["apis"][-1]
+            self.assertEqual(("passed", 424), (row["diagnosticStatus"], len(row["files"])))
+            path = root / "output/app-experience/api-37.0/launch-000.json"
+            self.assertEqual((directory / path.name).read_bytes(), path.read_bytes())
+            preserved = json.loads(path.read_text())
+            self.assertEqual([False, False, True], [observation["a11y"]["ready"] for observation in preserved["readinessObservations"]])
+            self.assertEqual([0, 1, 2], [observation["index"] for observation in preserved["readinessObservations"]])
+            self.assertEqual(first_draw, preserved["afterLaunch"])
+            self.assertEqual(marker, tuple(preserved[key] for key in ("launchStartedNanoTime", "launchEndedNanoTime")))
+
+    def test_version_three_failed_prefix_keeps_pending_observation_and_original_plan(self):
+        import collect_app_experience_evidence as experience
+        import test_collect_app_experience_evidence as fixtures
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = root / "incoming" / artifact()["name"]
+            first = fixtures.launch(0, profile="formal", schema_version=3)
+            failed = fixtures.launch(1, profile="formal", schema_version=3)
+            last = failed["readinessObservations"][-1]
+            last["a11y"].update(editorMatchCount=0, editorVisible=False, ready=False, reason="editor_match_count")
+            last["reason"] = "a11y_timeout"
+            failed.update(status="failed", readinessVerified=False, readinessFailureReason="a11y_timeout",
+                          readinessEndedNanos=failed["readinessStartedNanos"] + 3_000_000_000)
+            failed["endedNanos"] = failed["readinessEndedNanos"] + 1
+            failed["stateAfter"]["fixtureFocused"] = False
+            report = fixtures.write_bundle(directory, profile="formal", launches=[first, failed], trials=[],
+                                           status="failed", schema_version=3, trace_config_version=3)
+            capture = fixtures.collected_capture(directory, report, exit_code=1)
+            (directory / "capture.json").write_bytes(fixtures.encoded(capture))
+            result = publisher.archive_app_experience(args_for(root), source_run(), [legacy.job()],
+                                                     root / "output", {"bytes": 0, "files": 0})
+            row = result["apis"][-1]
+            self.assertEqual(("collected", "failed", "failed"), (row["captureStatus"], row["diagnosticStatus"], row["reportStatus"]))
+            output = root / "output/app-experience/api-37.0"
+            copied = json.loads((output / experience.REPORT_NAME).read_text())
+            self.assertEqual((400, 18, 2, 0), (copied["conditions"]["launchCount"], copied["conditions"]["trialCount"],
+                                              len(copied["launches"]), len(copied["trials"])))
+            self.assertEqual(["passed", "failed"], [ref["status"] for ref in copied["launches"]])
+            preserved = json.loads((output / "launch-001.json").read_text())
+            self.assertEqual(failed, preserved)
+            self.assertEqual("a11y_timeout", preserved["readinessObservations"][-1]["reason"])
+            self.assertFalse(preserved["readinessObservations"][-1]["a11y"]["ready"])
+            self.assertFalse((output / "launch-002.json").exists())
+            self.assertFalse((output / "trial-000.json").exists())
+            for ref in row["files"]:
+                data = (output / ref["path"]).read_bytes()
+                self.assertEqual((directory / ref["path"]).read_bytes(), data)
+                self.assertEqual((len(data), hashlib.sha256(data).hexdigest()), (ref["bytes"], ref["sha256"]))
+
     def test_v4_capacity_archives_formal_payloads_above_legacy_limits(self):
         import collect_app_experience_evidence as experience
         import experience_trace

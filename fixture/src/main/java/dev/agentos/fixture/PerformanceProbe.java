@@ -30,6 +30,8 @@ final class PerformanceProbe {
     private static long drawSequence, unresolvedDrawCount, sequenceMismatchCount, zeroDrawingTimeCount;
     private static String activityInstance = "";
     private static boolean present, resumed, stopped, focused, hardwareAccelerated;
+    private static long focusGainCount, focusLossCount, firstFocusGainNanoTime;
+    private static long lastFocusGainNanoTime, lastFocusLossNanoTime;
     private static long mutationVersion, drawVersion, drawVsyncNs, drawNanoTime;
     private static long drawTimeMillis, finalDrawTimeMillis;
     private static long finalDrawVersion, finalDrawVsyncNs;
@@ -47,6 +49,8 @@ final class PerformanceProbe {
         synchronized (LOCK) {
             activityInstance = UUID.randomUUID().toString();
             present = true; resumed = false; stopped = false; focused = false; hardwareAccelerated = false;
+            focusGainCount = focusLossCount = firstFocusGainNanoTime = 0;
+            lastFocusGainNanoTime = lastFocusLossNanoTime = 0;
             mutationVersion = drawVersion = drawVsyncNs = drawNanoTime = 0;
             finalDrawVersion = finalDrawVsyncNs = 0;
             drawTimeMillis = finalDrawTimeMillis = 0;
@@ -82,7 +86,20 @@ final class PerformanceProbe {
     }
     private static void event(int index) { COUNTS[index]++; TIMES[index] = System.nanoTime(); }
     static void focused(String instance, boolean value) {
-        synchronized (LOCK) { if (activityInstance.equals(instance)) focused = value; }
+        synchronized (LOCK) {
+            if (!activityInstance.equals(instance) || focused == value) return;
+            focused = value;
+            long now = System.nanoTime();
+            if (value) {
+                focusGainCount++;
+                if (firstFocusGainNanoTime == 0) firstFocusGainNanoTime = now;
+                lastFocusGainNanoTime = now;
+            } else {
+                focusLossCount++;
+                lastFocusLossNanoTime = now;
+            }
+            LOCK.notifyAll();
+        }
     }
     static void display(String instance, int id, double hz, double activeModeHz, boolean changed) {
         synchronized (LOCK) {
@@ -314,7 +331,7 @@ final class PerformanceProbe {
     }
     private static Bundle identity() {
         Bundle result = new Bundle();
-        result.putInt("schemaVersion", 2);
+        result.putInt("schemaVersion", 3);
         result.putString("clockDomain", "CLOCK_MONOTONIC_System.nanoTime");
         result.putInt("pid", Process.myPid()); result.putInt("uid", Process.myUid());
         result.putString("processInstance", PROCESS_INSTANCE); result.putString("activityInstance", activityInstance);
@@ -329,6 +346,10 @@ final class PerformanceProbe {
         }
         result.putBoolean("resumed", resumed); result.putBoolean("stopped", stopped);
         result.putBoolean("windowFocused", focused); result.putBoolean("hardwareAccelerated", hardwareAccelerated);
+        result.putLong("focusGainCount", focusGainCount); result.putLong("focusLossCount", focusLossCount);
+        result.putLong("firstFocusGainNanoTime", firstFocusGainNanoTime);
+        result.putLong("lastFocusGainNanoTime", lastFocusGainNanoTime);
+        result.putLong("lastFocusLossNanoTime", lastFocusLossNanoTime);
         result.putLong("mutationVersion", mutationVersion); result.putLong("drawVersion", drawVersion);
         result.putLong("drawVsyncNs", drawVsyncNs); result.putLong("drawNanoTime", drawNanoTime);
         result.putLong("drawTimeMillis", drawTimeMillis);

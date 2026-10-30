@@ -66,8 +66,15 @@ SESSION_HZ = ('beginRefreshHz', 'beginModeHz', 'endRefreshHz', 'endModeHz')
 PROBE_BASE_FIELDS = (*IDENTITY_FIELDS, *STATUS_BOOL, *STATUS_INT, 'refreshHz', 'modeHz', 'displayId', 'editorText', 'savedText', 'drawMatchMethod')
 PROBE_SESSION_FIELDS = ('sessionId', *SESSION_BOOL, *SESSION_INT, *SESSION_HZ, 'afterPssKb')
 DRAW_METHODS = {1: 'post_OnDraw_View.getDrawingTime_equals_floor_FrameMetrics.VSYNC_TIMESTAMP_ms',
-                2: 'front_post_OnDraw_View.getDrawingTime_equals_floor_FrameMetrics.VSYNC_TIMESTAMP_ms'}
+                2: 'front_post_OnDraw_View.getDrawingTime_equals_floor_FrameMetrics.VSYNC_TIMESTAMP_ms',
+                3: 'front_post_OnDraw_View.getDrawingTime_equals_floor_FrameMetrics.VSYNC_TIMESTAMP_ms'}
 DRAW_CAUSE_FIELDS = ('sequenceMismatchCount', 'zeroDrawingTimeCount')
+FOCUS_FIELDS = ('focusGainCount', 'focusLossCount', 'firstFocusGainNanoTime', 'lastFocusGainNanoTime', 'lastFocusLossNanoTime')
+READINESS_PROVIDER_FIELDS = ('pid', 'processInstance', 'activityInstance', *[name + 'Count' for name in LIFECYCLE],
+                             *FOCUS_FIELDS, 'resumed', 'stopped', 'windowFocused')
+READINESS_FIELDS = ('readinessStartedNanos', 'readinessEndedNanos', 'readinessVerified', 'readinessFailureReason', 'readinessObservations')
+READINESS_REASONS = ('', 'provider_identity_changed', 'provider_lifecycle_changed', 'provider_focus_changed',
+                     'provider_not_resumed_focused', 'agent_state_changed', 'a11y_timeout', 'observation_failed')
 MEMORY_FIELDS = ('PssStartedNanoTime', 'PssEndedNanoTime', 'DalvikPssKb', 'NativePssKb', 'OtherPssKb', 'GraphicsSummaryKb')
 FRAME_FIELDS = ('index', 'intendedVsyncNs', 'vsyncNs', 'totalDurationNs', 'firstDraw', 'gpuDurationNs',
                 'deadlineNs', 'callbackNanoTime', 'droppedReports', 'refreshHz', 'modeHz', 'displayId', 'drawVersion',
@@ -81,7 +88,7 @@ def profile_for_scope(scope):
 
 
 def conditions(profile, schema_version=1):
-    integer(schema_version, 1, 2)
+    integer(schema_version, 1, 3)
     if type(profile) is not str or profile not in PROFILES:
         raise ValueError('invalid_experience_profile')
     pairs, repetitions = PROFILES[profile]
@@ -94,8 +101,11 @@ def conditions(profile, schema_version=1):
                 localModelScope='same_process_all_arms_idle_in_A_B', sampling='target_provider_and_agent_endpoints',
                 startupMetric='external_perfetto_android_startups_time_to_display', forcedGc=False,
                 systemAnimationOverrides=False, screenshotSamplingIncluded=False)
-    if schema_version == 2:
+    if schema_version >= 2:
         result.update(homeSettleMillis=1000, homePreparation='resolved_HOME_focused_stopped_settle_recheck')
+    if schema_version == 3:
+        result.update(a11yReadinessMaxObservations=16, a11yReadinessTimeoutMillis=3000,
+                      a11yReadinessIntervalMillis=200, a11yReadinessPolicy='post_marker_read_only_identity_lifecycle_focus_guard')
     return result
 
 
@@ -143,7 +153,7 @@ def validate_report(value, api, profile=None, artifact_limit=None):
     fields(value, ('schemaVersion', 'kind', 'diagnosticOnly', 'budgetAcceptance', 'profile', 'status',
                    'appProcessPid', 'targetPackage', 'device', 'conditions', 'startedNanos', 'endedNanos',
                    'cleanup', 'launches', 'trials'))
-    if (type(value['schemaVersion']) is not int or value['schemaVersion'] not in (1, 2) or value['kind'] != KIND
+    if (type(value['schemaVersion']) is not int or value['schemaVersion'] not in (1, 2, 3) or value['kind'] != KIND
             or value['diagnosticOnly'] is not True or value['budgetAcceptance'] is not False
             or type(value['profile']) is not str or value['profile'] not in PROFILES or value['status'] not in STATUSES
             or profile is not None and value['profile'] != profile or value['targetPackage'] != TARGET_PACKAGE):
@@ -218,19 +228,21 @@ def validate_state(value, arm, passed, start, end, focused=True):
 def validate_probe(value, session=False, schema_version=None):
     if type(value) is not dict:
         raise ValueError('invalid_target_probe_identity')
-    integer(value.get('schemaVersion'), 1, 2)
+    integer(value.get('schemaVersion'), 1, 3)
     version = value['schemaVersion']
     if schema_version is not None and version != schema_version:
         raise ValueError('target_probe_version_mismatch')
     memory_fields = tuple(prefix + key for prefix in ('before', *(['after'] if value.get('ended') is True else []))
                           for key in MEMORY_FIELDS) if session and type(value) is dict else ()
-    fields(value, (*PROBE_BASE_FIELDS, *(DRAW_CAUSE_FIELDS if version == 2 else ()),
+    fields(value, (*PROBE_BASE_FIELDS, *(DRAW_CAUSE_FIELDS if version >= 2 else ()), *(FOCUS_FIELDS if version == 3 else ()),
                    *(PROBE_SESSION_FIELDS if session else ()), *memory_fields))
-    if version == 2:
+    if version >= 2:
         for key in DRAW_CAUSE_FIELDS:
             integer(value[key])
         if sum(value[key] for key in DRAW_CAUSE_FIELDS) != value['unresolvedDrawCount']:
             raise ValueError('unresolved_draw_cause_total_mismatch')
+    if version == 3:
+        validate_focus(value)
     if value['clockDomain'] != 'CLOCK_MONOTONIC_System.nanoTime':
         raise ValueError('invalid_target_clock_domain')
     integer(value['pid'], 1, 2 ** 31 - 1)
@@ -280,6 +292,221 @@ def validate_probe(value, session=False, schema_version=None):
     return value
 
 
+def validate_focus(value, checked=None):
+    for key in FOCUS_FIELDS:
+        integer(value[key])
+    boolean(value['windowFocused'])
+    gains, losses = value['focusGainCount'], value['focusLossCount']
+    first, last_gain, last_loss = (value[key] for key in FOCUS_FIELDS[2:])
+    if gains != losses + int(value['windowFocused']):
+        raise ValueError('invalid_focus_transition_counts')
+    if ((gains == 0 and (first or last_gain)) or gains > 0 and not 0 < first <= last_gain
+            or losses == 0 and last_loss or losses > 0 and last_loss <= 0):
+        raise ValueError('invalid_focus_transition_times')
+    if ((value['windowFocused'] and last_gain < last_loss)
+            or not value['windowFocused'] and last_loss < last_gain
+            or checked is not None and max(first, last_gain, last_loss) > checked):
+        raise ValueError('invalid_focus_transition_order')
+
+
+def validate_a11y(value):
+    fields(value, ('windowCount', 'focusedWindowCount', 'focusedWindowId', 'focusedWindowType', 'rootPresent',
+                   'packageName', 'editorMatchCount', 'editorVisible', 'ready', 'reason'))
+    integer(value['windowCount'], -1, 2 ** 31 - 1)
+    integer(value['focusedWindowCount'], 0, max(0, value['windowCount']))
+    for key in ('focusedWindowId', 'focusedWindowType', 'editorMatchCount'):
+        integer(value[key], -1, 2 ** 31 - 1)
+    for key in ('rootPresent', 'editorVisible', 'ready'):
+        boolean(value[key])
+    bounded_text(value['packageName'], 256, empty=True)
+    if value['windowCount'] == -1:
+        reason = 'windows_unavailable'
+    elif value['focusedWindowCount'] != 1:
+        reason = 'focused_window_count'
+    elif value['focusedWindowType'] != 1:
+        reason = 'focused_window_not_application'
+    elif not value['rootPresent']:
+        reason = 'root_missing'
+    elif value['packageName'] != TARGET_PACKAGE:
+        reason = 'package_mismatch'
+    elif value['editorMatchCount'] != 1:
+        reason = 'editor_match_count'
+    elif not value['editorVisible']:
+        reason = 'editor_not_visible'
+    else:
+        reason = 'ready'
+    if value['reason'] != reason or value['ready'] != (reason == 'ready'):
+        raise ValueError('a11y_readiness_reason_mismatch')
+    unique = value['focusedWindowCount'] == 1
+    if unique:
+        integer(value['focusedWindowId'], 0, 2 ** 31 - 1)
+        integer(value['focusedWindowType'], 0, 2 ** 31 - 1)
+    elif value['focusedWindowId'] != -1 or value['focusedWindowType'] != -1:
+        raise ValueError('a11y_unavailable_window_identity')
+    application = unique and value['focusedWindowType'] == 1
+    if not application and value['rootPresent']:
+        raise ValueError('a11y_root_without_application_window')
+    if not value['rootPresent'] and value['packageName']:
+        raise ValueError('a11y_package_without_root')
+    searched = application and value['rootPresent'] and value['packageName'] == TARGET_PACKAGE
+    if searched:
+        integer(value['editorMatchCount'])
+    elif value['editorMatchCount'] != -1:
+        raise ValueError('a11y_editor_search_without_fixture')
+    if value['editorVisible'] and value['editorMatchCount'] != 1:
+        raise ValueError('a11y_visible_editor_not_unique')
+
+
+def readiness_guard(provider, agent, launch):
+    anchor = launch['afterLaunch']
+    if anchor is None:
+        return 'provider_identity_changed'
+    expected = [anchor[key] for key in READINESS_PROVIDER_FIELDS]
+    if provider[:3] != expected[:3]:
+        return 'provider_identity_changed'
+    if provider[3:10] != expected[3:10]:
+        return 'provider_lifecycle_changed'
+    before = launch['beforeLaunch']
+    if launch['startupType'] == 'cold':
+        focus_anchor = (anchor['focusGainCount'] == 1 and anchor['focusLossCount'] == 0
+                        and anchor['firstFocusGainNanoTime'] == anchor['lastFocusGainNanoTime']
+                        and anchor['firstFocusGainNanoTime'] >= launch['launchStartedNanoTime']
+                        and anchor['lastFocusLossNanoTime'] == 0)
+    else:
+        focus_anchor = (before is not None and not before['windowFocused']
+                        and anchor['focusGainCount'] == before['focusGainCount'] + 1
+                        and anchor['focusLossCount'] == before['focusLossCount']
+                        and anchor['firstFocusGainNanoTime'] == before['firstFocusGainNanoTime']
+                        and anchor['lastFocusLossNanoTime'] == before['lastFocusLossNanoTime']
+                        and anchor['lastFocusGainNanoTime'] >= launch['launchStartedNanoTime'])
+    if not focus_anchor or provider[10:15] != expected[10:15]:
+        return 'provider_focus_changed'
+    if not provider[15] or provider[16] or not provider[17]:
+        return 'provider_not_resumed_focused'
+    connected = launch['arm'] != ARMS[0]
+    if agent[:4] != [connected, connected, False, False]:
+        return 'agent_state_changed'
+    return ''
+
+
+def validate_readiness(launch):
+    start, end = launch['readinessStartedNanos'], launch['readinessEndedNanos']
+    for point in (start, end):
+        integer(point, -1)
+        if point != -1:
+            integer(point, launch['startedNanos'], launch['endedNanos'])
+    boolean(launch['readinessVerified'])
+    failure = launch['readinessFailureReason']
+    if type(failure) is not str or failure not in READINESS_REASONS:
+        raise ValueError('invalid_readiness_failure_reason')
+    observations = launch['readinessObservations']
+    if type(observations) is not list or len(observations) > 16:
+        raise ValueError('invalid_readiness_observation_count')
+    known = launch['status'] in ('passed', 'unavailable')
+    if start == -1:
+        if end != -1 or observations or launch['readinessVerified'] or failure or known:
+            raise ValueError('missing_readiness_window')
+        return
+    if launch['launchEndedElapsedNanos'] == -1 or start < launch['launchEndedElapsedNanos']:
+        raise ValueError('readiness_overlaps_launch_marker')
+    if end != -1 and end < start:
+        raise ValueError('invalid_readiness_window')
+    deadline = start + 3_000_000_000
+    previous_end = None
+    # Provider checks use MONOTONIC; observation/Agent checks use BOOTTIME.
+    # Compare each only to its own launch marker and subsequent same-clock reads.
+    previous_provider_time = launch['launchEndedNanoTime']
+    last_state = None
+    last_ready = False
+    for index, observation in enumerate(observations):
+        fields(observation, ('index', 'startedNanos', 'endedNanos', 'providerBefore', 'providerAfter',
+                             'agentBefore', 'agentAfter', 'a11y', 'reason'))
+        integer(observation['index'], index, index)
+        observation_start, observation_end = observation['startedNanos'], observation['endedNanos']
+        integer(observation_start, start, min(deadline - 1, launch['endedNanos']))
+        integer(observation_end, -1)
+        if observation_end != -1:
+            integer(observation_end, observation_start, end if end != -1 else launch['endedNanos'])
+        if previous_end is not None and observation_start < previous_end + 200_000_000:
+            raise ValueError('readiness_observation_interval_too_short')
+        reason = observation['reason']
+        if type(reason) is not str or reason not in READINESS_REASONS:
+            raise ValueError('invalid_readiness_observation_reason')
+        if index + 1 < len(observations) and reason:
+            raise ValueError('readiness_continued_after_terminal_failure')
+        upper = observation_end if observation_end != -1 else end if end != -1 else launch['endedNanos']
+        for side in ('Before', 'After'):
+            provider, agent = observation['provider' + side], observation['agent' + side]
+            if provider is not None:
+                if type(provider) is not list or len(provider) != 19:
+                    raise ValueError('invalid_readiness_provider_snapshot')
+                integer(provider[0], 1, 2 ** 31 - 1)
+                uuid(provider[1]); uuid(provider[2])
+                for point in provider[3:15]:
+                    integer(point)
+                for point in provider[15:18]:
+                    boolean(point)
+                integer(provider[18], max(0, previous_provider_time))
+                validate_focus(dict(zip(READINESS_PROVIDER_FIELDS, provider[:18])), checked=provider[18])
+                previous_provider_time = provider[18]
+            if agent is not None:
+                if type(agent) is not list or len(agent) != 5:
+                    raise ValueError('invalid_readiness_agent_snapshot')
+                for flag in agent[:4]:
+                    boolean(flag)
+                integer(agent[4], observation_start, upper)
+        pb, pa = observation['providerBefore'], observation['providerAfter']
+        ab, aa = observation['agentBefore'], observation['agentAfter']
+        a11y = observation['a11y']
+        # Preserve a partial final read, but never allow holes in the actual read order.
+        if ((ab is not None and pb is None) or a11y is not None and (pb is None or ab is None)
+                or aa is not None and a11y is None or pa is not None and aa is None):
+            raise ValueError('readiness_snapshot_order_mismatch')
+        if aa is not None and ab is not None and aa[4] < ab[4]:
+            raise ValueError('readiness_agent_clock_regressed')
+        if a11y is not None:
+            validate_a11y(a11y)
+        before_guard = readiness_guard(pb, ab, launch) if pb is not None and ab is not None else ''
+        after_guard = readiness_guard(pa, aa, launch) if pa is not None and aa is not None else ''
+        if before_guard and (a11y is not None or aa is not None or pa is not None):
+            raise ValueError('readiness_read_after_failed_guard')
+        guard = before_guard or after_guard
+        complete = all(item is not None for item in (pb, ab, a11y, aa, pa)) and observation_end != -1
+        if guard and reason != guard:
+            raise ValueError('readiness_guard_failure_hidden')
+        if reason in READINESS_REASONS[1:6] and reason != guard:
+            raise ValueError('readiness_guard_reason_mismatch')
+        if not reason and (not complete or guard):
+            raise ValueError('incomplete_stable_readiness_observation')
+        if reason == 'a11y_timeout' and (guard or not complete or end == -1 or end < deadline):
+            raise ValueError('invalid_readiness_timeout')
+        ready = a11y is not None and a11y['ready']
+        if index + 1 < len(observations) and (not complete or ready or observation_end >= deadline):
+            raise ValueError('readiness_continued_after_ready_or_deadline')
+        if aa is not None or ab is not None:
+            agent = aa if aa is not None else ab
+            last_state = dict(zip(STATE_FLAGS[:4], agent[:4]))
+            last_state.update(checkedNanos=agent[4], fixtureFocused=ready)
+        previous_end = observation_end if observation_end != -1 else upper
+        last_ready = bool(complete and not guard and ready and not reason)
+    if last_state is not None and launch['stateAfter'] != last_state:
+        raise ValueError('readiness_final_state_mismatch')
+    if failure:
+        if launch['readinessVerified'] or known or observations and observations[-1]['reason'] != failure:
+            raise ValueError('readiness_terminal_failure_mismatch')
+        if not observations and failure not in ('a11y_timeout', 'observation_failed'):
+            raise ValueError('readiness_guard_without_observation')
+        if failure == 'a11y_timeout' and (end == -1 or end < deadline):
+            raise ValueError('readiness_timeout_before_deadline')
+    elif any(observation['reason'] for observation in observations):
+        raise ValueError('readiness_failure_reason_missing')
+    if launch['readinessVerified']:
+        if not observations or not last_ready or end == -1 or end >= deadline or failure:
+            raise ValueError('invalid_verified_readiness')
+    elif known or start != -1 and not failure:
+        raise ValueError('launch_readiness_not_verified')
+
+
 def validate_launch(value, index, report):
     version = report['schemaVersion']
     fields(value, ('schemaVersion', 'kind', 'index', 'pairIndex', 'position', 'arm', 'startupType', 'status',
@@ -287,7 +514,8 @@ def validate_launch(value, index, report):
                    'preLaunchPidAbsent', 'homeStoppedVerified', 'lifecycleVerified', 'newDrawVerified',
                    'stateBefore', 'stateAfter', 'beforeLaunch', 'afterLaunch', 'launchStartedElapsedNanos',
                    'launchEndedElapsedNanos', 'launchStartedNanoTime', 'launchEndedNanoTime', 'amStartOutput', 'unavailableReason',
-                   *(('homePackage', 'homeFocusedVerified') if version == 2 else ())))
+                   *(('homePackage', 'homeFocusedVerified') if version >= 2 else ()),
+                   *(READINESS_FIELDS if version == 3 else ())))
     pair, position, arm, startup_type = launch_identity(index, report['profile'])
     integer(value['schemaVersion'], version, version); integer(value['index'], index, index)
     integer(value['pairIndex'], pair, pair); integer(value['position'], position, position)
@@ -312,7 +540,7 @@ def validate_launch(value, index, report):
             raise ValueError('invalid_launch_marker_order')
     bounded_text(value['amStartOutput'], 8192, empty=True)
     bounded_text(value['unavailableReason'], 128, empty=True)
-    if version == 2:
+    if version >= 2:
         boolean(value['homeFocusedVerified'])
         bounded_text(value['homePackage'], 256, empty=True)
         if value['homePackage'] and not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)*', value['homePackage']):
@@ -340,7 +568,7 @@ def validate_launch(value, index, report):
             if not value['preLaunchPidAbsent'] or value['homeStoppedVerified'] or before is not None or after['createCount'] != 1 or after['resumeCount'] != 1 or after['createdNanoTime'] < value['launchStartedNanoTime']:
                 raise ValueError('cold_launch_requires_absent_process')
         else:
-            if version == 2 and (not value['homeFocusedVerified'] or not value['homePackage']):
+            if version >= 2 and (not value['homeFocusedVerified'] or not value['homePackage']):
                 raise ValueError('hot_launch_requires_focused_home')
             if value['preLaunchPidAbsent'] or not value['homeStoppedVerified'] or before is None or not before['stopped'] or before['resumed']:
                 raise ValueError('hot_launch_requires_stopped_activity')
@@ -366,6 +594,8 @@ def validate_launch(value, index, report):
                     or value['unavailableReason'] == 'unresolved_draw_observation' and not (matched and unresolved)
                     or value['unavailableReason'] not in ('no_new_draw_frame_report', 'unresolved_draw_observation')):
                 raise ValueError('invalid_unavailable_launch_reason')
+    if version == 3:
+        validate_readiness(value)
     return value
 
 

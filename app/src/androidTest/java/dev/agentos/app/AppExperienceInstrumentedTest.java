@@ -64,6 +64,12 @@ public final class AppExperienceInstrumentedTest {
     private static final String[] ARMS = {"A_SERVICE_OFF", "B_SERVICE_ON_IDLE", "C_SERVICE_ON_AGENT"};
     private static final String[] ORDERS = {"ABC", "BCA", "CAB", "ACB", "CBA", "BAC"};
     private static final long TASK_MILLIS = 30_000, SEQUENCE_MILLIS = 2_300_000, HOME_SETTLE_MILLIS = 1_000;
+    private static final int READINESS_MAX = 16;
+    private static final long READINESS_MILLIS = 3_000, READINESS_INTERVAL_MILLIS = 200;
+    private static final String[] READINESS_LIFECYCLE = {"createCount", "startCount", "resumeCount", "pauseCount",
+            "stopCount", "destroyCount", "newIntentCount"};
+    private static final String[] READINESS_FOCUS = {"focusGainCount", "focusLossCount", "firstFocusGainNanoTime",
+            "lastFocusGainNanoTime", "lastFocusLossNanoTime"};
     private static final String REPORT = "experience-diagnostics.json";
     private static final Gson JSON = new GsonBuilder().serializeNulls().create();
     private static final int AUTOMATION_FLAGS = AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
@@ -171,7 +177,7 @@ public final class AppExperienceInstrumentedTest {
         int pair = (index % (pairs * 2)) / 2, position = index % 2;
         String startupType = index < pairs * 2 ? "cold" : "hot";
         JsonObject value = new JsonObject();
-        value.addProperty("schemaVersion", 2);
+        value.addProperty("schemaVersion", 3);
         value.addProperty("kind", "agent-app-experience-launch");
         value.addProperty("index", index);
         value.addProperty("pairIndex", pair);
@@ -192,6 +198,11 @@ public final class AppExperienceInstrumentedTest {
         for (String key : new String[]{"launchStartedElapsedNanos", "launchEndedElapsedNanos", "launchStartedNanoTime", "launchEndedNanoTime"}) value.addProperty(key, -1);
         value.addProperty("amStartOutput", "");
         value.addProperty("unavailableReason", "");
+        value.addProperty("readinessStartedNanos", -1);
+        value.addProperty("readinessEndedNanos", -1);
+        value.addProperty("readinessVerified", false);
+        value.addProperty("readinessFailureReason", "");
+        value.add("readinessObservations", new JsonArray());
         return value;
     }
 
@@ -217,6 +228,7 @@ public final class AppExperienceInstrumentedTest {
             await("HOME did not focus the resolved launcher and stop the target Activity", () -> {
                 stopped[0] = provider("status", null, null);
                 return stopped[0].getBoolean("stopped") && !stopped[0].getBoolean("resumed")
+                        && !stopped[0].getBoolean("windowFocused")
                         && homePackage.equals(focusedApplicationPackage());
             }, 8_000);
             assertIdentity(foreground, stopped[0]);
@@ -228,6 +240,7 @@ public final class AppExperienceInstrumentedTest {
             value.add("beforeLaunch", bundleJson(before));
             assertIdentity(foreground, before);
             assertTrue("Target left its stopped HOME preparation state", before.getBoolean("stopped") && !before.getBoolean("resumed"));
+            assertFalse("Target regained window focus during HOME settling", before.getBoolean("windowFocused"));
             assertEquals("Resolved launcher lost focus during HOME settling", homePackage, focusedApplicationPackage());
             assertEquals(stopped[0].getLong("resumeCount"), before.getLong("resumeCount"));
             assertEquals(stopped[0].getLong("stopCount"), before.getLong("stopCount"));
@@ -283,9 +296,10 @@ public final class AppExperienceInstrumentedTest {
             value.addProperty("launchEndedElapsedNanos", SystemClock.elapsedRealtimeNanos());
             if (after != null) value.add("afterLaunch", bundleJson(after));
         }
-        JsonObject stateAfter = readState(controller);
-        value.add("stateAfter", stateAfter);
-        assertIdleState(stateAfter, enabled, true);
+        // First draw / official TTID ends above. Accessibility readiness is a
+        // separate, read-only phase: retain every snapshot, including an initial
+        // false during the real platform animation. Never restart the launch.
+        awaitLaunchReadiness(controller, value, before, after, cold, enabled);
         checkSequence();
     }
 
@@ -326,6 +340,225 @@ public final class AppExperienceInstrumentedTest {
         assertEquals(before.getString("activityInstance"), after.getString("activityInstance"));
     }
 
+    private void awaitLaunchReadiness(AgentController controller, JsonObject launch, Bundle beforeLaunch,
+                                     Bundle afterLaunch, boolean cold, boolean enabled) {
+        long started = SystemClock.elapsedRealtimeNanos();
+        long deadline = started + READINESS_MILLIS * 1_000_000;
+        launch.addProperty("readinessStartedNanos", started);
+        JsonArray observations = launch.getAsJsonArray("readinessObservations");
+        try {
+            for (int index = 0; index < READINESS_MAX; index++) {
+                checkSequence();
+                long observationStarted = SystemClock.elapsedRealtimeNanos();
+                if (observationStarted >= deadline) break;
+                JsonObject observation = new JsonObject();
+                observation.addProperty("index", index);
+                observation.addProperty("startedNanos", observationStarted);
+                observation.addProperty("endedNanos", -1);
+                for (String field : new String[]{"providerBefore", "providerAfter", "agentBefore", "agentAfter", "a11y"})
+                    observation.add(field, JsonNull.INSTANCE);
+                observation.addProperty("reason", "");
+                observations.add(observation);
+                try {
+                    JsonArray providerBefore = compactProvider(provider("status", null, null));
+                    observation.add("providerBefore", providerBefore);
+                    JsonArray agentBefore = compactAgent(controller);
+                    observation.add("agentBefore", agentBefore);
+                    String reason = readinessGuard(beforeLaunch, afterLaunch, cold,
+                            launch.get("launchStartedNanoTime").getAsLong(), providerBefore, agentBefore, enabled);
+                    if (!reason.isEmpty()) failReadiness(launch, observation, reason);
+                    observation.add("a11y", accessibilityReadiness());
+                    JsonArray agentAfter = compactAgent(controller);
+                    observation.add("agentAfter", agentAfter);
+                    JsonArray providerAfter = compactProvider(provider("status", null, null));
+                    observation.add("providerAfter", providerAfter);
+                    reason = readinessGuard(beforeLaunch, afterLaunch, cold,
+                            launch.get("launchStartedNanoTime").getAsLong(), providerAfter, agentAfter, enabled);
+                    if (!reason.isEmpty()) failReadiness(launch, observation, reason);
+                } catch (Exception | Error failure) {
+                    if (observation.get("reason").getAsString().isEmpty()) {
+                        observation.addProperty("reason", "observation_failed");
+                        launch.addProperty("readinessFailureReason", "observation_failed");
+                    }
+                    throw failure;
+                } finally {
+                    observation.addProperty("endedNanos", SystemClock.elapsedRealtimeNanos());
+                    retainReadinessState(launch, observation);
+                }
+                // Synchronous framework reads are not preempted. An overrun is
+                // retained as failure even if its late snapshot happened to be ready.
+                if (SystemClock.elapsedRealtimeNanos() >= deadline)
+                    failReadiness(launch, observation, "a11y_timeout");
+                if (observation.getAsJsonObject("a11y").get("ready").getAsBoolean()) {
+                    launch.addProperty("readinessVerified", true);
+                    return;
+                }
+                long nextEligible = observation.get("endedNanos").getAsLong()
+                        + READINESS_INTERVAL_MILLIS * 1_000_000;
+                long wakeAt = Math.min(nextEligible, deadline);
+                long remaining;
+                while ((remaining = wakeAt - SystemClock.elapsedRealtimeNanos()) > 0)
+                    SystemClock.sleep((remaining + 999_999) / 1_000_000);
+                if (nextEligible >= deadline) break;
+            }
+            failReadiness(launch, observations.size() == 0 ? null
+                    : observations.get(observations.size() - 1).getAsJsonObject(), "a11y_timeout");
+        } catch (Exception | Error failure) {
+            if (launch.get("readinessFailureReason").getAsString().isEmpty()) {
+                launch.addProperty("readinessFailureReason", "observation_failed");
+                if (observations.size() > 0) observations.get(observations.size() - 1).getAsJsonObject()
+                        .addProperty("reason", "observation_failed");
+            }
+            throw failure;
+        } finally {
+            long ended = SystemClock.elapsedRealtimeNanos();
+            launch.addProperty("readinessEndedNanos", ended);
+            if (launch.get("readinessVerified").getAsBoolean() && ended >= deadline) {
+                launch.addProperty("readinessVerified", false);
+                failReadiness(launch, observations.get(observations.size() - 1).getAsJsonObject(), "a11y_timeout");
+            }
+        }
+    }
+
+    private static void failReadiness(JsonObject launch, JsonObject observation, String reason) {
+        launch.addProperty("readinessFailureReason", reason);
+        if (observation != null) observation.addProperty("reason", reason);
+        throw new AssertionError("Launch accessibility readiness rejected: " + reason);
+    }
+
+    // Fixed positional arrays keep every before/after read within the launch's
+    // existing 32KiB cap. Their complete field order is the versioned v3 contract.
+    private static JsonArray compactProvider(Bundle value) {
+        JsonArray result = new JsonArray();
+        result.add(value.getInt("pid"));
+        result.add(value.getString("processInstance"));
+        result.add(value.getString("activityInstance"));
+        for (String field : READINESS_LIFECYCLE) result.add(value.getLong(field));
+        for (String field : READINESS_FOCUS) result.add(value.getLong(field));
+        result.add(value.getBoolean("resumed"));
+        result.add(value.getBoolean("stopped"));
+        result.add(value.getBoolean("windowFocused"));
+        result.add(System.nanoTime());
+        return result;
+    }
+
+    private JsonArray compactAgent(AgentController controller) {
+        JsonArray result = new JsonArray();
+        instrumentation.runOnMainSync(() -> {
+            AgentAccessibilityService service = AgentAccessibilityService.getInstance();
+            result.add(service != null);
+            result.add(service != null && service.isConnected());
+            result.add(controller.getState().running);
+            result.add(service != null && service.isControlAvailable());
+        });
+        result.add(SystemClock.elapsedRealtimeNanos());
+        return result;
+    }
+
+    private static String readinessGuard(Bundle before, Bundle anchor, boolean cold, long launchStart,
+                                         JsonArray observed, JsonArray agent, boolean enabled) {
+        if (observed.get(0).getAsInt() != anchor.getInt("pid")
+                || !observed.get(1).getAsString().equals(anchor.getString("processInstance"))
+                || !observed.get(2).getAsString().equals(anchor.getString("activityInstance")))
+            return "provider_identity_changed";
+        for (int i = 0; i < READINESS_LIFECYCLE.length; i++)
+            if (observed.get(i + 3).getAsLong() != anchor.getLong(READINESS_LIFECYCLE[i]))
+                return "provider_lifecycle_changed";
+        boolean focusAnchor;
+        if (cold) {
+            focusAnchor = anchor.getLong("focusGainCount") == 1 && anchor.getLong("focusLossCount") == 0
+                    && anchor.getLong("firstFocusGainNanoTime") == anchor.getLong("lastFocusGainNanoTime")
+                    && anchor.getLong("firstFocusGainNanoTime") >= launchStart
+                    && anchor.getLong("lastFocusLossNanoTime") == 0;
+        } else {
+            focusAnchor = before != null && !before.getBoolean("windowFocused")
+                    && anchor.getLong("focusGainCount") == before.getLong("focusGainCount") + 1
+                    && anchor.getLong("focusLossCount") == before.getLong("focusLossCount")
+                    && anchor.getLong("firstFocusGainNanoTime") == before.getLong("firstFocusGainNanoTime")
+                    && anchor.getLong("lastFocusLossNanoTime") == before.getLong("lastFocusLossNanoTime")
+                    && anchor.getLong("lastFocusGainNanoTime") >= launchStart;
+        }
+        if (!focusAnchor) return "provider_focus_changed";
+        for (int i = 0; i < READINESS_FOCUS.length; i++)
+            if (observed.get(i + 10).getAsLong() != anchor.getLong(READINESS_FOCUS[i]))
+                return "provider_focus_changed";
+        if (!observed.get(15).getAsBoolean() || observed.get(16).getAsBoolean()
+                || !observed.get(17).getAsBoolean()) return "provider_not_resumed_focused";
+        if (agent.get(0).getAsBoolean() != enabled || agent.get(1).getAsBoolean() != enabled
+                || agent.get(2).getAsBoolean() || agent.get(3).getAsBoolean()) return "agent_state_changed";
+        return "";
+    }
+
+    private static void retainReadinessState(JsonObject launch, JsonObject observation) {
+        String field = observation.get("agentAfter").isJsonNull() ? "agentBefore" : "agentAfter";
+        if (observation.get(field).isJsonNull()) return;
+        JsonArray agent = observation.getAsJsonArray(field);
+        JsonObject state = new JsonObject();
+        String[] fields = {"servicePresent", "serviceConnected", "controllerRunning", "controlAvailable"};
+        for (int i = 0; i < fields.length; i++) state.add(fields[i], agent.get(i));
+        boolean ready = !observation.get("a11y").isJsonNull()
+                && observation.getAsJsonObject("a11y").get("ready").getAsBoolean();
+        state.addProperty("fixtureFocused", ready);
+        state.add("checkedNanos", agent.get(4));
+        launch.add("stateAfter", state);
+    }
+
+    private JsonObject accessibilityReadiness() {
+        JsonObject result = new JsonObject();
+        result.addProperty("windowCount", -1);
+        result.addProperty("focusedWindowCount", 0);
+        result.addProperty("focusedWindowId", -1);
+        result.addProperty("focusedWindowType", -1);
+        result.addProperty("rootPresent", false);
+        result.addProperty("packageName", "");
+        result.addProperty("editorMatchCount", -1);
+        result.addProperty("editorVisible", false);
+        result.addProperty("ready", false);
+        result.addProperty("reason", "windows_unavailable");
+        List<AccessibilityWindowInfo> windows = automation.getWindows();
+        if (windows == null) return result;
+        result.addProperty("windowCount", windows.size());
+        try {
+            AccessibilityWindowInfo focused = null;
+            int count = 0;
+            for (AccessibilityWindowInfo window : windows) {
+                if (window.getDisplayId() == Display.DEFAULT_DISPLAY && window.isFocused()) {
+                    focused = window;
+                    count++;
+                }
+            }
+            result.addProperty("focusedWindowCount", count);
+            result.addProperty("reason", "focused_window_count");
+            if (count != 1 || focused == null) return result;
+            result.addProperty("focusedWindowId", focused.getId());
+            result.addProperty("focusedWindowType", focused.getType());
+            result.addProperty("reason", "focused_window_not_application");
+            if (focused.getType() != AccessibilityWindowInfo.TYPE_APPLICATION) return result;
+            AccessibilityNodeInfo root = focused.getRoot();
+            result.addProperty("reason", "root_missing");
+            if (root == null) return result;
+            result.addProperty("rootPresent", true);
+            try {
+                String name = root.getPackageName() == null ? "" : root.getPackageName().toString();
+                assertTrue("Accessibility package name exceeded the diagnostic bound", name.length() <= 256);
+                result.addProperty("packageName", name);
+                result.addProperty("reason", "package_mismatch");
+                if (!FIXTURE.equals(name)) return result;
+                List<AccessibilityNodeInfo> nodes = root.findAccessibilityNodeInfosByViewId(FIXTURE + ":id/edit_value");
+                try {
+                    result.addProperty("editorMatchCount", nodes.size());
+                    result.addProperty("reason", "editor_match_count");
+                    if (nodes.size() != 1) return result;
+                    boolean visible = nodes.get(0).isVisibleToUser();
+                    result.addProperty("editorVisible", visible);
+                    result.addProperty("ready", visible);
+                    result.addProperty("reason", visible ? "ready" : "editor_not_visible");
+                    return result;
+                } finally { for (AccessibilityNodeInfo node : nodes) node.recycle(); }
+            } finally { root.recycle(); }
+        } finally { for (AccessibilityWindowInfo window : windows) window.recycle(); }
+    }
+
     private final class Trial {
         final JsonObject result = new JsonObject();
         final int arm;
@@ -335,7 +568,7 @@ public final class AppExperienceInstrumentedTest {
             int repetition = index / 3, position = index % 3;
             arm = ORDERS[repetition].charAt(position) - 'A';
             agent = arm == 2;
-            result.addProperty("schemaVersion", 2);
+            result.addProperty("schemaVersion", 3);
             result.addProperty("kind", "agent-app-experience-trial");
             result.addProperty("index", index);
             result.addProperty("repetition", repetition);
@@ -515,7 +748,7 @@ public final class AppExperienceInstrumentedTest {
     private Bundle provider(String method, String arg, Bundle extras) {
         Bundle value = context.getContentResolver().call(PROVIDER, method, arg, extras);
         assertNotNull("Fixture diagnostic provider returned no bundle", value);
-        assertEquals(2, value.getInt("schemaVersion"));
+        assertEquals(3, value.getInt("schemaVersion"));
         assertEquals("CLOCK_MONOTONIC_System.nanoTime", value.getString("clockDomain"));
         assertTrue(value.getInt("pid") > 0);
         return value;
@@ -582,7 +815,7 @@ public final class AppExperienceInstrumentedTest {
 
     private JsonObject reportHeader() {
         JsonObject report = new JsonObject();
-        report.addProperty("schemaVersion", 2);
+        report.addProperty("schemaVersion", 3);
         report.addProperty("kind", "agent-app-experience-diagnostics");
         report.addProperty("diagnosticOnly", true);
         report.addProperty("budgetAcceptance", false);
@@ -617,6 +850,10 @@ public final class AppExperienceInstrumentedTest {
         conditions.addProperty("startupSettleMillis", 250);
         conditions.addProperty("homeSettleMillis", HOME_SETTLE_MILLIS);
         conditions.addProperty("homePreparation", "resolved_HOME_focused_stopped_settle_recheck");
+        conditions.addProperty("a11yReadinessMaxObservations", READINESS_MAX);
+        conditions.addProperty("a11yReadinessTimeoutMillis", READINESS_MILLIS);
+        conditions.addProperty("a11yReadinessIntervalMillis", READINESS_INTERVAL_MILLIS);
+        conditions.addProperty("a11yReadinessPolicy", "post_marker_read_only_identity_lifecycle_focus_guard");
         conditions.addProperty("resourceSettleMillis", 2_000);
         conditions.addProperty("taskTimeoutMillis", TASK_MILLIS);
         conditions.addProperty("sequenceTimeoutMillis", SEQUENCE_MILLIS);

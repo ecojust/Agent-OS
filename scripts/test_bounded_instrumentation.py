@@ -24,7 +24,7 @@ class BoundedInstrumentationTests(unittest.TestCase):
         (self.root / 'scripts').mkdir()
         for name in ('run_android_tests.sh', 'run_bounded_instrumentation.py',
                      'print_android_test_failures.py', 'collect_android_evidence.py',
-                     'collect_performance_evidence.py'):
+                     'collect_performance_evidence.py', 'collect_idle_pair_evidence.py'):
             shutil.copyfile(SCRIPTS / name, self.root / 'scripts' / name)
         (self.root / 'bin').mkdir()
         adb = self.root / 'bin/adb'
@@ -101,6 +101,30 @@ sys.exit(result)
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual('completed', self.execution()['status'])
         self.assert_collected(0)
+
+    def test_idle_pair_scope_preserves_failure_and_collects_its_separate_report(self):
+        result = self.run_shell('23', scope='idle-pair-diagnostic')
+        self.assertEqual(23, result.returncode, result.stderr)
+        calls = [json.loads(line) for line in (self.root / 'gradle-calls.jsonl').read_text().splitlines()]
+        self.assertEqual(1, len(calls))
+        self.assertIn('-Pandroid.testInstrumentationRunnerArguments.class='
+                      'dev.agentos.app.IdlePairedPerformanceInstrumentedTest#'
+                      'collectAlternatingServiceOffAndIdlePairs', calls[0])
+        self.assertNotIn('--force-queryable', (self.root / 'adb-calls.txt').read_text())
+        self.assert_collected(23)
+        record = json.loads((self.root / 'idle-pair-evidence/api-30/capture.json').read_text())
+        self.assertEqual(23, record['gradleExitCode'])
+        self.assertEqual('unavailable', record['captureStatus'])
+        self.assertIsNone(record['report'])
+
+    def test_full_keeps_idle_pair_probe_outside_its_existing_denominator(self):
+        result = self.run_shell('0')
+        self.assertEqual(0, result.returncode, result.stderr)
+        calls = [json.loads(line) for line in (self.root / 'gradle-calls.jsonl').read_text().splitlines()]
+        excluded = next(value for value in calls[-1]
+                        if value.startswith('-Pandroid.testInstrumentationRunnerArguments.notClass='))
+        self.assertIn('dev.agentos.app.IdlePairedPerformanceInstrumentedTest', excluded.split('=', 1)[1].split(','))
+        self.assertFalse((self.root / 'idle-pair-evidence').exists())
 
     def test_api30_full_installs_only_the_fixed_test_apk_once_before_connected(self):
         result = self.run_shell('0')

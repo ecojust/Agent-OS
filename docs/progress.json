@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-30T09:48:56Z",
-  "note": "固定三轮完整复测6548/6552：API30旋转三次失败，第二轮API35点击前身份失效，完成条件未满足，保持9/20。导航72/72、SAF144/144通过。已推进多轮性能统计工具，34项相关测试及24份真实诊断复算通过；README更新34.3秒普通演示。",
+  "updated_at": "2026-10-30T10:58:46Z",
+  "note": "新增同设备空闲A/B交替配对诊断与独立归档/统计，固定8API计划48对96窗；实际采集与本次普通录像待执行，检查点保持9/20。",
   "latest_evidence": {
     "path": "screenshots/41032285687-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41032285687"
@@ -93,10 +93,10 @@
       "id": "performance",
       "name": "三态性能测量与预算验收",
       "status": "in_progress",
-      "details": "已完成重复诊断汇总工具，17项新测试加17项既有测试通过；三轮24份有效性能报告按8个API分组，逐run数值和分布独立复算一致，保留完整运行失败。未完成：固定顺序短窗口不等于预算验收，交替配对、30分钟压力、目标应用进程、启动/完整帧及真机功耗温升仍缺。下一步：补采集合同与交替/长时数据，再做参考机预算。",
-      "updated_at": "2026-10-30T09:48:56Z",
-      "evidence": "docs/validation/performance-repeated-runs.md",
-      "scope": "New read-only repeated-performance CLI validates exact expected source and original manifest/capture/report hash chains,retains failed/missing samples,and groups by API/device fingerprint/CI profile/conditions.17 new host tests and17 existing performance-evidence tests passed. Three710e full archives yield24 eligible diagnostic lanes in8 groups of3,while retaining all3 full failures and4 failed jobs. Derived321826B report SHA2562ba2419c69e50f7a5ececc9015d038f67b35b976fd4473b948fb1a27735a4e62;independent calculations and deterministic regeneration match. CPU uses actual first/last sample span,PSS sampled means/maxima,within-run differences then run-level min/median/max. Fixed A_B_C_STOP,unequal workloads/durations,sampler and local model included,fixture process excluded;not alternating paired or budget acceptance. Remaining30-minute pressure,target-process/startup/full-frame sampling and physical resource/energy/thermal acceptance."
+      "details": "已完成旧24份报告复算；新增同设备AB/BA六对、12个20秒窗口采集与独立归档/统计，40项相关宿主测试通过。未完成：八档真实配对数据待采集，活跃等价流程、30分钟压力、目标进程、启动/完整帧和真机预算仍缺。下一步：固定源码跑8案/48对/96窗，核验原始来源并独立复算。",
+      "updated_at": "2026-10-30T10:58:46Z",
+      "evidence": "docs/validation/performance-idle-pairs.md",
+      "scope": "已完成旧四态多轮汇总，710e三轮24份诊断复算；新增独立同设备空闲交替配对采集：AB/BA六对、12个20秒窗口，8API计划48对96窗，固定专项不计入原273项/API完整矩阵。新增采集/统计/归档宿主40项通过，设备执行和真实数值待核验。仍为diagnosticOnly=true、budgetAcceptance=false；交替仅覆盖空闲，活跃等价流程、30分钟压力、目标进程、启动/完整帧及真机功耗温升未验收。"
     },
     {
       "id": "visual_observation",

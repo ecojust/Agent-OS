@@ -11,6 +11,7 @@ import shutil
 
 import collect_performance_evidence as performance
 import collect_android_evidence as android_evidence
+import collect_idle_pair_evidence as idle_pair
 
 EXPECTED_MATRIX = [str(api) for api in range(30, 37)] + ["37.0"]
 PINNED_WORKFLOW = ".github/workflows/pinned-calculator-page.yml"
@@ -32,6 +33,12 @@ ROTATION_TITLE = "Android checks [rotation-diagnostic]"
 NUMERIC_IMPORT_TITLE = "Android checks [numeric-import-diagnostic]"
 NAVIGATION_ORIGIN_TITLE = "Android checks [navigation-origin-diagnostic]"
 NAVIGATION_ORIGIN_REBUILD_TITLE = "Android checks [navigation-origin-rebuild-diagnostic]"
+IDLE_PAIR_TITLE = "Android checks [idle-pair-diagnostic]"
+IDLE_PAIR_COVERAGE = ("This case samples six service-off/service-on-idle pairs in AB/BA alternating order on each dedicated emulator, "
+                      "with the instrumented Agent process resident and the same synthetic Fixture in the foreground. "
+                      "The numeric denominator is 48 planned pairs and 96 windows across eight APIs, separate from the eight selected test cases. "
+                      "Missing, failed and unexecuted measurements remain explicit. Screenshots are outside the sampling windows; "
+                      "they do not prove the measured CPU/PSS. Target-process resources, real-device budgets and long-duration stability remain unverified.")
 NAVIGATION_ORIGIN_REBUILD_COVERAGE = ("This case preserves a real unscoped Settings observation across actual control-window removal and recreation "
                                       "before one automatic launch attempt on all eight API lanes. It requires TASK_PAUSED, "
                                       "zero approval callbacks and dispatch attempts, and retained Settings focus. "
@@ -68,7 +75,8 @@ DIAGNOSTIC_TITLES = {DIAGNOSTIC_TITLE: android_evidence.DIAGNOSTIC_SCOPE,
                      ROTATION_TITLE: android_evidence.ROTATION_SCOPE,
                      NUMERIC_IMPORT_TITLE: android_evidence.NUMERIC_IMPORT_SCOPE,
                      NAVIGATION_ORIGIN_TITLE: android_evidence.NAVIGATION_ORIGIN_SCOPE,
-                     NAVIGATION_ORIGIN_REBUILD_TITLE: android_evidence.NAVIGATION_ORIGIN_REBUILD_SCOPE}
+                     NAVIGATION_ORIGIN_REBUILD_TITLE: android_evidence.NAVIGATION_ORIGIN_REBUILD_SCOPE,
+                     IDLE_PAIR_TITLE: android_evidence.IDLE_PAIR_SCOPE}
 DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
                     android_evidence.QUALIFICATION_SCOPE: "Task Qualification",
                     android_evidence.CONTROL_STATUS_SCOPE: "Control Status",
@@ -80,7 +88,8 @@ DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
                     android_evidence.ROTATION_SCOPE: "Rotation",
                     android_evidence.NUMERIC_IMPORT_SCOPE: "Numeric Import",
                     android_evidence.NAVIGATION_ORIGIN_SCOPE: "Navigation Origin",
-                    android_evidence.NAVIGATION_ORIGIN_REBUILD_SCOPE: "Navigation Origin Rebuild"}
+                    android_evidence.NAVIGATION_ORIGIN_REBUILD_SCOPE: "Navigation Origin Rebuild",
+                    android_evidence.IDLE_PAIR_SCOPE: "Idle Pair"}
 
 
 def android_execution_scope(run: dict) -> str:
@@ -225,7 +234,18 @@ def verify_review_jobs(jobs: list, artifacts: list, run: dict) -> None:
 def performance_artifacts(value, run: dict) -> list:
     if run.get("path") in (PINNED_WORKFLOW, DISCLOSURE_WORKFLOW):
         return []  # These fixed profiles do not run performance diagnostics.
-    pattern = re.compile(r"performance-reports-api-(3[0-6]|37\.0)-attempt-" + str(run["run_attempt"]))
+    return numeric_artifacts(value, run, "performance-reports", performance.MAX_ARTIFACT_BYTES)
+
+
+def idle_pair_artifacts(value, run: dict) -> list:
+    if (run.get("path") != ".github/workflows/android.yml"
+            or android_execution_scope(run) != android_evidence.IDLE_PAIR_SCOPE):
+        return []  # Old full and other diagnostic runs do not acquire new requirements.
+    return numeric_artifacts(value, run, "idle-pair-reports", idle_pair.MAX_ARTIFACT_BYTES)
+
+
+def numeric_artifacts(value, run: dict, prefix: str, maximum: int) -> list:
+    pattern = re.compile(re.escape(prefix) + r"-api-(3[0-6]|37\.0)-attempt-" + str(run["run_attempt"]))
     selected = []
     names = set()
     for artifact in page_entries(value, "artifacts"):
@@ -235,7 +255,7 @@ def performance_artifacts(value, run: dict) -> list:
         if (artifact["name"] in names or artifact.get("expired") is not False
                 or not performance.positive_int(artifact.get("id"))
                 or not performance.positive_int(artifact.get("size_in_bytes"))
-                or artifact["size_in_bytes"] > performance.MAX_ARTIFACT_BYTES
+                or artifact["size_in_bytes"] > maximum
                 or origin.get("id") != run["id"] or origin.get("head_sha") != run["head_sha"]
                 or origin.get("head_branch") != run["head_branch"]
                 or origin.get("repository_id") != run["repository"]["id"]
@@ -248,6 +268,23 @@ def performance_artifacts(value, run: dict) -> list:
 
 def archive_performance(args, run, jobs, output, budget):
     artifacts = {item["name"]: item for item in performance_artifacts(read_json(args.artifacts), run)}
+    return archive_numeric_diagnostics(args, run, jobs, output, budget, artifacts, performance,
+                                       "performance-reports", "performance", "no_current_performance_artifact",
+                                       "performance-diagnostic-attachments",
+                                       "Raw instrumented emulator CPU/PSS and stage events; excludes fixture-process CPU/PSS. Not screenshots or device performance acceptance.")
+
+
+def archive_idle_pairs(args, run, jobs, output, budget):
+    if android_execution_scope(run) != android_evidence.IDLE_PAIR_SCOPE:
+        raise ValueError("idle pair attachments require the fixed diagnostic scope")
+    artifacts = {item["name"]: item for item in idle_pair_artifacts(read_json(args.artifacts), run)}
+    return archive_numeric_diagnostics(args, run, jobs, output, budget, artifacts, idle_pair,
+                                       "idle-pair-reports", "idle-paired-performance", "no_current_idle_pair_artifact",
+                                       "idle-paired-performance-attachments", IDLE_PAIR_COVERAGE)
+
+
+def archive_numeric_diagnostics(args, run, jobs, output, budget, artifacts, validator,
+                                prefix, directory, missing_error, kind, scope):
     source_identity = {"repository": args.repository, "runId": run["id"],
                        "attempt": run["run_attempt"], "commit": run["head_sha"]}
     records = []
@@ -256,9 +293,9 @@ def archive_performance(args, run, jobs, output, budget):
         job = matches[0] if len(matches) == 1 else {}
         record = {"matrixLabel": label, "apiLevel": int(label.split(".")[0]),
                   "jobConclusion": job.get("conclusion", "not_scheduled"),
-                  "captureStatus": "artifact_unavailable", "captureError": "no_current_performance_artifact",
+                  "captureStatus": "artifact_unavailable", "captureError": missing_error,
                   "diagnosticStatus": None, "files": []}
-        name = f"performance-reports-api-{label}-attempt-{run['run_attempt']}"
+        name = f"{prefix}-api-{label}-attempt-{run['run_attempt']}"
         artifact = artifacts.get(name)
         if artifact is not None:
             if (len(matches) != 1 or job.get("status") != "completed" or job.get("run_id") != run["id"]
@@ -273,14 +310,14 @@ def archive_performance(args, run, jobs, output, budget):
                 raise ValueError("expected performance artifact was not downloaded")
             entries = list(source.iterdir())
             if (len(entries) > 2 or any(path.is_symlink() or not path.is_file()
-                    or path.name not in ("capture.json", performance.REPORT_NAME) for path in entries)):
+                    or path.name not in ("capture.json", validator.REPORT_NAME) for path in entries)):
                 raise ValueError("unexpected performance artifact files")
-            capture = performance.validate_capture(
-                performance.read_json(source / "capture.json", performance.MAX_CAPTURE_BYTES), label, source_identity)
-            report_path = source / performance.REPORT_NAME
+            capture = validator.validate_capture(
+                validator.read_json(source / "capture.json", validator.MAX_CAPTURE_BYTES), label, source_identity)
+            report_path = source / validator.REPORT_NAME
             if capture["captureStatus"] == "collected":
-                raw = performance.read_json(report_path)
-                performance.validate_report(raw, record["apiLevel"])
+                raw = validator.read_json(report_path)
+                validator.validate_report(raw, record["apiLevel"])
                 data = report_path.read_bytes()
                 if (capture["report"]["bytes"] != len(data)
                         or capture["report"]["sha256"] != hashlib.sha256(data).hexdigest()
@@ -293,11 +330,9 @@ def archive_performance(args, run, jobs, output, budget):
                            "actualSdkInt": capture["actualSdkInt"], "gradleExitCode": capture["gradleExitCode"],
                            "declaredCiProfile": capture["declaredCiProfile"],
                            "artifactId": artifact["id"], "files": copy_files(
-                               source, output / "performance" / f"api-{label}", budget)})
+                               source, output / directory / f"api-{label}", budget)})
         records.append(record)
-    return {"kind": "performance-diagnostic-attachments", "diagnosticOnly": True,
-            "budgetAcceptance": False,
-            "scope": "Raw instrumented emulator CPU/PSS and stage events; excludes fixture-process CPU/PSS. Not screenshots or device performance acceptance.",
+    return {"kind": kind, "diagnosticOnly": True, "budgetAcceptance": False, "scope": scope,
             "apis": records}
 
 
@@ -402,6 +437,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
 
     build_job = next((job for job in jobs if job.get("name") == "build"), {})
     performance_records = archive_performance(args, run, jobs, output, budget)
+    idle_pair_records = (archive_idle_pairs(args, run, jobs, output, budget)
+                         if execution_scope == android_evidence.IDLE_PAIR_SCOPE else None)
     manifest = {
         "schemaVersion": 1, "kind": "android-emulator-test-evidence",
         "archivedAt": datetime.now(timezone.utc).isoformat(),
@@ -417,6 +454,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         "scope": "Synthetic fixture and Agent OS test UI; emulator results are not real-device certification",
         "fileCount": budget["files"], "totalBytes": budget["bytes"],
     }
+    if idle_pair_records is not None:
+        manifest["idlePairedPerformance"] = idle_pair_records
     if diagnostic:
         manifest.update({"expectedTestsPerApi": 1, "expectedTests": len(EXPECTED_MATRIX),
                          "diagnosticCaseCounts": {status: sum(record["diagnosticResult"] == status for record in records)
@@ -438,6 +477,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         manifest["scope"] += " " + NAVIGATION_ORIGIN_COVERAGE
     if execution_scope == android_evidence.NAVIGATION_ORIGIN_REBUILD_SCOPE:
         manifest["scope"] += " " + NAVIGATION_ORIGIN_REBUILD_COVERAGE
+    if execution_scope == android_evidence.IDLE_PAIR_SCOPE:
+        manifest["scope"] += " " + IDLE_PAIR_COVERAGE
     (output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     lines = ["# " + (diagnostic_name + " Diagnostic Evidence" if diagnostic else "Android Test Evidence"), "", f"Source run: {manifest['sourceRun']['url']}", "",
              f"Source commit: `{run['head_sha']}` · Attempt: {attempt}", "",
@@ -456,6 +497,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         lines += [NAVIGATION_ORIGIN_COVERAGE, ""]
     if execution_scope == android_evidence.NAVIGATION_ORIGIN_REBUILD_SCOPE:
         lines += [NAVIGATION_ORIGIN_REBUILD_COVERAGE, ""]
+    if execution_scope == android_evidence.IDLE_PAIR_SCOPE:
+        lines += [IDLE_PAIR_COVERAGE, ""]
     if diagnostic:
         lines += [f"Execution scope: `{execution_scope}`. Only `{android_evidence.test_selection(execution_scope)}` was selected.", "",
                   "The diagnostic denominator is 8 cases (8 APIs × 1 test); missing, skipped and unexecuted cases remain unverified. "
@@ -477,6 +520,16 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
                   "| API | Collection | Diagnostic result | Raw report |", "| --- | --- | --- | --- |"]
         for item in collected_performance:
             link = (f"[JSON](performance/api-{item['matrixLabel']}/{performance.REPORT_NAME})"
+                    if item["captureStatus"] == "collected" else item["captureError"])
+            lines.append(f"| {item['matrixLabel']} | {item['captureStatus']} | {item['diagnosticStatus']} | {link} |")
+        lines.append("")
+    if idle_pair_records is not None:
+        lines += ["## Alternating Idle Pair Diagnostics", "",
+                  "Six planned pairs per API remain in the denominator, including absent or failed numeric reports. "
+                  "The original selected-case and workflow conclusions are unchanged; diagnostic data does not establish a performance budget.", "",
+                  "| API | Collection | Diagnostic result | Raw report |", "| --- | --- | --- | --- |"]
+        for item in idle_pair_records["apis"]:
+            link = (f"[JSON](idle-paired-performance/api-{item['matrixLabel']}/{idle_pair.REPORT_NAME})"
                     if item["captureStatus"] == "collected" else item["captureError"])
             lines.append(f"| {item['matrixLabel']} | {item['captureStatus']} | {item['diagnosticStatus']} | {link} |")
         lines.append("")
@@ -720,12 +773,14 @@ def main() -> None:
                              else screenshot_artifacts(read_json(args.artifacts), run))
         screenshots = screenshot_artifacts(read_json(args.artifacts), run) if args.review_branch else []
         perf_artifacts = performance_artifacts(read_json(args.artifacts), run)
+        pair_artifacts = idle_pair_artifacts(read_json(args.artifacts), run)
         if args.github_output:
             with args.github_output.open("a") as output:
                 output.write(f"run_id={run_id}\nattempt={attempt}\n"
                              f"has_artifacts={'true' if has_artifacts else 'false'}\n"
                              f"screenshot_artifact_ids={','.join(str(item['id']) for item in screenshots)}\n"
                              f"performance_artifact_ids={','.join(str(item['id']) for item in perf_artifacts)}\n"
+                             f"idle_pair_artifact_ids={','.join(str(item['id']) for item in pair_artifacts)}\n"
                              f"evidence_path=screenshots/{run_id}-{attempt}\n")
         print(f"Verified trusted source run {run_id}, attempt {attempt}")
     else:

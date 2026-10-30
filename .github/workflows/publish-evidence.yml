@@ -93,6 +93,14 @@ jobs:
           run-id: ${{ steps.source.outputs.run_id }}
           artifact-ids: ${{ steps.source.outputs.performance_artifact_ids }}
           path: ${{ runner.temp }}/evidence-input
+      - name: Download verified alternating idle pair artifacts
+        if: steps.source.outputs.idle_pair_artifact_ids != ''
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.source.outputs.run_id }}
+          artifact-ids: ${{ steps.source.outputs.idle_pair_artifact_ids }}
+          path: ${{ runner.temp }}/evidence-input
       - name: Prepare evidence and refresh README
         env:
           EVIDENCE_PATH: ${{ steps.source.outputs.evidence_path }}

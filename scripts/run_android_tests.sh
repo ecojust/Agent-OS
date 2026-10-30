@@ -10,7 +10,7 @@ if (( $# > 2 )); then
 fi
 case "$test_scope" in
   full)
-    selection=(-Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest,dev.agentos.app.DemoWalkthroughInstrumentedTest,dev.agentos.app.PinnedWindowDisclosureInstrumentedTest)
+    selection=(-Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest,dev.agentos.app.DemoWalkthroughInstrumentedTest,dev.agentos.app.PinnedWindowDisclosureInstrumentedTest,dev.agentos.app.IdlePairedPerformanceInstrumentedTest)
     ;;
   owned-control-diagnostic)
     selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.OwnedControlWindowInstrumentedTest#changedPresentationAndCallbacksStillRevokeTheActualControlOwner)
@@ -47,6 +47,9 @@ case "$test_scope" in
     ;;
   navigation-origin-rebuild-diagnostic)
     selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.NavigationObservationGuardInstrumentedTest#aKnownUnscopedSettingsOriginStillPausesAfterControlWindowRecreation)
+    ;;
+  idle-pair-diagnostic)
+    selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.IdlePairedPerformanceInstrumentedTest#collectAlternatingServiceOffAndIdlePairs)
     ;;
   *) echo "Invalid Android test scope" >&2; exit 2 ;;
 esac
@@ -87,6 +90,9 @@ collect_on_exit() {
   fi
   python3 scripts/collect_android_evidence.py collect --api "$api_level" --matrix-label "$matrix_label" --scope "$test_scope" --exit-code "$result" || true
   python3 scripts/collect_performance_evidence.py collect --matrix-label "$matrix_label" --exit-code "$result" || true
+  if [[ "$test_scope" == 'idle-pair-diagnostic' ]]; then
+    python3 scripts/collect_idle_pair_evidence.py collect --matrix-label "$matrix_label" --exit-code "$result" || true
+  fi
   exit "$result"
 }
 trap collect_on_exit EXIT

@@ -40,6 +40,8 @@ NAVIGATION_ORIGIN_SCOPE = "navigation-origin-diagnostic"
 NAVIGATION_ORIGIN_TEST = "dev.agentos.app.NavigationObservationGuardInstrumentedTest#anUnscopedSettingsWindowCannotBeReplacedByAnAutomaticLaunch"
 NAVIGATION_ORIGIN_REBUILD_SCOPE = "navigation-origin-rebuild-diagnostic"
 NAVIGATION_ORIGIN_REBUILD_TEST = "dev.agentos.app.NavigationObservationGuardInstrumentedTest#aKnownUnscopedSettingsOriginStillPausesAfterControlWindowRecreation"
+IDLE_PAIR_SCOPE = "idle-pair-diagnostic"
+IDLE_PAIR_TEST = "dev.agentos.app.IdlePairedPerformanceInstrumentedTest#collectAlternatingServiceOffAndIdlePairs"
 DIAGNOSTIC_SELECTIONS = {DIAGNOSTIC_SCOPE: DIAGNOSTIC_TEST, QUALIFICATION_SCOPE: QUALIFICATION_TEST,
                         CONTROL_STATUS_SCOPE: CONTROL_STATUS_TEST, SCREEN_OFF_SCOPE: SCREEN_OFF_TEST,
                         TASK_REPORT_FOCUS_SCOPE: TASK_REPORT_FOCUS_TEST, FONT_SCALE_SCOPE: FONT_SCALE_TEST,
@@ -47,7 +49,8 @@ DIAGNOSTIC_SELECTIONS = {DIAGNOSTIC_SCOPE: DIAGNOSTIC_TEST, QUALIFICATION_SCOPE:
                         ACTIVITY_FONT_SCALE_SCOPE: ACTIVITY_FONT_SCALE_TEST, ROTATION_SCOPE: ROTATION_TEST,
                         NUMERIC_IMPORT_SCOPE: NUMERIC_IMPORT_TEST,
                         NAVIGATION_ORIGIN_SCOPE: NAVIGATION_ORIGIN_TEST,
-                        NAVIGATION_ORIGIN_REBUILD_SCOPE: NAVIGATION_ORIGIN_REBUILD_TEST}
+                        NAVIGATION_ORIGIN_REBUILD_SCOPE: NAVIGATION_ORIGIN_REBUILD_TEST,
+                        IDLE_PAIR_SCOPE: IDLE_PAIR_TEST}
 
 
 def test_selection(scope: str) -> str:

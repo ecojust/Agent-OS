@@ -25,7 +25,7 @@ class BoundedInstrumentationTests(unittest.TestCase):
         for name in ('run_android_tests.sh', 'run_bounded_instrumentation.py',
                      'print_android_test_failures.py', 'collect_android_evidence.py',
                      'collect_performance_evidence.py', 'collect_idle_pair_evidence.py',
-                     'collect_stress_evidence.py'):
+                     'collect_stress_evidence.py', 'collect_active_pair_evidence.py'):
             shutil.copyfile(SCRIPTS / name, self.root / 'scripts' / name)
         (self.root / 'bin').mkdir()
         adb = self.root / 'bin/adb'
@@ -128,6 +128,8 @@ sys.exit(result)
         self.assertIn('dev.agentos.app.SegmentedStressInstrumentedTest', excluded.split('=', 1)[1].split(','))
         self.assertFalse((self.root / 'idle-pair-evidence').exists())
         self.assertFalse((self.root / 'stress-evidence').exists())
+        self.assertFalse((self.root / 'active-pair-evidence').exists())
+        self.assertIn('dev.agentos.app.ActivePairedPerformanceInstrumentedTest', excluded.split('=', 1)[1].split(','))
 
     def test_stress_scope_has_its_own_longer_default_and_preserves_failed_measurement(self):
         self.env.pop('ANDROID_TEST_TIMEOUT_SECONDS')
@@ -146,6 +148,24 @@ sys.exit(result)
         self.assertEqual(23, capture['gradleExitCode'])
         self.assertEqual('unavailable', capture['captureStatus'])
         self.assertIsNone(capture['report'])
+
+    def test_active_pair_scope_uses_standard_budget_and_preserves_failure(self):
+        self.env.pop('ANDROID_TEST_TIMEOUT_SECONDS')
+        result = self.run_shell('23', scope='active-pair-diagnostic')
+        self.assertEqual(23, result.returncode, result.stderr)
+        self.assertEqual(1200, self.execution()['timeoutSeconds'])
+        self.assertEqual('standard', self.execution()['timeoutProfile'])
+        calls = [json.loads(line) for line in (self.root / 'gradle-calls.jsonl').read_text().splitlines()]
+        self.assertEqual(1, len(calls))
+        self.assertIn('-Pandroid.testInstrumentationRunnerArguments.class='
+                      'dev.agentos.app.ActivePairedPerformanceInstrumentedTest#'
+                      'collectAlternatingEquivalentManualAndAgentTasks', calls[0])
+        self.assert_collected(23)
+        capture = json.loads((self.root / 'active-pair-evidence/api-30/capture.json').read_text())
+        self.assertEqual(23, capture['gradleExitCode'])
+        self.assertEqual('unavailable', capture['captureStatus'])
+        self.assertIsNone(capture['report'])
+        self.assertFalse((self.root / 'stress-evidence').exists())
 
     def test_existing_scope_keeps_twenty_minute_default(self):
         self.env.pop('ANDROID_TEST_TIMEOUT_SECONDS')

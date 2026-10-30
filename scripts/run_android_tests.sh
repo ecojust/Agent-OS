@@ -12,7 +12,7 @@ if (( $# > 2 )); then
 fi
 case "$test_scope" in
   full)
-    selection=(-Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest,dev.agentos.app.DemoWalkthroughInstrumentedTest,dev.agentos.app.PinnedWindowDisclosureInstrumentedTest,dev.agentos.app.IdlePairedPerformanceInstrumentedTest,dev.agentos.app.SegmentedStressInstrumentedTest)
+    selection=(-Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest,dev.agentos.app.DemoWalkthroughInstrumentedTest,dev.agentos.app.PinnedWindowDisclosureInstrumentedTest,dev.agentos.app.IdlePairedPerformanceInstrumentedTest,dev.agentos.app.SegmentedStressInstrumentedTest,dev.agentos.app.ActivePairedPerformanceInstrumentedTest)
     ;;
   owned-control-diagnostic)
     selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.OwnedControlWindowInstrumentedTest#changedPresentationAndCallbacksStillRevokeTheActualControlOwner)
@@ -58,6 +58,9 @@ case "$test_scope" in
     default_timeout_seconds=2400
     watchdog_profile=segmented-stress
     ;;
+  active-pair-diagnostic)
+    selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.ActivePairedPerformanceInstrumentedTest#collectAlternatingEquivalentManualAndAgentTasks)
+    ;;
   *) echo "Invalid Android test scope" >&2; exit 2 ;;
 esac
 if [[ ! "$matrix_label" =~ ^(3[0-6]|37\.0)$ ]]; then
@@ -102,6 +105,9 @@ collect_on_exit() {
   fi
   if [[ "$test_scope" == 'stress-diagnostic' ]]; then
     python3 scripts/collect_stress_evidence.py collect --matrix-label "$matrix_label" --exit-code "$result" || true
+  fi
+  if [[ "$test_scope" == 'active-pair-diagnostic' ]]; then
+    python3 scripts/collect_active_pair_evidence.py collect --matrix-label "$matrix_label" --exit-code "$result" || true
   fi
   exit "$result"
 }
@@ -173,7 +179,8 @@ fi
 # Then about one minute of watchdog diagnostics
 # (60s collection budget +1s final reap), <=10s TERM grace and <=2s final reap.
 # The existing collectors independently bound their adb reads to <=35s and <=25s.
-# Only stress adds a collector with a 60s total adb budget; its CI job allows 55min.
+# Stress and active-pair each add a collector with a 60s total adb budget.
+# Only the fixed 30-minute stress scope needs a 55-minute CI job.
 # This reserves time for evidence; SDK/boot delays or the external job deadline
 # can still interrupt cleanup. A kernel-blocked process may survive SIGKILL.
 python3 scripts/run_bounded_instrumentation.py --matrix-label "$matrix_label" \

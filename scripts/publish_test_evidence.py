@@ -13,6 +13,7 @@ import collect_performance_evidence as performance
 import collect_android_evidence as android_evidence
 import collect_idle_pair_evidence as idle_pair
 import collect_stress_evidence as stress
+import collect_active_pair_evidence as active_pair
 
 EXPECTED_MATRIX = [str(api) for api in range(30, 37)] + ["37.0"]
 PINNED_WORKFLOW = ".github/workflows/pinned-calculator-page.yml"
@@ -36,6 +37,14 @@ NAVIGATION_ORIGIN_TITLE = "Android checks [navigation-origin-diagnostic]"
 NAVIGATION_ORIGIN_REBUILD_TITLE = "Android checks [navigation-origin-rebuild-diagnostic]"
 IDLE_PAIR_TITLE = "Android checks [idle-pair-diagnostic]"
 STRESS_TITLE = "Android checks [stress-diagnostic]"
+ACTIVE_PAIR_TITLE = "Android checks [active-pair-diagnostic]"
+ACTIVE_PAIR_COVERAGE = ("This fixed diagnostic plans six AC/CA alternating pairs per dedicated emulator, with five fresh tasks per arm. "
+                        "Across eight APIs the numeric denominator is 48 planned pairs, 96 arms and 480 trials, distinct from eight selected cases. "
+                        "A uses scripted accessibility actions on real Fixture controls with the Agent service off; it is not human, touch or IME timing. "
+                        "C uses the real Agent controller and local test model. Task CPU and elapsed time exclude setup and endpoint PSS probes. "
+                        "Only atomically committed trials are collected; interrupted prefixes and failed or absent results remain explicit. "
+                        "The resident instrumented process includes the same-process model, excludes Fixture resources, and does not establish "
+                        "steady-state or peak PSS, causal overhead, real-model or physical-device budgets.")
 STRESS_COVERAGE = ("This fixed diagnostic plans 30 segments per dedicated emulator, each at least 60 seconds and including "
                    "one completed synthetic task, one pending-approval stop and at least 10 seconds of service-off recovery. "
                    "The numeric denominator is 240 planned segments and 480 planned tasks across eight APIs, separate from eight selected cases. "
@@ -85,7 +94,8 @@ DIAGNOSTIC_TITLES = {DIAGNOSTIC_TITLE: android_evidence.DIAGNOSTIC_SCOPE,
                      NAVIGATION_ORIGIN_TITLE: android_evidence.NAVIGATION_ORIGIN_SCOPE,
                      NAVIGATION_ORIGIN_REBUILD_TITLE: android_evidence.NAVIGATION_ORIGIN_REBUILD_SCOPE,
                      IDLE_PAIR_TITLE: android_evidence.IDLE_PAIR_SCOPE,
-                     STRESS_TITLE: android_evidence.STRESS_SCOPE}
+                     STRESS_TITLE: android_evidence.STRESS_SCOPE,
+                     ACTIVE_PAIR_TITLE: android_evidence.ACTIVE_PAIR_SCOPE}
 DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
                     android_evidence.QUALIFICATION_SCOPE: "Task Qualification",
                     android_evidence.CONTROL_STATUS_SCOPE: "Control Status",
@@ -99,7 +109,8 @@ DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
                     android_evidence.NAVIGATION_ORIGIN_SCOPE: "Navigation Origin",
                     android_evidence.NAVIGATION_ORIGIN_REBUILD_SCOPE: "Navigation Origin Rebuild",
                     android_evidence.IDLE_PAIR_SCOPE: "Idle Pair",
-                    android_evidence.STRESS_SCOPE: "Segmented Stress"}
+                    android_evidence.STRESS_SCOPE: "Segmented Stress",
+                    android_evidence.ACTIVE_PAIR_SCOPE: "Active Task Pair"}
 
 
 def android_execution_scope(run: dict) -> str:
@@ -261,6 +272,13 @@ def stress_artifacts(value, run: dict) -> list:
     return numeric_artifacts(value, run, "stress-reports", stress.MAX_ARTIFACT_BYTES)
 
 
+def active_pair_artifacts(value, run: dict) -> list:
+    if (run.get("path") != ".github/workflows/android.yml"
+            or android_execution_scope(run) != android_evidence.ACTIVE_PAIR_SCOPE):
+        return []
+    return numeric_artifacts(value, run, "active-pair-reports", active_pair.MAX_ARTIFACT_BYTES)
+
+
 def numeric_artifacts(value, run: dict, prefix: str, maximum: int) -> list:
     pattern = re.compile(re.escape(prefix) + r"-api-(3[0-6]|37\.0)-attempt-" + str(run["run_attempt"]))
     selected = []
@@ -309,8 +327,17 @@ def archive_stress(args, run, jobs, output, budget):
                                        "segmented-stress-attachments", STRESS_COVERAGE, segmented=True)
 
 
+def archive_active_pairs(args, run, jobs, output, budget):
+    if android_execution_scope(run) != android_evidence.ACTIVE_PAIR_SCOPE:
+        raise ValueError("active pair attachments require the fixed diagnostic scope")
+    artifacts = {item["name"]: item for item in active_pair_artifacts(read_json(args.artifacts), run)}
+    return archive_numeric_diagnostics(args, run, jobs, output, budget, artifacts, active_pair,
+                                       "active-pair-reports", "active-task-pairs", "no_current_active_pair_artifact",
+                                       "active-task-pair-attachments", ACTIVE_PAIR_COVERAGE, active_pairs=True)
+
+
 def archive_numeric_diagnostics(args, run, jobs, output, budget, artifacts, validator,
-                                prefix, directory, missing_error, kind, scope, *, segmented=False):
+                                prefix, directory, missing_error, kind, scope, *, segmented=False, active_pairs=False):
     source_identity = {"repository": args.repository, "runId": run["id"],
                        "attempt": run["run_attempt"], "commit": run["head_sha"]}
     records = []
@@ -338,6 +365,8 @@ def archive_numeric_diagnostics(args, run, jobs, output, budget, artifacts, vali
             allowed = {"capture.json", validator.REPORT_NAME}
             if segmented:
                 allowed.update(f"segment-{index:03d}.json" for index in range(30))
+            elif active_pairs:
+                allowed.update(f"trial-{index:03d}.json" for index in range(60))
             if (len(entries) > len(allowed) or any(path.is_symlink() or not path.is_file()
                     or path.name not in allowed for path in entries)):
                 raise ValueError("unexpected performance artifact files")
@@ -352,7 +381,7 @@ def archive_numeric_diagnostics(args, run, jobs, output, budget, artifacts, vali
                         or capture["report"]["sha256"] != hashlib.sha256(data).hexdigest()
                         or capture["report"]["status"] != raw["status"]):
                     raise ValueError("raw performance report differs from its capture record")
-                if segmented:
+                if segmented or active_pairs:
                     validator.validate_bundle(source, raw, record["apiLevel"])
                 record["diagnosticStatus"] = raw["status"]
             elif {path.name for path in entries} != {"capture.json"}:
@@ -362,7 +391,8 @@ def archive_numeric_diagnostics(args, run, jobs, output, budget, artifacts, vali
                            "declaredCiProfile": capture["declaredCiProfile"],
                            "artifactId": artifact["id"], "files": copy_files(
                                source, output / directory / f"api-{label}", budget,
-                               json_maximum=validator.MAX_SEGMENT_BYTES if segmented else 2 * 1024 * 1024)})
+                               json_maximum=(validator.MAX_TRIAL_BYTES if active_pairs else
+                                             validator.MAX_SEGMENT_BYTES if segmented else 2 * 1024 * 1024))})
         records.append(record)
     return {"kind": kind, "diagnosticOnly": True, "budgetAcceptance": False, "scope": scope,
             "apis": records}
@@ -473,6 +503,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
                          if execution_scope == android_evidence.IDLE_PAIR_SCOPE else None)
     stress_records = (archive_stress(args, run, jobs, output, budget)
                       if execution_scope == android_evidence.STRESS_SCOPE else None)
+    active_pair_records = (archive_active_pairs(args, run, jobs, output, budget)
+                           if execution_scope == android_evidence.ACTIVE_PAIR_SCOPE else None)
     manifest = {
         "schemaVersion": 1, "kind": "android-emulator-test-evidence",
         "archivedAt": datetime.now(timezone.utc).isoformat(),
@@ -492,6 +524,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         manifest["idlePairedPerformance"] = idle_pair_records
     if stress_records is not None:
         manifest["segmentedStress"] = stress_records
+    if active_pair_records is not None:
+        manifest["activeTaskPairs"] = active_pair_records
     if diagnostic:
         manifest.update({"expectedTestsPerApi": 1, "expectedTests": len(EXPECTED_MATRIX),
                          "diagnosticCaseCounts": {status: sum(record["diagnosticResult"] == status for record in records)
@@ -517,6 +551,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         manifest["scope"] += " " + IDLE_PAIR_COVERAGE
     if execution_scope == android_evidence.STRESS_SCOPE:
         manifest["scope"] += " " + STRESS_COVERAGE
+    if execution_scope == android_evidence.ACTIVE_PAIR_SCOPE:
+        manifest["scope"] += " " + ACTIVE_PAIR_COVERAGE
     (output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     lines = ["# " + (diagnostic_name + " Diagnostic Evidence" if diagnostic else "Android Test Evidence"), "", f"Source run: {manifest['sourceRun']['url']}", "",
              f"Source commit: `{run['head_sha']}` · Attempt: {attempt}", "",
@@ -539,6 +575,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         lines += [IDLE_PAIR_COVERAGE, ""]
     if execution_scope == android_evidence.STRESS_SCOPE:
         lines += [STRESS_COVERAGE, ""]
+    if execution_scope == android_evidence.ACTIVE_PAIR_SCOPE:
+        lines += [ACTIVE_PAIR_COVERAGE, ""]
     if diagnostic:
         lines += [f"Execution scope: `{execution_scope}`. Only `{android_evidence.test_selection(execution_scope)}` was selected.", "",
                   "The diagnostic denominator is 8 cases (8 APIs × 1 test); missing, skipped and unexecuted cases remain unverified. "
@@ -582,6 +620,19 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
                   "| API | Collection | Diagnostic result | Raw report |", "| --- | --- | --- | --- |"]
         for item in stress_records["apis"]:
             link = (f"[JSON](segmented-stress/api-{item['matrixLabel']}/{stress.REPORT_NAME})"
+                    if item["captureStatus"] == "collected" else item["captureError"])
+            lines.append(f"| {item['matrixLabel']} | {item['captureStatus']} | {item['diagnosticStatus']} | {link} |")
+        lines.append("")
+    if active_pair_records is not None:
+        lines += ["## Active Equivalent Task Pair Diagnostics", "",
+                  "Each API retains six pairs and 60 planned trials, including failure, interruption and unavailable reports. "
+                  "An incomplete root report proves only its committed prefix; later trials are unavailable, not asserted unexecuted. "
+                  "Manual platform action accepts and Agent model-acknowledged writes are separate counts. "
+                  "PSS records are pre/post endpoints outside task timing, not steady-state or peak measurements. "
+                  "Original selected-case and job conclusions remain unchanged; diagnostics do not establish performance-budget acceptance.", "",
+                  "| API | Collection | Diagnostic result | Raw report |", "| --- | --- | --- | --- |"]
+        for item in active_pair_records["apis"]:
+            link = (f"[JSON](active-task-pairs/api-{item['matrixLabel']}/{active_pair.REPORT_NAME})"
                     if item["captureStatus"] == "collected" else item["captureError"])
             lines.append(f"| {item['matrixLabel']} | {item['captureStatus']} | {item['diagnosticStatus']} | {link} |")
         lines.append("")
@@ -827,6 +878,7 @@ def main() -> None:
         perf_artifacts = performance_artifacts(read_json(args.artifacts), run)
         pair_artifacts = idle_pair_artifacts(read_json(args.artifacts), run)
         segmented_artifacts = stress_artifacts(read_json(args.artifacts), run)
+        active_artifacts = active_pair_artifacts(read_json(args.artifacts), run)
         if args.github_output:
             with args.github_output.open("a") as output:
                 output.write(f"run_id={run_id}\nattempt={attempt}\n"
@@ -835,6 +887,7 @@ def main() -> None:
                              f"performance_artifact_ids={','.join(str(item['id']) for item in perf_artifacts)}\n"
                              f"idle_pair_artifact_ids={','.join(str(item['id']) for item in pair_artifacts)}\n"
                              f"stress_artifact_ids={','.join(str(item['id']) for item in segmented_artifacts)}\n"
+                             f"active_pair_artifact_ids={','.join(str(item['id']) for item in active_artifacts)}\n"
                              f"evidence_path=screenshots/{run_id}-{attempt}\n")
         print(f"Verified trusted source run {run_id}, attempt {attempt}")
     else:

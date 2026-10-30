@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-30T13:00:59Z",
-  "note": "实现活跃任务等价对照：八档48对/480任务、每任务CPU/耗时与端点PSS；编译/lint及664项宿主检查通过，设备实测与本版演示待执行",
+  "updated_at": "2026-10-30T13:13:02Z",
+  "note": "完成活跃任务等价对照：八档48对/480任务、960端点及3728派生数值独立核验；37.245秒同源演示已归档，下一项目标进程与启动/完整帧，预算未验收",
   "latest_evidence": {
-    "path": "screenshots/41052540296-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41052540296"
+    "path": "screenshots/41059787334-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41059787334"
   },
   "checkpoints": [
     {
@@ -93,10 +93,10 @@
       "id": "performance",
       "name": "三态性能诊断与空闲交替配对",
       "status": "complete",
-      "details": "已完成当前诊断范围：710e三轮三态/停止汇总、084d空闲配对八档8/8、48对96窗及2016采样。后续054be分段压力亦已独立通过八档240段/480任务、3120采样，详情另表。活跃等价流程、目标进程、启动/完整帧、繁忙停止与真机预算继续单列，预算仍未验收。",
-      "updated_at": "2026-10-30T12:46:52Z",
+      "details": "已完成当前诊断范围：三态/停止汇总与084d空闲配对；后续054be压力240段/480任务、8d038等价任务48对/480任务也均八档通过，后者960端点和3728派生数值独立复核一致，详情另表。目标进程、启动/完整帧、繁忙停止及稳态/峰值和真机预算继续单列，预算仍未验收。",
+      "updated_at": "2026-10-30T13:13:02Z",
       "evidence": "docs/validation/performance-idle-pairs.md",
-      "scope": "按用户本次确认，将原“三态性能测量与预算验收”检查点的当前完成范围明确为三态诊断采集、同源多轮汇总和同设备空闲交替配对，并以已归档通过证据关闭此项。原预算验收要求保留于docs/PERFORMANCE.md的“性能后续任务”，尚未完成；状态变更不改变diagnosticOnly=true、budgetAcceptance=false。084d596e源码专项41044860496八档8/8，AB/BA六对/API：48对96窗全部通过、2016采样、192端点状态及0trace；65payload/1073884B/17PNG核验，7条before截图blocked原样保留，无安全标志例外。2160派生数值独立Fraction复算一致，保留AB/BA顺序相关差异；CI562项宿主实际通过无skip，core:test FROM-CACHE。旧710e三轮24份四态诊断与矩阵失败保留。初次归档参数错误41045898899保留，纠正后41046173408成功且未重跑设备。仍为diagnosticOnly=true、budgetAcceptance=false。后续054be源码的30分钟分段专项41052540296已独立验收，见docs/validation/performance-stress.md；此行原诊断与空闲配对的验收范围不变。活跃等价流程、目标进程、启动/完整帧、繁忙停止及真机功耗温升仍未验收。"
+      "scope": "按用户本次确认，将原“三态性能测量与预算验收”检查点的当前完成范围明确为三态诊断采集、同源多轮汇总和同设备空闲交替配对，并以已归档通过证据关闭此项。原预算验收要求保留于docs/PERFORMANCE.md的“性能后续任务”，尚未完成；状态变更不改变diagnosticOnly=true、budgetAcceptance=false。084d596e源码专项41044860496八档8/8，AB/BA六对/API：48对96窗全部通过、2016采样、192端点状态及0trace；65payload/1073884B/17PNG核验，7条before截图blocked原样保留，无安全标志例外。2160派生数值独立Fraction复算一致，保留AB/BA顺序相关差异；CI562项宿主实际通过无skip，core:test FROM-CACHE。旧710e三轮24份四态诊断与矩阵失败保留。初次归档参数错误41045898899保留，纠正后41046173408成功且未重跑设备。仍为diagnosticOnly=true、budgetAcceptance=false。后续054be源码的30分钟分段专项41052540296已独立验收，见docs/validation/performance-stress.md；此行原诊断与空闲配对的验收范围不变。后续8d038源码的等价任务专项41059787334也已独立验收：48对/96组/480任务、960端点，A平台接受720与C模型确认720分开，548载荷和3728派生数值核验，见docs/validation/performance-active-pairs.md。原诊断/空闲配对验收范围不变；目标进程、启动/完整帧、繁忙停止、稳态/瞬时峰值及真机功耗温升仍未验收。"
     },
     {
       "id": "visual_observation",
@@ -119,10 +119,10 @@
       "id": "continuous_actions",
       "name": "普通操作连续执行与接管",
       "status": "in_progress",
-      "evidence": "screenshots/demos/41052543898-1/manifest.json",
-      "scope": "054be1f34源码的API35普通Fixture演示13阶段、8次确认、直接仪器1案通过；36.934秒、30payload/1204104B/22PNG来源与摘要/解码核验，安全标志保留，本地合成HTTP模型。继续仅对启动/滚动/主页开放可选免确认；普通写操作连续执行与真实模型接管未验收。录像不代替30分钟压力数值或历史旋转失败。",
-      "details": "已验证：054be源码API35普通流程13阶段、8次确认通过，36.9秒录像已核验并保留安全标志；仅启动/滚动/主页可选免确认。历史ready和旋转失败继续保留，普通视频不替代性能数值。未完成：普通写操作连续执行和实际模型接管尚未验收。下一步：冻结连续写范围，补端到端接管与启动可用性验证。",
-      "updated_at": "2026-10-30T12:12:54Z"
+      "evidence": "screenshots/demos/41059791535-1/manifest.json",
+      "scope": "8d0387452源码的API35普通Fixture演示13阶段、8次确认、直接仪器1案通过；37.245秒、30payload/1176196B/22PNG来源与摘要/解码核验，安全标志保留，本地合成HTTP模型。实际末帧控制窗消失，stopped阶段PNG仍为上一画面。继续仅对启动/滚动/主页开放可选免确认；普通写操作连续执行与真实模型接管未验收。普通录像不代替等价任务配对数值或历史旋转失败。",
+      "details": "已验证：8d038源码API35普通流程13阶段、8次确认通过，37.2秒录像已核验并保留安全标志；仅启动/滚动/主页可选免确认。历史ready和旋转失败继续保留，普通视频不替代性能数值。未完成：普通写操作连续执行和实际模型接管尚未验收。下一步：冻结连续写范围，补端到端接管与启动可用性验证。",
+      "updated_at": "2026-10-30T13:10:57Z"
     },
     {
       "id": "model_acceptance",
@@ -179,9 +179,9 @@
     }
   ],
   "latest_demo": {
-    "path": "screenshots/demos/41052543898-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41052543898",
-    "source_sha": "054be1f34f552771fb874eee6609f5d40f3466e3",
+    "path": "screenshots/demos/41059791535-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41059791535",
+    "source_sha": "8d03874521ddaeead53c6494fd72265099d0f993",
     "status": "passed"
   }
 }

@@ -1,6 +1,6 @@
 # 受控繁忙状态下的停止响应
 
-本项继续[性能后续任务](../PERFORMANCE.md#性能后续任务)，补齐实际停止按钮、在途平台调用及本地停止反馈的证据。Android 仪器编译、lint、Fixture 编译与 3 项探针单元测试已通过；默认完整矩阵的 273 个 class#method 身份与基线逐一相同。874 项完整宿主回归无跳过且全部通过。首轮设备试跑失败，已定位测试坐标问题并补强启动就绪检查，修复后的设备结果待验证。既有等待确认时停止、直接取消 RunControl 的真实远端点击测试和核心取消单元测试保留原范围，不能代替本项。
+本项继续[性能后续任务](../PERFORMANCE.md#性能后续任务)，补齐实际停止按钮、在途平台调用及本地停止反馈的证据。Android 仪器编译、lint、Fixture 编译与 3 项探针单元测试已通过；默认完整矩阵的 273 个 class#method 身份与基线逐一相同。874 项完整宿主回归无跳过且全部通过。第二轮设备试跑已取得 7/8 档通过；API30 的首次停止帧发生关联错误，最小修正后的八档结果仍待验证。前两轮失败均保留，下文列明进度。既有等待确认时停止、直接取消 RunControl 的真实远端点击测试和核心取消单元测试保留原范围，不能代替本项。
 
 本轮使用 API 30、31、32、33、34、35、36、37.0 八档专用合成模拟器，真实 Controller、生产授权与确认路径、固定本地 HTTP 测试模型和独立 Fixture APK。所有结果保持 `diagnosticOnly=true`、`budgetAcceptance=false`、`fullSuiteAcceptance=false`。受控等待不等于持续 CPU 满载，模拟器数据不代表真机、厂商 ROM 或 200 毫秒发布预算已经验收。
 
@@ -78,3 +78,15 @@ HWUI 完成端点为原始 `INTENDED_VSYNC_TIMESTAMP + TOTAL_DURATION`，FrameMe
 [原始归档](../../screenshots/41095210851-1/manifest.json)由 [41095837959](https://github.com/ecojust/Agent-OS/actions/runs/41095837959) 生成，证据提交 `5f70842ae8e6614b62e46cb89fde13e80d285b36` 的父提交恰为原测试源。64 个载荷、149,614 字节与 8 张 PNG 完整核验通过；8 条 blocked 截图及原失败结论保留，未清除安全窗口标志。各档根报告和逐次清理标志均为 true，不将清理成功换算为诊断通过。
 
 [分场景汇总](performance/busy-stop-41095210851/summary.json)、[独立数值审核](performance/busy-stop-41095210851/independent-numeric-audit.json)及[归档审核](performance/busy-stop-41095210851/archive-audit.json)保留完整分母，7,544 项独立核对一致。CI 宿主检查为 874 项中 873 项通过、1 项可选原 trace 集成跳过；本地指定已有 trace processor 时 874 项均通过。下一步在修复源码上重新执行同一固定 32 次试跑，先验证实际输入与两场景完整证据，再判断正式 1,600 次采样。
+
+## 第二轮试跑与帧关联修复
+
+修复源 `a24b48da6ab2fe4886ebb4736215b507177fbdd4` 的 [41096590345](https://github.com/ecojust/Agent-OS/actions/runs/41096590345) 于 2026-10-30 17:11:11–17:15:47 UTC 运行，API31–37.0 七档全部通过；API30 的 DEVICE 通过，首个 MODEL 在停止帧检查失败。固定 32 次计划中，30 份原始分片已提交，**29 通过、1 失败、2 未执行**，原运行仍为失败。两轮不合并样本、不替换失败记录。
+
+API30 原始首停止 OnDraw 时间为 `64018969153` ns，匹配候选的回调时间却为 `64014656892` ns，早 4.312261 ms；候选 HWUI 结束也早于绘制。该候选虽然与 `drawingTimeMillis=64007` 具有相同的 VSYNC 毫秒值，却不可能描述此停止绘制。同一个 Choreographer frameTime 可以关联不同 traversal，VSYNC 毫秒不能单独确定帧身份。本轮实际按钮收到 UP、任务代次失效、Controller 停止和原浮条移除均有证据，失败属于帧关联算法，不能解释为停止入口无响应。
+
+最小修正只排除 **接收回调早于已冻结 OnDraw** 的明确前帧，计入既有非目标候选计数，继续匹配同一个首次停止绘制。没有用 `end < draw` 作为静默排除条件；若候选回调在绘制之后而 HWUI 端点仍早于绘制，仍须失败。首 draw、VSYNC、唯一匹配、丢失/迟到判定和原 3 秒时限全部不变。
+
+[原始归档](../../screenshots/41096590345-1/manifest.json)来自 [41097337602](https://github.com/ecojust/Agent-OS/actions/runs/41097337602)，证据提交 `95fcfef02e53ec7216d4ed9ec897c0f33e007c79` 的父提交为原测试源。89 个载荷、348,006 字节和 11 张 PNG 核验通过，12 条 blocked 截图保留。独立数值复核 7,676 项一致；[汇总](performance/busy-stop-41096590345/summary.json)、[分组中位数/范围](performance/busy-stop-41096590345/statistics.md)、[独立数值审核](performance/busy-stop-41096590345/independent-numeric-audit.json)及[归档审核](performance/busy-stop-41096590345/archive-audit.json)均保留原失败结论。所有 P95 仍为空。
+
+完整七档 pilot 的根报告时长为 7.751–11.387 秒、忙停附件为 29,528–33,494 字节/API；按实际两场景耗时外推 200 次/API，估计 342–503 秒、每档约 1.67 MB 以内，原时限和共享容量有余量，详见[规模估计](performance/busy-stop-41096590345/archive-capacity-observations.json)。这是试跑规模估计，尚未完成正式批次或 API30 修复验收。有效原件中 API36 的一次 UP→取消观测上界为 201.166 ms，浮条移除观测为 233.790 ms，按原值保留；本项不据小样本或模拟器数据宣称满足 200 ms 发布预算。下一步在最小帧关联修复后重新执行固定八档试跑。

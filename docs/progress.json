@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-30T17:11:03Z",
-  "note": "繁忙停止首轮八档失败已完整归档：8失败、24未执行、0有效响应样本。六档触摸坐标域错误已修，API30/31启动节点未就绪检查已补强；编译/lint通过，准备在新源码上重新试跑，未启动正式采样或录像。",
+  "updated_at": "2026-10-30T17:21:45Z",
+  "note": "繁忙停止第二轮7/8档通过：32计划中29通过、1失败、2未执行，89载荷及7676项独立数值复核一致。API30将停止绘制之前已回调的旧帧误配为目标，已作最小因果过滤；编译/lint通过，准备第三轮固定试跑，保留两轮失败。",
   "latest_evidence": {
-    "path": "screenshots/41095210851-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41095210851"
+    "path": "screenshots/41096590345-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41096590345"
   },
   "checkpoints": [
     {
@@ -93,8 +93,8 @@
       "id": "performance",
       "name": "三态性能诊断与空闲交替配对",
       "status": "complete",
-      "details": "原三态/空闲配对、压力、活跃及目标进程/启动/帧诊断已完成。繁忙停止首轮41095210851：32计划中8失败、24未执行，0有效样本，64载荷与独立审核通过。API32–37测试坐标域错误已修；30/31初始节点不可读，已补同预算的新窗口就绪检查。修复编译/lint通过；下一步固定32次重新试跑，正式1600样本和录像待执行，真机预算未验收。",
-      "updated_at": "2026-10-30T17:11:03Z",
+      "details": "原诊断、压力、活跃及启动/帧子项已完成。繁忙停止第二轮41096590345七档通过：29有效、1失败、2未执行；89载荷及独立审核完成。API30停止已生效，失败是同VSYNC旧帧误关联，已仅排除draw前回调的非目标帧，首次帧与时限不变，编译/lint通过。下一步第三轮32次试跑；正式1600样本和录像待执行，真机预算未验收。",
+      "updated_at": "2026-10-30T17:21:45Z",
       "evidence": "docs/validation/performance-idle-pairs.md",
       "scope": "按用户本次确认，将原“三态性能测量与预算验收”检查点的当前完成范围明确为三态诊断采集、同源多轮汇总和同设备空闲交替配对，并以已归档通过证据关闭此项。原预算验收要求保留于docs/PERFORMANCE.md的“性能后续任务”，尚未完成；状态变更不改变diagnosticOnly=true、budgetAcceptance=false。084d596e源码专项41044860496八档8/8，AB/BA六对/API：48对96窗全部通过、2016采样、192端点状态及0trace；65payload/1073884B/17PNG核验，7条before截图blocked原样保留，无安全标志例外。2160派生数值独立Fraction复算一致，保留AB/BA顺序相关差异；CI562项宿主实际通过无skip，core:test FROM-CACHE。旧710e三轮24份四态诊断与矩阵失败保留。初次归档参数错误41045898899保留，纠正后41046173408成功且未重跑设备。仍为diagnosticOnly=true、budgetAcceptance=false。后续054be源码的30分钟分段专项41052540296已独立验收，见docs/validation/performance-stress.md；此行原诊断与空闲配对的验收范围不变。后续8d038源码的等价任务专项41059787334也已独立验收：48对/96组/480任务、960端点，A平台接受720与C模型确认720分开，548载荷和3728派生数值核验，见docs/validation/performance-active-pairs.md。原诊断/空闲配对验收范围不变；f45fbb152源码专项41082958303已完成受控Fixture目标进程/启动/HWUI帧诊断：八档3200有效TTID、144资源任务、576 PSS端点及432帧通过，3444载荷已归档，官方原trace重放及独立数值复验通过，见docs/validation/performance-app-experience.md。辅助资源trace的历史覆盖限制另列；繁忙停止、稳态/瞬时峰值及真机功耗温升仍未验收。"
     },

@@ -315,6 +315,9 @@ final class BusyStopFrameProbe implements AutoCloseable {
     }
 
     private boolean associate(Draw draw, Frame frame) {
+        // A report already delivered before this frozen draw cannot describe its completion,
+        // even when separate traversals share the same VSYNC millisecond.
+        if (frame.callbackNanoTime < draw.drawNanoTime) return false;
         if (draw.drawingTimeMillis <= 0 || frame.vsyncNanoTime / 1_000_000 != draw.drawingTimeMillis) return false;
         if (draw.frame == frame) return true;
         draw.matchCount++;

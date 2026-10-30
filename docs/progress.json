@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-30T12:03:27Z",
-  "note": "实现30分钟分段压力专项：八档240段/480任务、严格采集归档与统计；编译/lint及612项宿主测试通过，设备实测与本版演示待执行",
+  "updated_at": "2026-10-30T12:46:52Z",
+  "note": "完成30分钟分段压力：八档240段/480任务全部通过、3120采样及308载荷独立核验；同源36.934秒演示已归档，下一项活跃等价对照，真机预算未验收",
   "latest_evidence": {
-    "path": "screenshots/41044860496-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41044860496"
+    "path": "screenshots/41052540296-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41052540296"
   },
   "checkpoints": [
     {
@@ -93,10 +93,10 @@
       "id": "performance",
       "name": "三态性能诊断与空闲交替配对",
       "status": "complete",
-      "details": "已完成当前诊断范围：710e三轮24份三态/停止诊断及汇总、084d空闲配对八档8/8、48对96窗和2016采样通过，2160派生数值独立复算一致，CI562项通过。按本次确认关闭此检查点；30分钟压力、活跃等价流程、目标进程、启动/完整帧与真机预算另列后续任务，预算仍未验收。",
-      "updated_at": "2026-10-30T11:23:33Z",
+      "details": "已完成当前诊断范围：710e三轮三态/停止汇总、084d空闲配对八档8/8、48对96窗及2016采样。后续054be分段压力亦已独立通过八档240段/480任务、3120采样，详情另表。活跃等价流程、目标进程、启动/完整帧、繁忙停止与真机预算继续单列，预算仍未验收。",
+      "updated_at": "2026-10-30T12:46:52Z",
       "evidence": "docs/validation/performance-idle-pairs.md",
-      "scope": "按用户本次确认，将原“三态性能测量与预算验收”检查点的当前完成范围明确为三态诊断采集、同源多轮汇总和同设备空闲交替配对，并以已归档通过证据关闭此项。原预算验收要求保留于docs/PERFORMANCE.md的“性能后续任务”，尚未完成；状态变更不改变diagnosticOnly=true、budgetAcceptance=false。084d596e源码专项41044860496八档8/8，AB/BA六对/API：48对96窗全部通过、2016采样、192端点状态及0trace；65payload/1073884B/17PNG核验，7条before截图blocked原样保留，无安全标志例外。2160派生数值独立Fraction复算一致，保留AB/BA顺序相关差异；CI562项宿主实际通过无skip，core:test FROM-CACHE。旧710e三轮24份四态诊断与矩阵失败保留。初次归档参数错误41045898899保留，纠正后41046173408成功且未重跑设备。仍为diagnosticOnly=true、budgetAcceptance=false；30分钟压力、活跃等价流程、目标进程、启动/完整帧及真机功耗温升未验收。"
+      "scope": "按用户本次确认，将原“三态性能测量与预算验收”检查点的当前完成范围明确为三态诊断采集、同源多轮汇总和同设备空闲交替配对，并以已归档通过证据关闭此项。原预算验收要求保留于docs/PERFORMANCE.md的“性能后续任务”，尚未完成；状态变更不改变diagnosticOnly=true、budgetAcceptance=false。084d596e源码专项41044860496八档8/8，AB/BA六对/API：48对96窗全部通过、2016采样、192端点状态及0trace；65payload/1073884B/17PNG核验，7条before截图blocked原样保留，无安全标志例外。2160派生数值独立Fraction复算一致，保留AB/BA顺序相关差异；CI562项宿主实际通过无skip，core:test FROM-CACHE。旧710e三轮24份四态诊断与矩阵失败保留。初次归档参数错误41045898899保留，纠正后41046173408成功且未重跑设备。仍为diagnosticOnly=true、budgetAcceptance=false。后续054be源码的30分钟分段专项41052540296已独立验收，见docs/validation/performance-stress.md；此行原诊断与空闲配对的验收范围不变。活跃等价流程、目标进程、启动/完整帧、繁忙停止及真机功耗温升仍未验收。"
     },
     {
       "id": "visual_observation",
@@ -119,10 +119,10 @@
       "id": "continuous_actions",
       "name": "普通操作连续执行与接管",
       "status": "in_progress",
-      "evidence": "screenshots/demos/41044864399-1/manifest.json",
-      "scope": "084d596e源码的API35普通Fixture演示13阶段、8次确认、直接仪器1案通过；38.102秒、30payload/1203711B/22PNG来源与摘要/解码核验，安全标志保留，本地合成HTTP模型。继续仅对启动/滚动/主页开放可选免确认；普通写操作连续执行与真实模型接管未验收。录像不代替空闲配对数值或历史旋转失败。",
-      "details": "已验证：084d源码API35普通流程13阶段、8次确认通过，38.1秒录像已核验并保留安全标志；仅启动/滚动/主页可选免确认。历史ready和旋转失败继续保留，普通视频不替代性能数值。未完成：普通写操作连续执行和实际模型接管尚未验收。下一步：冻结连续写范围，补端到端接管与启动可用性验证。",
-      "updated_at": "2026-10-30T11:10:56Z"
+      "evidence": "screenshots/demos/41052543898-1/manifest.json",
+      "scope": "054be1f34源码的API35普通Fixture演示13阶段、8次确认、直接仪器1案通过；36.934秒、30payload/1204104B/22PNG来源与摘要/解码核验，安全标志保留，本地合成HTTP模型。继续仅对启动/滚动/主页开放可选免确认；普通写操作连续执行与真实模型接管未验收。录像不代替30分钟压力数值或历史旋转失败。",
+      "details": "已验证：054be源码API35普通流程13阶段、8次确认通过，36.9秒录像已核验并保留安全标志；仅启动/滚动/主页可选免确认。历史ready和旋转失败继续保留，普通视频不替代性能数值。未完成：普通写操作连续执行和实际模型接管尚未验收。下一步：冻结连续写范围，补端到端接管与启动可用性验证。",
+      "updated_at": "2026-10-30T12:12:54Z"
     },
     {
       "id": "model_acceptance",
@@ -179,9 +179,9 @@
     }
   ],
   "latest_demo": {
-    "path": "screenshots/demos/41044864399-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41044864399",
-    "status": "passed",
-    "source_sha": "084d596e00b50ca7cea603f6eaf94ad1c1a2dd64"
+    "path": "screenshots/demos/41052543898-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41052543898",
+    "source_sha": "054be1f34f552771fb874eee6609f5d40f3466e3",
+    "status": "passed"
   }
 }

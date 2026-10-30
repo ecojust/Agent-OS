@@ -24,7 +24,8 @@ class BoundedInstrumentationTests(unittest.TestCase):
         (self.root / 'scripts').mkdir()
         for name in ('run_android_tests.sh', 'run_bounded_instrumentation.py',
                      'print_android_test_failures.py', 'collect_android_evidence.py',
-                     'collect_performance_evidence.py', 'collect_idle_pair_evidence.py'):
+                     'collect_performance_evidence.py', 'collect_idle_pair_evidence.py',
+                     'collect_stress_evidence.py'):
             shutil.copyfile(SCRIPTS / name, self.root / 'scripts' / name)
         (self.root / 'bin').mkdir()
         adb = self.root / 'bin/adb'
@@ -124,7 +125,44 @@ sys.exit(result)
         excluded = next(value for value in calls[-1]
                         if value.startswith('-Pandroid.testInstrumentationRunnerArguments.notClass='))
         self.assertIn('dev.agentos.app.IdlePairedPerformanceInstrumentedTest', excluded.split('=', 1)[1].split(','))
+        self.assertIn('dev.agentos.app.SegmentedStressInstrumentedTest', excluded.split('=', 1)[1].split(','))
         self.assertFalse((self.root / 'idle-pair-evidence').exists())
+        self.assertFalse((self.root / 'stress-evidence').exists())
+
+    def test_stress_scope_has_its_own_longer_default_and_preserves_failed_measurement(self):
+        self.env.pop('ANDROID_TEST_TIMEOUT_SECONDS')
+        result = self.run_shell('23', scope='stress-diagnostic')
+        self.assertEqual(23, result.returncode, result.stderr)
+        execution = self.execution()
+        self.assertEqual(2400, execution['timeoutSeconds'])
+        self.assertEqual('segmented-stress', execution['timeoutProfile'])
+        calls = [json.loads(line) for line in (self.root / 'gradle-calls.jsonl').read_text().splitlines()]
+        self.assertEqual(1, len(calls))
+        self.assertIn('-Pandroid.testInstrumentationRunnerArguments.class='
+                      'dev.agentos.app.SegmentedStressInstrumentedTest#'
+                      'collectThirtyMinuteTaskStopAndServiceCycles', calls[0])
+        self.assert_collected(23)
+        capture = json.loads((self.root / 'stress-evidence/api-30/capture.json').read_text())
+        self.assertEqual(23, capture['gradleExitCode'])
+        self.assertEqual('unavailable', capture['captureStatus'])
+        self.assertIsNone(capture['report'])
+
+    def test_existing_scope_keeps_twenty_minute_default(self):
+        self.env.pop('ANDROID_TEST_TIMEOUT_SECONDS')
+        result = self.run_shell('0', scope='owned-control-diagnostic')
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(1200, self.execution()['timeoutSeconds'])
+        self.assertEqual('standard', self.execution()['timeoutProfile'])
+
+    def test_longer_timeout_requires_explicit_profile_and_remains_bounded(self):
+        for profile, seconds in [('standard', '1201'), ('standard', '2400'), ('segmented-stress', '2401')]:
+            with self.subTest(profile=profile, seconds=seconds):
+                result = subprocess.run([sys.executable, 'scripts/run_bounded_instrumentation.py',
+                                         '--matrix-label', '30', '--timeout-profile', profile,
+                                         '--timeout-seconds', seconds, '--', './gradlew'],
+                                        cwd=self.root, env=self.env, capture_output=True, text=True, timeout=5)
+                self.assertEqual(2, result.returncode, result.stderr)
+                self.assertFalse((self.root / 'gradle-pid').exists())
 
     def test_api30_full_installs_only_the_fixed_test_apk_once_before_connected(self):
         result = self.run_shell('0')

@@ -12,6 +12,7 @@ import shutil
 import collect_performance_evidence as performance
 import collect_android_evidence as android_evidence
 import collect_idle_pair_evidence as idle_pair
+import collect_stress_evidence as stress
 
 EXPECTED_MATRIX = [str(api) for api in range(30, 37)] + ["37.0"]
 PINNED_WORKFLOW = ".github/workflows/pinned-calculator-page.yml"
@@ -34,6 +35,13 @@ NUMERIC_IMPORT_TITLE = "Android checks [numeric-import-diagnostic]"
 NAVIGATION_ORIGIN_TITLE = "Android checks [navigation-origin-diagnostic]"
 NAVIGATION_ORIGIN_REBUILD_TITLE = "Android checks [navigation-origin-rebuild-diagnostic]"
 IDLE_PAIR_TITLE = "Android checks [idle-pair-diagnostic]"
+STRESS_TITLE = "Android checks [stress-diagnostic]"
+STRESS_COVERAGE = ("This fixed diagnostic plans 30 segments per dedicated emulator, each at least 60 seconds and including "
+                   "one completed synthetic task, one pending-approval stop and at least 10 seconds of service-off recovery. "
+                   "The numeric denominator is 240 planned segments and 480 planned tasks across eight APIs, separate from eight selected cases. "
+                   "Only atomically committed segment files are collected; incomplete, failed and absent measurements remain explicit. "
+                   "The measured resident Agent process includes instrumentation and the local model, excludes Fixture resources, "
+                   "and does not establish CPU saturation, leak absence, system-wide stability or physical-device performance budgets.")
 IDLE_PAIR_COVERAGE = ("This case samples six service-off/service-on-idle pairs in AB/BA alternating order on each dedicated emulator, "
                       "with the instrumented Agent process resident and the same synthetic Fixture in the foreground. "
                       "The numeric denominator is 48 planned pairs and 96 windows across eight APIs, separate from the eight selected test cases. "
@@ -76,7 +84,8 @@ DIAGNOSTIC_TITLES = {DIAGNOSTIC_TITLE: android_evidence.DIAGNOSTIC_SCOPE,
                      NUMERIC_IMPORT_TITLE: android_evidence.NUMERIC_IMPORT_SCOPE,
                      NAVIGATION_ORIGIN_TITLE: android_evidence.NAVIGATION_ORIGIN_SCOPE,
                      NAVIGATION_ORIGIN_REBUILD_TITLE: android_evidence.NAVIGATION_ORIGIN_REBUILD_SCOPE,
-                     IDLE_PAIR_TITLE: android_evidence.IDLE_PAIR_SCOPE}
+                     IDLE_PAIR_TITLE: android_evidence.IDLE_PAIR_SCOPE,
+                     STRESS_TITLE: android_evidence.STRESS_SCOPE}
 DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
                     android_evidence.QUALIFICATION_SCOPE: "Task Qualification",
                     android_evidence.CONTROL_STATUS_SCOPE: "Control Status",
@@ -89,7 +98,8 @@ DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
                     android_evidence.NUMERIC_IMPORT_SCOPE: "Numeric Import",
                     android_evidence.NAVIGATION_ORIGIN_SCOPE: "Navigation Origin",
                     android_evidence.NAVIGATION_ORIGIN_REBUILD_SCOPE: "Navigation Origin Rebuild",
-                    android_evidence.IDLE_PAIR_SCOPE: "Idle Pair"}
+                    android_evidence.IDLE_PAIR_SCOPE: "Idle Pair",
+                    android_evidence.STRESS_SCOPE: "Segmented Stress"}
 
 
 def android_execution_scope(run: dict) -> str:
@@ -244,6 +254,13 @@ def idle_pair_artifacts(value, run: dict) -> list:
     return numeric_artifacts(value, run, "idle-pair-reports", idle_pair.MAX_ARTIFACT_BYTES)
 
 
+def stress_artifacts(value, run: dict) -> list:
+    if (run.get("path") != ".github/workflows/android.yml"
+            or android_execution_scope(run) != android_evidence.STRESS_SCOPE):
+        return []
+    return numeric_artifacts(value, run, "stress-reports", stress.MAX_ARTIFACT_BYTES)
+
+
 def numeric_artifacts(value, run: dict, prefix: str, maximum: int) -> list:
     pattern = re.compile(re.escape(prefix) + r"-api-(3[0-6]|37\.0)-attempt-" + str(run["run_attempt"]))
     selected = []
@@ -283,8 +300,17 @@ def archive_idle_pairs(args, run, jobs, output, budget):
                                        "idle-paired-performance-attachments", IDLE_PAIR_COVERAGE)
 
 
+def archive_stress(args, run, jobs, output, budget):
+    if android_execution_scope(run) != android_evidence.STRESS_SCOPE:
+        raise ValueError("stress attachments require the fixed diagnostic scope")
+    artifacts = {item["name"]: item for item in stress_artifacts(read_json(args.artifacts), run)}
+    return archive_numeric_diagnostics(args, run, jobs, output, budget, artifacts, stress,
+                                       "stress-reports", "segmented-stress", "no_current_stress_artifact",
+                                       "segmented-stress-attachments", STRESS_COVERAGE, segmented=True)
+
+
 def archive_numeric_diagnostics(args, run, jobs, output, budget, artifacts, validator,
-                                prefix, directory, missing_error, kind, scope):
+                                prefix, directory, missing_error, kind, scope, *, segmented=False):
     source_identity = {"repository": args.repository, "runId": run["id"],
                        "attempt": run["run_attempt"], "commit": run["head_sha"]}
     records = []
@@ -309,34 +335,40 @@ def archive_numeric_diagnostics(args, run, jobs, output, budget, artifacts, vali
             if source.is_symlink() or not source.is_dir():
                 raise ValueError("expected performance artifact was not downloaded")
             entries = list(source.iterdir())
-            if (len(entries) > 2 or any(path.is_symlink() or not path.is_file()
-                    or path.name not in ("capture.json", validator.REPORT_NAME) for path in entries)):
+            allowed = {"capture.json", validator.REPORT_NAME}
+            if segmented:
+                allowed.update(f"segment-{index:03d}.json" for index in range(30))
+            if (len(entries) > len(allowed) or any(path.is_symlink() or not path.is_file()
+                    or path.name not in allowed for path in entries)):
                 raise ValueError("unexpected performance artifact files")
             capture = validator.validate_capture(
                 validator.read_json(source / "capture.json", validator.MAX_CAPTURE_BYTES), label, source_identity)
             report_path = source / validator.REPORT_NAME
             if capture["captureStatus"] == "collected":
-                raw = validator.read_json(report_path)
+                raw = validator.read_json(report_path, validator.MAX_REPORT_BYTES)
                 validator.validate_report(raw, record["apiLevel"])
                 data = report_path.read_bytes()
                 if (capture["report"]["bytes"] != len(data)
                         or capture["report"]["sha256"] != hashlib.sha256(data).hexdigest()
                         or capture["report"]["status"] != raw["status"]):
                     raise ValueError("raw performance report differs from its capture record")
+                if segmented:
+                    validator.validate_bundle(source, raw, record["apiLevel"])
                 record["diagnosticStatus"] = raw["status"]
-            elif report_path.exists():
+            elif {path.name for path in entries} != {"capture.json"}:
                 raise ValueError("uncollected diagnostics must not carry an unverified report")
             record.update({"captureStatus": capture["captureStatus"], "captureError": capture["captureError"],
                            "actualSdkInt": capture["actualSdkInt"], "gradleExitCode": capture["gradleExitCode"],
                            "declaredCiProfile": capture["declaredCiProfile"],
                            "artifactId": artifact["id"], "files": copy_files(
-                               source, output / directory / f"api-{label}", budget)})
+                               source, output / directory / f"api-{label}", budget,
+                               json_maximum=validator.MAX_SEGMENT_BYTES if segmented else 2 * 1024 * 1024)})
         records.append(record)
     return {"kind": kind, "diagnosticOnly": True, "budgetAcceptance": False, "scope": scope,
             "apis": records}
 
 
-def copy_files(source: Path, destination: Path, budget: dict) -> list[dict]:
+def copy_files(source: Path, destination: Path, budget: dict, *, json_maximum=2 * 1024 * 1024) -> list[dict]:
     copied = []
     for path in sorted(source.rglob("*")):
         if path.is_symlink():
@@ -361,7 +393,7 @@ def copy_files(source: Path, destination: Path, budget: dict) -> list[dict]:
             if not (0 < width <= 4096 and 0 < height <= 4096):
                 raise ValueError("unexpected screenshot dimensions")
         else:
-            read_json(path)
+            read_json(path, json_maximum)
         target = destination / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(path, target)
@@ -439,6 +471,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
     performance_records = archive_performance(args, run, jobs, output, budget)
     idle_pair_records = (archive_idle_pairs(args, run, jobs, output, budget)
                          if execution_scope == android_evidence.IDLE_PAIR_SCOPE else None)
+    stress_records = (archive_stress(args, run, jobs, output, budget)
+                      if execution_scope == android_evidence.STRESS_SCOPE else None)
     manifest = {
         "schemaVersion": 1, "kind": "android-emulator-test-evidence",
         "archivedAt": datetime.now(timezone.utc).isoformat(),
@@ -456,6 +490,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
     }
     if idle_pair_records is not None:
         manifest["idlePairedPerformance"] = idle_pair_records
+    if stress_records is not None:
+        manifest["segmentedStress"] = stress_records
     if diagnostic:
         manifest.update({"expectedTestsPerApi": 1, "expectedTests": len(EXPECTED_MATRIX),
                          "diagnosticCaseCounts": {status: sum(record["diagnosticResult"] == status for record in records)
@@ -479,6 +515,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         manifest["scope"] += " " + NAVIGATION_ORIGIN_REBUILD_COVERAGE
     if execution_scope == android_evidence.IDLE_PAIR_SCOPE:
         manifest["scope"] += " " + IDLE_PAIR_COVERAGE
+    if execution_scope == android_evidence.STRESS_SCOPE:
+        manifest["scope"] += " " + STRESS_COVERAGE
     (output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     lines = ["# " + (diagnostic_name + " Diagnostic Evidence" if diagnostic else "Android Test Evidence"), "", f"Source run: {manifest['sourceRun']['url']}", "",
              f"Source commit: `{run['head_sha']}` · Attempt: {attempt}", "",
@@ -499,6 +537,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         lines += [NAVIGATION_ORIGIN_REBUILD_COVERAGE, ""]
     if execution_scope == android_evidence.IDLE_PAIR_SCOPE:
         lines += [IDLE_PAIR_COVERAGE, ""]
+    if execution_scope == android_evidence.STRESS_SCOPE:
+        lines += [STRESS_COVERAGE, ""]
     if diagnostic:
         lines += [f"Execution scope: `{execution_scope}`. Only `{android_evidence.test_selection(execution_scope)}` was selected.", "",
                   "The diagnostic denominator is 8 cases (8 APIs × 1 test); missing, skipped and unexecuted cases remain unverified. "
@@ -530,6 +570,18 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
                   "| API | Collection | Diagnostic result | Raw report |", "| --- | --- | --- | --- |"]
         for item in idle_pair_records["apis"]:
             link = (f"[JSON](idle-paired-performance/api-{item['matrixLabel']}/{idle_pair.REPORT_NAME})"
+                    if item["captureStatus"] == "collected" else item["captureError"])
+            lines.append(f"| {item['matrixLabel']} | {item['captureStatus']} | {item['diagnosticStatus']} | {link} |")
+        lines.append("")
+    if stress_records is not None:
+        lines += ["## Segmented Stress Diagnostics", "",
+                  "Each API retains its planned 30 segments and 60 tasks, including failure, interruption and unavailable reports. "
+                  "An incomplete root report is a committed prefix, not a completed 30-minute test. "
+                  "Later planned slots have no committed evidence and are not inferred to be unexecuted. "
+                  "Original selected-case and job conclusions remain unchanged; numerical data is not performance-budget acceptance.", "",
+                  "| API | Collection | Diagnostic result | Raw report |", "| --- | --- | --- | --- |"]
+        for item in stress_records["apis"]:
+            link = (f"[JSON](segmented-stress/api-{item['matrixLabel']}/{stress.REPORT_NAME})"
                     if item["captureStatus"] == "collected" else item["captureError"])
             lines.append(f"| {item['matrixLabel']} | {item['captureStatus']} | {item['diagnosticStatus']} | {link} |")
         lines.append("")
@@ -774,6 +826,7 @@ def main() -> None:
         screenshots = screenshot_artifacts(read_json(args.artifacts), run) if args.review_branch else []
         perf_artifacts = performance_artifacts(read_json(args.artifacts), run)
         pair_artifacts = idle_pair_artifacts(read_json(args.artifacts), run)
+        segmented_artifacts = stress_artifacts(read_json(args.artifacts), run)
         if args.github_output:
             with args.github_output.open("a") as output:
                 output.write(f"run_id={run_id}\nattempt={attempt}\n"
@@ -781,6 +834,7 @@ def main() -> None:
                              f"screenshot_artifact_ids={','.join(str(item['id']) for item in screenshots)}\n"
                              f"performance_artifact_ids={','.join(str(item['id']) for item in perf_artifacts)}\n"
                              f"idle_pair_artifact_ids={','.join(str(item['id']) for item in pair_artifacts)}\n"
+                             f"stress_artifact_ids={','.join(str(item['id']) for item in segmented_artifacts)}\n"
                              f"evidence_path=screenshots/{run_id}-{attempt}\n")
         print(f"Verified trusted source run {run_id}, attempt {attempt}")
     else:

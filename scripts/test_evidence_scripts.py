@@ -136,7 +136,8 @@ class EvidenceTests(unittest.TestCase):
                       "numeric-import-diagnostic --class AnotherClass",
                       "navigation-origin-diagnostic --class AnotherClass",
                       "navigation-origin-rebuild-diagnostic --class AnotherClass",
-                      "idle-pair-diagnostic --class AnotherClass", "future-scope"):
+                      "idle-pair-diagnostic --class AnotherClass",
+                      "stress-diagnostic --class AnotherClass", "future-scope"):
             with self.subTest(scope=scope):
                 self.check_test_exit("30", 30, scope=scope, expected_exit=2, invalid_scope=True)
 
@@ -146,7 +147,7 @@ class EvidenceTests(unittest.TestCase):
             root = Path(temp)
             (root / "scripts").mkdir()
             for name in ("run_android_tests.sh", "run_bounded_instrumentation.py", "collect_android_evidence.py", "print_android_test_failures.py",
-                         "collect_performance_evidence.py", "collect_idle_pair_evidence.py"):
+                         "collect_performance_evidence.py", "collect_idle_pair_evidence.py", "collect_stress_evidence.py"):
                 (root / "scripts" / name).write_bytes((SCRIPTS / name).read_bytes())
             (root / "bin").mkdir()
             adb = root / "bin" / "adb"
@@ -200,6 +201,13 @@ class EvidenceTests(unittest.TestCase):
                 self.assertEqual("unavailable", idle["captureStatus"])
             else:
                 self.assertFalse(idle_path.exists())
+            stress_path = root / f"stress-evidence/api-{matrix_label}/capture.json"
+            if scope == collector.STRESS_SCOPE:
+                stress_capture = json.loads(stress_path.read_text())
+                self.assertEqual(expected_exit, stress_capture["gradleExitCode"])
+                self.assertEqual("unavailable", stress_capture["captureStatus"])
+            else:
+                self.assertFalse(stress_path.exists())
             self.assertIn("No Android XML reports were produced", result.stdout)
             self.assertEqual(expected_exit == 7, (root / "gradle-started").exists())
             if expected_exit == 7:
@@ -215,7 +223,7 @@ class EvidenceTests(unittest.TestCase):
                 if scope in collector.DIAGNOSTIC_SELECTIONS:
                     self.assertEqual("-Pandroid.testInstrumentationRunnerArguments.class=" + collector.test_selection(scope), selectors[0])
                 else:
-                    self.assertEqual("-Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest,dev.agentos.app.DemoWalkthroughInstrumentedTest,dev.agentos.app.PinnedWindowDisclosureInstrumentedTest,dev.agentos.app.IdlePairedPerformanceInstrumentedTest", selectors[0])
+                    self.assertEqual("-Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest,dev.agentos.app.DemoWalkthroughInstrumentedTest,dev.agentos.app.PinnedWindowDisclosureInstrumentedTest,dev.agentos.app.IdlePairedPerformanceInstrumentedTest,dev.agentos.app.SegmentedStressInstrumentedTest", selectors[0])
                 self.assertEqual(["window_animation_scale=1.0", "transition_animation_scale=1.0",
                     "animator_duration_scale=1.0"], (root / "animation-settings.txt").read_text().splitlines())
                 self.assertEqual(3, result.stdout.count("Emulator baseline:"))

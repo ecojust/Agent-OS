@@ -188,14 +188,16 @@ def timeout_diagnostics(directory):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--matrix-label', required=True)
+    parser.add_argument('--timeout-profile', choices=('standard', 'segmented-stress'), default='standard')
     parser.add_argument('--timeout-seconds', type=int, default=1200)
     parser.add_argument('--termination-grace-seconds', type=int, default=10)
     parser.add_argument('command', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     if not re.fullmatch(r'3[0-6]|37\.0', args.matrix_label):
         parser.error('unsupported API label')
-    if not 1 <= args.timeout_seconds <= 1200 or not 1 <= args.termination_grace_seconds <= 10:
-        parser.error('timeout must be 1..1200 seconds and grace 1..10 seconds')
+    maximum_timeout = 2400 if args.timeout_profile == 'segmented-stress' else 1200
+    if not 1 <= args.timeout_seconds <= maximum_timeout or not 1 <= args.termination_grace_seconds <= 10:
+        parser.error(f'timeout must be 1..{maximum_timeout} seconds and grace 1..10 seconds')
     command = args.command[1:] if args.command[:1] == ['--'] else args.command
     if not command:
         parser.error('missing command')
@@ -203,7 +205,8 @@ def main():
     directory.mkdir(parents=True, exist_ok=True)
     record = {'schemaVersion': 1, 'kind': 'instrumentation-execution',
               'matrixLabel': args.matrix_label, 'status': 'start_failed', 'exitCode': 2,
-              'timeoutSeconds': args.timeout_seconds, 'terminationGraceSeconds': args.termination_grace_seconds,
+              'timeoutSeconds': args.timeout_seconds, 'timeoutProfile': args.timeout_profile,
+              'terminationGraceSeconds': args.termination_grace_seconds,
               'diagnosticBudgetSeconds': DIAGNOSTIC_SECONDS,
               'diagnosticFinalReapAllowanceSeconds': 1,
               'startedAt': datetime.now(timezone.utc).isoformat(), 'diagnostics': None}

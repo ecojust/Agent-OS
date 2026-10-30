@@ -4,13 +4,15 @@ set -uo pipefail
 
 matrix_label="${1:?Android API level is required}"
 test_scope="${2:-full}"
+default_timeout_seconds=1200
+watchdog_profile=standard
 if (( $# > 2 )); then
   echo "Unexpected Android test arguments" >&2
   exit 2
 fi
 case "$test_scope" in
   full)
-    selection=(-Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest,dev.agentos.app.DemoWalkthroughInstrumentedTest,dev.agentos.app.PinnedWindowDisclosureInstrumentedTest,dev.agentos.app.IdlePairedPerformanceInstrumentedTest)
+    selection=(-Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest,dev.agentos.app.DemoWalkthroughInstrumentedTest,dev.agentos.app.PinnedWindowDisclosureInstrumentedTest,dev.agentos.app.IdlePairedPerformanceInstrumentedTest,dev.agentos.app.SegmentedStressInstrumentedTest)
     ;;
   owned-control-diagnostic)
     selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.OwnedControlWindowInstrumentedTest#changedPresentationAndCallbacksStillRevokeTheActualControlOwner)
@@ -50,6 +52,11 @@ case "$test_scope" in
     ;;
   idle-pair-diagnostic)
     selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.IdlePairedPerformanceInstrumentedTest#collectAlternatingServiceOffAndIdlePairs)
+    ;;
+  stress-diagnostic)
+    selection=(-Pandroid.testInstrumentationRunnerArguments.class=dev.agentos.app.SegmentedStressInstrumentedTest#collectThirtyMinuteTaskStopAndServiceCycles)
+    default_timeout_seconds=2400
+    watchdog_profile=segmented-stress
     ;;
   *) echo "Invalid Android test scope" >&2; exit 2 ;;
 esac
@@ -92,6 +99,9 @@ collect_on_exit() {
   python3 scripts/collect_performance_evidence.py collect --matrix-label "$matrix_label" --exit-code "$result" || true
   if [[ "$test_scope" == 'idle-pair-diagnostic' ]]; then
     python3 scripts/collect_idle_pair_evidence.py collect --matrix-label "$matrix_label" --exit-code "$result" || true
+  fi
+  if [[ "$test_scope" == 'stress-diagnostic' ]]; then
+    python3 scripts/collect_stress_evidence.py collect --matrix-label "$matrix_label" --exit-code "$result" || true
   fi
   exit "$result"
 }
@@ -159,13 +169,16 @@ if [[ "$matrix_label" == '30' && ( "$test_scope" == 'full' || "$test_scope" == '
   ' agentos-numeric-provider "${test_command[@]}")
 fi
 
-# Twenty minutes for this invocation, then about one minute of diagnostics
+# Twenty minutes normally; the fixed 30-minute stress scope has forty minutes.
+# Then about one minute of watchdog diagnostics
 # (60s collection budget +1s final reap), <=10s TERM grace and <=2s final reap.
 # The existing collectors independently bound their adb reads to <=35s and <=25s.
+# Only stress adds a collector with a 60s total adb budget; its CI job allows 55min.
 # This reserves time for evidence; SDK/boot delays or the external job deadline
 # can still interrupt cleanup. A kernel-blocked process may survive SIGKILL.
 python3 scripts/run_bounded_instrumentation.py --matrix-label "$matrix_label" \
-  --timeout-seconds "${ANDROID_TEST_TIMEOUT_SECONDS:-1200}" \
+  --timeout-profile "$watchdog_profile" \
+  --timeout-seconds "${ANDROID_TEST_TIMEOUT_SECONDS:-$default_timeout_seconds}" \
   --termination-grace-seconds "${ANDROID_TEST_TERMINATE_GRACE_SECONDS:-10}" \
   -- "${test_command[@]}" &
 instrumentation_pid=$!

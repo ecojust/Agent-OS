@@ -3,8 +3,10 @@
 
 Uses Perfetto v59.1 android.startup.time_to_display, then independently bounds
 its selected frame to the driver's launch marker and the next startup. The
-stdlib's frame search alone has no such upper bound. Durations are nanoseconds,
-not presentation timestamps or physical-device budget acceptance.
+stdlib's frame search alone has no such upper bound. Version 2 uses full sorting
+of the bounded trace and records that parser flag; version 1 archives retain
+their original configuration, parser identity, and results. Durations are
+nanoseconds, not presentation timestamps or physical-device budget acceptance.
 """
 
 import argparse
@@ -63,20 +65,29 @@ def strict_json(data):
                       parse_constant=lambda value: (_ for _ in ()).throw(ValueError("nonfinite_json")))
 
 
-def trace_config(packages=None):
+def trace_config(version=2, packages=None):
     """Streaming capture: 8 MiB bounded buffers, 64 MiB file; no timed exit."""
+    if type(version) is not int or version not in (1, 2):
+        raise ValueError("unsupported_trace_config_version")
     packages = [PACKAGE, DRIVER_PACKAGE] if packages is None else list(packages)
     if not packages or any(not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.]*", p) for p in packages):
         raise ValueError("invalid_atrace_package")
     apps = "\n".join(f'      atrace_apps: "{p}"' for p in dict.fromkeys(packages))
-    return f'''buffers {{ size_kb: 7168 fill_policy: DISCARD }}
-buffers {{ size_kb: 1024 fill_policy: DISCARD }}
+    # Keep version 1 byte-for-byte for already archived failures. Perfetto
+    # explicitly diagnoses write_into_file + DISCARD as data loss; streaming
+    # captures must use RING_BUFFER and still reject actual overwrite/loss.
+    fill_policy = "DISCARD" if version == 1 else "RING_BUFFER"
+    # HWUI is built with ATRACE_TAG_VIEW (Android 11-16 and AOSP main),
+    # including DrawFrameTask, and Choreographer explicitly uses VIEW.
+    # AM supplies the system startup/lifecycle markers. GFX adds unrelated
+    # SurfaceFlinger/GL traces and WM is not required by the startup query.
+    categories = ("am", "wm", "view", "gfx") if version == 1 else ("am", "view")
+    category_lines = "\n".join(f'    atrace_categories: "{category}"' for category in categories)
+    return f'''buffers {{ size_kb: 7168 fill_policy: {fill_policy} }}
+buffers {{ size_kb: 1024 fill_policy: {fill_policy} }}
 data_sources {{ config {{ name: "linux.ftrace" target_buffer: 0
   ftrace_config {{
-    atrace_categories: "am"
-    atrace_categories: "wm"
-    atrace_categories: "view"
-    atrace_categories: "gfx"
+{category_lines}
 {apps}
     ftrace_events: "task/task_newtask"
     ftrace_events: "task/task_rename"
@@ -331,17 +342,28 @@ def derive_measurements(raw, manifest):
     return result
 
 
-def derive_trace(trace_path, report, processor_path, query_output=None):
+def processor_identity(schema_version):
+    if type(schema_version) is not int or schema_version not in (1, 2):
+        raise ValueError("unsupported_startup_derivation_version")
+    value = dict(version=VERSION, sha256=PROCESSOR_SHA256, url=PROCESSOR_URL)
+    if schema_version == 2:
+        value["arguments"] = ["--full-sort"]
+    return value
+
+
+def derive_trace(trace_path, report, processor_path, query_output=None, schema_version=2):
     """Extract actual trace data; preserve failed rows and the original CSV."""
     validate_manifest(report)
     trace = trace_identity(trace_path)
     processor = verify_processor(processor_path)
+    identity = processor_identity(schema_version)
     sql = extraction_sql()
     query_output = Path(query_output) if query_output else Path(trace_path).parent / "startup-ttid.csv"
     def output_limit():
         resource.setrlimit(resource.RLIMIT_FSIZE, (QUERY_LIMIT + 1, QUERY_LIMIT + 1))
     with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
-        completed = subprocess.run([str(processor), "query", "--format", "csv", str(trace_path)],
+        completed = subprocess.run([str(processor), *identity.get("arguments", []),
+                                    "query", "--format", "csv", str(trace_path)],
                                    input=sql.encode(), stdout=stdout, stderr=stderr,
                                    timeout=180, preexec_fn=output_limit)
         if completed.returncode:
@@ -354,9 +376,9 @@ def derive_trace(trace_path, report, processor_path, query_output=None):
     raw = parse_extraction_csv(output)
     query_output.write_bytes(output)
     launches = derive_measurements(raw, report)
-    return dict(schemaVersion=1, kind=KIND, diagnosticOnly=True, budgetAcceptance=False,
+    return dict(schemaVersion=schema_version, kind=KIND, diagnosticOnly=True, budgetAcceptance=False,
                 status="passed" if launches and all(r["status"] == "passed" for r in launches) else "failed",
-                trace=trace, processor=dict(version=VERSION, sha256=PROCESSOR_SHA256, url=PROCESSOR_URL),
+                trace=trace, processor=identity,
                 package=PACKAGE, launches=launches, traceErrors=raw["stats"],
                 extraction=dict(path=query_output.name, bytes=len(output),
                                 sha256=sha256(output), sqlSha256=sha256(sql.encode())))
@@ -367,12 +389,12 @@ def validate_derivation(value, manifest, trace_path, query_path):
     expected_keys = {"schemaVersion", "kind", "diagnosticOnly", "budgetAcceptance", "status", "trace",
                      "processor", "package", "launches", "traceErrors", "extraction"}
     if (type(value) is not dict or set(value) != expected_keys or type(value["schemaVersion"]) is not int
-            or value["schemaVersion"] != 1 or value["kind"] != KIND or value["diagnosticOnly"] is not True
+            or value["schemaVersion"] not in (1, 2) or value["kind"] != KIND or value["diagnosticOnly"] is not True
             or value["budgetAcceptance"] is not False or value["package"] != PACKAGE):
         raise ValueError("invalid_startup_derivation_identity")
     if not same_typed(value["trace"], trace_identity(trace_path)):
         raise ValueError("startup_trace_identity_mismatch")
-    if not same_typed(value["processor"], dict(version=VERSION, sha256=PROCESSOR_SHA256, url=PROCESSOR_URL)):
+    if not same_typed(value["processor"], processor_identity(value["schemaVersion"])):
         raise ValueError("startup_processor_identity_mismatch")
     query_path = Path(query_path)
     if query_path.is_symlink() or not query_path.is_file() or query_path.stat().st_size > QUERY_LIMIT:
@@ -406,7 +428,7 @@ def main():
     parse.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.command == "config":
-        print(trace_config(args.package), end="")
+        print(trace_config(packages=args.package), end="")
     elif args.command == "download":
         print(download_processor(args.cache))
     else:

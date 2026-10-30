@@ -41,12 +41,12 @@ def trace_reference(raw):
     return {"path": "trace.pftrace", "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
 
 
-def write_artifact(root, profile="pilot", status="passed", with_trace=True):
-    import collect_app_experience_evidence as experience
+def write_artifact(root, profile="pilot", status="passed", with_trace=True, schema_version=1):
     import test_collect_app_experience_evidence as fixtures
     directory = root / "incoming" / artifact()["name"]
-    options = {} if status == "passed" else {"launches": [fixtures.launch(profile=profile)], "trials": []}
-    value = fixtures.write_bundle(directory, profile=profile, status=status, with_trace=with_trace, **options)
+    options = {} if status == "passed" else {"launches": [fixtures.launch(profile=profile, schema_version=schema_version)], "trials": []}
+    value = fixtures.write_bundle(directory, profile=profile, status=status, with_trace=with_trace,
+                                  schema_version=schema_version, **options)
     capture = fixtures.collected_capture(directory, value, exit_code=0 if status == "passed" else 124)
     (directory / "capture.json").write_bytes(fixtures.encoded(capture))
     return directory, value
@@ -67,6 +67,37 @@ def rebind_capture(directory):
 
 
 class AppExperienceArchiveTests(unittest.TestCase):
+    def test_version_two_reports_archive_with_v3_capture_and_v2_derivation(self):
+        import experience_trace
+        for profile, file_count in (("pilot", 17), ("formal", 424)):
+            with self.subTest(profile=profile), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                directory, report = write_artifact(root, profile=profile, schema_version=2)
+                trace_path = directory / "trace-capture.json"
+                trace = json.loads(trace_path.read_text())
+                derived = json.loads((directory / "startup-ttid.json").read_text())
+                self.assertEqual((2, 3, 2, 2), (report["schemaVersion"], trace["schemaVersion"],
+                                               trace["configVersion"], derived["schemaVersion"]))
+                self.assertEqual(experience_trace.trace_config(version=2), trace["config"])
+                with patch("subprocess.run", side_effect=AssertionError("archive executes data")):
+                    result = publisher.archive_app_experience(args_for(root), source_run(profile), [legacy.job()],
+                                                             root / "output", {"bytes": 0, "files": 0})
+                row = result["apis"][-1]
+                self.assertEqual(("collected", "passed", "passed"), (row["captureStatus"], row["diagnosticStatus"], row["reportStatus"]))
+                self.assertEqual(file_count, len(row["files"]))
+                for ref in row["files"]:
+                    data = (root / "output/app-experience/api-37.0" / ref["path"]).read_bytes()
+                    self.assertEqual((directory / ref["path"]).read_bytes(), data)
+                    self.assertEqual(len(data), ref["bytes"])
+                    self.assertEqual(hashlib.sha256(data).hexdigest(), ref["sha256"])
+                # Rebound hashes cannot replace the new configuration with the old one.
+                trace["config"] = experience_trace.trace_config(version=1)
+                trace_path.write_text(json.dumps(trace))
+                rebind_capture(directory)
+                with self.assertRaisesRegex(ValueError, "trace_config_mismatch"):
+                    publisher.archive_app_experience(args_for(root), source_run(profile), [legacy.job()],
+                                                     root / "mixed-versions", {"bytes": 0, "files": 0})
+
     def test_complete_pilot_and_formal_payloads_are_revalidated_and_copied_verbatim(self):
         for profile, file_count in (("pilot", 17), ("formal", 424)):
             with self.subTest(profile=profile), tempfile.TemporaryDirectory() as temporary:
@@ -290,7 +321,7 @@ class AppExperienceArchiveTests(unittest.TestCase):
             directory = root / "incoming" / artifact()["name"]
             directory.mkdir(parents=True)
             trace = dict(schemaVersion=1, kind="agent-os-experience-trace-capture", status="failed",
-                         pid=None, stopped=False, config=experience_trace.trace_config(), trace=None,
+                         pid=None, stopped=False, config=experience_trace.trace_config(version=1), trace=None,
                          compressed=None, error="perfetto_unavailable", startMode=None, ready=False)
             trace_data = json.dumps(trace).encode()
             (directory / "trace-capture.json").write_bytes(trace_data)

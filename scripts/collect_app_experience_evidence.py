@@ -62,6 +62,9 @@ SESSION_INT = ('beforePssKb', 'beginCpuMillis', 'endCpuMillis', 'beginNanoTime',
 SESSION_HZ = ('beginRefreshHz', 'beginModeHz', 'endRefreshHz', 'endModeHz')
 PROBE_BASE_FIELDS = (*IDENTITY_FIELDS, *STATUS_BOOL, *STATUS_INT, 'refreshHz', 'modeHz', 'displayId', 'editorText', 'savedText', 'drawMatchMethod')
 PROBE_SESSION_FIELDS = ('sessionId', *SESSION_BOOL, *SESSION_INT, *SESSION_HZ, 'afterPssKb')
+DRAW_METHODS = {1: 'post_OnDraw_View.getDrawingTime_equals_floor_FrameMetrics.VSYNC_TIMESTAMP_ms',
+                2: 'front_post_OnDraw_View.getDrawingTime_equals_floor_FrameMetrics.VSYNC_TIMESTAMP_ms'}
+DRAW_CAUSE_FIELDS = ('sequenceMismatchCount', 'zeroDrawingTimeCount')
 MEMORY_FIELDS = ('PssStartedNanoTime', 'PssEndedNanoTime', 'DalvikPssKb', 'NativePssKb', 'OtherPssKb', 'GraphicsSummaryKb')
 FRAME_FIELDS = ('index', 'intendedVsyncNs', 'vsyncNs', 'totalDurationNs', 'firstDraw', 'gpuDurationNs',
                 'deadlineNs', 'callbackNanoTime', 'droppedReports', 'refreshHz', 'modeHz', 'displayId', 'drawVersion',
@@ -74,11 +77,12 @@ def profile_for_scope(scope):
     return SCOPES[scope]
 
 
-def conditions(profile):
+def conditions(profile, schema_version=1):
+    integer(schema_version, 1, 2)
     if type(profile) is not str or profile not in PROFILES:
         raise ValueError('invalid_experience_profile')
     pairs, repetitions = PROFILES[profile]
-    return dict(buildType='debug', fixturePackage=TARGET_PACKAGE,
+    result = dict(buildType='debug', fixturePackage=TARGET_PACKAGE,
                 fixtureActivity='dev.agentos.fixture.PerformanceActivity', startupPairsPerMode=pairs,
                 launchCount=pairs * 4, resourceRepetitions=repetitions, trialCount=repetitions * 3,
                 startupOrder='AB_BA_alternating', resourceOrder='_'.join(ORDERS[:repetitions]),
@@ -87,6 +91,9 @@ def conditions(profile):
                 localModelScope='same_process_all_arms_idle_in_A_B', sampling='target_provider_and_agent_endpoints',
                 startupMetric='external_perfetto_android_startups_time_to_display', forcedGc=False,
                 systemAnimationOverrides=False, screenshotSamplingIncluded=False)
+    if schema_version == 2:
+        result.update(homeSettleMillis=1000, homePreparation='resolved_HOME_focused_stopped_settle_recheck')
+    return result
 
 
 def launch_name(index):
@@ -132,12 +139,12 @@ def validate_report(value, api, profile=None):
     fields(value, ('schemaVersion', 'kind', 'diagnosticOnly', 'budgetAcceptance', 'profile', 'status',
                    'appProcessPid', 'targetPackage', 'device', 'conditions', 'startedNanos', 'endedNanos',
                    'cleanup', 'launches', 'trials'))
-    if (type(value['schemaVersion']) is not int or value['schemaVersion'] != 1 or value['kind'] != KIND
+    if (type(value['schemaVersion']) is not int or value['schemaVersion'] not in (1, 2) or value['kind'] != KIND
             or value['diagnosticOnly'] is not True or value['budgetAcceptance'] is not False
             or type(value['profile']) is not str or value['profile'] not in PROFILES or value['status'] not in STATUSES
             or profile is not None and value['profile'] != profile or value['targetPackage'] != TARGET_PACKAGE):
         raise ValueError('invalid_experience_identity')
-    expected = conditions(value['profile'])
+    expected = conditions(value['profile'], value['schemaVersion'])
     exact(value['conditions'], expected)
     integer(value['appProcessPid'], 1, 2 ** 31 - 1)
     fields(value['device'], ('sdkInt', 'manufacturer', 'model', 'hardware', 'fingerprint', 'emulatorHeuristic'))
@@ -204,11 +211,22 @@ def validate_state(value, arm, passed, start, end, focused=True):
         raise ValueError('invalid_experience_endpoint_state')
 
 
-def validate_probe(value, session=False):
+def validate_probe(value, session=False, schema_version=None):
+    if type(value) is not dict:
+        raise ValueError('invalid_target_probe_identity')
+    integer(value.get('schemaVersion'), 1, 2)
+    version = value['schemaVersion']
+    if schema_version is not None and version != schema_version:
+        raise ValueError('target_probe_version_mismatch')
     memory_fields = tuple(prefix + key for prefix in ('before', *(['after'] if value.get('ended') is True else []))
                           for key in MEMORY_FIELDS) if session and type(value) is dict else ()
-    fields(value, (*PROBE_BASE_FIELDS, *(PROBE_SESSION_FIELDS if session else ()), *memory_fields))
-    integer(value['schemaVersion'], 1, 1)
+    fields(value, (*PROBE_BASE_FIELDS, *(DRAW_CAUSE_FIELDS if version == 2 else ()),
+                   *(PROBE_SESSION_FIELDS if session else ()), *memory_fields))
+    if version == 2:
+        for key in DRAW_CAUSE_FIELDS:
+            integer(value[key])
+        if sum(value[key] for key in DRAW_CAUSE_FIELDS) != value['unresolvedDrawCount']:
+            raise ValueError('unresolved_draw_cause_total_mismatch')
     if value['clockDomain'] != 'CLOCK_MONOTONIC_System.nanoTime':
         raise ValueError('invalid_target_clock_domain')
     integer(value['pid'], 1, 2 ** 31 - 1)
@@ -223,7 +241,7 @@ def validate_probe(value, session=False):
     integer(value['displayId'], -1, 2 ** 31 - 1)
     for key in ('editorText', 'savedText'):
         bounded_text(value[key], 256, empty=True)
-    if value['drawMatchMethod'] != 'post_OnDraw_View.getDrawingTime_equals_floor_FrameMetrics.VSYNC_TIMESTAMP_ms':
+    if value['drawMatchMethod'] != DRAW_METHODS[version]:
         raise ValueError('invalid_draw_matching_method')
     if value['drawFrameObserved'] and value['drawVsyncNs'] // 1_000_000 != value['drawTimeMillis']:
         raise ValueError('draw_match_timestamp_mismatch')
@@ -259,13 +277,15 @@ def validate_probe(value, session=False):
 
 
 def validate_launch(value, index, report):
+    version = report['schemaVersion']
     fields(value, ('schemaVersion', 'kind', 'index', 'pairIndex', 'position', 'arm', 'startupType', 'status',
                    'startedNanos', 'endedNanos', 'marker', 'driverPid', 'expectedPid', 'expectedStartupType',
                    'preLaunchPidAbsent', 'homeStoppedVerified', 'lifecycleVerified', 'newDrawVerified',
                    'stateBefore', 'stateAfter', 'beforeLaunch', 'afterLaunch', 'launchStartedElapsedNanos',
-                   'launchEndedElapsedNanos', 'launchStartedNanoTime', 'launchEndedNanoTime', 'amStartOutput', 'unavailableReason'))
+                   'launchEndedElapsedNanos', 'launchStartedNanoTime', 'launchEndedNanoTime', 'amStartOutput', 'unavailableReason',
+                   *(('homePackage', 'homeFocusedVerified') if version == 2 else ())))
     pair, position, arm, startup_type = launch_identity(index, report['profile'])
-    integer(value['schemaVersion'], 1, 1); integer(value['index'], index, index)
+    integer(value['schemaVersion'], version, version); integer(value['index'], index, index)
     integer(value['pairIndex'], pair, pair); integer(value['position'], position, position)
     if (value['kind'] != LAUNCH_KIND or value['arm'] != arm or value['startupType'] != startup_type
             or value['expectedStartupType'] != startup_type or value['marker'] != f'aos.experience.launch.{index}'
@@ -288,6 +308,13 @@ def validate_launch(value, index, report):
             raise ValueError('invalid_launch_marker_order')
     bounded_text(value['amStartOutput'], 8192, empty=True)
     bounded_text(value['unavailableReason'], 128, empty=True)
+    if version == 2:
+        boolean(value['homeFocusedVerified'])
+        bounded_text(value['homePackage'], 256, empty=True)
+        if value['homePackage'] and not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)*', value['homePackage']):
+            raise ValueError('invalid_home_package')
+        if startup_type == 'cold' and (value['homePackage'] or value['homeFocusedVerified']):
+            raise ValueError('cold_launch_cannot_claim_home_preparation')
     known = value['status'] in ('passed', 'unavailable')
     for key in ('stateBefore', 'stateAfter'):
         if value[key] is not None:
@@ -296,7 +323,7 @@ def validate_launch(value, index, report):
             raise ValueError('missing_launch_endpoint')
     for key in ('beforeLaunch', 'afterLaunch'):
         if value[key] is not None:
-            validate_probe(value[key])
+            validate_probe(value[key], schema_version=version)
     after, before = value['afterLaunch'], value['beforeLaunch']
     if after is not None and value['expectedPid'] != after['pid']:
         raise ValueError('target_pid_does_not_match_launch')
@@ -309,6 +336,8 @@ def validate_launch(value, index, report):
             if not value['preLaunchPidAbsent'] or value['homeStoppedVerified'] or before is not None or after['createCount'] != 1 or after['resumeCount'] != 1 or after['createdNanoTime'] < value['launchStartedNanoTime']:
                 raise ValueError('cold_launch_requires_absent_process')
         else:
+            if version == 2 and (not value['homeFocusedVerified'] or not value['homePackage']):
+                raise ValueError('hot_launch_requires_focused_home')
             if value['preLaunchPidAbsent'] or not value['homeStoppedVerified'] or before is None or not before['stopped'] or before['resumed']:
                 raise ValueError('hot_launch_requires_stopped_activity')
             for key in ('pid', 'uid', 'processInstance', 'activityInstance', 'createCount'):
@@ -321,8 +350,18 @@ def validate_launch(value, index, report):
                     or after['drawMatchAmbiguous'] or not after['drawFrameObserved'] or after['drawVsyncNs'] <= (before['drawVsyncNs'] if before else 0)
                     or value['unavailableReason']):
                 raise ValueError('passed_launch_missing_new_draw')
-        elif value['newDrawVerified'] or value['unavailableReason'] != 'no_new_draw_frame_report':
-            raise ValueError('invalid_unavailable_launch_reason')
+        elif version == 1:
+            if value['newDrawVerified'] or value['unavailableReason'] != 'no_new_draw_frame_report':
+                raise ValueError('invalid_unavailable_launch_reason')
+        else:
+            matched = (after['drawFrameObserved'] and not after['drawMatchAmbiguous']
+                       and after['drawVsyncNs'] > (before['drawVsyncNs'] if before else 0))
+            unresolved = after['unresolvedDrawCount'] > (before['unresolvedDrawCount'] if before else 0)
+            if (value['newDrawVerified'] != matched
+                    or value['unavailableReason'] == 'no_new_draw_frame_report' and matched
+                    or value['unavailableReason'] == 'unresolved_draw_observation' and not (matched and unresolved)
+                    or value['unavailableReason'] not in ('no_new_draw_frame_report', 'unresolved_draw_observation')):
+                raise ValueError('invalid_unavailable_launch_reason')
     return value
 
 
@@ -370,13 +409,14 @@ def validate_frames(frames, target, api, passed):
 
 
 def validate_trial(value, index, report):
+    version = report['schemaVersion']
     fields(value, ('schemaVersion', 'kind', 'index', 'repetition', 'position', 'arm', 'status', 'startedNanos', 'endedNanos',
                    'sessionId', 'initialStateVerified', 'editVerified', 'savedTextVerified', 'counterVerified', 'drawingVerified',
                    'stateBefore', 'stateAfter', 'agentBeforeSample', 'agentAfterSample', 'agentTaskStartedNanos', 'agentTaskEndedNanos',
                    'agentTaskStartedCpuMillis', 'agentTaskEndedCpuMillis', 'targetBefore', 'targetAfter', 'frames', 'framePageChecks',
                    'manualActionsAttempted', 'manualActionsAccepted', 'modelRequests', 'modelAcceptedWrites', 'approvalCount',
                    'resultKind', 'resultCode', 'cleanupCompleted'))
-    integer(value['schemaVersion'], 1, 1); integer(value['index'], index, index)
+    integer(value['schemaVersion'], version, version); integer(value['index'], index, index)
     integer(value['repetition'], index // 3, index // 3); integer(value['position'], index % 3, index % 3)
     if value['kind'] != TRIAL_KIND or value['arm'] != trial_arm(index) or value['status'] not in ('passed', 'failed'):
         raise ValueError('invalid_resource_trial_identity')
@@ -432,7 +472,7 @@ def validate_trial(value, index, report):
     target_before, target_after = value['targetBefore'], value['targetAfter']
     for point in (target_before, target_after):
         if point is not None:
-            validate_probe(point, session=True)
+            validate_probe(point, session=True, schema_version=version)
             if point['sessionId'] != value['sessionId']:
                 raise ValueError('target_session_mismatch')
         elif passed:
@@ -558,13 +598,17 @@ def _validate_raw_bundle(directory, report, api, profile=None):
 def validate_trace_capture(value, payloads):
     if type(value) is not dict:
         raise ValueError('invalid_trace_capture_identity')
-    integer(value.get('schemaVersion'), 1, 2)
+    integer(value.get('schemaVersion'), 1, 3)
     expected = ('schemaVersion', 'kind', 'status', 'pid', 'stopped', 'config', 'trace', 'compressed',
                 'error', 'startMode', 'ready')
-    if value['schemaVersion'] == 2:
+    if value['schemaVersion'] >= 2:
         expected += ('configDelivery', 'startStdout', 'startStderr', 'startExitCode')
+    if value['schemaVersion'] == 3:
+        expected += ('configVersion',)
     fields(value, expected)
-    if value['schemaVersion'] == 2:
+    if value['schemaVersion'] == 3:
+        integer(value['configVersion'], 2, 2)
+    if value['schemaVersion'] >= 2:
         if value['configDelivery'] != 'stdin':
             raise ValueError('invalid_trace_config_delivery')
         for key in ('startStdout', 'startStderr'):
@@ -584,7 +628,7 @@ def validate_trace_capture(value, payloads):
         raise ValueError('invalid_trace_start_mode')
     bounded_text(value['config'], 8192)
     from experience_trace import trace_config
-    if value['config'] != trace_config():
+    if value['config'] != trace_config(version=2 if value['schemaVersion'] == 3 else 1):
         raise ValueError('trace_config_mismatch')
     if value['error'] is not None:
         bounded_text(value['error'], 2000, empty=True)
@@ -656,6 +700,8 @@ def validate_bundle(directory, value, api, profile=None):
             raise ValueError('startup_derivation_requires_unsaturated_trace')
         from experience_trace import validate_derivation
         derived = strict_json(payloads['startup-ttid.json'])
+        if strict_json(payloads['trace-capture.json'])['schemaVersion'] == 3:
+            integer(derived.get('schemaVersion') if type(derived) is dict else None, 2, 2)
         validate_derivation(derived, value, directory / 'trace.pftrace.gz', directory / 'startup-ttid.csv')
         trace = derived['trace']
         data = payloads['trace.pftrace.gz']

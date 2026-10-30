@@ -41,8 +41,8 @@ def uid(number):
     return f"00000000-0000-4000-8000-{number:012d}"
 
 
-def probe(number, now):
-    result = dict(schemaVersion=1, clockDomain="CLOCK_MONOTONIC_System.nanoTime", pid=200 + number,
+def probe(number, now, schema_version=1):
+    result = dict(schemaVersion=schema_version, clockDomain="CLOCK_MONOTONIC_System.nanoTime", pid=200 + number,
                   uid=10001, processInstance=uid(number), activityInstance=uid(number + 1000),
                   refreshHz=60.0, modeHz=60.0, displayId=0, editorText="", savedText="Saved: empty",
                   activityPresent=True, resumed=True, stopped=False, windowFocused=True,
@@ -54,6 +54,9 @@ def probe(number, now):
                   clicks=0, editCount=0, saveCount=0, incrementCount=0,
                   drawTimeMillis=(now + 9 * M) // M, displayObservedNanoTime=now, unresolvedDrawCount=0,
                   drawMatchMethod="post_OnDraw_View.getDrawingTime_equals_floor_FrameMetrics.VSYNC_TIMESTAMP_ms")
+    if schema_version == 2:
+        result.update(sequenceMismatchCount=0, zeroDrawingTimeCount=0,
+                      drawMatchMethod="front_post_OnDraw_View.getDrawingTime_equals_floor_FrameMetrics.VSYNC_TIMESTAMP_ms")
     for name in ("create", "start", "resume", "pause", "stop", "destroy", "newIntent"):
         result[name + "Count"] = int(name in ("create", "start", "resume"))
     for name in ("created", "started", "resumed", "paused", "stopped", "destroyed", "newIntent"):
@@ -66,13 +69,13 @@ def state(at, arm, focused=True):
                 controllerRunning=False, controlAvailable=False, fixtureFocused=focused)
 
 
-def launch(index, profile):
+def launch(index, profile, schema_version=1):
     pair_count = 2 if profile == "pilot" else 100
     pair = index % (pair_count * 2) // 2
     arm = ARMS[index % 2 ^ pair % 2]
     hot = index >= pair_count * 2
     start = N + index * 5 * N
-    after = probe(pair_count * 2 if hot else index + 1, start + N + M)
+    after = probe(pair_count * 2 if hot else index + 1, start + N + M, schema_version)
     before = None
     if hot:
         before = copy.deepcopy(after)
@@ -80,7 +83,7 @@ def launch(index, profile):
                       resumeCount=index - pair_count * 2 + 1,
                       drawVsyncNs=start + N - M, drawTimeMillis=(start + N - M) // M)
         after["resumeCount"] = before["resumeCount"] + 1
-    return dict(schemaVersion=1, kind="agent-app-experience-launch", index=index, pairIndex=pair,
+    value = dict(schemaVersion=schema_version, kind="agent-app-experience-launch", index=index, pairIndex=pair,
                 position=index % 2, arm=arm, startupType="hot" if hot else "cold", status="passed",
                 startedNanos=start, endedNanos=start + 4 * N, marker=f"aos.experience.launch.{index}",
                 driverPid=420, expectedPid=after["pid"], expectedStartupType="hot" if hot else "cold",
@@ -90,16 +93,19 @@ def launch(index, profile):
                 launchStartedElapsedNanos=start + N, launchEndedElapsedNanos=start + 3 * N,
                 launchStartedNanoTime=start + N, launchEndedNanoTime=start + 3 * N,
                 amStartOutput="Status: ok\nTotalTime: 0\nWaitTime: 12\n", unavailableReason="")
+    if schema_version == 2:
+        value.update(homePackage="com.android.launcher3" if hot else "", homeFocusedVerified=hot)
+    return value
 
 
-def trial(index, profile, api):
+def trial(index, profile, api, schema_version=1):
     repetition, position = divmod(index, 3)
     arm_index = ord(ORDERS[repetition][position]) - ord("A")
     arm = ARMS[arm_index]
     refresh = 120.0 if arm_index == 1 else 60.0
     start = N + (8 if profile == "pilot" else 400) * 5 * N + index * 6 * N
     cpu = 1000 + index * 1000
-    before = probe(500 + index, start + N)
+    before = probe(500 + index, start + N, schema_version)
     before.update(sessionId=uid(2000 + index), ended=False, finalFrameObserved=False, drainComplete=False,
                   drainTimedOut=False, displayStable=False, beforePssKb=15000 + 100 * arm_index,
                   afterPssKb=-1, beginCpuMillis=100, endCpuMillis=0, beginNanoTime=start + 2100 * M,
@@ -140,7 +146,7 @@ def trial(index, profile, api):
         return dict(elapsedRealtimeNanos=at, processCpuMillis=cpu_value, totalPssKiB=pss,
                     dalvikPssKiB=10000, nativePssKiB=5000, otherPssKiB=pss - 15000, collectionNanos=M)
     agent_delta = 5 + 10 * arm_index + 2 * repetition
-    return dict(schemaVersion=1, kind="agent-app-experience-trial", index=index, repetition=repetition,
+    return dict(schemaVersion=schema_version, kind="agent-app-experience-trial", index=index, repetition=repetition,
                 position=position, arm=arm, status="passed", startedNanos=start, endedNanos=start + 5 * N,
                 sessionId=before["sessionId"], initialStateVerified=True, editVerified=True,
                 savedTextVerified=True, counterVerified=True, drawingVerified=True, cleanupCompleted=True,
@@ -159,13 +165,17 @@ def trial(index, profile, api):
 
 
 def trace_files(directory, report, launches, mutate=None, trace_status="collected"):
+    trace_version = 2 if report["schemaVersion"] == 2 else 1
     raw_trace = b"SYNTHETIC SUMMARY UNIT TEST DATA; NOT DEVICE EVIDENCE\n"
     (directory / "trace.pftrace.gz").write_bytes(gzip.compress(raw_trace, mtime=0))
-    save(directory / "trace-capture.json", dict(schemaVersion=1, kind="agent-os-experience-trace-capture",
+    capture = dict(schemaVersion=3 if trace_version == 2 else 1, kind="agent-os-experience-trace-capture",
         status=trace_status, pid=900, stopped=True, ready=True, startMode="--background-wait",
-        config=trace.trace_config(), error=None if trace_status == "collected" else "synthetic_stop_failure",
+        config=trace.trace_config(version=trace_version), error=None if trace_status == "collected" else "synthetic_stop_failure",
         trace=dict(path="trace.pftrace", bytes=len(raw_trace), sha256=hashlib.sha256(raw_trace).hexdigest()),
-        compressed=ref(directory / "trace.pftrace.gz")))
+        compressed=ref(directory / "trace.pftrace.gz"))
+    if trace_version == 2:
+        capture.update(configVersion=2, configDelivery="stdin", startStdout="900\n", startStderr="", startExitCode=0)
+    save(directory / "trace-capture.json", capture)
     raw = dict(markers=[], startups=[], stats=[], traceStartNanos=1, traceEndNanos=10 ** 15)
     for value in launches:
         index, pid, start = value["index"], value["expectedPid"], value["startedNanos"] + N
@@ -184,25 +194,28 @@ def trace_files(directory, report, launches, mutate=None, trace_status="collecte
     writer.writerow(["result"]); writer.writerow([encoded(raw).hex().upper()])
     (directory / "startup-ttid.csv").write_bytes(stream.getvalue().encode())
     rows = trace.derive_measurements(raw, report)
-    save(directory / "startup-ttid.json", dict(schemaVersion=1, kind=trace.KIND,
+    processor = dict(version=trace.VERSION, sha256=trace.PROCESSOR_SHA256, url=trace.PROCESSOR_URL)
+    if trace_version == 2:
+        processor["arguments"] = ["--full-sort"]
+    save(directory / "startup-ttid.json", dict(schemaVersion=trace_version, kind=trace.KIND,
         diagnosticOnly=True, budgetAcceptance=False, status="passed" if rows and all(v["status"] == "passed" for v in rows) else "failed",
         trace=trace.trace_identity(directory / "trace.pftrace.gz"), package="dev.agentos.fixture", launches=rows,
-        traceErrors=raw["stats"], processor=dict(version=trace.VERSION, sha256=trace.PROCESSOR_SHA256, url=trace.PROCESSOR_URL),
+        traceErrors=raw["stats"], processor=processor,
         extraction=dict(ref(directory / "startup-ttid.csv"), sqlSha256=hashlib.sha256(trace.extraction_sql().encode()).hexdigest())))
 
 
-def write_archive(parent, profile="pilot", alter=None, trace_change=None, with_trace=True, trace_status="collected", conclusion="success", exit_code=0):
+def write_archive(parent, profile="pilot", alter=None, trace_change=None, with_trace=True, trace_status="collected", conclusion="success", exit_code=0, schema_version=1):
     root = Path(parent) / "archive"; root.mkdir()
     records = []
     for label in ("30", "31", "32", "33", "34", "35", "36", "37.0"):
         api = int(label.split('.')[0]); directory = root / "app-experience" / ("api-" + label)
         directory.mkdir(parents=True)
-        launches = [launch(i, profile) for i in range(8 if profile == "pilot" else 400)]
-        trials = [trial(i, profile, api) for i in range(3 if profile == "pilot" else 18)]
-        report = dict(schemaVersion=1, kind="agent-app-experience-diagnostics", diagnosticOnly=True,
+        launches = [launch(i, profile, schema_version) for i in range(8 if profile == "pilot" else 400)]
+        trials = [trial(i, profile, api, schema_version) for i in range(3 if profile == "pilot" else 18)]
+        report = dict(schemaVersion=schema_version, kind="agent-app-experience-diagnostics", diagnosticOnly=True,
             budgetAcceptance=False, profile=profile, status="passed", appProcessPid=420, targetPackage="dev.agentos.fixture",
             device=dict(sdkInt=api, manufacturer="synthetic", model="summary-test", hardware="synthetic",
-                        fingerprint="synthetic-fixture", emulatorHeuristic=True), conditions=evidence.conditions(profile),
+                        fingerprint="synthetic-fixture", emulatorHeuristic=True), conditions=evidence.conditions(profile, schema_version),
             startedNanos=N, endedNanos=trials[-1]["endedNanos"] + 1,
             cleanup=dict(controllerCleared=True, servicesRestored=True, enabledRestored=True, automationFlagsRestored=True),
             launches=[], trials=[])
@@ -256,6 +269,45 @@ def rewrite_payload(root, name, alter, label="30", update_inner=False):
 
 
 class AppExperienceSummaryTests(unittest.TestCase):
+    def test_v2_raw_and_probe_v3_trace_v2_full_sort_archive_passes_strictly(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = write_archive(temporary, schema_version=2)
+            value = summary.summarize(root, SHA)
+            self.assertEqual(("complete", 64, 24), (value["status"], value["validTtidCount"], value["resourceTrialCounts"]["passed"]))
+            for lane in value["lanes"]:
+                self.assertEqual(2, lane["report"]["schemaVersion"])
+                self.assertEqual(1000, lane["report"]["conditions"]["homeSettleMillis"])
+                self.assertEqual(2, lane["launches"][0]["afterLaunch"]["schemaVersion"])
+                self.assertEqual(0, lane["launches"][0]["afterLaunch"]["sequenceMismatchCount"])
+                self.assertEqual(0, lane["launches"][0]["afterLaunch"]["zeroDrawingTimeCount"])
+                self.assertEqual("com.android.launcher3", lane["launches"][4]["homePackage"])
+                self.assertTrue(lane["launches"][4]["homeFocusedVerified"])
+                self.assertEqual(2, lane["trials"][0]["targetAfter"]["schemaVersion"])
+                self.assertEqual((3, 2), (lane["traceCapture"]["schemaVersion"], lane["traceCapture"]["configVersion"]))
+                self.assertIn("fill_policy: RING_BUFFER", lane["traceCapture"]["config"])
+                self.assertEqual(2, lane["startupDerivation"]["schemaVersion"])
+                self.assertEqual(["--full-sort"], lane["startupDerivation"]["processor"]["arguments"])
+                self.assertEqual(10, lane["trials"][0]["metrics"]["targetCpuDeltaMillis"])
+            # Rehashed metadata must not let the v3 capture downgrade its derivation.
+            rewrite_payload(root, "startup-ttid.json", lambda item: item.update(
+                schemaVersion=1, processor={key: value for key, value in item["processor"].items() if key != "arguments"}), update_inner=True)
+            with self.assertRaises(ValueError): summary.summarize(root, SHA)
+
+    def test_v2_unresolved_draw_preserves_matched_frame_and_unavailable_sample(self):
+        def alter(report, launches, trials):
+            report["status"] = "failed"
+            launches[0].update(status="unavailable", unavailableReason="unresolved_draw_observation")
+            launches[0]["afterLaunch"].update(unresolvedDrawCount=1, sequenceMismatchCount=1)
+        with tempfile.TemporaryDirectory() as temporary:
+            value = summary.summarize(write_archive(temporary, schema_version=2, alter=alter), SHA)
+        self.assertEqual((64, 56, 8), (value["expectedLaunchCount"], value["validTtidCount"], value["launchCounts"]["unavailable"]))
+        self.assertEqual(24, value["resourceTrialCounts"]["passed"])
+        sample = value["lanes"][0]["launches"][0]
+        self.assertTrue(sample["newDrawVerified"])
+        self.assertTrue(sample["afterLaunch"]["drawFrameObserved"])
+        self.assertEqual("unresolved_draw_observation", sample["reason"])
+        self.assertIsNone(sample["ttidMillis"])
+
     def test_pilot_counts_arithmetic_and_no_formal_p95(self):
         with tempfile.TemporaryDirectory() as temporary:
             value = summary.summarize(write_archive(temporary), SHA)

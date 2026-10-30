@@ -27,11 +27,13 @@ def identifier(number):
     return f'00000000-0000-4000-8000-{number:012d}'
 
 
-def probe(number=1, now=1_000_000_000):
-    value = dict(schemaVersion=1, clockDomain='CLOCK_MONOTONIC_System.nanoTime', pid=200 + number,
+def probe(number=1, now=1_000_000_000, schema_version=1):
+    value = dict(schemaVersion=schema_version, clockDomain='CLOCK_MONOTONIC_System.nanoTime', pid=200 + number,
                  uid=10001, processInstance=identifier(number), activityInstance=identifier(number + 1000),
                  refreshHz=60.0, modeHz=60.0, displayId=0, editorText='', savedText='Saved: empty',
-                 drawMatchMethod='post_OnDraw_View.getDrawingTime_equals_floor_FrameMetrics.VSYNC_TIMESTAMP_ms')
+                 drawMatchMethod=experience.DRAW_METHODS[schema_version])
+    if schema_version == 2:
+        value.update(sequenceMismatchCount=0, zeroDrawingTimeCount=0)
     value.update({key: False for key in experience.STATUS_BOOL})
     value.update({key: 0 for key in experience.STATUS_INT})
     value.update(activityPresent=True, resumed=True, windowFocused=True, hardwareAccelerated=True,
@@ -53,19 +55,19 @@ def sample(when, cpu):
                 dalvikPssKiB=10000, nativePssKiB=5000, otherPssKiB=5000, collectionNanos=1_000_000)
 
 
-def launch(index=0, profile='pilot'):
+def launch(index=0, profile='pilot', schema_version=1):
     pair, position, arm, startup_type = experience.launch_identity(index, profile)
     start = 1_000_000_000 + index * 5_000_000_000
     marker_start = start + 1_000_000_000
     cold_count = experience.PROFILES[profile][0] * 2
-    after = probe(index + 1 if startup_type == 'cold' else cold_count, marker_start + 1_000_000)
+    after = probe(index + 1 if startup_type == 'cold' else cold_count, marker_start + 1_000_000, schema_version)
     before = None
     if startup_type == 'hot':
         before = copy.deepcopy(after)
         before.update(stopped=True, resumed=False, windowFocused=False, resumeCount=index - cold_count + 1,
                       drawVsyncNs=marker_start - 1_000_000, drawTimeMillis=(marker_start - 1_000_000) // 1_000_000)
         after['resumeCount'] = before['resumeCount'] + 1
-    return dict(schemaVersion=1, kind=experience.LAUNCH_KIND, index=index, pairIndex=pair, position=position,
+    value = dict(schemaVersion=schema_version, kind=experience.LAUNCH_KIND, index=index, pairIndex=pair, position=position,
                 arm=arm, startupType=startup_type, status='passed', startedNanos=start, endedNanos=start + 4_000_000_000,
                 marker=f'aos.experience.launch.{index}', driverPid=420, expectedPid=after['pid'], expectedStartupType=startup_type,
                 preLaunchPidAbsent=startup_type == 'cold', homeStoppedVerified=startup_type == 'hot',
@@ -74,13 +76,17 @@ def launch(index=0, profile='pilot'):
                 launchStartedElapsedNanos=marker_start, launchEndedElapsedNanos=start + 3_000_000_000,
                 launchStartedNanoTime=marker_start, launchEndedNanoTime=start + 3_000_000_000,
                 amStartOutput='Status: ok\nTotalTime: 0\n', unavailableReason='')
+    if schema_version == 2:
+        value.update(homePackage='com.android.launcher3' if startup_type == 'hot' else '',
+                     homeFocusedVerified=startup_type == 'hot')
+    return value
 
 
-def trial(index=0, profile='pilot', api=37):
+def trial(index=0, profile='pilot', api=37, schema_version=1):
     arm = experience.trial_arm(index)
     start = 1_000_000_000 + experience.conditions(profile)['launchCount'] * 5_000_000_000 + index * 6_000_000_000
     cpu = 1000 + index * 1000
-    before = probe(500 + index, start + 1_000_000_000)
+    before = probe(500 + index, start + 1_000_000_000, schema_version)
     before.update({key: False for key in experience.SESSION_BOOL})
     before.update({key: 0 for key in experience.SESSION_INT})
     before.update({key: 60.0 for key in experience.SESSION_HZ})
@@ -104,7 +110,7 @@ def trial(index=0, profile='pilot', api=37):
                  droppedReports=0, refreshHz=60.0, modeHz=60.0, displayId=0, drawVersion=3,
                  drawNanoTime=start + 2_501_000_000, crossesBegin=False, refreshObservedNanoTime=start + 2_000_000_000)
     agent = arm == experience.ARMS[2]
-    return dict(schemaVersion=1, kind=experience.TRIAL_KIND, index=index, repetition=index // 3, position=index % 3,
+    return dict(schemaVersion=schema_version, kind=experience.TRIAL_KIND, index=index, repetition=index // 3, position=index % 3,
                 arm=arm, status='passed', startedNanos=start, endedNanos=start + 5_000_000_000,
                 sessionId=before['sessionId'], initialStateVerified=True, editVerified=True, savedTextVerified=True,
                 counterVerified=True, drawingVerified=True, cleanupCompleted=True,
@@ -119,9 +125,9 @@ def trial(index=0, profile='pilot', api=37):
                 approvalCount=3 if agent else 0, resultKind='MODEL_REPORT' if agent else '', resultCode='MODEL_REPORT' if agent else '')
 
 
-def report(api=37, profile='pilot', launches=None, trials=None, status='passed'):
-    launches = [launch(i, profile) for i in range(experience.conditions(profile)['launchCount'])] if launches is None else launches
-    trials = [trial(i, profile, api) for i in range(experience.conditions(profile)['trialCount'])] if trials is None else trials
+def report(api=37, profile='pilot', launches=None, trials=None, status='passed', schema_version=1):
+    launches = [launch(i, profile, schema_version) for i in range(experience.conditions(profile)['launchCount'])] if launches is None else launches
+    trials = [trial(i, profile, api, schema_version) for i in range(experience.conditions(profile)['trialCount'])] if trials is None else trials
     def refs(values, namer):
         result = []
         for value in values:
@@ -132,20 +138,20 @@ def report(api=37, profile='pilot', launches=None, trials=None, status='passed')
                 ref.update({key: value[key] for key in ('marker', 'expectedPid', 'expectedStartupType', 'driverPid')})
             result.append(ref)
         return result
-    return dict(schemaVersion=1, kind=experience.KIND, diagnosticOnly=True, budgetAcceptance=False, profile=profile,
+    return dict(schemaVersion=schema_version, kind=experience.KIND, diagnosticOnly=True, budgetAcceptance=False, profile=profile,
                 status=status, appProcessPid=420, targetPackage=experience.TARGET_PACKAGE,
                 device=dict(sdkInt=api, manufacturer='synthetic', model='unit-test', hardware='synthetic',
-                            fingerprint='synthetic-fixture', emulatorHeuristic=True), conditions=experience.conditions(profile),
+                            fingerprint='synthetic-fixture', emulatorHeuristic=True), conditions=experience.conditions(profile, schema_version),
                 startedNanos=1_000_000_000, endedNanos=-1 if status == 'incomplete' else (trials or launches or [dict(endedNanos=1_000_000_000)])[-1]['endedNanos'] + 1,
                 cleanup={key: status != 'incomplete' for key in experience.CLEANUP},
                 launches=refs(launches, experience.launch_name), trials=refs(trials, experience.trial_name))
 
 
-def write_bundle(directory, api=37, profile='pilot', launches=None, trials=None, status='passed', with_trace=True):
+def write_bundle(directory, api=37, profile='pilot', launches=None, trials=None, status='passed', with_trace=True, schema_version=1):
     directory = Path(directory); directory.mkdir(parents=True, exist_ok=True)
-    launches = [launch(i, profile) for i in range(experience.conditions(profile)['launchCount'])] if launches is None else launches
-    trials = [trial(i, profile, api) for i in range(experience.conditions(profile)['trialCount'])] if trials is None else trials
-    value = report(api, profile, launches, trials, status)
+    launches = [launch(i, profile, schema_version) for i in range(experience.conditions(profile)['launchCount'])] if launches is None else launches
+    trials = [trial(i, profile, api, schema_version) for i in range(experience.conditions(profile)['trialCount'])] if trials is None else trials
+    value = report(api, profile, launches, trials, status, schema_version)
     for item in launches:
         (directory / experience.launch_name(item['index'])).write_bytes(encoded(item))
     for item in trials:
@@ -158,14 +164,17 @@ def write_bundle(directory, api=37, profile='pilot', launches=None, trials=None,
 
 def write_trace(directory, value, mutate=None):
     directory = Path(directory)
+    trace_version = 2 if value['schemaVersion'] == 2 else 1
     raw_trace = b'SYNTHETIC UNIT TEST TRACE: not device evidence\n'
     zipped = gzip.compress(raw_trace, mtime=0)
     (directory / 'trace.pftrace.gz').write_bytes(zipped)
-    capture = dict(schemaVersion=2, kind='agent-os-experience-trace-capture', status='collected', pid=900,
+    capture = dict(schemaVersion=3 if trace_version == 2 else 2, kind='agent-os-experience-trace-capture', status='collected', pid=900,
                    configDelivery='stdin', startStdout='900\n', startStderr='', startExitCode=0,
-                   stopped=True, ready=True, startMode='--background-wait', config=trace.trace_config(), error=None,
+                   stopped=True, ready=True, startMode='--background-wait', config=trace.trace_config(version=trace_version), error=None,
                    trace=dict(path='trace.pftrace', bytes=len(raw_trace), sha256=hashlib.sha256(raw_trace).hexdigest()),
                    compressed=dict(path='trace.pftrace.gz', bytes=len(zipped), sha256=hashlib.sha256(zipped).hexdigest()))
+    if trace_version == 2:
+        capture['configVersion'] = 2
     (directory / 'trace-capture.json').write_bytes(encoded(capture))
     raw = dict(markers=[], startups=[], stats=[], traceStartNanos=1, traceEndNanos=10 ** 15)
     for ref in value['launches']:
@@ -182,10 +191,10 @@ def write_trace(directory, value, mutate=None):
     stream = io.StringIO(); writer = csv.writer(stream); writer.writerow(['result']); writer.writerow([encoded(raw).hex().upper()])
     data = stream.getvalue().encode(); (directory / 'startup-ttid.csv').write_bytes(data)
     rows = trace.derive_measurements(raw, value)
-    derived = dict(schemaVersion=1, kind=trace.KIND, diagnosticOnly=True, budgetAcceptance=False,
+    derived = dict(schemaVersion=trace_version, kind=trace.KIND, diagnosticOnly=True, budgetAcceptance=False,
                    status='passed' if all(row['status'] == 'passed' for row in rows) else 'failed',
                    trace=trace.trace_identity(directory / 'trace.pftrace.gz'),
-                   processor=dict(version=trace.VERSION, sha256=trace.PROCESSOR_SHA256, url=trace.PROCESSOR_URL),
+                   processor=trace.processor_identity(trace_version),
                    package=experience.TARGET_PACKAGE, launches=rows, traceErrors=raw['stats'],
                    extraction=dict(path='startup-ttid.csv', bytes=len(data), sha256=hashlib.sha256(data).hexdigest(),
                                    sqlSha256=hashlib.sha256(trace.extraction_sql().encode()).hexdigest()))
@@ -220,6 +229,60 @@ class AppExperienceEvidenceTests(unittest.TestCase):
                 self.assertEqual(original, value)
                 other = 'formal' if profile == 'pilot' else 'pilot'
                 with self.assertRaises(ValueError): experience.validate_report(value, 37, other)
+
+    def test_raw_v2_home_preparation_and_probe_causes_are_versioned(self):
+        for profile in ('pilot', 'formal'):
+            with tempfile.TemporaryDirectory() as temporary:
+                value = write_bundle(temporary, profile=profile, schema_version=2)
+                capture = collected_capture(temporary, value)
+                experience.validate_payloads(temporary, capture, '37.0', SOURCE, profile)
+                self.assertEqual(1000, value['conditions']['homeSettleMillis'])
+        for mutate in (lambda value: value['conditions'].update(homeSettleMillis=999),
+                       lambda value: value['conditions'].pop('homePreparation'),
+                       lambda value: value.update(schemaVersion=1)):
+            value = report(schema_version=2); mutate(value)
+            with self.assertRaises(ValueError): experience.validate_report(value, 37)
+        value = report(); value['conditions'].update(homeSettleMillis=1000)
+        with self.assertRaises(ValueError): experience.validate_report(value, 37)
+        for index in (0, 4):
+            for mutate in (lambda value: value['afterLaunch'].update(schemaVersion=1),
+                           lambda value: value['afterLaunch'].update(drawMatchMethod=experience.DRAW_METHODS[1]),
+                           lambda value: value['afterLaunch'].update(sequenceMismatchCount=True),
+                           lambda value: value['afterLaunch'].update(sequenceMismatchCount=1),
+                           lambda value: value.update(schemaVersion=1)):
+                value = launch(index, schema_version=2); mutate(value)
+                with self.assertRaises(ValueError): experience.validate_launch(value, index, report(schema_version=2))
+        for mutate in (lambda value: value.update(homePackage=''),
+                       lambda value: value.update(homePackage='../launcher'),
+                       lambda value: value.update(homeFocusedVerified=False)):
+            value = launch(4, schema_version=2); mutate(value)
+            with self.assertRaises(ValueError): experience.validate_launch(value, 4, report(schema_version=2))
+        value = launch(0, schema_version=2); value['homeFocusedVerified'] = True
+        with self.assertRaises(ValueError): experience.validate_launch(value, 0, report(schema_version=2))
+        value = launch(); value['afterLaunch'].update(sequenceMismatchCount=0, zeroDrawingTimeCount=0)
+        with self.assertRaises(ValueError): experience.validate_launch(value, 0, report())
+        value = trial(schema_version=2); value['targetAfter']['zeroDrawingTimeCount'] = 1
+        with self.assertRaisesRegex(ValueError, 'cause_total'): experience.validate_trial(value, 0, report(schema_version=2))
+
+    def test_v2_unresolved_reason_retains_a_real_new_frame_without_passing(self):
+        for index in (0, 4):
+            value = launch(index, schema_version=2)
+            value.update(status='unavailable', newDrawVerified=True, unavailableReason='unresolved_draw_observation')
+            value['afterLaunch'].update(unresolvedDrawCount=1, sequenceMismatchCount=1)
+            experience.validate_launch(value, index, report(schema_version=2))
+            for changes in (dict(newDrawVerified=False), dict(status='passed', unavailableReason=''),
+                            dict(unavailableReason='no_new_draw_frame_report')):
+                invalid = copy.deepcopy(value); invalid.update(changes)
+                with self.assertRaises(ValueError): experience.validate_launch(invalid, index, report(schema_version=2))
+            value['afterLaunch'].update(unresolvedDrawCount=0, sequenceMismatchCount=0)
+            with self.assertRaises(ValueError): experience.validate_launch(value, index, report(schema_version=2))
+        value = launch(4, schema_version=2)
+        value.update(status='unavailable', newDrawVerified=False, unavailableReason='no_new_draw_frame_report')
+        value['afterLaunch']['drawFrameObserved'] = False
+        experience.validate_launch(value, 4, report(schema_version=2))
+        legacy = launch(4); legacy.update(status='unavailable', newDrawVerified=True,
+                                         unavailableReason='unresolved_draw_observation')
+        with self.assertRaises(ValueError): experience.validate_launch(legacy, 4, report())
 
     def test_failed_and_incomplete_prefix_never_promoted(self):
         for status in ('failed', 'incomplete'):
@@ -415,6 +478,31 @@ class AppExperienceEvidenceTests(unittest.TestCase):
             legacy['startExitCode'] = 1
             with self.assertRaises(ValueError): experience.validate_trace_capture(legacy, {})
 
+    def test_trace_v3_uses_only_versioned_ring_config_and_full_sort_derivation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); value = write_bundle(root, schema_version=2)
+            payloads = experience.validate_bundle(root, value, 37)
+            state = experience.strict_json(payloads['trace-capture.json'])
+            derived = experience.strict_json(payloads['startup-ttid.json'])
+            self.assertEqual((3, 2), (state['schemaVersion'], state['configVersion']))
+            self.assertIn('fill_policy: RING_BUFFER', state['config'])
+            self.assertEqual(['--full-sort'], derived['processor']['arguments'])
+            for changes in (dict(configVersion=1), dict(configVersion=True),
+                            dict(config=trace.trace_config(version=1)), dict(schemaVersion=2)):
+                invalid = dict(state, **changes)
+                with self.assertRaises(ValueError): experience.validate_trace_capture(invalid, payloads)
+            legacy = {key: item for key, item in state.items() if key != 'configVersion'}
+            legacy['schemaVersion'] = 2
+            with self.assertRaisesRegex(ValueError, 'config_mismatch'):
+                experience.validate_trace_capture(legacy, payloads)
+            legacy['config'] = trace.trace_config(version=1)
+            experience.validate_trace_capture(legacy, payloads)
+            derived.update(schemaVersion=1, processor=trace.processor_identity(1))
+            (root / 'startup-ttid.json').write_bytes(encoded(derived))
+            with self.assertRaises(ValueError): experience.validate_bundle(root, value, 37)
+        self.assertEqual('6646bb1c53eeafbcf95efba46636928a4e388d51b02360dd50577674512386ed',
+                         hashlib.sha256(trace.trace_config(version=1).encode()).hexdigest())
+
     def test_rehashed_cross_trial_cpu_and_cold_process_reuse_are_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             launches = [launch(i) for i in range(8)]
@@ -550,7 +638,7 @@ class AppExperienceEvidenceTests(unittest.TestCase):
             value=write_bundle(device, launches=[launch()], trials=[], status='incomplete', with_trace=False)
             (device/'launch-001.json').write_text('uncommitted orphan')
             trace_state=dict(schemaVersion=1, kind='agent-os-experience-trace-capture', status='failed', pid=None,
-                             stopped=False, ready=False, startMode=None, config=trace.trace_config(), trace=None, compressed=None, error='fixture failure')
+                             stopped=False, ready=False, startMode=None, config=trace.trace_config(version=1), trace=None, compressed=None, error='fixture failure')
             (out/'trace-capture.json').write_bytes(encoded(trace_state))
             calls=[]
             def run(args,**kwargs):

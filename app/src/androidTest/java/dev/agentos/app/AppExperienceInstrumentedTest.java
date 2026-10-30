@@ -7,6 +7,8 @@ import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Debug;
@@ -61,7 +63,7 @@ public final class AppExperienceInstrumentedTest {
     private static final String COMPONENT = "dev.agentos.app/dev.agentos.app.AgentAccessibilityService";
     private static final String[] ARMS = {"A_SERVICE_OFF", "B_SERVICE_ON_IDLE", "C_SERVICE_ON_AGENT"};
     private static final String[] ORDERS = {"ABC", "BCA", "CAB", "ACB", "CBA", "BAC"};
-    private static final long TASK_MILLIS = 30_000, SEQUENCE_MILLIS = 2_300_000;
+    private static final long TASK_MILLIS = 30_000, SEQUENCE_MILLIS = 2_300_000, HOME_SETTLE_MILLIS = 1_000;
     private static final String REPORT = "experience-diagnostics.json";
     private static final Gson JSON = new GsonBuilder().serializeNulls().create();
     private static final int AUTOMATION_FLAGS = AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
@@ -127,7 +129,7 @@ public final class AppExperienceInstrumentedTest {
                 }
             }
             screenshots.capture("app-experience-sequence-after");
-            assertTrue("A launch lacked a new natural draw and matching FrameMetrics; raw unavailable records are retained", allLaunchesAvailable);
+            assertTrue("A launch had unavailable natural-frame or draw-association evidence; raw reasons are retained", allLaunchesAvailable);
             passed = true;
         } finally {
             boolean controllerCleared = false, servicesRestored = false, enabledRestored = false;
@@ -169,7 +171,7 @@ public final class AppExperienceInstrumentedTest {
         int pair = (index % (pairs * 2)) / 2, position = index % 2;
         String startupType = index < pairs * 2 ? "cold" : "hot";
         JsonObject value = new JsonObject();
-        value.addProperty("schemaVersion", 1);
+        value.addProperty("schemaVersion", 2);
         value.addProperty("kind", "agent-app-experience-launch");
         value.addProperty("index", index);
         value.addProperty("pairIndex", pair);
@@ -183,6 +185,8 @@ public final class AppExperienceInstrumentedTest {
         value.addProperty("driverPid", Process.myPid());
         value.addProperty("expectedPid", -1);
         value.addProperty("expectedStartupType", startupType);
+        value.addProperty("homePackage", "");
+        value.addProperty("homeFocusedVerified", false);
         for (String key : new String[]{"preLaunchPidAbsent", "homeStoppedVerified", "lifecycleVerified", "newDrawVerified"}) value.addProperty(key, false);
         for (String key : new String[]{"stateBefore", "stateAfter", "beforeLaunch", "afterLaunch"}) value.add(key, JsonNull.INSTANCE);
         for (String key : new String[]{"launchStartedElapsedNanos", "launchEndedElapsedNanos", "launchStartedNanoTime", "launchEndedNanoTime"}) value.addProperty(key, -1);
@@ -206,16 +210,29 @@ public final class AppExperienceInstrumentedTest {
         } else {
             Bundle foreground = provider("status", null, null);
             assertTrue("Hot setup target was not resumed", foreground.getBoolean("resumed"));
+            String homePackage = resolvedHomePackage();
+            value.addProperty("homePackage", homePackage);
             assertTrue(automation.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_HOME));
             Bundle[] stopped = {null};
-            await("HOME did not stop the existing target Activity", () -> {
+            await("HOME did not focus the resolved launcher and stop the target Activity", () -> {
                 stopped[0] = provider("status", null, null);
-                return stopped[0].getBoolean("stopped") && !stopped[0].getBoolean("resumed");
+                return stopped[0].getBoolean("stopped") && !stopped[0].getBoolean("resumed")
+                        && homePackage.equals(focusedApplicationPackage());
             }, 8_000);
-            before = stopped[0];
-            assertIdentity(foreground, before);
+            assertIdentity(foreground, stopped[0]);
+            // Identical preparation in A and B, outside the launch marker. A
+            // callback entering onStop alone does not certify a settled HOME
+            // transition; verify real launcher focus and the stopped target again.
+            SystemClock.sleep(HOME_SETTLE_MILLIS);
+            before = provider("status", null, null);
             value.add("beforeLaunch", bundleJson(before));
+            assertIdentity(foreground, before);
+            assertTrue("Target left its stopped HOME preparation state", before.getBoolean("stopped") && !before.getBoolean("resumed"));
+            assertEquals("Resolved launcher lost focus during HOME settling", homePackage, focusedApplicationPackage());
+            assertEquals(stopped[0].getLong("resumeCount"), before.getLong("resumeCount"));
+            assertEquals(stopped[0].getLong("stopCount"), before.getLong("stopCount"));
             value.addProperty("homeStoppedVerified", true);
+            value.addProperty("homeFocusedVerified", true);
         }
         JsonObject stateBefore = readState(controller);
         value.add("stateBefore", stateBefore);
@@ -230,16 +247,16 @@ public final class AppExperienceInstrumentedTest {
             value.addProperty("amStartOutput", output);
             assertTrue("am start did not report a successful launch", output.contains("Status: ok") && !output.contains("Error:"));
             long deadline = Math.min(sequenceDeadlineNanos, SystemClock.elapsedRealtimeNanos() + 3_000_000_000L);
-            boolean newDraw = false;
+            boolean newDraw = false, observationsResolved = false;
             do {
                 after = provider("status", null, null);
                 value.addProperty("expectedPid", after.getInt("pid"));
                 boolean resumed = after.getBoolean("resumed") && after.getBoolean("windowFocused");
                 newDraw = resumed && after.getBoolean("drawFrameObserved") && !after.getBoolean("drawMatchAmbiguous")
                         && after.getLong("drawVsyncNs") > 0
-                        && (cold || after.getLong("drawVsyncNs") > before.getLong("drawVsyncNs"))
-                        && after.getLong("unresolvedDrawCount") == (cold ? 0 : before.getLong("unresolvedDrawCount"));
-                if (newDraw) break;
+                        && (cold || after.getLong("drawVsyncNs") > before.getLong("drawVsyncNs"));
+                observationsResolved = after.getLong("unresolvedDrawCount") == (cold ? 0 : before.getLong("unresolvedDrawCount"));
+                if (newDraw && observationsResolved) break;
                 SystemClock.sleep(25);
             } while (SystemClock.elapsedRealtimeNanos() < deadline);
             assertNotNull(after);
@@ -257,8 +274,9 @@ public final class AppExperienceInstrumentedTest {
             }
             value.addProperty("lifecycleVerified", true);
             value.addProperty("newDrawVerified", newDraw);
-            value.addProperty("status", newDraw ? "passed" : "unavailable");
+            value.addProperty("status", newDraw && observationsResolved ? "passed" : "unavailable");
             if (!newDraw) value.addProperty("unavailableReason", "no_new_draw_frame_report");
+            else if (!observationsResolved) value.addProperty("unavailableReason", "unresolved_draw_observation");
         } finally {
             Trace.endSection();
             value.addProperty("launchEndedNanoTime", System.nanoTime());
@@ -269,6 +287,37 @@ public final class AppExperienceInstrumentedTest {
         value.add("stateAfter", stateAfter);
         assertIdleState(stateAfter, enabled, true);
         checkSequence();
+    }
+
+    private String resolvedHomePackage() {
+        ResolveInfo resolved = context.getPackageManager().resolveActivity(new Intent(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_HOME), PackageManager.MATCH_DEFAULT_ONLY);
+        assertNotNull("A resolved default HOME activity is required", resolved);
+        assertNotNull("Resolved HOME lacks an Activity identity", resolved.activityInfo);
+        String name = resolved.activityInfo.packageName;
+        assertTrue("HOME resolved to no launcher or to a resolver dialog", name != null && !name.isEmpty()
+                && !"android".equals(name) && !FIXTURE.equals(name) && !context.getPackageName().equals(name));
+        return name;
+    }
+
+    private String focusedApplicationPackage() {
+        List<AccessibilityWindowInfo> windows = automation.getWindows();
+        if (windows == null) return "";
+        try {
+            AccessibilityWindowInfo focused = null;
+            int count = 0;
+            for (AccessibilityWindowInfo window : windows) {
+                if (window.getDisplayId() == Display.DEFAULT_DISPLAY && window.isFocused()) {
+                    focused = window;
+                    count++;
+                }
+            }
+            if (count != 1 || focused == null || focused.getType() != AccessibilityWindowInfo.TYPE_APPLICATION) return "";
+            AccessibilityNodeInfo root = focused.getRoot();
+            if (root == null) return "";
+            try { return root.getPackageName() == null ? "" : root.getPackageName().toString(); }
+            finally { root.recycle(); }
+        } finally { for (AccessibilityWindowInfo window : windows) window.recycle(); }
     }
 
     private static void assertIdentity(Bundle before, Bundle after) {
@@ -286,7 +335,7 @@ public final class AppExperienceInstrumentedTest {
             int repetition = index / 3, position = index % 3;
             arm = ORDERS[repetition].charAt(position) - 'A';
             agent = arm == 2;
-            result.addProperty("schemaVersion", 1);
+            result.addProperty("schemaVersion", 2);
             result.addProperty("kind", "agent-app-experience-trial");
             result.addProperty("index", index);
             result.addProperty("repetition", repetition);
@@ -466,7 +515,7 @@ public final class AppExperienceInstrumentedTest {
     private Bundle provider(String method, String arg, Bundle extras) {
         Bundle value = context.getContentResolver().call(PROVIDER, method, arg, extras);
         assertNotNull("Fixture diagnostic provider returned no bundle", value);
-        assertEquals(1, value.getInt("schemaVersion"));
+        assertEquals(2, value.getInt("schemaVersion"));
         assertEquals("CLOCK_MONOTONIC_System.nanoTime", value.getString("clockDomain"));
         assertTrue(value.getInt("pid") > 0);
         return value;
@@ -533,7 +582,7 @@ public final class AppExperienceInstrumentedTest {
 
     private JsonObject reportHeader() {
         JsonObject report = new JsonObject();
-        report.addProperty("schemaVersion", 1);
+        report.addProperty("schemaVersion", 2);
         report.addProperty("kind", "agent-app-experience-diagnostics");
         report.addProperty("diagnosticOnly", true);
         report.addProperty("budgetAcceptance", false);
@@ -566,6 +615,8 @@ public final class AppExperienceInstrumentedTest {
         conditions.addProperty("startupOrder", "AB_BA_alternating");
         conditions.addProperty("resourceOrder", "pilot".equals(profile) ? "ABC" : "ABC_BCA_CAB_ACB_CBA_BAC");
         conditions.addProperty("startupSettleMillis", 250);
+        conditions.addProperty("homeSettleMillis", HOME_SETTLE_MILLIS);
+        conditions.addProperty("homePreparation", "resolved_HOME_focused_stopped_settle_recheck");
         conditions.addProperty("resourceSettleMillis", 2_000);
         conditions.addProperty("taskTimeoutMillis", TASK_MILLIS);
         conditions.addProperty("sequenceTimeoutMillis", SEQUENCE_MILLIS);

@@ -172,9 +172,33 @@ class ExperienceTraceTests(unittest.TestCase):
         self.assertIn("max_file_size_bytes: 67108864", config)
         self.assertIn("write_into_file: true", config)
         self.assertIn("android.surfaceflinger.frametimeline", config)
-        self.assertNotIn("RING_BUFFER", config)
+        self.assertEqual(2, config.count("fill_policy: RING_BUFFER"))
+        self.assertNotIn("DISCARD", config)
         self.assertNotIn("sched/sched_switch", config)
         self.assertNotIn("duration_ms", config)
+        self.assertIn('atrace_categories: "am"', config)
+        self.assertIn('atrace_categories: "view"', config)
+        self.assertNotIn('atrace_categories: "gfx"', config)
+        self.assertNotIn('atrace_categories: "wm"', config)
+
+    def test_legacy_config_remains_byte_exact_for_archived_failures(self):
+        legacy = trace.trace_config(version=1)
+        self.assertEqual("6646bb1c53eeafbcf95efba46636928a4e388d51b02360dd50577674512386ed",
+                         trace.sha256(legacy.encode()))
+        expected = legacy.replace("fill_policy: DISCARD", "fill_policy: RING_BUFFER")
+        expected = expected.replace('    atrace_categories: "gfx"\n', '')
+        expected = expected.replace('    atrace_categories: "wm"\n', '')
+        self.assertEqual(expected, trace.trace_config(version=2))
+        for version in (True, 0, 3, "2"):
+            with self.assertRaises(ValueError): trace.trace_config(version=version)
+
+    def test_parser_arguments_are_versioned_without_relabeling_legacy(self):
+        legacy = trace.processor_identity(1)
+        current = trace.processor_identity(2)
+        self.assertNotIn("arguments", legacy)
+        self.assertEqual(dict(legacy, arguments=["--full-sort"]), current)
+        for version in (True, 0, 3, "2"):
+            with self.assertRaises(ValueError): trace.processor_identity(version)
 
     def test_trace_bounds_gzip_and_checksum_are_verified(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -202,6 +226,8 @@ class ExperienceTraceTests(unittest.TestCase):
                                             expectedStartupType="hot", driverPid=300))
             query = Path(temp) / "startup-ttid.csv"
             value = trace.derive_trace(path, report, os.environ["TEST_TRACE_PROCESSOR"], query)
+            self.assertEqual(2, value["schemaVersion"])
+            self.assertEqual(["--full-sort"], value["processor"]["arguments"])
             self.assertEqual("passed", value["status"])
             self.assertEqual([500000, 500000], [r["ttidNanos"] for r in value["launches"]])
             trace.validate_derivation(value, report, path, query)
@@ -212,6 +238,14 @@ class ExperienceTraceTests(unittest.TestCase):
                 modified = copy.deepcopy(value); modified["launches"][0][key] = replacement
                 with self.assertRaisesRegex(ValueError, "recompute"):
                     trace.validate_derivation(modified, report, path, query)
+            modified = copy.deepcopy(value); modified["processor"]["arguments"] = []
+            with self.assertRaisesRegex(ValueError, "processor"):
+                trace.validate_derivation(modified, report, path, query)
+            legacy = trace.derive_trace(path, report, os.environ["TEST_TRACE_PROCESSOR"], query,
+                                        schema_version=1)
+            self.assertEqual(1, legacy["schemaVersion"])
+            self.assertNotIn("arguments", legacy["processor"])
+            trace.validate_derivation(legacy, report, path, query)
 
 
 if __name__ == "__main__":

@@ -27,7 +27,7 @@ final class PerformanceProbe {
     private static final Frame[] RECENT_FRAMES = new Frame[128];
     private static int drawPosition;
     private static int recentFramePosition;
-    private static long drawSequence, unresolvedDrawCount;
+    private static long drawSequence, unresolvedDrawCount, sequenceMismatchCount, zeroDrawingTimeCount;
     private static String activityInstance = "";
     private static boolean present, resumed, stopped, focused, hardwareAccelerated;
     private static long mutationVersion, drawVersion, drawVsyncNs, drawNanoTime;
@@ -56,7 +56,7 @@ final class PerformanceProbe {
             java.util.Arrays.fill(RECENT_FRAMES, null);
             drawPosition = 0;
             recentFramePosition = 0;
-            drawSequence = unresolvedDrawCount = 0;
+            drawSequence = unresolvedDrawCount = sequenceMismatchCount = zeroDrawingTimeCount = 0;
             drawFrameObserved = false;
             activityFrameCount = activityDroppedReports = lastFrameVsyncNs = lastFrameCallbackNanoTime = 0;
             displayChangeCount = edits = saves = increments = 0;
@@ -119,6 +119,10 @@ final class PerformanceProbe {
         synchronized (LOCK) {
             if (observation == null || !activityInstance.equals(observation.instance)) return;
             if (observation.sequence != drawSequence || drawingTimeMillis <= 0) {
+                // Classify each rejected observation once, with sequence mismatch
+                // taking precedence if its later-frame time is also unavailable.
+                if (observation.sequence != drawSequence) sequenceMismatchCount++;
+                else zeroDrawingTimeCount++;
                 unresolvedDrawCount++;
                 LOCK.notifyAll();
                 return;
@@ -310,7 +314,7 @@ final class PerformanceProbe {
     }
     private static Bundle identity() {
         Bundle result = new Bundle();
-        result.putInt("schemaVersion", 1);
+        result.putInt("schemaVersion", 2);
         result.putString("clockDomain", "CLOCK_MONOTONIC_System.nanoTime");
         result.putInt("pid", Process.myPid()); result.putInt("uid", Process.myUid());
         result.putString("processInstance", PROCESS_INSTANCE); result.putString("activityInstance", activityInstance);
@@ -328,10 +332,12 @@ final class PerformanceProbe {
         result.putLong("mutationVersion", mutationVersion); result.putLong("drawVersion", drawVersion);
         result.putLong("drawVsyncNs", drawVsyncNs); result.putLong("drawNanoTime", drawNanoTime);
         result.putLong("drawTimeMillis", drawTimeMillis);
-        result.putString("drawMatchMethod", "post_OnDraw_View.getDrawingTime_equals_floor_FrameMetrics.VSYNC_TIMESTAMP_ms");
+        result.putString("drawMatchMethod", "front_post_OnDraw_View.getDrawingTime_equals_floor_FrameMetrics.VSYNC_TIMESTAMP_ms");
         result.putBoolean("drawFrameObserved", drawFrameObserved);
         result.putBoolean("drawMatchAmbiguous", drawMatchAmbiguous);
         result.putLong("unresolvedDrawCount", unresolvedDrawCount);
+        result.putLong("sequenceMismatchCount", sequenceMismatchCount);
+        result.putLong("zeroDrawingTimeCount", zeroDrawingTimeCount);
         result.putBoolean("finalState", finalState()); result.putBoolean("finalDrawObserved", finalDrawVsyncNs > 0);
         result.putLong("activityFrameCount", activityFrameCount); result.putLong("activityDroppedReports", activityDroppedReports);
         result.putLong("lastFrameVsyncNs", lastFrameVsyncNs); result.putLong("lastFrameCallbackNanoTime", lastFrameCallbackNanoTime);

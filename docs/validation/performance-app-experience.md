@@ -1,6 +1,6 @@
 # 目标进程与启动／完整帧诊断
 
-本任务补采受控 Fixture 自身的 CPU、PSS、启动 TTID 与目标窗口 HWUI 帧耗时，属于[性能后续任务](../PERFORMANCE.md#性能后续任务)。本文记录冻结的采集合同及首轮前置失败；尚无本专项性能实测数据，不能据此更新为已完成。最近更新时间：**2026-10-30 13:50:30 UTC**。
+本任务补采受控 Fixture 自身的 CPU、PSS、启动 TTID 与目标窗口 HWUI 帧耗时，属于[性能后续任务](../PERFORMANCE.md#性能后续任务)。本文记录冻结的采集合同及两轮试跑结果；已取得部分资源测量，但启动与正式诊断尚未通过，不能据此更新为已完成。最近更新时间：**2026-10-30 14:18:24 UTC**。
 
 测量对象为独立测试 Fixture 页面，保留现有 Fixture 主页面和生产 APK 行为。八档专用模拟器分别为 API 30、31、32、33、34、35、36、37.0。结果始终为 `diagnosticOnly=true`、`budgetAcceptance=false`、`fullSuiteAcceptance=false`，不代表真实第三方应用、真机、厂商 ROM、实际屏幕呈现或性能预算已经验收。
 
@@ -23,11 +23,11 @@ A 为 Agent 服务关闭；B 为服务开启、已连接且没有任务。服务
 
 冷启动先 force-stop 目标包并确认没有目标进程，再发启动请求；在此之前不得查询目标 ContentProvider，因为查询本身会启动目标进程。启动后记录新进程标识、Activity 实例标识、PID 与生命周期证据。这里的“冷”是目标进程不存在，不表示已清除文件系统缓存、ART 编译结果或系统其他缓存。
 
-热启动先建立同一目标 Activity，将其移到后台并确认暂停／停止和不在前台，再启动恢复；要求同一目标进程与 Activity 实例以及实际 resume／绘制证据。不得把重建 Activity 的暖启动归为热启动，也不得以已在前台的重复 Intent 充数。准备热启动所需的首次启动不进入测量分母，但须与测量启动可区分。
+热启动先建立同一目标 Activity，将其移到后台并确认暂停／停止和不在前台，解析实际默认 HOME 应用并等待其获得焦点、目标确已停止；随后固定等待 1,000 毫秒并再次核验，才启动恢复。这些准备全部位于启动标记之外，两种状态一致；要求同一目标进程与 Activity 实例以及实际 resume／绘制证据。不得把重建 Activity 的暖启动归为热启动，也不得以已在前台的重复 Intent 充数。准备热启动所需的首次启动不进入测量分母，但须与测量启动可区分。
 
 ### TTID 来源与关联
 
-主指标采用官方 Perfetto SQL 标准库 `android.startup.startups` 与 `android.startup.time_to_display`，不新增 Macrobenchmark 模块。宿主固定 [`trace_processor` v59.1](https://commondatastorage.googleapis.com/perfetto-luci-artifacts/v59.1/linux-amd64/trace_processor_shell)，二进制 SHA-256 为 `2434129a3af4dc9e2034a476f7b76447b490975213e301769310d3bd0d5d6458`；实际版本为 `Perfetto v59.1-1e9c61e98`，对应源码 `1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d`。工具实际版本输出、下载来源和校验结果进入运行清单，不得在正式运行中隐式改用最新版本或修改官方 SQL 来补出缺失测量。
+主指标采用官方 Perfetto SQL 标准库 `android.startup.startups` 与 `android.startup.time_to_display`，不新增 Macrobenchmark 模块。宿主固定 [`trace_processor` v59.1](https://commondatastorage.googleapis.com/perfetto-luci-artifacts/v59.1/linux-amd64/trace_processor_shell)，二进制 SHA-256 为 `2434129a3af4dc9e2034a476f7b76447b490975213e301769310d3bd0d5d6458`；实际版本为 `Perfetto v59.1-1e9c61e98`，对应源码 `1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d`。工具实际版本输出、下载来源和校验结果进入运行清单，不得在正式运行中隐式改用最新版本或修改官方 SQL 来补出缺失测量。新版派生 schema 2 固定增加 `--full-sort`，旧 schema 1 的原命令及原失败结论继续可复验。
 
 该工具的 TTID 定义为系统启动起点至目标首个 UI 帧关联的 RenderThread `DrawFrame` 结束。它是可复核的 Android 启动渲染指标，不是屏幕物理呈现时间；不得把它描述为已测到 display present 或完整端到端显示响应。
 
@@ -73,7 +73,7 @@ PSS 仅为任务前、后端点，另记可取得的 Java／Native／图形等�
 
 三次写入可能合并到同一帧，也可能伴随光标、布局等额外帧，因此按实际帧数报告；18 个任务不是 18 帧。本项衡量三写入工作窗口内目标 Window 的 HWUI 帧，不覆盖持续滚动、视频、整机合成或所有交互场景。
 
-公开绘制时钟采用 `View.getDrawingTime()`：在自然 OnDraw 中记下版本和单调时间，待本次遍历后的一次主线程回调读取平台已更新的 drawingTime，再唯一匹配 FrameMetrics 的原始 VSYNC 毫秒部分。回调跨到后续 OnDraw、匹配歧义或缺失均保留不完整，不使用隐藏 API。目标 CPU 包含这些探针开销。
+公开绘制时钟采用 `View.getDrawingTime()`：在自然 OnDraw 中记下版本和单调时间，待本次遍历结束后，通过一次异步 Handler 的 `postAtFrontOfQueue` 回调读取平台已更新的 drawingTime，再唯一匹配 FrameMetrics 的原始 VSYNC 毫秒部分。回调跨到后续 OnDraw、匹配歧义或缺失均保留不完整，不使用隐藏 API。该固定大小回调不生成新绘制、不自行重复调度，但会先于已积压的下一帧执行；所有状态使用相同探针，目标 CPU 包含其调度与读取开销。序号失配及非正时间分别计数，原有零未关联门槛保持。
 
 任务窗口以自然绘制证据关联：被动记录 trial generation、UI 状态版本及对应 VSYNC；在自然绘制包含最终目标状态时冻结结束水位，再等待对应 FrameMetrics 报告及有界回调排空。语义状态核验完成不等于最终帧已完成，不能用主线程回调 CPU 耗时替代整帧。不得通过新增 `invalidate()` 补绘后宣称原任务末帧齐全；若采用后置采集标记，必须先冻结任务末帧，标记帧与额外 CPU 明确移出任务统计。
 
@@ -85,9 +85,9 @@ PSS 仅为任务前、后端点，另记可取得的 Java／Native／图形等�
 
 试跑必须记录各档启动／准备、资源任务、trace 落盘／提取及清理的实际耗时和字节数，按最慢档推算正式容量并预留余量。不得把八档并行的总墙钟时间当作单 API 作业预算。如果试跑表明上限不足，应在正式运行前明确调整、记录原因并冻结；不得在正式运行中减少样本、延长个别失败样本或静默改变采集配置来制造通过。
 
-每 API 整轮使用有界 streaming trace，配置 `write_into_file`、定期 `file_write_period_ms`、8 MiB 内存缓冲及 64 MiB 原始文件上限。记录完整配置及实际字节数；达到文件上限、trace 丢包、缓冲覆盖或截断时报告不完整，不能以环形覆盖较早启动后仅解析尾部。压缩只改变归档方式，原始 trace 内容、压缩前后长度及 SHA-256 保持可核验；每 API gzip 附件计划上限 12 MiB，必须用试跑实测校准后固定。
+新版每 API 整轮使用有界 streaming trace，两个 buffer 采用 `RING_BUFFER`，同时严格检查 overwrite／packet loss／解析错误，配置 `write_into_file`、定期 `file_write_period_ms`、8 MiB 内存缓冲及 64 MiB 原始文件上限。记录完整配置及实际字节数；达到文件上限、trace 丢包、缓冲覆盖或截断时报告不完整，不能以环形覆盖较早启动后仅解析尾部。压缩只改变归档方式，原始 trace 内容、压缩前后长度及 SHA-256 保持可核验；每 API gzip 附件计划上限 12 MiB，必须用试跑实测校准后固定。
 
-采集必要的 `am`、`wm`、`view`、`gfx` 及目标进程元数据，避免无目的采集全机高流量事件。API 31+ 同时启用 `android.surfaceflinger.frametimeline`，为官方标准库提供相应帧关联数据；API 30 使用其实际可用的旧版帧路径，不伪造 FrameTimeline。数据源或关联不足时保留无效原因，不能用自造时间戳绕过官方 TTID。
+新版配置仅采集 `am`、`view`、两应用 APP 标记及进程元数据。Android 11–16 发布源码和 main 的 HWUI 编译标签为 `ATRACE_TAG_VIEW`，因此真实 `DrawFrame` 不依赖 `gfx`；删除 `gfx/wm` 可避免大量 SF/GL 旁路事件，仍必须由各档实测确认必要 slice 齐全。旧两轮 `am/wm/view/gfx` 配置原样保留，不用新配置倒推旧数据。API 31+ 同时启用 `android.surfaceflinger.frametimeline`，为官方标准库提供相应帧关联数据；API 30 使用其实际可用的旧版帧路径，不伪造 FrameTimeline。数据源或关联不足时保留无效原因，不能用自造时间戳绕过官方 TTID。
 
 目前尚无八档实际容量依据，不能预先宣称 35／55 分钟或上述大小一定足够。如果试跑显示上限需要调整，须在正式运行前记录并冻结。新增 app-experience 证据使用独立上限：每 API 16 MiB、整批 160 MiB；既有证据类别的上限不变。达到上限时先定位 trace 配置及真实数据规模，不截取 trace、删除原始样本或只归档统计结果。运行文档与清单记录独立附件的来源、名称、长度、校验和及可取得位置；附件失效或原始 trace 缺失时，明确标记可复核证据不完整。
 
@@ -108,6 +108,22 @@ PSS 仅为任务前、后端点，另记可取得的 Java／Native／图形等�
 独立审核还修正两项统计边界：API 31+ 的未知 DEADLINE 哨兵及非正预算不进入可比较分母，各自保留原因；结束后晚到回调携带的丢报告数单独保存，分页累计值取最大值，不能重复相加。原有晚到报告仍判采集失败，验收标准未放宽。本轮没有原始帧，无法据此判断上述边界实际发生过。
 
 下一步运行修正源码的八档 pilot；成功后根据真实耗时和 trace 体积确认正式计划。首轮不能提供容量或性能估计，也不计入正式 P95 样本。
+
+## 第二轮试跑：部分资源通过，启动诊断仍失败
+
+精确源码 `5be02c1c4c2ddf0fe60e0a2c7e2eb5190eec03d8` 的 [pilot 41067237848](https://github.com/ecojust/Agent-OS/actions/runs/41067237848) 为 failure，build 通过，八档作业均未通过。API 36 在系统镜像安装时报 `ZipFile unknown archive`，未启动测试；后续端口连接失败是清理未启动模拟器时的现象，不能归因为应用行为。
+
+其余七档实际记录 **56/64 次启动、21/24 个资源任务**。21 个三写入资源任务全部通过，84 个 Agent／目标进程 PSS 端点、63 个非首绘帧已独立复算；已查看 API 32 的结束图和 API 35 的失败现场，保存文字及 Count 1 与报告一致。63 帧中未观察到未知／零 DEADLINE 或晚到 drop；API 31、37.0 各有 1/9 帧超过平台 DEADLINE，其余支持档为 0/9；API 30 名义刷新周期为 0/9，不能与 DEADLINE 混作同一口径。
+
+启动有效数仍为 **0/64**。设备端 35 个启动通过辅助检查、21 个 unavailable；后者最终均有真实自然绘制与 FrameMetrics，拒收原因是绘制时间回调未能关联更早的一次 OnDraw（20 个冷启动、API 33 的 1 个热启动），不能继续概括成“没有新帧”。原报告的笼统原因保留，新版分别记录真实新帧和观测失败，拆出序号失配与非正绘制时间计数，保持原门槛。源码与实际 trace 显示，首帧耗时数百毫秒后，积压的下一 VSYNC 可能先于普通异步 post 执行；新版通过上述一次队首回调修正读取顺序，不强制绘制。
+
+七档 trace 均取得，但两个 `DISCARD + write_into_file` buffer 均被官方解析器标为 `config_write_into_file_discard` 数据丢失风险；API 31、35 另有排序错误。新版按官方建议改为 `RING_BUFFER`，仍要求实际零丢失；固定 `--full-sort` 的独立重放消除了后两档排序错误，启动起点和帧端点保持一致，旧结果不改为通过。API 33 的另一个热启动在官方启动区间结束后约 2 毫秒才 resume，官方类型为 null，`am` 为 UNKNOWN；虽为同一 Activity 恢复，也未强写 HOT。新版在 HOME 后增加上面的焦点与停止稳定准备，再按原要求核验官方类型。
+
+旧宽类别 trace 原始体积每档 **6,156,835–28,276,362 字节**，不能直接扩大到 400 次启动。逐包分析发现大头为 SF、SystemUI、Launcher 的 ftrace print；新版基于 HWUI 的 VIEW 编译标签删除 `gfx/wm`，实际减量和完整性仍需第三轮 pilot 确认，不以截断或删除旧 trace 控制体积。
+
+[归档 41067994168](https://github.com/ecojust/Agent-OS/actions/runs/41067994168) 成功，固定提交 `9bc6a6f91ac2455f15fea186590afadf608e16c7` 的父提交为上述源码。[清单](../../screenshots/41067237848-1/manifest.json)的 **165 份载荷、24,181,164 字节、15 张 PNG**全部核验；6 条 blocked 原样保留。成功 PNG 明确未清除安全标志，blocked 记录缺少该字段，不将缺字段冒称逐项 false。独立审计复算 18,886 个结构及派生字段一致，不把这些字段数当作实测样本数。原版摘要与所有原始失败均保留。
+
+新版报告／探针 schema 2、采集清单 schema 3（configVersion 2）及派生 schema 2 明确区分修正前后合同；前两轮仍按旧版本严格复验，不修改原始载荷。第三轮修正版 767 项宿主检查全部通过，Fixture／AndroidTest 编译及 app lint 通过，原 273 个完整回归身份不变。下一步第三轮八档 pilot，随后才可冻结正式容量并执行 3,200 次启动与 144 个资源任务。
 
 ## 当前进度与完成条件
 

@@ -100,9 +100,12 @@ public final class PerformanceActivity extends Activity {
                     getWindow().getDecorView().isHardwareAccelerated());
             // ViewRootImpl dispatches OnDraw before updating the public drawing time.
             // Read it after this traversal; the probe rejects a crossing into a later draw.
-            // An async message avoids a later traversal's synchronization barrier;
-            // it still cannot run until the current main-thread draw has returned.
-            drawReadHandler.post(() -> PerformanceProbe.completeDraw(observation, scroll.getDrawingTime()));
+            // One async front-of-queue read runs after this draw stack returns and
+            // before an already queued, older-vsync traversal. This changes only
+            // the fixture probe's message ordering: its bounded read/association
+            // cost remains in every arm's target-process measurements. It does
+            // not invalidate a View, generate a frame, or reschedule itself.
+            drawReadHandler.postAtFrontOfQueue(() -> PerformanceProbe.completeDraw(observation, scroll.getDrawingTime()));
         };
         scroll.getViewTreeObserver().addOnDrawListener(drawListener);
     }

@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-29T23:57:24Z",
-  "note": "继续核查稳定性：固定两轮同源271×8复测；新增导航真实控制窗重建回归和八档专项，先验证原实现的拒绝顺序问题。生产逻辑尚未修改，设备前对照待执行。",
+  "updated_at": "2026-10-30T00:16:09Z",
+  "note": "两轮稳定性复测均2166/2168；八档重建前对照均证实导航未按合同暂停。已实现来源提前拒绝与条件暂停，核心339项、最终测试包构建及lint通过；同案、273项/API完整设备回归和普通录像待执行。",
   "latest_evidence": {
-    "path": "screenshots/40913005561-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40913005561"
+    "path": "screenshots/40975743980-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40975743980"
   },
   "checkpoints": [
     {
@@ -84,10 +84,10 @@
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
       "status": "in_progress",
-      "evidence": "screenshots/40913005561-1/manifest.json",
-      "scope": "Latest exact3f2bf1da0556ee532c8d793073a0eeac313468ae/run40913005561 full:271 identities/API x8=2168/2168,zero failures/errors/skips/missing/extra/duplicates/unreadable;old270 subset2160/2160. Rotation and navigation each8/8;same-source fixed navigation-origin-diagnostic run40912125258 independently8/8,32payload/28892B/16blocked/0PNG/fullSuiteAcceptance=false. Neither run reproduced old309c API37 normal-return failure; bounded failure metadata now survives runner trimming in a host transport check,not yet exercised by a device failure. Old42db API30 rotation bounded-reobservation exhaustion remains unexplained at its window/control/revision subtype. SAF48/48,2 actual reobserved-1-depth-0 markers in passed API30 malformed/cancel and API31 export cases;48setup markers allprior1. Previous309c full recovery cases were API30 andAPI35 and remain separate. Standalone exact309c/run40907079764 import8/8 including API32,allprior0 with original business assertions,32payload/30564B/24blocked/0PNG. All old failures and dc1b ordered probe retained. Latest full4473payload/47236449B/2273PNG verified,1495blocked,24 prior secure exceptions unchanged;8performance reports diagnostic-only. Remaining API-only boundaries:MainActivity rotation drafts,multiwindow/PiP,process-death,in-flight upgrade;completion list needs freezing. Real-model/phone/ROM/broad-app/performance are separate checkpoints. Stability investigation:two preregistered exact8e8e00518 full runs40975741234 and40975743980,each271x8,still pending. One new independent real-control-recreation navigation case and fixed navigation-origin-rebuild-diagnostic8case scope are test-only;original navigation case unchanged. Future full inventory272/API;fail-first device result pending,not a production repair.",
-      "details": "最近已核验完整2168/2168，仍不能称全部稳定修复。两轮同源271×8重复验证执行中；新增独立导航控制窗重建回归，原用例和断言保留，未来完整272项/API。未完成：导航与旋转历史根因、主界面旋转、多窗口/PiP、进程终止、执行中升级。下一步：记录旧实现前对照，依据实证修正来源拒绝顺序，再做同案及完整回归。",
-      "updated_at": "2026-10-29T23:57:24Z"
+      "evidence": "screenshots/40975743980-1/manifest.json",
+      "scope": "Two preregistered exact8e8e00518 full runs40975741234/40975743980 each271x8=2168,2166pass/2fail,zero errors/skips/missing/extra/duplicates/unreadable. Both API30 rotation failures have6 completed SNAPSHOT_OBSERVE and6 OWNED_WINDOW_MISMATCH with0 dispatch/1HTTP;subtype unresolved. First API34 visual-generation failure has2 non-owned-window events;second API34 original navigation case returns unsubmitted STALE_OBSERVATION during unfinished final snapshot,not TASK_PAUSED. SAF48/48 each;48setup each allprior1;first2 actual recovery markers in passed API32/33 malformed-cancel cases,second0markers. Latest second archive4471payload/47357329B/2271PNG/1492blocked,24 prior secure exceptions;performance diagnostic-only. New exact74090a971 run40976664678 fixed navigation-origin-rebuild-diagnostic:0/8 contract pass,all8 preconditions verified and actual old-production counterexamples (recreationVerified,returnedSTALE,localStale1,finalEvents0,pausedfalse,dispatch/approvals/HTTP0);32payload/25212B/8blocked/0PNG/fullSuiteAcceptance=false. Current production repair records successful observation origin solely for refusal with owner/epoch/profile/config binding,clears on fresh scoped observation,keeps target authorization priority and all final guards. Conditional pause prevents stale-epoch state mutation;339core tests including6new passed;async UI notification is not atomic. New fresh-scoped positive case preserves same epoch;original2negative methods unchanged;future exact full273/API,device result pending. Rotation now only adds original-rejection numeric details;not a repair. Prior3f full2168/2168 and all original failures retained. Remaining boundaries:MainActivity rotation drafts,multiwindow/PiP,process-death,in-flight upgrade;real-model/phone/ROM/broad-app/performance separate.",
+      "details": "两轮重复各2166/2168，旋转API30均失败，另有导航/视觉失败，尚未整体稳定。导航重建前对照8档均复现未暂停；来源提前拒绝及原子条件暂停已实现，核心339项、构建/lint通过。未完成：修正后设备验收、旋转匹配细类、视觉事件及主界面旋转/多窗口/PiP/进程终止/执行中升级。下一步：同案复测及273项/API完整回归，按新诊断继续查旋转。",
+      "updated_at": "2026-10-30T00:16:09Z"
     },
     {
       "id": "performance",

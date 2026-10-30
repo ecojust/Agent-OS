@@ -83,6 +83,7 @@ public final class AndroidDeviceTools implements ToolHandler {
     private long lastObservedEpoch = -1;
     private RunControl lastObservedControl;
     private ObservedBlockers lastObservedBlockers;
+    private ObservedLaunchOrigin lastObservedLaunchOrigin;
     private ControlWindowBaseline lastObservedControlBaseline;
     private CoordinateNodeResolver.Binding lastObservedCoordinateBinding;
     private boolean denied;
@@ -363,6 +364,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         onMain(() -> { requireReady(control, epoch); return null; }, control, epoch, new Dispatch());
         JsonObject result;
         ObservedBlockers blockers;
+        ObservedLaunchOrigin launchOrigin;
         CoordinateNodeResolver.Binding coordinateBinding;
         AgentAccessibilityService.OwnedControlWindowIdentity controlWindow;
         ControlWindowBaseline controlBaseline;
@@ -371,6 +373,8 @@ public final class AndroidDeviceTools implements ToolHandler {
             controlBaseline = state.controlBaseline;
             result = success(state.json());
             blockers = state.observedBlockers();
+            launchOrigin = state.scoped ? null : new ObservedLaunchOrigin(control, epoch,
+                    profileId, configurationLease, state.windowType, state.packageName);
             // Unsupported coordinate geometry must not disable ordinary structured observation.
             coordinateBinding = null;
             if (state.scoped) {
@@ -387,6 +391,7 @@ public final class AndroidDeviceTools implements ToolHandler {
         lastObservedEpoch = epoch;
         lastObservedControl = control;
         lastObservedBlockers = blockers;
+        lastObservedLaunchOrigin = launchOrigin;
         lastObservedControlBaseline = controlBaseline;
         lastObservedCoordinateBinding = coordinateBinding;
         return result;
@@ -1093,6 +1098,15 @@ public final class AndroidDeviceTools implements ToolHandler {
     private JsonObject launch(JsonObject args, RunControl control, long epoch, Dispatch dispatch) throws Exception {
         String name = required(args, "packageName");
         validateInstalledGrant(name);
+        // A successfully observed forbidden origin can only reject this request.
+        // Do not let later control-window staleness hide that known interruption.
+        ObservedLaunchOrigin origin = lastObservedLaunchOrigin;
+        if (!confirmationPolicy.requiresConfirmation("launch_app") && origin != null
+                && origin.matches(control, epoch, profileId, configurationLease)
+                && !isNavigationLaunchOrigin(origin.windowType, origin.packageName)) {
+            requireCurrentConfiguration(control, epoch);
+            pauseForInterruption("最近观察到的前台不是已授权应用或桌面，请由用户检查后继续", control, epoch);
+        }
         String frozenDescription = "目标应用：" + appLabel(name) + "\n动作：打开应用\n包名：" + name;
         AgentAccessibilityService.ControlLease controls = confirmAndAwaitControls("launch_app", frozenDescription,
                 control, epoch, lastObservedControl == control && lastObservedEpoch == epoch ? lastObservedControlBaseline : null);
@@ -1218,12 +1232,16 @@ public final class AndroidDeviceTools implements ToolHandler {
     }
 
     private boolean isNavigationLaunchOrigin(Snapshot state) {
-        if (state.windowType != AccessibilityWindowInfo.TYPE_APPLICATION) return false;
-        if (service.getPackageName().equals(state.packageName)) return true;
+        return isNavigationLaunchOrigin(state.windowType, state.packageName);
+    }
+
+    private boolean isNavigationLaunchOrigin(int windowType, String packageName) {
+        if (windowType != AccessibilityWindowInfo.TYPE_APPLICATION) return false;
+        if (service.getPackageName().equals(packageName)) return true;
         Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
         ResolveInfo resolved = service.getPackageManager().resolveActivity(home, PackageManager.MATCH_DEFAULT_ONLY);
         return resolved != null && resolved.activityInfo != null
-                && state.packageName.equals(resolved.activityInfo.packageName);
+                && packageName.equals(resolved.activityInfo.packageName);
     }
 
     private void requireNavigationObservation(String tool, Snapshot state) throws DeviceException {
@@ -1440,6 +1458,29 @@ public final class AndroidDeviceTools implements ToolHandler {
             if (protectsControl && controls.intersects(bounds)) {
                 throw unavailable("目标被任务控制条遮挡，请先拖动控制条再重新观察");
             }
+        }
+    }
+
+    /** Content-free source evidence; never a permit to skip a fresh launch guard. */
+    private static final class ObservedLaunchOrigin {
+        final RunControl owner;
+        final String taskId, profileId, packageName;
+        final long epoch;
+        final SettingsStore.ConfigurationLease configurationLease;
+        final int windowType;
+
+        ObservedLaunchOrigin(RunControl owner, long epoch, String profileId,
+                             SettingsStore.ConfigurationLease configurationLease, int windowType, String packageName) {
+            this.owner = owner; taskId = owner.getTaskId(); this.epoch = epoch;
+            this.profileId = profileId; this.configurationLease = configurationLease;
+            this.windowType = windowType; this.packageName = packageName;
+        }
+
+        boolean matches(RunControl control, long epoch, String profileId,
+                        SettingsStore.ConfigurationLease configurationLease) {
+            return owner == control && this.epoch == epoch && taskId.equals(control.getTaskId())
+                    && this.profileId.equals(profileId) && this.profileId.equals(control.getProfileId())
+                    && this.configurationLease == configurationLease;
         }
     }
 
@@ -1838,19 +1879,39 @@ public final class AndroidDeviceTools implements ToolHandler {
         private void verifyOwnedControlWindow(List<AccessibilityWindowInfo> windows) throws DeviceException {
             if (!service.isOwnedControlWindowCurrent(controlWindow))
                 throw diagnosticStale(PerformanceTrace.Stage.LOCAL_CONTROL_STALE, control, epoch);
-            if (windows == null || windows.size() > 40)
-                throw diagnosticStale(PerformanceTrace.Stage.OWNED_WINDOW_MISMATCH, control, epoch);
+            if (windows == null)
+                throw diagnosticOwnedWindowMismatch(PerformanceTrace.OwnedWindowRejection.NULL_WINDOWS, 0, 0, control, epoch);
+            int windowCount = windows.size();
+            if (windowCount > 40)
+                throw diagnosticOwnedWindowMismatch(PerformanceTrace.OwnedWindowRejection.WINDOW_LIMIT, windowCount, 40, control, epoch);
             int matches = 0;
             for (AccessibilityWindowInfo window : windows) {
                 if (window.getId() != controlWindow.windowId) continue;
                 matches++;
                 Rect actual = new Rect(); window.getBoundsInScreen(actual);
-                if (window.getType() != AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY
-                        || window.getDisplayId() != Display.DEFAULT_DISPLAY || window.getDisplayId() != controlWindow.displayId
-                        || window.isFocused() || actual.isEmpty() || !actual.equals(controlWindow.copyBounds()))
-                    throw diagnosticStale(PerformanceTrace.Stage.OWNED_WINDOW_MISMATCH, control, epoch);
+                // Preserve the original reads and short-circuit order, including both display reads.
+                int type = window.getType();
+                if (type != AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY)
+                    throw diagnosticOwnedWindowMismatch(PerformanceTrace.OwnedWindowRejection.WRONG_TYPE,
+                            type, AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY, control, epoch);
+                int display = window.getDisplayId();
+                if (display != Display.DEFAULT_DISPLAY)
+                    throw diagnosticOwnedWindowMismatch(PerformanceTrace.OwnedWindowRejection.NON_DEFAULT_DISPLAY,
+                            display, Display.DEFAULT_DISPLAY, control, epoch);
+                display = window.getDisplayId();
+                int expectedDisplay = controlWindow.displayId;
+                if (display != expectedDisplay)
+                    throw diagnosticOwnedWindowMismatch(PerformanceTrace.OwnedWindowRejection.DISPLAY_MISMATCH,
+                            display, expectedDisplay, control, epoch);
+                if (window.isFocused())
+                    throw diagnosticOwnedWindowMismatch(PerformanceTrace.OwnedWindowRejection.FOCUSED, 0, 0, control, epoch);
+                if (actual.isEmpty())
+                    throw diagnosticOwnedWindowMismatch(PerformanceTrace.OwnedWindowRejection.EMPTY_BOUNDS, 0, 0, control, epoch);
+                Rect expected = controlWindow.copyBounds();
+                if (!actual.equals(expected)) throw diagnosticOwnedWindowMismatch(actual, expected, control, epoch);
             }
-            if (matches != 1) throw diagnosticStale(PerformanceTrace.Stage.OWNED_WINDOW_MISMATCH, control, epoch);
+            if (matches != 1)
+                throw diagnosticOwnedWindowMismatch(PerformanceTrace.OwnedWindowRejection.MATCH_COUNT, matches, 1, control, epoch);
             if (!service.isOwnedControlWindowCurrent(controlWindow))
                 throw diagnosticStale(PerformanceTrace.Stage.LOCAL_CONTROL_STALE, control, epoch);
         }
@@ -1971,7 +2032,8 @@ public final class AndroidDeviceTools implements ToolHandler {
     }
 
     private void pauseForInterruption(String message, RunControl control, long epoch) throws Exception {
-        control.pause(); service.notifyDevicePaused(message); requireCurrentConfiguration(control, epoch);
+        if (control.pauseIfExecutionEpoch(epoch)) service.notifyDevicePaused(message);
+        requireCurrentConfiguration(control, epoch);
     }
 
     private <T> T onMain(Callable<T> action, RunControl control, long epoch, Dispatch dispatch) throws Exception {
@@ -2082,6 +2144,16 @@ public final class AndroidDeviceTools implements ToolHandler {
     private static DeviceException diagnosticStale(PerformanceTrace.Stage reason, RunControl control, long epoch) {
         PerformanceTrace.mark(reason, epoch, control.getDispatchAttempts());
         return stale(); // Preserve the original tool code/message, flags and replan policy.
+    }
+    private static DeviceException diagnosticOwnedWindowMismatch(PerformanceTrace.OwnedWindowRejection reason,
+                                                                  int observed, int expected, RunControl control, long epoch) {
+        PerformanceTrace.markOwnedWindowMismatch(reason, observed, expected, epoch, control.getDispatchAttempts());
+        return stale();
+    }
+    private static DeviceException diagnosticOwnedWindowMismatch(Rect actual, Rect expected, RunControl control, long epoch) {
+        PerformanceTrace.markOwnedWindowBoundsMismatch(actual.left, actual.top, actual.right, actual.bottom,
+                expected.left, expected.top, expected.right, expected.bottom, epoch, control.getDispatchAttempts());
+        return stale();
     }
     private static DeviceException stale() { return new DeviceException("STALE_OBSERVATION", "界面或执行代次已变化，旧目标已失效", "重新 observe 后再规划动作"); }
     private static class DeviceException extends Exception {

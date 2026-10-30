@@ -163,6 +163,21 @@ public final class RunControl {
         }
         runHook(hook);
     }
+    /**
+     * A refusal based on an earlier observation may pause only its own epoch.
+     * As with conditional cancellation, never call with an outer control monitor:
+     * the detached hook must execute after this method releases the monitor.
+     */
+    public boolean pauseIfExecutionEpoch(long expectedEpoch) {
+        Runnable hook;
+        synchronized (this) {
+            if (cancelled || paused || epoch != expectedEpoch) return false;
+            account(); paused = true; pausedSince = nanoClock.getAsLong(); epoch++;
+            hook = cancelHook; cancelHook = null; notifyAll();
+        }
+        runHook(hook);
+        return true;
+    }
     public synchronized void resume() {
         if (cancelled || !paused) return;
         account();

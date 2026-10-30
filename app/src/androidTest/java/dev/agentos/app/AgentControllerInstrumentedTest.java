@@ -1032,6 +1032,23 @@ public final class AgentControllerInstrumentedTest {
                 sequence.append(event.stage.name()).append('@')
                         .append((event.startNanos - trace.startedNanos) / 1_000_000)
                         .append('+').append(event.durationNanos / 1_000_000);
+                PerformanceTrace.OwnedWindowMismatchDetail detail = event.ownedWindowMismatch;
+                if (detail != null) {
+                    sequence.append("[reason=").append(detail.reason.name());
+                    switch (detail.reason) {
+                        case WINDOW_LIMIT: case WRONG_TYPE: case NON_DEFAULT_DISPLAY:
+                        case DISPLAY_MISMATCH: case MATCH_COUNT:
+                            sequence.append(",observed=").append(detail.observed)
+                                    .append(",expected=").append(detail.expected); break;
+                        case BOUNDS_MISMATCH:
+                            sequence.append(",actual=").append(detail.actualLeft).append(',').append(detail.actualTop)
+                                    .append(',').append(detail.actualRight).append(',').append(detail.actualBottom)
+                                    .append(",expected=").append(detail.expectedLeft).append(',').append(detail.expectedTop)
+                                    .append(',').append(detail.expectedRight).append(',').append(detail.expectedBottom); break;
+                        default: break;
+                    }
+                    sequence.append(']');
+                }
             }
         }
         // The recorder appends on completion, not start; in-flight spans are absent.

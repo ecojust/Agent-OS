@@ -335,6 +335,119 @@ public final class NavigationObservationGuardInstrumentedTest {
         }
     }
 
+    @Test public void aFreshScopedObservationReplacesThePriorUnscopedLaunchOrigin() throws Exception {
+        try (DeviceHarness device = new DeviceHarness();
+             LocalControllerModelServer server = new LocalControllerModelServer(LocalControllerModelServer.Scenario.REJECT_CLICK);
+             ControllerTestSettings settings = new ControllerTestSettings(device.context, server, Mode.CONTINUOUS_NAVIGATION);
+             PerformanceTrace.Session trace = PerformanceTrace.startDiagnostics()) {
+            AtomicInteger approvals = new AtomicInteger();
+            NavigationDiagnostic diagnostic = new NavigationDiagnostic();
+            try {
+                AndroidDeviceTools tools = guardedTools(device, settings, approvals);
+                RunControl owner = device.control;
+                long epoch = owner.getExecutionEpoch();
+                String profile = owner.getProfileId();
+                SettingsStore.ConfigurationLease configuration = settings.lease;
+                resolveSettingsOrigin(device, diagnostic);
+                diagnostic.phase("settings_launch");
+                device.context.startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                device.awaitUiIdle();
+                diagnostic.phase("settings_observation");
+                JsonObject unscoped = awaitSettingsObservation(tools, device, diagnostic);
+                assertFalse(unscoped.get("scoped").getAsBoolean());
+                assertEquals(0, unscoped.getAsJsonArray("nodes").size());
+                assertFalse(unscoped.get("hasOcclusion").getAsBoolean());
+                FocusedOrigin settingsFocus = focusedOrigin(device, diagnostic);
+                diagnostic.values.add("beforeFocus", settingsFocus.metadata());
+                assertEquals("SETTINGS", settingsFocus.classification);
+                assertEquals(unscoped.get("windowId").getAsInt(), settingsFocus.windowId);
+                assertEquals(settingsFocus.windowId, settingsFocus.rootWindowId);
+                assertEquals(epoch, owner.getExecutionEpoch());
+                assertFalse(owner.isPaused());
+                assertFalse(owner.isCancelled());
+                assertTrue(SettingsStore.isCurrent(configuration));
+
+                diagnostic.phase("user_returns_to_fixture");
+                // This explicit test-side transition stands for the user's return.
+                // Do not pause/resume or replace the adapter: either would let an
+                // old source record expire without testing successful observation.
+                device.context.startActivity(new Intent().setComponent(new ComponentName(FIXTURE, FIXTURE + ".FixtureActivity"))
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
+                device.awaitUiIdle();
+                diagnostic.phase("fresh_scoped_observation");
+                JsonObject scoped = awaitObservation(tools, owner, data -> FIXTURE.equals(string(data, "packageName"))
+                        && "TRUE".equals(booleanField(data, "scoped")) && "FALSE".equals(booleanField(data, "hasOcclusion"))
+                        && "FALSE".equals(booleanField(data, "truncated")) && containsText(data, "Count: 0"));
+                diagnostic.values.addProperty("observedOrigin", "FIXTURE");
+                assertTrue(scoped.get("scoped").getAsBoolean());
+                assertEquals("Count: 0", actualFixtureText(device, "counter_value"));
+                FocusedOrigin freshFocus = focusedOrigin(device, diagnostic);
+                diagnostic.values.add("freshFocus", freshFocus.metadata());
+                assertEquals("FIXTURE", freshFocus.classification);
+                assertEquals(scoped.get("windowId").getAsInt(), freshFocus.windowId);
+                assertEquals(freshFocus.windowId, freshFocus.rootWindowId);
+                assertSame(owner, device.control);
+                assertEquals(profile, owner.getProfileId());
+                assertEquals(profile, string(scoped, "profileId"));
+                assertEquals(profile, SettingsStore.currentProfileId(device.context));
+                assertSame(configuration, settings.lease);
+                assertTrue(SettingsStore.isCurrent(configuration));
+                assertEquals(epoch, owner.getExecutionEpoch());
+                assertFalse(owner.isPaused());
+                assertFalse(owner.isCancelled());
+                assertEquals(0, owner.getDispatchAttempts());
+                assertEquals(0, approvals.get());
+                assertEquals(0, server.requestCount());
+
+                JsonObject args = new JsonObject(); args.addProperty("packageName", FIXTURE);
+                diagnostic.phase("launch_app_after_scoped_observation");
+                diagnostic.values.addProperty("epochBefore", epoch);
+                diagnostic.traceStart = trace.events().size();
+                diagnostic.values.addProperty("outcome", "ENTERED");
+                JsonObject returned;
+                try {
+                    returned = tools.execute("launch_app", args, owner, epoch);
+                    diagnostic.values.addProperty("outcome", "RETURNED");
+                    diagnostic.recordResult("return", returned);
+                } catch (TaskControlException interrupted) {
+                    diagnostic.values.addProperty("outcome", "CONTROL_EXCEPTION");
+                    diagnostic.values.addProperty("exceptionCode", fixedCode(interrupted.getCode()));
+                    throw new AssertionError("A new scoped observation must replace the old unscoped launch origin", interrupted);
+                }
+                for (String flag : new String[]{"ok", "accepted", "submitted", "dispatchSubmitted", "dispatchAccepted"})
+                    assertEquals("The single launch must be explicitly accepted: " + flag, "TRUE", booleanField(returned, flag));
+                diagnostic.phase("post_launch_observation");
+                JsonObject after = awaitObservation(tools, owner, data -> FIXTURE.equals(string(data, "packageName"))
+                        && "TRUE".equals(booleanField(data, "scoped")) && containsText(data, "Count: 0"));
+                FocusedOrigin afterFocus = focusedOrigin(device, diagnostic);
+                diagnostic.values.add("afterFocus", afterFocus.metadata());
+                assertEquals("FIXTURE", afterFocus.classification);
+                assertEquals(after.get("windowId").getAsInt(), afterFocus.windowId);
+                assertEquals(afterFocus.windowId, afterFocus.rootWindowId);
+                assertEquals("Count: 0", actualFixtureText(device, "counter_value"));
+                assertEquals(epoch, owner.getExecutionEpoch());
+                assertFalse(owner.isPaused());
+                assertFalse(owner.isCancelled());
+                assertTrue(SettingsStore.isCurrent(configuration));
+                assertEquals(0, approvals.get());
+                assertEquals(1, owner.getDispatchAttempts());
+                assertEquals(0, server.requestCount());
+                assertEquals(0, trace.overwrittenCount());
+                int dispatches = 0;
+                for (PerformanceTrace.Event event : trace.events())
+                    if (event.stage == PerformanceTrace.Stage.DEVICE_DISPATCH_ATTEMPT) dispatches++;
+                assertEquals(1, dispatches);
+                screenshots.capture("fresh-scoped-observation-replaces-old-unscoped-origin");
+            } catch (Exception | AssertionError failure) {
+                String snapshot = diagnostic.attach(failure, device, server, approvals, trace);
+                if (failure instanceof AssertionError) {
+                    throw new AssertionError(failure.getMessage() + "\nnavigationDiagnostic=" + snapshot, failure);
+                }
+                throw failure;
+            }
+        }
+    }
+
     private static <T> T awaitRealControlWindow(CompletableFuture<T> future) throws Exception {
         try { return future.get(5, TimeUnit.SECONDS); }
         finally { future.cancel(false); }

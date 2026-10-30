@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "api": 31,
+  "testClass": "dev.agentos.app.NumericPreferencesInstrumentedTest",
+  "testName": "cancelledProviderIoKeepsItsProcessSlotUntilActualCloseWithoutBlockingMainWork",
+  "assertionResult": "pass",
+  "testResult": "pass",
+  "status": "pass",
+  "startedAt": 1793318121777,
+  "finishedAt": 1793318127321,
+  "captures": [
+    {
+      "stage": "protected-saf-interactive-windows-requested-prior-1",
+      "capturedAt": 1793318121778,
+      "status": "blocked",
+      "captureError": "secure_numeric_preferences_capture_not_attempted"
+    },
+    {
+      "stage": "protected-cancelled-provider-real-slot-and-independent-explicit-save",
+      "capturedAt": 1793318126620,
+      "status": "blocked",
+      "captureError": "secure_numeric_preferences_capture_not_attempted"
+    },
+    {
+      "stage": "finished",
+      "capturedAt": 1793318127321,
+      "status": "blocked",
+      "captureError": "secure_numeric_preferences_capture_not_attempted"
+    }
+  ]
+}

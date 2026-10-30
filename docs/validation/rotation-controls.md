@@ -34,7 +34,11 @@
 
 后续 `309c2f759f14fabd44e268ef40fa9cb070016614` 仅在原确认前启用已有有界 `PerformanceTrace`，失败时输出完成的观察 span、固定失效计数及最多 16 条事件，原动作、观察预算、窗口校验和断言不变。已完成 span 包含失败观察，不等于成功观察次数；尚在执行的调用不会出现，环覆盖也不能作为全程精确计数。其[完整运行 40906944025](../../screenshots/40906944025-1/manifest.json)中本用例 8/8 未复现，该轮唯一失败是 API37 导航来源拒绝。不能用这次通过关闭 API30 的间歇原因，后续结果见[当前 API 盘点](apk-api-acceptance.md)与[导航排查](navigation-origin-verification.md)。
 
-最新 `3f2bf1da0556ee532c8d793073a0eeac313468ae` 的[完整运行 40913005561](../../screenshots/40913005561-1/manifest.json)为 2168/2168，本旋转用例八档仍为 8/8。它保持同一旋转源码，没有输出失败 trace 诊断；原 API30 观察细类依然未知，不把两次未复现写成根因修复。
+此前 `3f2bf1da0556ee532c8d793073a0eeac313468ae` 的[完整运行 40913005561](../../screenshots/40913005561-1/manifest.json)为 2168/2168，本旋转用例八档仍为 8/8。它保持同一旋转源码，没有输出失败 trace 诊断；不把两次未复现写成根因修复。
+
+`8e8e00518b11f55cca4c7c24dd74c49a0e35cd21` 的固定两轮完整复测再次复现 API30 失败：[第一轮原文](diagnostics/stability-full-40975741234-api30/README.md)、[第二轮原文](diagnostics/stability-full-40975743980-api30/README.md)。两轮均为 `old_observation_rejected`、`FAILED/STALE_OBSERVATION`、原 owner 已取消、派发 0、模型请求 1、冻结的旧输入回执明确未提交。两轮 trace 均保留 63 条、覆盖 0 条，确实记录六次 `SNAPSHOT_OBSERVE` 和六次 `OWNED_WINDOW_MISMATCH`，另有一次旧写阶段的 `LOCAL_CONTROL_STALE`；观察总耗时分别 12607 与 32666 微秒。这次可确认六次观察都在自有窗口匹配处拒绝，不再仅根据预算推算次数；具体类型、显示、边界或匹配数量仍缺拒绝瞬间证据。
+
+因此仅细分原 `verifyOwnedControlWindow` 拒绝点，在已启用的有界 trace 内附固定枚举和数字，边界不匹配保存当时实际/预期的八个坐标。沿用原读取和短路顺序、原单个 `OWNED_WINDOW_MISMATCH` 事件、原错误及预算；不额外读取平台或放宽几何条件。失败摘要仍最多列 16 条事件，正常性能 JSON 不增加字段，未分类的其他调用继续没有 detail。该增量是诊断，不是旋转修复，后续同源设备结果另记。
 
 
 ## 首轮失败与测试目标调整

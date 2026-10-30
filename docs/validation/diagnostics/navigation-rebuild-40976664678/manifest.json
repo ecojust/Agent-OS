@@ -1,0 +1,395 @@
+{
+  "schemaVersion": 1,
+  "kind": "navigation-origin-rebuild-failure-diagnostics",
+  "derived": true,
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 40976664678,
+    "attempt": 1,
+    "commit": "74090a97192e9b6dcf90c94f8457c5cc66fc86e6",
+    "scope": "navigation-origin-rebuild-diagnostic",
+    "selection": "dev.agentos.app.NavigationObservationGuardInstrumentedTest#aKnownUnscopedSettingsOriginStillPausesAfterControlWindowRecreation",
+    "url": "https://github.com/ecojust/Agent-OS/actions/runs/40976664678"
+  },
+  "productionComparison": {
+    "baselineCommit": "8e8e00518b11f55cca4c7c24dd74c49a0e35cd21",
+    "sameTrees": {
+      "app/src/main": "2bbd3106117102c1054e1ac9b8dfccd3adb18f30",
+      "core/src/main": "4b31f7616959efb10f2a30c44506b0adeb5b0403"
+    },
+    "limit": "Equality is established for these two production source trees, not APK bytes or all historical runtime conditions."
+  },
+  "results": {
+    "passed": 0,
+    "failed": 8,
+    "unverified": 0,
+    "qualifiedCounterexamples": 8,
+    "setupFailures": 0,
+    "fullSuiteAcceptance": false
+  },
+  "artifactAudit": {
+    "valid": true,
+    "archiveRunId": 40977233884,
+    "archiveUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40977233884",
+    "evidenceCommit": "269358107d566d62ffa4ed00a325d465ba39e50d",
+    "evidencePath": "screenshots/40976664678-1",
+    "fileCount": 32,
+    "totalBytes": 25212,
+    "png": 0,
+    "blocked": 8,
+    "secureWindowExceptions": 0,
+    "junitTotals": {
+      "tests": 8,
+      "failures": 8,
+      "errors": 0,
+      "skipped": 0,
+      "unreadableReports": 0,
+      "unexpectedTests": 0
+    },
+    "performanceCaptureStatus": {
+      "invalid": 8
+    },
+    "performanceBudgetAcceptance": false,
+    "checks": [
+      "Exact source, run attempt, fixed scope and one selected test per API",
+      "Artifact source identity and upload interval match the API job",
+      "Every listed payload byte count and SHA-256; no missing or extra files",
+      "JUnit summaries agree with identical individual and aggregate case JSON",
+      "All eight cases remain failed; no missing, skipped, unreadable or unexpected cases"
+    ],
+    "limits": "Raw XML and full logs are not part of the screenshot archive. The failure text here is the bounded original JUnit excerpt supplied through the read-only inspection workflow."
+  },
+  "diagnosticFileCount": 32,
+  "diagnosticBytes": 182114,
+  "apis": [
+    {
+      "api": "30",
+      "inspectionRunId": 40977006190,
+      "sourceJobId": 123806283373,
+      "windowId": 9,
+      "recreationVerified": true,
+      "phase": "launch_app_after_recreation",
+      "returnCode": "STALE_OBSERVATION",
+      "paused": false,
+      "localStale": 1,
+      "finalEvents": 0,
+      "dispatchAttempts": 0,
+      "inspectionUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40977006190",
+      "sourceJobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40976664678/job/123806283373",
+      "files": [
+        {
+          "path": "api-30/annotations.json",
+          "kind": "Checks API annotation response",
+          "bytes": 5072,
+          "sha256": "a33efdbde0c0625147e4b0c3abbe2920834da5cec0248b90eea01a1c8f6620d5"
+        },
+        {
+          "path": "api-30/failure.txt",
+          "kind": "Annotation chunks joined without text changes",
+          "bytes": 3243,
+          "sha256": "192ee46195b966a4a8e959b561b1689844f4b45b43c8bdc355fb522161a1859d"
+        },
+        {
+          "path": "api-30/diagnostic.json",
+          "kind": "Derived parsed navigationDiagnostic object",
+          "bytes": 1326,
+          "sha256": "6ebcf4359be6a1aa4fefef00a04816f03a028def4240539cc8b4e99e1fcc8216"
+        },
+        {
+          "path": "api-30/inspection-run.json",
+          "kind": "Actions run metadata preserved as formatted JSON",
+          "bytes": 13097,
+          "sha256": "e232af2854d23c8938737cee21f1b9d6870c1944ee8f1be1c022cec4c8d51529"
+        }
+      ]
+    },
+    {
+      "api": "31",
+      "inspectionRunId": 40977015539,
+      "sourceJobId": 123806283377,
+      "windowId": 10,
+      "recreationVerified": true,
+      "phase": "launch_app_after_recreation",
+      "returnCode": "STALE_OBSERVATION",
+      "paused": false,
+      "localStale": 1,
+      "finalEvents": 0,
+      "dispatchAttempts": 0,
+      "inspectionUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40977015539",
+      "sourceJobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40976664678/job/123806283377",
+      "files": [
+        {
+          "path": "api-31/annotations.json",
+          "kind": "Checks API annotation response",
+          "bytes": 5084,
+          "sha256": "9ff5e8c7f2f57020bb9ccdc62cd0ded8ef309b132182164ce8e28f8aee93aa92"
+        },
+        {
+          "path": "api-31/failure.txt",
+          "kind": "Annotation chunks joined without text changes",
+          "bytes": 3255,
+          "sha256": "d5fefed88934c1a794f3b07039b15db46be6f56a886d435ba633a2121f26cafb"
+        },
+        {
+          "path": "api-31/diagnostic.json",
+          "kind": "Derived parsed navigationDiagnostic object",
+          "bytes": 1332,
+          "sha256": "e7cc75afbd8b6a9e0e86fa4fad70a0022ad550e31f7cecc5aae89c79a03b7391"
+        },
+        {
+          "path": "api-31/inspection-run.json",
+          "kind": "Actions run metadata preserved as formatted JSON",
+          "bytes": 13097,
+          "sha256": "b445fb0a33e6670356ae21dc6c8bf03ef96ab724854ac2f0020415e18f170761"
+        }
+      ]
+    },
+    {
+      "api": "32",
+      "inspectionRunId": 40977228586,
+      "sourceJobId": 123806283560,
+      "windowId": 13,
+      "recreationVerified": true,
+      "phase": "launch_app_after_recreation",
+      "returnCode": "STALE_OBSERVATION",
+      "paused": false,
+      "localStale": 1,
+      "finalEvents": 0,
+      "dispatchAttempts": 0,
+      "inspectionUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40977228586",
+      "sourceJobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40976664678/job/123806283560",
+      "files": [
+        {
+          "path": "api-32/annotations.json",
+          "kind": "Checks API annotation response",
+          "bytes": 5084,
+          "sha256": "601d14450caba1c6805c02d3c1a41a0b540b3e01b0594f37ee5c668923e770a5"
+        },
+        {
+          "path": "api-32/failure.txt",
+          "kind": "Annotation chunks joined without text changes",
+          "bytes": 3255,
+          "sha256": "860c18c9b713343f2ad0ec5dff364310df035f4c50c07d0ac24d2ac0386022c0"
+        },
+        {
+          "path": "api-32/diagnostic.json",
+          "kind": "Derived parsed navigationDiagnostic object",
+          "bytes": 1332,
+          "sha256": "0feb0b9255296cd48c7d280a9bf3ca243d3e0840ce373b2034cfc700b66de852"
+        },
+        {
+          "path": "api-32/inspection-run.json",
+          "kind": "Actions run metadata preserved as formatted JSON",
+          "bytes": 13097,
+          "sha256": "27b70870e130a40e33717f870a37260778344f26baf545469057c90aeccfa740"
+        }
+      ]
+    },
+    {
+      "api": "33",
+      "inspectionRunId": 40977190156,
+      "sourceJobId": 123806283507,
+      "windowId": 12,
+      "recreationVerified": true,
+      "phase": "launch_app_after_recreation",
+      "returnCode": "STALE_OBSERVATION",
+      "paused": false,
+      "localStale": 1,
+      "finalEvents": 0,
+      "dispatchAttempts": 0,
+      "inspectionUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40977190156",
+      "sourceJobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40976664678/job/123806283507",
+      "files": [
+        {
+          "path": "api-33/annotations.json",
+          "kind": "Checks API annotation response",
+          "bytes": 5084,
+          "sha256": "91ea9e45d06bdaf8944b043a03f48b489187cfdcbc02dc61e43c04ce632bba76"
+        },
+        {
+          "path": "api-33/failure.txt",
+          "kind": "Annotation chunks joined without text changes",
+          "bytes": 3255,
+          "sha256": "5d4ae73dabc8834bfe66d58b5776034bcdafa34933470ea51541e4a359cd8bd3"
+        },
+        {
+          "path": "api-33/diagnostic.json",
+          "kind": "Derived parsed navigationDiagnostic object",
+          "bytes": 1332,
+          "sha256": "579f8e4b4749c6efff33bb94255120382302da56834662c8de88e4332994f40d"
+        },
+        {
+          "path": "api-33/inspection-run.json",
+          "kind": "Actions run metadata preserved as formatted JSON",
+          "bytes": 13097,
+          "sha256": "7a6e09defdb47f0981adffeb94f4c6caf1941a0fd068757fdea20355d787f6da"
+        }
+      ]
+    },
+    {
+      "api": "34",
+      "inspectionRunId": 40977118899,
+      "sourceJobId": 123806283463,
+      "windowId": 11,
+      "recreationVerified": true,
+      "phase": "launch_app_after_recreation",
+      "returnCode": "STALE_OBSERVATION",
+      "paused": false,
+      "localStale": 1,
+      "finalEvents": 0,
+      "dispatchAttempts": 0,
+      "inspectionUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40977118899",
+      "sourceJobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40976664678/job/123806283463",
+      "files": [
+        {
+          "path": "api-34/annotations.json",
+          "kind": "Checks API annotation response",
+          "bytes": 5084,
+          "sha256": "b1dadd7995a67c890c9f7689b8d1c8886488afe4a6ec031f6102a4301ddeb6e6"
+        },
+        {
+          "path": "api-34/failure.txt",
+          "kind": "Annotation chunks joined without text changes",
+          "bytes": 3255,
+          "sha256": "c221c6c556f2e7b0f69ac6147260d015e5ac3cbeac4496fd9c9b08948648a36a"
+        },
+        {
+          "path": "api-34/diagnostic.json",
+          "kind": "Derived parsed navigationDiagnostic object",
+          "bytes": 1332,
+          "sha256": "b195cacc72184d07617271428259e81bb350fa69c72a3a823ff35cdf5cdca4a8"
+        },
+        {
+          "path": "api-34/inspection-run.json",
+          "kind": "Actions run metadata preserved as formatted JSON",
+          "bytes": 13097,
+          "sha256": "ac190ae6c8e11172a2541b083cce484b177664d73c6b420d5cebb8fbabcf5c7c"
+        }
+      ]
+    },
+    {
+      "api": "35",
+      "inspectionRunId": 40977196401,
+      "sourceJobId": 123806283506,
+      "windowId": 12,
+      "recreationVerified": true,
+      "phase": "launch_app_after_recreation",
+      "returnCode": "STALE_OBSERVATION",
+      "paused": false,
+      "localStale": 1,
+      "finalEvents": 0,
+      "dispatchAttempts": 0,
+      "inspectionUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40977196401",
+      "sourceJobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40976664678/job/123806283506",
+      "files": [
+        {
+          "path": "api-35/annotations.json",
+          "kind": "Checks API annotation response",
+          "bytes": 5084,
+          "sha256": "15b88279962a95e5f17b9ae930211887972032ff8ed3546afed2c2e310fa0551"
+        },
+        {
+          "path": "api-35/failure.txt",
+          "kind": "Annotation chunks joined without text changes",
+          "bytes": 3255,
+          "sha256": "7fa27b3d794719a2aa05be72f9d2a59b4b09200d4e4e20c7a82e8ed0aa267856"
+        },
+        {
+          "path": "api-35/diagnostic.json",
+          "kind": "Derived parsed navigationDiagnostic object",
+          "bytes": 1332,
+          "sha256": "579f8e4b4749c6efff33bb94255120382302da56834662c8de88e4332994f40d"
+        },
+        {
+          "path": "api-35/inspection-run.json",
+          "kind": "Actions run metadata preserved as formatted JSON",
+          "bytes": 13097,
+          "sha256": "1c71c981a755c1c6a44cae9e947ec1e1376dba68cb1b56f316ec29de1dd5338e"
+        }
+      ]
+    },
+    {
+      "api": "36",
+      "inspectionRunId": 40977201666,
+      "sourceJobId": 123806283599,
+      "windowId": 12,
+      "recreationVerified": true,
+      "phase": "launch_app_after_recreation",
+      "returnCode": "STALE_OBSERVATION",
+      "paused": false,
+      "localStale": 1,
+      "finalEvents": 0,
+      "dispatchAttempts": 0,
+      "inspectionUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40977201666",
+      "sourceJobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40976664678/job/123806283599",
+      "files": [
+        {
+          "path": "api-36/annotations.json",
+          "kind": "Checks API annotation response",
+          "bytes": 5084,
+          "sha256": "cc7d07dc4bf97dd4473a1e7c1a4810462b392e1b5f78a4f4e7b2c457815502e5"
+        },
+        {
+          "path": "api-36/failure.txt",
+          "kind": "Annotation chunks joined without text changes",
+          "bytes": 3255,
+          "sha256": "9e2dc14651665df29627bdc6049d4cd95678d4fd846dfa801b6cb441c0697d69"
+        },
+        {
+          "path": "api-36/diagnostic.json",
+          "kind": "Derived parsed navigationDiagnostic object",
+          "bytes": 1332,
+          "sha256": "579f8e4b4749c6efff33bb94255120382302da56834662c8de88e4332994f40d"
+        },
+        {
+          "path": "api-36/inspection-run.json",
+          "kind": "Actions run metadata preserved as formatted JSON",
+          "bytes": 13097,
+          "sha256": "90751dbd2d1ce848dd1b6762fe32a1366459aa2b01b05ef9d4dd5448538920e3"
+        }
+      ]
+    },
+    {
+      "api": "37.0",
+      "inspectionRunId": 40977125141,
+      "sourceJobId": 123806283332,
+      "windowId": 11,
+      "recreationVerified": true,
+      "phase": "launch_app_after_recreation",
+      "returnCode": "STALE_OBSERVATION",
+      "paused": false,
+      "localStale": 1,
+      "finalEvents": 0,
+      "dispatchAttempts": 0,
+      "inspectionUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40977125141",
+      "sourceJobUrl": "https://github.com/ecojust/Agent-OS/actions/runs/40976664678/job/123806283332",
+      "files": [
+        {
+          "path": "api-37.0/annotations.json",
+          "kind": "Checks API annotation response",
+          "bytes": 5084,
+          "sha256": "03d2cd8aca744c71714a57257718df88a7187c9dd675bee59b74d4856aa190cf"
+        },
+        {
+          "path": "api-37.0/failure.txt",
+          "kind": "Annotation chunks joined without text changes",
+          "bytes": 3255,
+          "sha256": "b645724f30efd4e3302a91cc6adf83a877216c1317218835d647775d76136e71"
+        },
+        {
+          "path": "api-37.0/diagnostic.json",
+          "kind": "Derived parsed navigationDiagnostic object",
+          "bytes": 1332,
+          "sha256": "b195cacc72184d07617271428259e81bb350fa69c72a3a823ff35cdf5cdca4a8"
+        },
+        {
+          "path": "api-37.0/inspection-run.json",
+          "kind": "Actions run metadata preserved as formatted JSON",
+          "bytes": 13097,
+          "sha256": "2858898304be64f5562c6824bfb8c0025c7ec6a5ac922c12afa0730da08d4a06"
+        }
+      ]
+    }
+  ],
+  "limits": "Original failing assertions remain failures. These controlled cases establish the known-unscoped-origin/control-recreation ordering defect; they do not prove the cause of every historical navigation or rotation failure."
+}

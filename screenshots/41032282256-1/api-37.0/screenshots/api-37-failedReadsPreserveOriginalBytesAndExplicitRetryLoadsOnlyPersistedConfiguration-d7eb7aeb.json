@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "api": 37,
+  "testClass": "dev.agentos.app.ConfigurationRecoveryUiInstrumentedTest",
+  "testName": "failedReadsPreserveOriginalBytesAndExplicitRetryLoadsOnlyPersistedConfiguration",
+  "assertionResult": "pass",
+  "testResult": "pass",
+  "status": "pass",
+  "startedAt": 1793352091619,
+  "finishedAt": 1793352093020,
+  "captures": [
+    {
+      "stage": "protected-unreadable-configuration-preserved",
+      "capturedAt": 1793352092296,
+      "status": "blocked",
+      "captureError": "secure_configuration_recovery_capture_not_attempted"
+    },
+    {
+      "stage": "protected-unknown-format-repeated-read-preserved",
+      "capturedAt": 1793352092378,
+      "status": "blocked",
+      "captureError": "secure_configuration_recovery_capture_not_attempted"
+    },
+    {
+      "stage": "protected-persisted-configuration-reloaded-without-execution",
+      "capturedAt": 1793352092426,
+      "status": "blocked",
+      "captureError": "secure_configuration_recovery_capture_not_attempted"
+    },
+    {
+      "stage": "finished",
+      "capturedAt": 1793352093020,
+      "status": "blocked",
+      "captureError": "secure_configuration_recovery_capture_not_attempted"
+    }
+  ]
+}

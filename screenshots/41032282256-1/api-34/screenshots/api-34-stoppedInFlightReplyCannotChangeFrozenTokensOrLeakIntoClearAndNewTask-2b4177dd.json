@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "api": 34,
+  "testClass": "dev.agentos.app.TaskTokenUsageInstrumentedTest",
+  "testName": "stoppedInFlightReplyCannotChangeFrozenTokensOrLeakIntoClearAndNewTask",
+  "assertionResult": "pass",
+  "testResult": "pass",
+  "status": "pass",
+  "startedAt": 1793352461238,
+  "finishedAt": 1793352464990,
+  "captures": [
+    {
+      "stage": "protected-stopped-tokens-cleared-and-new-task-unrequested",
+      "capturedAt": 1793352464205,
+      "status": "blocked",
+      "captureError": "secure_task_token_usage_capture_not_attempted"
+    },
+    {
+      "stage": "finished",
+      "capturedAt": 1793352464990,
+      "status": "blocked",
+      "captureError": "secure_task_token_usage_capture_not_attempted"
+    }
+  ]
+}

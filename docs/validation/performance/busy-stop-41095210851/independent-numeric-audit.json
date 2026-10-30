@@ -1,0 +1,4064 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-busy-stop-numeric-audit",
+  "status": "passed",
+  "numericAgreement": true,
+  "originalSummaryStatus": "incomplete",
+  "originalFormalDiagnosticComplete": false,
+  "sourceRun": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 41095210851,
+    "attempt": 1,
+    "commit": "f899bc435557618738173d0876fe9adb2686636d",
+    "event": "workflow_dispatch",
+    "branch": "master",
+    "conclusion": "failure",
+    "finishedAt": "2026-10-30T17:05:47Z",
+    "url": "https://github.com/ecojust/Agent-OS/actions/runs/41095210851"
+  },
+  "profile": "pilot",
+  "manifestSha256": "8c452f473bd3d6351e87a7d2d33200f5080a3165a219f6ef632a8e05704a9b44",
+  "summarySha256": "dd43bd65964d00a2f4a07c068fc4725609283be30306f6efc4ef3547ab26bd4a",
+  "checkerSha256": "3e04653eb1e076e4ca471a100c23146a21f28d2c49f11ed1f507eef2037bcb17",
+  "checks": 7544,
+  "mismatches": [],
+  "plannedTrialCount": 32,
+  "recordedTrialCount": 8,
+  "validTrialCount": 0,
+  "method": "Integer endpoint subtraction; exact Fraction milliseconds; exact median; integer nearest-rank ceil(95*n/100). Each API/scenario stays separate. Numeric JSON comparison allows at most two IEEE754 ULPs.",
+  "scope": "Read-only local arithmetic/provenance-link check, not a second behavioral validator, GitHub authentication, or device acceptance. Type 6 is cancel-hook-return upper bound; type 7 is pre-return publication observation. HWUI is intended-vsync plus duration, never callback or physical presentation. DEVICE frame remains unavailable.",
+  "groups": [
+    {
+      "matrixLabel": "30",
+      "scenario": "DEVICE",
+      "plannedCount": 2,
+      "recordedCount": 1,
+      "validCount": 0,
+      "metrics": {
+        "cancelReturnToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "cancelReturnToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "cancelReturnToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "inputDeliveryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "platformCallDurationMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        }
+      }
+    },
+    {
+      "matrixLabel": "30",
+      "scenario": "MODEL",
+      "plannedCount": 2,
+      "recordedCount": 0,
+      "validCount": 0,
+      "metrics": {
+        "cancelReturnToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "cancelReturnToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "cancelReturnToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "inputDeliveryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "platformCallDurationMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        }
+      }
+    },
+    {
+      "matrixLabel": "31",
+      "scenario": "DEVICE",
+      "plannedCount": 2,
+      "recordedCount": 1,
+      "validCount": 0,
+      "metrics": {
+        "cancelReturnToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "cancelReturnToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "cancelReturnToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "inputDeliveryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "platformCallDurationMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        }
+      }
+    },
+    {
+      "matrixLabel": "31",
+      "scenario": "MODEL",
+      "plannedCount": 2,
+      "recordedCount": 0,
+      "validCount": 0,
+      "metrics": {
+        "cancelReturnToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "cancelReturnToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "cancelReturnToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "inputDeliveryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "platformCallDurationMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        }
+      }
+    },
+    {
+      "matrixLabel": "32",
+      "scenario": "DEVICE",
+      "plannedCount": 2,
+      "recordedCount": 1,
+      "validCount": 0,
+      "metrics": {
+        "cancelReturnToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "cancelReturnToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "cancelReturnToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "inputDeliveryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "platformCallDurationMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        }
+      }
+    },
+    {
+      "matrixLabel": "32",
+      "scenario": "MODEL",
+      "plannedCount": 2,
+      "recordedCount": 0,
+      "validCount": 0,
+      "metrics": {
+        "cancelReturnToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "cancelReturnToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "cancelReturnToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "inputDeliveryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "platformCallDurationMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        }
+      }
+    },
+    {
+      "matrixLabel": "33",
+      "scenario": "DEVICE",
+      "plannedCount": 2,
+      "recordedCount": 1,
+      "validCount": 0,
+      "metrics": {
+        "cancelReturnToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "cancelReturnToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "cancelReturnToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "inputDeliveryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "platformCallDurationMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        }
+      }
+    },
+    {
+      "matrixLabel": "33",
+      "scenario": "MODEL",
+      "plannedCount": 2,
+      "recordedCount": 0,
+      "validCount": 0,
+      "metrics": {
+        "cancelReturnToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "cancelReturnToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "cancelReturnToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "inputDeliveryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "platformCallDurationMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        }
+      }
+    },
+    {
+      "matrixLabel": "34",
+      "scenario": "DEVICE",
+      "plannedCount": 2,
+      "recordedCount": 1,
+      "validCount": 0,
+      "metrics": {
+        "cancelReturnToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "cancelReturnToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "cancelReturnToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "inputDeliveryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "platformCallDurationMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        }
+      }
+    },
+    {
+      "matrixLabel": "34",
+      "scenario": "MODEL",
+      "plannedCount": 2,
+      "recordedCount": 0,
+      "validCount": 0,
+      "metrics": {
+        "cancelReturnToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "cancelReturnToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "cancelReturnToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "inputDeliveryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "platformCallDurationMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        }
+      }
+    },
+    {
+      "matrixLabel": "35",
+      "scenario": "DEVICE",
+      "plannedCount": 2,
+      "recordedCount": 1,
+      "validCount": 0,
+      "metrics": {
+        "cancelReturnToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "cancelReturnToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "cancelReturnToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "inputDeliveryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "platformCallDurationMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        }
+      }
+    },
+    {
+      "matrixLabel": "35",
+      "scenario": "MODEL",
+      "plannedCount": 2,
+      "recordedCount": 0,
+      "validCount": 0,
+      "metrics": {
+        "cancelReturnToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "cancelReturnToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "cancelReturnToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "inputDeliveryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "platformCallDurationMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        }
+      }
+    },
+    {
+      "matrixLabel": "36",
+      "scenario": "DEVICE",
+      "plannedCount": 2,
+      "recordedCount": 1,
+      "validCount": 0,
+      "metrics": {
+        "cancelReturnToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "cancelReturnToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "cancelReturnToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "inputDeliveryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "platformCallDurationMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        }
+      }
+    },
+    {
+      "matrixLabel": "36",
+      "scenario": "MODEL",
+      "plannedCount": 2,
+      "recordedCount": 0,
+      "validCount": 0,
+      "metrics": {
+        "cancelReturnToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "cancelReturnToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "cancelReturnToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "inputDeliveryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "platformCallDurationMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        }
+      }
+    },
+    {
+      "matrixLabel": "37.0",
+      "scenario": "DEVICE",
+      "plannedCount": 2,
+      "recordedCount": 1,
+      "validCount": 0,
+      "metrics": {
+        "cancelReturnToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "cancelReturnToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "cancelReturnToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "inputDeliveryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "platformCallDurationMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        }
+      }
+    },
+    {
+      "matrixLabel": "37.0",
+      "scenario": "MODEL",
+      "plannedCount": 2,
+      "recordedCount": 0,
+      "validCount": 0,
+      "metrics": {
+        "cancelReturnToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "cancelReturnToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "cancelReturnToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "inputDeliveryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "platformCallDurationMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "touchUpToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "touchUpToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToCancelReturnUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToControlGoneObservedUpperBoundMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToFixtureBarrierExitMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToPlatformCallReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToReplyWriteAttemptMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToReplyWriteEndMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopOwnedEntryMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStopReturnMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToStoppedFrameCompletionMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "pilot_profile_not_formal"
+        },
+        "upToTargetEffectMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        },
+        "upToTicketSettledMillis": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "p95": null,
+          "validCount": 0,
+          "missingCount": 2,
+          "p95UnavailableReason": "scenario_not_applicable"
+        }
+      }
+    }
+  ]
+}

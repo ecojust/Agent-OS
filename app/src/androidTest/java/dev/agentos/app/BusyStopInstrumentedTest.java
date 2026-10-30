@@ -198,9 +198,8 @@ public final class BusyStopInstrumentedTest {
             server = new BusyStopModelServer(!trial.device);
             settings = new ControllerTestSettings(context, new ModelSettings(server.endpoint(),
                     LocalControllerModelServer.SYNTHETIC_KEY, LocalControllerModelServer.MODEL), ActionConfirmationPolicy.Mode.CONFIRM_ALL);
-            launchFixture(trial.device ? "SlowActivity" : "FixtureActivity");
-            assertEquals(0, actualCounter());
-            trial.checks().addProperty("initialCounter", 0);
+            int initialCounter = launchFixture(trial.device ? "SlowActivity" : "FixtureActivity");
+            trial.checks().addProperty("initialCounter", initialCounter);
             if (walkthrough) { screenshots.capture("busy-stop-ready-count-zero"); SystemClock.sleep(1200); }
             trace = PerformanceTrace.startDiagnostics();
             ControllerTestSettings currentSettings = settings;
@@ -492,7 +491,7 @@ public final class BusyStopInstrumentedTest {
         BoundButton(Button button, View root, Rect bounds) { this.button = button; ownerRoot = root; this.bounds = bounds; }
         void installTouchRecorder(JsonObject value) {
             onMain(() -> {
-                Rect current = new Rect(); assertTrue(button.getGlobalVisibleRect(current));
+                Rect current = new Rect(); assertTrue(readFullScreenBounds(button, current));
                 // Approval collapse may legitimately move controls. Bind the current local
                 // Agent view before input; never query the blocked remote fixture or retry input.
                 assertTrue(ownerRoot.isAttachedToWindow() && button.getRootView() == ownerRoot.getRootView());
@@ -520,7 +519,7 @@ public final class BusyStopInstrumentedTest {
             onMain(() -> {
                 View root = (View) field(service, "overlay"); if (root == null || !root.isAttachedToWindow()) return;
                 Button stop = findStop(root); if (stop == null) return;
-                Rect bounds = new Rect(); if (!stop.isEnabled() || !stop.getGlobalVisibleRect(bounds) || bounds.isEmpty()) return;
+                Rect bounds = new Rect(); if (!stop.isEnabled() || !readFullScreenBounds(stop, bounds)) return;
                 result.set(new BoundButton(stop, root, bounds));
             });
             return result.get() != null;
@@ -540,16 +539,25 @@ public final class BusyStopInstrumentedTest {
             onMain(() -> {
                 Button button = activity.findViewById(R.id.stop_task); Rect bounds = new Rect();
                 View status = activity.findViewById(R.id.status_text); Rect statusBounds = new Rect();
-                if (!status.getGlobalVisibleRect(statusBounds) || statusBounds.width() != status.getWidth()
-                        || statusBounds.height() != status.getHeight()) return;
-                if (!activity.hasWindowFocus() || !button.isShown() || !button.isEnabled() || !button.getGlobalVisibleRect(bounds)
-                        || bounds.isEmpty() || service.controlBounds().contains(bounds.centerX(), bounds.centerY())) return;
+                if (!readFullScreenBounds(status, statusBounds)) return;
+                if (!activity.hasWindowFocus() || !button.isShown() || !button.isEnabled() || !readFullScreenBounds(button, bounds)
+                        || service.controlBounds().contains(bounds.centerX(), bounds.centerY())) return;
                 assertTrue((activity.getWindow().getAttributes().flags & WindowManager.LayoutParams.FLAG_SECURE) != 0);
                 result.set(new BoundButton(button, activity.getWindow().getDecorView(), bounds));
             });
             return result.get() != null;
         }, 5_000);
         return result.get();
+    }
+    private static boolean readFullScreenBounds(View view, Rect result) {
+        Rect visible = new Rect();
+        if (view.getWidth() <= 0 || view.getHeight() <= 0 || !view.getLocalVisibleRect(visible)
+                || !visible.equals(new Rect(0, 0, view.getWidth(), view.getHeight()))) return false;
+        // Global visible rectangles use root coordinates. Input injection and the
+        // service's controlBounds use screen coordinates, including this Window's offset.
+        int[] screen = new int[2]; view.getLocationOnScreen(screen);
+        result.set(screen[0], screen[1], screen[0] + view.getWidth(), screen[1] + view.getHeight());
+        return true;
     }
     private static Button findStop(View view) {
         if (view instanceof Button && "停止".contentEquals(((Button) view).getText())) return (Button) view;
@@ -616,12 +624,39 @@ public final class BusyStopInstrumentedTest {
         assertFalse(value.get("returned").getAsBoolean()); assertFalse(value.get("expired").getAsBoolean());
         assertEquals(-1, value.get("effectCount").getAsInt());
     }
-    private void launchFixture(String name) throws Exception {
+    private int launchFixture(String name) throws Exception {
+        long until = Math.min(deadlineNanoTime, System.nanoTime() + 8_000_000_000L);
+        int previousWindow = -1;
+        AccessibilityNodeInfo previous = automation.getRootInActiveWindow();
+        if (previous != null) {
+            try { if (FIXTURE.equals(String.valueOf(previous.getPackageName()))) previousWindow = previous.getWindowId(); }
+            finally { previous.recycle(); }
+        }
         context.startActivity(new Intent().setComponent(new ComponentName(FIXTURE, FIXTURE + "." + name))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
-        await("Fixture did not become foreground", () -> fixtureVisible(), 8_000);
-        automation.waitForIdle(300, 5_000);
-        assertTrue(fixtureVisible());
+        automation.waitForIdle(300, Math.max(1, Math.min(5_000, (until - System.nanoTime()) / 1_000_000)));
+        while (System.nanoTime() < until) {
+            AccessibilityNodeInfo root = automation.getRootInActiveWindow();
+            if (root != null) {
+                try {
+                    String packageName = String.valueOf(root.getPackageName());
+                    // CLEAR_TASK can leave the previous same-package window visible
+                    // briefly. Bind only the new window's refreshed, unique counter.
+                    if (FIXTURE.equals(packageName) && root.getWindowId() != previousWindow) {
+                        int readyWindow = root.getWindowId();
+                        Integer counter = counterIfReady(root);
+                        if (counter != null) {
+                            assertEquals("Fixture package changed while binding its counter", FIXTURE, String.valueOf(root.getPackageName()));
+                            assertEquals("Fixture window changed while binding its counter", readyWindow, root.getWindowId());
+                            assertEquals("Fresh fixture counter must be zero", 0, counter.intValue());
+                            return counter;
+                        }
+                    }
+                } finally { root.recycle(); }
+            }
+            SystemClock.sleep(5);
+        }
+        throw new AssertionError("Fixture initial counter did not become readable within its 8s launch budget");
     }
     private boolean fixtureVisible() {
         AccessibilityNodeInfo root = automation.getRootInActiveWindow();
@@ -633,14 +668,22 @@ public final class BusyStopInstrumentedTest {
         AccessibilityNodeInfo root = automation.getRootInActiveWindow(); assertNotNull("Missing fixture root", root);
         try {
             assertEquals(FIXTURE, String.valueOf(root.getPackageName()));
-            List<AccessibilityNodeInfo> nodes = root.findAccessibilityNodeInfosByViewId(FIXTURE + ":id/counter_value");
-            try {
-                assertEquals(1, nodes.size()); assertTrue(nodes.get(0).refresh());
-                String value = String.valueOf(nodes.get(0).getText());
-                assertTrue("Unexpected synthetic counter", value.matches("Count: [0-9]{1,3}"));
-                return Integer.parseInt(value.substring(7));
-            } finally { for (AccessibilityNodeInfo node : nodes) node.recycle(); }
+            Integer counter = counterIfReady(root);
+            assertNotNull("Independent fixture counter is unavailable", counter);
+            return counter;
         } finally { root.recycle(); }
+    }
+    private static Integer counterIfReady(AccessibilityNodeInfo root) {
+        if (!root.refresh()) return null;
+        List<AccessibilityNodeInfo> nodes = root.findAccessibilityNodeInfosByViewId(FIXTURE + ":id/counter_value");
+        try {
+            if (nodes.isEmpty()) return null;
+            assertEquals("Fixture counter identity is ambiguous", 1, nodes.size());
+            if (!nodes.get(0).refresh()) return null;
+            String value = String.valueOf(nodes.get(0).getText());
+            assertTrue("Unexpected synthetic counter", value.matches("Count: [0-9]{1,3}"));
+            return Integer.parseInt(value.substring(7));
+        } finally { for (AccessibilityNodeInfo node : nodes) node.recycle(); }
     }
     private void closeActivity(MainActivity activity) { onMain(activity::finish); instrumentation.waitForIdleSync(); }
     private void clearController(AgentController controller) throws Exception {

@@ -326,6 +326,8 @@ class AppExperienceArchiveTests(unittest.TestCase):
             raw = b"x" * 65535
             publisher.verify_app_experience_gzip(gzip.compress(raw), trace_reference(raw))
             raw += b"x"
+            publisher.verify_app_experience_gzip(gzip.compress(raw), trace_reference(raw))
+            raw += b"x"
             with self.assertRaises(ValueError):
                 publisher.verify_app_experience_gzip(gzip.compress(raw), trace_reference(raw))
             # A dishonest small length must still stop a much larger inflation.
@@ -334,6 +336,52 @@ class AppExperienceArchiveTests(unittest.TestCase):
         with patch.object(publisher, "APP_EXPERIENCE_MAX_GZIP_BYTES", 20):
             with self.assertRaises(ValueError):
                 publisher.verify_app_experience_gzip(gzip.compress(b"test"), trace_reference(b"test"))
+
+    def test_exact_trace_capacity_is_preserved_only_as_failed_evidence(self):
+        import collect_app_experience_evidence as experience
+        import test_collect_app_experience_evidence as fixtures
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(experience, "MAX_TRACE_BYTES", 1024), \
+                patch.object(publisher, "APP_EXPERIENCE_MAX_TRACE_BYTES", 1024):
+            root = Path(temporary)
+            directory, report = write_artifact(root)
+            for name in ("startup-ttid.json", "startup-ttid.csv"):
+                (directory / name).unlink()
+            trace_path = directory / "trace-capture.json"
+            trace = json.loads(trace_path.read_text())
+            raw = b"x" * 1024
+            compressed = gzip.compress(raw, mtime=0)
+            (directory / "trace.pftrace.gz").write_bytes(compressed)
+            trace.update(status="failed", error="trace_reached_size_limit", trace=trace_reference(raw),
+                         compressed={"path": "trace.pftrace.gz", "bytes": len(compressed),
+                                     "sha256": hashlib.sha256(compressed).hexdigest()})
+            trace_path.write_bytes(fixtures.encoded(trace))
+            capture = fixtures.collected_capture(directory, report)
+            (directory / "capture.json").write_bytes(fixtures.encoded(capture))
+            result = publisher.archive_app_experience(args_for(root), source_run("pilot"), [legacy.job()],
+                                                     root / "output", {"bytes": 0, "files": 0})
+            row = result["apis"][-1]
+            self.assertEqual(("partial", "failed", "passed"), (row["captureStatus"], row["diagnosticStatus"], row["reportStatus"]))
+            self.assertEqual(compressed, (root / "output/app-experience/api-37.0/trace.pftrace.gz").read_bytes())
+            # An exact-capacity file may be preserved, but cannot claim complete collection.
+            trace.update(status="collected", error=None)
+            trace_path.write_bytes(fixtures.encoded(trace))
+            rebind_capture(directory)
+            with self.assertRaises(ValueError):
+                publisher.archive_app_experience(args_for(root), source_run("pilot"), [legacy.job()],
+                                                 root / "false-complete", {"bytes": 0, "files": 0})
+            # Retaining a failure never grants one additional byte of raw capacity.
+            raw += b"x"
+            compressed = gzip.compress(raw, mtime=0)
+            (directory / "trace.pftrace.gz").write_bytes(compressed)
+            trace.update(status="failed", error="trace_reached_size_limit", trace=trace_reference(raw),
+                         compressed={"path": "trace.pftrace.gz", "bytes": len(compressed),
+                                     "sha256": hashlib.sha256(compressed).hexdigest()})
+            trace_path.write_bytes(fixtures.encoded(trace))
+            rebind_capture(directory)
+            with self.assertRaises(ValueError):
+                publisher.archive_app_experience(args_for(root), source_run("pilot"), [legacy.job()],
+                                                 root / "over-capacity", {"bytes": 0, "files": 0})
 
     def test_new_attachment_budget_does_not_relax_the_old_copy_budget(self):
         self.assertEqual(64 * 1024 * 1024, publisher.MAX_TOTAL_BYTES)

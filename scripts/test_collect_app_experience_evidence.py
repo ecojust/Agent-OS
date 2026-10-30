@@ -113,7 +113,7 @@ def trial(index=0, profile='pilot', api=37):
                 agentTaskStartedNanos=start + 2_200_000_000, agentTaskEndedNanos=start + 3_050_000_000,
                 agentTaskStartedCpuMillis=cpu + 10, agentTaskEndedCpuMillis=cpu + 10,
                 targetBefore=before, targetAfter=after, frames=[frame],
-                framePageChecks=[dict(offset=0, nextOffset=1, totalFrames=1, drainComplete=True, lateFrameReports=0)],
+                framePageChecks=[dict(offset=0, nextOffset=1, totalFrames=1, drainComplete=True, lateFrameReports=0, lateDroppedReports=0)],
                 manualActionsAttempted=0 if agent else 3,
                 manualActionsAccepted=0 if agent else 3, modelRequests=4 if agent else 0, modelAcceptedWrites=3 if agent else 0,
                 approvalCount=3 if agent else 0, resultKind='MODEL_REPORT' if agent else '', resultCode='MODEL_REPORT' if agent else '')
@@ -161,7 +161,8 @@ def write_trace(directory, value, mutate=None):
     raw_trace = b'SYNTHETIC UNIT TEST TRACE: not device evidence\n'
     zipped = gzip.compress(raw_trace, mtime=0)
     (directory / 'trace.pftrace.gz').write_bytes(zipped)
-    capture = dict(schemaVersion=1, kind='agent-os-experience-trace-capture', status='collected', pid=900,
+    capture = dict(schemaVersion=2, kind='agent-os-experience-trace-capture', status='collected', pid=900,
+                   configDelivery='stdin', startStdout='900\n', startStderr='', startExitCode=0,
                    stopped=True, ready=True, startMode='--background-wait', config=trace.trace_config(), error=None,
                    trace=dict(path='trace.pftrace', bytes=len(raw_trace), sha256=hashlib.sha256(raw_trace).hexdigest()),
                    compressed=dict(path='trace.pftrace.gz', bytes=len(zipped), sha256=hashlib.sha256(zipped).hexdigest()))
@@ -368,6 +369,52 @@ class AppExperienceEvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'identity_changed'):
             experience.validate_trial(value, 0, report())
 
+    def test_late_dropped_reports_remain_distinct_and_failed_samples_keep_counts(self):
+        for key in ('targetAfter', 'page'):
+            value = trial()
+            point = value['targetAfter'] if key == 'targetAfter' else value['framePageChecks'][0]
+            point['lateDroppedReports'] = 4
+            with self.assertRaises(ValueError): experience.validate_trial(value, 0, report())
+            value['status'] = 'failed'
+            experience.validate_trial(value, 0, report())
+            self.assertEqual(4, point['lateDroppedReports'])
+            self.assertEqual(0, point['lateFrameReports'])
+            for invalid in (True, -1, 1.0):
+                point['lateDroppedReports'] = invalid
+                with self.assertRaises(ValueError): experience.validate_trial(value, 0, report())
+
+    def test_trace_capture_v2_start_outcome_is_strict_and_v1_remains_supported(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); value = write_bundle(root)
+            state = json.loads((root / 'trace-capture.json').read_bytes())
+            payloads = experience.validate_bundle(root, value, 37)
+            legacy = {key: item for key, item in state.items()
+                      if key not in ('configDelivery', 'startStdout', 'startStderr', 'startExitCode')}
+            legacy['schemaVersion'] = 1
+            experience.validate_trace_capture(legacy, payloads)
+            for changes in (dict(schemaVersion=3), dict(schemaVersion=True), dict(configDelivery='path'),
+                            dict(startStdout=None), dict(startStderr='x' * 2049), dict(startExitCode=True),
+                            dict(startExitCode=1.0), dict(startExitCode=1), dict(startExitCode=None)):
+                bad = copy.deepcopy(state); bad.update(changes)
+                with self.assertRaises(ValueError): experience.validate_trace_capture(bad, payloads)
+            state.update(startStdout='界' * 682 + 'ab', startStderr='')
+            self.assertEqual(2048, len(state['startStdout'].encode('utf-8')))
+            experience.validate_trace_capture(state, payloads)
+            for output in ('界' * 682 + 'abc', '界' * 2048):
+                bad = dict(state, startStdout=output)
+                with self.assertRaisesRegex(ValueError, 'invalid_trace_start_output'):
+                    experience.validate_trace_capture(bad, payloads)
+            for code in (None, -9, 1):
+                failed = dict(state, status='failed', pid=None, ready=False, stopped=False,
+                              trace=None, compressed=None, error='startup failed', startExitCode=code)
+                experience.validate_trace_capture(failed, {})
+                self.assertEqual(code, failed['startExitCode'])
+            legacy.update(status='failed', pid=None, ready=False, stopped=False, trace=None,
+                          compressed=None, error='legacy preinstrumentation failure')
+            experience.validate_trace_capture(legacy, {})
+            legacy['startExitCode'] = 1
+            with self.assertRaises(ValueError): experience.validate_trace_capture(legacy, {})
+
     def test_rehashed_cross_trial_cpu_and_cold_process_reuse_are_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             launches = [launch(i) for i in range(8)]
@@ -431,6 +478,39 @@ class AppExperienceEvidenceTests(unittest.TestCase):
             value = write_bundle(temporary)
             with patch.object(experience, 'MAX_TRACE_BYTES', 10):
                 with self.assertRaises(ValueError): experience.validate_bundle(temporary, value, 37)
+
+    def test_exact_raw_trace_capacity_is_preserved_only_as_failed_without_derivation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); value = write_bundle(root)
+            state_path = root / 'trace-capture.json'; state = json.loads(state_path.read_bytes())
+            cap = state['trace']['bytes']
+            derived = {name: (root / name).read_bytes() for name in ('startup-ttid.json', 'startup-ttid.csv')}
+            for name in derived: (root / name).unlink()
+            state.update(status='failed', error='trace_reached_size_limit')
+            state_path.write_bytes(encoded(state))
+            with patch.object(experience, 'MAX_TRACE_BYTES', cap):
+                capture = collected_capture(root, value)
+                payloads = experience.validate_payloads(root, capture, '37.0', SOURCE)
+                self.assertEqual('partial', capture['captureStatus'])
+                self.assertEqual('failed', capture['diagnosticStatus'])
+                self.assertEqual(cap, experience.strict_json(payloads['trace-capture.json'])['trace']['bytes'])
+                self.assertIn('trace.pftrace.gz', payloads)
+                for status in ('collected', 'recording'):
+                    invalid = dict(state, status=status, error=None)
+                    with self.assertRaises(ValueError): experience.validate_trace_capture(invalid, payloads)
+                for name, data in derived.items(): (root / name).write_bytes(data)
+                with self.assertRaisesRegex(ValueError, 'unsaturated_trace'):
+                    experience.validate_bundle(root, value, 37)
+                for name in derived: (root / name).unlink()
+                oversized = gzip.compress(gzip.decompress(payloads['trace.pftrace.gz']) + b'x')
+                # A forged in-budget raw byte count must not permit an oversized
+                # stream to allocate through a zero (unbounded) zlib max_length.
+                state['compressed'].update(bytes=len(oversized), sha256=hashlib.sha256(oversized).hexdigest())
+                with self.assertRaisesRegex(ValueError, 'uncompressed_trace_exceeds_budget'):
+                    experience.validate_trace_capture(state, {'trace.pftrace.gz': oversized})
+                state['trace']['bytes'] = cap + 1
+                with self.assertRaises(ValueError):
+                    experience.validate_trace_capture(state, {'trace.pftrace.gz': oversized})
 
     def test_rehashed_concatenated_gzip_and_corrupted_crc_are_rejected(self):
         for suffix in (gzip.compress(b'second member'), b'trailing garbage', None):

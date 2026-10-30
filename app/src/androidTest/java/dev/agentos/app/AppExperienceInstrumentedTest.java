@@ -418,6 +418,7 @@ public final class AppExperienceInstrumentedTest {
         assertEquals(0, targetAfter.getLong("frameOverflow"));
         assertEquals(0, targetAfter.getLong("droppedReports"));
         assertEquals(0, targetAfter.getLong("lateFrameReports"));
+        assertEquals(0, targetAfter.getLong("lateDroppedReports"));
         assertEquals("A natural draw could not be associated with its frame", 0, targetAfter.getLong("unresolvedTaskDraws"));
         assertTrue("Display mode changed during the resource task", targetAfter.getBoolean("displayStable"));
         assertFalse("Natural draw/frame millisecond association is ambiguous", targetAfter.getBoolean("drawMatchAmbiguous"));
@@ -441,6 +442,7 @@ public final class AppExperienceInstrumentedTest {
             check.addProperty("totalFrames", page.getInt("totalFrames"));
             check.addProperty("drainComplete", page.getBoolean("drainComplete"));
             check.addProperty("lateFrameReports", page.getLong("lateFrameReports"));
+            check.addProperty("lateDroppedReports", page.getLong("lateDroppedReports"));
             pageChecks.add(check); // Preserve even the first failed page without rewriting the end snapshot.
             assertEquals(sessionId, page.getString("sessionId"));
             assertEquals(offset, page.getInt("offset"));
@@ -456,6 +458,7 @@ public final class AppExperienceInstrumentedTest {
             assertTrue(offset <= total);
             assertTrue("Frame drain changed while reading immutable frame pages", page.getBoolean("drainComplete"));
             assertEquals("Late frame report arrived after end", 0, page.getLong("lateFrameReports"));
+            assertEquals("Late callback reported missing frame reports", 0, page.getLong("lateDroppedReports"));
         }
         assertEquals(total, frames.size());
     }

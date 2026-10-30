@@ -371,10 +371,11 @@ def verify_app_experience_gzip(data: bytes, reference: dict) -> None:
     """Validate one bounded gzip member without writing or interpreting its trace."""
     if not 0 < len(data) <= APP_EXPERIENCE_MAX_GZIP_BYTES:
         raise ValueError("app experience compressed trace exceeds budget")
+    # validate_payloads separately permits exact capacity only for a failed trace.
     if (type(reference) is not dict or set(reference) != {"path", "bytes", "sha256"}
             or reference["path"] != "trace.pftrace"
             or type(reference["bytes"]) is not int
-            or not 0 < reference["bytes"] < APP_EXPERIENCE_MAX_TRACE_BYTES
+            or not 0 < reference["bytes"] <= APP_EXPERIENCE_MAX_TRACE_BYTES
             or not re.fullmatch(r"[0-9a-f]{64}", str(reference["sha256"]))):
         raise ValueError("invalid app experience raw trace reference")
     decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
@@ -387,7 +388,7 @@ def verify_app_experience_gzip(data: bytes, reference: dict) -> None:
                 block = decompressor.decompress(pending, 65536)
                 pending = decompressor.unconsumed_tail
                 size += len(block)
-                if size >= APP_EXPERIENCE_MAX_TRACE_BYTES or size > reference["bytes"]:
+                if size > APP_EXPERIENCE_MAX_TRACE_BYTES or size > reference["bytes"]:
                     raise ValueError("app experience raw trace exceeds budget or declared size")
                 digest.update(block)
                 if decompressor.unused_data:

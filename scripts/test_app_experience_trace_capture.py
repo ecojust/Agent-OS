@@ -104,6 +104,8 @@ class ExperienceCaptureTests(unittest.TestCase):
             if args == ("shell", "perfetto", "--help"):
                 value = "--background -d"
             elif args[:2] == ("shell", "perfetto"):
+                self.assertEqual(args[args.index("-c") + 1], "-")
+                self.assertIn("write_into_file: true", kwargs["input_text"])
                 value = "123\n"
             elif args[:2] == ("shell", "cat"):
                 value = "perfetto\n"
@@ -114,8 +116,30 @@ class ExperienceCaptureTests(unittest.TestCase):
             self.assertTrue(capture.start(self.output))
         state = json.loads((self.output / capture.STATE_NAME).read_text())
         self.assertEqual(state["startMode"], "--background")
+        self.assertEqual(state["schemaVersion"], 2)
+        self.assertEqual(state["configDelivery"], "stdin")
+        self.assertEqual(state["startExitCode"], 0)
         self.assertTrue(state["ready"])
         self.assertFalse(any("--background-wait" in call for call in self.calls))
+        self.assertFalse(any(call[0] == "push" for call in self.calls))
+
+    def test_start_failure_keeps_bounded_real_output_without_claiming_recording(self):
+        def fake(*args, **kwargs):
+            if args == ("shell", "perfetto", "--help"):
+                return subprocess.CompletedProcess(args, 0, "--background-wait", "")
+            if args[:2] == ("shell", "perfetto"):
+                return subprocess.CompletedProcess(args, 1, "synthetic stdout", "Could not open config\n" + "x" * 3000)
+            return subprocess.CompletedProcess(args, 0, "", "")
+        with mock.patch.object(capture, "adb", side_effect=fake):
+            self.assertFalse(capture.start(self.output))
+        state = json.loads((self.output / capture.STATE_NAME).read_text())
+        self.assertEqual(state["startExitCode"], 1)
+        self.assertEqual(state["startStdout"], "synthetic stdout")
+        self.assertTrue(state["startStderr"].startswith("Could not open config\n"))
+        self.assertEqual(len(state["startStderr"]), 2048)
+        self.assertEqual(state["error"], "perfetto_start_exit_1")
+        self.assertFalse(state["ready"])
+        self.assertIsNone(state["pid"])
 
 
 if __name__ == "__main__":

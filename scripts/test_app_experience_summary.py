@@ -105,7 +105,8 @@ def trial(index, profile, api):
                   afterPssKb=-1, beginCpuMillis=100, endCpuMillis=0, beginNanoTime=start + 2100 * M,
                   endNanoTime=0, beginMutationVersion=0, finalMutationVersion=0, finalDrawVersion=0,
                   finalDrawVsyncNs=0, frameCutoffVsyncNs=0, frameCount=0, frameOverflow=0,
-                  droppedReports=0, lateFrameReports=0, beginDisplayChangeCount=0, endDisplayChangeCount=0,
+                  droppedReports=0, lateFrameReports=0, lateDroppedReports=0,
+                  beginDisplayChangeCount=0, endDisplayChangeCount=0,
                   beginDisplayObservedNanoTime=start + N, endDisplayObservedNanoTime=0,
                   beginUnresolvedDrawCount=0, unresolvedTaskDraws=0,
                   beginRefreshHz=refresh, beginModeHz=refresh, endRefreshHz=refresh, endModeHz=refresh,
@@ -149,7 +150,8 @@ def trial(index, profile, api):
                 agentTaskStartedNanos=start + 2200 * M, agentTaskEndedNanos=start + 3200 * M,
                 agentTaskStartedCpuMillis=cpu + 10, agentTaskEndedCpuMillis=cpu + 10 + agent_delta,
                 targetBefore=before, targetAfter=after, frames=frames,
-                framePageChecks=[dict(offset=0, nextOffset=3, totalFrames=3, drainComplete=True, lateFrameReports=0)],
+                framePageChecks=[dict(offset=0, nextOffset=3, totalFrames=3, drainComplete=True,
+                                      lateFrameReports=0, lateDroppedReports=0)],
                 manualActionsAttempted=0 if arm_index == 2 else 3, manualActionsAccepted=0 if arm_index == 2 else 3,
                 modelRequests=4 if arm_index == 2 else 0, modelAcceptedWrites=3 if arm_index == 2 else 0,
                 approvalCount=3 if arm_index == 2 else 0, resultKind="MODEL_REPORT" if arm_index == 2 else "",
@@ -326,6 +328,51 @@ class AppExperienceSummaryTests(unittest.TestCase):
         self.assertEqual([60.0, 120.0], frame31["refreshSnapshotValuesHz"])
         self.assertEqual(0, frame31["api30NominalRefreshPeriodComparison"]["comparableReportCount"])
 
+    def test_unknown_and_non_positive_deadlines_are_not_comparable_fast_frames(self):
+        def alter(report, launches, trials):
+            if report["device"]["sdkInt"] == 30:
+                return
+            # Unknown first draws are excluded before the non-first reasons.
+            for trial_value in trials:
+                frame = trial_value["frames"][0]
+                frame["deadlineNs"] = evidence.LONG_MAX - frame["intendedVsyncNs"]
+            unknown = trials[0]["frames"][1]
+            unknown["deadlineNs"] = evidence.LONG_MAX - unknown["intendedVsyncNs"]
+            trials[1]["frames"][1]["deadlineNs"] = 0
+            trials[1]["frames"][2]["deadlineNs"] = -1
+        with tempfile.TemporaryDirectory() as temporary:
+            value = summary.summarize(write_archive(temporary, alter=alter), SHA)
+        for lane in value["lanes"][1:]:
+            frames = lane["frames"]["allRecordedTasks"]
+            comparison = frames["nonFirstTotalMinusDeadlineMillis"]
+            self.assertEqual((6, 3, 3, 2), tuple(comparison[key] for key in
+                ("nonFirstReportCount", "comparableReportCount", "unavailableReportCount", "exceededReportCount")))
+            self.assertEqual(2 / 3, comparison["exceededFraction"])
+            self.assertEqual(12, comparison["differenceMillis"]["median"])
+            self.assertEqual(dict(unsupported_api_30=0, platform_unavailable=1,
+                                  non_positive_budget=1, unknown_deadline_sentinel=1), comparison["unavailableReasonCounts"])
+            self.assertEqual(9, frames["receivedReportCount"])
+        api30 = value["lanes"][0]["frames"]["allRecordedTasks"]["nonFirstTotalMinusDeadlineMillis"]
+        self.assertEqual(6, api30["unavailableReasonCounts"]["unsupported_api_30"])
+        self.assertEqual(0, api30["comparableReportCount"])
+
+    def test_no_known_deadlines_has_no_exceedance_ratio_or_zero_substitution(self):
+        def alter(report, launches, trials):
+            if report["device"]["sdkInt"] == 30:
+                return
+            for trial_value in trials:
+                for frame in trial_value["frames"]:
+                    frame["deadlineNs"] = evidence.LONG_MAX - frame["intendedVsyncNs"]
+        with tempfile.TemporaryDirectory() as temporary:
+            value = summary.summarize(write_archive(temporary, alter=alter), SHA)
+        comparison = value["lanes"][1]["frames"]["allRecordedTasks"]["nonFirstTotalMinusDeadlineMillis"]
+        self.assertEqual((6, 0, 6), tuple(comparison[key] for key in
+            ("nonFirstReportCount", "comparableReportCount", "unavailableReportCount")))
+        self.assertEqual(6, comparison["unavailableReasonCounts"]["unknown_deadline_sentinel"])
+        self.assertIsNone(comparison["exceededFraction"])
+        self.assertIsNone(comparison["differenceMillis"]["median"])
+        self.assertEqual(6, comparison["differenceMillis"]["missingCount"])
+
     def test_zero_cpu_is_valid_and_not_replaced_by_sample_cpu(self):
         def alter(report, launches, trials):
             trials[0]["targetAfter"]["endCpuMillis"] = trials[0]["targetAfter"]["beginCpuMillis"]
@@ -390,6 +437,34 @@ class AppExperienceSummaryTests(unittest.TestCase):
         self.assertEqual(1, frames["refreshAttributionUncertainReportCount"])
         self.assertEqual((6, 5, 1), tuple(frames["api30NominalRefreshPeriodComparison"][key] for key in ("nonFirstReportCount", "comparableReportCount", "unavailableReportCount")))
 
+    def test_late_dropped_reports_use_task_max_without_readding_rows_or_pages(self):
+        def alter(report, launches, trials):
+            report["status"] = "failed"; value = trials[-1]; value["status"] = "failed"
+            value["targetAfter"].update(droppedReports=4, lateDroppedReports=2)
+            value["frames"][-1]["droppedReports"] = 4
+            value["framePageChecks"][0].update(lateDroppedReports=5)
+            value["framePageChecks"].append(dict(offset=3, nextOffset=3, totalFrames=3,
+                                                 drainComplete=True, lateFrameReports=0, lateDroppedReports=7))
+        with tempfile.TemporaryDirectory() as temporary:
+            value = summary.summarize(write_archive(temporary, alter=alter), SHA)
+        for lane in value["lanes"]:
+            frames = lane["frames"]["allRecordedTasks"]
+            self.assertEqual((4, 4, 7, 11), tuple(frames[key] for key in
+                ("droppedReportCount", "receivedRowDroppedReportCount", "lateDroppedReportCount", "observedDroppedReportCount")))
+            self.assertEqual(0, frames["lateReportCount"])
+            self.assertEqual(0, frames["lateDroppedReportUnavailableTaskCount"])
+            self.assertEqual(0, lane["frames"]["passedTasks"]["observedDroppedReportCount"])
+
+    def test_absent_late_dropped_counter_is_unavailable_not_zero(self):
+        value = trial(0, "pilot", 31)
+        value["targetAfter"].pop("lateDroppedReports")
+        for page in value["framePageChecks"]: page.pop("lateDroppedReports")
+        frames = summary.frame_summary([value], 31)
+        self.assertIsNone(frames["lateDroppedReportCount"])
+        self.assertIsNone(frames["observedDroppedReportCount"])
+        self.assertEqual(1, frames["lateDroppedReportUnavailableTaskCount"])
+        self.assertEqual(3, frames["receivedReportCount"])
+
     def test_failure_before_measurements_has_no_fabricated_zero_cpu_or_memory(self):
         def alter(report, launches, trials):
             report["status"] = "failed"; del trials[1:]
@@ -424,6 +499,7 @@ class AppExperienceSummaryTests(unittest.TestCase):
         self.assertEqual((64, 56), (value["expectedLaunchCount"], value["validTtidCount"]))
         self.assertEqual("collected", value["lanes"][0]["traceCapture"]["status"])
         self.assertEqual("report_unavailable", value["lanes"][0]["reason"])
+        self.assertNotIn("frames", value["lanes"][0])
 
     def test_partial_trace_keeps_observed_ttid_without_complete_acceptance(self):
         with tempfile.TemporaryDirectory() as temporary:

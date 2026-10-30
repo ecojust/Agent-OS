@@ -56,7 +56,7 @@ STATUS_INT = (*[x + 'Count' for x in LIFECYCLE], *[x + 'NanoTime' for x in LIFEC
 SESSION_BOOL = ('ended', 'finalFrameObserved', 'drainComplete', 'drainTimedOut', 'displayStable')
 SESSION_INT = ('beforePssKb', 'beginCpuMillis', 'endCpuMillis', 'beginNanoTime', 'endNanoTime',
                'beginMutationVersion', 'finalMutationVersion', 'finalDrawVersion', 'finalDrawVsyncNs',
-               'frameCutoffVsyncNs', 'frameCount', 'frameOverflow', 'droppedReports', 'lateFrameReports',
+               'frameCutoffVsyncNs', 'frameCount', 'frameOverflow', 'droppedReports', 'lateFrameReports', 'lateDroppedReports',
                'beginDisplayChangeCount', 'endDisplayChangeCount', 'beginDisplayObservedNanoTime', 'endDisplayObservedNanoTime',
                'beginUnresolvedDrawCount', 'unresolvedTaskDraws')
 SESSION_HZ = ('beginRefreshHz', 'beginModeHz', 'endRefreshHz', 'endModeHz')
@@ -450,13 +450,13 @@ def validate_trial(value, index, report):
         raise ValueError('invalid_frame_page_count')
     next_offset = 0
     for check in checks:
-        fields(check, ('offset', 'nextOffset', 'totalFrames', 'drainComplete', 'lateFrameReports'))
+        fields(check, ('offset', 'nextOffset', 'totalFrames', 'drainComplete', 'lateFrameReports', 'lateDroppedReports'))
         for key in ('offset', 'nextOffset', 'totalFrames'):
             integer(check[key], 0, 4096)
-        boolean(check['drainComplete']); integer(check['lateFrameReports'])
+        boolean(check['drainComplete']); integer(check['lateFrameReports']); integer(check['lateDroppedReports'])
         if passed and (check['offset'] != next_offset or check['totalFrames'] != target_after['frameCount']
                 or check['nextOffset'] != min(check['offset'] + 64, check['totalFrames'])
-                or check['nextOffset'] <= check['offset'] or not check['drainComplete'] or check['lateFrameReports']):
+                or check['nextOffset'] <= check['offset'] or not check['drainComplete'] or check['lateFrameReports'] or check['lateDroppedReports']):
             raise ValueError('invalid_or_late_frame_page')
         next_offset = check['nextOffset']
     if passed and next_offset != len(value['frames']):
@@ -467,7 +467,7 @@ def validate_trial(value, index, report):
             raise ValueError('passed_resource_trial_incomplete')
         if (target_after['endNanoTime'] <= target_after['beginNanoTime'] or not all(target_after[k] for k in ('ended', 'finalState', 'finalDrawObserved', 'finalFrameObserved', 'drainComplete', 'hardwareAccelerated', 'displayStable'))
                 or target_after['drawMatchAmbiguous'] or target_after['drainTimedOut'] or target_after['unresolvedTaskDraws']
-                or target_after['beginDisplayChangeCount'] != target_after['endDisplayChangeCount'] or any(target_after[k] for k in ('frameOverflow', 'droppedReports', 'lateFrameReports'))
+                or target_after['beginDisplayChangeCount'] != target_after['endDisplayChangeCount'] or any(target_after[k] for k in ('frameOverflow', 'droppedReports', 'lateFrameReports', 'lateDroppedReports'))
                 or target_after['finalMutationVersion'] != target_after['finalDrawVersion']
                 or target_after['finalDrawVsyncNs'] != target_after['frameCutoffVsyncNs']):
             raise ValueError('passed_resource_trial_incomplete_frames')
@@ -556,9 +556,24 @@ def _validate_raw_bundle(directory, report, api, profile=None):
 
 
 def validate_trace_capture(value, payloads):
-    fields(value, ('schemaVersion', 'kind', 'status', 'pid', 'stopped', 'config', 'trace', 'compressed',
-                   'error', 'startMode', 'ready'))
-    integer(value['schemaVersion'], 1, 1)
+    if type(value) is not dict:
+        raise ValueError('invalid_trace_capture_identity')
+    integer(value.get('schemaVersion'), 1, 2)
+    expected = ('schemaVersion', 'kind', 'status', 'pid', 'stopped', 'config', 'trace', 'compressed',
+                'error', 'startMode', 'ready')
+    if value['schemaVersion'] == 2:
+        expected += ('configDelivery', 'startStdout', 'startStderr', 'startExitCode')
+    fields(value, expected)
+    if value['schemaVersion'] == 2:
+        if value['configDelivery'] != 'stdin':
+            raise ValueError('invalid_trace_config_delivery')
+        for key in ('startStdout', 'startStderr'):
+            if type(value[key]) is not str or len(value[key].encode('utf-8')) > 2048:
+                raise ValueError('invalid_trace_start_output')
+        if value['startExitCode'] is not None:
+            integer(value['startExitCode'], -255, 255)
+        if value['status'] in ('recording', 'collected') and value['startExitCode'] != 0:
+            raise ValueError('trace_capture_start_did_not_succeed')
     if value['kind'] != 'agent-os-experience-trace-capture' or value['status'] not in ('recording', 'collected', 'failed'):
         raise ValueError('invalid_trace_capture_identity')
     if value['pid'] is not None:
@@ -582,7 +597,8 @@ def validate_trace_capture(value, payloads):
         if 'trace.pftrace.gz' in payloads:
             raise ValueError('unreferenced_compressed_trace')
         return
-    for key, name, maximum in (('trace', 'trace.pftrace', MAX_TRACE_BYTES - 1),
+    raw_maximum = MAX_TRACE_BYTES if value['status'] == 'failed' else MAX_TRACE_BYTES - 1
+    for key, name, maximum in (('trace', 'trace.pftrace', raw_maximum),
                                ('compressed', 'trace.pftrace.gz', MAX_GZIP_BYTES)):
         ref = value[key]
         fields(ref, ('path', 'bytes', 'sha256'))
@@ -598,10 +614,10 @@ def validate_trace_capture(value, payloads):
         for offset in range(0, len(data), 65536):
             pending = data[offset:offset + 65536]
             while pending:
-                block = inflater.decompress(pending, min(65536, MAX_TRACE_BYTES - total))
+                block = inflater.decompress(pending, min(65536, MAX_TRACE_BYTES - total + 1))
                 pending = inflater.unconsumed_tail
                 total += len(block)
-                if total >= MAX_TRACE_BYTES:
+                if total > MAX_TRACE_BYTES or total == MAX_TRACE_BYTES and value['status'] != 'failed':
                     raise ValueError('uncompressed_trace_exceeds_budget')
                 sha.update(block)
                 if inflater.unused_data:
@@ -636,6 +652,8 @@ def validate_bundle(directory, value, api, profile=None):
     if 'startup-ttid.json' in payloads:
         if value is None or 'trace.pftrace.gz' not in payloads:
             raise ValueError('derivation_missing_report_or_trace')
+        if strict_json(payloads['trace-capture.json'])['trace']['bytes'] >= MAX_TRACE_BYTES:
+            raise ValueError('startup_derivation_requires_unsaturated_trace')
         from experience_trace import validate_derivation
         derived = strict_json(payloads['startup-ttid.json'])
         validate_derivation(derived, value, directory / 'trace.pftrace.gz', directory / 'startup-ttid.csv')

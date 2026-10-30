@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-30T13:41:21Z",
-  "note": "目标进程/启动/帧专项实现完成本地验证：750项宿主检查、Fixture与AndroidTest编译及lint通过，原273回归身份不变；八档pilot及正式3200启动/144任务待执行，整体演示待录制，检查点仍10/20。",
+  "updated_at": "2026-10-30T13:54:52Z",
+  "note": "已归档首轮目标应用pilot的32份失败载荷，64启动/24任务仍无实测；修正Perfetto标准输入配置、保存错误输出及帧统计边界，759项宿主检查与编译/lint通过。现启动新源码八档pilot，正式3200启动/144任务及整体演示仍待完成。",
   "latest_evidence": {
-    "path": "screenshots/41059787334-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41059787334"
+    "path": "screenshots/41065314486-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41065314486"
   },
   "checkpoints": [
     {
@@ -93,8 +93,8 @@
       "id": "performance",
       "name": "三态性能诊断与空闲交替配对",
       "status": "complete",
-      "details": "已完成三态/停止汇总与084d空闲配对；后续054be压力240段/480任务、8d038等价任务48对/480任务均八档通过。目标进程/启动/帧已实现独立采集与严格归档，正在准备八档试跑；正式3200启动/144任务及独立复算未完成。繁忙停止、稳态/峰值及真机预算继续单列。",
-      "updated_at": "2026-10-30T13:36:16Z",
+      "details": "已完成三态/停止、084d空闲配对，以及后续压力和活跃等价任务诊断。目标进程/启动/帧首轮pilot八档在Perfetto前置退出，64启动/24任务无实测；32份失败载荷已归档。已补配置传输与错误输出，下一步新源码试跑；正式3200启动/144任务、繁忙停止及真机预算未完成。",
+      "updated_at": "2026-10-30T13:50:30Z",
       "evidence": "docs/validation/performance-idle-pairs.md",
       "scope": "按用户本次确认，将原“三态性能测量与预算验收”检查点的当前完成范围明确为三态诊断采集、同源多轮汇总和同设备空闲交替配对，并以已归档通过证据关闭此项。原预算验收要求保留于docs/PERFORMANCE.md的“性能后续任务”，尚未完成；状态变更不改变diagnosticOnly=true、budgetAcceptance=false。084d596e源码专项41044860496八档8/8，AB/BA六对/API：48对96窗全部通过、2016采样、192端点状态及0trace；65payload/1073884B/17PNG核验，7条before截图blocked原样保留，无安全标志例外。2160派生数值独立Fraction复算一致，保留AB/BA顺序相关差异；CI562项宿主实际通过无skip，core:test FROM-CACHE。旧710e三轮24份四态诊断与矩阵失败保留。初次归档参数错误41045898899保留，纠正后41046173408成功且未重跑设备。仍为diagnosticOnly=true、budgetAcceptance=false。后续054be源码的30分钟分段专项41052540296已独立验收，见docs/validation/performance-stress.md；此行原诊断与空闲配对的验收范围不变。后续8d038源码的等价任务专项41059787334也已独立验收：48对/96组/480任务、960端点，A平台接受720与C模型确认720分开，548载荷和3728派生数值核验，见docs/validation/performance-active-pairs.md。原诊断/空闲配对验收范围不变；目标进程、启动/完整帧、繁忙停止、稳态/瞬时峰值及真机功耗温升仍未验收。"
     },

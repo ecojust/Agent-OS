@@ -186,6 +186,7 @@ final class PerformanceProbe {
         if (current.ended) {
             if (frame.vsyncNs <= current.frameCutoffVsyncNs) {
                 current.lateFrameReports++;
+                current.lateDroppedReports += frame.droppedReports;
                 current.drainComplete = false;
             }
         } else {
@@ -263,7 +264,8 @@ final class PerformanceProbe {
             current.endDisplayObservedNanoTime = displayObservedNanoTime;
             current.unresolvedTaskDraws = unresolvedDrawCount - current.beginUnresolvedDrawCount;
             current.drainComplete = barrier && current.finalFrameObserved && current.frameCutoffVsyncNs > 0
-                    && !drawMatchAmbiguous && current.lateFrameReports == 0 && current.unresolvedTaskDraws == 0;
+                    && !drawMatchAmbiguous && current.lateFrameReports == 0 && current.lateDroppedReports == 0
+                    && current.unresolvedTaskDraws == 0;
             current.drainTimedOut = !current.drainComplete;
             // Select complete reported task frames through the final natural draw watermark.
             // Later cursor/IME frames do not extend the completed three-write task frame sample.
@@ -287,6 +289,7 @@ final class PerformanceProbe {
             result.putInt("nextOffset", end);
             result.putInt("totalFrames", current.frames.size());
             result.putLong("lateFrameReports", current.lateFrameReports);
+            result.putLong("lateDroppedReports", current.lateDroppedReports);
             result.putBoolean("drainComplete", current.drainComplete);
             ArrayList<Bundle> frames = new ArrayList<>(end - offset);
             for (int i = offset; i < end; i++) frames.add(current.frames.get(i).bundle(i));
@@ -345,7 +348,7 @@ final class PerformanceProbe {
         final ArrayList<Frame> frames = new ArrayList<>();
         long beforePssKb, afterPssKb = -1, beginCpuMillis, endCpuMillis, beginNanoTime, endNanoTime;
         long beginMutationVersion, finalMutationVersion, finalDrawVersion, frameCutoffVsyncNs;
-        long frameOverflow, droppedReports, lateFrameReports;
+        long frameOverflow, droppedReports, lateFrameReports, lateDroppedReports;
         long beginUnresolvedDrawCount, unresolvedTaskDraws;
         long beginDisplayChangeCount, endDisplayChangeCount, beginDisplayObservedNanoTime, endDisplayObservedNanoTime;
         MemorySample beforeMemory, afterMemory;
@@ -362,6 +365,7 @@ final class PerformanceProbe {
             result.putLong("frameCutoffVsyncNs", frameCutoffVsyncNs);
             result.putInt("frameCount", frames.size()); result.putLong("frameOverflow", frameOverflow);
             result.putLong("droppedReports", droppedReports); result.putLong("lateFrameReports", lateFrameReports);
+            result.putLong("lateDroppedReports", lateDroppedReports);
             result.putLong("beginUnresolvedDrawCount", beginUnresolvedDrawCount);
             result.putLong("unresolvedTaskDraws", unresolvedTaskDraws);
             result.putBoolean("finalFrameObserved", finalFrameObserved); result.putBoolean("drainComplete", drainComplete);

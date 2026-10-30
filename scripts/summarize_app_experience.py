@@ -33,9 +33,9 @@ LIMITATIONS = [
     "CPU is cumulative process CPU milliseconds over each process's own positive wall interval. Zero quantized CPU deltas are valid; one logical core is 100%. Percentage differences are not computed as net overhead.",
     "Target and Agent intervals and PSS endpoints are sampled separately. Two-process PSS sums combine different sampling instants and are neither simultaneous system memory nor a peak or steady state.",
     "PSS category readings are preserved separately and are not summed with overlapping Graphics summaries. Probe/Binder, instrumentation, local-model, cache/GC and host effects remain.",
-    "Frame counts describe received HWUI reports, not presented screen frames. Dropped reports, buffer overflow and late callbacks are separate quality counters; failed-task reports remain visible.",
+    "Frame counts describe received HWUI reports, not presented screen frames. End-snapshot dropped reports, late-callback dropped reports, buffer overflow and late received callbacks are distinct counters. Late cumulative snapshots use each task's maximum before summing tasks; received-row drop counters overlap the end-snapshot counters and are not added again. Missing late-drop fields remain unavailable.",
     "FIRST_DRAW_FRAME is separate from non-first timing and exceedance denominators. FrameMetrics is not TTID, physical presentation, sustained scrolling or complete system composition.",
-    "API31+ TOTAL_DURATION-minus-DEADLINE is a named HWUI diagnostic, not Macrobenchmark frameOverrunMs. API30 has no GPU/deadline value and uses a separately labelled nominal-refresh-period comparison only when attribution is stable.",
+    "API31+ TOTAL_DURATION-minus-DEADLINE is a named HWUI diagnostic, not Macrobenchmark frameOverrunMs. Only positive known deadline budgets enter comparison: platform -1, other non-positive values and the HWUI INT64_MAX-derived unknown sentinel are excluded with separate reasons. API30 has no GPU/deadline value and uses a separately labelled nominal-refresh-period comparison only when attribution is stable.",
     "Per-frame refreshHz is the platform-reported application-rate snapshot, not measured physical panel frequency. Mode rate, observation times and display changes remain in raw evidence.",
     "A failed root retains a known unexecuted suffix; an incomplete or missing root retains unknown uncommitted samples. No failed sample is replaced and partial traces cannot establish complete startup evidence.",
     "Local archive hash validation and archived SQL-result recomputation do not authenticate GitHub or independently execute the binary against the trace; raw trace and tool identities are retained for that audit.",
@@ -232,8 +232,27 @@ def frame_summary(trials, api):
     nonfirst = [(frame, target) for frame, target in rows if frame["firstDraw"] == 0]
     first = [frame for frame, unused in rows if frame["firstDraw"] == 1]
     targets = [trial["targetAfter"] for trial in trials if trial.get("targetAfter") is not None]
-    deadline = [(frame["totalDurationNs"] - frame["deadlineNs"]) / 1e6 if frame["deadlineNs"] >= 0 else None
-                for frame, unused in nonfirst]
+    end_dropped = sum(target["droppedReports"] for target in targets)
+    late_dropped = []
+    for trial in trials:
+        snapshots = [*([] if trial.get("targetAfter") is None else [trial["targetAfter"]]),
+                     *trial.get("framePageChecks", [])]
+        known = [snapshot["lateDroppedReports"] for snapshot in snapshots if "lateDroppedReports" in snapshot]
+        late_dropped.append(max(known) if known else None)
+    late_dropped_total = sum(late_dropped) if late_dropped and all(value is not None for value in late_dropped) else None
+    # FrameMetrics.DEADLINE is FrameDeadline - IntendedVsync. HWUI's
+    # UNKNOWN_DEADLINE is INT64_MAX, so its derived positive value is not a
+    # usable budget. Public getMetric documents -1 as unavailable; zero or
+    # other non-positive values are simply not comparable, not an invented
+    # platform unknown encoding.
+    deadline_reasons = [
+        "unsupported_api_30" if api == 30 else
+        "platform_unavailable" if frame["deadlineNs"] == -1 else
+        "non_positive_budget" if frame["deadlineNs"] <= 0 else
+        "unknown_deadline_sentinel" if frame["deadlineNs"] + frame["intendedVsyncNs"] == common.LONG_MAX else None
+        for frame, unused in nonfirst]
+    deadline = [(frame["totalDurationNs"] - frame["deadlineNs"]) / 1e6 if reason is None else None
+                for (frame, unused), reason in zip(nonfirst, deadline_reasons)]
     def attributed_refresh(frame, target):
         return (target is not None and target["displayStable"] and frame["refreshHz"] > 0
                 and frame["refreshHz"] == target["beginRefreshHz"] == target["endRefreshHz"]
@@ -245,7 +264,13 @@ def frame_summary(trials, api):
         observedTaskCount=len(trials), targetSessionCount=len(targets), receivedReportCount=len(rows),
         targetBufferedReportCount=sum(target["frameCount"] for target in targets),
         firstDrawReportCount=len(first), nonFirstReportCount=len(nonfirst),
-        droppedReportCount=sum(target["droppedReports"] for target in targets),
+        droppedReportCount=end_dropped,
+        lateDroppedReportCount=late_dropped_total,
+        knownLateDroppedReportCount=sum(value for value in late_dropped if value is not None),
+        lateDroppedReportUnavailableTaskCount=sum(value is None for value in late_dropped),
+        observedDroppedReportCount=end_dropped + late_dropped_total
+        if late_dropped_total is not None and len(targets) == len(trials) else None,
+        droppedReportSemantics="end_snapshot_plus_task_max_late_cumulative_counts_received_row_counts_overlap_not_added",
         receivedRowDroppedReportCount=sum(frame["droppedReports"] for frame, unused in rows),
         bufferOverflowCount=sum(target["frameOverflow"] for target in targets),
         endSnapshotLateReportCount=sum(target["lateFrameReports"] for target in targets),
@@ -267,6 +292,8 @@ def frame_summary(trials, api):
         nonFirstGpuDurationMillis=dict(availability="unavailable_on_api_30" if api == 30 else "platform_reported",
             **distribution([frame["gpuDurationNs"] / 1e6 if frame["gpuDurationNs"] >= 0 else None for frame, unused in nonfirst])),
         nonFirstTotalMinusDeadlineMillis=dict(availability="unavailable_on_api_30" if api == 30 else "platform_deadline",
+            unavailableReasonCounts={reason: deadline_reasons.count(reason) for reason in
+                ("unsupported_api_30", "platform_unavailable", "non_positive_budget", "unknown_deadline_sentinel")},
             **exceedance(deadline, len(nonfirst))),
         api30NominalRefreshPeriodComparison=dict(availability="nominal_period_only" if api == 30 else "not_used_api_31_plus",
             **exceedance(nominal if api == 30 else [None] * len(nonfirst), len(nonfirst))),

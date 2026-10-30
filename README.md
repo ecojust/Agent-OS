@@ -45,11 +45,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 继续核查稳定性：固定两轮同源271×8复测；新增导航真实控制窗重建回归和八档专项，先验证原实现的拒绝顺序问题。生产逻辑尚未修改，设备前对照待执行。
+**本次更新：** 归档本次真实模拟器测试截图与结果；证据清单保留失败、受保护及无界面用例的状态。
 
-**记录时间：** 2026-10-29T23:57:24Z
+**记录时间：** 2026-10-30T00:07:16Z
 
-[最近测试截图与清单](screenshots/40913005561-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40913005561)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/40975741234-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40975741234)。通过、失败及未截图原因见清单。
 
 **整体操作演示：** [播放视频](screenshots/demos/40902334050-1/demo.mp4) · [录制与验证清单](screenshots/demos/40902334050-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/40902334050)。
 录制版本：[`42db0baf3`](https://github.com/ecojust/Agent-OS/commit/42db0baf3528ff33dd1beaa4da1cb32dc54c16f4)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。

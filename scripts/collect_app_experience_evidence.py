@@ -30,9 +30,12 @@ MAX_REPORT_BYTES = 262144
 MAX_LAUNCH_BYTES = 32768
 MAX_TRIAL_BYTES = 2097152
 MAX_CAPTURE_BYTES = 131072
-MAX_TRACE_BYTES = 64 * 1024 * 1024
-MAX_GZIP_BYTES = 12 * 1024 * 1024
-MAX_ARTIFACT_BYTES = 16 * 1024 * 1024
+LEGACY_MAX_TRACE_BYTES = 64 * 1024 * 1024
+LEGACY_MAX_GZIP_BYTES = 12 * 1024 * 1024
+LEGACY_MAX_ARTIFACT_BYTES = 16 * 1024 * 1024
+MAX_TRACE_BYTES = 256 * 1024 * 1024
+MAX_GZIP_BYTES = 64 * 1024 * 1024
+MAX_ARTIFACT_BYTES = 80 * 1024 * 1024
 MAX_DERIVED_BYTES = 2 * 1024 * 1024
 COLLECTION_SECONDS = 60
 TARGET_PACKAGE = 'dev.agentos.fixture'
@@ -135,7 +138,8 @@ def hz(value, minimum=-1):
         raise ValueError('invalid_refresh_rate')
 
 
-def validate_report(value, api, profile=None):
+def validate_report(value, api, profile=None, artifact_limit=None):
+    artifact_limit = MAX_ARTIFACT_BYTES if artifact_limit is None else artifact_limit
     fields(value, ('schemaVersion', 'kind', 'diagnosticOnly', 'budgetAcceptance', 'profile', 'status',
                    'appProcessPid', 'targetPackage', 'device', 'conditions', 'startedNanos', 'endedNanos',
                    'cleanup', 'launches', 'trials'))
@@ -192,7 +196,7 @@ def validate_report(value, api, profile=None):
                 integer(ref['driverPid'], value['appProcessPid'], value['appProcessPid'])
                 integer(ref['expectedPid'], 1 if ref['status'] == 'passed' else -1, 2 ** 31 - 1)
             total += ref['bytes']
-            if total > MAX_ARTIFACT_BYTES:
+            if total > artifact_limit:
                 raise ValueError('experience_artifact_exceeds_budget')
             previous_end = ref['endedNanos']
             failed = ref['status'] == 'failed'
@@ -552,9 +556,9 @@ def read_bounded(path, maximum):
     return data
 
 
-def _validate_raw_bundle(directory, report, api, profile=None):
+def _validate_raw_bundle(directory, report, api, profile=None, artifact_limit=None):
     directory = Path(directory)
-    validate_report(report, api, profile)
+    validate_report(report, api, profile, artifact_limit)
     root = read_bounded(directory / REPORT_NAME, MAX_REPORT_BYTES)
     if strict_json(root) != report:
         raise ValueError('root_report_does_not_match_bundle')
@@ -595,19 +599,41 @@ def _validate_raw_bundle(directory, report, api, profile=None):
     return payloads
 
 
+def limits_for_trace_capture(value):
+    """Capacity belongs to recorded capture versions, never the current default."""
+    if value is None:
+        version = 1
+    else:
+        if type(value) is not dict:
+            raise ValueError('invalid_trace_capture_identity')
+        integer(value.get('schemaVersion'), 1, 4)
+        version = value['schemaVersion']
+        config_version = version - 1 if version >= 3 else 1
+        if version >= 3:
+            integer(value.get('configVersion'), config_version, config_version)
+        from experience_trace import trace_config
+        if value.get('config') != trace_config(version=config_version):
+            raise ValueError('trace_config_mismatch')
+    if version == 4:
+        return dict(raw=MAX_TRACE_BYTES, gzip=MAX_GZIP_BYTES, lane=MAX_ARTIFACT_BYTES)
+    return dict(raw=LEGACY_MAX_TRACE_BYTES, gzip=LEGACY_MAX_GZIP_BYTES, lane=LEGACY_MAX_ARTIFACT_BYTES)
+
+
 def validate_trace_capture(value, payloads):
     if type(value) is not dict:
         raise ValueError('invalid_trace_capture_identity')
-    integer(value.get('schemaVersion'), 1, 3)
+    integer(value.get('schemaVersion'), 1, 4)
+    limits = limits_for_trace_capture(value)
     expected = ('schemaVersion', 'kind', 'status', 'pid', 'stopped', 'config', 'trace', 'compressed',
                 'error', 'startMode', 'ready')
     if value['schemaVersion'] >= 2:
         expected += ('configDelivery', 'startStdout', 'startStderr', 'startExitCode')
-    if value['schemaVersion'] == 3:
+    if value['schemaVersion'] >= 3:
         expected += ('configVersion',)
     fields(value, expected)
-    if value['schemaVersion'] == 3:
-        integer(value['configVersion'], 2, 2)
+    if value['schemaVersion'] >= 3:
+        expected_config = value['schemaVersion'] - 1
+        integer(value['configVersion'], expected_config, expected_config)
     if value['schemaVersion'] >= 2:
         if value['configDelivery'] != 'stdin':
             raise ValueError('invalid_trace_config_delivery')
@@ -628,7 +654,7 @@ def validate_trace_capture(value, payloads):
         raise ValueError('invalid_trace_start_mode')
     bounded_text(value['config'], 8192)
     from experience_trace import trace_config
-    if value['config'] != trace_config(version=2 if value['schemaVersion'] == 3 else 1):
+    if value['config'] != trace_config(version=value['schemaVersion'] - 1 if value['schemaVersion'] >= 3 else 1):
         raise ValueError('trace_config_mismatch')
     if value['error'] is not None:
         bounded_text(value['error'], 2000, empty=True)
@@ -641,9 +667,9 @@ def validate_trace_capture(value, payloads):
         if 'trace.pftrace.gz' in payloads:
             raise ValueError('unreferenced_compressed_trace')
         return
-    raw_maximum = MAX_TRACE_BYTES if value['status'] == 'failed' else MAX_TRACE_BYTES - 1
+    raw_maximum = limits['raw'] if value['status'] == 'failed' else limits['raw'] - 1
     for key, name, maximum in (('trace', 'trace.pftrace', raw_maximum),
-                               ('compressed', 'trace.pftrace.gz', MAX_GZIP_BYTES)):
+                               ('compressed', 'trace.pftrace.gz', limits['gzip'])):
         ref = value[key]
         fields(ref, ('path', 'bytes', 'sha256'))
         if ref['path'] != name:
@@ -658,10 +684,10 @@ def validate_trace_capture(value, payloads):
         for offset in range(0, len(data), 65536):
             pending = data[offset:offset + 65536]
             while pending:
-                block = inflater.decompress(pending, min(65536, MAX_TRACE_BYTES - total + 1))
+                block = inflater.decompress(pending, min(65536, limits['raw'] - total + 1))
                 pending = inflater.unconsumed_tail
                 total += len(block)
-                if total > MAX_TRACE_BYTES or total == MAX_TRACE_BYTES and value['status'] != 'failed':
+                if total > limits['raw'] or total == limits['raw'] and value['status'] != 'failed':
                     raise ValueError('uncompressed_trace_exceeds_budget')
                 sha.update(block)
                 if inflater.unused_data:
@@ -676,16 +702,28 @@ def validate_trace_capture(value, payloads):
 
 def validate_bundle(directory, value, api, profile=None):
     directory = Path(directory)
-    payloads = _validate_raw_bundle(directory, value, api, profile) if value is not None else {}
+    # Read small versioned metadata before permitting any large gzip allocation.
+    metadata_path = directory / 'trace-capture.json'
+    metadata_bytes = read_bounded(metadata_path, 16384) if metadata_path.exists() or metadata_path.is_symlink() else None
+    metadata = strict_json(metadata_bytes) if metadata_bytes is not None else None
+    limits = limits_for_trace_capture(metadata)
+    payloads = _validate_raw_bundle(directory, value, api, profile, limits['lane']) if value is not None else {}
+    if metadata_bytes is not None:
+        payloads['trace-capture.json'] = metadata_bytes
     for name in HOST_NAMES:
+        if name == 'trace-capture.json':
+            continue
         path = directory / name
         if path.exists() or path.is_symlink():
-            maximum = MAX_GZIP_BYTES if name.endswith('.gz') else 16384 if name == 'trace-capture.json' else MAX_DERIVED_BYTES
-            payloads[name] = read_bounded(path, maximum)
+            maximum = limits['gzip'] if name.endswith('.gz') else MAX_DERIVED_BYTES
+            remaining = limits['lane'] - MAX_CAPTURE_BYTES - sum(map(len, payloads.values()))
+            if remaining <= 0:
+                raise ValueError('experience_artifact_exceeds_budget')
+            payloads[name] = read_bounded(path, min(maximum, remaining))
     expected = set(payloads) | {'capture.json'}
     if any(path.name not in expected or path.is_symlink() or not path.is_file() for path in directory.iterdir()):
         raise ValueError('unexpected_experience_bundle_file')
-    if sum(map(len, payloads.values())) + MAX_CAPTURE_BYTES > MAX_ARTIFACT_BYTES:
+    if sum(map(len, payloads.values())) + MAX_CAPTURE_BYTES > limits['lane']:
         raise ValueError('experience_artifact_exceeds_budget')
     if 'trace-capture.json' in payloads:
         validate_trace_capture(strict_json(payloads['trace-capture.json']), payloads)
@@ -696,13 +734,14 @@ def validate_bundle(directory, value, api, profile=None):
     if 'startup-ttid.json' in payloads:
         if value is None or 'trace.pftrace.gz' not in payloads:
             raise ValueError('derivation_missing_report_or_trace')
-        if strict_json(payloads['trace-capture.json'])['trace']['bytes'] >= MAX_TRACE_BYTES:
+        if metadata['trace']['bytes'] >= limits['raw']:
             raise ValueError('startup_derivation_requires_unsaturated_trace')
         from experience_trace import validate_derivation
         derived = strict_json(payloads['startup-ttid.json'])
-        if strict_json(payloads['trace-capture.json'])['schemaVersion'] == 3:
+        if metadata['schemaVersion'] >= 3:
             integer(derived.get('schemaVersion') if type(derived) is dict else None, 2, 2)
-        validate_derivation(derived, value, directory / 'trace.pftrace.gz', directory / 'startup-ttid.csv')
+        validate_derivation(derived, value, directory / 'trace.pftrace.gz', directory / 'startup-ttid.csv',
+                            raw_limit=limits['raw'], gzip_limit=limits['gzip'])
         trace = derived['trace']
         data = payloads['trace.pftrace.gz']
         if (trace['path'] != 'trace.pftrace.gz' or trace['bytes'] != len(data)
@@ -906,12 +945,15 @@ def collect(label, source, exit_code, output, profile='formal'):
         if not sdk.isdigit() or int(sdk) != record['apiLevel']:
             raise ValueError('device_sdk_mismatch')
         record['actualSdkInt'] = int(sdk)
+        metadata_path = output / 'trace-capture.json'
+        metadata = read_json(metadata_path, 16384) if metadata_path.exists() else None
+        limits = limits_for_trace_capture(metadata)
         with tempfile.TemporaryDirectory(prefix='agent-app-experience-') as temporary:
             folder = Path(temporary)
             pull_file(REPORT_NAME, folder / REPORT_NAME, MAX_REPORT_BYTES, deadline)
-            candidate = validate_report(read_json(folder / REPORT_NAME, MAX_REPORT_BYTES), record['apiLevel'], profile)
+            candidate = validate_report(read_json(folder / REPORT_NAME, MAX_REPORT_BYTES), record['apiLevel'], profile, limits['lane'])
             pull_shards(candidate, folder, deadline)
-            _validate_raw_bundle(folder, candidate, record['apiLevel'], profile)
+            _validate_raw_bundle(folder, candidate, record['apiLevel'], profile, limits['lane'])
             remaining_timeout(deadline)
             for path in folder.iterdir():
                 shutil.copyfile(path, output / path.name)
@@ -931,7 +973,9 @@ def collect(label, source, exit_code, output, profile='formal'):
             if (output / 'trace.pftrace.gz').exists():
                 from experience_trace import derive_trace, download_processor
                 processor = download_processor(Path(os.environ.get('AGENT_OS_TRACE_PROCESSOR_CACHE', '/tmp/agent-os-perfetto-v59.1')))
-                derived = derive_trace(output / 'trace.pftrace.gz', report, processor, output / 'startup-ttid.csv')
+                limits = limits_for_trace_capture(read_json(output / 'trace-capture.json', 16384))
+                derived = derive_trace(output / 'trace.pftrace.gz', report, processor, output / 'startup-ttid.csv',
+                                       raw_limit=limits['raw'], gzip_limit=limits['gzip'])
                 (output / 'startup-ttid.json').write_text(json.dumps(derived, sort_keys=True, indent=2) + '\n')
         except (ValueError, OSError, subprocess.SubprocessError, RuntimeError):
             for name in ('startup-ttid.json', 'startup-ttid.csv'):

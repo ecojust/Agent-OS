@@ -169,7 +169,7 @@ class ExperienceTraceTests(unittest.TestCase):
 
     def test_streaming_config_is_bounded_and_not_a_timed_exit(self):
         config = trace.trace_config()
-        self.assertIn("max_file_size_bytes: 67108864", config)
+        self.assertIn("max_file_size_bytes: 268435456", config)
         self.assertIn("write_into_file: true", config)
         self.assertIn("android.surfaceflinger.frametimeline", config)
         self.assertEqual(2, config.count("fill_policy: RING_BUFFER"))
@@ -189,7 +189,12 @@ class ExperienceTraceTests(unittest.TestCase):
         expected = expected.replace('    atrace_categories: "gfx"\n', '')
         expected = expected.replace('    atrace_categories: "wm"\n', '')
         self.assertEqual(expected, trace.trace_config(version=2))
-        for version in (True, 0, 3, "2"):
+        self.assertEqual("e1d531b1f6b35186a86c128c8ba949833b0c68fcaa9b2ec5cbc39cc0ee6b997b",
+                         trace.sha256(trace.trace_config(version=2).encode()))
+        self.assertEqual(expected.replace("max_file_size_bytes: 67108864",
+                                          "max_file_size_bytes: 268435456"),
+                         trace.trace_config(version=3))
+        for version in (True, 0, 4, "2"):
             with self.assertRaises(ValueError): trace.trace_config(version=version)
 
     def test_parser_arguments_are_versioned_without_relabeling_legacy(self):
@@ -208,6 +213,22 @@ class ExperienceTraceTests(unittest.TestCase):
             self.assertEqual(14, value["uncompressedBytes"])
             path.write_bytes(path.read_bytes()[:-4])
             with self.assertRaises((OSError, EOFError)): trace.trace_identity(path)
+
+    def test_explicit_legacy_raw_limit_cannot_be_relaxed_by_new_defaults(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "trace.pftrace.gz"
+            # Small on disk; exercise the actual 64 MiB decoded boundary.
+            with gzip.open(path, "wb") as stream:
+                for _ in range(64):
+                    stream.write(b"x" * (1024 * 1024))
+            with self.assertRaisesRegex(ValueError, "reached_file_limit"):
+                trace.trace_identity(path, raw_limit=trace.LEGACY_RAW_LIMIT,
+                                      gzip_limit=trace.LEGACY_GZIP_LIMIT)
+            self.assertEqual(trace.LEGACY_RAW_LIMIT, trace.trace_identity(path)["uncompressedBytes"])
+        for limits in ((True, trace.GZIP_LIMIT), (trace.RAW_LIMIT, True),
+                       (trace.LEGACY_RAW_LIMIT, trace.GZIP_LIMIT), (trace.RAW_LIMIT + 1, trace.GZIP_LIMIT)):
+            with self.assertRaisesRegex(ValueError, "unsupported_trace_limits"):
+                trace.validate_limits(*limits)
 
     def test_unverified_or_symlink_binary_is_never_executed(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -242,10 +263,13 @@ class ExperienceTraceTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "processor"):
                 trace.validate_derivation(modified, report, path, query)
             legacy = trace.derive_trace(path, report, os.environ["TEST_TRACE_PROCESSOR"], query,
-                                        schema_version=1)
+                                        schema_version=1, raw_limit=trace.LEGACY_RAW_LIMIT,
+                                        gzip_limit=trace.LEGACY_GZIP_LIMIT)
             self.assertEqual(1, legacy["schemaVersion"])
             self.assertNotIn("arguments", legacy["processor"])
-            trace.validate_derivation(legacy, report, path, query)
+            trace.validate_derivation(legacy, report, path, query,
+                                       raw_limit=trace.LEGACY_RAW_LIMIT,
+                                       gzip_limit=trace.LEGACY_GZIP_LIMIT)
 
 
 if __name__ == "__main__":

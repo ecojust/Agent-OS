@@ -16,7 +16,8 @@ import experience_trace as trace
 
 REPOSITORY = "ecojust/Agent-OS"
 MAX_MANIFEST_BYTES = 8 * 1024 * 1024
-MAX_ARCHIVE_BYTES = 160 * 1024 * 1024
+LEGACY_MAX_ARCHIVE_BYTES = 160 * 1024 * 1024
+MAX_ARCHIVE_BYTES = 640 * 1024 * 1024
 RESOURCE_METRICS = (
     "targetCpuDeltaMillis", "targetWallMillis", "targetOneCorePercent",
     "agentCpuDeltaMillis", "agentWallMillis", "agentOneCorePercent",
@@ -369,7 +370,7 @@ def load_archive(root, expected_source):
                 raise ValueError("unexpected_experience_api_directory")
     archive = dict(sourceRun=source, manifestSha256=manifest_sha, archiveDirectory=root.name,
                    manifestRelativePath="manifest.json", executionScope=manifest["executionScope"])
-    lanes, archive_bytes = [], 0
+    lanes, archive_bytes, extended_capacity_verified = [], 0, False
     for record in records:
         label, api = record["matrixLabel"], int(record["matrixLabel"].split('.')[0])
         common.integer(record.get("apiLevel"), api, api)
@@ -409,6 +410,16 @@ def load_archive(root, expected_source):
         for name, key in (("trace-capture.json", "traceCapture"), ("startup-ttid.json", "startupDerivation")):
             if name in payloads:
                 lane[key] = common.strict_json(payloads[name])
+        # Only metadata already accepted by validate_payloads (including its
+        # source/hash chain, exact versioned config and trace limits) can opt
+        # the archive into the extended cap. Legacy lanes retain their own
+        # smaller limits even in a mixed archive.
+        limits = evidence.limits_for_trace_capture(lane["traceCapture"])
+        if (sum(ref["bytes"] for ref in files.values()) > limits["lane"]
+                or files.get("trace.pftrace.gz", {}).get("bytes", 0) > limits["gzip"]):
+            raise ValueError("experience_lane_exceeds_versioned_budget")
+        if lane["traceCapture"] is not None and lane["traceCapture"]["schemaVersion"] == 4:
+            extended_capacity_verified = True
         if capture["report"] is None:
             if record.get("reportStatus") is not None:
                 raise ValueError("archive_report_status_mismatch")
@@ -435,6 +446,8 @@ def load_archive(root, expected_source):
         lane["frames"] = dict(allRecordedTasks=frame_summary(raw_trials, api),
                               passedTasks=frame_summary([value for value in raw_trials if value["status"] == "passed"], api),
                               byArm={arm: frame_summary([value for value in raw_trials if value["arm"] == arm], api) for arm in evidence.ARMS})
+    if archive_bytes > (MAX_ARCHIVE_BYTES if extended_capacity_verified else LEGACY_MAX_ARCHIVE_BYTES):
+        raise ValueError("experience_archive_exceeds_versioned_budget")
     archive["attachmentBytes"] = archive_bytes
     return archive, profile, lanes
 

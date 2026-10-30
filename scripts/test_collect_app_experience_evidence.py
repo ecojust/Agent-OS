@@ -147,7 +147,7 @@ def report(api=37, profile='pilot', launches=None, trials=None, status='passed',
                 launches=refs(launches, experience.launch_name), trials=refs(trials, experience.trial_name))
 
 
-def write_bundle(directory, api=37, profile='pilot', launches=None, trials=None, status='passed', with_trace=True, schema_version=1):
+def write_bundle(directory, api=37, profile='pilot', launches=None, trials=None, status='passed', with_trace=True, schema_version=1, trace_config_version=None):
     directory = Path(directory); directory.mkdir(parents=True, exist_ok=True)
     launches = [launch(i, profile, schema_version) for i in range(experience.conditions(profile)['launchCount'])] if launches is None else launches
     trials = [trial(i, profile, api, schema_version) for i in range(experience.conditions(profile)['trialCount'])] if trials is None else trials
@@ -158,23 +158,24 @@ def write_bundle(directory, api=37, profile='pilot', launches=None, trials=None,
         (directory / experience.trial_name(item['index'])).write_bytes(encoded(item))
     (directory / experience.REPORT_NAME).write_bytes(encoded(value))
     if with_trace:
-        write_trace(directory, value)
+        write_trace(directory, value, config_version=trace_config_version)
     return value
 
 
-def write_trace(directory, value, mutate=None):
+def write_trace(directory, value, mutate=None, config_version=None):
     directory = Path(directory)
-    trace_version = 2 if value['schemaVersion'] == 2 else 1
+    trace_version = config_version if config_version is not None else 2 if value['schemaVersion'] == 2 else 1
+    derived_version = 2 if trace_version >= 2 else 1
     raw_trace = b'SYNTHETIC UNIT TEST TRACE: not device evidence\n'
     zipped = gzip.compress(raw_trace, mtime=0)
     (directory / 'trace.pftrace.gz').write_bytes(zipped)
-    capture = dict(schemaVersion=3 if trace_version == 2 else 2, kind='agent-os-experience-trace-capture', status='collected', pid=900,
+    capture = dict(schemaVersion=trace_version + 1, kind='agent-os-experience-trace-capture', status='collected', pid=900,
                    configDelivery='stdin', startStdout='900\n', startStderr='', startExitCode=0,
                    stopped=True, ready=True, startMode='--background-wait', config=trace.trace_config(version=trace_version), error=None,
                    trace=dict(path='trace.pftrace', bytes=len(raw_trace), sha256=hashlib.sha256(raw_trace).hexdigest()),
                    compressed=dict(path='trace.pftrace.gz', bytes=len(zipped), sha256=hashlib.sha256(zipped).hexdigest()))
-    if trace_version == 2:
-        capture['configVersion'] = 2
+    if trace_version >= 2:
+        capture['configVersion'] = trace_version
     (directory / 'trace-capture.json').write_bytes(encoded(capture))
     raw = dict(markers=[], startups=[], stats=[], traceStartNanos=1, traceEndNanos=10 ** 15)
     for ref in value['launches']:
@@ -191,10 +192,10 @@ def write_trace(directory, value, mutate=None):
     stream = io.StringIO(); writer = csv.writer(stream); writer.writerow(['result']); writer.writerow([encoded(raw).hex().upper()])
     data = stream.getvalue().encode(); (directory / 'startup-ttid.csv').write_bytes(data)
     rows = trace.derive_measurements(raw, value)
-    derived = dict(schemaVersion=trace_version, kind=trace.KIND, diagnosticOnly=True, budgetAcceptance=False,
+    derived = dict(schemaVersion=derived_version, kind=trace.KIND, diagnosticOnly=True, budgetAcceptance=False,
                    status='passed' if all(row['status'] == 'passed' for row in rows) else 'failed',
                    trace=trace.trace_identity(directory / 'trace.pftrace.gz'),
-                   processor=trace.processor_identity(trace_version),
+                   processor=trace.processor_identity(derived_version),
                    package=experience.TARGET_PACKAGE, launches=rows, traceErrors=raw['stats'],
                    extraction=dict(path='startup-ttid.csv', bytes=len(data), sha256=hashlib.sha256(data).hexdigest(),
                                    sqlSha256=hashlib.sha256(trace.extraction_sql().encode()).hexdigest()))
@@ -503,6 +504,84 @@ class AppExperienceEvidenceTests(unittest.TestCase):
         self.assertEqual('6646bb1c53eeafbcf95efba46636928a4e388d51b02360dd50577674512386ed',
                          hashlib.sha256(trace.trace_config(version=1).encode()).hexdigest())
 
+    def test_capture_v4_has_separate_capacity_without_upgrading_legacy_evidence(self):
+        mib = 1024 * 1024
+        self.assertEqual(dict(raw=64*mib, gzip=12*mib, lane=16*mib), experience.limits_for_trace_capture(None))
+        for config_version in (1, 2, 3):
+            with self.subTest(config_version=config_version), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                value = write_bundle(root, schema_version=2, trace_config_version=config_version)
+                metadata = experience.read_json(root / 'trace-capture.json')
+                expected = dict(raw=256*mib, gzip=64*mib, lane=80*mib) if config_version == 3 else dict(raw=64*mib, gzip=12*mib, lane=16*mib)
+                self.assertEqual(expected, experience.limits_for_trace_capture(metadata))
+                with patch.object(trace, 'validate_derivation', wraps=trace.validate_derivation) as validate:
+                    capture = collected_capture(root, value)
+                    experience.validate_payloads(root, capture, '37.0', SOURCE)
+                self.assertTrue(validate.call_args_list)
+                self.assertTrue(all(call.kwargs == dict(raw_limit=expected['raw'], gzip_limit=expected['gzip'])
+                                    for call in validate.call_args_list))
+                if config_version == 3:
+                    self.assertEqual((4, 3), (metadata['schemaVersion'], metadata['configVersion']))
+                    self.assertIn('max_file_size_bytes: 268435456', metadata['config'])
+                    for changes in (dict(configVersion=2), dict(configVersion=True),
+                                    dict(schemaVersion=3), dict(config=trace.trace_config(version=2))):
+                        invalid = dict(metadata, **changes)
+                        with self.assertRaises(ValueError): experience.limits_for_trace_capture(invalid)
+                else:
+                    self.assertIn('max_file_size_bytes: 67108864', metadata['config'])
+                    metadata['schemaVersion'] = 4
+                    metadata['configVersion'] = 3
+                    with self.assertRaisesRegex(ValueError, 'config_mismatch'):
+                        experience.limits_for_trace_capture(metadata)
+        self.assertEqual(dict(raw=256*mib, gzip=64*mib, lane=80*mib),
+                         dict(raw=experience.MAX_TRACE_BYTES, gzip=experience.MAX_GZIP_BYTES,
+                              lane=experience.MAX_ARTIFACT_BYTES))
+
+    def test_legacy_gzip_and_lane_caps_apply_before_larger_reads(self):
+        for config_version in (2, 3):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); value = write_bundle(root, schema_version=2, trace_config_version=config_version)
+                zipped_size = (root / 'trace.pftrace.gz').stat().st_size
+                with patch.object(experience, 'LEGACY_MAX_GZIP_BYTES', zipped_size - 1), \
+                        patch.object(experience, 'read_bounded', wraps=experience.read_bounded) as read:
+                    if config_version == 2:
+                        with self.assertRaisesRegex(ValueError, 'invalid_bounded_payload'):
+                            experience.validate_bundle(root, value, 37)
+                    else:
+                        experience.validate_bundle(root, value, 37)
+                    gzip_reads = [call for call in read.call_args_list if Path(call.args[0]).name == 'trace.pftrace.gz']
+                    self.assertEqual(1, len(gzip_reads))
+                    self.assertEqual(zipped_size - 1 if config_version == 2 else experience.MAX_GZIP_BYTES, gzip_reads[0].args[1])
+                with patch.object(experience, 'LEGACY_MAX_ARTIFACT_BYTES', experience.MAX_REPORT_BYTES + experience.MAX_CAPTURE_BYTES):
+                    if config_version == 2:
+                        with self.assertRaisesRegex(ValueError, 'artifact_exceeds_budget'):
+                            experience.validate_bundle(root, value, 37)
+                    else:
+                        experience.validate_bundle(root, value, 37)
+
+    def test_new_raw_capacity_still_preserves_only_failed_saturated_trace(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); value = write_bundle(root, schema_version=2, trace_config_version=3)
+            metadata = experience.read_json(root / 'trace-capture.json')
+            cap = metadata['trace']['bytes']
+            metadata.update(status='failed', error='trace_reached_size_limit')
+            (root / 'trace-capture.json').write_bytes(encoded(metadata))
+            derived = {name: (root / name).read_bytes() for name in ('startup-ttid.json', 'startup-ttid.csv')}
+            for name in derived: (root / name).unlink()
+            with patch.object(experience, 'MAX_TRACE_BYTES', cap):
+                capture = collected_capture(root, value)
+                payloads = experience.validate_payloads(root, capture, '37.0', SOURCE)
+                self.assertEqual(('partial', 'failed'), (capture['captureStatus'], capture['diagnosticStatus']))
+                with self.assertRaises(ValueError):
+                    experience.validate_trace_capture(dict(metadata, status='collected', error=None), payloads)
+                for name, data in derived.items(): (root / name).write_bytes(data)
+                with self.assertRaisesRegex(ValueError, 'unsaturated_trace'):
+                    experience.validate_bundle(root, value, 37)
+                oversized = gzip.compress(gzip.decompress(payloads['trace.pftrace.gz']) + b'x')
+                metadata['compressed'].update(bytes=len(oversized), sha256=hashlib.sha256(oversized).hexdigest())
+                with self.assertRaisesRegex(ValueError, 'uncompressed_trace_exceeds_budget'):
+                    experience.validate_trace_capture(metadata, {'trace.pftrace.gz': oversized})
+
     def test_rehashed_cross_trial_cpu_and_cold_process_reuse_are_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             launches = [launch(i) for i in range(8)]
@@ -564,7 +643,7 @@ class AppExperienceEvidenceTests(unittest.TestCase):
             with self.assertRaises(ValueError): experience.validate_bundle(root, value, 37)
         with tempfile.TemporaryDirectory() as temporary:
             value = write_bundle(temporary)
-            with patch.object(experience, 'MAX_TRACE_BYTES', 10):
+            with patch.object(experience, 'LEGACY_MAX_TRACE_BYTES', 10):
                 with self.assertRaises(ValueError): experience.validate_bundle(temporary, value, 37)
 
     def test_exact_raw_trace_capacity_is_preserved_only_as_failed_without_derivation(self):
@@ -576,7 +655,7 @@ class AppExperienceEvidenceTests(unittest.TestCase):
             for name in derived: (root / name).unlink()
             state.update(status='failed', error='trace_reached_size_limit')
             state_path.write_bytes(encoded(state))
-            with patch.object(experience, 'MAX_TRACE_BYTES', cap):
+            with patch.object(experience, 'LEGACY_MAX_TRACE_BYTES', cap):
                 capture = collected_capture(root, value)
                 payloads = experience.validate_payloads(root, capture, '37.0', SOURCE)
                 self.assertEqual('partial', capture['captureStatus'])

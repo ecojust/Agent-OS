@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import collect_app_experience_evidence as evidence
 import experience_trace as trace
@@ -164,17 +165,21 @@ def trial(index, profile, api, schema_version=1):
                 resultCode="MODEL_REPORT" if arm_index == 2 else "")
 
 
-def trace_files(directory, report, launches, mutate=None, trace_status="collected"):
-    trace_version = 2 if report["schemaVersion"] == 2 else 1
+def trace_files(directory, report, launches, mutate=None, trace_status="collected", capture_version=None):
+    capture_version = (3 if report["schemaVersion"] == 2 else 1) if capture_version is None else capture_version
+    config_version = {1: 1, 2: 1, 3: 2, 4: 3}[capture_version]
+    trace_version = 2 if capture_version >= 3 else 1
     raw_trace = b"SYNTHETIC SUMMARY UNIT TEST DATA; NOT DEVICE EVIDENCE\n"
     (directory / "trace.pftrace.gz").write_bytes(gzip.compress(raw_trace, mtime=0))
-    capture = dict(schemaVersion=3 if trace_version == 2 else 1, kind="agent-os-experience-trace-capture",
+    capture = dict(schemaVersion=capture_version, kind="agent-os-experience-trace-capture",
         status=trace_status, pid=900, stopped=True, ready=True, startMode="--background-wait",
-        config=trace.trace_config(version=trace_version), error=None if trace_status == "collected" else "synthetic_stop_failure",
+        config=trace.trace_config(version=config_version), error=None if trace_status == "collected" else "synthetic_stop_failure",
         trace=dict(path="trace.pftrace", bytes=len(raw_trace), sha256=hashlib.sha256(raw_trace).hexdigest()),
         compressed=ref(directory / "trace.pftrace.gz"))
-    if trace_version == 2:
-        capture.update(configVersion=2, configDelivery="stdin", startStdout="900\n", startStderr="", startExitCode=0)
+    if capture_version >= 2:
+        capture.update(configDelivery="stdin", startStdout="900\n", startStderr="", startExitCode=0)
+    if capture_version >= 3:
+        capture["configVersion"] = config_version
     save(directory / "trace-capture.json", capture)
     raw = dict(markers=[], startups=[], stats=[], traceStartNanos=1, traceEndNanos=10 ** 15)
     for value in launches:
@@ -204,7 +209,7 @@ def trace_files(directory, report, launches, mutate=None, trace_status="collecte
         extraction=dict(ref(directory / "startup-ttid.csv"), sqlSha256=hashlib.sha256(trace.extraction_sql().encode()).hexdigest())))
 
 
-def write_archive(parent, profile="pilot", alter=None, trace_change=None, with_trace=True, trace_status="collected", conclusion="success", exit_code=0, schema_version=1):
+def write_archive(parent, profile="pilot", alter=None, trace_change=None, with_trace=True, trace_status="collected", conclusion="success", exit_code=0, schema_version=1, trace_capture_version=None):
     root = Path(parent) / "archive"; root.mkdir()
     records = []
     for label in ("30", "31", "32", "33", "34", "35", "36", "37.0"):
@@ -231,7 +236,7 @@ def write_archive(parent, profile="pilot", alter=None, trace_change=None, with_t
                 report[kind].append(shard)
         report_ref = save(directory / evidence.REPORT_NAME, report)
         if with_trace:
-            trace_files(directory, report, launches, trace_change, trace_status)
+            trace_files(directory, report, launches, trace_change, trace_status, trace_capture_version)
         payloads = {path.name: path.read_bytes() for path in directory.iterdir()}
         capture = evidence.empty_capture(label, SOURCE, profile)
         capture.update(actualSdkInt=api, gradleExitCode=exit_code, report=dict(report_ref, status=report["status"]),
@@ -269,6 +274,71 @@ def rewrite_payload(root, name, alter, label="30", update_inner=False):
 
 
 class AppExperienceSummaryTests(unittest.TestCase):
+    def test_capture_v4_formal_capacity_and_legacy_v2_capture_remain_distinct(self):
+        for capture_version, profile, raw_version in ((2, "pilot", 1), (4, "formal", 2)):
+            with self.subTest(capture_version=capture_version), tempfile.TemporaryDirectory() as temporary:
+                value = summary.summarize(write_archive(temporary, profile=profile, schema_version=raw_version,
+                                                        trace_capture_version=capture_version), SHA)
+                self.assertEqual("complete", value["status"])
+                self.assertEqual((3200, 144) if capture_version == 4 else (64, 24),
+                                 (value["validTtidCount"], value["resourceTrialCounts"]["passed"]))
+                for lane in value["lanes"]:
+                    capture = lane["traceCapture"]
+                    self.assertEqual(capture_version, capture["schemaVersion"])
+                    self.assertEqual("stdin", capture["configDelivery"])
+                    if capture_version == 4:
+                        self.assertEqual(3, capture["configVersion"])
+                        self.assertIn("max_file_size_bytes: 268435456", capture["config"])
+                        self.assertEqual(trace.trace_config(version=2), capture["config"].replace("268435456", "67108864"))
+                        self.assertEqual(["--full-sort"], lane["startupDerivation"]["processor"]["arguments"])
+                    else:
+                        self.assertNotIn("configVersion", capture)
+                        self.assertIn("max_file_size_bytes: 67108864", capture["config"])
+                        self.assertNotIn("arguments", lane["startupDerivation"]["processor"])
+
+    def test_verified_capture_version_selects_legacy_or_extended_archive_byte_limit(self):
+        self.assertEqual((160 * 1024 * 1024, 640 * 1024 * 1024),
+                         (summary.LEGACY_MAX_ARCHIVE_BYTES, summary.MAX_ARCHIVE_BYTES))
+        for version in (1, 2, 3, 4):
+            with self.subTest(capture_version=version), tempfile.TemporaryDirectory() as temporary:
+                root = write_archive(temporary, schema_version=2 if version >= 3 else 1, trace_capture_version=version)
+                manifest = json.loads((root / "manifest.json").read_text())
+                size = sum(ref["bytes"] for lane in manifest["appExperience"]["apis"] for ref in lane["files"])
+                if version == 4:
+                    with patch.object(summary, "LEGACY_MAX_ARCHIVE_BYTES", 1), patch.object(summary, "MAX_ARCHIVE_BYTES", size):
+                        self.assertEqual(size, summary.summarize(root, SHA)["archive"]["attachmentBytes"])
+                    with patch.object(summary, "MAX_ARCHIVE_BYTES", size - 1):
+                        with self.assertRaisesRegex(ValueError, "archive_exceeds"): summary.summarize(root, SHA)
+                else:
+                    with patch.object(summary, "LEGACY_MAX_ARCHIVE_BYTES", size):
+                        self.assertEqual(size, summary.summarize(root, SHA)["archive"]["attachmentBytes"])
+                    with patch.object(summary, "LEGACY_MAX_ARCHIVE_BYTES", size - 1):
+                        with self.assertRaisesRegex(ValueError, "versioned_budget"): summary.summarize(root, SHA)
+
+    def test_versioned_gzip_limit_exact_boundary_and_invalid_extended_metadata(self):
+        for version in (1, 4):
+            with self.subTest(capture_version=version), tempfile.TemporaryDirectory() as temporary:
+                root = write_archive(temporary, schema_version=2 if version == 4 else 1, trace_capture_version=version)
+                directory = root / "app-experience/api-30"
+                metadata = json.loads((directory / "trace-capture.json").read_text())
+                limits = evidence.limits_for_trace_capture(metadata)
+                self.assertEqual((256, 64, 80) if version == 4 else (64, 12, 16),
+                                 tuple(limits[key] // (1024 * 1024) for key in ("raw", "gzip", "lane")))
+                gzip_size = (directory / "trace.pftrace.gz").stat().st_size
+                # Scale the same version's bound in both validators; validation
+                # still reads/hashes/inflates every archived payload normally.
+                trace_limit = "GZIP_LIMIT" if version == 4 else "LEGACY_GZIP_LIMIT"
+                with patch.object(trace, trace_limit, gzip_size), patch.object(
+                        evidence, "limits_for_trace_capture", return_value=dict(limits, gzip=gzip_size)):
+                    self.assertEqual("complete", summary.summarize(root, SHA)["status"])
+                with patch.object(trace, trace_limit, gzip_size - 1), patch.object(
+                        evidence, "limits_for_trace_capture", return_value=dict(limits, gzip=gzip_size - 1)):
+                    with self.assertRaises(ValueError): summary.summarize(root, SHA)
+                if version == 4:
+                    rewrite_payload(root, "trace-capture.json", lambda item: item.update(configVersion=2), update_inner=True)
+                    with patch.object(summary, "LEGACY_MAX_ARCHIVE_BYTES", 1):
+                        with self.assertRaises(ValueError): summary.summarize(root, SHA)
+
     def test_v2_raw_and_probe_v3_trace_v2_full_sort_archive_passes_strictly(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = write_archive(temporary, schema_version=2)

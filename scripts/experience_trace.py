@@ -29,8 +29,10 @@ PROCESSOR_BYTES = 15885448
 PROCESSOR_URL = ("https://commondatastorage.googleapis.com/perfetto-luci-artifacts/"
                  "v59.1/linux-amd64/trace_processor_shell")
 KIND = "agent-os-startup-trace-v1"
-RAW_LIMIT = 64 * 1024 * 1024
-GZIP_LIMIT = 12 * 1024 * 1024
+LEGACY_RAW_LIMIT = 64 * 1024 * 1024
+LEGACY_GZIP_LIMIT = 12 * 1024 * 1024
+RAW_LIMIT = 256 * 1024 * 1024
+GZIP_LIMIT = 64 * 1024 * 1024
 QUERY_LIMIT = 4 * 1024 * 1024
 PACKAGE = "dev.agentos.fixture"
 DRIVER_PACKAGE = "dev.agentos.app"
@@ -65,9 +67,9 @@ def strict_json(data):
                       parse_constant=lambda value: (_ for _ in ()).throw(ValueError("nonfinite_json")))
 
 
-def trace_config(version=2, packages=None):
-    """Streaming capture: 8 MiB bounded buffers, 64 MiB file; no timed exit."""
-    if type(version) is not int or version not in (1, 2):
+def trace_config(version=3, packages=None):
+    """Streaming capture: 8 MiB buffers, versioned bounded file; no timed exit."""
+    if type(version) is not int or version not in (1, 2, 3):
         raise ValueError("unsupported_trace_config_version")
     packages = [PACKAGE, DRIVER_PACKAGE] if packages is None else list(packages)
     if not packages or any(not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.]*", p) for p in packages):
@@ -83,6 +85,7 @@ def trace_config(version=2, packages=None):
     # SurfaceFlinger/GL traces and WM is not required by the startup query.
     categories = ("am", "wm", "view", "gfx") if version == 1 else ("am", "view")
     category_lines = "\n".join(f'    atrace_categories: "{category}"' for category in categories)
+    file_limit = LEGACY_RAW_LIMIT if version in (1, 2) else RAW_LIMIT
     return f'''buffers {{ size_kb: 7168 fill_policy: {fill_policy} }}
 buffers {{ size_kb: 1024 fill_policy: {fill_policy} }}
 data_sources {{ config {{ name: "linux.ftrace" target_buffer: 0
@@ -102,7 +105,7 @@ data_sources {{ config {{ name: "android.packages_list" target_buffer: 1 }} }}
 data_sources {{ config {{ name: "android.surfaceflinger.frametimeline" target_buffer: 0 }} }}
 write_into_file: true
 file_write_period_ms: 2500
-max_file_size_bytes: {RAW_LIMIT}
+max_file_size_bytes: {file_limit}
 flush_period_ms: 5000
 incremental_state_config {{ clear_period_ms: 5000 }}
 '''
@@ -143,20 +146,28 @@ def download_processor(cache_dir):
             temporary.unlink(missing_ok=True)
 
 
-def trace_identity(path):
+def validate_limits(raw_limit, gzip_limit):
+    if (type(raw_limit) is not int or type(gzip_limit) is not int
+            or (raw_limit, gzip_limit) not in ((LEGACY_RAW_LIMIT, LEGACY_GZIP_LIMIT),
+                                              (RAW_LIMIT, GZIP_LIMIT))):
+        raise ValueError("unsupported_trace_limits")
+
+
+def trace_identity(path, raw_limit=RAW_LIMIT, gzip_limit=GZIP_LIMIT):
+    validate_limits(raw_limit, gzip_limit)
     path = Path(path)
     if path.is_symlink() or not path.is_file():
         raise ValueError("trace_missing_or_symlink")
     size = path.stat().st_size
     compressed = path.suffix == ".gz"
-    if not 0 < size <= (GZIP_LIMIT if compressed else RAW_LIMIT):
+    if not 0 < size <= (gzip_limit if compressed else raw_limit):
         raise ValueError("trace_size_limit")
     length = 0
     opener = gzip.open if compressed else open
     with opener(path, "rb") as stream:
         while block := stream.read(65536):
             length += len(block)
-            if length >= RAW_LIMIT:
+            if length >= raw_limit:
                 raise ValueError("trace_reached_file_limit")
     if not length:
         raise ValueError("empty_trace")
@@ -351,10 +362,11 @@ def processor_identity(schema_version):
     return value
 
 
-def derive_trace(trace_path, report, processor_path, query_output=None, schema_version=2):
+def derive_trace(trace_path, report, processor_path, query_output=None, schema_version=2,
+                 *, raw_limit=RAW_LIMIT, gzip_limit=GZIP_LIMIT):
     """Extract actual trace data; preserve failed rows and the original CSV."""
     validate_manifest(report)
-    trace = trace_identity(trace_path)
+    trace = trace_identity(trace_path, raw_limit=raw_limit, gzip_limit=gzip_limit)
     processor = verify_processor(processor_path)
     identity = processor_identity(schema_version)
     sql = extraction_sql()
@@ -384,7 +396,8 @@ def derive_trace(trace_path, report, processor_path, query_output=None, schema_v
                                 sha256=sha256(output), sqlSha256=sha256(sql.encode())))
 
 
-def validate_derivation(value, manifest, trace_path, query_path):
+def validate_derivation(value, manifest, trace_path, query_path,
+                        *, raw_limit=RAW_LIMIT, gzip_limit=GZIP_LIMIT):
     """Offline archive validation: rederive every row from archived query CSV."""
     expected_keys = {"schemaVersion", "kind", "diagnosticOnly", "budgetAcceptance", "status", "trace",
                      "processor", "package", "launches", "traceErrors", "extraction"}
@@ -392,7 +405,7 @@ def validate_derivation(value, manifest, trace_path, query_path):
             or value["schemaVersion"] not in (1, 2) or value["kind"] != KIND or value["diagnosticOnly"] is not True
             or value["budgetAcceptance"] is not False or value["package"] != PACKAGE):
         raise ValueError("invalid_startup_derivation_identity")
-    if not same_typed(value["trace"], trace_identity(trace_path)):
+    if not same_typed(value["trace"], trace_identity(trace_path, raw_limit=raw_limit, gzip_limit=gzip_limit)):
         raise ValueError("startup_trace_identity_mismatch")
     if not same_typed(value["processor"], processor_identity(value["schemaVersion"])):
         raise ValueError("startup_processor_identity_mismatch")

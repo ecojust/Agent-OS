@@ -22,10 +22,11 @@ DISCLOSURE_WORKFLOW = ".github/workflows/pinned-window-disclosure.yml"
 PINNED_MATRIX = ["34", "35", "36", "37.0"]
 MAX_FILE_BYTES = 16 * 1024 * 1024
 MAX_TOTAL_BYTES = 64 * 1024 * 1024
-APP_EXPERIENCE_MAX_TOTAL_BYTES = 160 * 1024 * 1024
-APP_EXPERIENCE_MAX_LANE_BYTES = 16 * 1024 * 1024
-APP_EXPERIENCE_MAX_TRACE_BYTES = 64 * 1024 * 1024
-APP_EXPERIENCE_MAX_GZIP_BYTES = 12 * 1024 * 1024
+LEGACY_APP_EXPERIENCE_MAX_TOTAL_BYTES = 160 * 1024 * 1024
+APP_EXPERIENCE_MAX_TOTAL_BYTES = 640 * 1024 * 1024
+APP_EXPERIENCE_MAX_LANE_BYTES = 80 * 1024 * 1024
+APP_EXPERIENCE_MAX_TRACE_BYTES = 256 * 1024 * 1024
+APP_EXPERIENCE_MAX_GZIP_BYTES = 64 * 1024 * 1024
 MAX_FILES = 8000
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 DIAGNOSTIC_TITLE = "Android checks [owned-control-diagnostic]"
@@ -367,15 +368,17 @@ def archive_active_pairs(args, run, jobs, output, budget):
                                        "active-task-pair-attachments", ACTIVE_PAIR_COVERAGE, active_pairs=True)
 
 
-def verify_app_experience_gzip(data: bytes, reference: dict) -> None:
+def verify_app_experience_gzip(data: bytes, reference: dict, *, raw_maximum=None, gzip_maximum=None) -> None:
     """Validate one bounded gzip member without writing or interpreting its trace."""
-    if not 0 < len(data) <= APP_EXPERIENCE_MAX_GZIP_BYTES:
+    raw_maximum = min(raw_maximum, APP_EXPERIENCE_MAX_TRACE_BYTES) if raw_maximum is not None else APP_EXPERIENCE_MAX_TRACE_BYTES
+    gzip_maximum = min(gzip_maximum, APP_EXPERIENCE_MAX_GZIP_BYTES) if gzip_maximum is not None else APP_EXPERIENCE_MAX_GZIP_BYTES
+    if not 0 < len(data) <= gzip_maximum:
         raise ValueError("app experience compressed trace exceeds budget")
     # validate_payloads separately permits exact capacity only for a failed trace.
     if (type(reference) is not dict or set(reference) != {"path", "bytes", "sha256"}
             or reference["path"] != "trace.pftrace"
             or type(reference["bytes"]) is not int
-            or not 0 < reference["bytes"] <= APP_EXPERIENCE_MAX_TRACE_BYTES
+            or not 0 < reference["bytes"] <= raw_maximum
             or not re.fullmatch(r"[0-9a-f]{64}", str(reference["sha256"]))):
         raise ValueError("invalid app experience raw trace reference")
     decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
@@ -388,7 +391,7 @@ def verify_app_experience_gzip(data: bytes, reference: dict) -> None:
                 block = decompressor.decompress(pending, 65536)
                 pending = decompressor.unconsumed_tail
                 size += len(block)
-                if size > APP_EXPERIENCE_MAX_TRACE_BYTES or size > reference["bytes"]:
+                if size > raw_maximum or size > reference["bytes"]:
                     raise ValueError("app experience raw trace exceeds budget or declared size")
                 digest.update(block)
                 if decompressor.unused_data:
@@ -400,11 +403,14 @@ def verify_app_experience_gzip(data: bytes, reference: dict) -> None:
         raise ValueError("invalid app experience gzip trace") from error
 
 
-def copy_app_experience_payloads(payloads, destination, budget):
+def copy_app_experience_payloads(payloads, destination, budget, *, lane_maximum=None, total_maximum=None):
     """Only prevalidated experience bytes receive the larger aggregate budget."""
+    lane_maximum = min(lane_maximum, APP_EXPERIENCE_MAX_LANE_BYTES) if lane_maximum is not None else APP_EXPERIENCE_MAX_LANE_BYTES
+    total_maximum = (min(total_maximum, APP_EXPERIENCE_MAX_TOTAL_BYTES) if total_maximum is not None
+                     else LEGACY_APP_EXPERIENCE_MAX_TOTAL_BYTES)
     lane_bytes = sum(len(data) for data in payloads.values())
-    if (lane_bytes > APP_EXPERIENCE_MAX_LANE_BYTES
-            or budget["bytes"] + lane_bytes > APP_EXPERIENCE_MAX_TOTAL_BYTES
+    if (lane_bytes > lane_maximum
+            or budget["bytes"] + lane_bytes > total_maximum
             or budget["files"] + len(payloads) > MAX_FILES):
         raise ValueError("app experience evidence exceeds archive budget")
     copied = []
@@ -431,7 +437,8 @@ def archive_app_experience(args, run, jobs, output, budget):
     artifacts = {item["name"]: item for item in app_experience_artifacts(read_json(args.artifacts), run)}
     source_identity = {"repository": args.repository, "runId": run["id"],
                        "attempt": run["run_attempt"], "commit": run["head_sha"]}
-    records = []
+    records, pending = [], []
+    verified_v4 = False
     for label in EXPECTED_MATRIX:
         matches = [job for job in jobs if job.get("name") == f"emulator-tests ({label})"]
         job = matches[0] if len(matches) == 1 else {}
@@ -488,15 +495,29 @@ def archive_app_experience(args, run, jobs, output, budget):
                         or ref["bytes"] != len(data) or ref["sha256"] != hashlib.sha256(data).hexdigest()
                         or (source / path).read_bytes() != data):
                     raise ValueError("app experience payload differs from its capture")
+            trace_capture = (performance.strict_json(payloads["trace-capture.json"])
+                             if "trace-capture.json" in payloads else None)
+            limits = experience.limits_for_trace_capture(trace_capture)
             if "trace.pftrace.gz" in payloads:
-                trace_capture = performance.strict_json(payloads["trace-capture.json"])
-                verify_app_experience_gzip(payloads["trace.pftrace.gz"], trace_capture["trace"])
+                verify_app_experience_gzip(payloads["trace.pftrace.gz"], trace_capture["trace"],
+                                          raw_maximum=limits["raw"], gzip_maximum=limits["gzip"])
+            if trace_capture is not None and trace_capture["schemaVersion"] == 4:
+                verified_v4 = True
             record.update({"captureStatus": capture["captureStatus"], "captureError": capture["captureError"],
                            "actualSdkInt": capture["actualSdkInt"], "gradleExitCode": capture["gradleExitCode"],
-                           "declaredCiProfile": capture["declaredCiProfile"], "artifactId": artifact["id"],
-                           "files": copy_app_experience_payloads({"capture.json": capture_bytes, **payloads},
-                               output / "app-experience" / f"api-{label}", budget)})
+                           "declaredCiProfile": capture["declaredCiProfile"], "artifactId": artifact["id"]})
+            pending.append((record, {"capture.json": capture_bytes, **payloads}, limits["lane"]))
         records.append(record)
+    # A later API may hold the first v4 capture. Decide the aggregate limit only
+    # after validating every lane, before copying any of the bounded payloads.
+    total_maximum = APP_EXPERIENCE_MAX_TOTAL_BYTES if verified_v4 else LEGACY_APP_EXPERIENCE_MAX_TOTAL_BYTES
+    pending_bytes = sum(len(data) for _, payloads, _ in pending for data in payloads.values())
+    pending_files = sum(len(payloads) for _, payloads, _ in pending)
+    if budget["bytes"] + pending_bytes > total_maximum or budget["files"] + pending_files > MAX_FILES:
+        raise ValueError("app experience evidence exceeds archive budget")
+    for record, payloads, lane_maximum in pending:
+        record["files"] = copy_app_experience_payloads(payloads, output / "app-experience" / f"api-{record['matrixLabel']}",
+                                                      budget, lane_maximum=lane_maximum, total_maximum=total_maximum)
     return {"kind": "app-experience-attachments", "diagnosticOnly": True, "budgetAcceptance": False,
             "profile": profile, "scope": APP_EXPERIENCE_COVERAGE, "apis": records}
 

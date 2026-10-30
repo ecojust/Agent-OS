@@ -41,12 +41,12 @@ def trace_reference(raw):
     return {"path": "trace.pftrace", "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
 
 
-def write_artifact(root, profile="pilot", status="passed", with_trace=True, schema_version=1):
+def write_artifact(root, profile="pilot", status="passed", with_trace=True, schema_version=1, trace_config_version=None):
     import test_collect_app_experience_evidence as fixtures
     directory = root / "incoming" / artifact()["name"]
     options = {} if status == "passed" else {"launches": [fixtures.launch(profile=profile, schema_version=schema_version)], "trials": []}
     value = fixtures.write_bundle(directory, profile=profile, status=status, with_trace=with_trace,
-                                  schema_version=schema_version, **options)
+                                  schema_version=schema_version, trace_config_version=trace_config_version, **options)
     capture = fixtures.collected_capture(directory, value, exit_code=0 if status == "passed" else 124)
     (directory / "capture.json").write_bytes(fixtures.encoded(capture))
     return directory, value
@@ -67,6 +67,47 @@ def rebind_capture(directory):
 
 
 class AppExperienceArchiveTests(unittest.TestCase):
+    def test_v4_capacity_archives_formal_payloads_above_legacy_limits(self):
+        import collect_app_experience_evidence as experience
+        import experience_trace
+        for limited, bound in (("LEGACY_MAX_TRACE_BYTES", 32), ("LEGACY_MAX_GZIP_BYTES", 32),
+                               ("LEGACY_MAX_ARTIFACT_BYTES", 1024)):
+            with self.subTest(limited=limited), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                directory, _ = write_artifact(root, profile="formal", schema_version=2, trace_config_version=3)
+                trace_path = directory / "trace-capture.json"
+                trace = json.loads(trace_path.read_text())
+                self.assertEqual((4, 3), (trace["schemaVersion"], trace["configVersion"]))
+                self.assertEqual({"raw": 256 * 1024 * 1024, "gzip": 64 * 1024 * 1024, "lane": 80 * 1024 * 1024},
+                                 experience.limits_for_trace_capture(trace))
+                with patch.object(experience, limited, bound), \
+                        patch("subprocess.run", side_effect=AssertionError("archive executes data")):
+                    budget = {"bytes": publisher.MAX_TOTAL_BYTES, "files": 0}
+                    result = publisher.archive_app_experience(args_for(root), source_run(), [legacy.job()], root / "output", budget)
+                    row = result["apis"][-1]
+                    self.assertEqual("passed", row["diagnosticStatus"])
+                    self.assertEqual(424, len(row["files"]))
+                    self.assertGreater(budget["bytes"], publisher.MAX_TOTAL_BYTES)
+                    for ref in row["files"]:
+                        data = (root / "output/app-experience/api-37.0" / ref["path"]).read_bytes()
+                        self.assertEqual((directory / ref["path"]).read_bytes(), data)
+                        self.assertEqual(hashlib.sha256(data).hexdigest(), ref["sha256"])
+                    # The same bytes cannot inherit larger limits through a legacy record.
+                    trace.update(schemaVersion=3, configVersion=2, config=experience_trace.trace_config(version=2))
+                    trace_path.write_text(json.dumps(trace))
+                    rebind_capture(directory)
+                    with self.assertRaises(ValueError):
+                        publisher.archive_app_experience(args_for(root), source_run(), [legacy.job()],
+                                                         root / "legacy", {"bytes": 0, "files": 0})
+
+    def test_app_artifact_selection_accepts_new_capacity_without_generic_64_mib_rejection(self):
+        size = 64 * 1024 * 1024 + 1
+        item = dict(artifact(), size_in_bytes=size)
+        for profile in ("pilot", "formal"):
+            self.assertEqual([item], publisher.app_experience_artifacts({"artifacts": [item]}, source_run(profile)))
+        with self.assertRaises(ValueError):
+            publisher.performance_artifacts({"artifacts": [dict(legacy.artifact(), size_in_bytes=size)]}, legacy.source_run())
+
     def test_version_two_reports_archive_with_v3_capture_and_v2_derivation(self):
         import experience_trace
         for profile, file_count in (("pilot", 17), ("formal", 424)):
@@ -367,15 +408,22 @@ class AppExperienceArchiveTests(unittest.TestCase):
         with patch.object(publisher, "APP_EXPERIENCE_MAX_GZIP_BYTES", 20):
             with self.assertRaises(ValueError):
                 publisher.verify_app_experience_gzip(gzip.compress(b"test"), trace_reference(b"test"))
+        raw = b"bounded trace"
+        compressed = gzip.compress(raw)
+        with self.assertRaises(ValueError):
+            publisher.verify_app_experience_gzip(compressed, trace_reference(raw), raw_maximum=len(raw) - 1)
+        with self.assertRaises(ValueError):
+            publisher.verify_app_experience_gzip(compressed, trace_reference(raw), gzip_maximum=len(compressed) - 1)
 
     def test_exact_trace_capacity_is_preserved_only_as_failed_evidence(self):
         import collect_app_experience_evidence as experience
         import test_collect_app_experience_evidence as fixtures
         with tempfile.TemporaryDirectory() as temporary, \
-                patch.object(experience, "MAX_TRACE_BYTES", 1024), \
+                patch.object(experience, "LEGACY_MAX_TRACE_BYTES", 1024), \
                 patch.object(publisher, "APP_EXPERIENCE_MAX_TRACE_BYTES", 1024):
             root = Path(temporary)
-            directory, report = write_artifact(root)
+            directory, report = write_artifact(root, with_trace=False)
+            fixtures.write_trace(directory, report)
             for name in ("startup-ttid.json", "startup-ttid.csv"):
                 (directory / name).unlink()
             trace_path = directory / "trace-capture.json"
@@ -416,8 +464,12 @@ class AppExperienceArchiveTests(unittest.TestCase):
 
     def test_new_attachment_budget_does_not_relax_the_old_copy_budget(self):
         self.assertEqual(64 * 1024 * 1024, publisher.MAX_TOTAL_BYTES)
-        self.assertEqual(160 * 1024 * 1024, publisher.APP_EXPERIENCE_MAX_TOTAL_BYTES)
-        self.assertEqual(16 * 1024 * 1024, publisher.APP_EXPERIENCE_MAX_LANE_BYTES)
+        self.assertEqual(16 * 1024 * 1024, publisher.MAX_FILE_BYTES)
+        self.assertEqual(160 * 1024 * 1024, publisher.LEGACY_APP_EXPERIENCE_MAX_TOTAL_BYTES)
+        self.assertEqual(640 * 1024 * 1024, publisher.APP_EXPERIENCE_MAX_TOTAL_BYTES)
+        self.assertEqual(80 * 1024 * 1024, publisher.APP_EXPERIENCE_MAX_LANE_BYTES)
+        self.assertEqual(256 * 1024 * 1024, publisher.APP_EXPERIENCE_MAX_TRACE_BYTES)
+        self.assertEqual(64 * 1024 * 1024, publisher.APP_EXPERIENCE_MAX_GZIP_BYTES)
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             source = root / "source"
@@ -429,20 +481,85 @@ class AppExperienceArchiveTests(unittest.TestCase):
             copied = publisher.copy_app_experience_payloads({"capture.json": b"{}"}, root / "experience", budget)
             self.assertEqual(1, len(copied))
             self.assertEqual(publisher.MAX_TOTAL_BYTES + 2, budget["bytes"])
-            budget = {"bytes": publisher.APP_EXPERIENCE_MAX_TOTAL_BYTES - 2, "files": 0}
-            publisher.copy_app_experience_payloads({"capture.json": b"{}"}, root / "at-limit", budget)
-            with self.assertRaises(ValueError):
-                publisher.copy_app_experience_payloads({"capture.json": b"{}"}, root / "over-limit", budget)
-            self.assertFalse((root / "over-limit").exists())
+            for version, maximum, options in (
+                    ("legacy", publisher.LEGACY_APP_EXPERIENCE_MAX_TOTAL_BYTES, {}),
+                    ("v4", publisher.APP_EXPERIENCE_MAX_TOTAL_BYTES,
+                     {"total_maximum": publisher.APP_EXPERIENCE_MAX_TOTAL_BYTES})):
+                budget = {"bytes": maximum - 2, "files": 0}
+                publisher.copy_app_experience_payloads({"capture.json": b"{}"}, root / f"{version}-at-limit", budget, **options)
+                self.assertEqual(maximum, budget["bytes"])
+                with self.assertRaises(ValueError):
+                    publisher.copy_app_experience_payloads({"capture.json": b"{}"}, root / f"{version}-over-limit",
+                                                           {"bytes": maximum - 1, "files": 0}, **options)
+                self.assertFalse((root / f"{version}-over-limit").exists())
+
+    def test_aggregate_limit_requires_a_fully_validated_v4_capture(self):
+        # Seed the shared earlier-evidence budget; no oversized files are needed.
+        for schema_version, config_version, with_trace, maximum in (
+                (1, None, True, publisher.LEGACY_APP_EXPERIENCE_MAX_TOTAL_BYTES),
+                (2, 2, True, publisher.LEGACY_APP_EXPERIENCE_MAX_TOTAL_BYTES),
+                (2, None, False, publisher.LEGACY_APP_EXPERIENCE_MAX_TOTAL_BYTES),
+                (2, 3, True, publisher.APP_EXPERIENCE_MAX_TOTAL_BYTES)):
+            with self.subTest(schema=schema_version, config=config_version, trace=with_trace), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                directory, _ = write_artifact(root, schema_version=schema_version,
+                                              trace_config_version=config_version, with_trace=with_trace)
+                size = sum(path.stat().st_size for path in directory.iterdir())
+                budget = {"bytes": maximum - size, "files": 0}
+                publisher.archive_app_experience(args_for(root), source_run("pilot"), [legacy.job()], root / "at-limit", budget)
+                self.assertEqual(maximum, budget["bytes"])
+                budget = {"bytes": maximum - size + 1, "files": 0}
+                before = dict(budget)
+                with self.assertRaisesRegex(ValueError, "archive budget"):
+                    publisher.archive_app_experience(args_for(root), source_run("pilot"), [legacy.job()], root / "over-limit", budget)
+                self.assertEqual(before, budget)
+                self.assertFalse((root / "over-limit").exists())
+
+    def test_late_v4_capture_selects_budget_only_after_all_lanes_validate(self):
+        import experience_trace
+        import test_collect_app_experience_evidence as fixtures
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            last_directory, _ = write_artifact(root, schema_version=2, trace_config_version=3)
+            first_artifact = dict(artifact(), id=457, name="app-experience-reports-api-30-attempt-2")
+            first_directory = root / "incoming" / first_artifact["name"]
+            value = fixtures.write_bundle(first_directory, api=30, profile="pilot")
+            capture = fixtures.collected_capture(first_directory, value, label="30")
+            (first_directory / "capture.json").write_bytes(fixtures.encoded(capture))
+            jobs = [dict(legacy.job(), name="emulator-tests (30)"), legacy.job()]
+            args = args_for(root, jobs=jobs)
+            args.artifacts.write_text(json.dumps({"artifacts": [first_artifact, artifact()]}))
+            first_size = sum(path.stat().st_size for path in first_directory.iterdir())
+            initial = {"bytes": publisher.LEGACY_APP_EXPERIENCE_MAX_TOTAL_BYTES - first_size + 1, "files": 0}
+            budget = dict(initial)
+            result = publisher.archive_app_experience(args, source_run("pilot"), jobs, root / "valid", budget)
+            self.assertGreater(budget["bytes"], publisher.LEGACY_APP_EXPERIENCE_MAX_TOTAL_BYTES)
+            self.assertEqual(["30", "37.0"], [row["matrixLabel"] for row in result["apis"] if row["files"]])
+            # A schema label alone cannot grant capacity; even correctly rebound
+            # hashes must fail if the late v4 configuration itself is invalid.
+            trace_path = last_directory / "trace-capture.json"
+            trace = json.loads(trace_path.read_text())
+            trace["config"] = experience_trace.trace_config(version=2)
+            trace_path.write_text(json.dumps(trace))
+            rebind_capture(last_directory)
+            budget = dict(initial)
+            with self.assertRaisesRegex(ValueError, "trace_config_mismatch"):
+                publisher.archive_app_experience(args, source_run("pilot"), jobs, root / "invalid", budget)
+            self.assertEqual(initial, budget)
+            self.assertFalse((root / "invalid").exists())
 
     def test_new_lane_and_shared_file_count_caps_apply_before_any_copy(self):
-        with tempfile.TemporaryDirectory() as temporary:
+        with tempfile.TemporaryDirectory() as temporary, patch.object(publisher, "APP_EXPERIENCE_MAX_LANE_BYTES", 1024):
             root = Path(temporary)
             for payloads, budget in (({"a.json": b"x" * (publisher.APP_EXPERIENCE_MAX_LANE_BYTES + 1)}, {"bytes": 0, "files": 0}),
                                      ({"capture.json": b"{}"}, {"bytes": 0, "files": publisher.MAX_FILES})):
                 with self.assertRaises(ValueError):
                     publisher.copy_app_experience_payloads(payloads, root / "output", budget)
                 self.assertFalse((root / "output").exists())
+            with self.assertRaises(ValueError):
+                publisher.copy_app_experience_payloads({"capture.json": b"{}"}, root / "legacy-lane",
+                                                       {"bytes": 0, "files": 0}, lane_maximum=1)
+            self.assertFalse((root / "legacy-lane").exists())
 
     def test_verify_outputs_only_verified_experience_artifact_ids(self):
         for profile in ("pilot", "formal"):

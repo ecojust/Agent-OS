@@ -19,7 +19,7 @@ class ExperienceCaptureTests(unittest.TestCase):
         self.output = Path(temporary.name)
         self.calls = []
         self.payload = b"synthetic trace bytes for boundary tests" * 20
-        self.state = dict(schemaVersion=1, kind="agent-os-experience-trace-capture", status="recording",
+        self.state = dict(schemaVersion=4, configVersion=3, kind="agent-os-experience-trace-capture", status="recording",
                           pid=123, stopped=False, startMode="--background", ready=True,
                           config="synthetic config", trace=None, compressed=None, error=None)
         capture.save(self.output, self.state)
@@ -72,6 +72,34 @@ class ExperienceCaptureTests(unittest.TestCase):
         self.assertEqual(state["error"], "trace_reached_size_limit")
         self.assertEqual(state["trace"]["bytes"], len(self.payload))
 
+    def test_legacy_capture_keeps_its_original_capacity(self):
+        for version in (1, 2, 3):
+            with self.subTest(version=version):
+                state = dict(self.state, schemaVersion=version)
+                state.pop("configVersion")
+                if version == 3:
+                    state["configVersion"] = 2
+                capture.save(self.output, state)
+                with mock.patch.object(capture, "LEGACY_RAW_LIMIT", len(self.payload)):
+                    result, actual = self.run_stop()
+                self.assertFalse(result)
+                self.assertEqual(actual["error"], "trace_reached_size_limit")
+                self.assertEqual(actual["trace"]["bytes"], len(self.payload))
+
+    def test_current_capture_uses_new_limit_without_changing_legacy_limits(self):
+        with mock.patch.object(capture, "LEGACY_RAW_LIMIT", len(self.payload) - 1), \
+                mock.patch.object(capture, "LEGACY_GZIP_LIMIT", 5):
+            result, state = self.run_stop()
+        self.assertTrue(result)
+        self.assertEqual(state["status"], "collected")
+
+    def test_wrong_capacity_version_is_rejected_before_device_access(self):
+        self.state["configVersion"] = 2
+        capture.save(self.output, self.state)
+        with self.assertRaisesRegex(ValueError, "unsupported_trace_config_version"):
+            self.run_stop()
+        self.assertEqual(self.calls, [])
+
     def test_oversized_compressed_file_is_removed_and_failure_is_recorded(self):
         with mock.patch.object(capture, "GZIP_LIMIT", 5):
             result, state = self.run_stop()
@@ -116,8 +144,9 @@ class ExperienceCaptureTests(unittest.TestCase):
             self.assertTrue(capture.start(self.output))
         state = json.loads((self.output / capture.STATE_NAME).read_text())
         self.assertEqual(state["startMode"], "--background")
-        self.assertEqual(state["schemaVersion"], 3)
-        self.assertEqual(state["configVersion"], 2)
+        self.assertEqual(state["schemaVersion"], 4)
+        self.assertEqual(state["configVersion"], 3)
+        self.assertIn("max_file_size_bytes: 268435456", state["config"])
         self.assertEqual(state["configDelivery"], "stdin")
         self.assertEqual(state["startExitCode"], 0)
         self.assertTrue(state["ready"])

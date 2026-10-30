@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-30T00:16:09Z",
-  "note": "两轮稳定性复测均2166/2168；八档重建前对照均证实导航未按合同暂停。已实现来源提前拒绝与条件暂停，核心339项、最终测试包构建及lint通过；同案、273项/API完整设备回归和普通录像待执行。",
+  "updated_at": "2026-10-30T00:40:02Z",
+  "note": "导航拒绝顺序已修正：同案八档0/8→8/8，修正源完整2184/2184、三个导航用例各8/8。核心339项、CI脚本503项及普通录像13阶段通过。旋转与视觉本轮未复现，根因及剩余生命周期验收继续记录，检查点保持9/20。",
   "latest_evidence": {
-    "path": "screenshots/40975743980-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40975743980"
+    "path": "screenshots/40978861976-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40978861976"
   },
   "checkpoints": [
     {
@@ -84,10 +84,10 @@
       "id": "api_matrix",
       "name": "Android 11–17 API 行为矩阵",
       "status": "in_progress",
-      "evidence": "screenshots/40975743980-1/manifest.json",
-      "scope": "Two preregistered exact8e8e00518 full runs40975741234/40975743980 each271x8=2168,2166pass/2fail,zero errors/skips/missing/extra/duplicates/unreadable. Both API30 rotation failures have6 completed SNAPSHOT_OBSERVE and6 OWNED_WINDOW_MISMATCH with0 dispatch/1HTTP;subtype unresolved. First API34 visual-generation failure has2 non-owned-window events;second API34 original navigation case returns unsubmitted STALE_OBSERVATION during unfinished final snapshot,not TASK_PAUSED. SAF48/48 each;48setup each allprior1;first2 actual recovery markers in passed API32/33 malformed-cancel cases,second0markers. Latest second archive4471payload/47357329B/2271PNG/1492blocked,24 prior secure exceptions;performance diagnostic-only. New exact74090a971 run40976664678 fixed navigation-origin-rebuild-diagnostic:0/8 contract pass,all8 preconditions verified and actual old-production counterexamples (recreationVerified,returnedSTALE,localStale1,finalEvents0,pausedfalse,dispatch/approvals/HTTP0);32payload/25212B/8blocked/0PNG/fullSuiteAcceptance=false. Current production repair records successful observation origin solely for refusal with owner/epoch/profile/config binding,clears on fresh scoped observation,keeps target authorization priority and all final guards. Conditional pause prevents stale-epoch state mutation;339core tests including6new passed;async UI notification is not atomic. New fresh-scoped positive case preserves same epoch;original2negative methods unchanged;future exact full273/API,device result pending. Rotation now only adds original-rejection numeric details;not a repair. Prior3f full2168/2168 and all original failures retained. Remaining boundaries:MainActivity rotation drafts,multiwindow/PiP,process-death,in-flight upgrade;real-model/phone/ROM/broad-app/performance separate.",
-      "details": "两轮重复各2166/2168，旋转API30均失败，另有导航/视觉失败，尚未整体稳定。导航重建前对照8档均复现未暂停；来源提前拒绝及原子条件暂停已实现，核心339项、构建/lint通过。未完成：修正后设备验收、旋转匹配细类、视觉事件及主界面旋转/多窗口/PiP/进程终止/执行中升级。下一步：同案复测及273项/API完整回归，按新诊断继续查旋转。",
-      "updated_at": "2026-10-30T00:16:09Z"
+      "evidence": "screenshots/40978861976-1/manifest.json",
+      "scope": "Exact b3e2cacfcc48c5819b0c25f9d8900b6d723c9f44 full run40978861976:273x8=2184/2184,zero failures/errors/skips/missing/extra/duplicates/unreadable. Original270 subset2160/2160;original Settings navigation,real control-rebuild refusal,fresh scoped observation replacement,and rotation each8/8;SAF48/48. Unique archive40980594033:4504payload/48098452B/2288PNG/1510blocked;24 prior secure exceptions unchanged;8performance reports diagnostic-only. SAF48setup allprior1;one actual reobserved-1-depth-0 recovery in passed API30 export;145 protected records. Navigation production fix records a successful observed origin solely for refusal,bound to owner/epoch/profile/config;target authorization and all final guards retained. Conditional pause prevents stale-epoch state changes;async UI notification remains separate. Byte-identical rebuild method:old74090a run40976664678 0/8 contract pass with8 verified target counterexamples;fixed b3e2 run40978858645 8/8,unique archive40979236639,32payload/29324B/16blocked/0PNG. Local core339 including6 new tests passed;CI503 script tests passed and core task executed,without independent CI core case count. Same-source ordinary demo40978865253 passed13phases/8confirmations. Prior exact8e repeated full runs40975741234/40975743980 both2166/2168 and all historical failures retained. Rotation rejection diagnostics added but not triggered in latest passing run;historical mismatch subtype unresolved. Visual positive global-generation assertion also assumes no unrelated external events;causal test amendment pending,external invalidation protection unchanged. Remaining:MainActivity rotation drafts,multiwindow/PiP,process death,in-flight external upgrade;real-model/phone/ROM/broad-app/performance are separate acceptance.",
+      "details": "已验证：导航拒绝顺序同案0/8→8/8；修正源2184/2184，原负例、重建负例、新观察正例各8/8，SAF48/48；核心339项、普通录像13阶段通过。未完成：旧API30旋转失配细类、视觉事件归因整改，以及主界面旋转草稿/多窗口/PiP/进程终止/执行中升级。本轮旋转8/8但无新失败诊断。下一步：取得旋转拒绝瞬间样本，补视觉单事件中性与外部撤销的独立验证。",
+      "updated_at": "2026-10-30T00:40:02Z"
     },
     {
       "id": "performance",
@@ -178,9 +178,9 @@
     }
   ],
   "latest_demo": {
-    "path": "screenshots/demos/40902334050-1",
-    "source_sha": "42db0baf3528ff33dd1beaa4da1cb32dc54c16f4",
+    "path": "screenshots/demos/40978865253-1",
+    "source_sha": "b3e2cacfcc48c5819b0c25f9d8900b6d723c9f44",
     "status": "passed",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40902334050"
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/40978865253"
   }
 }

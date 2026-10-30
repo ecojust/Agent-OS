@@ -1,6 +1,25 @@
 # API 矩阵的重复验证与未关闭原因
 
-截至 2026-10-30 UTC，预先固定的两轮完整回归均为 **2166/2168**，仍不能认定已经稳定修复。API30 旋转在两轮均失败；API34 第一轮失败于界面事件用例，第二轮失败于导航来源中断用例。导航另已取得八档合格的失败前对照，生产修正已实现，但尚无该修正的设备通过结果。旋转目前新增的是诊断，未宣称修复。
+截至 2026-10-30 UTC，导航拒绝顺序已有生产修正及同案八档前后对照：**0/8 → 8/8**；修正源的完整回归为 **2184/2184**。此前固定的两轮完整回归均为 **2166/2168**，API30 旋转均失败，API34 分别失败于视觉事件和导航来源中断，这些原失败全部保留。导航的具体缺陷已验证修正；旋转和视觉问题本轮未复现，尚不能据此认定根因已修复，API 矩阵检查点继续进行中。
+
+## 修正源的完整回归
+
+源码 `b3e2cacfcc48c5819b0c25f9d8900b6d723c9f44`，完整运行 [40978861976](https://github.com/ecojust/Agent-OS/actions/runs/40978861976)，attempt 1，API30、31、32、33、34、35、36、37.0 **各273/273，共2184/2184**。缺失、额外、重复、failed、skipped、JUnit errors、不可读报告均为 0。清单按精确源码冻结：原270项加旋转及两个新增导航用例，没有删除原有身份。
+
+| 独立核验子集 | 本次完整运行结果 |
+| --- | --- |
+| 原270项/API | 2160/2160 |
+| 原Settings来源暂停、控制窗重建后暂停、新授权观察替换旧来源 | 各8/8，合计24/24 |
+| 真实旋转 | 8/8，本轮未复现历史失败 |
+| 六个SAF用例/API | 48/48 |
+
+[唯一归档40980594033](https://github.com/ecojust/Agent-OS/actions/runs/40980594033)发布证据提交 `4f1a8794f9812285e3e0f3f26a9e754c8315d9b2`。[原始清单](../../screenshots/40978861976-1/manifest.json)包含 **4504 payload、48,098,452 B、2288张PNG、1510条blocked**；PNG为2260张320×640、24张640×320、4张831×1662。全部实际文件集合、字节数、SHA-256、PNG解码/引用、逐案JSON、采集JUnit摘要及精确源码身份经交叉核验，16份截图/性能artifact的来源与上传时段也已核对。未独立下载全部原JUnit XML，不将摘要核验称为重解析原XML。原24次测试窗口截图例外保持不变；八份性能报告仅作诊断，`budgetAcceptance=false`。
+
+SAF48案均有一次初始化标记，全部prior1、无prior0；只有 **API30 的 `realSafExportWritesTheCapturedFourFieldSnapshotWithoutConfigurationAuthority`** 实际记录 `protected-saf-root-refresh-reobserved-1-depth-0`，随后整案与断言通过。SAF保护记录为 **145＝96个原阶段/结束记录＋48个初始化＋1个恢复**。此恢复仍不证明底层节点失效的单一平台原因。
+
+原CI build日志确认503项脚本检查实际执行通过（91.574秒）；Gradle主体53秒成功，`:core:test`实际执行，应用JVM任务为NO-SOURCE。日志未单列核心逐案总数，本页的339/339来自下文同源本地核心验证，未挪作CI逐案统计。同源[唯一普通录像](../../screenshots/demos/40978865253-1/manifest.json)也通过13阶段与8次确认，但不执行Settings重建或旋转专项。
+
+三个导航用例在此完整运行全部通过，重建负例另有独立专项8/8。旋转虽为8/8，本轮没有失败诊断，新增失配细类尚未取得设备失败样本；视觉用例也未复现，旧全局代次断言的归因限制仍在。主界面旋转草稿、多窗口/PiP、进程终止、执行中外部升级仍缺具体验收，不能将本次全绿当作这些边界已覆盖。
 
 ## 预先固定的两轮完整样本
 
@@ -32,6 +51,8 @@
 
 第一轮 API34 失败于 `VisualEventGenerationInstrumentedTest#actualSameHeightStatusEventsPreserveTheOriginalLocalGuardAcrossRepeatedPublications`。`round=2` 时匹配的自有事件 windowId 为 866，但另外两条 windowId 3 的事件使 generation 从 33→34→35；content 分别为 2、4，均 `eventMatchesVisual=false`。诊断无丢条、采样未失败。这说明原断言被其他窗口事件打断，尚不能确定这些事件的具体平台来源，也不能据此允许忽略外部事件。见[第一轮 API34 原文](diagnostics/stability-full-40975741234-api34/README.md)。
 
+按该源代码复核，测试的事件过滤器只等待指定自有事件，不会阻止服务收到其他窗口事件；随后等待 UI 空闲，再要求整个三轮期间的全局 generation 保持不变。这个断言同时依赖“期间没有外部失效事件”，强于仅验证自有文字事件不失效。上述两次实际增量均来自非自有窗口，符合当前保守撤销规则；没有证据表明匹配的自有事件造成了增量。原案第2轮先在 generation 断言失败，该轮后面的原 guard 存活断言未执行，不能补记其结果。下一步需在单次真实事件处理内记录固定元数据及前后 generation，分别验证自有事件不增代、外部交错撤销原 guard，并取得非空的存活正例；不能忽略外部事件、重建 guard 或以重跑替换失败。该测试归因整改尚未实现，不算视觉问题已修复。
+
 第二轮 API34 失败于 `NavigationObservationGuardInstrumentedTest#anUnscopedSettingsWindowCannotBeReplacedByAnAutomaticLaunch`。本次已取得主消息诊断：`outcome=RETURNED`、`return.code=STALE_OBSERVATION`；ok/submitted/dispatchSubmitted/dispatchAccepted 均为 FALSE，accepted 为 MISSING。epoch 为 1→1，paused/cancelled/inFlight 均为 false，派发、审批和 HTTP 请求均为 0。调用前与清理前采样均为 Settings，窗口及根 ID 均为 506。trace 为 finalEvents 1、finalCompleted 0，其他四类计数为 0、无覆盖；这不是成功终检，也尚未唯一确定 stale 的具体条件。原合同要求 `TASK_PAUSED`，普通未提交返回仍计失败。见[第二轮 API34 原文](diagnostics/stability-full-40975743980-api34/README.md)；该新证据不补造旧 API37 未记录的返回值。
 
 | 原有子集 | 第一轮 | 第二轮 |
@@ -59,14 +80,18 @@
 
 前对照确认了“已知未授权来源遇到控制窗重建时未按合同暂停”的具体缺陷。它不证明所有历史导航失败或 API30 旋转失败都来自这一路径。该源完整清单为 **272 项/API**，本次只执行八案专项，没有产生 272×8 的完整通过证据。
 
-## 生产修正与下一步设备验证
+## 生产修正与同案设备验证
 
 导航生产修正已实现：成功 `observe` 后保存不含节点内容、仅用于拒绝的来源记录，绑定原 owner/task、epoch、profile 和配置许可；下一次成功观察会替换该记录，包括新的 scoped 观察。`launch_app` 仍先校验目标应用授权，再对同一有效绑定中的已知禁止来源执行条件暂停。任何启动派发仍须经过原有控制窗、最终快照、窗口版本、配置及提交前校验；来源记录不能许可旧动作或免除最终校验。
 
 核心 `pauseIfExecutionEpoch` 只暂停对应的当前执行代次，取消 hook 在锁外运行；旧代次的拒绝不能暂停后来恢复的任务。本地 core 的 **339 项测试通过，包含新增 6 项条件暂停测试**，无失败/错误/skipped。这证明核心状态边界的本地回归；通知仍经异步 UI 路径，不代表状态和控制窗界面已变成原子更新。
 
-本次另增加 `aFreshScopedObservationReplacesThePriorUnscopedLaunchOrigin` 正例：同一 owner、epoch、profile、配置及适配器，先观察未授权 Settings，再由测试侧返回 Fixture 并成功观察新的 scoped 界面；随后单次 launch 仍须通过原检查并明确被接受。该用例未通过暂停/恢复让旧记录自然过期。原普通导航负例和控制窗重建负例的方法字节均未改；新增正例后，待执行完整清单为 **273 项/API、2184 项**。它不会改写前对照的 272 项/API 或两轮旧源的 271 项/API。
+本次另增加 `aFreshScopedObservationReplacesThePriorUnscopedLaunchOrigin` 正例：同一 owner、epoch、profile、配置及适配器，先观察未授权 Settings，再由测试侧返回 Fixture 并成功观察新的 scoped 界面；随后单次 launch 仍须通过原检查并明确被接受。该用例未通过暂停/恢复让旧记录自然过期。原普通导航负例和控制窗重建负例的方法字节均未改；新增正例后，修正源完整清单为 **273 项/API、2184 项**。它不会改写前对照的 272 项/API 或两轮旧源的 271 项/API。
 
-当前旋转相关改动仅为原拒绝点增加分类和数字坐标诊断，用于区分后续失配；尚无旋转修复或新设备通过结论。以上改动等待绑定新的源提交与设备运行，再分别记录原负例、重建负例、新正例及完整矩阵结果。在这些证据取得前，保留本页全部失败，API 矩阵检查点继续进行中。
+修正源 `b3e2cacfcc48c5819b0c25f9d8900b6d723c9f44` 的同案专项 [40978858645](https://github.com/ecojust/Agent-OS/actions/runs/40978858645) 已 **8/8 通过**，失败、未验证、JUnit errors/skipped/unreadable/unexpected 均为 0。选中方法相对前对照源码逐字节不变，八案均通过原 `TASK_PAUSED`、owner 暂停、零审批/派发/HTTP 与 Settings 焦点断言。通过案不输出 failure-only `navigationDiagnostic`，不能据此编造成功时的 trace 数值。
+
+唯一归档 [40979236639](https://github.com/ecojust/Agent-OS/actions/runs/40979236639) 的[完整证据](../../screenshots/40978858645-1/manifest.json)为 **32 payload、29,324 B、0 PNG、16 blocked、0 secure-window 例外**，全部文件集合、大小、摘要、逐案记录、采集 JUnit 摘要和八档来源均已核验。性能附件八项 invalid，与未执行性能用例的专项范围一致，不是性能验收。旧源八个完成前置的失败与新源八个合同通过分别成立，未重跑同案来挑选通过结果。
+
+当前旋转相关改动仅为原拒绝点增加分类和数字坐标诊断。同源完整运行 `40978861976` 已核验三个导航用例各8/8及整套2184/2184；旋转本轮也为8/8，但没有取得新的失配细类样本，尚无根因修复结论。以上结果与旧失败分别保留，API 矩阵检查点继续进行中。
 
 详情见 [API 盘点](apk-api-acceptance.md)、[SAF 排查](numeric-preferences.md)、[旋转记录](rotation-controls.md)和[导航记录](navigation-origin-verification.md)。

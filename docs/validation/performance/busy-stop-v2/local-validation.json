@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "kind": "busy-stop-v2-local-validation",
+  "sourceCommit": "c7bfa7c21124a2384804ba15378ce7320edb0241",
+  "recordedAt": "2026-10-30T17:50:03Z",
+  "deviceValidation": false,
+  "fullHostSuite": {
+    "tests": 891,
+    "passed": 891,
+    "skipped": 0,
+    "durationSeconds": 122.348,
+    "traceProcessorProvided": true
+  },
+  "android": {
+    "instrumentationCompile": "passed",
+    "lint": "passed",
+    "durationSeconds": 148
+  },
+  "targeted": {
+    "evidenceTests": 28,
+    "archiveSummaryVideoTests": 59,
+    "independentNumericTests": 13
+  },
+  "logs": {
+    "busy-stop-c7b-frozen-full-host.log": {
+      "bytes": 2173,
+      "sha256": "ff9dd1c34fa7ae233ad9f39b35cdc1c7f4d230856de7f55fadaecf36d271e28c"
+    },
+    "busy-stop-v2-final-android-build.log": {
+      "bytes": 2658,
+      "sha256": "85626df92ebda76f376ffde65a3ab474a3b21c3295dea36f17ce9f065cb964e5"
+    },
+    "busy-stop-v2-host-contract.log": {
+      "bytes": 5692,
+      "sha256": "568a755ed9a46263b87dd5a492471b2ad804f6b60dc4ee1600be8871e45a53e4"
+    },
+    "busy-stop-v2-pipeline-final.log": {
+      "bytes": 11259,
+      "sha256": "4cbd715a6a1f74d897ca83b4db9bb1f83923741ca72214dc0871f35f9a5bb41a"
+    },
+    "busy-stop-v2-independent-final.log": {
+      "bytes": 2129,
+      "sha256": "2c7a392c0d73a04e8a1a4911321bcbe9c40c48c9b2414a422ac081461159a744"
+    }
+  },
+  "limitations": [
+    "Local host/build validation supplies no Android emulator result, physical device result, or video.",
+    "Targeted counts overlap the full host suite and must not be added as unique cases."
+  ]
+}

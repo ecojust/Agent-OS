@@ -1,6 +1,6 @@
 # 受控繁忙状态下的停止响应
 
-本项继续[性能后续任务](../PERFORMANCE.md#性能后续任务)，补齐实际停止按钮、在途平台调用及本地停止反馈的证据。Android 仪器编译、lint、Fixture 编译与 3 项探针单元测试已通过；默认完整矩阵的 273 个 class#method 身份与基线逐一相同。v2 集成过程中的 889 项完整宿主回归无跳过且全部通过；最终严格 DRAW_START 门槛及字段命名又通过 28 项证据校验、59 项归档／汇总／视频检查和 13 项独立复核检查，最终 Android 编译与 lint 通过。第三轮仍未通过首帧验收：API30 缺少可匹配报告，API32 出现延迟旧报告与歧义。已实现并通过本地回归的 schema v2 阶段时间关联与有界候选原件，准备第四轮固定试跑及两段独立录像；前三轮原结论均保留，下文列明进度。既有等待确认时停止、直接取消 RunControl 的真实远端点击测试和核心取消单元测试保留原范围，不能代替本项。
+本项继续[性能后续任务](../PERFORMANCE.md#性能后续任务)，补齐实际停止按钮、在途平台调用及本地停止反馈的证据。Android 仪器编译、lint、Fixture 编译与 3 项探针单元测试已通过；默认完整矩阵的 273 个 class#method 身份与基线逐一相同。冻结源码 `c7bfa7c21` 的 [891 项完整宿主回归](performance/busy-stop-v2/local-validation.json)无跳过且全部通过；最终严格 DRAW_START 门槛与字段命名另经 28 项证据校验、59 项归档／汇总／视频检查和 13 项独立复核检查，Android 编译与 lint 通过。针对检查与整套回归有重叠，不累加为独立用例。第三轮仍未通过首帧验收：API30 缺少可匹配报告，API32 出现延迟旧报告与歧义。已实现并通过本地回归的 schema v2 阶段时间关联与有界候选原件，已启动第四轮固定试跑及两段独立录像，等待 CI 运行器；前三轮原结论均保留，下文列明进度。既有等待确认时停止、直接取消 RunControl 的真实远端点击测试和核心取消单元测试保留原范围，不能代替本项。
 
 本轮使用 API 30、31、32、33、34、35、36、37.0 八档专用合成模拟器，真实 Controller、生产授权与确认路径、固定本地 HTTP 测试模型和独立 Fixture APK。所有结果保持 `diagnosticOnly=true`、`budgetAcceptance=false`、`fullSuiteAcceptance=false`。受控等待不等于持续 CPU 满载，模拟器数据不代表真机、厂商 ROM 或 200 毫秒发布预算已经验收。
 
@@ -106,3 +106,7 @@ API32 的首停止 OnDraw 为 `88633901518` ns；候选结束时间 `88627903054
 v1 的原通过状态、功能证据和历史数值不重写，但其帧关联已证明存在不足，不能据此独立确认首停止 traversal 的 HWUI 报告，也不纳入未来 v2 正式采样。不同版本的报告和分母须分开。
 
 [原始归档](../../screenshots/41098174743-1/manifest.json)由 [41098866377](https://github.com/ecojust/Agent-OS/actions/runs/41098866377) 生成，证据提交 `4bf8fc03f849a5e16ea3ceec68cc5e45006ccba1` 的父提交为原测试源。87 个载荷、326,487 字节及 10 张 PNG 完整核验；[原 v1 汇总](performance/busy-stop-41098174743/summary.json)、[独立数值审核](performance/busy-stop-41098174743/independent-numeric-audit.json)和[归档审核](performance/busy-stop-41098174743/archive-audit.json)保留原运行失败与所有未执行项，7,670 项独立核对一致。正式采样与独立录像尚未执行。
+
+## 第四轮 v2 验证与独立录像
+
+源 `c7bfa7c21124a2384804ba15378ce7320edb0241` 已于 2026-10-30 17:43 UTC 启动第四轮固定试跑 [41101009371](https://github.com/ecojust/Agent-OS/actions/runs/41101009371)，计划仍为八档共 32 次。相同源码另启动一次[繁忙停止录像 41101012830](https://github.com/ecojust/Agent-OS/actions/runs/41101012830)及一次[整体操作录像 41101016649](https://github.com/ecojust/Agent-OS/actions/runs/41101016649)。截至 2026-10-30 17:53 UTC，三项均排队超过 10 分钟，八档设备与构建作业没有分配运行器，尚无设备结果或可播放文件；不计为通过。[队列快照](performance/busy-stop-v2/workflow-queue.json)记录原运行 ID 和状态，排队不归因为产品失败。下一步先等待并审核这批原件，符合方法与样本条件后才启动正式采样；本地回归不能替代这一步。

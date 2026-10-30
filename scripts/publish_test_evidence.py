@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import re
 import shutil
+import zlib
 
 import collect_performance_evidence as performance
 import collect_android_evidence as android_evidence
@@ -21,6 +22,10 @@ DISCLOSURE_WORKFLOW = ".github/workflows/pinned-window-disclosure.yml"
 PINNED_MATRIX = ["34", "35", "36", "37.0"]
 MAX_FILE_BYTES = 16 * 1024 * 1024
 MAX_TOTAL_BYTES = 64 * 1024 * 1024
+APP_EXPERIENCE_MAX_TOTAL_BYTES = 160 * 1024 * 1024
+APP_EXPERIENCE_MAX_LANE_BYTES = 16 * 1024 * 1024
+APP_EXPERIENCE_MAX_TRACE_BYTES = 64 * 1024 * 1024
+APP_EXPERIENCE_MAX_GZIP_BYTES = 12 * 1024 * 1024
 MAX_FILES = 8000
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 DIAGNOSTIC_TITLE = "Android checks [owned-control-diagnostic]"
@@ -38,6 +43,18 @@ NAVIGATION_ORIGIN_REBUILD_TITLE = "Android checks [navigation-origin-rebuild-dia
 IDLE_PAIR_TITLE = "Android checks [idle-pair-diagnostic]"
 STRESS_TITLE = "Android checks [stress-diagnostic]"
 ACTIVE_PAIR_TITLE = "Android checks [active-pair-diagnostic]"
+APP_EXPERIENCE_SCOPE = "app-experience-diagnostic"
+APP_EXPERIENCE_PILOT_SCOPE = "app-experience-pilot"
+APP_EXPERIENCE_SCOPES = (APP_EXPERIENCE_SCOPE, APP_EXPERIENCE_PILOT_SCOPE)
+APP_EXPERIENCE_TITLE = "Android checks [app-experience-diagnostic]"
+APP_EXPERIENCE_PILOT_TITLE = "Android checks [app-experience-pilot]"
+APP_EXPERIENCE_COVERAGE = (
+    "Target Fixture and resident Agent CPU/PSS are measured separately. Startup uses matched Perfetto "
+    "android_startups time_to_display observations; am start output and frame callbacks do not substitute for TTID. "
+    "Raw launch, resource and frame reports, bounded compressed traces, failed and unavailable results are retained. "
+    "Manual accessibility actions and local test-model actions are synthetic; endpoint PSS is not steady-state or peak memory, "
+    "and received FrameMetrics do not prove presentation. These diagnostics do not establish causal overhead, "
+    "real-model, physical-device or performance-budget acceptance. Pilot and formal results are separate profiles.")
 ACTIVE_PAIR_COVERAGE = ("This fixed diagnostic plans six AC/CA alternating pairs per dedicated emulator, with five fresh tasks per arm. "
                         "Across eight APIs the numeric denominator is 48 planned pairs, 96 arms and 480 trials, distinct from eight selected cases. "
                         "A uses scripted accessibility actions on real Fixture controls with the Agent service off; it is not human, touch or IME timing. "
@@ -95,7 +112,9 @@ DIAGNOSTIC_TITLES = {DIAGNOSTIC_TITLE: android_evidence.DIAGNOSTIC_SCOPE,
                      NAVIGATION_ORIGIN_REBUILD_TITLE: android_evidence.NAVIGATION_ORIGIN_REBUILD_SCOPE,
                      IDLE_PAIR_TITLE: android_evidence.IDLE_PAIR_SCOPE,
                      STRESS_TITLE: android_evidence.STRESS_SCOPE,
-                     ACTIVE_PAIR_TITLE: android_evidence.ACTIVE_PAIR_SCOPE}
+                     ACTIVE_PAIR_TITLE: android_evidence.ACTIVE_PAIR_SCOPE,
+                     APP_EXPERIENCE_TITLE: APP_EXPERIENCE_SCOPE,
+                     APP_EXPERIENCE_PILOT_TITLE: APP_EXPERIENCE_PILOT_SCOPE}
 DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
                     android_evidence.QUALIFICATION_SCOPE: "Task Qualification",
                     android_evidence.CONTROL_STATUS_SCOPE: "Control Status",
@@ -110,7 +129,9 @@ DIAGNOSTIC_NAMES = {android_evidence.DIAGNOSTIC_SCOPE: "Owned Control",
                     android_evidence.NAVIGATION_ORIGIN_REBUILD_SCOPE: "Navigation Origin Rebuild",
                     android_evidence.IDLE_PAIR_SCOPE: "Idle Pair",
                     android_evidence.STRESS_SCOPE: "Segmented Stress",
-                    android_evidence.ACTIVE_PAIR_SCOPE: "Active Task Pair"}
+                    android_evidence.ACTIVE_PAIR_SCOPE: "Active Task Pair",
+                    APP_EXPERIENCE_SCOPE: "App Experience",
+                    APP_EXPERIENCE_PILOT_SCOPE: "App Experience Pilot"}
 
 
 def android_execution_scope(run: dict) -> str:
@@ -279,6 +300,16 @@ def active_pair_artifacts(value, run: dict) -> list:
     return numeric_artifacts(value, run, "active-pair-reports", active_pair.MAX_ARTIFACT_BYTES)
 
 
+def app_experience_artifacts(value, run: dict) -> list:
+    if (run.get("path") != ".github/workflows/android.yml"
+            or android_execution_scope(run) not in APP_EXPERIENCE_SCOPES):
+        return []
+    selected = numeric_artifacts(value, run, "app-experience-reports", APP_EXPERIENCE_MAX_LANE_BYTES)
+    if len(selected) > len(EXPECTED_MATRIX) or len({item["id"] for item in selected}) != len(selected):
+        raise ValueError("app experience artifacts must identify unique fixed API lanes")
+    return selected
+
+
 def numeric_artifacts(value, run: dict, prefix: str, maximum: int) -> list:
     pattern = re.compile(re.escape(prefix) + r"-api-(3[0-6]|37\.0)-attempt-" + str(run["run_attempt"]))
     selected = []
@@ -334,6 +365,139 @@ def archive_active_pairs(args, run, jobs, output, budget):
     return archive_numeric_diagnostics(args, run, jobs, output, budget, artifacts, active_pair,
                                        "active-pair-reports", "active-task-pairs", "no_current_active_pair_artifact",
                                        "active-task-pair-attachments", ACTIVE_PAIR_COVERAGE, active_pairs=True)
+
+
+def verify_app_experience_gzip(data: bytes, reference: dict) -> None:
+    """Validate one bounded gzip member without writing or interpreting its trace."""
+    if not 0 < len(data) <= APP_EXPERIENCE_MAX_GZIP_BYTES:
+        raise ValueError("app experience compressed trace exceeds budget")
+    if (type(reference) is not dict or set(reference) != {"path", "bytes", "sha256"}
+            or reference["path"] != "trace.pftrace"
+            or type(reference["bytes"]) is not int
+            or not 0 < reference["bytes"] < APP_EXPERIENCE_MAX_TRACE_BYTES
+            or not re.fullmatch(r"[0-9a-f]{64}", str(reference["sha256"]))):
+        raise ValueError("invalid app experience raw trace reference")
+    decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
+    digest = hashlib.sha256()
+    size = 0
+    try:
+        for offset in range(0, len(data), 65536):
+            pending = data[offset:offset + 65536]
+            while pending:
+                block = decompressor.decompress(pending, 65536)
+                pending = decompressor.unconsumed_tail
+                size += len(block)
+                if size >= APP_EXPERIENCE_MAX_TRACE_BYTES or size > reference["bytes"]:
+                    raise ValueError("app experience raw trace exceeds budget or declared size")
+                digest.update(block)
+                if decompressor.unused_data:
+                    raise ValueError("app experience trace has trailing data or multiple gzip members")
+        if (not decompressor.eof or size != reference["bytes"]
+                or digest.hexdigest() != reference["sha256"]):
+            raise ValueError("app experience raw trace differs from its reference")
+    except zlib.error as error:
+        raise ValueError("invalid app experience gzip trace") from error
+
+
+def copy_app_experience_payloads(payloads, destination, budget):
+    """Only prevalidated experience bytes receive the larger aggregate budget."""
+    lane_bytes = sum(len(data) for data in payloads.values())
+    if (lane_bytes > APP_EXPERIENCE_MAX_LANE_BYTES
+            or budget["bytes"] + lane_bytes > APP_EXPERIENCE_MAX_TOTAL_BYTES
+            or budget["files"] + len(payloads) > MAX_FILES):
+        raise ValueError("app experience evidence exceeds archive budget")
+    copied = []
+    for name, data in sorted(payloads.items()):
+        if not re.fullmatch(r"[A-Za-z0-9_.-]+", name) or name in (".", ".."):
+            raise ValueError("unexpected app experience payload path")
+        target = destination / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+        target.chmod(0o644)
+        copied.append({"path": name, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()})
+    budget["bytes"] += lane_bytes
+    budget["files"] += len(payloads)
+    return copied
+
+
+def archive_app_experience(args, run, jobs, output, budget):
+    # Lazy import also keeps unrelated legacy archive paths independent of trace tooling.
+    import collect_app_experience_evidence as experience
+    scope = android_execution_scope(run)
+    if run.get("path") != ".github/workflows/android.yml" or scope not in APP_EXPERIENCE_SCOPES:
+        raise ValueError("app experience attachments require a fixed diagnostic scope")
+    profile = experience.profile_for_scope(scope)
+    artifacts = {item["name"]: item for item in app_experience_artifacts(read_json(args.artifacts), run)}
+    source_identity = {"repository": args.repository, "runId": run["id"],
+                       "attempt": run["run_attempt"], "commit": run["head_sha"]}
+    records = []
+    for label in EXPECTED_MATRIX:
+        matches = [job for job in jobs if job.get("name") == f"emulator-tests ({label})"]
+        job = matches[0] if len(matches) == 1 else {}
+        record = {"matrixLabel": label, "apiLevel": int(label.split(".")[0]), "profile": profile,
+                  "jobConclusion": job.get("conclusion", "not_scheduled"),
+                  "captureStatus": "artifact_unavailable", "captureError": "no_current_app_experience_artifact",
+                  "diagnosticStatus": None, "reportStatus": None, "files": []}
+        name = f"app-experience-reports-api-{label}-attempt-{run['run_attempt']}"
+        artifact = artifacts.get(name)
+        if artifact is not None:
+            if (len(matches) != 1 or job.get("status") != "completed" or job.get("run_id") != run["id"]
+                    or job.get("run_attempt") != run["run_attempt"] or job.get("head_sha") != run["head_sha"]):
+                raise ValueError("app experience job does not match source attempt")
+            start, finish, uploaded = (datetime.fromisoformat(value.replace("Z", "+00:00")) for value in
+                                      (job["started_at"], job["completed_at"], artifact["created_at"]))
+            if not start <= uploaded <= finish:
+                raise ValueError("app experience artifact upload is outside its source job")
+            source = args.incoming / name
+            if source.is_symlink() or not source.is_dir():
+                raise ValueError("expected app experience artifact was not downloaded")
+            allowed = {"capture.json", experience.REPORT_NAME, "startup-ttid.json", "startup-ttid.csv",
+                       "trace.pftrace.gz", "trace-capture.json"}
+            allowed.update(f"launch-{index:03d}.json" for index in range(8 if profile == "pilot" else 400))
+            allowed.update(f"trial-{index:03d}.json" for index in range(3 if profile == "pilot" else 18))
+            entries = list(source.iterdir())
+            if (len(entries) > len(allowed) or any(path.is_symlink() or not path.is_file()
+                    or path.name not in allowed for path in entries)
+                    or sum(path.stat().st_size for path in entries) > APP_EXPERIENCE_MAX_LANE_BYTES):
+                raise ValueError("unexpected or oversized app experience artifact files")
+            capture_bytes = (source / "capture.json").read_bytes()
+            if len(capture_bytes) > experience.MAX_CAPTURE_BYTES:
+                raise ValueError("oversized app experience capture")
+            capture = experience.validate_capture(performance.strict_json(capture_bytes), label, source_identity, profile)
+            # This revalidates raw JSON, TTID references and trace metadata, and
+            # recomputes collection/result status instead of trusting capture labels.
+            payloads = experience.validate_payloads(source, capture, label, source_identity, profile)
+            record["diagnosticStatus"] = capture["diagnosticStatus"]
+            if capture["report"] is not None:
+                raw = experience.read_json(source / experience.REPORT_NAME, experience.MAX_REPORT_BYTES)
+                experience.validate_report(raw, record["apiLevel"], profile)
+                root_bytes = payloads[experience.REPORT_NAME]
+                if (capture["report"]["bytes"] != len(root_bytes)
+                        or capture["report"]["sha256"] != hashlib.sha256(root_bytes).hexdigest()
+                        or capture["report"]["status"] != raw["status"]):
+                    raise ValueError("raw app experience report differs from its capture")
+                record["reportStatus"] = raw["status"]
+            references = {ref["path"]: ref for ref in capture["payloads"]}
+            if (len(references) != len(capture["payloads"]) or set(references) != set(payloads)
+                    or {path.name for path in entries} != {"capture.json", *payloads}):
+                raise ValueError("app experience capture payload set differs from archive")
+            for path, data in payloads.items():
+                ref = references[path]
+                if (path not in allowed or path == "capture.json" or type(data) is not bytes
+                        or ref["bytes"] != len(data) or ref["sha256"] != hashlib.sha256(data).hexdigest()
+                        or (source / path).read_bytes() != data):
+                    raise ValueError("app experience payload differs from its capture")
+            if "trace.pftrace.gz" in payloads:
+                trace_capture = performance.strict_json(payloads["trace-capture.json"])
+                verify_app_experience_gzip(payloads["trace.pftrace.gz"], trace_capture["trace"])
+            record.update({"captureStatus": capture["captureStatus"], "captureError": capture["captureError"],
+                           "actualSdkInt": capture["actualSdkInt"], "gradleExitCode": capture["gradleExitCode"],
+                           "declaredCiProfile": capture["declaredCiProfile"], "artifactId": artifact["id"],
+                           "files": copy_app_experience_payloads({"capture.json": capture_bytes, **payloads},
+                               output / "app-experience" / f"api-{label}", budget)})
+        records.append(record)
+    return {"kind": "app-experience-attachments", "diagnosticOnly": True, "budgetAcceptance": False,
+            "profile": profile, "scope": APP_EXPERIENCE_COVERAGE, "apis": records}
 
 
 def archive_numeric_diagnostics(args, run, jobs, output, budget, artifacts, validator,
@@ -505,6 +669,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
                       if execution_scope == android_evidence.STRESS_SCOPE else None)
     active_pair_records = (archive_active_pairs(args, run, jobs, output, budget)
                            if execution_scope == android_evidence.ACTIVE_PAIR_SCOPE else None)
+    app_experience_records = (archive_app_experience(args, run, jobs, output, budget)
+                              if execution_scope in APP_EXPERIENCE_SCOPES else None)
     manifest = {
         "schemaVersion": 1, "kind": "android-emulator-test-evidence",
         "archivedAt": datetime.now(timezone.utc).isoformat(),
@@ -526,6 +692,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         manifest["segmentedStress"] = stress_records
     if active_pair_records is not None:
         manifest["activeTaskPairs"] = active_pair_records
+    if app_experience_records is not None:
+        manifest["appExperience"] = app_experience_records
     if diagnostic:
         manifest.update({"expectedTestsPerApi": 1, "expectedTests": len(EXPECTED_MATRIX),
                          "diagnosticCaseCounts": {status: sum(record["diagnosticResult"] == status for record in records)
@@ -553,6 +721,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         manifest["scope"] += " " + STRESS_COVERAGE
     if execution_scope == android_evidence.ACTIVE_PAIR_SCOPE:
         manifest["scope"] += " " + ACTIVE_PAIR_COVERAGE
+    if execution_scope in APP_EXPERIENCE_SCOPES:
+        manifest["scope"] += " " + APP_EXPERIENCE_COVERAGE
     (output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     lines = ["# " + (diagnostic_name + " Diagnostic Evidence" if diagnostic else "Android Test Evidence"), "", f"Source run: {manifest['sourceRun']['url']}", "",
              f"Source commit: `{run['head_sha']}` · Attempt: {attempt}", "",
@@ -577,6 +747,8 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         lines += [STRESS_COVERAGE, ""]
     if execution_scope == android_evidence.ACTIVE_PAIR_SCOPE:
         lines += [ACTIVE_PAIR_COVERAGE, ""]
+    if execution_scope in APP_EXPERIENCE_SCOPES:
+        lines += [APP_EXPERIENCE_COVERAGE, ""]
     if diagnostic:
         lines += [f"Execution scope: `{execution_scope}`. Only `{android_evidence.test_selection(execution_scope)}` was selected.", "",
                   "The diagnostic denominator is 8 cases (8 APIs × 1 test); missing, skipped and unexecuted cases remain unverified. "
@@ -635,6 +807,19 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
             link = (f"[JSON](active-task-pairs/api-{item['matrixLabel']}/{active_pair.REPORT_NAME})"
                     if item["captureStatus"] == "collected" else item["captureError"])
             lines.append(f"| {item['matrixLabel']} | {item['captureStatus']} | {item['diagnosticStatus']} | {link} |")
+        lines.append("")
+    if app_experience_records is not None:
+        lines += ["## App Experience Diagnostics", "",
+                  f"Profile: `{app_experience_records['profile']}`. Pilot data does not count toward the formal denominator. "
+                  "The original instrumented report status is separate from the complete evidence status, which also requires valid TTID and trace evidence. "
+                  "Missing, failed and incomplete data remain in the planned eight-API denominator. "
+                  "Only committed launch and trial prefixes are known; later entries are unavailable, not asserted unexecuted.", "",
+                  "| API | Collection | Evidence result | Instrumented report | Raw report |",
+                  "| --- | --- | --- | --- | --- |"]
+        for item in app_experience_records["apis"]:
+            link = (f"[JSON](app-experience/api-{item['matrixLabel']}/experience-diagnostics.json)"
+                    if item["reportStatus"] is not None else item["captureError"])
+            lines.append(f"| {item['matrixLabel']} | {item['captureStatus']} | {item['diagnosticStatus']} | {item['reportStatus']} | {link} |")
         lines.append("")
     for record in records:
         samples = [item for item in record["files"] if item["path"].endswith(".png")][:2]
@@ -879,6 +1064,7 @@ def main() -> None:
         pair_artifacts = idle_pair_artifacts(read_json(args.artifacts), run)
         segmented_artifacts = stress_artifacts(read_json(args.artifacts), run)
         active_artifacts = active_pair_artifacts(read_json(args.artifacts), run)
+        experience_artifacts = app_experience_artifacts(read_json(args.artifacts), run)
         if args.github_output:
             with args.github_output.open("a") as output:
                 output.write(f"run_id={run_id}\nattempt={attempt}\n"
@@ -888,6 +1074,7 @@ def main() -> None:
                              f"idle_pair_artifact_ids={','.join(str(item['id']) for item in pair_artifacts)}\n"
                              f"stress_artifact_ids={','.join(str(item['id']) for item in segmented_artifacts)}\n"
                              f"active_pair_artifact_ids={','.join(str(item['id']) for item in active_artifacts)}\n"
+                             f"app_experience_artifact_ids={','.join(str(item['id']) for item in experience_artifacts)}\n"
                              f"evidence_path=screenshots/{run_id}-{attempt}\n")
         print(f"Verified trusted source run {run_id}, attempt {attempt}")
     else:

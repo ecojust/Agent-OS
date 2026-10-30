@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <queries><package android:name="dev.agentos.app" /></queries>
     <application android:label="Agent OS Test Fixture"
         android:allowBackup="false" android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
@@ -21,8 +22,15 @@
         <activity android:name=".KeyboardActivity" android:exported="true"
             android:windowSoftInputMode="stateUnspecified|adjustResize" />
         <activity android:name=".CapturePatternActivity" android:exported="true" />
+        <activity android:name=".PerformanceActivity" android:exported="true"
+            android:launchMode="singleTask" android:taskAffinity="dev.agentos.fixture.performance"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="stateAlwaysHidden|adjustResize" />
         <receiver android:name=".SlowObservationReceiver" android:exported="true" />
         <provider android:name=".SlowReadControlProvider" android:exported="true"
             android:authorities="dev.agentos.fixture.slow-read-control" />
+        <provider android:name=".PerformanceControlProvider" android:exported="true"
+            android:grantUriPermissions="false"
+            android:authorities="dev.agentos.fixture.performance" />
     </application>
 </manifest>

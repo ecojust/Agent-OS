@@ -188,14 +188,14 @@ def timeout_diagnostics(directory):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--matrix-label', required=True)
-    parser.add_argument('--timeout-profile', choices=('standard', 'segmented-stress'), default='standard')
+    parser.add_argument('--timeout-profile', choices=('standard', 'segmented-stress', 'app-experience'), default='standard')
     parser.add_argument('--timeout-seconds', type=int, default=1200)
     parser.add_argument('--termination-grace-seconds', type=int, default=10)
     parser.add_argument('command', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     if not re.fullmatch(r'3[0-6]|37\.0', args.matrix_label):
         parser.error('unsupported API label')
-    maximum_timeout = 2400 if args.timeout_profile == 'segmented-stress' else 1200
+    maximum_timeout = 2400 if args.timeout_profile in ('segmented-stress', 'app-experience') else 1200
     if not 1 <= args.timeout_seconds <= maximum_timeout or not 1 <= args.termination_grace_seconds <= 10:
         parser.error(f'timeout must be 1..{maximum_timeout} seconds and grace 1..10 seconds')
     command = args.command[1:] if args.command[:1] == ['--'] else args.command

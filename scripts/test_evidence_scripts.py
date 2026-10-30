@@ -138,7 +138,9 @@ class EvidenceTests(unittest.TestCase):
                       "navigation-origin-rebuild-diagnostic --class AnotherClass",
                       "idle-pair-diagnostic --class AnotherClass",
                       "stress-diagnostic --class AnotherClass",
-                      "active-pair-diagnostic --class AnotherClass", "future-scope"):
+                      "active-pair-diagnostic --class AnotherClass",
+                      "app-experience-diagnostic --class AnotherClass",
+                      "app-experience-pilot --class AnotherClass", "future-scope"):
             with self.subTest(scope=scope):
                 self.check_test_exit("30", 30, scope=scope, expected_exit=2, invalid_scope=True)
 
@@ -149,8 +151,13 @@ class EvidenceTests(unittest.TestCase):
             (root / "scripts").mkdir()
             for name in ("run_android_tests.sh", "run_bounded_instrumentation.py", "collect_android_evidence.py", "print_android_test_failures.py",
                          "collect_performance_evidence.py", "collect_idle_pair_evidence.py", "collect_stress_evidence.py",
-                         "collect_active_pair_evidence.py"):
+                         "collect_active_pair_evidence.py", "collect_app_experience_evidence.py", "experience_trace.py"):
                 (root / "scripts" / name).write_bytes((SCRIPTS / name).read_bytes())
+            if scope in publisher.APP_EXPERIENCE_SCOPES:
+                # Exercise wrapper sequencing without a device or downloaded trace processor.
+                (root / "scripts/run_app_experience_trace.py").write_text(
+                    'import sys\nfrom pathlib import Path\n'
+                    'with Path("trace-lifecycle.txt").open("a") as out: out.write(sys.argv[1] + "\\n")\n')
             (root / "bin").mkdir()
             adb = root / "bin" / "adb"
             adb.write_text(f'#!/bin/sh\n'
@@ -166,6 +173,8 @@ class EvidenceTests(unittest.TestCase):
             gradle.write_text("#!/bin/sh\n"
                 "if [ \"$*\" = \"--no-daemon :app:assembleDebugAndroidTest\" ]; then "
                 "printf '%s\\n' 'assemble test APK' >> provider-preparation.txt; exit 0; fi\n"
+                "if [ \"$*\" = \"--no-daemon :fixture:installDebug :app:installDebug :app:installDebugAndroidTest\" ]; then "
+                "printf '%s\\n' 'install experience APKs' >> experience-preparation.txt; exit 0; fi\n"
                 "touch gradle-started\nprintf '%s\\n' \"$@\" > gradle-args.txt\nexit 7\n")
             gradle.chmod(0o755)
             env = os.environ.copy()
@@ -217,6 +226,16 @@ class EvidenceTests(unittest.TestCase):
                 self.assertEqual("unavailable", active_capture["captureStatus"])
             else:
                 self.assertFalse(active_pair_path.exists())
+            experience_path = root / f"app-experience-evidence/api-{matrix_label}/capture.json"
+            if scope in publisher.APP_EXPERIENCE_SCOPES:
+                experience_capture = json.loads(experience_path.read_text())
+                self.assertEqual(expected_exit, experience_capture["gradleExitCode"])
+                self.assertEqual(scope, experience_capture["executionScope"])
+                self.assertIn(experience_capture["captureStatus"], ("unavailable", "partial", "invalid"))
+                self.assertNotEqual("passed", experience_capture["diagnosticStatus"])
+                self.assertEqual(["start", "stop"], (root / "trace-lifecycle.txt").read_text().splitlines())
+            else:
+                self.assertFalse(experience_path.exists())
             self.assertIn("No Android XML reports were produced", result.stdout)
             self.assertEqual(expected_exit == 7, (root / "gradle-started").exists())
             if expected_exit == 7:
@@ -228,11 +247,15 @@ class EvidenceTests(unittest.TestCase):
                     self.assertFalse(preparation.exists())
                 arguments = (root / "gradle-args.txt").read_text().splitlines()
                 selectors = [value for value in arguments if value.startswith("-Pandroid.testInstrumentationRunnerArguments.")]
-                self.assertEqual(1, len(selectors))
+                self.assertEqual(2 if scope in publisher.APP_EXPERIENCE_SCOPES else 1, len(selectors))
                 if scope in collector.DIAGNOSTIC_SELECTIONS:
                     self.assertEqual("-Pandroid.testInstrumentationRunnerArguments.class=" + collector.test_selection(scope), selectors[0])
+                    if scope in publisher.APP_EXPERIENCE_SCOPES:
+                        profile = "pilot" if scope == publisher.APP_EXPERIENCE_PILOT_SCOPE else "formal"
+                        self.assertEqual("-Pandroid.testInstrumentationRunnerArguments.experienceProfile=" + profile, selectors[1])
+                        self.assertEqual("install experience APKs\n", (root / "experience-preparation.txt").read_text())
                 else:
-                    self.assertEqual("-Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest,dev.agentos.app.DemoWalkthroughInstrumentedTest,dev.agentos.app.PinnedWindowDisclosureInstrumentedTest,dev.agentos.app.IdlePairedPerformanceInstrumentedTest,dev.agentos.app.SegmentedStressInstrumentedTest,dev.agentos.app.ActivePairedPerformanceInstrumentedTest", selectors[0])
+                    self.assertEqual("-Pandroid.testInstrumentationRunnerArguments.notClass=dev.agentos.app.PinnedCalculatorVisualPageInstrumentedTest,dev.agentos.app.DemoWalkthroughInstrumentedTest,dev.agentos.app.PinnedWindowDisclosureInstrumentedTest,dev.agentos.app.IdlePairedPerformanceInstrumentedTest,dev.agentos.app.SegmentedStressInstrumentedTest,dev.agentos.app.ActivePairedPerformanceInstrumentedTest,dev.agentos.app.AppExperienceInstrumentedTest", selectors[0])
                 self.assertEqual(["window_animation_scale=1.0", "transition_animation_scale=1.0",
                     "animator_duration_scale=1.0"], (root / "animation-settings.txt").read_text().splitlines())
                 self.assertEqual(3, result.stdout.count("Emulator baseline:"))

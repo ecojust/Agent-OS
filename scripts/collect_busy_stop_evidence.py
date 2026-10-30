@@ -23,6 +23,13 @@ CAPTURE_KIND = 'agent-busy-stop-evidence-capture'
 SCOPES = ('busy-stop-pilot', 'busy-stop-diagnostic')
 PROFILES = {'pilot': 2, 'formal': 100}
 SCENARIOS = ('DEVICE', 'MODEL')
+SCHEMA_VERSIONS = (1, 2)
+FRAME_REPORT_CAPACITY = 8
+FRAME_V2_DURATIONS = ('unknownDelayDurationNanos', 'inputHandlingDurationNanos',
+                      'animationDurationNanos', 'layoutMeasureDurationNanos')
+FRAME_REPORT_COLUMNS = ('intendedVsyncNanoTime', 'vsyncNanoTime', 'totalDurationNanos', 'firstDraw',
+                        'gpuDurationNanos', 'deadlineNanos', 'callbackNanoTime', 'droppedReports',
+                        *FRAME_V2_DURATIONS, 'drawStartNanoTime')
 MAX_REPORT_BYTES = 64 * 1024
 MAX_CAPTURE_BYTES = 16 * 1024
 MAX_TRIAL_BYTES = 32 * 1024
@@ -108,7 +115,7 @@ def validate_report(value, api, profile=None):
     fields(value, ('schemaVersion', 'kind', 'diagnosticOnly', 'budgetAcceptance', 'fullSuiteAcceptance',
                    'profile', 'status', 'api', 'appProcessPid', 'device', 'conditions', 'startedNanoTime',
                    'endedNanoTime', 'cleanup', 'trials'))
-    if (type(value['schemaVersion']) is not int or value['schemaVersion'] != 1 or value['kind'] != KIND
+    if (type(value['schemaVersion']) is not int or value['schemaVersion'] not in SCHEMA_VERSIONS or value['kind'] != KIND
             or value['diagnosticOnly'] is not True or value['budgetAcceptance'] is not False
             or value['fullSuiteAcceptance'] is not False or type(value['profile']) is not str or value['profile'] not in PROFILES
             or profile is not None and value['profile'] != profile or value['status'] not in STATUSES):
@@ -116,7 +123,7 @@ def validate_report(value, api, profile=None):
     integer(value['appProcessPid'], 1, 2 ** 31 - 1)
     integer(value['api'], api, api)
     validate_device(value['device'], api)
-    validate_conditions(value['conditions'], value['profile'])
+    validate_conditions(value['conditions'], value['profile'], value['schemaVersion'])
     integer(value['startedNanoTime'])
     integer(value['endedNanoTime'], -1 if value['status'] == 'incomplete' else value['startedNanoTime'])
     if value['status'] == 'incomplete' and value['endedNanoTime'] != -1:
@@ -144,21 +151,27 @@ def validate_report(value, api, profile=None):
     return value
 
 
-def validate_conditions(value, profile):
-    expected = conditions(profile)
+def validate_conditions(value, profile, schema_version=1):
+    expected = conditions(profile, schema_version)
     fields(value, expected)
     if any(type(value[key]) is not type(item) or value[key] != item for key, item in expected.items()):
         raise ValueError('unexpected_busy_stop_conditions')
 
 
-def conditions(profile):
-    return dict(clock='System.nanoTime', traceClock='SystemClock.elapsedRealtimeNanos',
+def conditions(profile, schema_version=1):
+    integer(schema_version, 1, 2)
+    result = dict(clock='System.nanoTime', traceClock='SystemClock.elapsedRealtimeNanos',
                 rounds=PROFILES[profile], trialsPerRound=2, trialCount=trial_count(profile),
                 orders=['DEVICE_MODEL', 'MODEL_DEVICE'], quietMillis=500, frameWaitMillis=3000,
                 fixtureBarrierMillis=3000, modelBarrierMillis=20000, frameCandidateCapacity=16,
                 probeCapacity=16, traceCapacity=128, input='UiAutomation.injectInputEvent',
                 frameMetric='INTENDED_VSYNC_TIMESTAMP+TOTAL_DURATION', forcedInvalidate=False,
                 secureFlagsCleared=False)
+    if schema_version == 2:
+        result.update(frameAssociation='VSYNC_MS_AND_DRAW_START_BRACKET_V2',
+                      frameCandidateReportCapacity=FRAME_REPORT_CAPACITY,
+                      frameCandidateReportColumns=list(FRAME_REPORT_COLUMNS))
+    return result
 
 
 SNAPSHOTS = ('beforeStop', 'afterStop', 'beforeRelease', 'afterSettle', 'finalQuiet')
@@ -213,7 +226,7 @@ def validate_snapshot(value, trial):
             'busy_stop_snapshot_derived_identity_mismatch')
 
 
-def validate_frame(value, trial, report):
+def validate_frame_v1(value, trial, report):
     if value is None:
         return
     fields(value, ('clockDomain', 'status', 'pid', 'activityIdentity', 'windowIdentity', 'decorIdentity',
@@ -291,12 +304,103 @@ def validate_frame(value, trial, report):
             'passed_frame_quality_or_order_invalid')
 
 
+def checked_draw_start(frame):
+    """Checked signed stage sum; invalid start/overflow/negative final stays -1."""
+    result = frame['intendedVsyncNanoTime']
+    if result <= 0:
+        return -1
+    for key in FRAME_V2_DURATIONS:
+        part = frame[key]
+        result += part
+        if result < -2**63 or result > LONG_MAX:
+            return -1
+    return result if result >= 0 else -1
+
+
+def validate_frame_v2(value, trial, report):
+    if value is None:
+        return
+    fields(value, ('clockDomain', 'status', 'pid', 'activityIdentity', 'windowIdentity', 'decorIdentity',
+                   'armedNanoTime', 'baseline', 'firstStoppedDraw', 'targetFrame', 'completedNanoTime', 'quality',
+                   'candidateReports'))
+    quality = value['quality']
+    require(type(quality) is dict and {'candidateReportsObserved', 'candidateReportsNotRetained'} <= set(quality),
+            'missing_v2_frame_candidate_counts')
+    for key in ('candidateReportsObserved', 'candidateReportsNotRetained'):
+        integer(quality[key])
+    rows = value['candidateReports']
+    require(type(rows) is list and len(rows) <= FRAME_REPORT_CAPACITY, 'invalid_v2_frame_candidate_capacity')
+    def metric_shape(frame):
+        if frame is None:
+            return
+        fields(frame, FRAME_REPORT_COLUMNS)
+        for key, item in frame.items():
+            integer(item, -2**63 if key in FRAME_V2_DURATIONS else 0 if key == 'droppedReports' else -1)
+        integer(frame['firstDraw'], -1, 1)
+        mono(frame['callbackNanoTime'], trial)
+    candidates = []
+    for row in rows:
+        require(type(row) is list and len(row) == len(FRAME_REPORT_COLUMNS), 'invalid_v2_frame_candidate_columns')
+        metric = dict(zip(FRAME_REPORT_COLUMNS, row)); metric_shape(metric); candidates.append(metric)
+    baseline = value['baseline']
+    require(type(baseline) is dict and 'frame' in baseline, 'invalid_v2_frame_baseline')
+    for metric in (baseline['frame'], value['targetFrame']):
+        metric_shape(metric)
+    # Preserve the v1 validator's exact raw domains and common safety gates.
+    # Only v2-only additions are projected away; no v1 evidence is reinterpreted.
+    legacy_keys = FRAME_REPORT_COLUMNS[:8]
+    def original_metric(metric):
+        return None if metric is None else {key: metric[key] for key in legacy_keys}
+    original = {key: item for key, item in value.items() if key != 'candidateReports'}
+    original['baseline'] = dict(baseline, frame=original_metric(baseline['frame']))
+    original['targetFrame'] = original_metric(value['targetFrame'])
+    original['quality'] = {key: item for key, item in quality.items()
+                           if key not in ('candidateReportsObserved', 'candidateReportsNotRetained')}
+    validate_frame_v1(original, trial, report)
+    # Failed originals retain contradictory observations for investigation. The
+    # derived label never authorizes a passed frame or a statistical sample.
+    if value['status'] != 'passed' or trial['status'] != 'passed':
+        return
+    observed, omitted = quality['candidateReportsObserved'], quality['candidateReportsNotRetained']
+    require(len(rows) == min(observed, FRAME_REPORT_CAPACITY) and observed == len(rows) + omitted,
+            'v2_frame_candidate_prefix_accounting_mismatch')
+    for metric in (baseline['frame'], value['targetFrame'], *candidates):
+        require(metric is not None and metric['drawStartNanoTime'] == checked_draw_start(metric),
+                'v2_frame_draw_start_arithmetic_mismatch')
+    for draw, metric in ((baseline['draw'], baseline['frame']), (value['firstStoppedDraw'], value['targetFrame'])):
+        start = checked_draw_start(metric)
+        end = metric['intendedVsyncNanoTime'] + metric['totalDurationNanos']
+        require(all(metric[key] >= 0 for key in FRAME_V2_DURATIONS)
+                and start > metric['vsyncNanoTime']
+                and draw['drawNanoTime'] <= start <= draw['readNanoTime'] and start <= end,
+                'v2_frame_draw_start_outside_frozen_draw_bracket')
+    target_draw, target = value['firstStoppedDraw'], value['targetFrame']
+    require(all(metric['callbackNanoTime'] >= target_draw['drawNanoTime'] for metric in candidates),
+            'v2_candidate_precedes_frozen_stopped_draw')
+    matches = [metric for metric in candidates
+               if metric['vsyncNanoTime'] // 1_000_000 == target_draw['drawingTimeMillis']
+               and (checked_draw_start(metric) < 0
+                    or target_draw['drawNanoTime'] <= checked_draw_start(metric) <= target_draw['readNanoTime'])]
+    require(len(matches) <= 1 and all(metric == target for metric in matches),
+            'v2_candidate_contradicts_unique_original_target')
+    if omitted == 0:
+        require(len(matches) == 1 and candidates.count(target) == 1, 'v2_complete_candidate_prefix_missing_target')
+
+
+def validate_frame(value, trial, report):
+    if trial['schemaVersion'] == 1:
+        return validate_frame_v1(value, trial, report)
+    return validate_frame_v2(value, trial, report)
+
+
 def validate_trial(value, index, report):
     fields(value, ('schemaVersion', 'kind', 'index', 'round', 'position', 'order', 'scenario', 'status',
                    'phase', 'failure', 'startedNanoTime', 'endedNanoTime', 'taskId', 'epochBefore', 'input',
                    *SNAPSHOTS, 'probe', 'fixture', 'model', 'frames', 'trace', 'checks', 'cleanup', 'feedback',
                    'releaseRequestedNanoTime', 'gateProbe', 'oldEpochProbe'))
-    require(type(value['schemaVersion']) is int and value['schemaVersion'] == 1 and value['kind'] == TRIAL_KIND
+    require(type(value['schemaVersion']) is int and value['schemaVersion'] in SCHEMA_VERSIONS
+            and type(report.get('schemaVersion', 1)) is int and value['schemaVersion'] == report.get('schemaVersion', 1)
+            and value['kind'] == TRIAL_KIND
             and value['status'] in ('passed', 'failed'), 'invalid_busy_stop_trial_identity')
     for key, expected in trial_identity(index, report['profile']).items():
         require(type(value[key]) is type(expected) and value[key] == expected, 'invalid_busy_stop_trial_identity')
@@ -487,7 +591,7 @@ def validate_trial(value, index, report):
 
 def validate_single_device_trial(value, api):
     integer(api, 30, 37)
-    context = dict(profile='pilot', api=api)
+    context = dict(profile='pilot', api=api, schemaVersion=value.get('schemaVersion') if type(value) is dict else None)
     return validate_trial(value, 0, context)
 
 

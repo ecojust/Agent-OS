@@ -23,7 +23,7 @@ def save_manifest(root, manifest):
     (root / "manifest.json").write_bytes(fixtures.encoded(manifest))
 
 
-def make_archive(root, profile="pilot", present=None, status="passed", trials=None, vary_input=False):
+def make_archive(root, profile="pilot", present=None, status="passed", trials=None, vary_input=False, schema_version=1):
     """Use the real publisher and validator for independently synthetic lane bytes."""
     present = list(evidence.LABELS) if present is None else present
     incoming_root = root.parent / (root.name + "-downloads")
@@ -39,12 +39,13 @@ def make_archive(root, profile="pilot", present=None, status="passed", trials=No
         artifacts.append(item)
         current = copy.deepcopy(trials)
         if vary_input:
-            current = [fixtures.valid_trial(i, api, profile) for i in range(evidence.trial_count(profile))]
+            current = [fixtures.valid_trial(i, api, profile, schema_version=schema_version)
+                       for i in range(evidence.trial_count(profile))]
             for trial in current:
                 offset = (api - 30) * 1_000_000 + trial["round"] * 1000
                 trial["input"]["upIssuedNanoTime"] -= offset
                 trial["input"]["upIssuedElapsedNanos"] -= offset
-        fixtures.write_bundle(args.incoming / item["name"], api, profile, current, status)
+        fixtures.write_bundle(args.incoming / item["name"], api, profile, current, status, schema_version=schema_version)
     args.artifacts.write_bytes(fixtures.encoded({"artifacts": artifacts}))
     run = dict(archive_tests.source_run(profile), conclusion="success")
     budget = {"bytes": 0, "files": 0}
@@ -122,6 +123,9 @@ class BusyStopSummaryTests(unittest.TestCase):
         self.assertEqual(("complete", 32, 32, 32), (result["status"], result["plannedTrialCount"],
                                                 result["recordedTrialCount"], result["validTrialCount"]))
         self.assertFalse(result["formalDiagnosticComplete"])
+        self.assertEqual(1, result["evidenceSchemaVersion"])
+        self.assertFalse(result["firstStoppedTraversalFrameMetricsEvidence"])
+        self.assertIn("legacy_v1", result["frameScope"])
         self.assertFalse(result["budgetAcceptance"])
         self.assertFalse(result["fullSuiteAcceptance"])
         for lane in result["lanes"]:
@@ -134,8 +138,35 @@ class BusyStopSummaryTests(unittest.TestCase):
             self.assertEqual(0, frame["validCount"])
             self.assertEqual("scenario_not_applicable", frame["p95UnavailableReason"])
 
+    def test_v2_pilot_first_stopped_traversal_frame_metrics_scope_requires_all_planned_model_trials(self):
+        make_archive(self.root, schema_version=2)
+        result = summary.summarize(self.root, SHA)
+        self.assertEqual((2, True, False), (result["evidenceSchemaVersion"], result["firstStoppedTraversalFrameMetricsEvidence"],
+                                          result["formalDiagnosticComplete"]))
+        self.assertEqual(32, result["validTrialCount"])
+        for lane in result["lanes"]:
+            self.assertEqual(2, lane["evidenceSchemaVersion"])
+            self.assertTrue(lane["scenarios"]["MODEL"]["firstStoppedTraversalFrameMetricsEvidence"])
+            self.assertFalse(lane["scenarios"]["DEVICE"]["firstStoppedTraversalFrameMetricsEvidence"])
+            self.assertIn("draw_start_bracket", lane["scenarios"]["MODEL"]["frameScope"])
+
+    def test_v2_partial_frame_evidence_does_not_promote_the_planned_group(self):
+        trials = [fixtures.valid_trial(index, schema_version=2) for index in range(3)]
+        trials[-1].update(status="failed", phase="stop_frame", failure="AssertionError")
+        make_archive(self.root, trials=trials, status="failed", schema_version=2)
+        result = summary.summarize(self.root, SHA)
+        self.assertEqual(("incomplete", 24, 16), (result["status"], result["recordedTrialCount"], result["validTrialCount"]))
+        self.assertFalse(result["firstStoppedTraversalFrameMetricsEvidence"])
+        self.assertFalse(result["formalDiagnosticComplete"])
+        for lane in result["lanes"]:
+            self.assertTrue(lane["trials"][1]["firstStoppedTraversalFrameMetricsEvidence"])
+            self.assertFalse(lane["trials"][2]["firstStoppedTraversalFrameMetricsEvidence"])
+            self.assertEqual("not_executed", lane["trials"][3]["status"])
+            self.assertFalse(lane["scenarios"]["MODEL"]["firstStoppedTraversalFrameMetricsEvidence"])
+            self.assertEqual((2, 1), (lane["scenarios"]["MODEL"]["plannedCount"], lane["scenarios"]["MODEL"]["validCount"]))
+
     def test_formal_sixteen_hundred_do_not_pool_api_or_scenario_p95(self):
-        make_archive(self.root, profile="formal", vary_input=True)
+        make_archive(self.root, profile="formal", vary_input=True, schema_version=2)
         result = summary.summarize(self.root, SHA)
         self.assertEqual((1600, 1600, True), (result["plannedTrialCount"], result["validTrialCount"], result["formalDiagnosticComplete"]))
         self.assertNotIn("metrics", result)
@@ -149,6 +180,27 @@ class BusyStopSummaryTests(unittest.TestCase):
                 self.assertEqual(2, group["metrics"]["touchUpToCancelReturnUpperBoundMillis"]["p95"])
             self.assertIsNone(lane["scenarios"]["DEVICE"]["metrics"]["upToStoppedFrameCompletionMillis"]["p95"])
             self.assertAlmostEqual(10 + index + .094, lane["scenarios"]["MODEL"]["metrics"]["upToStoppedFrameCompletionMillis"]["p95"])
+
+    def test_historical_v1_formal_keeps_original_distributions_without_v2_completion(self):
+        make_archive(self.root, profile="formal", vary_input=True)
+        result = summary.summarize(self.root, SHA)
+        self.assertEqual(("complete", 1600, 1), (result["status"], result["validTrialCount"], result["evidenceSchemaVersion"]))
+        self.assertFalse(result["formalDiagnosticComplete"])
+        self.assertFalse(result["firstStoppedTraversalFrameMetricsEvidence"])
+        for index, lane in enumerate(result["lanes"]):
+            model = lane["scenarios"]["MODEL"]
+            self.assertIn("legacy_v1", model["frameScope"])
+            self.assertFalse(model["firstStoppedTraversalFrameMetricsEvidence"])
+            self.assertEqual(100, model["validCount"])
+            self.assertAlmostEqual(10 + index + .094, model["metrics"]["upToStoppedFrameCompletionMillis"]["p95"])
+
+    def test_individually_valid_v1_and_v2_lanes_cannot_mix_in_one_source_run(self):
+        original = make_archive(self.root)
+        folder = self.root / "busy-stop/api-37.0"
+        fixtures.write_bundle(folder, schema_version=2)
+        refreshed_refs(self.root, original)
+        with self.assertRaisesRegex(ValueError, "mixes_evidence_schema_versions"):
+            summary.summarize(self.root, SHA)
 
     def test_failed_prefix_excludes_observed_failed_trial_and_keeps_unexecuted_slots(self):
         trials = [fixtures.valid_trial(0), fixtures.valid_trial(1)]

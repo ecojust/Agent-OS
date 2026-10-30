@@ -24,7 +24,7 @@ ENDPOINTS = {
     "CancelReturnUpperBound": "RunControl.cancel returned including its hooks (probe type 6); upper bound on cancellation observation, not the epoch mutation instant.",
     "StopReturn": "Controller stop publication call completed, observed by the pre-return probe (type 7); not an observation after the method returned.",
     "ControlGoneObservedUpperBound": "Test observed the stop control gone; polling upper bound, not a complete UI frame.",
-    "StoppedFrameCompletion": "MODEL only: original first natural stopped-state FrameMetrics INTENDED_VSYNC_TIMESTAMP + TOTAL_DURATION; HWUI completion, not physical presentation.",
+    "StoppedFrameCompletion": "MODEL only: FrameMetrics INTENDED_VSYNC_TIMESTAMP + TOTAL_DURATION. Schema 2 associates the first stopped traversal's UI FrameInfo using VSYNC and four-phase draw-start bracket. Schema 1 is legacy observed candidate arithmetic, not reliable evidence of that traversal's report. Neither establishes buffer swap, enqueue, or physical presentation.",
     "PlatformCallReturn": "DEVICE only: original platform API actually returned (probe type 2), distinct from target effect and ticket settlement.",
     "FixtureBarrierExit": "DEVICE only: target Fixture hold exited; this is not platform API return.",
     "TargetEffect": "DEVICE only: original target increment was written, possibly after stop.",
@@ -43,7 +43,8 @@ LIMITATIONS = [
     "Primary intervals start immediately before ACTION_UP injection and include injection/dispatch overhead. Intervals from the actual target button's touchUp receipt are reported separately. DOWN is preparation, not the response start.",
     "All derived intervals use System.nanoTime/CLOCK_MONOTONIC. Raw elapsedRealtime/BOOT clocks and PerformanceTrace events remain separate and are never subtracted from MONOTONIC timestamps.",
     "Cancel-return includes synchronous cancellation hooks and is an upper bound on cancellation observation, not the exact epoch linearization instant.",
-    "Control disappearance is a polling observation. Only MODEL measures the first natural stopped-state HWUI frame; DEVICE overlay disappearance supplies no complete-frame latency. HWUI completion is not physical display presentation.",
+    "Control disappearance is a polling observation. DEVICE overlay disappearance supplies no complete-frame latency. Schema 2 MODEL associates the first natural stopped traversal's UI FrameInfo passed to HWUI using VSYNC plus four raw phase durations and a draw-start bracket. The resulting FrameMetrics completion does not establish successful buffer swap, enqueue, or physical display presentation.",
+    "Schema 1 preserves original trial/status and historical numeric distributions as legacy observed candidate values. Its millisecond VSYNC association does not establish the first stopped traversal FrameMetrics report. Its validCount retains the original functional result and does not enter schema 2 formal completion. Different root/trial schema versions never mix within a lane or run.",
     "The original in-flight DEVICE action may produce its one target effect after stop. Barrier exit, effect, API return, ticket settlement and eventual Controller/NETWORK/CLOSER worker drain are distinct. Late held-model writes do not prove that the client consumed the reply.",
     "Only strictly valid passed original trials enter distributions. Failed trials retain observed intervals separately; missing and unexecuted slots remain explicit and no trial is replaced.",
     "P95 is nearest rank ceil(0.95*n), only for formal groups with at least 100 valid original samples for that metric. Pilot data and a 99-sample prefix never supply P95.",
@@ -154,7 +155,8 @@ def metric_applies(name, scenario):
 
 def planned(profile, status="unavailable", reason="report_unavailable"):
     return [dict(**evidence.trial_identity(i, profile), status=status, reason=reason,
-                 recorded=False, eligible=False, metrics=dict.fromkeys(METRICS), observedMetrics=dict.fromkeys(METRICS))
+                 recorded=False, eligible=False, evidenceSchemaVersion=None, firstStoppedTraversalFrameMetricsEvidence=False,
+                 metrics=dict.fromkeys(METRICS), observedMetrics=dict.fromkeys(METRICS))
             for i in range(evidence.trial_count(profile))]
 
 
@@ -168,6 +170,8 @@ def summarize_trial(value, reference, label):
                 rawRelativePath=f"busy-stop/api-{label}/{reference['path']}",
                 rawBytes=reference["bytes"], rawSha256=reference["sha256"],
                 phase=value["phase"], taskId=value["taskId"], epochBefore=value["epochBefore"],
+                evidenceSchemaVersion=value["schemaVersion"],
+                firstStoppedTraversalFrameMetricsEvidence=eligible and value["scenario"] == "MODEL" and value["schemaVersion"] == 2,
                 metrics=observed if eligible else dict.fromkeys(METRICS), observedMetrics=observed)
 
 
@@ -187,13 +191,23 @@ def distribution(values, profile, applicable=True):
                 unit="milliseconds", applicable=applicable)
 
 
-def group(trials, scenario, profile):
+def frame_scope(scenario, version):
+    if scenario == "DEVICE":
+        return "unavailable_overlay_host_removal_only"
+    return ("v2_first_stopped_traversal_draw_start_bracket" if version == 2 else
+            "legacy_v1_observed_candidate_not_first_stopped_traversal" if version == 1 else "report_unavailable")
+
+
+def group(trials, scenario, profile, evidence_schema_version):
     current = [value for value in trials if value["scenario"] == scenario]
     return dict(scenario=scenario, plannedCount=len(current), recordedCount=sum(v["recorded"] for v in current),
                 validCount=sum(v["eligible"] for v in current),
+                evidenceSchemaVersion=evidence_schema_version,
+                firstStoppedTraversalFrameMetricsEvidence=scenario == "MODEL" and evidence_schema_version == 2 and all(v["eligible"] for v in current),
+                firstStoppedTraversalFrameMetricsEvidenceScope="all planned trials in this API/scenario",
                 statusCounts={status: sum(value["status"] == status for value in current)
                               for status in ("passed", "failed", "not_executed", "unavailable")},
-                frameScope="unavailable_overlay_host_removal_only" if scenario == "DEVICE" else "first_natural_stopped_hwui_frame",
+                frameScope=frame_scope(scenario, evidence_schema_version),
                 metrics={name: distribution([v["metrics"][name] for v in current], profile, metric_applies(name, scenario))
                          for name in METRICS})
 
@@ -240,7 +254,7 @@ def load_archive(root, expected_source):
             checked_path(path)
             if path.name not in {"api-" + label for label in evidence.LABELS} or not path.is_dir():
                 raise ValueError("unexpected_busy_stop_api_directory")
-    lanes, artifact_ids, total_bytes, total_files = [], set(), 0, 0
+    lanes, artifact_ids, total_bytes, total_files, report_versions = [], set(), 0, 0, set()
     for record, case in zip(records, cases):
         label, api = record["matrixLabel"], int(record["matrixLabel"].split(".")[0])
         common.integer(record.get("apiLevel"), api, api)
@@ -254,7 +268,7 @@ def load_archive(root, expected_source):
         if total_bytes > manifest["totalBytes"] or total_files > manifest["fileCount"]:
             raise ValueError("busy_stop_attachments_exceed_shared_archive_accounting")
         lane = dict(record, sourceRunConclusion=source["conclusion"], instrumentedCaseResult=case["diagnosticResult"],
-                    reason="report_unavailable", trials=planned(profile))
+                    reason="report_unavailable", evidenceSchemaVersion=None, trials=planned(profile))
         lanes.append(lane)
         if not files:
             if record.get("captureStatus") != "artifact_unavailable" or record.get("diagnosticStatus") is not None or record.get("reportStatus") is not None:
@@ -281,6 +295,9 @@ def load_archive(root, expected_source):
             continue
         report = common.strict_json(payloads[evidence.REPORT_NAME])
         if record.get("reportStatus") != report["status"]: raise ValueError("busy_stop_archive_report_status_mismatch")
+        report_versions.add(report["schemaVersion"])
+        if len(report_versions) > 1:
+            raise ValueError("busy_stop_run_mixes_evidence_schema_versions")
         # A failing shard/root commit may leave only earlier successful trials.
         # That first missing slot may already have run, so absence alone cannot
         # establish nonexecution. A committed failed trial is the fail-fast fence.
@@ -290,14 +307,15 @@ def load_archive(root, expected_source):
         tail_reason = ("not_executed_after_failure" if failed_trial_committed else
                        "not_committed_before_failure" if report["status"] == "failed" else
                        "not_committed_before_interruption")
-        lane.update(report=report, trials=planned(profile, tail_status, tail_reason),
+        lane.update(report=report, evidenceSchemaVersion=report["schemaVersion"], trials=planned(profile, tail_status, tail_reason),
                     reason=None if capture["diagnosticStatus"] == "passed" else "original_diagnostic_" + capture["diagnosticStatus"])
         for ref in report["trials"]:
             lane["trials"][ref["index"]] = summarize_trial(common.strict_json(payloads[ref["path"]]), ref, label)
     archive = dict(sourceRun=source, manifestRelativePath="manifest.json", manifestSha256=hashlib.sha256(data).hexdigest(),
                    archiveDirectory=root.name, executionScope=manifest["executionScope"], attachmentBytes=total_bytes,
                    attachmentFileCount=total_files, declaredArchiveBytes=manifest["totalBytes"],
-                   declaredArchiveFileCount=manifest["fileCount"])
+                   declaredArchiveFileCount=manifest["fileCount"],
+                   evidenceSchemaVersion=next(iter(report_versions)) if report_versions else None)
     return archive, profile, lanes
 
 
@@ -306,16 +324,21 @@ def summarize(root, expected_source):
         raise ValueError("exact_expected_source_required")
     archive, profile, lanes = load_archive(root, expected_source)
     for lane in lanes:
-        lane["scenarios"] = {scenario: group(lane["trials"], scenario, profile) for scenario in evidence.SCENARIOS}
+        lane["scenarios"] = {scenario: group(lane["trials"], scenario, profile, lane["evidenceSchemaVersion"])
+                             for scenario in evidence.SCENARIOS}
     trials = [value for lane in lanes for value in lane["trials"]]
     evidence_complete = all(value["eligible"] for value in trials) and all(lane.get("diagnosticStatus") == "passed" for lane in lanes)
     originals_success = (archive["sourceRun"]["conclusion"] == "success"
                          and all(lane["jobConclusion"] == "success" and lane["instrumentedCaseResult"] == "passed" for lane in lanes))
     complete = evidence_complete and originals_success
+    version = archive["evidenceSchemaVersion"]
     return dict(schemaVersion=1, kind="busy-stop-summary", diagnosticOnly=True, budgetAcceptance=False, fullSuiteAcceptance=False,
                 sourceCommit=expected_source, profile=profile, status="complete" if complete else "incomplete",
+                evidenceSchemaVersion=version, frameScope=frame_scope("MODEL", version),
+                firstStoppedTraversalFrameMetricsEvidence=version == 2 and all(lane["scenarios"]["MODEL"]["firstStoppedTraversalFrameMetricsEvidence"] for lane in lanes),
+                firstStoppedTraversalFrameMetricsEvidenceScope="all planned MODEL trials across eight APIs",
                 evidenceComplete=evidence_complete, originalConclusionsSuccessful=originals_success,
-                formalDiagnosticComplete=profile == "formal" and complete, plannedLaneCount=8,
+                formalDiagnosticComplete=profile == "formal" and version == 2 and complete, plannedLaneCount=8,
                 plannedTrialCount=len(trials), recordedTrialCount=sum(v["recorded"] for v in trials),
                 validTrialCount=sum(v["eligible"] for v in trials),
                 metricDefinitions=dict(unit="milliseconds", clock="CLOCK_MONOTONIC_System.nanoTime",

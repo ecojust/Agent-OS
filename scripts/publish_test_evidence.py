@@ -60,7 +60,9 @@ BUSY_STOP_COVERAGE = (
     "platform action stopped from the overlay, and a held local HTTP model reply stopped from MainActivity. "
     "Pilot plans two stops per scenario/API; formal plans one hundred, or 1600 stops across eight APIs. "
     "Cancellation-observed bounds, platform-call return, target effect and ticket settlement remain distinct. "
-    "MainActivity natural stopped-state FrameMetrics measure HWUI completion, not physical presentation; "
+    "MainActivity FrameMetrics completion does not establish buffer swap, enqueue, or physical presentation. Schema 2 requires the "
+    "first stopped traversal's VSYNC and four-phase draw-start bracket; historical schema 1 millisecond "
+    "association does not establish the first stopped traversal FrameMetrics report. "
     "overlay removal is not a complete-frame measurement. Failed and missing planned trials remain explicit. "
     "These diagnostics do not establish physical-device, all-workload, full-suite or performance-budget acceptance.")
 APP_EXPERIENCE_COVERAGE = (
@@ -588,7 +590,7 @@ def archive_busy_stop(args, run, jobs, output, budget):
     artifacts = {item["name"]: item for item in busy_stop_artifacts(read_json(args.artifacts), run)}
     source_identity = {"repository": args.repository, "runId": run["id"],
                        "attempt": run["run_attempt"], "commit": run["head_sha"]}
-    records, pending = [], []
+    records, pending, report_versions = [], [], set()
     for label in EXPECTED_MATRIX:
         matches = [job for job in jobs if job.get("name") == f"emulator-tests ({label})"]
         job = matches[0] if len(matches) == 1 else {}
@@ -633,6 +635,9 @@ def archive_busy_stop(args, run, jobs, output, budget):
                     raise ValueError("busy stop payload differs from its capture")
             if capture["report"] is not None:
                 raw = performance.strict_json(payloads[busy_stop.REPORT_NAME])
+                report_versions.add(raw["schemaVersion"])
+                if len(report_versions) > 1:
+                    raise ValueError("busy stop run cannot mix report schema versions")
                 reference = capture["report"]
                 data = payloads[busy_stop.REPORT_NAME]
                 if (reference["bytes"] != len(data) or reference["sha256"] != hashlib.sha256(data).hexdigest()
@@ -987,7 +992,9 @@ def archive(args, run: dict, run_id: int, attempt: int) -> None:
         lines += ["## Busy Stop Diagnostics", "",
                   f"Profile: `{busy_stop_records['profile']}`. Pilot data does not count toward the formal denominator. "
                   "Two scenarios remain separate: in-flight platform action with overlay stop, and held local model reply "
-                  "with MainActivity stop. The latter alone measures a stopped-state HWUI frame. "
+                  "with MainActivity stop. MODEL carries versioned stopped-state HWUI reports: schema 2 requires "
+                  "a first-traversal draw-start bracket, while schema 1 retains its historical millisecond association "
+                  "and cannot establish the first stopped traversal FrameMetrics report. "
                   "Original instrumented, collection and job statuses are retained separately. "
                   "Committed failed/incomplete prefixes are preserved; later planned slots remain unavailable.", "",
                   "| API | Collection | Evidence result | Instrumented report | Raw report |",

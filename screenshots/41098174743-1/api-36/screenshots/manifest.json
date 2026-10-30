@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "api": 36,
+  "runId": "1793381044536-cf506547",
+  "scope": "Dedicated synthetic Android fixture and verified empty application UI only",
+  "jvmTests": "No UI; no screenshot is claimed for JVM tests",
+  "tests": [
+    {
+      "schemaVersion": 1,
+      "api": 36,
+      "testClass": "dev.agentos.app.BusyStopInstrumentedTest",
+      "testName": "collectBusyStopDiagnostics",
+      "assertionResult": "pass",
+      "testResult": "pass",
+      "status": "pass",
+      "startedAt": 1793381044550,
+      "finishedAt": 1793381054145,
+      "captures": [
+        {
+          "stage": "busy-stop-sequence-before",
+          "capturedAt": 1793381045430,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "blocked",
+          "captureError": "capture_unavailable_or_blank_secure_surface_not_evidence"
+        },
+        {
+          "stage": "busy-stop-sequence-after",
+          "capturedAt": 1793381054103,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-36-collectBusyStopDiagnostics-6e91eef7-busy-stop-sequence-after-1.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        },
+        {
+          "stage": "finished",
+          "capturedAt": 1793381054125,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "pass",
+          "png": "api-36-collectBusyStopDiagnostics-6e91eef7-finished-2.png",
+          "width": 320,
+          "height": 640,
+          "secureWindowTemporarilyCleared": false
+        }
+      ]
+    }
+  ]
+}

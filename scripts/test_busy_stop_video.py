@@ -303,18 +303,22 @@ class BusyStopVideoStrictTrialIntegration(unittest.TestCase):
     """No validator mocks: the independent wrapper reuses ordinary DEVICE semantics."""
     def setUp(self):
         from test_busy_stop_evidence import valid_trial
-        self.trial = valid_trial(index=0, api=35, profile='pilot')
+        self.trials = [valid_trial(index=0, api=35, profile='pilot', schema_version=version)
+                       for version in (1, 2)]
 
     def test_one_valid_device_trial_has_no_pilot_root_or_missing_three_samples(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            folder = Path(temporary)
-            report = bundle(folder, trial=self.trial)
-            result = video.validate_probe(report, scanned(folder), SOURCE)
-            self.assertEqual([dict(name=video.METHOD, status='passed')], result['cases'])
-            self.assertFalse(result['performanceSample'])
-            self.assertNotIn('profile', self.trial)
-            self.assertEqual(['35'], report['expectedMatrixLabels'])
-            with self.assertRaises(ValueError): busy.validate_report(flow(self.trial), 35)
+        for trial in self.trials:
+            with self.subTest(version=trial['schemaVersion']), tempfile.TemporaryDirectory() as temporary:
+                folder = Path(temporary)
+                report = bundle(folder, trial=trial)
+                result = video.validate_probe(report, scanned(folder), SOURCE)
+                self.assertEqual([dict(name=video.METHOD, status='passed')], result['cases'])
+                self.assertFalse(result['performanceSample'])
+                self.assertNotIn('profile', trial)
+                self.assertIsNone(trial['frames'])
+                self.assertEqual(1, flow(trial)['schemaVersion'])
+                self.assertEqual(['35'], report['expectedMatrixLabels'])
+                with self.assertRaises(ValueError): busy.validate_report(flow(trial), 35)
 
     def test_wrapper_cannot_greenwash_wrong_owner_gate_effect_or_trial_identity(self):
         mutations = [lambda t: t['afterStop'].update(inFlight=False),
@@ -324,18 +328,66 @@ class BusyStopVideoStrictTrialIntegration(unittest.TestCase):
                      lambda t: t['oldEpochProbe'].update(code='OK'),
                      lambda t: t['cleanup'].update(settingsRestored=False),
                      lambda t: t.update(index=1), lambda t: t.update(scenario='MODEL')]
-        for mutate in mutations:
-            trial = copy.deepcopy(self.trial); mutate(trial)
-            with self.assertRaises(ValueError): video.validate_flow(flow(trial), SOURCE)
+        for original in self.trials:
+            with self.subTest(version=original['schemaVersion']):
+                for mutate in mutations:
+                    trial = copy.deepcopy(original); mutate(trial)
+                    with self.assertRaises(ValueError): video.validate_flow(flow(trial), SOURCE)
 
     def test_failed_original_retains_the_busy_invariant_violation(self):
-        trial = copy.deepcopy(self.trial)
-        trial.update(status='failed', phase='blocked_gate', failure='AssertionError')
-        trial['afterStop']['inFlight'] = False
-        value = flow(trial)
-        value.update(status='failed', failure=dict(stage='blocked_gate', errorClass='AssertionError'))
-        self.assertIs(value, video.validate_flow(value, SOURCE))
-        self.assertFalse(value['trial']['afterStop']['inFlight'])
+        for original in self.trials:
+            with self.subTest(version=original['schemaVersion']):
+                trial = copy.deepcopy(original)
+                trial.update(status='failed', phase='blocked_gate', failure='AssertionError')
+                trial['afterStop']['inFlight'] = False
+                value = flow(trial)
+                value.update(status='failed', failure=dict(stage='blocked_gate', errorClass='AssertionError'))
+                self.assertIs(value, video.validate_flow(value, SOURCE))
+                self.assertFalse(value['trial']['afterStop']['inFlight'])
+
+    def test_trial_versions_do_not_change_outer_schema_or_admit_frame_claims(self):
+        from test_busy_stop_evidence import valid_trial
+        for original in self.trials:
+            with self.subTest(version=original['schemaVersion']):
+                for version in (0, 3, True, '2'):
+                    trial = copy.deepcopy(original); trial['schemaVersion'] = version
+                    with self.assertRaises(ValueError): video.validate_flow(flow(trial), SOURCE)
+                value = flow(original); value['schemaVersion'] = 2
+                with self.assertRaises(ValueError): video.validate_flow(value, SOURCE)
+                trial = copy.deepcopy(original)
+                trial['frames'] = valid_trial(index=1, api=35, schema_version=original['schemaVersion'])['frames']
+                with self.assertRaises(ValueError): video.validate_flow(flow(trial), SOURCE)
+
+    def test_both_trial_versions_archive_original_bytes_as_one_api35_walkthrough(self):
+        for trial in self.trials:
+            with self.subTest(version=trial['schemaVersion']), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); incoming = root / 'incoming'; incoming.mkdir()
+                run = dict(existing.source_run(), path=video.WORKFLOW)
+                jobs = dict(jobs=[dict(existing.job(), name=video.JOB)])
+                items = existing.artifacts(video.PROFILE)
+                items[0]['name'] = 'busy-stop-walkthrough-api-35-attempt-2'
+                probe = incoming / items[0]['name']; probe.mkdir()
+                bundle(probe, trial=trial)
+                raw = (probe / 'flow-result.json').read_bytes()
+                recording = incoming / items[1]['name']; recording.mkdir()
+                write(recording, 'recording.json', existing.recording(video.PROFILE))
+                (recording / 'demo.mp4').write_bytes(existing.VIDEO)
+                # Only media parsing is synthetic; the original DEVICE trial,
+                # source, inventory, digests and archive validators all execute.
+                with mock.patch.object(archive.demo_video.bounded, 'run_command', return_value=''), \
+                        mock.patch.object(archive.demo_video, 'video_metadata',
+                                          return_value=existing.recording(video.PROFILE)['video']):
+                    result = archive.archive(run, jobs, dict(artifacts=items), incoming, root)
+                self.assertEqual('passed', result['status'])
+                self.assertEqual(SOURCE, result['source'])
+                self.assertEqual((35, 1, 1), (result['apiLevel'], result['expectedTests'], result['matrixExpectedTests']))
+                self.assertEqual(['35'], result['expectedMatrixLabels'])
+                self.assertFalse(result['performanceSample'])
+                self.assertFalse(result['fullSuiteAcceptance'])
+                self.assertEqual(dict(passed=1, failed=0, unverified=0), result['caseCounts'])
+                saved = root / 'screenshots/demos/probes-123-2/probe/flow-result.json'
+                self.assertEqual(raw, saved.read_bytes())
+                self.assertEqual(trial['schemaVersion'], json.loads(saved.read_bytes())['trial']['schemaVersion'])
 
     def test_before_trial_failure_and_interrupted_initial_flow_remain_explicit(self):
         value = flow()

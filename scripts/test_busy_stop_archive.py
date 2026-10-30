@@ -134,11 +134,11 @@ class BusyStopArchiveTests(unittest.TestCase):
                               "sha256": hashlib.sha256(original).hexdigest()}, row["files"][0])
 
     def test_complete_pilot_and_formal_bundles_archive_every_original_shard(self):
-        for profile in ("pilot", "formal"):
-            with self.subTest(profile=profile), tempfile.TemporaryDirectory() as temporary:
+        for profile, version in ((p, v) for p in ("pilot", "formal") for v in (1, 2)):
+            with self.subTest(profile=profile, schemaVersion=version), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
                 source = root / "incoming" / artifact()["name"]
-                fixtures.write_bundle(source, profile=profile)
+                fixtures.write_bundle(source, profile=profile, schema_version=version)
                 originals = {path.name: path.read_bytes() for path in source.iterdir()}
                 budget = {"bytes": 123, "files": 2}
                 with patch("subprocess.run", side_effect=AssertionError("executed downloaded artifact")):
@@ -150,6 +150,34 @@ class BusyStopArchiveTests(unittest.TestCase):
                 for ref in row["files"]:
                     self.assertEqual(originals[ref["path"]], (root / "out/busy-stop/api-37.0" / ref["path"]).read_bytes())
                 self.assertEqual({"bytes": 123 + sum(map(len, originals.values())), "files": 2 + len(originals)}, budget)
+
+    def test_mixed_root_versions_across_lanes_are_rejected_before_any_copy(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            args = args_for(root)
+            artifacts, jobs = [], []
+            for index, (label, version) in enumerate((("30", 1), ("37.0", 2))):
+                item = dict(artifact(label), id=456 + index)
+                artifacts.append(item)
+                jobs.append(dict(legacy.job(), name=f"emulator-tests ({label})"))
+                fixtures.write_bundle(args.incoming / item["name"], api=int(label.split(".")[0]), schema_version=version)
+            args.artifacts.write_text(json.dumps({"artifacts": artifacts}))
+            budget = {"bytes": 123, "files": 1}
+            with self.assertRaisesRegex(ValueError, "cannot mix report schema versions"):
+                publisher.archive_busy_stop(args, source_run("pilot"), jobs, root / "out", budget)
+            self.assertFalse((root / "out").exists())
+            self.assertEqual({"bytes": 123, "files": 1}, budget)
+
+    def test_v2_root_cannot_rehash_a_v1_trial_as_current_evidence(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "incoming" / artifact()["name"]
+            trials = [fixtures.valid_trial(i, schema_version=2) for i in range(4)]
+            trials[0] = fixtures.valid_trial(0, schema_version=1)
+            fixtures.write_bundle(source, trials=trials, schema_version=2)
+            with self.assertRaises(ValueError):
+                publisher.archive_busy_stop(args_for(root), source_run("pilot"), [legacy.job()], root / "out", {"bytes": 0, "files": 0})
+            self.assertFalse((root / "out").exists())
 
     def test_failed_incomplete_and_nonzero_exit_keep_separate_original_statuses(self):
         for status, exit_code in (("failed", 1), ("incomplete", 124), ("passed", 23)):

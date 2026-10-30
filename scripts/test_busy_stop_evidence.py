@@ -32,7 +32,7 @@ def collected_capture(report, label='37.0', source=SOURCE):
     return value, raw
 
 
-def valid_trial(index=0, api=37, profile='pilot'):
+def valid_trial(index=0, api=37, profile='pilot', schema_version=1):
     """Synthetic raw measurements for trust-boundary tests, never run evidence."""
     base = 10_000_000_000 + index * 10_000_000_000
     at = lambda ms: base + ms * 1_000_000
@@ -40,7 +40,7 @@ def valid_trial(index=0, api=37, profile='pilot'):
     identity = busy.trial_identity(index, profile)
     device = identity['scenario'] == 'DEVICE'; attempts = int(device); epoch=4
     task = f'synthetic-owner-{index}'
-    trial = dict(schemaVersion=1, kind=busy.TRIAL_KIND, **identity, status='passed', phase='complete',
+    trial = dict(schemaVersion=schema_version, kind=busy.TRIAL_KIND, **identity, status='passed', phase='complete',
                  failure=None, startedNanoTime=at(0), endedNanoTime=at(1500), taskId=task, epochBefore=epoch,
                  input=dict(bounds=[0,0,100,100], point=[50,50], downIssuedNanoTime=at(400),
                             downReturnedNanoTime=at(410), upIssuedNanoTime=at(450), upIssuedElapsedNanos=boot(450),
@@ -104,17 +104,26 @@ def valid_trial(index=0, api=37, profile='pilot'):
                                            droppedReports=0,complete=True,timedOut=False),
                              firstStoppedDraw=draw(2,457,450),targetFrame=metric(440,450,20,470),
                              completedNanoTime=at(460),quality=quality)
+    if schema_version == 2 and trial['frames'] is not None:
+        frame=trial['frames']
+        for draw,metric in ((frame['baseline']['draw'],frame['baseline']['frame']),
+                            (frame['firstStoppedDraw'],frame['targetFrame'])):
+            metric.update(unknownDelayDurationNanos=draw['drawNanoTime']-metric['intendedVsyncNanoTime'],
+                          inputHandlingDurationNanos=250_000,animationDurationNanos=250_000,layoutMeasureDurationNanos=0)
+            metric['drawStartNanoTime']=busy.checked_draw_start(metric)
+        frame['candidateReports']=[[frame['targetFrame'][key] for key in busy.FRAME_REPORT_COLUMNS]]
+        frame['quality'].update(candidateReportsObserved=1,candidateReportsNotRetained=0)
     return trial
 
 
-def write_bundle(directory, api=37, profile='pilot', trials=None, status='passed', source=SOURCE):
+def write_bundle(directory, api=37, profile='pilot', trials=None, status='passed', source=SOURCE, schema_version=1):
     """Write a synthetic complete bundle; return (capture, root) for integration tests."""
     directory=Path(directory); directory.mkdir(parents=True, exist_ok=True)
-    if trials is None: trials=[valid_trial(i,api,profile) for i in range(busy.trial_count(profile))]
-    report=dict(schemaVersion=1,kind=busy.KIND,status=status,profile=profile,diagnosticOnly=True,
+    if trials is None: trials=[valid_trial(i,api,profile,schema_version) for i in range(busy.trial_count(profile))]
+    report=dict(schemaVersion=schema_version,kind=busy.KIND,status=status,profile=profile,diagnosticOnly=True,
                 budgetAcceptance=False,fullSuiteAcceptance=False,api=api,appProcessPid=1234,
                 device=dict(manufacturer='synthetic',model='validator-fixture',fingerprint='synthetic/test-only'),
-                conditions=busy.conditions(profile),startedNanoTime=1,
+                conditions=busy.conditions(profile,schema_version),startedNanoTime=1,
                 endedNanoTime=-1 if status=='incomplete' else (trials[-1]['endedNanoTime']+1 if trials else 2),
                 cleanup={key:status=='passed' for key in busy.CLEANUP_FIELDS},trials=[])
     for trial in trials:
@@ -128,9 +137,9 @@ def write_bundle(directory, api=37, profile='pilot', trials=None, status='passed
     return capture,report
 
 
-def maximum_failed_trial(index=0):
+def maximum_failed_trial(index=0, schema_version=1):
     """Full-width values and worst UTF-8→JSON escaping, within each scalar bound."""
-    trial=valid_trial(index)
+    trial=valid_trial(index,schema_version=schema_version)
     delta=busy.LONG_MAX-trial['endedNanoTime']-1
     def shift(value,key=''):
         if type(value) is dict:return {k:shift(v,k) for k,v in value.items()}
@@ -179,12 +188,18 @@ def maximum_failed_trial(index=0):
     if trial['frames']:
         trial['frames']['status']='not_started'
         for metric in (trial['frames']['baseline']['frame'],trial['frames']['targetFrame']):metric['firstDraw']=-1
+    if schema_version == 2 and trial['frames']:
+        frame=trial['frames']
+        for metric in (frame['baseline']['frame'],frame['targetFrame']):
+            for key in busy.FRAME_V2_DURATIONS:metric[key]=-2**63
+        frame['candidateReports']=[[frame['targetFrame'][key] for key in busy.FRAME_REPORT_COLUMNS] for _ in range(8)]
+        frame['quality'].update(candidateReportsObserved=busy.LONG_MAX,candidateReportsNotRetained=busy.LONG_MAX-8)
     return trial
 
 
 class BusyStopRawContractTests(unittest.TestCase):
     def validate(self, value, api=37, profile='pilot'):
-        return busy.validate_trial(value,value['index'],dict(profile=profile,api=api,appProcessPid=1234))
+        return busy.validate_trial(value,value['index'],dict(profile=profile,api=api,appProcessPid=1234,schemaVersion=value['schemaVersion']))
 
     def test_all_apis_pilot_and_formal_round_trip_original_bytes(self):
         for api in range(30,38):
@@ -351,6 +366,181 @@ class BusyStopRawContractTests(unittest.TestCase):
     def test_walkthrough_reuses_strict_single_device_without_accepting_extra_profile(self):
         busy.validate_single_device_trial(valid_trial(api=35),35)
         with self.assertRaises(ValueError):busy.validate_single_device_trial(valid_trial(1,35),35)
+
+
+class BusyStopV2ContractTests(unittest.TestCase):
+    def validate(self, trial):
+        return busy.validate_trial(trial,trial['index'],dict(profile='pilot',api=37,appProcessPid=1234,
+                                                            schemaVersion=trial['schemaVersion']))
+
+    def row(self, metric):
+        return [metric[key] for key in busy.FRAME_REPORT_COLUMNS]
+
+    def candidates(self, trial, metrics, omitted=0):
+        frame=trial['frames'];frame['candidateReports']=[self.row(metric) for metric in metrics]
+        frame['quality'].update(candidateReportsObserved=len(metrics)+omitted,candidateReportsNotRetained=omitted)
+
+    def unrelated(self, trial):
+        metric=copy.deepcopy(trial['frames']['targetFrame'])
+        metric['unknownDelayDurationNanos']-=2_000_000
+        metric['drawStartNanoTime']=busy.checked_draw_start(metric)
+        return metric
+
+    def test_v1_and_v2_complete_roundtrips_and_single_device_remain_separate(self):
+        for version in (1,2):
+            for profile in ('pilot','formal'):
+                for api in (30,37):
+                    with self.subTest(version=version,profile=profile,api=api),tempfile.TemporaryDirectory() as folder:
+                        capture,root=write_bundle(folder,api,profile,schema_version=version)
+                        label='37.0' if api==37 else str(api)
+                        self.assertEqual(busy.trial_count(profile)+1,len(busy.validate_payloads(folder,capture,label,SOURCE,profile)))
+            busy.validate_single_device_trial(valid_trial(api=35,schema_version=version),35)
+
+    def test_root_trial_condition_versions_cannot_be_mixed_or_inferred(self):
+        for root_version,trial_version in ((1,2),(2,1)):
+            trials=[valid_trial(i,schema_version=trial_version) for i in range(4)]
+            with tempfile.TemporaryDirectory() as folder:
+                capture,root=write_bundle(folder,trials=trials,schema_version=root_version)
+                with self.assertRaises(ValueError):busy.validate_payloads(folder,capture,'37.0',SOURCE,'pilot')
+        with tempfile.TemporaryDirectory() as folder:
+            _,root=write_bundle(folder,schema_version=2)
+            for version in (True,0,3):
+                with self.assertRaises(ValueError):busy.validate_report(dict(root,schemaVersion=version),37,'pilot')
+            root['conditions']=busy.conditions('pilot',1)
+            with self.assertRaises(ValueError):busy.validate_report(root,37,'pilot')
+            root.update(schemaVersion=1,conditions=busy.conditions('pilot',2))
+            with self.assertRaises(ValueError):busy.validate_report(root,37,'pilot')
+        for version,other in ((1,2),(2,1)):
+            trial=valid_trial(1,schema_version=version)
+            trial['frames']=valid_trial(1,schema_version=other)['frames']
+            with self.assertRaises(ValueError):self.validate(trial)
+
+    def test_checked_signed_arithmetic_retains_cancellation_and_rejects_intermediate_overflow(self):
+        def metric(start,parts):
+            return dict(intendedVsyncNanoTime=start,**dict(zip(busy.FRAME_V2_DURATIONS,parts)))
+        self.assertEqual(105,busy.checked_draw_start(metric(100,[-20,30,-10,5])))
+        self.assertEqual(0,busy.checked_draw_start(metric(100,[-100,0,0,0])))
+        for value in (metric(0,[1,1,1,1]),metric(100,[-101,0,0,0]),
+                      metric(busy.LONG_MAX,[1,-1,0,0]),metric(1,[-2**63,-2,2,0])):
+            self.assertEqual(-1,busy.checked_draw_start(value))
+
+    def test_same_vsync_late_callback_does_not_authorize_wrong_draw_or_bad_selected_stages(self):
+        changes=[lambda t:t['frames']['targetFrame'].update(drawStartNanoTime=t['frames']['targetFrame']['drawStartNanoTime']+1),
+                 lambda t:t['frames']['targetFrame'].update(unknownDelayDurationNanos=busy.LONG_MAX,drawStartNanoTime=-1),
+                 lambda t:t['frames']['targetFrame'].update(unknownDelayDurationNanos=-1,drawStartNanoTime=-1)]
+        for key in busy.FRAME_V2_DURATIONS:
+            def negative(t,key=key):
+                metric=t['frames']['targetFrame'];metric[key]=-1
+                metric['drawStartNanoTime']=busy.checked_draw_start(metric)
+            changes.append(negative)
+        def before(t):
+            metric=t['frames']['targetFrame'];metric['unknownDelayDurationNanos']-=2_000_000
+            metric['drawStartNanoTime']=busy.checked_draw_start(metric)
+        changes.append(before)
+        def after(t):
+            metric=t['frames']['targetFrame'];metric['unknownDelayDurationNanos']+=2_000_000
+            metric['drawStartNanoTime']=busy.checked_draw_start(metric)
+        changes.append(after)
+        def beyond_end(t):
+            frame=t['frames'];metric=frame['targetFrame']
+            frame['firstStoppedDraw']['readNanoTime']=frame['completedNanoTime']+2_000_000
+            metric['unknownDelayDurationNanos']+=4_000_000;metric['drawStartNanoTime']=busy.checked_draw_start(metric)
+        changes.append(beyond_end)
+        for change in changes:
+            trial=valid_trial(1,schema_version=2);change(trial)
+            self.candidates(trial,[trial['frames']['targetFrame']])
+            with self.subTest(change=change),self.assertRaises(ValueError):self.validate(trial)
+        # Both endpoints of the measured OnDraw→post-read bracket are inclusive.
+        for offset in (0,1_000_000):
+            trial=valid_trial(1,schema_version=2);frame=trial['frames'];metric=frame['targetFrame']
+            metric['inputHandlingDurationNanos']=offset;metric['animationDurationNanos']=0
+            metric['drawStartNanoTime']=busy.checked_draw_start(metric);self.candidates(trial,[metric]);self.validate(trial)
+
+    def test_candidate_prefix_keeps_signed_non_target_reports_without_replacing_original_draw(self):
+        trial=valid_trial(1,schema_version=2);target=trial['frames']['targetFrame']
+        old=self.unrelated(trial)
+        # Negative raw stages are retained; their checked signed sum places this
+        # report outside the frozen bracket. This does not prove what it displayed.
+        old['unknownDelayDurationNanos']=-1;old['inputHandlingDurationNanos']=0
+        old['animationDurationNanos']=0;old['layoutMeasureDurationNanos']=0
+        old['drawStartNanoTime']=busy.checked_draw_start(old)
+        other=copy.deepcopy(old);other['callbackNanoTime']+=1
+        self.candidates(trial,[other,old,target])
+        self.validate(trial)  # Prefix order is processing order, not sorted callback time.
+        for omitted in (1,1000):
+            trial=valid_trial(1,schema_version=2)
+            self.candidates(trial,[self.unrelated(trial) for _ in range(8)],omitted)
+            self.validate(trial)  # Bounded raw-prefix omission is not a quality failure.
+
+    def test_rt_only_synthetic_or_pre_vsync_draw_start_cannot_be_selected(self):
+        for selected in ('baseline', 'target'):
+            for vsync_offset in (0, 250_000):
+                trial=valid_trial(1,schema_version=2);frame=trial['frames']
+                draw,metric=((frame['baseline']['draw'],frame['baseline']['frame'])
+                             if selected=='baseline' else (frame['firstStoppedDraw'],frame['targetFrame']))
+                end=metric['intendedVsyncNanoTime']+metric['totalDurationNanos']
+                metric.update(intendedVsyncNanoTime=draw['drawNanoTime'],
+                              vsyncNanoTime=draw['drawNanoTime']+vsync_offset,
+                              totalDurationNanos=end-draw['drawNanoTime'])
+                metric.update({key:0 for key in busy.FRAME_V2_DURATIONS})
+                metric['drawStartNanoTime']=busy.checked_draw_start(metric)
+                draw['drawingTimeMillis']=metric['vsyncNanoTime']//1_000_000
+                self.candidates(trial,[frame['targetFrame']])
+                # Zero-stage RT-only timestamps can satisfy both the millisecond
+                # VSYNC identity and the frozen draw/read bracket; still reject.
+                with self.subTest(selected=selected,vsync_offset=vsync_offset),self.assertRaises(ValueError):
+                    self.validate(trial)
+
+    def test_ambiguous_unknown_or_contradictory_candidate_cannot_be_hidden_by_omission(self):
+        for attack in ('duplicate','different_match','unknown','negative_inside','before_draw','missing_target','truncated_match'):
+            trial=valid_trial(1,schema_version=2);target=trial['frames']['targetFrame'];other=copy.deepcopy(target)
+            metrics=[other,target];omitted=0
+            if attack=='different_match':other['gpuDurationNanos']=1
+            elif attack=='unknown':other.update(unknownDelayDurationNanos=busy.LONG_MAX,drawStartNanoTime=-1)
+            elif attack=='negative_inside':
+                other['unknownDelayDurationNanos']=-1
+                other['inputHandlingDurationNanos']=target['drawStartNanoTime']-other['intendedVsyncNanoTime']+1
+                other['animationDurationNanos']=0;other['layoutMeasureDurationNanos']=0
+                other['drawStartNanoTime']=busy.checked_draw_start(other)
+            elif attack=='before_draw':other['callbackNanoTime']=trial['frames']['firstStoppedDraw']['drawNanoTime']-1
+            elif attack=='missing_target':metrics=[self.unrelated(trial)]
+            elif attack=='truncated_match':
+                other['gpuDurationNanos']=1;metrics=[other,*[self.unrelated(trial) for _ in range(7)]];omitted=100
+            self.candidates(trial,metrics,omitted)
+            with self.subTest(attack=attack),self.assertRaises(ValueError):self.validate(trial)
+
+    def test_prefix_shape_conservation_and_type_bounds_are_strict_but_failed_values_survive(self):
+        changes=[lambda t:t['frames'].update(candidateReports=[]),
+                 lambda t:t['frames']['quality'].update(candidateReportsObserved=2),
+                 lambda t:t['frames']['quality'].update(candidateReportsNotRetained=1),
+                 lambda t:t['frames']['quality'].update(candidateReportsObserved=True),
+                 lambda t:t['frames'].update(candidateReports=t['frames']['candidateReports']*9),
+                 lambda t:t['frames']['candidateReports'][0].pop(),
+                 lambda t:t['frames']['candidateReports'][0].__setitem__(8,False),
+                 lambda t:t['frames']['candidateReports'][0].__setitem__(8,-2**63-1),
+                 lambda t:t['frames']['candidateReports'][0].__setitem__(7,-1)]
+        for change in changes:
+            trial=valid_trial(1,schema_version=2);change(trial)
+            with self.subTest(change=change),self.assertRaises(ValueError):self.validate(trial)
+        trial=valid_trial(1,schema_version=2);trial.update(status='failed',phase='stop_frame',failure='AssertionError')
+        trial['frames']['targetFrame'].update(unknownDelayDurationNanos=-2**63,drawStartNanoTime=-1)
+        trial['frames']['quality'].update(candidateReportsObserved=99,candidateReportsNotRetained=5)
+        self.validate(trial)  # Preserve bounded arithmetic/accounting anomalies on failed originals.
+
+    def test_v2_full_capacity_is_bounded_without_changing_existing_caps(self):
+        self.assertEqual((32768,65536,16384,8388608,67108864),
+                         (busy.MAX_TRIAL_BYTES,busy.MAX_REPORT_BYTES,busy.MAX_CAPTURE_BYTES,busy.MAX_ARTIFACT_BYTES,busy.MAX_ARCHIVE_BYTES))
+        for version in (1,2):
+            for index in (0,1):
+                trial=maximum_failed_trial(index,version);self.validate(trial)
+                self.assertLess(len(encoded(trial)),busy.MAX_TRIAL_BYTES)
+            with tempfile.TemporaryDirectory() as folder:
+                _,root=write_bundle(folder,profile='formal',schema_version=version)
+                root['device']={key:'😀'*(bound//4) for key,bound in (('manufacturer',256),('model',256),('fingerprint',1024))}
+                root.update(startedNanoTime=busy.LONG_MAX-1,endedNanoTime=busy.LONG_MAX,status='failed',
+                            appProcessPid=2**31-1,cleanup={key:False for key in busy.CLEANUP_FIELDS})
+                for ref in root['trials']:ref['bytes']=busy.MAX_TRIAL_BYTES
+                busy.validate_report(root,37,'formal');self.assertLess(len(encoded(root)),busy.MAX_REPORT_BYTES)
 
 
 class BusyStopCaptureBoundaryTests(unittest.TestCase):

@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /** Passive, test-only association of the first visible stopped UI with its original HWUI report. */
 final class BusyStopFrameProbe implements AutoCloseable {
     private static final int CANDIDATE_CAPACITY = 16;
+    private static final int CANDIDATE_REPORT_CAPACITY = 8;
     private static final long MAX_WAIT_MILLIS = 3_000, CLOSE_JOIN_MILLIS = 1_000;
     private final Object lock = new Object();
     private final Instrumentation instrumentation;
@@ -39,6 +40,7 @@ final class BusyStopFrameProbe implements AutoCloseable {
     private final HandlerThread frameThread = new HandlerThread("busy-stop-frame-metrics");
     private final Handler drawReadHandler = Handler.createAsync(Looper.getMainLooper());
     private final Frame[] candidates = new Frame[CANDIDATE_CAPACITY];
+    private final Frame[] candidateReports = new Frame[CANDIDATE_REPORT_CAPACITY];
     private final Rect visibleBounds = new Rect();
     private final Window.OnFrameMetricsAvailableListener frameListener = (reportedWindow, metrics, dropped) -> {
         try { onFrame(reportedWindow, metrics, dropped); }
@@ -62,6 +64,7 @@ final class BusyStopFrameProbe implements AutoCloseable {
     private boolean drainStarted, drainBarrierObserved, frameThreadStopped, drainComplete, drainTimedOut, closed;
     private long drainStartedNanoTime = -1, drainEndedNanoTime = -1;
     private long receivedReports, observedDrawCount, discardedNonTargetCandidates, candidateOverflow;
+    private long candidateReportsObserved, candidateReportsNotRetained;
     private long droppedReports, sequenceMismatchCount, zeroDrawingTimeCount, ambiguousMatchCount;
     private long lateFrameReports, lateDroppedReports, invalidMetricCount;
     private long callbackFailureCount;
@@ -191,11 +194,16 @@ final class BusyStopFrameProbe implements AutoCloseable {
             Frame target = firstStoppedDraw == null ? null : firstStoppedDraw.frame;
             result.add("targetFrame", target == null ? JsonNull.INSTANCE : target.json());
             result.addProperty("completedNanoTime", target == null ? -1 : target.completedNanoTime());
+            JsonArray reports = new JsonArray();
+            for (Frame frame : candidateReports) if (frame != null) reports.add(frame.reportJson());
+            result.add("candidateReports", reports);
             JsonObject quality = new JsonObject();
             quality.addProperty("receivedReports", receivedReports);
             quality.addProperty("observedDrawCount", observedDrawCount);
             quality.addProperty("discardedNonTargetCandidates", discardedNonTargetCandidates);
             quality.addProperty("candidateOverflow", candidateOverflow);
+            quality.addProperty("candidateReportsObserved", candidateReportsObserved);
+            quality.addProperty("candidateReportsNotRetained", candidateReportsNotRetained);
             quality.addProperty("droppedReports", droppedReports);
             quality.addProperty("sequenceMismatchCount", sequenceMismatchCount);
             quality.addProperty("zeroDrawingTimeCount", zeroDrawingTimeCount);
@@ -268,6 +276,11 @@ final class BusyStopFrameProbe implements AutoCloseable {
             if (closed || draw.readNanoTime >= 0) return;
             draw.readNanoTime = readNanoTime;
             draw.drawingTimeMillis = drawingTimeMillis;
+            // Preserve eligible reports from the unresolved ring even if the draw itself fails a guard.
+            for (int offset = 0; offset < candidates.length; offset++) {
+                Frame frame = candidates[(candidatePosition + offset) % candidates.length];
+                if (frame != null) recordCandidateReport(frame);
+            }
             if (draw.sequence != sequence) sequenceMismatchCount++;
             else if (drawingTimeMillis <= 0) zeroDrawingTimeCount++;
             else {
@@ -292,6 +305,8 @@ final class BusyStopFrameProbe implements AutoCloseable {
             else baselineDroppedReports += dropped;
             if (dropped < 0) invalidMetricCount++;
             Draw target = armed ? firstStoppedDraw : baseline;
+            // This prefix also includes reports received before the queue-front read is ready.
+            recordCandidateReport(frame);
             if (drainStarted && firstStoppedDraw != null && firstStoppedDraw.frame != null
                     && frame.vsyncNanoTime <= firstStoppedDraw.frame.vsyncNanoTime) {
                 lateFrameReports++;
@@ -319,18 +334,31 @@ final class BusyStopFrameProbe implements AutoCloseable {
         // even when separate traversals share the same VSYNC millisecond.
         if (frame.callbackNanoTime < draw.drawNanoTime) return false;
         if (draw.drawingTimeMillis <= 0 || frame.vsyncNanoTime / 1_000_000 != draw.drawingTimeMillis) return false;
+        // An unavailable derived boundary cannot exclude a same-VSYNC candidate.
+        // Retain it below and fail quality instead of silently filtering it.
+        if (frame.drawStartNanoTime >= 0 && (frame.drawStartNanoTime < draw.drawNanoTime
+                || frame.drawStartNanoTime > draw.readNanoTime)) return false;
         if (draw.frame == frame) return true;
         draw.matchCount++;
-        if (draw.frame == null) {
-            draw.frame = frame;
-            if (!frame.valid() || frame.completedNanoTime() < draw.drawNanoTime) invalidMetricCount++;
-        } else ambiguousMatchCount++;
+        if (!frame.valid() || frame.completedNanoTime() < draw.drawNanoTime) invalidMetricCount++;
+        if (draw.frame == null) draw.frame = frame;
+        else ambiguousMatchCount++;
         return true;
+    }
+
+    private void recordCandidateReport(Frame frame) {
+        if (frame.reportRecorded || firstStoppedDraw == null
+                || frame.callbackNanoTime < firstStoppedDraw.drawNanoTime) return;
+        frame.reportRecorded = true;
+        long index = candidateReportsObserved++;
+        if (index < candidateReports.length) candidateReports[(int) index] = frame;
+        else candidateReportsNotRetained++;
     }
 
     private boolean drawReady(Draw draw, boolean stopped) {
         return draw != null && draw.guardsValid() && draw.readNanoTime >= draw.drawNanoTime
                 && draw.drawingTimeMillis > 0 && draw.matchCount == 1 && draw.frame != null && draw.frame.valid()
+                && draw.frame.drawStartNanoTime >= draw.drawNanoTime && draw.frame.drawStartNanoTime <= draw.readNanoTime
                 && draw.frame.completedNanoTime() >= draw.drawNanoTime
                 && (!stopped || draw.frame.firstDraw == 0 && draw.drawNanoTime >= armedNanoTime);
     }
@@ -475,6 +503,9 @@ final class BusyStopFrameProbe implements AutoCloseable {
     private static final class Frame {
         final long intendedVsyncNanoTime, vsyncNanoTime, totalDurationNanos, firstDraw;
         final long gpuDurationNanos, deadlineNanos, callbackNanoTime, droppedReports;
+        final long unknownDelayDurationNanos, inputHandlingDurationNanos, animationDurationNanos, layoutMeasureDurationNanos;
+        final long drawStartNanoTime;
+        boolean reportRecorded;
         Frame(FrameMetrics metrics, int dropped) {
             callbackNanoTime = System.nanoTime();
             intendedVsyncNanoTime = metrics.getMetric(FrameMetrics.INTENDED_VSYNC_TIMESTAMP);
@@ -484,6 +515,26 @@ final class BusyStopFrameProbe implements AutoCloseable {
             gpuDurationNanos = Build.VERSION.SDK_INT >= 31 ? metrics.getMetric(FrameMetrics.GPU_DURATION) : -1;
             deadlineNanos = Build.VERSION.SDK_INT >= 31 ? metrics.getMetric(FrameMetrics.DEADLINE) : -1;
             droppedReports = dropped;
+            unknownDelayDurationNanos = metrics.getMetric(FrameMetrics.UNKNOWN_DELAY_DURATION);
+            inputHandlingDurationNanos = metrics.getMetric(FrameMetrics.INPUT_HANDLING_DURATION);
+            animationDurationNanos = metrics.getMetric(FrameMetrics.ANIMATION_DURATION);
+            layoutMeasureDurationNanos = metrics.getMetric(FrameMetrics.LAYOUT_MEASURE_DURATION);
+            drawStartNanoTime = deriveDrawStart();
+        }
+        private long deriveDrawStart() {
+            long result = intendedVsyncNanoTime;
+            if (result <= 0) return -1;
+            try {
+                // RT-only reports can contain signed stages. Keep their telescoping value
+                // for diagnosis; selecting a UI frame still requires every stage nonnegative.
+                for (long duration : new long[]{unknownDelayDurationNanos, inputHandlingDurationNanos,
+                        animationDurationNanos, layoutMeasureDurationNanos}) {
+                    result = Math.addExact(result, duration);
+                }
+            } catch (ArithmeticException overflow) {
+                return -1;
+            }
+            return result >= 0 ? result : -1;
         }
         long completedNanoTime() {
             return intendedVsyncNanoTime > 0 && totalDurationNanos > 0
@@ -494,6 +545,11 @@ final class BusyStopFrameProbe implements AutoCloseable {
             long completed = completedNanoTime();
             return vsyncNanoTime >= intendedVsyncNanoTime && intendedVsyncNanoTime > 0
                     && completed >= vsyncNanoTime && completed <= callbackNanoTime
+                    // RT-only synthetic reports set all UI boundaries to VSYNC.
+                    // A selected UI traversal must carry a later real draw start.
+                    && drawStartNanoTime > vsyncNanoTime && completed >= drawStartNanoTime
+                    && unknownDelayDurationNanos >= 0 && inputHandlingDurationNanos >= 0
+                    && animationDurationNanos >= 0 && layoutMeasureDurationNanos >= 0
                     && droppedReports >= 0 && (firstDraw == 0 || firstDraw == 1);
         }
         JsonObject json() {
@@ -503,6 +559,20 @@ final class BusyStopFrameProbe implements AutoCloseable {
             result.addProperty("firstDraw", firstDraw); result.addProperty("gpuDurationNanos", gpuDurationNanos);
             result.addProperty("deadlineNanos", deadlineNanos); result.addProperty("callbackNanoTime", callbackNanoTime);
             result.addProperty("droppedReports", droppedReports);
+            result.addProperty("unknownDelayDurationNanos", unknownDelayDurationNanos);
+            result.addProperty("inputHandlingDurationNanos", inputHandlingDurationNanos);
+            result.addProperty("animationDurationNanos", animationDurationNanos);
+            result.addProperty("layoutMeasureDurationNanos", layoutMeasureDurationNanos);
+            result.addProperty("drawStartNanoTime", drawStartNanoTime);
+            return result;
+        }
+        JsonArray reportJson() {
+            JsonArray result = new JsonArray();
+            for (long value : new long[]{intendedVsyncNanoTime, vsyncNanoTime, totalDurationNanos, firstDraw,
+                    gpuDurationNanos, deadlineNanos, callbackNanoTime, droppedReports, unknownDelayDurationNanos,
+                    inputHandlingDurationNanos, animationDurationNanos, layoutMeasureDurationNanos, drawStartNanoTime}) {
+                result.add(value);
+            }
             return result;
         }
     }

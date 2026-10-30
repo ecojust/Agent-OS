@@ -1,6 +1,6 @@
 # 受控繁忙状态下的停止响应
 
-本项继续[性能后续任务](../PERFORMANCE.md#性能后续任务)，补齐实际停止按钮、在途平台调用及本地停止反馈的证据。Android 仪器编译、lint、Fixture 编译与 3 项探针单元测试已通过；默认完整矩阵的 273 个 class#method 身份与基线逐一相同。874 项完整宿主回归无跳过且全部通过。第二轮设备试跑已取得 7/8 档通过；API30 的首次停止帧发生关联错误，最小修正后的八档结果仍待验证。前两轮失败均保留，下文列明进度。既有等待确认时停止、直接取消 RunControl 的真实远端点击测试和核心取消单元测试保留原范围，不能代替本项。
+本项继续[性能后续任务](../PERFORMANCE.md#性能后续任务)，补齐实际停止按钮、在途平台调用及本地停止反馈的证据。Android 仪器编译、lint、Fixture 编译与 3 项探针单元测试已通过；默认完整矩阵的 273 个 class#method 身份与基线逐一相同。v2 集成过程中的 889 项完整宿主回归无跳过且全部通过；最终严格 DRAW_START 门槛及字段命名又通过 28 项证据校验、59 项归档／汇总／视频检查和 13 项独立复核检查，最终 Android 编译与 lint 通过。第三轮仍未通过首帧验收：API30 缺少可匹配报告，API32 出现延迟旧报告与歧义。已实现并通过本地回归的 schema v2 阶段时间关联与有界候选原件，准备第四轮固定试跑及两段独立录像；前三轮原结论均保留，下文列明进度。既有等待确认时停止、直接取消 RunControl 的真实远端点击测试和核心取消单元测试保留原范围，不能代替本项。
 
 本轮使用 API 30、31、32、33、34、35、36、37.0 八档专用合成模拟器，真实 Controller、生产授权与确认路径、固定本地 HTTP 测试模型和独立 Fixture APK。所有结果保持 `diagnosticOnly=true`、`budgetAcceptance=false`、`fullSuiteAcceptance=false`。受控等待不等于持续 CPU 满载，模拟器数据不代表真机、厂商 ROM 或 200 毫秒发布预算已经验收。
 
@@ -44,11 +44,11 @@
 
 在 UP 前注册公开 Window FrameMetrics，确认真实 MainActivity 已在前台、有焦点、启用硬件加速，并取得自然运行状态基线。保留生产 `FLAG_SECURE`，受保护截图记录 blocked，不清标志换取截图或录像。
 
-冻结输入之后**首次**自然 OnDraw 中可见的原任务停止状态：状态文字为“已停止”、运行按钮隐藏、开始按钮可见。通过一次队首 post-traversal 回调读取该次 drawingTime，与原 FrameMetrics VSYNC 的毫秒部分唯一关联；缺失、歧义或失配均失败，不能换用后一个更快或更容易匹配的停止帧。不得调用 invalidate／postInvalidate 制造替代绘制。
+冻结输入之后**首次**自然 OnDraw 中可见的原任务停止状态：状态文字为“已停止”、运行按钮隐藏、开始按钮可见。通过一次队首 post-traversal 回调读取该次 drawingTime；schema v2 同时核对原 FrameMetrics VSYNC 的毫秒部分，并由 UNKNOWN_DELAY、INPUT_HANDLING、ANIMATION、LAYOUT_MEASURE 四段公开时长依次 checked-add 至 INTENDED_VSYNC 重建 DRAW_START，要求处于该次 OnDraw 与队首读取之间。目标与基线的四段必须非负、DRAW_START 必须严格晚于 VSYNC、结束时间不得早于 DRAW_START，且只存在一个候选；缺失、歧义或失配均失败，不能换用后一个更快或更容易匹配的停止帧。不得调用 invalidate／postInvalidate 制造替代绘制。
 
-HWUI 完成端点为原始 `INTENDED_VSYNC_TIMESTAMP + TOTAL_DURATION`，FrameMetrics 回调收到时间单列；不把回调、OnDraw CPU 片段或状态发布时刻作为完整帧端点。API 30 不保证该端点包含 GPU 完成，所有 API 都不等于实际屏幕 present。GPU／DEADLINE 不支持或未知值保留 unavailable。
+HWUI 完成端点为原始 `INTENDED_VSYNC_TIMESTAMP + TOTAL_DURATION`，FrameMetrics 回调收到时间单列；不把回调、OnDraw CPU 片段或状态发布时刻作为完整帧端点。API 30 不保证该端点包含 GPU 完成；公开报告也不证明 buffer 成功 swap／入队，所有 API 都不等于实际屏幕 present。本项仅关联首停止 traversal 传入 HWUI 的 UI FrameInfo 报告及其完成时序。GPU／DEADLINE 不支持或未知值保留 unavailable。
 
-候选帧、目标水位、报告丢失、溢出和排空均有界且可复核。已经确定不可能属于目标的旧报告可单列计数，不能偷偷删除目标、清零丢失计数，或让固定缓冲区形成未声明的响应时限。首个停止帧一旦冻结，后续绘制不得替换它。
+候选帧、目标水位、报告丢失、溢出和排空均有界且可复核。v2 额外保存首停止 OnDraw 之后回调的前 8 条候选，每条含 13 个原始或可重建数值；原样保留 RT 报告中的负时长，另列总观测数及未保留数。该诊断前缀截断不构成新失败条件，后续匹配与质量统计仍继续，目标和基线另行完整保存。已经确定不可能属于目标的旧报告可单列计数，不能偷偷删除目标、清零丢失计数，或让固定缓冲区形成未声明的响应时限。首个停止帧一旦冻结，后续绘制不得替换它。
 
 ## 容量、失败与验收
 
@@ -56,7 +56,7 @@ HWUI 完成端点为原始 `INTENDED_VSYNC_TIMESTAMP + TOTAL_DURATION`，FrameMe
 
 根报告上限 64 KiB、宿主 capture 上限 16 KiB、每分片 32 KiB、每 API 8 MiB。capture 只绑定根文件，全部分片由根引用绑定，避免重复保存 200 份引用。整批继续使用既有 64 MiB 共享归档上限；实施中核验最大序列化布局及真实字节数，不以每档各自低于上限替代整批检查。文件提取采用一次有界归档传输，拒绝路径逃逸、链接、重复、缺片、孤儿文件和来源或语义不符。
 
-容量回归使用实际 schema、19 位数字、128 条 trace、16 条探针及最大字符串逃逸：平台与模型分片分别为 29,092／29,562 字节，200 条引用与最大设备字符串的根报告为 47,937 字节，root-only capture 为 818 字节。按各文件硬上限估计，八档共 53,084,160 字节，仍为普通截图及其他附件留出 14,024,704 字节；归档仍须检查实际共享总量。这些是解析器容量测试，不是设备结果。
+v1 容量回归使用实际 schema、19 位数字、128 条 trace、16 条探针及最大字符串逃逸：平台与模型分片分别为 29,092／29,562 字节，200 条引用与最大设备字符串的根报告为 47,937 字节，root-only capture 为 818 字节。按各文件硬上限估计，八档共 53,084,160 字节，仍为普通截图及其他附件留出 14,024,704 字节；归档仍须检查实际共享总量。v2 加入四段时间及 8×13 候选后，包含最大正式索引的边界回归为 DEVICE 29,095、MODEL 32,145、根报告 48,333、capture 818 字节；各硬上限保持不变。[完整容量记录](performance/busy-stop-v2/capacity.json)保留双版本对照。这些是解析器容量测试，不是设备结果。
 
 正式专项 watchdog 为 2,400 秒、设备内采集上限 2,300 秒、设备作业上限 55 分钟；试跑 watchdog 为 1,200 秒、作业上限 35 分钟。先用试跑实测时间和容量判断正式计划可行性，不在运行中缩减分母或扩大单个失败样本的等待。
 
@@ -90,3 +90,19 @@ API30 原始首停止 OnDraw 时间为 `64018969153` ns，匹配候选的回调�
 [原始归档](../../screenshots/41096590345-1/manifest.json)来自 [41097337602](https://github.com/ecojust/Agent-OS/actions/runs/41097337602)，证据提交 `95fcfef02e53ec7216d4ed9ec897c0f33e007c79` 的父提交为原测试源。89 个载荷、348,006 字节和 11 张 PNG 核验通过，12 条 blocked 截图保留。独立数值复核 7,676 项一致；[汇总](performance/busy-stop-41096590345/summary.json)、[分组中位数/范围](performance/busy-stop-41096590345/statistics.md)、[独立数值审核](performance/busy-stop-41096590345/independent-numeric-audit.json)及[归档审核](performance/busy-stop-41096590345/archive-audit.json)均保留原失败结论。所有 P95 仍为空。
 
 完整七档 pilot 的根报告时长为 7.751–11.387 秒、忙停附件为 29,528–33,494 字节/API；按实际两场景耗时外推 200 次/API，估计 342–503 秒、每档约 1.67 MB 以内，原时限和共享容量有余量，详见[规模估计](performance/busy-stop-41096590345/archive-capacity-observations.json)。这是试跑规模估计，尚未完成正式批次或 API30 修复验收。有效原件中 API36 的一次 UP→取消观测上界为 201.166 ms，浮条移除观测为 233.790 ms，按原值保留；本项不据小样本或模拟器数据宣称满足 200 ms 发布预算。下一步在最小帧关联修复后重新执行固定八档试跑。
+
+## 第三轮结果与公开帧指标的限制
+
+源 `161c14d9d3be31472a8307f1b2869efdaccc4126` 的 [41098174743](https://github.com/ecojust/Agent-OS/actions/runs/41098174743) 为 6/8 档通过，API30、32 仍在首个停止帧检查失败。原固定 32 次计划提交 29 份分片：按当时 v1 规则为 **27 通过、2 失败、3 未执行**。API30 首个 MODEL 已通过，第二个 MODEL 失败；API32 首个 MODEL 失败。两份失败样本中实际 UP、代次失效、Controller 停止及原浮条移除均已观测，但尚未到释放模型回复和排空阶段，不能将其推断为完整停止链通过。
+
+API30 首停止 OnDraw 为 `82522624635` ns，`drawingTimeMillis=82509`；原 3 秒内收到 25 份报告，却没有匹配目标，最终超时，没有丢失、溢出或无效端点计数。当前 v1 未保存这些非目标候选的原始阶段时间，无法从本轮判断是未生成独立 HWUI 报告、转为 RenderThread 帧，还是时间关联不足。
+
+API32 的首停止 OnDraw 为 `88633901518` ns；候选结束时间 `88627903054` ns 早于绘制，回调 `88639369555` ns 却晚于绘制。该候选是延迟回调的旧报告，原 `callback >= draw` 过滤不足以排除它；同 VSYNC 又出现第二个匹配项，原样记录歧义和迟到计数。第二候选未保存完整时序，不能事后指定它为正确首帧。
+
+独立源码审查发现，公开 OnDraw 与 Window FrameMetrics 不保证一一对应：ViewRootImpl 在实际 HWUI 绘制条件检查之前分发 OnDraw；原生 RenderThread 也可能同步 UI 树后跳过当前绘制，由后续 RT 帧输出并覆盖原 UI 时序。固定 AOSP 版本的[源码审查与引用](performance/busy-stop-v2/frame-review.md)列出对应实现。这些机制不能直接证明本次 API30 走了哪条路径，却说明不能将“无匹配”当成“已证明无提交”，再改选下一帧。
+
+新实现采用 schema v2：额外保存公开的 UNKNOWN_DELAY、INPUT_HANDLING、ANIMATION、LAYOUT_MEASURE 四段原值，独立 checked-add 重建 DRAW_START，并要求其落入同一冻结 OnDraw 与该次 traversal 后读取的区间；原 VSYNC、唯一性、完整结束端点及质量门槛继续保留。选中帧还要求 DRAW_START 严格晚于 VSYNC，以明确排除 AOSP RT-only 将 UI 阶段全部置于 VSYNC 的合成报告。另记录最多 8 条候选数值前缀及明确的未保留数量，固定 ring 与时限不扩大。此改动旨在使归属可复核，**不承诺所有首个 OnDraw 都能取得可证明对应的完整帧**；缺证仍失败。
+
+v1 的原通过状态、功能证据和历史数值不重写，但其帧关联已证明存在不足，不能据此独立确认首停止 traversal 的 HWUI 报告，也不纳入未来 v2 正式采样。不同版本的报告和分母须分开。
+
+[原始归档](../../screenshots/41098174743-1/manifest.json)由 [41098866377](https://github.com/ecojust/Agent-OS/actions/runs/41098866377) 生成，证据提交 `4bf8fc03f849a5e16ea3ceec68cc5e45006ccba1` 的父提交为原测试源。87 个载荷、326,487 字节及 10 张 PNG 完整核验；[原 v1 汇总](performance/busy-stop-41098174743/summary.json)、[独立数值审核](performance/busy-stop-41098174743/independent-numeric-audit.json)和[归档审核](performance/busy-stop-41098174743/archive-audit.json)保留原运行失败与所有未执行项，7,670 项独立核对一致。正式采样与独立录像尚未执行。

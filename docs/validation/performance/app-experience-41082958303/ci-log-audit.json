@@ -1,0 +1,519 @@
+{
+  "run": 41082958303,
+  "source": "f45fbb152ebf1b3c1335bb28744e81d8837dc50c",
+  "logBytes": 1669985,
+  "logSha256": "88fc9467311b15366ac7ec65b0537013ae079aeec2cd61cb7c8528f035f8e0f3",
+  "host": {
+    "testsRun": 801,
+    "seconds": 137.306,
+    "ranLine": 293,
+    "status": "passed",
+    "skipped": 1,
+    "resultLine": 295,
+    "notSkipped": 800,
+    "skippedTest": {
+      "identity": "test_experience_trace.ExperienceTraceTests.test_official_stdlib_extracts_synthetic_cold_hot_and_offline_rederives",
+      "sourcePath": "scripts/test_experience_trace.py",
+      "sourceLine": 240,
+      "reason": "pinned processor integration opt-in",
+      "condition": "TEST_TRACE_PROCESSOR environment variable is absent in build job",
+      "evidence": "Current f45 unittest discover expands exactly 801 ordered identities without executing them. The CI progress line contains exactly 801 characters; its sole s at zero-based index466 maps to this identity and decorator reason. RealSdkTest conditional setUpClass skip did not occur.",
+      "realTraceCoverage": "Positive official stdlib/full-sort cold/hot PID/TTID extraction and offline rederivation. Does not itself exercise deliberate tamper/type/arguments/legacy negative branches; those are in the explicitly opted-in local test.",
+      "ciProgressIndex": 466,
+      "ciProgressCharacters": 801
+    }
+  },
+  "buildTasks": {
+    ":core:test": {
+      "line": 354,
+      "detail": "2026-10-30T15:44:04.4869763Z > Task :core:test FROM-CACHE"
+    },
+    ":app:testDebugUnitTest": {
+      "line": 363,
+      "detail": "2026-10-30T15:44:05.3951447Z > Task :app:testDebugUnitTest NO-SOURCE"
+    },
+    ":app:lintDebug": {
+      "line": 386,
+      "detail": "2026-10-30T15:44:08.2863575Z > Task :app:lintDebug"
+    },
+    ":app:assembleDebug": {
+      "line": 400,
+      "detail": "2026-10-30T15:44:09.6837094Z > Task :app:assembleDebug"
+    }
+  },
+  "lanes": {
+    "32": {
+      "starting": {
+        "count": 1,
+        "device": "emulator-5554 - 12",
+        "line": 1390
+      },
+      "finished": {
+        "count": 1,
+        "device": "emulator-5554 - 12",
+        "line": 1833
+      },
+      "diagnostic": {
+        "line": 1840,
+        "detail": "2026-10-30T15:55:20.7242769Z API 32: application experience formal passed; capture=collected; diagnostic only"
+      },
+      "terminationStarted": {
+        "line": 1841,
+        "detail": "2026-10-30T15:55:20.7386885Z ##[group]Terminate Emulator"
+      },
+      "cleanupSteps": [
+        {
+          "step": "Post Run gradle/actions/setup-gradle@v4",
+          "line": 2137
+        },
+        {
+          "step": "Post Run actions/setup-java@v4",
+          "line": 2222
+        },
+        {
+          "step": "Post Run actions/checkout@v4",
+          "line": 2225
+        }
+      ]
+    },
+    "31": {
+      "starting": {
+        "count": 1,
+        "device": "emulator-5554 - 12",
+        "line": 3049
+      },
+      "finished": {
+        "count": 1,
+        "device": "emulator-5554 - 12",
+        "line": 3502
+      },
+      "diagnostic": {
+        "line": 3509,
+        "detail": "2026-10-30T15:55:39.1296352Z API 31: application experience formal passed; capture=collected; diagnostic only"
+      },
+      "terminationStarted": {
+        "line": 3510,
+        "detail": "2026-10-30T15:55:39.1454845Z ##[group]Terminate Emulator"
+      },
+      "cleanupSteps": [
+        {
+          "step": "Post Run gradle/actions/setup-gradle@v4",
+          "line": 3806
+        },
+        {
+          "step": "Post Run actions/setup-java@v4",
+          "line": 3891
+        },
+        {
+          "step": "Post Run actions/checkout@v4",
+          "line": 3894
+        }
+      ]
+    },
+    "30": {
+      "starting": {
+        "count": 1,
+        "device": "emulator-5554 - 11",
+        "line": 4715
+      },
+      "finished": {
+        "count": 1,
+        "device": "emulator-5554 - 11",
+        "line": 4718
+      },
+      "diagnostic": {
+        "line": 4725,
+        "detail": "2026-10-30T15:53:35.4138357Z API 30: application experience formal passed; capture=collected; diagnostic only"
+      },
+      "terminationStarted": {
+        "line": 4726,
+        "detail": "2026-10-30T15:53:35.4285367Z ##[group]Terminate Emulator"
+      },
+      "cleanupSteps": [
+        {
+          "step": "Post Run gradle/actions/setup-gradle@v4",
+          "line": 5020
+        },
+        {
+          "step": "Post Run actions/setup-java@v4",
+          "line": 5105
+        },
+        {
+          "step": "Post Run actions/checkout@v4",
+          "line": 5108
+        }
+      ]
+    },
+    "36": {
+      "starting": {
+        "count": 1,
+        "device": "emulator-5554 - 16",
+        "line": 5950
+      },
+      "finished": {
+        "count": 1,
+        "device": "emulator-5554 - 16",
+        "line": 5999
+      },
+      "diagnostic": {
+        "line": 6006,
+        "detail": "2026-10-30T15:59:24.4391589Z API 36: application experience formal passed; capture=collected; diagnostic only"
+      },
+      "terminationStarted": {
+        "line": 6007,
+        "detail": "2026-10-30T15:59:24.4550134Z ##[group]Terminate Emulator"
+      },
+      "cleanupSteps": [
+        {
+          "step": "Post Run gradle/actions/setup-gradle@v4",
+          "line": 6305
+        },
+        {
+          "step": "Post Run actions/setup-java@v4",
+          "line": 6390
+        },
+        {
+          "step": "Post Run actions/checkout@v4",
+          "line": 6393
+        }
+      ]
+    },
+    "35": {
+      "starting": {
+        "count": 1,
+        "device": "emulator-5554 - 15",
+        "line": 7236
+      },
+      "finished": {
+        "count": 1,
+        "device": "emulator-5554 - 15",
+        "line": 7303
+      },
+      "diagnostic": {
+        "line": 7310,
+        "detail": "2026-10-30T15:56:05.7593638Z API 35: application experience formal passed; capture=collected; diagnostic only"
+      },
+      "terminationStarted": {
+        "line": 7311,
+        "detail": "2026-10-30T15:56:05.7753546Z ##[group]Terminate Emulator"
+      },
+      "cleanupSteps": [
+        {
+          "step": "Post Run gradle/actions/setup-gradle@v4",
+          "line": 7609
+        },
+        {
+          "step": "Post Run actions/setup-java@v4",
+          "line": 7694
+        },
+        {
+          "step": "Post Run actions/checkout@v4",
+          "line": 7697
+        }
+      ]
+    },
+    "34": {
+      "starting": {
+        "count": 1,
+        "device": "emulator-5554 - 14",
+        "line": 8580
+      },
+      "finished": {
+        "count": 1,
+        "device": "emulator-5554 - 14",
+        "line": 8725
+      },
+      "diagnostic": {
+        "line": 8732,
+        "detail": "2026-10-30T15:54:34.6318393Z API 34: application experience formal passed; capture=collected; diagnostic only"
+      },
+      "terminationStarted": {
+        "line": 8733,
+        "detail": "2026-10-30T15:54:34.6464281Z ##[group]Terminate Emulator"
+      },
+      "cleanupSteps": [
+        {
+          "step": "Post Run gradle/actions/setup-gradle@v4",
+          "line": 9030
+        },
+        {
+          "step": "Post Run actions/setup-java@v4",
+          "line": 9115
+        },
+        {
+          "step": "Post Run actions/checkout@v4",
+          "line": 9118
+        }
+      ]
+    },
+    "33": {
+      "starting": {
+        "count": 1,
+        "device": "emulator-5554 - 13",
+        "line": 9950
+      },
+      "finished": {
+        "count": 1,
+        "device": "emulator-5554 - 13",
+        "line": 10001
+      },
+      "diagnostic": {
+        "line": 10008,
+        "detail": "2026-10-30T15:55:36.3029440Z API 33: application experience formal passed; capture=collected; diagnostic only"
+      },
+      "terminationStarted": {
+        "line": 10009,
+        "detail": "2026-10-30T15:55:36.3195996Z ##[group]Terminate Emulator"
+      },
+      "cleanupSteps": [
+        {
+          "step": "Post Run gradle/actions/setup-gradle@v4",
+          "line": 10307
+        },
+        {
+          "step": "Post Run actions/setup-java@v4",
+          "line": 10392
+        },
+        {
+          "step": "Post Run actions/checkout@v4",
+          "line": 10395
+        }
+      ]
+    },
+    "37.0": {
+      "starting": {
+        "count": 1,
+        "device": "emulator-5554 - 17",
+        "line": 11496
+      },
+      "finished": {
+        "count": 1,
+        "device": "emulator-5554 - 17",
+        "line": 11517
+      },
+      "diagnostic": {
+        "line": 11524,
+        "detail": "2026-10-30T15:57:52.9957940Z API 37.0: application experience formal passed; capture=collected; diagnostic only"
+      },
+      "terminationStarted": {
+        "line": 11525,
+        "detail": "2026-10-30T15:57:53.0116866Z ##[group]Terminate Emulator"
+      },
+      "cleanupSteps": [
+        {
+          "step": "Post Run gradle/actions/setup-gradle@v4",
+          "line": 11823
+        },
+        {
+          "step": "Post Run actions/setup-java@v4",
+          "line": 11908
+        },
+        {
+          "step": "Post Run actions/checkout@v4",
+          "line": 11911
+        }
+      ]
+    }
+  },
+  "buildStatus": {
+    "line": 403,
+    "detail": "2026-10-30T15:44:09.6839867Z BUILD SUCCESSFUL in 24s"
+  },
+  "instrumentation": {
+    "executionScope": "app-experience-diagnostic",
+    "selection": "dev.agentos.app.AppExperienceInstrumentedTest#collectTargetResourcesStartupAndFrames",
+    "expectedTestsPerApi": 1,
+    "expectedTests": 8,
+    "actualTests": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "unexpectedTests": 0,
+    "lanes": [
+      {
+        "api": "30",
+        "junit": {
+          "reports": 1,
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "unreadableReports": 0,
+          "selection": "dev.agentos.app.AppExperienceInstrumentedTest#collectTargetResourcesStartupAndFrames",
+          "selectedTests": 1,
+          "unexpectedTests": 0
+        },
+        "rootCleanup": {
+          "controllerCleared": true,
+          "servicesRestored": true,
+          "enabledRestored": true,
+          "automationFlagsRestored": true
+        },
+        "trials": 18,
+        "trialsCleanupCompleted": 18,
+        "allTrialControllersAndControlsIdleAfter": true
+      },
+      {
+        "api": "31",
+        "junit": {
+          "reports": 1,
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "unreadableReports": 0,
+          "selection": "dev.agentos.app.AppExperienceInstrumentedTest#collectTargetResourcesStartupAndFrames",
+          "selectedTests": 1,
+          "unexpectedTests": 0
+        },
+        "rootCleanup": {
+          "controllerCleared": true,
+          "servicesRestored": true,
+          "enabledRestored": true,
+          "automationFlagsRestored": true
+        },
+        "trials": 18,
+        "trialsCleanupCompleted": 18,
+        "allTrialControllersAndControlsIdleAfter": true
+      },
+      {
+        "api": "32",
+        "junit": {
+          "reports": 1,
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "unreadableReports": 0,
+          "selection": "dev.agentos.app.AppExperienceInstrumentedTest#collectTargetResourcesStartupAndFrames",
+          "selectedTests": 1,
+          "unexpectedTests": 0
+        },
+        "rootCleanup": {
+          "controllerCleared": true,
+          "servicesRestored": true,
+          "enabledRestored": true,
+          "automationFlagsRestored": true
+        },
+        "trials": 18,
+        "trialsCleanupCompleted": 18,
+        "allTrialControllersAndControlsIdleAfter": true
+      },
+      {
+        "api": "33",
+        "junit": {
+          "reports": 1,
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "unreadableReports": 0,
+          "selection": "dev.agentos.app.AppExperienceInstrumentedTest#collectTargetResourcesStartupAndFrames",
+          "selectedTests": 1,
+          "unexpectedTests": 0
+        },
+        "rootCleanup": {
+          "controllerCleared": true,
+          "servicesRestored": true,
+          "enabledRestored": true,
+          "automationFlagsRestored": true
+        },
+        "trials": 18,
+        "trialsCleanupCompleted": 18,
+        "allTrialControllersAndControlsIdleAfter": true
+      },
+      {
+        "api": "34",
+        "junit": {
+          "reports": 1,
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "unreadableReports": 0,
+          "selection": "dev.agentos.app.AppExperienceInstrumentedTest#collectTargetResourcesStartupAndFrames",
+          "selectedTests": 1,
+          "unexpectedTests": 0
+        },
+        "rootCleanup": {
+          "controllerCleared": true,
+          "servicesRestored": true,
+          "enabledRestored": true,
+          "automationFlagsRestored": true
+        },
+        "trials": 18,
+        "trialsCleanupCompleted": 18,
+        "allTrialControllersAndControlsIdleAfter": true
+      },
+      {
+        "api": "35",
+        "junit": {
+          "reports": 1,
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "unreadableReports": 0,
+          "selection": "dev.agentos.app.AppExperienceInstrumentedTest#collectTargetResourcesStartupAndFrames",
+          "selectedTests": 1,
+          "unexpectedTests": 0
+        },
+        "rootCleanup": {
+          "controllerCleared": true,
+          "servicesRestored": true,
+          "enabledRestored": true,
+          "automationFlagsRestored": true
+        },
+        "trials": 18,
+        "trialsCleanupCompleted": 18,
+        "allTrialControllersAndControlsIdleAfter": true
+      },
+      {
+        "api": "36",
+        "junit": {
+          "reports": 1,
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "unreadableReports": 0,
+          "selection": "dev.agentos.app.AppExperienceInstrumentedTest#collectTargetResourcesStartupAndFrames",
+          "selectedTests": 1,
+          "unexpectedTests": 0
+        },
+        "rootCleanup": {
+          "controllerCleared": true,
+          "servicesRestored": true,
+          "enabledRestored": true,
+          "automationFlagsRestored": true
+        },
+        "trials": 18,
+        "trialsCleanupCompleted": 18,
+        "allTrialControllersAndControlsIdleAfter": true
+      },
+      {
+        "api": "37.0",
+        "junit": {
+          "reports": 1,
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "unreadableReports": 0,
+          "selection": "dev.agentos.app.AppExperienceInstrumentedTest#collectTargetResourcesStartupAndFrames",
+          "selectedTests": 1,
+          "unexpectedTests": 0
+        },
+        "rootCleanup": {
+          "controllerCleared": true,
+          "servicesRestored": true,
+          "enabledRestored": true,
+          "automationFlagsRestored": true
+        },
+        "trials": 18,
+        "trialsCleanupCompleted": 18,
+        "allTrialControllersAndControlsIdleAfter": true
+      }
+    ]
+  }
+}

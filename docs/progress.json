@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-30T15:32:33Z",
-  "note": "启动就绪修正版V3已完成：保留单次启动与原TTID端点，逐次记录marker外只读观察，真实失焦/生命周期变化/超时均失败。801项完整宿主回归、Android编译/lint通过，273测试身份不变；四轮历史证据3314文件原样。即将执行第四轮八档pilot，再正式全量复测；普通视频仍保留523真实源码。",
+  "updated_at": "2026-10-30T16:12:38Z",
+  "note": "f45源码第二轮正式诊断八档通过：3200次启动、144个资源任务及432帧完整；原trace重放、独立统计与3444载荷归档核验完成，目标进程/启动/帧子项已完成。保留旧失败与录像实际来源，下一项繁忙状态停止。",
   "latest_evidence": {
-    "path": "screenshots/41075735469-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41075735469"
+    "path": "screenshots/41082958303-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41082958303"
   },
   "checkpoints": [
     {
@@ -93,10 +93,10 @@
       "id": "performance",
       "name": "三态性能诊断与空闲交替配对",
       "status": "complete",
-      "details": "原三态/空闲配对及后续压力/活跃任务已完成。目标进程首次正式5档完整、3档首帧后快照失败，2734有效TTID/90资源任务及未执行项已归档。V3已实现焦点转换/完整生命周期校验和有界就绪观察，保持原TTID端点；801项宿主回归、编译/lint通过，旧3314文件未改。下一步第四轮八档pilot，再正式3200启动/144任务复测；本子项及真机预算未完成。",
-      "updated_at": "2026-10-30T15:32:33Z",
+      "details": "原三态/空闲配对、压力和活跃任务已完成。f45正式八档3200/3200启动、144/144资源任务通过，32场景各100个TTID、432帧及独立来源/数值复验通过；一次首次未就绪在守卫不变时转为就绪，未重选TTID。3444载荷已归档，目标进程/启动/帧诊断子项完成，旧失败及辅助trace范围限制保留。下一项繁忙停止；真机预算未验收。",
+      "updated_at": "2026-10-30T16:12:38Z",
       "evidence": "docs/validation/performance-idle-pairs.md",
-      "scope": "按用户本次确认，将原“三态性能测量与预算验收”检查点的当前完成范围明确为三态诊断采集、同源多轮汇总和同设备空闲交替配对，并以已归档通过证据关闭此项。原预算验收要求保留于docs/PERFORMANCE.md的“性能后续任务”，尚未完成；状态变更不改变diagnosticOnly=true、budgetAcceptance=false。084d596e源码专项41044860496八档8/8，AB/BA六对/API：48对96窗全部通过、2016采样、192端点状态及0trace；65payload/1073884B/17PNG核验，7条before截图blocked原样保留，无安全标志例外。2160派生数值独立Fraction复算一致，保留AB/BA顺序相关差异；CI562项宿主实际通过无skip，core:test FROM-CACHE。旧710e三轮24份四态诊断与矩阵失败保留。初次归档参数错误41045898899保留，纠正后41046173408成功且未重跑设备。仍为diagnosticOnly=true、budgetAcceptance=false。后续054be源码的30分钟分段专项41052540296已独立验收，见docs/validation/performance-stress.md；此行原诊断与空闲配对的验收范围不变。后续8d038源码的等价任务专项41059787334也已独立验收：48对/96组/480任务、960端点，A平台接受720与C模型确认720分开，548载荷和3728派生数值核验，见docs/validation/performance-active-pairs.md。原诊断/空闲配对验收范围不变；目标进程、启动/完整帧、繁忙停止、稳态/瞬时峰值及真机功耗温升仍未验收。"
+      "scope": "按用户本次确认，将原“三态性能测量与预算验收”检查点的当前完成范围明确为三态诊断采集、同源多轮汇总和同设备空闲交替配对，并以已归档通过证据关闭此项。原预算验收要求保留于docs/PERFORMANCE.md的“性能后续任务”，尚未完成；状态变更不改变diagnosticOnly=true、budgetAcceptance=false。084d596e源码专项41044860496八档8/8，AB/BA六对/API：48对96窗全部通过、2016采样、192端点状态及0trace；65payload/1073884B/17PNG核验，7条before截图blocked原样保留，无安全标志例外。2160派生数值独立Fraction复算一致，保留AB/BA顺序相关差异；CI562项宿主实际通过无skip，core:test FROM-CACHE。旧710e三轮24份四态诊断与矩阵失败保留。初次归档参数错误41045898899保留，纠正后41046173408成功且未重跑设备。仍为diagnosticOnly=true、budgetAcceptance=false。后续054be源码的30分钟分段专项41052540296已独立验收，见docs/validation/performance-stress.md；此行原诊断与空闲配对的验收范围不变。后续8d038源码的等价任务专项41059787334也已独立验收：48对/96组/480任务、960端点，A平台接受720与C模型确认720分开，548载荷和3728派生数值核验，见docs/validation/performance-active-pairs.md。原诊断/空闲配对验收范围不变；f45fbb152源码专项41082958303已完成受控Fixture目标进程/启动/HWUI帧诊断：八档3200有效TTID、144资源任务、576 PSS端点及432帧通过，3444载荷已归档，官方原trace重放及独立数值复验通过，见docs/validation/performance-app-experience.md。辅助资源trace的历史覆盖限制另列；繁忙停止、稳态/瞬时峰值及真机功耗温升仍未验收。"
     },
     {
       "id": "visual_observation",

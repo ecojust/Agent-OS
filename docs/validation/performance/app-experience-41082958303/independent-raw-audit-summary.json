@@ -1,0 +1,530 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-app-experience-diagnostic-audit-summary",
+  "status": "matched",
+  "sourceCommit": "f45fbb152ebf1b3c1335bb28744e81d8837dc50c",
+  "sourceRun": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 41082958303,
+    "attempt": 1,
+    "commit": "f45fbb152ebf1b3c1335bb28744e81d8837dc50c",
+    "event": "workflow_dispatch",
+    "branch": "master",
+    "conclusion": "success",
+    "finishedAt": "2026-10-30T15:59:52Z",
+    "url": "https://github.com/ecojust/Agent-OS/actions/runs/41082958303"
+  },
+  "manifestSha256": "e35d4722ada8985ae73be95af4c513e47ef0082f61f8dc18d33f1ba7bfbdf4b3",
+  "scope": {
+    "diagnosticOnly": true,
+    "budgetAcceptance": false,
+    "fullSuiteAcceptance": false,
+    "physicalDeviceAcceptance": false,
+    "cohort": "This formal run only; prior formal and pilot measurements are not combined."
+  },
+  "counts": {
+    "diagnosticOnly": true,
+    "budgetAcceptance": false,
+    "fullSuiteAcceptance": false,
+    "status": "complete",
+    "formalDiagnosticComplete": true,
+    "originalConclusionsSuccessful": true,
+    "expectedLaneCount": 8,
+    "passedDiagnosticLaneCount": 8,
+    "expectedLaunchCount": 3200,
+    "recordedLaunchCount": 3200,
+    "validTtidCount": 3200,
+    "launchCounts": {
+      "passed": 3200,
+      "failed": 0,
+      "unavailable": 0,
+      "not_executed": 0
+    },
+    "expectedResourceTrialCount": 144,
+    "recordedResourceTrialCount": 144,
+    "resourceTrialCounts": {
+      "passed": 144,
+      "failed": 0,
+      "unavailable": 0,
+      "not_executed": 0
+    },
+    "expectedManualActionsAccepted": 288,
+    "verifiedManualActionsAccepted": 288,
+    "observedManualActionsAccepted": 288,
+    "unknownManualActionsAcceptedTrialCount": 0,
+    "expectedModelAcceptedWrites": 144,
+    "verifiedModelAcceptedWrites": 144,
+    "observedModelAcceptedWrites": 144,
+    "unknownModelAcceptedWritesTrialCount": 0
+  },
+  "independentChecks": {
+    "rawToDerivedFields": 1370794,
+    "rawToDerivedNumeric": 746214,
+    "documentTableRows": 240,
+    "documentTableFields": 9003,
+    "documentTableNumeric": 7217,
+    "appEvidenceFiles": 3392,
+    "appEvidenceBytes": 189712545,
+    "maximumNumericDifference": 1.87e-13,
+    "probeV3Snapshots": 5088,
+    "launchV3Contracts": 3200,
+    "failures": 0
+  },
+  "quantiles": {
+    "mainScenes": 32,
+    "formalScenesWith100ValidSamples": 32,
+    "nearestRankOrdinal": 95,
+    "orderSubgroups": 64,
+    "eachOrderSubgroupCount": 50,
+    "orderSubgroupP95Available": false,
+    "rankEvidence": [
+      {
+        "matrixLabel": "30",
+        "startupType": "cold",
+        "arm": "A_SERVICE_OFF",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 103,
+        "p95Millis": "31318293/50000"
+      },
+      {
+        "matrixLabel": "30",
+        "startupType": "cold",
+        "arm": "B_SERVICE_ON_IDLE",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 101,
+        "p95Millis": "632966577/1000000"
+      },
+      {
+        "matrixLabel": "30",
+        "startupType": "hot",
+        "arm": "A_SERVICE_OFF",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 303,
+        "p95Millis": "46794809/1000000"
+      },
+      {
+        "matrixLabel": "30",
+        "startupType": "hot",
+        "arm": "B_SERVICE_ON_IDLE",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 297,
+        "p95Millis": "960597/20000"
+      },
+      {
+        "matrixLabel": "31",
+        "startupType": "cold",
+        "arm": "A_SERVICE_OFF",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 52,
+        "p95Millis": "978979939/1000000"
+      },
+      {
+        "matrixLabel": "31",
+        "startupType": "cold",
+        "arm": "B_SERVICE_ON_IDLE",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 137,
+        "p95Millis": "173851989/200000"
+      },
+      {
+        "matrixLabel": "31",
+        "startupType": "hot",
+        "arm": "A_SERVICE_OFF",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 380,
+        "p95Millis": "1593221/31250"
+      },
+      {
+        "matrixLabel": "31",
+        "startupType": "hot",
+        "arm": "B_SERVICE_ON_IDLE",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 213,
+        "p95Millis": "10346531/200000"
+      },
+      {
+        "matrixLabel": "32",
+        "startupType": "cold",
+        "arm": "A_SERVICE_OFF",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 52,
+        "p95Millis": "778499541/1000000"
+      },
+      {
+        "matrixLabel": "32",
+        "startupType": "cold",
+        "arm": "B_SERVICE_ON_IDLE",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 102,
+        "p95Millis": "16804817/20000"
+      },
+      {
+        "matrixLabel": "32",
+        "startupType": "hot",
+        "arm": "A_SERVICE_OFF",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 291,
+        "p95Millis": "25950729/500000"
+      },
+      {
+        "matrixLabel": "32",
+        "startupType": "hot",
+        "arm": "B_SERVICE_ON_IDLE",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 225,
+        "p95Millis": "51219507/1000000"
+      },
+      {
+        "matrixLabel": "33",
+        "startupType": "cold",
+        "arm": "A_SERVICE_OFF",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 115,
+        "p95Millis": "731808923/1000000"
+      },
+      {
+        "matrixLabel": "33",
+        "startupType": "cold",
+        "arm": "B_SERVICE_ON_IDLE",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 150,
+        "p95Millis": "91992399/125000"
+      },
+      {
+        "matrixLabel": "33",
+        "startupType": "hot",
+        "arm": "A_SERVICE_OFF",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 380,
+        "p95Millis": "3819021/100000"
+      },
+      {
+        "matrixLabel": "33",
+        "startupType": "hot",
+        "arm": "B_SERVICE_ON_IDLE",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 370,
+        "p95Millis": "34387857/1000000"
+      },
+      {
+        "matrixLabel": "34",
+        "startupType": "cold",
+        "arm": "A_SERVICE_OFF",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 47,
+        "p95Millis": "45976243/62500"
+      },
+      {
+        "matrixLabel": "34",
+        "startupType": "cold",
+        "arm": "B_SERVICE_ON_IDLE",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 14,
+        "p95Millis": "178136519/250000"
+      },
+      {
+        "matrixLabel": "34",
+        "startupType": "hot",
+        "arm": "A_SERVICE_OFF",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 304,
+        "p95Millis": "50912261/1000000"
+      },
+      {
+        "matrixLabel": "34",
+        "startupType": "hot",
+        "arm": "B_SERVICE_ON_IDLE",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 313,
+        "p95Millis": "12570793/250000"
+      },
+      {
+        "matrixLabel": "35",
+        "startupType": "cold",
+        "arm": "A_SERVICE_OFF",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 112,
+        "p95Millis": "484665291/500000"
+      },
+      {
+        "matrixLabel": "35",
+        "startupType": "cold",
+        "arm": "B_SERVICE_ON_IDLE",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 97,
+        "p95Millis": "945555247/1000000"
+      },
+      {
+        "matrixLabel": "35",
+        "startupType": "hot",
+        "arm": "A_SERVICE_OFF",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 264,
+        "p95Millis": "1167191/31250"
+      },
+      {
+        "matrixLabel": "35",
+        "startupType": "hot",
+        "arm": "B_SERVICE_ON_IDLE",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 209,
+        "p95Millis": "50187599/1000000"
+      },
+      {
+        "matrixLabel": "36",
+        "startupType": "cold",
+        "arm": "A_SERVICE_OFF",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 135,
+        "p95Millis": "1159419629/1000000"
+      },
+      {
+        "matrixLabel": "36",
+        "startupType": "cold",
+        "arm": "B_SERVICE_ON_IDLE",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 93,
+        "p95Millis": "146934539/125000"
+      },
+      {
+        "matrixLabel": "36",
+        "startupType": "hot",
+        "arm": "A_SERVICE_OFF",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 235,
+        "p95Millis": "50416173/1000000"
+      },
+      {
+        "matrixLabel": "36",
+        "startupType": "hot",
+        "arm": "B_SERVICE_ON_IDLE",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 229,
+        "p95Millis": "26444229/500000"
+      },
+      {
+        "matrixLabel": "37.0",
+        "startupType": "cold",
+        "arm": "A_SERVICE_OFF",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 20,
+        "p95Millis": "15032867/15625"
+      },
+      {
+        "matrixLabel": "37.0",
+        "startupType": "cold",
+        "arm": "B_SERVICE_ON_IDLE",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 138,
+        "p95Millis": "189862681/200000"
+      },
+      {
+        "matrixLabel": "37.0",
+        "startupType": "hot",
+        "arm": "A_SERVICE_OFF",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 364,
+        "p95Millis": "51356551/1000000"
+      },
+      {
+        "matrixLabel": "37.0",
+        "startupType": "hot",
+        "arm": "B_SERVICE_ON_IDLE",
+        "validCount": 100,
+        "nearestRankOrdinal": 95,
+        "rankLaunchIndex": 357,
+        "p95Millis": "27461741/500000"
+      }
+    ]
+  },
+  "resourceEvidence": {
+    "tasks": 144,
+    "cpuIntervals": {
+      "target": 144,
+      "agent": 144
+    },
+    "pssEndpoints": {
+      "target": 288,
+      "agent": 288
+    },
+    "frameReports": 432,
+    "naturalFinalFrameWatermarks": 144,
+    "manualAcceptedWrites": 288,
+    "modelAcceptedWrites": 144,
+    "deadlineExceededByApi": {
+      "31": {
+        "exceeded": 27,
+        "comparable": 54
+      },
+      "32": {
+        "exceeded": 25,
+        "comparable": 54
+      },
+      "33": {
+        "exceeded": 29,
+        "comparable": 54
+      },
+      "34": {
+        "exceeded": 30,
+        "comparable": 54
+      },
+      "35": {
+        "exceeded": 27,
+        "comparable": 54
+      },
+      "36": {
+        "exceeded": 23,
+        "comparable": 54
+      },
+      "37": {
+        "exceeded": 28,
+        "comparable": 54
+      }
+    },
+    "api30NominalComparison": {
+      "exceeded": 0,
+      "comparable": 54,
+      "deadlineAndGpu": "unavailable"
+    },
+    "droppedReportCount": 0,
+    "lateDroppedReportCount": 0,
+    "lateReportCount": 0,
+    "overflowCount": 0,
+    "incompleteDrainCount": 0,
+    "refreshAttributionUncertainCount": 0,
+    "api31PlusUnknownDeadlineCount": 0,
+    "api31PlusNonpositiveDeadlineCount": 0
+  },
+  "readiness": {
+    "expectedLaunchCount": 3200,
+    "recordedLaunchCount": 3200,
+    "launchStatuses": {
+      "passed": 3200
+    },
+    "readinessAttemptedCount": 3200,
+    "readinessVerifiedCount": 3200,
+    "readinessFailureReasons": {},
+    "initialA11yObservedCount": 3200,
+    "initialA11yUnavailableCount": 0,
+    "initialA11yFalseCount": 1,
+    "initialA11yFalseReasons": {
+      "focused_window_count": 1
+    },
+    "initialA11yReasons": {
+      "ready": 3199,
+      "focused_window_count": 1
+    },
+    "observationCount": 3201,
+    "observationCountDistribution": {
+      "1": 3199,
+      "2": 1
+    },
+    "observedA11yFalseReasons": {
+      "focused_window_count": 1
+    },
+    "observedGuardSnapshotResults": {
+      "passed": 6402
+    },
+    "recordedTerminalGuardResults": {},
+    "independentGuardMismatches": 0,
+    "markerOverlapCount": 0,
+    "readinessTimeoutCount": 0,
+    "observationStartsAtOrAfterDeadlineCount": 0,
+    "observationCompletionsAtOrAfterDeadlineCount": 0,
+    "verifiedAtOrAfterDeadlineCount": 0,
+    "readinessDurations": {
+      "plannedCount": 3200,
+      "measuredCount": 3200,
+      "unavailableCount": 0,
+      "minNanos": 1680944,
+      "medianNanos": 5868124.5,
+      "maxNanos": 210124992
+    }
+  },
+  "observedRetryCase": {
+    "api": 34,
+    "rawPath": "app-experience/api-34/launch-288.json",
+    "rawSha256": "7a87ddde5be32a917a19712f91f504898c9b5e699115b1c05778e0e57baf8c3b",
+    "launchIndex": 288,
+    "startupType": "hot",
+    "arm": "A_SERVICE_OFF",
+    "firstReason": "focused_window_count",
+    "focusedWindowCounts": [
+      0,
+      1
+    ],
+    "elapsedNanos": 210124992,
+    "providerAndAgentBracketPairs": 4,
+    "guardChanges": 0,
+    "originalMarker": "aos.experience.launch.288",
+    "originalMarkerEndNanos": 455896310523,
+    "readinessStartedNanos": 455896540667,
+    "originalTtidNanos": 24495945,
+    "ttidEndpointRechosen": false
+  },
+  "method": "Standard-library Fraction/Decimal raw re-computation; no project summary modules imported. Documentation metric cells are bound to the independently recomputed summary by its exact SHA; readiness is separately rederived from raw observations. Every main-scene P95 records its original sorted rank-95 sample.",
+  "traceScope": "This numeric audit checks original trace metadata, raw gzip/hash and CSV/measurement associations. Independent official Perfetto replay and supplemental resource ftrace coverage are separate audits. No assertion that every resource drawing slice or final ftrace drain appears in the trace; resources use original CPU/PSS/FrameMetrics evidence. Unknown auxiliary trace-tail mechanisms are not inferred as physical truncation or stop failure.",
+  "artifacts": [
+    {
+      "path": "/workspace/scratch/app-experience-audit/formal-41082958303-independent-audit.json",
+      "bytes": 1311602,
+      "sha256": "34649020b96af91fc0f5312f5b0002a5500cce845c1f3e603ed07800761dd816"
+    },
+    {
+      "path": "/workspace/scratch/app-experience-audit/formal-41082958303-doc-data-independent-audit.json",
+      "bytes": 2669,
+      "sha256": "62d9cc07dfadbd899701437ca50b1df136779e24c369a6c4a818151cc9b8b648"
+    },
+    {
+      "path": "/workspace/scratch/app-experience-audit/audit.py",
+      "bytes": 72381,
+      "sha256": "09252bee01a423af2e81a48db26c1acc54186d39355563045b671380058c22ce"
+    },
+    {
+      "path": "/workspace/scratch/app-experience-audit/audit_doc_tables.py",
+      "bytes": 16001,
+      "sha256": "bb60437de7425c53c615114f0839ca31bf4023bcb6ab3a87cef4954e05e6c76f"
+    },
+    {
+      "path": "/workspace/scratch/app-experience-formal-41082958303-frame-audit/independent-task-frame-audit.json",
+      "bytes": 86464,
+      "sha256": "d257523bdeb770c6e82238878be449f3f9fc5b976bfa0710a0de7ebd0610ae89"
+    },
+    {
+      "path": "/workspace/scratch/app-experience-formal-41082958303-frame-audit/audit_frames.py",
+      "bytes": 15623,
+      "sha256": "8b2cf32364b9f2b34ceeca25c13797c36772004f5dc0c11d6230dde4577e2d73"
+    }
+  ]
+}

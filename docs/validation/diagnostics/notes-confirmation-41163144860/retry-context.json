@@ -1,0 +1,30 @@
+{
+  "sourceCommit": "435d91b794ddc4efca52de56b4be4f31997639a3",
+  "runId": 41163144860,
+  "reason": "Independent full32 retry after original API36 emulator userdata partition failed for disk space; original32 retains its actual outcomes.",
+  "previousRunId": 41161477724,
+  "previousSource": "ad0f0a723e2efbb146a06e173a0ebdecc6706ee6",
+  "originalLogFatal": "Not enough space to create userdata partition. Available: 5144.23 MB at /home/runner/.android/avd/agent-os-third-party.avd, need 7372.80 MB.",
+  "workflowChanges": [
+    "sparse checkout excluding historical screenshots in build/probe jobs",
+    "max-parallel=8; unchanged API list, fail-fast=false and original four methods per API"
+  ],
+  "unchanged": {
+    "app/src/main": true,
+    "core/src/main": true,
+    "fixture/src/main": true,
+    "compat-smoke/src/androidTest": true,
+    "scripts/third_party_smoke_set.py": true,
+    "scripts/third_party_smoke_set_archive.py": true,
+    "docs/validation/third-party-app-set-lock.json": true,
+    "docs/validation/notes-dialog-confirmation-v4.md": true
+  },
+  "mergeWithOriginalDenominator": false,
+  "deviceOutcome": "completed",
+  "originalStateCounts": {
+    "passed": 23,
+    "failed": 9,
+    "unverified": 0
+  },
+  "allPlannedCombinationsExecuted": true
+}

@@ -2,6 +2,17 @@
 
 本项推进[真实 APK 日常使用检查点](third-party-smoke.md)。历史 v4 八档固定 32 项有 8 个 Notes 失败：API31/32 发送一次已接受的 BACK 后耗尽四次隐藏采样；API36/37 未发送 BACK，也耗尽四次隐藏采样。现有明细来自失败后的截图检查，不能替代原四次准备读取，因此本次先补齐缺失的原时序证据。
 
+## 本次实际结果
+
+两批分别保留原源码与固定32项分母，没有相互补值。
+
+| 原运行 / 源码 | 通过 | 失败 | 未验证 | 结论 |
+| --- | ---: | ---: | ---: | --- |
+| [41161477724 / ad0f](../../screenshots/third-party-41161477724-1/manifest.json) | 22 | 6 | 4 | API36磁盘不足未启动，其余六项Notes失败取得24次原隐藏读取 |
+| [41163144860 / 435d](../../screenshots/third-party-41163144860-1/manifest.json) | 23 | 9 | 0 | 八档全执行；原八项Notes隐藏失败取得32次原读取，另API30标题输入前包含检查失败 |
+
+本轮完成原八项隐藏失败的原读取诊断，尚未完成稳定修复或应用检查点验收。API35独立真实APK录像4/4与普通整体录像13阶段/8确认已归档，不并入上表。
+
 ## 本次固定范围
 
 仍为官方 Calculator 1.4.0 和 Notes 1.7.0、API30–37 八档、Agent 关闭与绑定空闲两态，共 32 项。APK、签名、样本清单、v4 JSON/schema、四个实际方法、准入条件及失败结论均保持。诊断只修改 compat-smoke 测试 APK，不改 Agent 生产行为和第三方 APK。
@@ -18,7 +29,7 @@
 
 ## 验证与下一步
 
-本地检查覆盖原异常/JSON/动作权限不变、4 次原样本与固定期限、完整八字段和最大数值容量、显式截断、冻结后不受修改影响，以及宿主归档保留完整 suppressed 输出。独立审查通过；compat-smoke 与测试 APK 构建、lint 通过，891 项完整宿主回归无跳过且全部通过（118.732 秒），其中相关归档检查为 34 项。本轮七档进入原四方法并执行初始化检查；API36在模拟器启动前失败，该档不能记成初始化或流程通过。
+本地检查覆盖原异常/JSON/动作权限不变、4 次原样本与固定期限、完整八字段和最大数值容量、显式截断、冻结后不受修改影响，以及宿主归档保留完整 suppressed 输出。独立审查通过；compat-smoke 与测试 APK 构建、lint 通过，891 项完整宿主回归无跳过且全部通过（118.732 秒），其中相关归档检查为 34 项。第一批七档进入原四方法并执行初始化检查；API36在模拟器启动前失败，该档不能记成初始化或流程通过。第二批八档均实际执行，结果见下表。
 
 本地检查后已在同一源码执行原八档32项，另独立执行API35四项真实APK录像与整体操作录像。各运行分母独立，录像不并入八档通过率，失败不替换。以下根据原拒绝读取分析；未降低隐藏门槛。
 
@@ -52,4 +63,18 @@ API36原[作业日志](diagnostics/notes-confirmation-41161477724/api36-job-orig
 
 ## 环境修正后的独立复测
 
-第一批API36的明确磁盘失败使原读取证据不完整，因此在源码 `435d91b794ddc4efca52de56b4be4f31997639a3` 启动独立完整[32项41163144860](https://github.com/ecojust/Agent-OS/actions/runs/41163144860)。生产代码、compat测试、原采集/归档器、APK锁与v4契约相对ad0f没有改动；采用上述已验证的稀疏检出及八档并行，排除历史screenshots工作树。此轮正在执行，实际环境恢复与32项结果待原件核验；不覆盖第一批22/6/4，不追加合并分母，不以原API35录像冒充新源码录像。
+第一批API36的明确磁盘失败使原读取证据不完整，因此在源码 `435d91b794ddc4efca52de56b4be4f31997639a3` 执行独立完整[32项41163144860](https://github.com/ecojust/Agent-OS/actions/runs/41163144860)。生产代码、compat测试、原采集/归档器、APK锁与v4契约相对ad0f[没有改动](diagnostics/notes-confirmation-41163144860/retry-context.json)；采用上述稀疏检出及八档并行，排除历史screenshots工作树。原API35录像仍标注ad0f，不冒充435d录像。
+
+本轮 **23通过、9失败、0未验证**，32项全部执行：Calculator16/16；Notes7/16。16次官方APK安装、32次身份核验和设置恢复、7次Notes新进程完整标题/正文读回均核验。[归档](../../screenshots/third-party-41163144860-1/manifest.json)保留56载荷、2,493,872字节、32张计算器PNG和32条Notes blocked；[来源、全部载荷及原仪器审核](diagnostics/notes-confirmation-41163144860/archive-audit.json)通过。
+
+API36在03:12:29 UTC启动成功，03:12:31实际调用探针，四方法均执行，计算器两项通过、Notes两项隐藏失败。[独立启动证据](diagnostics/notes-confirmation-41163144860/api36-start-evidence.json)与[原job日志](diagnostics/notes-confirmation-41163144860/api36-job-original.txt)绑定本轮源、时间及原文件摘要。这证明本次环境已恢复执行，不是Notes通过或长期磁盘稳定证明；第一批四项未验证保持。
+
+[第二批逐项报告](diagnostics/notes-confirmation-41163144860/notes-diagnostic-findings.md)、[原诊断/32次WMS](diagnostics/notes-confirmation-41163144860/notes-same-read-analysis.json)和[历史32组合对照](diagnostics/notes-confirmation-41163144860/notes-historical-comparison.json)已独立复核。原API31/32/36/37八项隐藏失败再次出现；八条诊断均完整、身份和解析无异常。31/32保持一次已接受BACK、visible2/hidden4；36/37原决策及四次隐藏前、最后保留清单全部完整且IME=0，WMS三可见谓词仍true，均无BELOW_FOCUSED记录。所有原四次采样包装最晚在START+2,556毫秒完成，不能称为连续WMS观测满五秒。
+
+新增的第九项失败为API30 Notes关闭态：原堆栈停在标题`locked_note_title`的完整包含检查，发生在该次`ACTION_SET_TEXT`提交之前。确认准备为NOT_STARTED，BACK/visible/hidden/confirm/HOME均0；原件未保留该次应用/目标矩形，不能判定空矩形、越界、动画、快照变化或时序回归。[独立边界分析](diagnostics/notes-confirmation-41163144860/notes-extra-failure-analysis.json)保留错误、堆栈及冻结源码哈希。它与八项隐藏失败分别记录，也不与已有旋转失败合并归因。
+
+## 已缩小的下一步
+
+固定Android16/17的[窗口来源核对](diagnostics/notes-confirmation-41161477724/ime-window-list-source-note.md)说明，无障碍候选来自输入窗口回调，并检查NOT_VISIBLE、CLONE、空触摸区域和空frame；它不直接等同于WMS的三个可见谓词。这解释了为何两种来源可以不同，但原数据尚不能判定当次在哪一层缺项。四文件[固定源码索引](diagnostics/notes-confirmation-41161477724/ime-window-list-source-index.json)已核验；未证明测试镜像与公开tag逐字对应。
+
+下一步先保存API30标题包含检查的同次原矩形、窗口身份和读取次序；对API36/37，核对可用平台诊断中的原回调、筛选及共同对象标识；对API31/32，验证父层/Insets与隐藏缓存的实际生命周期。新增读取必须另立有界诊断，不能放宽现有隐藏、完整包含和遮挡守卫，不能重放标题输入或追加BACK，也不能用后续样本补写这两批。Agent执行态、升级、更多应用、真实模型和真机验收仍未完成。

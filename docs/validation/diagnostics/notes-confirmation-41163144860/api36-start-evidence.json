@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "kind": "original-job-emulator-start-evidence",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "435d91b794ddc4efca52de56b4be4f31997639a3",
+    "runId": 41163144860,
+    "attempt": 1,
+    "apiLevel": 36,
+    "jobId": 124425144343
+  },
+  "logsZip": {
+    "bytes": 298101,
+    "sha256": "d737b29e6e55368458649092d2846f282e16f1319928ca7f03aa5034cb3db153"
+  },
+  "originalJobLog": {
+    "entry": "5_probe (36).txt",
+    "bytes": 50815,
+    "sha256": "6f70afc3575d938cfb1ab6def2780e995633d13e316d29ce9289229422aba904"
+  },
+  "booted": [
+    {
+      "line": 477,
+      "text": "2026-10-31T03:12:29.1326915Z Emulator booted."
+    }
+  ],
+  "actualProbeInvocation": [
+    {
+      "line": 482,
+      "text": "2026-10-31T03:12:31.6839978Z [command]/usr/bin/sh -c python3 scripts/third_party_smoke_set.py run --api '36' --output \"$RUNNER_TEMP/third-party-evidence/api-36\" --sdk-root \"$ANDROID_HOME\" --calculator-apk \"$RUNNER_TEMP/calculator-1.4.0.apk\" --notes-apk \"$RUNNER_TEMP/notes-1.7.0.apk\" --agent-apk \"$RUNNER_TEMP/third-party-apks/app/build/outputs/apk/debug/app-debug.apk\" --probe-apk \"$RUNNER_TEMP/third-party-apks/compat-smoke/build/outputs/apk/debug/compat-smoke-debug.apk\" --test-apk \"$RUNNER_TEMP/third-party-apks/compat-smoke/build/outputs/apk/androidTest/debug/compat-smoke-debug-androidTest.apk\""
+    }
+  ],
+  "priorDiskFatalObserved": false,
+  "scope": "This independent second batch reached the actual APK probe; no assertion is made here that its app cases passed, or that every future runner has sufficient disk.",
+  "jobConclusion": "failure",
+  "environmentRecoveredForThisLane": true,
+  "allFourUiCasesPassed": false,
+  "applicationAcceptance": false,
+  "rawDevice": {
+    "serial": "emulator-5554",
+    "apiLevel": 36,
+    "fingerprint": "Android/sdk_phone64_x86_64/emu64x:16/BE2A.250530.026.D1/13818094:userdebug/test-keys",
+    "abi": "x86_64",
+    "kernelQemu": "1",
+    "bootQemu": "1"
+  },
+  "rawReportStatus": "failed",
+  "instrumentation": {
+    "cases": {
+      "notesWithAgentDisabled": {
+        "code": -2,
+        "status": "failed",
+        "exception": "dev.agentos.compat.SmokeHarness$NotesPreparationTimeout: Notes v4 observation timed out: reason=confirmation_input_method_hidden_not_verified automaticBackPolicy=single-back-only-before-notes-create-confirm imeSamples=0 lastImeSurface=NOT_SAMPLED"
+      },
+      "notesWithAgentBoundAndIdle": {
+        "code": -2,
+        "status": "failed",
+        "exception": "dev.agentos.compat.SmokeHarness$NotesPreparationTimeout: Notes v4 observation timed out: reason=confirmation_input_method_hidden_not_verified automaticBackPolicy=single-back-only-before-notes-create-confirm imeSamples=0 lastImeSurface=NOT_SAMPLED"
+      },
+      "calculatorWithAgentBoundAndIdle": {
+        "code": 0,
+        "status": "passed",
+        "exception": null
+      },
+      "calculatorWithAgentDisabled": {
+        "code": 0,
+        "status": "passed",
+        "exception": null
+      }
+    },
+    "startedMethods": [
+      "calculatorWithAgentBoundAndIdle",
+      "calculatorWithAgentDisabled",
+      "notesWithAgentBoundAndIdle",
+      "notesWithAgentDisabled"
+    ],
+    "missingResults": [],
+    "completed": true,
+    "commandCompleted": true,
+    "finalCodes": [
+      "-1"
+    ],
+    "runnerErrors": [],
+    "danglingStatusFields": []
+  },
+  "caseCounts": {
+    "passed": 2,
+    "failed": 2
+  },
+  "rawEvidence": [
+    {
+      "path": "screenshots/third-party-41163144860-1/api-36/report.json",
+      "bytes": 97597,
+      "sha256": "10caf18089dca4a57c3ba4fbf0eac0be796f9dfb3fad3addf0029a97183571b6"
+    },
+    {
+      "path": "screenshots/third-party-41163144860-1/api-36/ui-results.json",
+      "bytes": 93256,
+      "sha256": "178636603fc3711de92ec9a81f19fed475e859c3cee49a637e09718d46331da8"
+    },
+    {
+      "path": "screenshots/third-party-41163144860-1/api-36/instrumentation.json",
+      "bytes": 18794,
+      "sha256": "4842ca6e695d573ffa967dcfbd2686dd91e6173827f2cdb7f44289231e4ebf3e"
+    }
+  ]
+}

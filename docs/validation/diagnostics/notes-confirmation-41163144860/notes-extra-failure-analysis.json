@@ -1,0 +1,151 @@
+{
+  "kind": "notes-pre-confirmation-failure-analysis",
+  "sourceRun": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 41163144860,
+    "attempt": 1,
+    "commit": "435d91b794ddc4efca52de56b4be4f31997639a3",
+    "url": "https://github.com/ecojust/Agent-OS/actions/runs/41163144860",
+    "conclusion": "failure",
+    "event": "workflow_dispatch",
+    "branch": "master"
+  },
+  "api": "30",
+  "app": "notes-1.7.0",
+  "state": "off",
+  "rawPayloads": {
+    "report.json": {
+      "bytes": 108368,
+      "sha256": "33157833af4cfc6ccc82ee3eafdb70302d4bcec86927d5b3b69b438222771f82"
+    },
+    "ui-results.json": {
+      "bytes": 104088,
+      "sha256": "e8da978e782be894aec8ee0debd27a22d56f4aff154cc3b4f1c0a93e8b387e4f"
+    },
+    "instrumentation.json": {
+      "bytes": 5658,
+      "sha256": "fcdd6f6c59dbd67b9d7086c4ae5d798758b5f3d666a398c7a92c22bf96f1e726"
+    }
+  },
+  "originalStatus": "failed",
+  "originalStage": "create_note",
+  "originalError": "AssertionError: Notes resource is not fully inside its original application window",
+  "originalSteps": [
+    {
+      "name": "installed_identity",
+      "status": "passed",
+      "details": "PackageManager identity and installed APK digest match the frozen official release"
+    },
+    {
+      "name": "service_state_before",
+      "status": "passed",
+      "details": "Settings, accessibility binding and activity service records agree"
+    },
+    {
+      "name": "launch_notes",
+      "status": "passed",
+      "details": "PackageManager resolved the installed launcher alias and a real notes editor became visible"
+    },
+    {
+      "name": "create_note",
+      "status": "failed",
+      "details": "AssertionError: Notes resource is not fully inside its original application window"
+    },
+    {
+      "name": "restore_service_settings",
+      "status": "passed",
+      "details": "Original accessibility component list restored and Agent service unbound; system owns the global accessibility flag"
+    }
+  ],
+  "originalConfirmationPreparation": {
+    "policy": "once-verified-create-dialog",
+    "stage": "NOT_STARTED",
+    "backAttempts": 0,
+    "backDownAttempted": false,
+    "backDownAccepted": null,
+    "backUpAttempted": false,
+    "backUpAccepted": null,
+    "backPreconditionVerified": false,
+    "visibleSamples": 0,
+    "hiddenSamples": 0,
+    "elapsedMillis": 0,
+    "originalDialogWindowId": null,
+    "finalDialogWindowId": null,
+    "preBackTitleMatched": null,
+    "preBackTitleFocused": null,
+    "preBackTitleEditable": null,
+    "postTitleMatched": null,
+    "postTitleFocused": null,
+    "postTitleEditable": null,
+    "imeHiddenVerified": false,
+    "confirmTargetReached": false,
+    "confirmAttempts": 0,
+    "confirmAccepted": null
+  },
+  "originalHomeAttempts": 0,
+  "originalStacks": [
+    {
+      "line": 13,
+      "rawLines": [
+        "INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Notes resource is not fully inside its original application window",
+        "\tat dev.agentos.compat.SmokeHarness.require(SmokeHarness.java:1023)",
+        "\tat dev.agentos.compat.SmokeHarness.requireUsableNotesNode(SmokeHarness.java:853)",
+        "\tat dev.agentos.compat.SmokeHarness.awaitNotesTarget(SmokeHarness.java:616)",
+        "\tat dev.agentos.compat.SmokeHarness.awaitNotesTarget(SmokeHarness.java:580)",
+        "\tat dev.agentos.compat.SmokeHarness.awaitNotesTarget(SmokeHarness.java:576)",
+        "\tat dev.agentos.compat.SmokeHarness.notesSetText(SmokeHarness.java:832)",
+        "\tat dev.agentos.compat.ApplicationSetCompatibilityInstrumentedTest.exercise(ApplicationSetCompatibilityInstrumentedTest.java:212)",
+        "\tat dev.agentos.compat.ApplicationSetCompatibilityInstrumentedTest.notesWithAgentDisabled(ApplicationSetCompatibilityInstrumentedTest.java:76)"
+      ]
+    },
+    {
+      "line": 25,
+      "rawLines": [
+        "java.lang.AssertionError: Notes resource is not fully inside its original application window",
+        "\tat dev.agentos.compat.SmokeHarness.require(SmokeHarness.java:1023)",
+        "\tat dev.agentos.compat.SmokeHarness.requireUsableNotesNode(SmokeHarness.java:853)",
+        "\tat dev.agentos.compat.SmokeHarness.awaitNotesTarget(SmokeHarness.java:616)",
+        "\tat dev.agentos.compat.SmokeHarness.awaitNotesTarget(SmokeHarness.java:580)",
+        "\tat dev.agentos.compat.SmokeHarness.awaitNotesTarget(SmokeHarness.java:576)",
+        "\tat dev.agentos.compat.SmokeHarness.notesSetText(SmokeHarness.java:832)",
+        "\tat dev.agentos.compat.ApplicationSetCompatibilityInstrumentedTest.exercise(ApplicationSetCompatibilityInstrumentedTest.java:212)",
+        "\tat dev.agentos.compat.ApplicationSetCompatibilityInstrumentedTest.notesWithAgentDisabled(ApplicationSetCompatibilityInstrumentedTest.java:76)"
+      ]
+    },
+    {
+      "line": 84,
+      "rawLines": [
+        "java.lang.AssertionError: Notes resource is not fully inside its original application window",
+        "\tat dev.agentos.compat.SmokeHarness.require(SmokeHarness.java:1023)",
+        "\tat dev.agentos.compat.SmokeHarness.requireUsableNotesNode(SmokeHarness.java:853)",
+        "\tat dev.agentos.compat.SmokeHarness.awaitNotesTarget(SmokeHarness.java:616)",
+        "\tat dev.agentos.compat.SmokeHarness.awaitNotesTarget(SmokeHarness.java:580)",
+        "\tat dev.agentos.compat.SmokeHarness.awaitNotesTarget(SmokeHarness.java:576)",
+        "\tat dev.agentos.compat.SmokeHarness.notesSetText(SmokeHarness.java:832)",
+        "\tat dev.agentos.compat.ApplicationSetCompatibilityInstrumentedTest.exercise(ApplicationSetCompatibilityInstrumentedTest.java:212)",
+        "\tat dev.agentos.compat.ApplicationSetCompatibilityInstrumentedTest.notesWithAgentDisabled(ApplicationSetCompatibilityInstrumentedTest.java:76)"
+      ]
+    }
+  ],
+  "sourceFiles": {
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/SmokeHarness.java": {
+      "source": "435d91b794ddc4efca52de56b4be4f31997639a3",
+      "sha256": "7eb89f3aeb2911b466ca758c280cb03cdb589a9eba971eef49bf672de9cf2a1e"
+    },
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/ApplicationSetCompatibilityInstrumentedTest.java": {
+      "source": "435d91b794ddc4efca52de56b4be4f31997639a3",
+      "sha256": "89210b6cf812ca0e1da69da7a16f1a6bb6ac667b06b8481d78c247824579dcf4"
+    }
+  },
+  "sourceOrderInference": {
+    "resource": "locked_note_title",
+    "guard": "!app.isEmpty() && !target.isEmpty() && app.contains(target)",
+    "stackLocation": "requireUsableNotesNode:853 -> awaitNotesTarget:616/580/576 -> notesSetText:832 -> exercise:212",
+    "inference": "The failed awaitNotesTarget call precedes this notesSetText call's ACTION_SET_TEXT submission; it is also before notesConfirmCreate.",
+    "limitation": "No coordinates or NotesRead diagnostic were persisted for this throwing check; source order does not identify the cause of the failed rectangle predicate."
+  },
+  "forbiddenInferences": [
+    "No bounds are reconstructed from a later capture or another run.",
+    "Do not attribute this failure to IME hiding, layer filtering, animation, input focus, or diagnostic overhead without original evidence."
+  ]
+}

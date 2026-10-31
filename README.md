@@ -48,11 +48,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** Notes原诊断第一批已归档：22通过/6失败/4未验证，API36明确为磁盘不足；24次原WMS区分31/32隐藏未证实与37清单缺IME。独立稀疏检出批次41163144860执行中，历史分母保留。
+**本次更新：** 完成Notes原读取诊断与两批独立归档：最新八档32项全执行，23通过/9失败；原8项隐藏失败取得32次原WMS，另API30标题输入前边界失败。稀疏检出后API36恢复启动，旧22/6/4保留；最新两类视频已列入README。
 
-**记录时间：** 2026-10-31T03:12:23Z
+**记录时间：** 2026-10-31T03:18:09Z
 
-[最近测试截图与清单](screenshots/third-party-41161477724-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41161477724)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/third-party-41163144860-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41163144860)。通过、失败及未截图原因见清单。
 
 **整体操作演示：** [播放视频](screenshots/demos/41161481513-1/demo.mp4) · [录制与验证清单](screenshots/demos/41161481513-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41161481513)。
 录制版本：[`ad0f0a723`](https://github.com/ecojust/Agent-OS/commit/ad0f0a723e2efbb146a06e173a0ebdecc6706ee6)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
@@ -79,7 +79,7 @@
 <tr><td nowrap>绑定界面版本的坐标操作</td><td nowrap>进行中</td><td>已验证：只读坐标定位可解析绑定当前观察版本的节点候选。未完成：坐标点击/滑动仍关闭，图片到屏幕映射、捕获身份/时效及最终提交校验待完成。下一步：冻结最小手势合同，验证过期、遮挡、取消与未知结果不重试。 <a href="docs/VISUAL_PIPELINE.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
 <tr><td nowrap>普通操作连续执行与接管</td><td nowrap>进行中</td><td>已验证：ad0f源码API35普通流程13阶段、8次确认通过，36.162秒/506帧完整解码，安全标志保留；c7b繁忙停止独立演示1/1通过。仅启动/滚动/主页可选免确认，旧ready/旋转及MODEL帧失败保留。未完成：普通写操作连续执行和真实模型接管。下一步冻结连续写范围，补端到端接管与启动可用性验证。 <a href="screenshots/demos/41161481513-1/manifest.json">依据</a></td><td nowrap>2026-10-31 03:01:33</td></tr>
 <tr><td nowrap>真实模型跨应用任务验收</td><td nowrap>待实现</td><td>已验证：本地合成HTTP模型到执行器的链路；现有录像未使用外部模型。未完成：真实模型自主完成受控跨应用目标尚无验收证据。下一步：冻结实际模型服务、版本、授权应用和可独立核对结果的任务，在模拟器实跑并保留失败。 <a href="docs/PRODUCT_PLAN.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
-<tr><td nowrap>冻结常用应用样本与日常使用验收</td><td nowrap>进行中</td><td>ad0f固定32项22通过/6失败/4未验证，API36因磁盘不足未启动。六失败共24次原WMS已归档：31/32接受BACK后隐藏未证实；37原决策完整清单无IME，非已证实层级过滤。50载荷/28PNG审核通过，独立API35录像4/4。435d稀疏检出独立32项41163144860执行中；下一步核对API36及重复诊断，再验证IME清单/父层隐藏来源。原v4不放宽；执行态、升级和扩样未验收。 <a href="docs/validation/notes-confirmation-diagnostics.md">依据</a></td><td nowrap>2026-10-31 03:12:23</td></tr>
+<tr><td nowrap>冻结常用应用样本与日常使用验收</td><td nowrap>进行中</td><td>最新435d八档32项全执行，23通过/9失败：Calculator16/16、Notes7/16。原8项隐藏失败有32次原读取，31/32隐藏未证实，36/37原清单无IME；新增API30标题输入前完整包含检查失败。首批磁盘失败22/6/4保留，第二批API36已恢复执行；56载荷/32PNG核验，独立录像4/4。下一步保存标题同次矩形，核对IME上游对象身份和父层生命周期。原v4不放宽；执行态、升级和扩样未验收。 <a href="docs/validation/notes-confirmation-diagnostics.md">依据</a></td><td nowrap>2026-10-31 03:18:09</td></tr>
 <tr><td nowrap>跨厂商近五年真机与资源档验证</td><td nowrap>待外部条件</td><td>已完成：定义跨厂商、芯片、上市年份及资源档的选样要求。阻塞：尚无参考手机或真机测试环境，暂无机型验收。下一步：确定可用设备清单，按固定任务验证权限、后台行为与资源表现。 <a href="docs/COMPATIBILITY.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
 <tr><td nowrap>参考机 AOSP 集成与平台兼容套件</td><td nowrap>待外部条件</td><td>已完成：定义系统集成、特权桥接与兼容验证目标。阻塞：参考机、可解锁性、内核和厂商驱动未确定，尚无可刷写镜像。下一步：确定机型和可维护源码基线，再完成构建、启动及平台兼容套件验证。 <a href="docs/PRODUCT_PLAN.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
 <tr><td nowrap>机型 OTA 与失败启动恢复</td><td nowrap>待外部条件</td><td>已完成：定义OTA、降级限制与失败启动恢复要求。阻塞：尚无参考机镜像和可验证恢复环境，未完成实际OTA/恢复。下一步：在机型确定后验证签名、升级、失败恢复及数据保留边界。 <a href="docs/DESIGN_RULES.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>

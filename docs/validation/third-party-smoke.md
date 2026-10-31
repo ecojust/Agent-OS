@@ -4,11 +4,16 @@
 
 ## 2026-10-31：补齐创建确认的原读取诊断
 
-已按[原读取诊断方案](notes-confirmation-diagnostics.md)完成源码ad0f的八档[运行41161477724](../../screenshots/third-party-41161477724-1/manifest.json)：固定32项为 **22通过、6失败、4未验证**。API36因userdata分区磁盘不足未启动，四项保留未验证。其他七档14次官方APK安装成功；Calculator14通过、2未验证；Notes8通过、6失败、2未验证。50载荷、2,210,433字节、28张计算器PNG和28条Notes blocked均已核验。
+已按[原读取诊断方案](notes-confirmation-diagnostics.md)完成两批独立八档复测，原v4判定、固定32项、APK身份、五秒期限和动作额度保持。
 
-六个Notes失败完整保留24次原隐藏WMS读取：API31/32返回键已接受，但onScreen与保留子表面状态不满足原隐藏条件；API37的原BACK决策清单完整且没有IME条目，不能归因于已观察到的低层IME被过滤。原WMS、时序和[逐案分析](diagnostics/notes-confirmation-41161477724/notes-diagnostic-findings.md)已归档；平台父层隐藏与五秒缓存只作为机制线索，未宣称稳定修复。原v4判定、样本、APK身份、五秒和动作额度保持。
+| 运行 / 源码 | 通过 / 失败 / 未验证 | 范围与证据 |
+| --- | --- | --- |
+| [41161477724 / ad0f](../../screenshots/third-party-41161477724-1/manifest.json) | 22 / 6 / 4 | API36因userdata磁盘不足未启动；七档14次官方安装成功，50载荷/2,210,433B/28计算器PNG和28 Notes blocked已核验 |
+| [41163144860 / 435d](../../screenshots/third-party-41163144860-1/manifest.json) | 23 / 9 / 0 | 稀疏检出后八档均执行，16次官方安装成功；56载荷/2,493,872B/32计算器PNG和32 Notes blocked已核验 |
 
-本地构建/lint、891项宿主回归与独立审查通过；API35独立录像4/4见下节。为验证磁盘环境修正，另以已提交稀疏检出配置在435d源码执行完整[32项41163144860](https://github.com/ecojust/Agent-OS/actions/runs/41163144860)，尚待结果；不回填第一批或合并历史分母。
+最新一批Calculator16/16、Notes7/16。原API31/32/36/37的Notes两态八项隐藏失败再次出现，取得完整32次原隐藏WMS读取；31/32返回键已接受但原严格隐藏条件未满足，36/37原决策清单完整且无IME条目，不能归因于低层IME被过滤。新增API30关闭态在标题ACTION_SET_TEXT前完整包含检查失败，确认准备尚未开始；未保存同次矩形，不能断言具体几何/动画原因。[第二批逐案报告](diagnostics/notes-confirmation-41163144860/notes-diagnostic-findings.md)与原件分别保留，未用第二批补第一批四项未验证。
+
+本轮补齐了原读取证据并验证API36环境恢复，尚无稳定修复结论。AOSP表面缓存及输入窗口来源调查只是机制依据；下一步分别核对同次标题矩形、IME上游清单/共同对象身份与父层生命周期。本地构建/lint、891项宿主回归与独立审查通过；下节API35录像4/4独立统计。Agent执行态、升级和扩大样本仍未验收。
 
 ## API35实际操作录像（2026-10-31）
 

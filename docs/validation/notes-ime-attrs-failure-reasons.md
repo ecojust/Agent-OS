@@ -53,3 +53,5 @@ API36关闭/空闲两态均报告`ATTRS_SIZE_LIMIT`：第3/11条正式Window分�
 [可复现宿主验证](diagnostics/notes-ime-attrs-scan-2026-10-31/java-host-tests/host-validation.json)通过25项采集检查、2607组扫描差分（1789组旧非SIZE域保持，818组变化属于旧SIZE域）及83项边界检查。实际API36记录后半段是否可接受，仍须新冻结源码的一轮32项结果；本地合成样本不能代替设备证据。
 
 独立复核250组完整WMS比较、770断言通过，20处变化均属于旧SIZE域；8条v2详情的完整标记5923字符。[独立采集审查](diagnostics/notes-ime-attrs-scan-2026-10-31/independent-collector-review.json)记录实际worker截断拒绝等边界。分析器44项检查通过，72f/9b/355三轮各32项及原marker逐值回放一致，旧355仍按8192限制解释。构建/lint通过（44秒），见[本地回执](diagnostics/notes-ime-attrs-scan-2026-10-31/local-validation.json)。
+
+修正源码固定为`cdea60c126af3cb50805f6e989eccbf7a7a1efb1`，独立完整32项[41178248694](https://github.com/ecojust/Agent-OS/actions/runs/41178248694)及整体录像[41178250336](https://github.com/ecojust/Agent-OS/actions/runs/41178250336)已启动，尚待审核。见[修正来源绑定](diagnostics/notes-ime-attrs-scan-2026-10-31/source-runs.json)；当前README仍保留355实际影片，不把旧片标为新版本。

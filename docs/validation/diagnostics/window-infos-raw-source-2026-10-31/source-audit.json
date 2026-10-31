@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "kind": "raw-window-source-audit",
+  "auditedAt": "2026-10-31T16:14:18.979087+00:00",
+  "repositoryBaseline": "c362d4db805a964a8c0358625753606784c8a472",
+  "scope": "固定源码可行性与下一独立实验合同，不是设备测试或修复验收",
+  "sourceIndexSha256": "a30bfd0e8a09b4910de623f6b8983161ad65ca70a29161cd54289e509264bbc5",
+  "hashVerifiedSourceFiles": 78,
+  "sourceBytes": 15468377,
+  "urlCommitAndLineRangeChecks": "passed",
+  "duplicateSourceAgreement": "passed",
+  "fixedCommits": [
+    "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+    "ae266dcb706d083868578cfedce381ef44488a07",
+    "b753cf97923c3695338d21466fa14c57b480a59a",
+    "ece66975738007dd0978b911d8a2077e49b8f31e"
+  ],
+  "findings": {
+    "rawFieldSource": "SF InputWindowHandle with packageName, ownerUid, layoutParamsType, displayId, inputConfig, frame, touchableRegion and actual IWindow Binder",
+    "candidate": "configured_package_uid_ime_type_candidate",
+    "identityGrouping": "distinct non-null Binder; preserve every row including CLONE, NOT_VISIBLE and empty geometry",
+    "forTestPerformsPopulatorFiltering": false,
+    "sameBinderImpliesSameSnapshot": false,
+    "rawContainsAllWmsWindows": false,
+    "shellRoute": "source-supported diagnostic candidate, not runtime verified",
+    "runtimePolicyChanged": false,
+    "newRawDeviceRuns": 0,
+    "originalNotesCasesRerun": 0,
+    "originalNotesResults": {
+      "passed": 24,
+      "failed": 8
+    },
+    "nextExperiment": "single bounded shell experiment: admission, one raw registration, controlled positive observation, four predicates, unregister; not another lookup-only result"
+  },
+  "limitations": [
+    "实际CI镜像与固定AOSP/ART源码尚未建立字节一致性",
+    "包名/UID/类型候选不独立证明具体IME服务组件",
+    "初始缓存为空或无候选不证明系统中不存在该窗口",
+    "本地摘要复核验证下载字节与索引一致，不等同Android运行结果"
+  ],
+  "independentReview": {
+    "status": "passed_after_correction",
+    "blockingFinding": "遗漏最终A11yWindow不等同没有内部注册windowId",
+    "resolution": "已改为即使内部存在注册ID，查询仍要求最终A11yWindow存在",
+    "nonblockingFinding": "Java handles上限不限制回调前JNI数组转换",
+    "resolutionNote": "验收合同已明确该边界",
+    "reviewedDocumentSha256": "268772b81272a243bdb3b9b59294ce6ca5b4095b097c5ebad99090b45c8da6b7"
+  },
+  "indexCorrectionsBeforeFreeze": [
+    "LayerProtoHeader.h行范围25–28修正为25–27（文件27行）",
+    "rect.proto行范围22–27修正为21–26（文件26行）"
+  ]
+}

@@ -76,3 +76,8 @@
 214源码的[33.502秒整体录像](../../screenshots/demos/41180137894-1/demo.mp4)完成13阶段、8次确认；[原清单](../../screenshots/demos/41180137894-1/manifest.json)和[审核](diagnostics/window-infos-capability-2026-10-31/overall-video-audit.json)保存来源、30载荷/22PNG与468帧完整解码核验。视频为API35 Fixture及本地测试模型，既不是本页非视觉接口探针的录像，也不是真实模型或真机验收。
 
 README普通任务类型更新为本轮实际影片；72f真实APK录像保持实际来源。旧cdea ready阶段服务未连接的[失败短片](../../screenshots/demos/41178250336-1/demo.mp4)和[原件](../../screenshots/demos/41178250336-1/manifest.json)保留。本轮录像成功不说明旧就绪性故障已稳定修复，服务设置变空的原因仍未定位；没有为获取成功片重复录制本轮源码。
+
+
+## 后续来源核查：已完成，运行验证仍待执行
+
+[原始窗口字段与身份来源审查](window-infos-raw-source.md)已确认固定AOSP17中shell原始监听器的字段和真实Binder链，补充了packageName及按独立Binder而非记录行计数的候选合同。ForTest并不执行Populator四项过滤；两者同窗匹配也不是同帧或具体IME组件证明。下一项已收敛为一次有界shell实验，在必要准入后进行实际注册、候选四谓词正对照和注销。本次仅完成源码可行性核查，没有新增设备probe，原24/8保留。

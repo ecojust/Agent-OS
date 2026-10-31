@@ -18,8 +18,21 @@
 
 另各执行一次独立API35真实APK四项录像和普通整体操作录像，失败同样归档，不重录以替换失败。API35四项不并入任何32项矩阵；普通录像使用合成Fixture与本地测试模型，不代表真实模型、Agent执行态写入、升级或真机验收。既有录像保留原来源，实际新录像审核后才更新README。
 
-本地验证已完成：compat-smoke及测试APK构建、lint通过（49秒），891项完整宿主回归全部通过、无跳过（112.304秒），其中相关归档检查34项；两次独立审查无阻断。新增Android初始化边界检查仍需在实际八档运行中执行。上述两轮32项及独立录像待执行，尚无本轮设备结论。输入法窗口来源接口的并行调查仅用于选择后续独立诊断，不向这两轮原准备流程添加平台采集。
+本地验证已完成：compat-smoke及测试APK构建、lint通过（49秒），891项完整宿主回归全部通过、无跳过（112.304秒），其中相关归档检查34项；两次独立审查无阻断。新增Android初始化边界检查仍需在实际八档运行中执行。上述两轮32项及独立录像已在下述固定源码启动，实际原件待审核，尚无本轮设备结论。输入法窗口来源接口的并行调查仅用于选择后续独立诊断，不向这两轮原准备流程添加平台采集。
 
 ## 并行完成的输入法接口可行性核对
 
 固定源码的[只读接口方案](diagnostics/notes-ime-interfaces-2026-10-31/ime-dump-interface-plan.md)及15份[源码摘要](diagnostics/notes-ime-interfaces-2026-10-31/ime-interface-source-index.json)已核验。现有shell接口有条件提供WMS mClient、Populator windowToken与最终WindowInfo.token的文本候选关联，不必先改系统镜像；原selectedToken并非这个关联键。方案尚未在设备执行，不能保证候选唯一、镜像格式一致、取到原回调全部字段或证明IME隐藏。本轮几何诊断不增加这些dump；后续采集须独立计数并区分原失败与后置观察。
+
+## 固定源码与本次运行
+
+已冻结源码 `33ac5825bc7537b9a67c9daeeee6916da12256d6`；[本地验证与源边界](diagnostics/notes-target-geometry-2026-10-31/local-validation.json)保留实际文件摘要、日志摘要与原生产代码/四方法/锁文件不变证明。
+
+| 独立运行 | 固定范围 | 当前记录 |
+| --- | --- | --- |
+| [第一轮41165280718](https://github.com/ecojust/Agent-OS/actions/runs/41165280718) | 八档×两APK×关闭/空闲，32项 | 已启动，待原件审核 |
+| [第二轮41165282816](https://github.com/ecojust/Agent-OS/actions/runs/41165282816) | 同源独立32项 | 已启动，待原件审核 |
+| [真实APK录像41165285095](https://github.com/ecojust/Agent-OS/actions/runs/41165285095) | 仅API35原四项 | 已启动，待实际视频 |
+| [整体录像41165286817](https://github.com/ecojust/Agent-OS/actions/runs/41165286817) | API35合成Fixture/本地模型 | 已启动，待实际视频 |
+
+上述运行于2026-10-31 03:39 UTC分别启动，均绑定同一源码；未结束前不填入结果，也不将旧ad0f录像改名为本轮。

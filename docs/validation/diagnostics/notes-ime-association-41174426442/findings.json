@@ -1,0 +1,2063 @@
+{
+  "schemaVersion": 1,
+  "kind": "source-bound-corrected-attrs-post-failure-ime-association-findings",
+  "sourceRun": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 41174426442,
+    "attempt": 1,
+    "commit": "9b86b2a842f9e837e20e2df183893da697faaf40",
+    "url": "https://github.com/ecojust/Agent-OS/actions/runs/41174426442",
+    "conclusion": "failure",
+    "event": "workflow_dispatch",
+    "branch": "master"
+  },
+  "originalStateCounts": {
+    "passed": 24,
+    "failed": 8,
+    "unverified": 0
+  },
+  "plannedCombinations": 32,
+  "archiveIntegrityAndScopeValid": true,
+  "all32CombinationsExecuted": true,
+  "appStateCounts": {
+    "calculator-1.4.0": {
+      "passed": 16
+    },
+    "notes-1.7.0": {
+      "passed": 8,
+      "failed": 8
+    }
+  },
+  "payloadFileCount": 56,
+  "payloadTotalBytes": 2527152,
+  "captureCounts": {
+    "captured": 32,
+    "blocked": 32
+  },
+  "appCaptureCounts": {
+    "calculator-1.4.0": {
+      "captured": 32
+    },
+    "notes-1.7.0": {
+      "blocked": 32
+    }
+  },
+  "imageDimensions": {
+    "320x640": 32
+  },
+  "installationIdentitiesVerified": 32,
+  "notesFreshProcessFullReadbacksPassed": 8,
+  "associationDistinctCases": 8,
+  "associationOccurrences": 8,
+  "unassignedAssociationOccurrences": 0,
+  "malformedAssociationOccurrences": 0,
+  "associationConsistencyIssues": 0,
+  "originalConfirmationDistinctCases": 8,
+  "originalConfirmationSampleCount": 32,
+  "originalConfirmationConsistencyIssues": 0,
+  "geometryOccurrences": 0,
+  "unassignedGeometryOccurrences": 0,
+  "geometryConsistencyIssues": 0,
+  "commandStatusCounts": [
+    {
+      "id": "ACCESSIBILITY",
+      "status": "COMPLETE",
+      "count": 8
+    },
+    {
+      "id": "WMS_A11Y",
+      "status": "COMMAND_UNAVAILABLE",
+      "count": 4
+    },
+    {
+      "id": "WMS_A11Y",
+      "status": "COMPLETE",
+      "count": 4
+    },
+    {
+      "id": "WMS_WINDOWS",
+      "status": "COMPLETE",
+      "count": 8
+    }
+  ],
+  "parseReasonCounts": [
+    {
+      "id": "ACCESSIBILITY",
+      "status": "RECOGNIZED",
+      "reason": "REPORTED_WINDOW_PAIRS_PARSED",
+      "count": 4
+    },
+    {
+      "id": "ACCESSIBILITY",
+      "status": "UNAVAILABLE",
+      "reason": "ACCESSIBILITY_PAIRS_INCOMPLETE_OR_LEGACY",
+      "count": 4
+    },
+    {
+      "id": "WMS_A11Y",
+      "status": "RECOGNIZED",
+      "reason": "FILTERED_LISTS_PARSED",
+      "count": 4
+    },
+    {
+      "id": "WMS_A11Y",
+      "status": "UNAVAILABLE",
+      "reason": "SOURCE_UNAVAILABLE",
+      "count": 4
+    },
+    {
+      "id": "WMS_WINDOWS",
+      "status": "SELECTED",
+      "reason": "UNIQUE_CONFIGURED_IME_TEXT_CANDIDATE",
+      "count": 6
+    },
+    {
+      "id": "WMS_WINDOWS",
+      "status": "UNAVAILABLE",
+      "reason": "WMS_ATTRIBUTES_INCOMPLETE",
+      "count": 2
+    }
+  ],
+  "originalWmsFieldSets": {
+    "31/32": {
+      "isOnScreen": [
+        "TRUE / count 1"
+      ],
+      "isVisible": [
+        "FALSE / count 1"
+      ],
+      "isReadyForDisplay()": [
+        "FALSE / count 1"
+      ],
+      "mLastHidden": [
+        "FALSE / count 1"
+      ],
+      "mEnterAnimationPending": [
+        "FALSE / count 1"
+      ],
+      "mAnimatingExit": [
+        "MISSING / count 0"
+      ],
+      "mHasSurface": [
+        "TRUE / count 1"
+      ],
+      "Surface: shown": [
+        "TRUE / count 1"
+      ]
+    },
+    "36/37": {
+      "isOnScreen": [
+        "TRUE / count 1"
+      ],
+      "isVisible": [
+        "TRUE / count 1"
+      ],
+      "isReadyForDisplay()": [
+        "TRUE / count 1"
+      ],
+      "mLastHidden": [
+        "FALSE / count 1"
+      ],
+      "mEnterAnimationPending": [
+        "FALSE / count 1"
+      ],
+      "mAnimatingExit": [
+        "MISSING / count 0"
+      ],
+      "mHasSurface": [
+        "TRUE / count 1"
+      ],
+      "Surface: shown": [
+        "TRUE / count 1"
+      ]
+    }
+  },
+  "failedOrDiagnosticNotesCases": [
+    {
+      "api": "31",
+      "state": "off",
+      "originalStatus": "failed",
+      "originalStage": "create_note",
+      "originalError": "AssertionError: Notes v4 observation timed out: reason=confirmation_input_method_hidden_not_verified automaticBackPolicy=single-back-only-before-notes-create-confirm imeSamples=2 lastImeSurface=VISIBLE",
+      "originalConfirmation": {
+        "stage": "HIDDEN_PREPARATION",
+        "backAttempts": 1,
+        "visibleSamples": 2,
+        "hiddenSamples": 4,
+        "confirmAttempts": 0,
+        "elapsedMillis": 5012
+      },
+      "homeAttempts": 0,
+      "originalDiagnosticSamples": 4,
+      "originalDiagnosticConsistencyIssues": [],
+      "originalBackDecisionInventory": {
+        "sequence": 17,
+        "scanComplete": true,
+        "focusedWindowId": 8,
+        "focusedLayer": 0,
+        "imeCount": 1,
+        "notRetained": 0,
+        "retainedFilterCounts": {
+          "CANDIDATE_REQUIRES_IDENTITY": 1
+        },
+        "entries": [
+          [
+            1,
+            0,
+            1,
+            "CANDIDATE_REQUIRES_IDENTITY"
+          ]
+        ],
+        "startedElapsedMillis": 31852,
+        "readCompletedElapsedMillis": 31852
+      },
+      "associationDiagnosticOccurrences": 1,
+      "distinctAssociationDiagnosticCount": 1,
+      "postFailureTiming": {
+        "originalFrozenElapsedMillis": 36002,
+        "collectorStartedElapsedMillis": 36004,
+        "startedAfterOriginalFreeze": true,
+        "gapAfterOriginalFreezeMillis": 2
+      },
+      "postFailureAnalysis": {
+        "availability": "complete",
+        "configuredIme": {
+          "ownerUid": 10086,
+          "packageName": "com.android.inputmethod.latin",
+          "component": "com.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME",
+          "identitySource": "FROZEN_CONFIRMATION"
+        },
+        "interpretationAllowed": true,
+        "commandObservations": [
+          {
+            "ordinal": 1,
+            "id": "WMS_WINDOWS",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 36004,
+            "endedElapsedMillis": 36016,
+            "outputBytes": 24303,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          },
+          {
+            "ordinal": 2,
+            "id": "WMS_A11Y",
+            "status": "COMMAND_UNAVAILABLE",
+            "startedElapsedMillis": 36016,
+            "endedElapsedMillis": 36021,
+            "outputBytes": 63,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          },
+          {
+            "ordinal": 3,
+            "id": "ACCESSIBILITY",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 36021,
+            "endedElapsedMillis": 36025,
+            "outputBytes": 2374,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          }
+        ],
+        "postFailureObservations": {
+          "wmsSelected": true,
+          "tokenCandidate": "android.os.BinderProxy@f37f13",
+          "populatorVisible": {
+            "availability": "unavailable",
+            "matchCount": null
+          },
+          "populatorDisplays": {
+            "availability": "unavailable",
+            "matchCount": null
+          },
+          "finalService": {
+            "availability": "unavailable",
+            "matchCount": null
+          }
+        },
+        "association": {
+          "status": "INCONCLUSIVE",
+          "systemServerLifetime": "NOT_VERIFIED",
+          "atomicSnapshot": false,
+          "key": "WMS_MCLIENT_TO_WINDOW_TOKEN",
+          "reason": "SOURCE_UNAVAILABLE",
+          "tokenCandidate": "android.os.BinderProxy@f37f13",
+          "populatorVisibleMatchCount": null,
+          "populatorDisplayMatchCount": null,
+          "finalMatchCount": null
+        },
+        "collectorDurationMillis": 21,
+        "collectorObservedOverBudgetMillis": 0,
+        "consistencyIssues": []
+      },
+      "associationRawSha256": "53093de29ab4f705efe30b32b1a2abce2ed35c42413fdd5e61e7eab037853a36",
+      "commandReceipts": [
+        {
+          "ordinal": 1,
+          "id": "WMS_WINDOWS",
+          "command": "dumpsys -t 2 window -a windows",
+          "startedElapsedMillis": 36004,
+          "endedElapsedMillis": 36016,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 24303,
+          "outputSha256": "0f20e820a17a27f7d75fcde5d4c1b2bc4b76a4d6852dc1b901dc1ed9c0fda959",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "SELECTED",
+            "reason": "UNIQUE_CONFIGURED_IME_TEXT_CANDIDATE",
+            "referenceCount": 1,
+            "inputMethodRecordCount": 1,
+            "selectedWindowStateToken": "4171550",
+            "attributesParsedCount": 9,
+            "attributesUnparsedCount": 0,
+            "ownerUid": 10086,
+            "displayId": 0,
+            "ownerMatches": true,
+            "displayMatches": true,
+            "packageMatches": true,
+            "mClient": "android.os.BinderProxy@f37f13",
+            "fields": {
+              "isOnScreen": {
+                "count": 1,
+                "value": "TRUE"
+              },
+              "isVisible": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "isReadyForDisplay()": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "mLastHidden": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "mEnterAnimationPending": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "mAnimatingExit": {
+                "count": 0,
+                "value": "MISSING"
+              },
+              "mHasSurface": {
+                "count": 1,
+                "value": "TRUE"
+              },
+              "Surface: shown": {
+                "count": 1,
+                "value": "TRUE"
+              }
+            }
+          }
+        },
+        {
+          "ordinal": 2,
+          "id": "WMS_A11Y",
+          "command": "dumpsys -t 2 window a11y",
+          "startedElapsedMillis": 36016,
+          "endedElapsedMillis": 36021,
+          "status": "COMMAND_UNAVAILABLE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 63,
+          "outputSha256": "59b592eb36b7e163ea77084383624c13f5b695da79b958520804dd52780b09d0",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "UNAVAILABLE",
+            "reason": "SOURCE_UNAVAILABLE"
+          }
+        },
+        {
+          "ordinal": 3,
+          "id": "ACCESSIBILITY",
+          "command": "dumpsys -t 2 accessibility",
+          "startedElapsedMillis": 36021,
+          "endedElapsedMillis": 36025,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 2374,
+          "outputSha256": "c9efaa0f098b8cd1b4db2f8a7e3583dc6cd1a4d7bfcda3b55c5522c0a1ef36d9",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "UNAVAILABLE",
+            "reason": "ACCESSIBILITY_PAIRS_INCOMPLETE_OR_LEGACY",
+            "a11yWindowCount": 0,
+            "windowInfoCount": 0,
+            "pairCount": 0,
+            "matchCount": null,
+            "matches": []
+          }
+        }
+      ]
+    },
+    {
+      "api": "31",
+      "state": "idle",
+      "originalStatus": "failed",
+      "originalStage": "create_note",
+      "originalError": "AssertionError: Notes v4 observation timed out: reason=confirmation_input_method_hidden_not_verified automaticBackPolicy=single-back-only-before-notes-create-confirm imeSamples=2 lastImeSurface=VISIBLE",
+      "originalConfirmation": {
+        "stage": "HIDDEN_PREPARATION",
+        "backAttempts": 1,
+        "visibleSamples": 2,
+        "hiddenSamples": 4,
+        "confirmAttempts": 0,
+        "elapsedMillis": 5031
+      },
+      "homeAttempts": 0,
+      "originalDiagnosticSamples": 4,
+      "originalDiagnosticConsistencyIssues": [],
+      "originalBackDecisionInventory": {
+        "sequence": 17,
+        "scanComplete": true,
+        "focusedWindowId": 11,
+        "focusedLayer": 0,
+        "imeCount": 1,
+        "notRetained": 0,
+        "retainedFilterCounts": {
+          "CANDIDATE_REQUIRES_IDENTITY": 1
+        },
+        "entries": [
+          [
+            1,
+            0,
+            1,
+            "CANDIDATE_REQUIRES_IDENTITY"
+          ]
+        ],
+        "startedElapsedMillis": 42849,
+        "readCompletedElapsedMillis": 42850
+      },
+      "associationDiagnosticOccurrences": 1,
+      "distinctAssociationDiagnosticCount": 1,
+      "postFailureTiming": {
+        "originalFrozenElapsedMillis": 47009,
+        "collectorStartedElapsedMillis": 47010,
+        "startedAfterOriginalFreeze": true,
+        "gapAfterOriginalFreezeMillis": 1
+      },
+      "postFailureAnalysis": {
+        "availability": "complete",
+        "configuredIme": {
+          "ownerUid": 10086,
+          "packageName": "com.android.inputmethod.latin",
+          "component": "com.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME",
+          "identitySource": "FROZEN_CONFIRMATION"
+        },
+        "interpretationAllowed": true,
+        "commandObservations": [
+          {
+            "ordinal": 1,
+            "id": "WMS_WINDOWS",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 47010,
+            "endedElapsedMillis": 47021,
+            "outputBytes": 24309,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          },
+          {
+            "ordinal": 2,
+            "id": "WMS_A11Y",
+            "status": "COMMAND_UNAVAILABLE",
+            "startedElapsedMillis": 47021,
+            "endedElapsedMillis": 47025,
+            "outputBytes": 63,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          },
+          {
+            "ordinal": 3,
+            "id": "ACCESSIBILITY",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 47025,
+            "endedElapsedMillis": 47030,
+            "outputBytes": 2892,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          }
+        ],
+        "postFailureObservations": {
+          "wmsSelected": true,
+          "tokenCandidate": "android.os.BinderProxy@f37f13",
+          "populatorVisible": {
+            "availability": "unavailable",
+            "matchCount": null
+          },
+          "populatorDisplays": {
+            "availability": "unavailable",
+            "matchCount": null
+          },
+          "finalService": {
+            "availability": "unavailable",
+            "matchCount": null
+          }
+        },
+        "association": {
+          "status": "INCONCLUSIVE",
+          "systemServerLifetime": "NOT_VERIFIED",
+          "atomicSnapshot": false,
+          "key": "WMS_MCLIENT_TO_WINDOW_TOKEN",
+          "reason": "SOURCE_UNAVAILABLE",
+          "tokenCandidate": "android.os.BinderProxy@f37f13",
+          "populatorVisibleMatchCount": null,
+          "populatorDisplayMatchCount": null,
+          "finalMatchCount": null
+        },
+        "collectorDurationMillis": 20,
+        "collectorObservedOverBudgetMillis": 0,
+        "consistencyIssues": []
+      },
+      "associationRawSha256": "0080105a175dfe6dc19f9ba51e2f9efefa5132cbcaba779e8d492e6ee128650f",
+      "commandReceipts": [
+        {
+          "ordinal": 1,
+          "id": "WMS_WINDOWS",
+          "command": "dumpsys -t 2 window -a windows",
+          "startedElapsedMillis": 47010,
+          "endedElapsedMillis": 47021,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 24309,
+          "outputSha256": "9bb3be7b0b04eeacc3fc95dc3b36a0e0d09ec92c05ef559ffcaf4a51ee38d240",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "SELECTED",
+            "reason": "UNIQUE_CONFIGURED_IME_TEXT_CANDIDATE",
+            "referenceCount": 1,
+            "inputMethodRecordCount": 1,
+            "selectedWindowStateToken": "4171550",
+            "attributesParsedCount": 9,
+            "attributesUnparsedCount": 0,
+            "ownerUid": 10086,
+            "displayId": 0,
+            "ownerMatches": true,
+            "displayMatches": true,
+            "packageMatches": true,
+            "mClient": "android.os.BinderProxy@f37f13",
+            "fields": {
+              "isOnScreen": {
+                "count": 1,
+                "value": "TRUE"
+              },
+              "isVisible": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "isReadyForDisplay()": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "mLastHidden": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "mEnterAnimationPending": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "mAnimatingExit": {
+                "count": 0,
+                "value": "MISSING"
+              },
+              "mHasSurface": {
+                "count": 1,
+                "value": "TRUE"
+              },
+              "Surface: shown": {
+                "count": 1,
+                "value": "TRUE"
+              }
+            }
+          }
+        },
+        {
+          "ordinal": 2,
+          "id": "WMS_A11Y",
+          "command": "dumpsys -t 2 window a11y",
+          "startedElapsedMillis": 47021,
+          "endedElapsedMillis": 47025,
+          "status": "COMMAND_UNAVAILABLE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 63,
+          "outputSha256": "59b592eb36b7e163ea77084383624c13f5b695da79b958520804dd52780b09d0",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "UNAVAILABLE",
+            "reason": "SOURCE_UNAVAILABLE"
+          }
+        },
+        {
+          "ordinal": 3,
+          "id": "ACCESSIBILITY",
+          "command": "dumpsys -t 2 accessibility",
+          "startedElapsedMillis": 47025,
+          "endedElapsedMillis": 47030,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 2892,
+          "outputSha256": "5f4a0b7f21997ae490fe0f36cc7eed995275413a34b3659995c1b0159484dcc8",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "UNAVAILABLE",
+            "reason": "ACCESSIBILITY_PAIRS_INCOMPLETE_OR_LEGACY",
+            "a11yWindowCount": 0,
+            "windowInfoCount": 0,
+            "pairCount": 0,
+            "matchCount": null,
+            "matches": []
+          }
+        }
+      ]
+    },
+    {
+      "api": "32",
+      "state": "off",
+      "originalStatus": "failed",
+      "originalStage": "create_note",
+      "originalError": "AssertionError: Notes v4 observation timed out: reason=confirmation_input_method_hidden_not_verified automaticBackPolicy=single-back-only-before-notes-create-confirm imeSamples=2 lastImeSurface=VISIBLE",
+      "originalConfirmation": {
+        "stage": "HIDDEN_PREPARATION",
+        "backAttempts": 1,
+        "visibleSamples": 2,
+        "hiddenSamples": 4,
+        "confirmAttempts": 0,
+        "elapsedMillis": 5034
+      },
+      "homeAttempts": 0,
+      "originalDiagnosticSamples": 4,
+      "originalDiagnosticConsistencyIssues": [],
+      "originalBackDecisionInventory": {
+        "sequence": 17,
+        "scanComplete": true,
+        "focusedWindowId": 11,
+        "focusedLayer": 0,
+        "imeCount": 1,
+        "notRetained": 0,
+        "retainedFilterCounts": {
+          "CANDIDATE_REQUIRES_IDENTITY": 1
+        },
+        "entries": [
+          [
+            2,
+            0,
+            1,
+            "CANDIDATE_REQUIRES_IDENTITY"
+          ]
+        ],
+        "startedElapsedMillis": 40909,
+        "readCompletedElapsedMillis": 40910
+      },
+      "associationDiagnosticOccurrences": 1,
+      "distinctAssociationDiagnosticCount": 1,
+      "postFailureTiming": {
+        "originalFrozenElapsedMillis": 45049,
+        "collectorStartedElapsedMillis": 45051,
+        "startedAfterOriginalFreeze": true,
+        "gapAfterOriginalFreezeMillis": 2
+      },
+      "postFailureAnalysis": {
+        "availability": "complete",
+        "configuredIme": {
+          "ownerUid": 10079,
+          "packageName": "com.android.inputmethod.latin",
+          "component": "com.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME",
+          "identitySource": "FROZEN_CONFIRMATION"
+        },
+        "interpretationAllowed": true,
+        "commandObservations": [
+          {
+            "ordinal": 1,
+            "id": "WMS_WINDOWS",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 45052,
+            "endedElapsedMillis": 45078,
+            "outputBytes": 32513,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          },
+          {
+            "ordinal": 2,
+            "id": "WMS_A11Y",
+            "status": "COMMAND_UNAVAILABLE",
+            "startedElapsedMillis": 45078,
+            "endedElapsedMillis": 45084,
+            "outputBytes": 63,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          },
+          {
+            "ordinal": 3,
+            "id": "ACCESSIBILITY",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 45084,
+            "endedElapsedMillis": 45092,
+            "outputBytes": 2399,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          }
+        ],
+        "postFailureObservations": {
+          "wmsSelected": true,
+          "tokenCandidate": "android.os.BinderProxy@2f4e886",
+          "populatorVisible": {
+            "availability": "unavailable",
+            "matchCount": null
+          },
+          "populatorDisplays": {
+            "availability": "unavailable",
+            "matchCount": null
+          },
+          "finalService": {
+            "availability": "unavailable",
+            "matchCount": null
+          }
+        },
+        "association": {
+          "status": "INCONCLUSIVE",
+          "systemServerLifetime": "NOT_VERIFIED",
+          "atomicSnapshot": false,
+          "key": "WMS_MCLIENT_TO_WINDOW_TOKEN",
+          "reason": "SOURCE_UNAVAILABLE",
+          "tokenCandidate": "android.os.BinderProxy@2f4e886",
+          "populatorVisibleMatchCount": null,
+          "populatorDisplayMatchCount": null,
+          "finalMatchCount": null
+        },
+        "collectorDurationMillis": 41,
+        "collectorObservedOverBudgetMillis": 0,
+        "consistencyIssues": []
+      },
+      "associationRawSha256": "beba5e1d32631ac6b31ddebabbb249ca6461d9f82b4221842e6143a0b9b580a8",
+      "commandReceipts": [
+        {
+          "ordinal": 1,
+          "id": "WMS_WINDOWS",
+          "command": "dumpsys -t 2 window -a windows",
+          "startedElapsedMillis": 45052,
+          "endedElapsedMillis": 45078,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 32513,
+          "outputSha256": "f00c5a4b722c642d67d06d8f4e3d279c581bc5473c5cfa421eaecc5e6f5060b8",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "SELECTED",
+            "reason": "UNIQUE_CONFIGURED_IME_TEXT_CANDIDATE",
+            "referenceCount": 1,
+            "inputMethodRecordCount": 1,
+            "selectedWindowStateToken": "ec40547",
+            "attributesParsedCount": 12,
+            "attributesUnparsedCount": 0,
+            "ownerUid": 10079,
+            "displayId": 0,
+            "ownerMatches": true,
+            "displayMatches": true,
+            "packageMatches": true,
+            "mClient": "android.os.BinderProxy@2f4e886",
+            "fields": {
+              "isOnScreen": {
+                "count": 1,
+                "value": "TRUE"
+              },
+              "isVisible": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "isReadyForDisplay()": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "mLastHidden": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "mEnterAnimationPending": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "mAnimatingExit": {
+                "count": 0,
+                "value": "MISSING"
+              },
+              "mHasSurface": {
+                "count": 1,
+                "value": "TRUE"
+              },
+              "Surface: shown": {
+                "count": 1,
+                "value": "TRUE"
+              }
+            }
+          }
+        },
+        {
+          "ordinal": 2,
+          "id": "WMS_A11Y",
+          "command": "dumpsys -t 2 window a11y",
+          "startedElapsedMillis": 45078,
+          "endedElapsedMillis": 45084,
+          "status": "COMMAND_UNAVAILABLE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 63,
+          "outputSha256": "59b592eb36b7e163ea77084383624c13f5b695da79b958520804dd52780b09d0",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "UNAVAILABLE",
+            "reason": "SOURCE_UNAVAILABLE"
+          }
+        },
+        {
+          "ordinal": 3,
+          "id": "ACCESSIBILITY",
+          "command": "dumpsys -t 2 accessibility",
+          "startedElapsedMillis": 45084,
+          "endedElapsedMillis": 45092,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 2399,
+          "outputSha256": "c07287b891263391eeb4486255196c06569151695f19b6a19d0d274f9ccee4b5",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "UNAVAILABLE",
+            "reason": "ACCESSIBILITY_PAIRS_INCOMPLETE_OR_LEGACY",
+            "a11yWindowCount": 0,
+            "windowInfoCount": 0,
+            "pairCount": 0,
+            "matchCount": null,
+            "matches": []
+          }
+        }
+      ]
+    },
+    {
+      "api": "32",
+      "state": "idle",
+      "originalStatus": "failed",
+      "originalStage": "create_note",
+      "originalError": "AssertionError: Notes v4 observation timed out: reason=confirmation_input_method_hidden_not_verified automaticBackPolicy=single-back-only-before-notes-create-confirm imeSamples=2 lastImeSurface=VISIBLE",
+      "originalConfirmation": {
+        "stage": "HIDDEN_PREPARATION",
+        "backAttempts": 1,
+        "visibleSamples": 2,
+        "hiddenSamples": 4,
+        "confirmAttempts": 0,
+        "elapsedMillis": 5014
+      },
+      "homeAttempts": 0,
+      "originalDiagnosticSamples": 4,
+      "originalDiagnosticConsistencyIssues": [],
+      "originalBackDecisionInventory": {
+        "sequence": 17,
+        "scanComplete": true,
+        "focusedWindowId": 14,
+        "focusedLayer": 0,
+        "imeCount": 1,
+        "notRetained": 0,
+        "retainedFilterCounts": {
+          "CANDIDATE_REQUIRES_IDENTITY": 1
+        },
+        "entries": [
+          [
+            2,
+            0,
+            1,
+            "CANDIDATE_REQUIRES_IDENTITY"
+          ]
+        ],
+        "startedElapsedMillis": 52434,
+        "readCompletedElapsedMillis": 52434
+      },
+      "associationDiagnosticOccurrences": 1,
+      "distinctAssociationDiagnosticCount": 1,
+      "postFailureTiming": {
+        "originalFrozenElapsedMillis": 56573,
+        "collectorStartedElapsedMillis": 56574,
+        "startedAfterOriginalFreeze": true,
+        "gapAfterOriginalFreezeMillis": 1
+      },
+      "postFailureAnalysis": {
+        "availability": "complete",
+        "configuredIme": {
+          "ownerUid": 10079,
+          "packageName": "com.android.inputmethod.latin",
+          "component": "com.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME",
+          "identitySource": "FROZEN_CONFIRMATION"
+        },
+        "interpretationAllowed": true,
+        "commandObservations": [
+          {
+            "ordinal": 1,
+            "id": "WMS_WINDOWS",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 56574,
+            "endedElapsedMillis": 56594,
+            "outputBytes": 32512,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          },
+          {
+            "ordinal": 2,
+            "id": "WMS_A11Y",
+            "status": "COMMAND_UNAVAILABLE",
+            "startedElapsedMillis": 56594,
+            "endedElapsedMillis": 56600,
+            "outputBytes": 63,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          },
+          {
+            "ordinal": 3,
+            "id": "ACCESSIBILITY",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 56600,
+            "endedElapsedMillis": 56607,
+            "outputBytes": 2914,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          }
+        ],
+        "postFailureObservations": {
+          "wmsSelected": true,
+          "tokenCandidate": "android.os.BinderProxy@2f4e886",
+          "populatorVisible": {
+            "availability": "unavailable",
+            "matchCount": null
+          },
+          "populatorDisplays": {
+            "availability": "unavailable",
+            "matchCount": null
+          },
+          "finalService": {
+            "availability": "unavailable",
+            "matchCount": null
+          }
+        },
+        "association": {
+          "status": "INCONCLUSIVE",
+          "systemServerLifetime": "NOT_VERIFIED",
+          "atomicSnapshot": false,
+          "key": "WMS_MCLIENT_TO_WINDOW_TOKEN",
+          "reason": "SOURCE_UNAVAILABLE",
+          "tokenCandidate": "android.os.BinderProxy@2f4e886",
+          "populatorVisibleMatchCount": null,
+          "populatorDisplayMatchCount": null,
+          "finalMatchCount": null
+        },
+        "collectorDurationMillis": 33,
+        "collectorObservedOverBudgetMillis": 0,
+        "consistencyIssues": []
+      },
+      "associationRawSha256": "17fa0584dbe1fbb806eae146d7aeef25c05adcde243703ae82eba159a909a61d",
+      "commandReceipts": [
+        {
+          "ordinal": 1,
+          "id": "WMS_WINDOWS",
+          "command": "dumpsys -t 2 window -a windows",
+          "startedElapsedMillis": 56574,
+          "endedElapsedMillis": 56594,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 32512,
+          "outputSha256": "79ed010d728b43e18357117f825bab486e1dec6d9180c81375939af412bd0e64",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "SELECTED",
+            "reason": "UNIQUE_CONFIGURED_IME_TEXT_CANDIDATE",
+            "referenceCount": 1,
+            "inputMethodRecordCount": 1,
+            "selectedWindowStateToken": "ec40547",
+            "attributesParsedCount": 12,
+            "attributesUnparsedCount": 0,
+            "ownerUid": 10079,
+            "displayId": 0,
+            "ownerMatches": true,
+            "displayMatches": true,
+            "packageMatches": true,
+            "mClient": "android.os.BinderProxy@2f4e886",
+            "fields": {
+              "isOnScreen": {
+                "count": 1,
+                "value": "TRUE"
+              },
+              "isVisible": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "isReadyForDisplay()": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "mLastHidden": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "mEnterAnimationPending": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "mAnimatingExit": {
+                "count": 0,
+                "value": "MISSING"
+              },
+              "mHasSurface": {
+                "count": 1,
+                "value": "TRUE"
+              },
+              "Surface: shown": {
+                "count": 1,
+                "value": "TRUE"
+              }
+            }
+          }
+        },
+        {
+          "ordinal": 2,
+          "id": "WMS_A11Y",
+          "command": "dumpsys -t 2 window a11y",
+          "startedElapsedMillis": 56594,
+          "endedElapsedMillis": 56600,
+          "status": "COMMAND_UNAVAILABLE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 63,
+          "outputSha256": "59b592eb36b7e163ea77084383624c13f5b695da79b958520804dd52780b09d0",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "UNAVAILABLE",
+            "reason": "SOURCE_UNAVAILABLE"
+          }
+        },
+        {
+          "ordinal": 3,
+          "id": "ACCESSIBILITY",
+          "command": "dumpsys -t 2 accessibility",
+          "startedElapsedMillis": 56600,
+          "endedElapsedMillis": 56607,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 2914,
+          "outputSha256": "5303c567ac28c2d4618ce176e645a275389b9f189edd81ea13267f84db0ce958",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "UNAVAILABLE",
+            "reason": "ACCESSIBILITY_PAIRS_INCOMPLETE_OR_LEGACY",
+            "a11yWindowCount": 0,
+            "windowInfoCount": 0,
+            "pairCount": 0,
+            "matchCount": null,
+            "matches": []
+          }
+        }
+      ]
+    },
+    {
+      "api": "36",
+      "state": "off",
+      "originalStatus": "failed",
+      "originalStage": "create_note",
+      "originalError": "AssertionError: Notes v4 observation timed out: reason=confirmation_input_method_hidden_not_verified automaticBackPolicy=single-back-only-before-notes-create-confirm imeSamples=0 lastImeSurface=NOT_SAMPLED",
+      "originalConfirmation": {
+        "stage": "HIDDEN_PREPARATION",
+        "backAttempts": 0,
+        "visibleSamples": 0,
+        "hiddenSamples": 4,
+        "confirmAttempts": 0,
+        "elapsedMillis": 5026
+      },
+      "homeAttempts": 0,
+      "originalDiagnosticSamples": 4,
+      "originalDiagnosticConsistencyIssues": [],
+      "originalBackDecisionInventory": {
+        "sequence": 13,
+        "scanComplete": true,
+        "focusedWindowId": 10,
+        "focusedLayer": 0,
+        "imeCount": 0,
+        "notRetained": 0,
+        "retainedFilterCounts": {},
+        "entries": [],
+        "startedElapsedMillis": 46567,
+        "readCompletedElapsedMillis": 46567
+      },
+      "associationDiagnosticOccurrences": 1,
+      "distinctAssociationDiagnosticCount": 1,
+      "postFailureTiming": {
+        "originalFrozenElapsedMillis": 50957,
+        "collectorStartedElapsedMillis": 50957,
+        "startedAfterOriginalFreeze": true,
+        "gapAfterOriginalFreezeMillis": 0
+      },
+      "postFailureAnalysis": {
+        "availability": "complete",
+        "configuredIme": {
+          "ownerUid": 10113,
+          "packageName": "com.android.inputmethod.latin",
+          "component": "com.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME",
+          "identitySource": "FROZEN_CONFIRMATION"
+        },
+        "interpretationAllowed": true,
+        "commandObservations": [
+          {
+            "ordinal": 1,
+            "id": "WMS_WINDOWS",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 50957,
+            "endedElapsedMillis": 50986,
+            "outputBytes": 46134,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          },
+          {
+            "ordinal": 2,
+            "id": "WMS_A11Y",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 50986,
+            "endedElapsedMillis": 50993,
+            "outputBytes": 3222,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          },
+          {
+            "ordinal": 3,
+            "id": "ACCESSIBILITY",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 50993,
+            "endedElapsedMillis": 51003,
+            "outputBytes": 5759,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          }
+        ],
+        "postFailureObservations": {
+          "wmsSelected": false,
+          "tokenCandidate": null,
+          "populatorVisible": {
+            "availability": "unavailable",
+            "matchCount": null
+          },
+          "populatorDisplays": {
+            "availability": "unavailable",
+            "matchCount": null
+          },
+          "finalService": {
+            "availability": "unavailable",
+            "matchCount": null
+          }
+        },
+        "association": {
+          "status": "INCONCLUSIVE",
+          "systemServerLifetime": "NOT_VERIFIED",
+          "atomicSnapshot": false,
+          "key": "WMS_MCLIENT_TO_WINDOW_TOKEN",
+          "reason": "SOURCE_UNAVAILABLE",
+          "tokenCandidate": null,
+          "populatorVisibleMatchCount": null,
+          "populatorDisplayMatchCount": null,
+          "finalMatchCount": null
+        },
+        "collectorDurationMillis": 46,
+        "collectorObservedOverBudgetMillis": 0,
+        "consistencyIssues": []
+      },
+      "associationRawSha256": "38c644808b5e1ce05ebafde5ade623952e9fa6b4c07edcaa76bed002676d9707",
+      "commandReceipts": [
+        {
+          "ordinal": 1,
+          "id": "WMS_WINDOWS",
+          "command": "dumpsys -t 2 window -a windows",
+          "startedElapsedMillis": 50957,
+          "endedElapsedMillis": 50986,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 46134,
+          "outputSha256": "afbed9d142c049f4a559c729b89ac2799faa34dda352fc2fec5f9eed1d4f3376",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "UNAVAILABLE",
+            "reason": "WMS_ATTRIBUTES_INCOMPLETE",
+            "referenceCount": 1,
+            "inputMethodRecordCount": 1,
+            "selectedWindowStateToken": "f9b1d60",
+            "attributesParsedCount": 10,
+            "attributesUnparsedCount": 1
+          }
+        },
+        {
+          "ordinal": 2,
+          "id": "WMS_A11Y",
+          "command": "dumpsys -t 2 window a11y",
+          "startedElapsedMillis": 50986,
+          "endedElapsedMillis": 50993,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 3222,
+          "outputSha256": "92c74740f583e701abd41420bd624fdc0da213d974392dfe95df5b125b654e76",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "RECOGNIZED",
+            "reason": "FILTERED_LISTS_PARSED",
+            "notificationsEnabled": true,
+            "visible": {
+              "declaredCount": 4,
+              "parsedCount": 4,
+              "tokenFieldCount": 4,
+              "complete": true,
+              "matchCount": null,
+              "matches": []
+            },
+            "displays": {
+              "declaredDisplayCount": 1,
+              "parsedDisplayCount": 1,
+              "complete": true,
+              "matchCount": null,
+              "matches": []
+            }
+          }
+        },
+        {
+          "ordinal": 3,
+          "id": "ACCESSIBILITY",
+          "command": "dumpsys -t 2 accessibility",
+          "startedElapsedMillis": 50993,
+          "endedElapsedMillis": 51003,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 5759,
+          "outputSha256": "296cb938ab71b029e7d80a2b61c40bf74b25950be83d9a9aa44f5fc57360508f",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "RECOGNIZED",
+            "reason": "REPORTED_WINDOW_PAIRS_PARSED",
+            "a11yWindowCount": 3,
+            "windowInfoCount": 3,
+            "pairCount": 3,
+            "matchCount": null,
+            "matches": []
+          }
+        }
+      ]
+    },
+    {
+      "api": "36",
+      "state": "idle",
+      "originalStatus": "failed",
+      "originalStage": "create_note",
+      "originalError": "AssertionError: Notes v4 observation timed out: reason=confirmation_input_method_hidden_not_verified automaticBackPolicy=single-back-only-before-notes-create-confirm imeSamples=0 lastImeSurface=NOT_SAMPLED",
+      "originalConfirmation": {
+        "stage": "HIDDEN_PREPARATION",
+        "backAttempts": 0,
+        "visibleSamples": 0,
+        "hiddenSamples": 4,
+        "confirmAttempts": 0,
+        "elapsedMillis": 5035
+      },
+      "homeAttempts": 0,
+      "originalDiagnosticSamples": 4,
+      "originalDiagnosticConsistencyIssues": [],
+      "originalBackDecisionInventory": {
+        "sequence": 13,
+        "scanComplete": true,
+        "focusedWindowId": 13,
+        "focusedLayer": 0,
+        "imeCount": 0,
+        "notRetained": 0,
+        "retainedFilterCounts": {},
+        "entries": [],
+        "startedElapsedMillis": 57751,
+        "readCompletedElapsedMillis": 57751
+      },
+      "associationDiagnosticOccurrences": 1,
+      "distinctAssociationDiagnosticCount": 1,
+      "postFailureTiming": {
+        "originalFrozenElapsedMillis": 62130,
+        "collectorStartedElapsedMillis": 62130,
+        "startedAfterOriginalFreeze": true,
+        "gapAfterOriginalFreezeMillis": 0
+      },
+      "postFailureAnalysis": {
+        "availability": "complete",
+        "configuredIme": {
+          "ownerUid": 10113,
+          "packageName": "com.android.inputmethod.latin",
+          "component": "com.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME",
+          "identitySource": "FROZEN_CONFIRMATION"
+        },
+        "interpretationAllowed": true,
+        "commandObservations": [
+          {
+            "ordinal": 1,
+            "id": "WMS_WINDOWS",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 62130,
+            "endedElapsedMillis": 62153,
+            "outputBytes": 46144,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          },
+          {
+            "ordinal": 2,
+            "id": "WMS_A11Y",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 62154,
+            "endedElapsedMillis": 62161,
+            "outputBytes": 3222,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          },
+          {
+            "ordinal": 3,
+            "id": "ACCESSIBILITY",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 62161,
+            "endedElapsedMillis": 62169,
+            "outputBytes": 6275,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          }
+        ],
+        "postFailureObservations": {
+          "wmsSelected": false,
+          "tokenCandidate": null,
+          "populatorVisible": {
+            "availability": "unavailable",
+            "matchCount": null
+          },
+          "populatorDisplays": {
+            "availability": "unavailable",
+            "matchCount": null
+          },
+          "finalService": {
+            "availability": "unavailable",
+            "matchCount": null
+          }
+        },
+        "association": {
+          "status": "INCONCLUSIVE",
+          "systemServerLifetime": "NOT_VERIFIED",
+          "atomicSnapshot": false,
+          "key": "WMS_MCLIENT_TO_WINDOW_TOKEN",
+          "reason": "SOURCE_UNAVAILABLE",
+          "tokenCandidate": null,
+          "populatorVisibleMatchCount": null,
+          "populatorDisplayMatchCount": null,
+          "finalMatchCount": null
+        },
+        "collectorDurationMillis": 39,
+        "collectorObservedOverBudgetMillis": 0,
+        "consistencyIssues": []
+      },
+      "associationRawSha256": "0ddb475f73b1c91b514e5aca5e8267bbb6aa7b3a96677caf6b1dfacdad04a12d",
+      "commandReceipts": [
+        {
+          "ordinal": 1,
+          "id": "WMS_WINDOWS",
+          "command": "dumpsys -t 2 window -a windows",
+          "startedElapsedMillis": 62130,
+          "endedElapsedMillis": 62153,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 46144,
+          "outputSha256": "7c46edc38ed8994a77947e6b7eef354c5a6c3802a2a1fdfa43d359b2b241206c",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "UNAVAILABLE",
+            "reason": "WMS_ATTRIBUTES_INCOMPLETE",
+            "referenceCount": 1,
+            "inputMethodRecordCount": 1,
+            "selectedWindowStateToken": "f9b1d60",
+            "attributesParsedCount": 10,
+            "attributesUnparsedCount": 1
+          }
+        },
+        {
+          "ordinal": 2,
+          "id": "WMS_A11Y",
+          "command": "dumpsys -t 2 window a11y",
+          "startedElapsedMillis": 62154,
+          "endedElapsedMillis": 62161,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 3222,
+          "outputSha256": "8051e64c21baba9919b0c527c7fed27218bbb59a8c844355b75228f60a446f24",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "RECOGNIZED",
+            "reason": "FILTERED_LISTS_PARSED",
+            "notificationsEnabled": true,
+            "visible": {
+              "declaredCount": 4,
+              "parsedCount": 4,
+              "tokenFieldCount": 4,
+              "complete": true,
+              "matchCount": null,
+              "matches": []
+            },
+            "displays": {
+              "declaredDisplayCount": 1,
+              "parsedDisplayCount": 1,
+              "complete": true,
+              "matchCount": null,
+              "matches": []
+            }
+          }
+        },
+        {
+          "ordinal": 3,
+          "id": "ACCESSIBILITY",
+          "command": "dumpsys -t 2 accessibility",
+          "startedElapsedMillis": 62161,
+          "endedElapsedMillis": 62169,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 6275,
+          "outputSha256": "9a9c14aaa2acf0cc91ddea6ee0ad21132569baca8dd226797b4b192ebbe5c1be",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "RECOGNIZED",
+            "reason": "REPORTED_WINDOW_PAIRS_PARSED",
+            "a11yWindowCount": 3,
+            "windowInfoCount": 3,
+            "pairCount": 3,
+            "matchCount": null,
+            "matches": []
+          }
+        }
+      ]
+    },
+    {
+      "api": "37.0",
+      "state": "off",
+      "originalStatus": "failed",
+      "originalStage": "create_note",
+      "originalError": "AssertionError: Notes v4 observation timed out: reason=confirmation_input_method_hidden_not_verified automaticBackPolicy=single-back-only-before-notes-create-confirm imeSamples=0 lastImeSurface=NOT_SAMPLED",
+      "originalConfirmation": {
+        "stage": "HIDDEN_PREPARATION",
+        "backAttempts": 0,
+        "visibleSamples": 0,
+        "hiddenSamples": 4,
+        "confirmAttempts": 0,
+        "elapsedMillis": 5039
+      },
+      "homeAttempts": 0,
+      "originalDiagnosticSamples": 4,
+      "originalDiagnosticConsistencyIssues": [],
+      "originalBackDecisionInventory": {
+        "sequence": 13,
+        "scanComplete": true,
+        "focusedWindowId": 9,
+        "focusedLayer": 0,
+        "imeCount": 0,
+        "notRetained": 0,
+        "retainedFilterCounts": {},
+        "entries": [],
+        "startedElapsedMillis": 50179,
+        "readCompletedElapsedMillis": 50179
+      },
+      "associationDiagnosticOccurrences": 1,
+      "distinctAssociationDiagnosticCount": 1,
+      "postFailureTiming": {
+        "originalFrozenElapsedMillis": 54578,
+        "collectorStartedElapsedMillis": 54579,
+        "startedAfterOriginalFreeze": true,
+        "gapAfterOriginalFreezeMillis": 1
+      },
+      "postFailureAnalysis": {
+        "availability": "complete",
+        "configuredIme": {
+          "ownerUid": 10112,
+          "packageName": "com.android.inputmethod.latin",
+          "component": "com.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME",
+          "identitySource": "FROZEN_CONFIRMATION"
+        },
+        "interpretationAllowed": true,
+        "commandObservations": [
+          {
+            "ordinal": 1,
+            "id": "WMS_WINDOWS",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 54579,
+            "endedElapsedMillis": 54606,
+            "outputBytes": 33668,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          },
+          {
+            "ordinal": 2,
+            "id": "WMS_A11Y",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 54606,
+            "endedElapsedMillis": 54615,
+            "outputBytes": 2594,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          },
+          {
+            "ordinal": 3,
+            "id": "ACCESSIBILITY",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 54615,
+            "endedElapsedMillis": 54626,
+            "outputBytes": 5041,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          }
+        ],
+        "postFailureObservations": {
+          "wmsSelected": true,
+          "tokenCandidate": "android.os.BinderProxy@702c98c",
+          "populatorVisible": {
+            "availability": "observed",
+            "matchCount": 0,
+            "candidate": "absent_from_this_post_failure_list",
+            "matches": []
+          },
+          "populatorDisplays": {
+            "availability": "observed",
+            "matchCount": 0,
+            "candidate": "absent_from_this_post_failure_list",
+            "matches": []
+          },
+          "finalService": {
+            "availability": "observed",
+            "matchCount": 0,
+            "candidate": "absent_from_this_post_failure_list",
+            "matches": []
+          }
+        },
+        "association": {
+          "status": "TEXT_CANDIDATE_ONLY",
+          "systemServerLifetime": "NOT_VERIFIED",
+          "atomicSnapshot": false,
+          "key": "WMS_MCLIENT_TO_WINDOW_TOKEN",
+          "reason": "ORDERED_TEXT_COUNTS_ONLY",
+          "tokenCandidate": "android.os.BinderProxy@702c98c",
+          "populatorVisibleMatchCount": 0,
+          "populatorDisplayMatchCount": 0,
+          "finalMatchCount": 0
+        },
+        "collectorDurationMillis": 47,
+        "collectorObservedOverBudgetMillis": 0,
+        "consistencyIssues": []
+      },
+      "associationRawSha256": "9d490cad26a2bbb2713bb1aeaf83d085575c98e1c2ef1ff2e6ae0f32b6ebc16f",
+      "commandReceipts": [
+        {
+          "ordinal": 1,
+          "id": "WMS_WINDOWS",
+          "command": "dumpsys -t 2 window -a windows",
+          "startedElapsedMillis": 54579,
+          "endedElapsedMillis": 54606,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 33668,
+          "outputSha256": "86d426a377054059fbd720d8d256da0d58ee1f9f9dc281ec76026d37168850d9",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "SELECTED",
+            "reason": "UNIQUE_CONFIGURED_IME_TEXT_CANDIDATE",
+            "referenceCount": 1,
+            "inputMethodRecordCount": 1,
+            "selectedWindowStateToken": "3e0a8d5",
+            "attributesParsedCount": 10,
+            "attributesUnparsedCount": 0,
+            "ownerUid": 10112,
+            "displayId": 0,
+            "ownerMatches": true,
+            "displayMatches": true,
+            "packageMatches": true,
+            "mClient": "android.os.BinderProxy@702c98c",
+            "fields": {
+              "isOnScreen": {
+                "count": 1,
+                "value": "TRUE"
+              },
+              "isVisible": {
+                "count": 1,
+                "value": "TRUE"
+              },
+              "isReadyForDisplay()": {
+                "count": 1,
+                "value": "TRUE"
+              },
+              "mLastHidden": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "mEnterAnimationPending": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "mAnimatingExit": {
+                "count": 0,
+                "value": "MISSING"
+              },
+              "mHasSurface": {
+                "count": 1,
+                "value": "TRUE"
+              },
+              "Surface: shown": {
+                "count": 1,
+                "value": "TRUE"
+              }
+            }
+          }
+        },
+        {
+          "ordinal": 2,
+          "id": "WMS_A11Y",
+          "command": "dumpsys -t 2 window a11y",
+          "startedElapsedMillis": 54606,
+          "endedElapsedMillis": 54615,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 2594,
+          "outputSha256": "1b3f59d029b935a640b90119fdbf1c3daca5a0672bb12eab49e35aabecef8b49",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "RECOGNIZED",
+            "reason": "FILTERED_LISTS_PARSED",
+            "notificationsEnabled": true,
+            "visible": {
+              "declaredCount": 3,
+              "parsedCount": 3,
+              "tokenFieldCount": 3,
+              "complete": true,
+              "matchCount": 0,
+              "matches": []
+            },
+            "displays": {
+              "declaredDisplayCount": 1,
+              "parsedDisplayCount": 1,
+              "complete": true,
+              "matchCount": 0,
+              "matches": []
+            }
+          }
+        },
+        {
+          "ordinal": 3,
+          "id": "ACCESSIBILITY",
+          "command": "dumpsys -t 2 accessibility",
+          "startedElapsedMillis": 54615,
+          "endedElapsedMillis": 54626,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 5041,
+          "outputSha256": "359a34929ccbeae55f11921dd08e65a72415665fa3729acef7a1bfbe6cdea5c0",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "RECOGNIZED",
+            "reason": "REPORTED_WINDOW_PAIRS_PARSED",
+            "a11yWindowCount": 2,
+            "windowInfoCount": 2,
+            "pairCount": 2,
+            "matchCount": 0,
+            "matches": []
+          }
+        }
+      ]
+    },
+    {
+      "api": "37.0",
+      "state": "idle",
+      "originalStatus": "failed",
+      "originalStage": "create_note",
+      "originalError": "AssertionError: Notes v4 observation timed out: reason=confirmation_input_method_hidden_not_verified automaticBackPolicy=single-back-only-before-notes-create-confirm imeSamples=0 lastImeSurface=NOT_SAMPLED",
+      "originalConfirmation": {
+        "stage": "HIDDEN_PREPARATION",
+        "backAttempts": 0,
+        "visibleSamples": 0,
+        "hiddenSamples": 4,
+        "confirmAttempts": 0,
+        "elapsedMillis": 5004
+      },
+      "homeAttempts": 0,
+      "originalDiagnosticSamples": 4,
+      "originalDiagnosticConsistencyIssues": [],
+      "originalBackDecisionInventory": {
+        "sequence": 13,
+        "scanComplete": true,
+        "focusedWindowId": 12,
+        "focusedLayer": 0,
+        "imeCount": 0,
+        "notRetained": 0,
+        "retainedFilterCounts": {},
+        "entries": [],
+        "startedElapsedMillis": 61845,
+        "readCompletedElapsedMillis": 61845
+      },
+      "associationDiagnosticOccurrences": 1,
+      "distinctAssociationDiagnosticCount": 1,
+      "postFailureTiming": {
+        "originalFrozenElapsedMillis": 66184,
+        "collectorStartedElapsedMillis": 66184,
+        "startedAfterOriginalFreeze": true,
+        "gapAfterOriginalFreezeMillis": 0
+      },
+      "postFailureAnalysis": {
+        "availability": "complete",
+        "configuredIme": {
+          "ownerUid": 10112,
+          "packageName": "com.android.inputmethod.latin",
+          "component": "com.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME",
+          "identitySource": "FROZEN_CONFIRMATION"
+        },
+        "interpretationAllowed": true,
+        "commandObservations": [
+          {
+            "ordinal": 1,
+            "id": "WMS_WINDOWS",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 66184,
+            "endedElapsedMillis": 66210,
+            "outputBytes": 33717,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          },
+          {
+            "ordinal": 2,
+            "id": "WMS_A11Y",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 66210,
+            "endedElapsedMillis": 66218,
+            "outputBytes": 2598,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          },
+          {
+            "ordinal": 3,
+            "id": "ACCESSIBILITY",
+            "status": "COMPLETE",
+            "startedElapsedMillis": 66218,
+            "endedElapsedMillis": 66229,
+            "outputBytes": 5561,
+            "outputComplete": true,
+            "hashScope": "FULL_OUTPUT"
+          }
+        ],
+        "postFailureObservations": {
+          "wmsSelected": true,
+          "tokenCandidate": "android.os.BinderProxy@702c98c",
+          "populatorVisible": {
+            "availability": "observed",
+            "matchCount": 0,
+            "candidate": "absent_from_this_post_failure_list",
+            "matches": []
+          },
+          "populatorDisplays": {
+            "availability": "observed",
+            "matchCount": 0,
+            "candidate": "absent_from_this_post_failure_list",
+            "matches": []
+          },
+          "finalService": {
+            "availability": "observed",
+            "matchCount": 0,
+            "candidate": "absent_from_this_post_failure_list",
+            "matches": []
+          }
+        },
+        "association": {
+          "status": "TEXT_CANDIDATE_ONLY",
+          "systemServerLifetime": "NOT_VERIFIED",
+          "atomicSnapshot": false,
+          "key": "WMS_MCLIENT_TO_WINDOW_TOKEN",
+          "reason": "ORDERED_TEXT_COUNTS_ONLY",
+          "tokenCandidate": "android.os.BinderProxy@702c98c",
+          "populatorVisibleMatchCount": 0,
+          "populatorDisplayMatchCount": 0,
+          "finalMatchCount": 0
+        },
+        "collectorDurationMillis": 45,
+        "collectorObservedOverBudgetMillis": 0,
+        "consistencyIssues": []
+      },
+      "associationRawSha256": "136a422e8afc364b2e71f380540909468894eb520ddc05b7942422744578a769",
+      "commandReceipts": [
+        {
+          "ordinal": 1,
+          "id": "WMS_WINDOWS",
+          "command": "dumpsys -t 2 window -a windows",
+          "startedElapsedMillis": 66184,
+          "endedElapsedMillis": 66210,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 33717,
+          "outputSha256": "e76f2d0963cb45b155fce3f236a5df56f565447068ecdc4d31f1e8864d32a260",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "SELECTED",
+            "reason": "UNIQUE_CONFIGURED_IME_TEXT_CANDIDATE",
+            "referenceCount": 1,
+            "inputMethodRecordCount": 1,
+            "selectedWindowStateToken": "3e0a8d5",
+            "attributesParsedCount": 10,
+            "attributesUnparsedCount": 0,
+            "ownerUid": 10112,
+            "displayId": 0,
+            "ownerMatches": true,
+            "displayMatches": true,
+            "packageMatches": true,
+            "mClient": "android.os.BinderProxy@702c98c",
+            "fields": {
+              "isOnScreen": {
+                "count": 1,
+                "value": "TRUE"
+              },
+              "isVisible": {
+                "count": 1,
+                "value": "TRUE"
+              },
+              "isReadyForDisplay()": {
+                "count": 1,
+                "value": "TRUE"
+              },
+              "mLastHidden": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "mEnterAnimationPending": {
+                "count": 1,
+                "value": "FALSE"
+              },
+              "mAnimatingExit": {
+                "count": 0,
+                "value": "MISSING"
+              },
+              "mHasSurface": {
+                "count": 1,
+                "value": "TRUE"
+              },
+              "Surface: shown": {
+                "count": 1,
+                "value": "TRUE"
+              }
+            }
+          }
+        },
+        {
+          "ordinal": 2,
+          "id": "WMS_A11Y",
+          "command": "dumpsys -t 2 window a11y",
+          "startedElapsedMillis": 66210,
+          "endedElapsedMillis": 66218,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 2598,
+          "outputSha256": "083f67756f22009c3a648850c01b444e886030225aa4498e7e43ef59e1ebc5ee",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "RECOGNIZED",
+            "reason": "FILTERED_LISTS_PARSED",
+            "notificationsEnabled": true,
+            "visible": {
+              "declaredCount": 3,
+              "parsedCount": 3,
+              "tokenFieldCount": 3,
+              "complete": true,
+              "matchCount": 0,
+              "matches": []
+            },
+            "displays": {
+              "declaredDisplayCount": 1,
+              "parsedDisplayCount": 1,
+              "complete": true,
+              "matchCount": 0,
+              "matches": []
+            }
+          }
+        },
+        {
+          "ordinal": 3,
+          "id": "ACCESSIBILITY",
+          "command": "dumpsys -t 2 accessibility",
+          "startedElapsedMillis": 66218,
+          "endedElapsedMillis": 66229,
+          "status": "COMPLETE",
+          "exitStatus": "NOT_EXPOSED",
+          "outputBytes": 5561,
+          "outputSha256": "e43dbb5bd0522f8136a7d72345615c730aea0ef4343e8aa693e6511327ac5f82",
+          "hashScope": "FULL_OUTPUT",
+          "outputComplete": true,
+          "parsed": {
+            "status": "RECOGNIZED",
+            "reason": "REPORTED_WINDOW_PAIRS_PARSED",
+            "a11yWindowCount": 2,
+            "windowInfoCount": 2,
+            "pairCount": 2,
+            "matchCount": 0,
+            "matches": []
+          }
+        }
+      ]
+    }
+  ],
+  "serviceSettingsRestoresPassed": 32,
+  "historicalTransitions": {
+    "passed -> passed": 24,
+    "failed -> failed": 8
+  },
+  "evidenceFiles": {
+    "archive-audit.json": {
+      "sha256": "a2cb8651953935ded38ecf0d9e48a25848828ba79c1d13fa2e8d0c42d77b2956",
+      "bytes": 64809
+    },
+    "archive-source-binding.json": {
+      "sha256": "3fa7d9af908d437684c8a701438ca8a532502bee7d12cda3407b9f64dab33722",
+      "bytes": 464
+    },
+    "association-analysis.json": {
+      "sha256": "b92b9e6b61c08efac3aa86c4b314310819d798adbe148ae1969b4af1877143dc",
+      "bytes": 120466
+    },
+    "confirmation-analysis.json": {
+      "sha256": "3c7fce82ba7c44ff1c7f8970ecd0b45d436ffb1feccc150c828c9ace4f6728cc",
+      "bytes": 235971
+    },
+    "geometry-analysis.json": {
+      "sha256": "ba3b344e9c237b01ad7ac20b382d4a4011aa86073efe9caa07fe97962f1ee342",
+      "bytes": 28142
+    },
+    "historical-comparison.json": {
+      "sha256": "823181b2cd0da38e1a2acf158c5f0141abedd22c35f95ad8fb3fa94b2a8395a0",
+      "bytes": 42710
+    },
+    "attrs-correction-comparison.json": {
+      "sha256": "5d9fbb5589b08e6e277abf0fb82777205c3ba72341e509a99d9011658f6387f7",
+      "bytes": 145463
+    }
+  },
+  "limitations": [
+    "New observations occur after the original failure freeze, before existing screenshot/cleanup, and are not atomic.",
+    "No post-failure data backfill original BACK decisions or four hidden samples.",
+    "IWindow binder text is only a candidate; system_server lifetime remains unverified.",
+    "EOF is not shell exit success. Missing/unavailable/ambiguous sources are not observed absence.",
+    "Populator is already filtered; source absence cannot name the upstream or downstream rejection rule.",
+    "Full dumps are deliberately discarded. outputSha256 is collector-reported and cannot be independently recomputed from archived diagnostic fields; raw instrumentation/marker hashes are independently checked.",
+    "No new original outcome is promoted, no pixels or physical device acceptance are inferred."
+  ],
+  "primaryFindings": {
+    "wmsConfiguredImeTextCandidatesSelected": 6,
+    "wmsSelectedApis": [
+      "31",
+      "32",
+      "37.0"
+    ],
+    "wmsSelectedStates": [
+      "off",
+      "idle"
+    ],
+    "api36": {
+      "states": [
+        "off",
+        "idle"
+      ],
+      "attributesParsedCount": 10,
+      "attributesUnparsedCount": 1,
+      "knownInputMethodRecordCount": 1,
+      "status": "UNAVAILABLE",
+      "reason": "WMS_ATTRIBUTES_INCOMPLETE",
+      "mClientCandidate": null,
+      "allCandidateMatchCounts": null
+    },
+    "api37": {
+      "states": [
+        "off",
+        "idle"
+      ],
+      "wmsStatus": "SELECTED",
+      "ownerDisplayPackageMatch": true,
+      "attributesParsedCount": 10,
+      "attributesUnparsedCount": 0,
+      "populatorVisibleDeclaredCount": 3,
+      "populatorVisibleParsedCount": 3,
+      "populatorDisplayCount": 1,
+      "finalPairCount": 2,
+      "notificationsEnabled": true,
+      "populatorVisibleMatchCount": 0,
+      "populatorDisplayMatchCount": 0,
+      "finalMatchCount": 0,
+      "associationStatus": "TEXT_CANDIDATE_ONLY",
+      "systemServerLifetime": "NOT_VERIFIED",
+      "atomicSnapshot": false
+    },
+    "api31And32": {
+      "wmsStatus": "SELECTED",
+      "windowA11yStatus": "COMMAND_UNAVAILABLE",
+      "finalParsedStatus": "UNAVAILABLE",
+      "finalReason": "ACCESSIBILITY_PAIRS_INCOMPLETE_OR_LEGACY",
+      "candidateMatchCounts": null
+    }
+  },
+  "postFailureTimingRanges": {
+    "gapAfterOriginalFreezeMillis": [
+      0,
+      2
+    ],
+    "collectorDurationMillis": [
+      20,
+      47
+    ]
+  },
+  "comparisonWithFirstAssociationRun": {
+    "beforeSource": {
+      "repository": "ecojust/Agent-OS",
+      "runId": 41173725544,
+      "attempt": 1,
+      "commit": "72f77af85481eb90c0511a52e61c7cbab3ac6595",
+      "url": "https://github.com/ecojust/Agent-OS/actions/runs/41173725544",
+      "conclusion": "failure",
+      "event": "workflow_dispatch",
+      "branch": "master"
+    },
+    "beforeOriginalCounts": {
+      "passed": 24,
+      "failed": 8,
+      "unverified": 0
+    },
+    "afterOriginalCounts": {
+      "passed": 24,
+      "failed": 8,
+      "unverified": 0
+    },
+    "all32OriginalStatusesUnchanged": true,
+    "all32OriginalMainErrorsUnchanged": true,
+    "all16NotesConfirmationContractObservationsUnchanged": true,
+    "originalHiddenDiagnosticValuesUnchangedCases": 8
+  },
+  "priorSourceAvailabilityPreserved": {
+    "sourceCommit": "72f77af85481eb90c0511a52e61c7cbab3ac6595",
+    "sourceRunId": 41173725544,
+    "wmsCandidatesSelected": 0,
+    "wmsCandidatesUnavailable": 8,
+    "allCandidateMatchCounts": null,
+    "oldReportsOverwritten": false
+  },
+  "nextInvestigation": "First add fixed-field parse refusal reasons for the single unparsed API36 attrs record, then evaluate the available sources and common identity key for API37 prefilter metadata. No further capture or test added to this frozen run."
+}

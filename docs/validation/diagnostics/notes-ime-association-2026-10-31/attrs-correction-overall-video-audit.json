@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "kind": "notes-ime-association-attrs-correction-overall-video-audit",
+  "auditedAt": "2026-10-31T06:02:19.851682+00:00",
+  "status": "passed",
+  "testedSource": "9b86b2a842f9e837e20e2df183893da697faaf40",
+  "videos": [
+    {
+      "kind": "overall",
+      "source": {
+        "repository": "ecojust/Agent-OS",
+        "commit": "9b86b2a842f9e837e20e2df183893da697faaf40",
+        "runId": 41174428202,
+        "attempt": 1
+      },
+      "originalStatus": "passed",
+      "archive": "screenshots/demos/41174428202-1",
+      "manifestSha256": "6ec9224457242c2fbacfd27881bfab29c0421127aa182841439a7293564b6691",
+      "sourceRunCreatedAt": "2026-10-31T05:54:30Z",
+      "sourceRunUpdatedAt": "2026-10-31T05:58:28Z",
+      "sourceRunConclusion": "success",
+      "job": {
+        "id": 124458924836,
+        "name": "record-demo (API 35)",
+        "started_at": "2026-10-31T05:54:33Z",
+        "completed_at": "2026-10-31T05:58:28Z",
+        "conclusion": "success"
+      },
+      "artifacts": [
+        {
+          "id": 13032513033,
+          "name": "demo-video-api-35-attempt-1",
+          "size_in_bytes": 1058170,
+          "created_at": "2026-10-31T05:57:55Z"
+        }
+      ],
+      "payloadFiles": 30,
+      "payloadBytes": 1133280,
+      "pngCount": 22,
+      "fullPayloadHashCheck": "passed",
+      "pinnedSourceValidator": "passed",
+      "videoPath": "screenshots/demos/41174428202-1/demo.mp4",
+      "video": {
+        "bytes": 399328,
+        "sha256": "94dbb7750298f6458bf278732c9f3b019aeacbb82522cd883295f48d1b228c0a",
+        "durationMs": 38827,
+        "width": 640,
+        "height": 1280,
+        "codec": "h264",
+        "pixelFormat": "yuv420p",
+        "decodedFrames": 455,
+        "fullDecode": "passed"
+      },
+      "flow": {
+        "requiredStages": 13,
+        "passedRequiredStages": 13,
+        "confirmationCount": 8,
+        "stageNames": [
+          "ready",
+          "text_entered",
+          "text_saved",
+          "counter_verified",
+          "scrolled_down",
+          "scrolled_up",
+          "second_page",
+          "returned_to_fixture",
+          "controls_waiting",
+          "paused",
+          "resumed",
+          "stopped",
+          "stale_approval_rejected"
+        ],
+        "model": {
+          "kind": "local_synthetic_http",
+          "externalModelUsed": false
+        },
+        "secureFlagsPreserved": true
+      }
+    }
+  ],
+  "visualInspection": {
+    "status": "passed",
+    "reviewedAt": "2026-10-31T06:02:19.503777+00:00",
+    "method": "Inspected the listed original video frames; all 455 frames independently decoded without error.",
+    "sampledOriginalFrames": [
+      {
+        "videoOffsetSeconds": 10,
+        "scratchPath": "/workspace/scratch/notes-ime-video-correction-audit/overall-frames/10.png",
+        "sha256": "5c7ec86ee5c14999c4896ae7a8393b5e38d19c5a6a571b26a95e0f371ed5b4f2"
+      },
+      {
+        "videoOffsetSeconds": 18,
+        "scratchPath": "/workspace/scratch/notes-ime-video-correction-audit/overall-frames/18.png",
+        "sha256": "4b6819055fa9e80a3ef0d3c9b03afeab96a06d9ed6cdeafa6626b52d12dcd3dc"
+      },
+      {
+        "videoOffsetSeconds": 21,
+        "scratchPath": "/workspace/scratch/notes-ime-video-correction-audit/overall-frames/21.png",
+        "sha256": "4bbe267139669fe56ff965303d72cd5e6373e536d1e41eed54264b1c2ddfd861"
+      },
+      {
+        "videoOffsetSeconds": 27,
+        "scratchPath": "/workspace/scratch/notes-ime-video-correction-audit/overall-frames/27.png",
+        "sha256": "79f07841d6ec21aa3f506d866cf96db159d764d36db5af7edcf72a14839553b6"
+      },
+      {
+        "videoOffsetSeconds": 33,
+        "scratchPath": "/workspace/scratch/notes-ime-video-correction-audit/overall-frames/33.png",
+        "sha256": "53cfc463cdf603d0cee1b6da40c5725f7e57c3be18566921ea999f256a8e2352"
+      },
+      {
+        "videoOffsetSeconds": 34.5,
+        "scratchPath": "/workspace/scratch/notes-ime-video-correction-audit/overall-frames/34.5.png",
+        "sha256": "c71bd899b7aba68087907c78cc4b3c5846d11cdf1a58836c517ee4b101048848"
+      },
+      {
+        "videoOffsetSeconds": 38,
+        "scratchPath": "/workspace/scratch/notes-ime-video-correction-audit/overall-frames/38.png",
+        "sha256": "e3f12d1d2ca6f7dac02414bce0bcd63494bde3120930ec0488e2d3dc686c18e3"
+      }
+    ],
+    "observed": [
+      "Native approval overlay displays input-text, scroll-backward, return navigation and increment-counter requests.",
+      "Saved synthetic text and Count 1 are visible; scrolled rows and second page are reached.",
+      "At 34.5 seconds the paused overlay shows Continue and Stop.",
+      "At 38 seconds saved synthetic text and Count 1 remain with no task overlay."
+    ],
+    "limits": "Original receipts establish thirteen required stages and eight approvals. This ordinary Fixture/local-model video does not run the Notes IME collector, prove its parsing or turn any matrix failure into a pass; sampled frames are not physical-touch or latency acceptance."
+  },
+  "limitations": [
+    "Both recordings use dedicated API35 emulators; app-set uses official unmodified Calculator 1.4.0 and Notes 1.7.0 in off/idle states, while overall uses synthetic Fixture/local HTTP model.",
+    "App-set video contains four API35 cases, not the eight-API 32-case matrix or Agent execution/upgrade/real-model acceptance.",
+    "Video decoding and visible screens do not establish physical-present latency or physical-device acceptance."
+  ],
+  "archiveBindings": [
+    {
+      "runId": 41174428202,
+      "branch": "evidence/demo-41174428202-1",
+      "archiveCommit": "095a4aca2a2fc4192bc0dc92b38dc4d6c090796f",
+      "parentCommit": "cd7f6110119706860670278267a2bbef97e87343",
+      "sourceCommit": "9b86b2a842f9e837e20e2df183893da697faaf40",
+      "path": "screenshots/demos/41174428202-1"
+    }
+  ],
+  "archiveRuns": [
+    {
+      "id": 41174745803,
+      "head_sha": "cd7f6110119706860670278267a2bbef97e87343",
+      "path": ".github/workflows/demo-video.yml",
+      "created_at": "2026-10-31T05:59:39Z",
+      "updated_at": "2026-10-31T06:01:20Z",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "auditScriptSha256": "ac035a4b4805e7d43a9dfabf0c56a1274471280690aa5e594f632a03b6d7c90b",
+  "pinnedValidatorFiles": {
+    "scripts/demo_video.py": "0a310f66a8b76c5b240c899871b449c24a3a0857647e79a22b74231006885f0b",
+    "scripts/probe_video_archive.py": "a6e26499d1dab356e3d202aa0d988705329218fafdad66c06fd0afe539b004b2",
+    "scripts/probe_video.py": "5d346980d64470853bb598f2aebf80253ac731012e5e418c1610baae19720ebe",
+    "scripts/third_party_smoke_set.py": "c68a8d930368430041fb2b9ce1ce9b1ff129692a524dbc46ef8edde002677fcd",
+    "scripts/third_party_smoke_set_archive.py": "bf2a7a287fbbdce20e3ffee7742342f486485da5187cc204213a0d9e924d6919",
+    "docs/validation/third-party-app-set-lock.json": "9bfd9a059cf858cdb73eb4245fa57d5f9bf2d2ebc6818f4fbfdc8a159d50c20a"
+  }
+}

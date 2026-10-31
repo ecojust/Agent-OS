@@ -66,6 +66,26 @@ v4仍使用原5秒准备期限、最多4次visible及4次hidden WMS采样、最�
 
 完成新增解析边界检查、主机替身检查、构建与lint并冻结另一份源码后，另执行**一轮完整32项**，与72f首轮分别报告，不合并分母。再录一次该修正源码的整体操作演示；已经录制成功的72f真实APK四项视频保留其实际源码，因为本次只修正失败后的属性提取，不改API35四项核心操作。新录像不存在或失败时保留已有成功视频的原来源，不改标版本或反复补录。未修复的应用失败继续列为失败。
 
-首轮[真实APK视频](../../screenshots/demos/probes-41173740075-1/video/demo.mp4)为46.685秒、758,718字节、843帧，四项4/4；9载荷1,088,574字节、4 PNG和4条Notes blocked保留。[整体视频](../../screenshots/demos/41173741948-1/demo.mp4)为39.148秒、442,972字节、506帧，13阶段/8确认；30载荷1,183,865字节、22 PNG。两段的来源、全部载荷、固定源码验证器、全帧解码及实际画面已[审核](diagnostics/notes-ime-association-2026-10-31/video-audit.json)，README各类型已更新到这两段实际72f录像；不代表在API35复现了八项隐藏失败。
+首轮[真实APK视频](../../screenshots/demos/probes-41173740075-1/video/demo.mp4)为46.685秒、758,718字节、843帧，四项4/4；9载荷1,088,574字节、4 PNG和4条Notes blocked保留。[整体视频](../../screenshots/demos/41173741948-1/demo.mp4)为39.148秒、442,972字节、506帧，13阶段/8确认；30载荷1,183,865字节、22 PNG。两段的来源、全部载荷、固定源码验证器、全帧解码及实际画面已[审核](diagnostics/notes-ime-association-2026-10-31/video-audit.json)，首轮归档时README已链接这两段实际72f录像；不代表在API35复现了八项隐藏失败。
 
-属性解析修正已完成：每条属性块最多8192字符、嵌套深度最多8，只认唯一顶层`ty`；任一窗口属性未解析完成就记录`WMS_ATTRIBUTES_INCOMPLETE`，不据此选择唯一IME。新增两个固定解析计数，旧标记仍兼容。修正后25项采集替身检查、29项分析检查、独立24项解析复核及构建/lint（43秒）通过；旧72f报告重放逐案结果与marker摘要不变。[修正验证记录](diagnostics/notes-ime-association-2026-10-31/attrs-correction-local-validation.json)证明采集器WMS解析前代码、原准备/截图/清理接线、APK/锁/四方法和生产代码未改。891项既有宿主检查仍归72f，未为这次解析修正重复执行或改标来源。修正源码已固定为`9b86b2a842f9e837e20e2df183893da697faaf40`。独立[32项运行41174426442](https://github.com/ecojust/Agent-OS/actions/runs/41174426442)与[整体录像41174428202](https://github.com/ecojust/Agent-OS/actions/runs/41174428202)已启动，结果待审核；[来源记录](diagnostics/notes-ime-association-2026-10-31/attrs-correction-source-runs.json)与首轮分别保存。
+属性解析修正已完成：每条属性块最多8192字符、嵌套深度最多8，只认唯一顶层`ty`；任一窗口属性未解析完成就记录`WMS_ATTRIBUTES_INCOMPLETE`，不据此选择唯一IME。新增两个固定解析计数，旧标记仍兼容。修正后25项采集替身检查、29项分析检查、独立24项解析复核及构建/lint（43秒）通过；旧72f报告重放逐案结果与marker摘要不变。[修正验证记录](diagnostics/notes-ime-association-2026-10-31/attrs-correction-local-validation.json)证明采集器WMS解析前代码、原准备/截图/清理接线、APK/锁/四方法和生产代码未改。891项既有宿主检查仍归72f，未为这次解析修正重复执行或改标来源。修正源码已固定为`9b86b2a842f9e837e20e2df183893da697faaf40`。独立[32项运行41174426442](https://github.com/ecojust/Agent-OS/actions/runs/41174426442)与[整体录像41174428202](https://github.com/ecojust/Agent-OS/actions/runs/41174428202)已完成并审核，结果见下文；[来源记录](diagnostics/notes-ime-association-2026-10-31/attrs-correction-source-runs.json)与首轮分别保存。
+
+## 修正轮实际结果与下一步
+
+`9b86b2a842f9e837e20e2df183893da697faaf40`的[41174426442原件](../../screenshots/third-party-41174426442-1/manifest.json)完整执行32项，仍为 **24通过/8失败/0未验证**。56载荷共2,527,152字节、32 PNG与32条Notes blocked全部核验；32份安装身份及设置恢复、8份Notes新进程全文读回通过。与72f首轮逐项比较，原32结果/主错误、16项Notes确认字段及8×4次原隐藏WMS的字段值/计数不变；时间、窗口ID和token不跨运行比较。几何marker为零，旧API30标题失败未据此称为修复。
+
+修正后6项取得唯一配置IME的WMS候选，2项仍拒绝选择；只有API37两态取得完整的后续候选查找结果：
+
+| 原失败组合 | 后置WMS | 后续来源与实际候选匹配 |
+| --- | --- | --- |
+| API31/32 × off/idle，4项 | 候选已选中，属性分别9/12项完整 | a11y命令不可用，最终服务为旧式未配对格式；匹配未知 |
+| API36 × off/idle，2项 | 10项属性成功、1项未解析；虽识别1条INPUT_METHOD，仍拒绝选择mClient | Populator及最终清单格式可识别，但没有候选键；匹配为null，不能称缺项 |
+| API37 × off/idle，2项 | 10项属性完整，唯一配置IME候选已选中 | Populator通知开启，可见清单3项、单display分组、最终配对2项；同轮候选文本分别匹配0/0/0 |
+
+API37的结果说明：在**失败后的三次有序读取**中，WMS候选文本已不在Populator的已筛选清单内。它缩小了调查边界，但不能区分上游未提供、预筛选、缓存/通知时序或对象重建，也不能回填原BACK决策或证明输入法像素隐藏。API36未知记录的具体格式尚无证据，不猜测原因，也不忽略它来建立唯一关联。
+
+八份采集均在原失败冻结后0–2毫秒开始，耗时20–47毫秒，无截断或超时；原31/32各一次BACK被接受，36/37仍为零，八项确认/HOME均为零。[逐案结果与来源比较](diagnostics/notes-ime-association-41174426442/findings.md)及[独立原件复核](diagnostics/notes-ime-association-2026-10-31/attrs-correction-independent-original-review.json)分别保存。72f首轮八个未知候选保持原样，没有用修正版结果改写历史。
+
+修正源码的[最新整体视频](../../screenshots/demos/41174428202-1/demo.mp4)为38.827秒、399,328字节、455帧，13阶段/8确认通过；30载荷1,133,280字节、22 PNG、固定源码验证器及全部帧解码/实际画面均[审核通过](diagnostics/notes-ime-association-2026-10-31/attrs-correction-overall-video-audit.json)。README普通任务一类已更新为9b86，真实APK一类保留最新实际72f视频；两轮矩阵与录像各自统计，所有旧片保留真实来源。
+
+本步骤完成了有界诊断、格式修正与两份源码的独立验证，**原八项应用失败仍未修复，应用验收检查点继续进行中**。下一步先为API36未解析属性补充有界结构失败原因，再评估API37过滤前输入窗口元数据的只读来源和共同对象键；继续保留原动作与截图准入。整体工程检查点仍为10/20，不因诊断新增而增加通过数。

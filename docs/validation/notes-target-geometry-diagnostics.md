@@ -33,6 +33,8 @@
 | [第一轮41165280718](https://github.com/ecojust/Agent-OS/actions/runs/41165280718) | 八档×两APK×关闭/空闲，32项 | 已启动，待原件审核 |
 | [第二轮41165282816](https://github.com/ecojust/Agent-OS/actions/runs/41165282816) | 同源独立32项 | 已启动，待原件审核 |
 | [真实APK录像41165285095](https://github.com/ecojust/Agent-OS/actions/runs/41165285095) | 仅API35原四项 | 已启动，待实际视频 |
-| [整体录像41165286817](https://github.com/ecojust/Agent-OS/actions/runs/41165286817) | API35合成Fixture/本地模型 | 已启动，待实际视频 |
+| [整体录像41165286817](https://github.com/ecojust/Agent-OS/actions/runs/41165286817) | API35合成Fixture/本地模型 | 13阶段/8确认通过；36.256秒、515帧，实际视频已审核归档 |
 
 上述运行于2026-10-31 03:39 UTC分别启动，均绑定同一源码；未结束前不填入结果，也不将旧ad0f录像改名为本轮。
+
+整体录像[原清单](../../screenshots/demos/41165286817-1/manifest.json)与[审核](diagnostics/notes-target-geometry-2026-10-31/overall-video-audit.json)已保存，README普通操作一类已更新到实际33ac视频；它不证明发生过几何失败，也不替代两轮原APK结果。

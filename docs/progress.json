@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-31T03:41:13Z",
-  "note": "几何诊断冻结在33ac源码，两轮独立32项41165280718/41165282816及两段录像41165285095/41165286817已启动；891宿主检查和构建/lint通过，结果待原件审核。",
+  "updated_at": "2026-10-31T03:47:00Z",
+  "note": "33ac源码整体操作录像已归档：13阶段/8确认通过，36.256秒/515帧、30载荷/22PNG完整核验。两轮真实APK原件及独立APK录像继续分别审核。",
   "latest_evidence": {
     "path": "screenshots/third-party-41163144860-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41163144860"
@@ -119,10 +119,10 @@
       "id": "continuous_actions",
       "name": "普通操作连续执行与接管",
       "status": "in_progress",
-      "evidence": "screenshots/demos/41161481513-1/manifest.json",
-      "scope": "ad0f0a723源码API35普通Fixture演示13阶段、8次确认通过；36.162秒、30载荷/1197740B/22PNG及506帧完整解码核验，安全标志保留，本地合成模型。最终浮条移除。仅启动/滚动/主页开放可选免确认；普通写操作连续执行与真实模型接管未验收。录像不替代专项性能数值或历史旋转失败。",
-      "details": "已验证：ad0f源码API35普通流程13阶段、8次确认通过，36.162秒/506帧完整解码，安全标志保留；c7b繁忙停止独立演示1/1通过。仅启动/滚动/主页可选免确认，旧ready/旋转及MODEL帧失败保留。未完成：普通写操作连续执行和真实模型接管。下一步冻结连续写范围，补端到端接管与启动可用性验证。",
-      "updated_at": "2026-10-31T03:01:33Z"
+      "evidence": "screenshots/demos/41165286817-1/manifest.json",
+      "scope": "33ac5825b源码API35普通Fixture演示13阶段、8次确认通过；36.256秒、30载荷/1159207B/22PNG及515帧完整解码核验，保留安全标志、本地合成模型；最终浮条已移除。仅启动/滚动/主页可选免确认，普通写操作连续执行与真实模型接管仍未验收。普通录像不替代真实APK、性能或历史旋转/停止帧失败。",
+      "details": "已验证：33ac源码API35普通流程13阶段、8次确认通过，36.256秒/515帧及30载荷/22PNG完整核验，安全标志保留；c7b繁忙停止独立演示1/1保留。仅启动/滚动/主页可选免确认，旧ready/旋转及MODEL帧失败仍在。未完成：普通写操作连续执行和真实模型接管。下一步冻结连续写范围，补端到端接管与启动可用性验证。",
+      "updated_at": "2026-10-31T03:47:00Z"
     },
     {
       "id": "model_acceptance",
@@ -179,9 +179,9 @@
     }
   ],
   "latest_demo": {
-    "path": "screenshots/demos/41161481513-1",
-    "source_sha": "ad0f0a723e2efbb146a06e173a0ebdecc6706ee6",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41161481513",
+    "path": "screenshots/demos/41165286817-1",
+    "source_sha": "33ac5825bc7537b9a67c9daeeee6916da12256d6",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41165286817",
     "status": "passed"
   }
 }

@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-31T02:35:54Z",
-  "note": "调整README检查点表格列宽：检查点、状态及最近更新时间保持单行，详细进度正常换行；生成器同步更新。16项进度检查通过，已核对GitHub渲染及桌面/窄屏效果，原检查点数据和行更新时间保留。",
+  "updated_at": "2026-10-31T02:43:08Z",
+  "note": "已归档第四轮停止诊断与同源两段实际录像：32计划中27有效、2失败、3未执行，原件及7847项复核一致；README新增7秒繁忙停止演示并更新33.5秒普通演示。API30旋转+2px找到平台机制候选，仍待独立实测；下一项推进Notes失败瞬间诊断。",
   "latest_evidence": {
-    "path": "screenshots/41098174743-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41098174743"
+    "path": "screenshots/41101009371-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41101009371"
   },
   "checkpoints": [
     {
@@ -86,15 +86,15 @@
       "status": "in_progress",
       "evidence": "docs/validation/matrix-repeat-2026-10-30.md",
       "scope": "User requested three additional fixed complete runs before closing the current declared matrix if failures cannot reproduce. Exact710e54e701edb37a32efa28845f0cd5ed6ace936 has identical Android/product/test/build/workflow sources to priorb3e. Runs41032278433,41032282256,41032285687 each273/API over8 APIs:2183/2184,2182/2184,2183/2184,total6548/6552;four actual rotation failures,not accepted for closure. Zero missing/extra/duplicate/skipped/JUnit errors/unreadable. API30 all3:6 BOUNDS_MISMATCH each,17/18 reject-time actual[110,36,532,150] vs expected[110,36,530,148];round2 first actual bottom244. Old input explicitly unsubmitted STALE,dispatch0/request1. API35 round2 fails current-identity assertion before actual approval click;not the same observed failure path. Original270 subset6480/6480;three navigation cases72/72;SAF144/144;visual12 actual API34-37 positives plus12 lower-API unsupported passes. SAF setup144 allprior1;one actual depth0 recovery at round1 API32 normal import;round2/3 zero. All3 archives/hash/PNG/source checks valid;13508payload/144515210B/6860PNG,24 prior secure exceptions each. All503 host checks passed in each CI;core:test FROM-CACHE,app JVM NO-SOURCE. Production navigation before/after repair remains supported;rotation platform cause and API35 invalidation trigger remain open. No replacement runs or weakened guard/budget. Remaining lifecycle extensions:MainActivity rotation drafts,multiwindow/PiP,process death,in-flight external upgrade. Performance,real-model,apps,phones and ROM separately accepted.",
-      "details": "三轮已核验2183/2184、2182/2184、2183/2184，共6548/6552；未满足不复现后完成的条件。导航72/72、SAF144/144，视觉12实际正例及12不支持路径通过。未完成：API30三轮均六次边界失配（17/18次右/下+2px）；第二轮API35点击前身份失效；后续生命周期扩展。下一步：分别定位平台几何差异与控件失效触发点，保留原精度和观察预算。",
-      "updated_at": "2026-10-30T09:48:56Z"
+      "details": "三轮6548/6552，API30三轮与API35第二轮旋转仍失败，未满足完成条件。源码调查确认AOSP11旋转扩大宽高2px，可推导原边界差异；尚未区分动画、WMS矩阵残留或窗口缓存。现有首次可见事件已发送，未部署可能影响其他辅助服务的重复刷新。下一步独立测试专用刷新实验，并补API35点击前失效原因；保留精确几何和原2秒/6次预算。",
+      "updated_at": "2026-10-31T02:43:08Z"
     },
     {
       "id": "performance",
       "name": "三态性能诊断与空闲交替配对",
       "status": "complete",
-      "details": "原诊断、压力、活跃及启动/帧子项已完成。繁忙停止第三轮原v1规则27通过、2失败、3未执行，原件与独立审核已归档。c7b源码v2关联修正、RT合成排除通过891项完整宿主回归和编译/lint。第四轮41101009371及录像41101012830、41101016649截至17:53 UTC排队超10分钟，未分配GitHub运行器，暂无新设备结果。下一步审核原32次结果，通过后启动正式1600次；真机预算未验收。",
-      "updated_at": "2026-10-30T17:53:50Z",
+      "details": "原诊断、压力、活跃及启动/帧子项已完成。c7b源码第四轮41101009371六档通过：27有效、2失败、3未执行；88载荷及7847项复核一致。v2已排除零UI阶段误配，API30/32仍缺首停止traversal报告，模型释放/排空未执行步骤不补成通过。独立停止/整体录像已归档。下一步验证保留原UI提交身份的原生trace方法，再判断正式1600样本；真机预算未验收。",
+      "updated_at": "2026-10-31T02:43:08Z",
       "evidence": "docs/validation/performance-idle-pairs.md",
       "scope": "按用户本次确认，将原“三态性能测量与预算验收”检查点的当前完成范围明确为三态诊断采集、同源多轮汇总和同设备空闲交替配对，并以已归档通过证据关闭此项。原预算验收要求保留于docs/PERFORMANCE.md的“性能后续任务”，尚未完成；状态变更不改变diagnosticOnly=true、budgetAcceptance=false。084d596e源码专项41044860496八档8/8，AB/BA六对/API：48对96窗全部通过、2016采样、192端点状态及0trace；65payload/1073884B/17PNG核验，7条before截图blocked原样保留，无安全标志例外。2160派生数值独立Fraction复算一致，保留AB/BA顺序相关差异；CI562项宿主实际通过无skip，core:test FROM-CACHE。旧710e三轮24份四态诊断与矩阵失败保留。初次归档参数错误41045898899保留，纠正后41046173408成功且未重跑设备。仍为diagnosticOnly=true、budgetAcceptance=false。后续054be源码的30分钟分段专项41052540296已独立验收，见docs/validation/performance-stress.md；此行原诊断与空闲配对的验收范围不变。后续8d038源码的等价任务专项41059787334也已独立验收：48对/96组/480任务、960端点，A平台接受720与C模型确认720分开，548载荷和3728派生数值核验，见docs/validation/performance-active-pairs.md。原诊断/空闲配对验收范围不变；f45fbb152源码专项41082958303已完成受控Fixture目标进程/启动/HWUI帧诊断：八档3200有效TTID、144资源任务、576 PSS端点及432帧通过，3444载荷已归档，官方原trace重放及独立数值复验通过，见docs/validation/performance-app-experience.md。辅助资源trace的历史覆盖限制另列；繁忙停止、稳态/瞬时峰值及真机功耗温升仍未验收。"
     },
@@ -121,8 +121,8 @@
       "status": "in_progress",
       "evidence": "screenshots/demos/41072479607-1/manifest.json",
       "scope": "52355136b源码API35普通Fixture演示13阶段、8次确认和直接仪器1/1通过；33.673秒、30载荷/1141994B/22PNG以及448帧完整解码核验，安全标志保留，本地合成模型。末帧控制窗已消失，stopped PNG仍等待确认。仅启动/滚动/主页开放可选免确认；普通写操作连续执行与真实模型接管未验收。录像不替代目标进程/启动/帧数值或历史旋转失败。",
-      "details": "已验证：523源码API35普通流程13阶段、8次确认通过，33.7秒录像及全部448帧解码核验，安全标志保留；仅启动/滚动/主页可选免确认。历史ready和旋转失败保留，普通视频不替代性能数值。未完成：普通写操作连续执行和实际模型接管尚未验收。下一步：冻结连续写范围，补端到端接管与启动可用性验证。",
-      "updated_at": "2026-10-30T14:43:52Z"
+      "details": "已验证：c7b源码API35普通流程13阶段、8次确认通过，33.533秒/2012帧完整解码，同源独立繁忙停止演示1/1通过；安全标志保留。仅启动/滚动/主页可选免确认，旧ready/旋转及MODEL帧失败各自保留。未完成：普通写操作连续执行和真实模型接管。下一步冻结连续写范围，补端到端接管与启动可用性验证。",
+      "updated_at": "2026-10-31T02:43:08Z"
     },
     {
       "id": "model_acceptance",
@@ -179,9 +179,9 @@
     }
   ],
   "latest_demo": {
-    "path": "screenshots/demos/41072479607-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41072479607",
-    "source_sha": "52355136be35ad7834a27c7741755cfd4514e1f7",
+    "path": "screenshots/demos/41101016649-1",
+    "source_sha": "c7bfa7c21124a2384804ba15378ce7320edb0241",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41101016649",
     "status": "passed"
   }
 }

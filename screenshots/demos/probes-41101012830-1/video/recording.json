@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "kind": "agent-os-probe-video",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "c7bfa7c21124a2384804ba15378ce7320edb0241",
+    "runId": 41101012830,
+    "attempt": 1
+  },
+  "profile": "busy-stop-platform",
+  "apiLevel": 35,
+  "status": "passed",
+  "recordingStatus": "recorded",
+  "callbackOutcome": "returned",
+  "callbackErrorClass": null,
+  "callbackElapsedMs": 6534,
+  "callbackStartedAfterRecorderMs": 447,
+  "callbackFinishedAfterRecorderMs": 6982,
+  "timeLimitSeconds": 120,
+  "secureFlagsPreserved": true,
+  "testOutcomeIndependent": true,
+  "coverage": {
+    "status": "covered",
+    "recorderAliveBeforeCallback": true,
+    "recorderAliveAfterCallback": true,
+    "durationToleranceMs": 1500
+  },
+  "rawVideo": {
+    "bytes": 167455,
+    "sha256": "b3dc122921ebea53293bdb11f20b3e49ab6ef826964d43405de1f54a2f0d12e5",
+    "durationMs": 6846,
+    "width": 320,
+    "height": 640,
+    "codec": "h264",
+    "pixelFormat": "yuv420p"
+  },
+  "rawRetained": false,
+  "video": {
+    "bytes": 62687,
+    "sha256": "c7c98e59f876c284819bf7728f4833620a518b1cdeda6f3f9c72188a63929172",
+    "durationMs": 6965,
+    "width": 640,
+    "height": 1280,
+    "codec": "h264",
+    "pixelFormat": "yuv420p"
+  },
+  "recorder": {
+    "started": true,
+    "exitCode": 0,
+    "stderr": {
+      "text": "",
+      "truncated": false,
+      "complete": true
+    }
+  },
+  "failures": [],
+  "probes": [
+    {
+      "stage": "raw_probe",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "{\n    \"programs\": [\n\n    ],\n    \"streams\": [\n        {\n            \"codec_name\": \"h264\",\n            \"codec_type\": \"video\",\n            \"codec_tag_string\": \"avc1\",\n            \"width\": 320,\n            \"height\": 640,\n            \"pix_fmt\": \"yuv420p\"\n        },\n        {\n            \"codec_type\": \"data\",\n            \"codec_tag_string\": \"mett\"\n        },\n        {\n            \"codec_type\": \"data\",\n            \"codec_tag_string\": \"mett\"\n        }\n    ],\n    \"format\": {\n        \"duration\": \"6.846167\"\n    }\n}\n"
+    },
+    {
+      "stage": "encoded_probe",
+      "status": "completed",
+      "exitCode": 0,
+      "stdout": "{\n    \"programs\": [\n\n    ],\n    \"streams\": [\n        {\n            \"codec_name\": \"h264\",\n            \"codec_type\": \"video\",\n            \"codec_tag_string\": \"avc1\",\n            \"width\": 640,\n            \"height\": 1280,\n            \"pix_fmt\": \"yuv420p\"\n        }\n    ],\n    \"format\": {\n        \"duration\": \"6.965242\"\n    }\n}\n"
+    }
+  ]
+}

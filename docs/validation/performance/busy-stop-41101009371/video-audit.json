@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "kind": "busy-stop-and-overall-video-audit",
+  "auditedAt": "2026-10-31T02:41:57.276053+00:00",
+  "status": "passed",
+  "testedSource": "c7bfa7c21124a2384804ba15378ce7320edb0241",
+  "videos": [
+    {
+      "kind": "busy-stop",
+      "source": {
+        "repository": "ecojust/Agent-OS",
+        "commit": "c7bfa7c21124a2384804ba15378ce7320edb0241",
+        "runId": 41101012830,
+        "attempt": 1
+      },
+      "archive": "screenshots/demos/probes-41101012830-1",
+      "manifestSha256": "e04ae89290115e47b454a92975814b11674322bc00e703f7d7c0c2c159eb0aa4",
+      "sourceRunCreatedAt": "2026-10-30T17:43:02Z",
+      "sourceRunUpdatedAt": "2026-10-30T18:02:52Z",
+      "sourceRunConclusion": "success",
+      "job": {
+        "id": 124218102822,
+        "name": "record-busy-stop (API 35)",
+        "started_at": "2026-10-30T17:43:07Z",
+        "completed_at": "2026-10-30T17:54:27Z",
+        "conclusion": "success"
+      },
+      "artifacts": [
+        {
+          "id": 12998358614,
+          "name": "busy-stop-walkthrough-api-35-attempt-1",
+          "size_in_bytes": 26604,
+          "created_at": "2026-10-30T17:47:34Z"
+        },
+        {
+          "id": 12999705692,
+          "name": "probe-video-busy-stop-platform-api-35-attempt-1",
+          "size_in_bytes": 60170,
+          "created_at": "2026-10-30T17:47:35Z"
+        }
+      ],
+      "payloadFiles": 11,
+      "payloadBytes": 104131,
+      "pngCount": 3,
+      "fullPayloadHashCheck": "passed",
+      "pinnedSourceValidator": "passed",
+      "videoPath": "screenshots/demos/probes-41101012830-1/video/demo.mp4",
+      "video": {
+        "bytes": 62687,
+        "sha256": "c7c98e59f876c284819bf7728f4833620a518b1cdeda6f3f9c72188a63929172",
+        "durationMs": 6965,
+        "width": 640,
+        "height": 1280,
+        "codec": "h264",
+        "pixelFormat": "yuv420p",
+        "decodedFrames": 117,
+        "fullDecode": "passed"
+      },
+      "flow": {
+        "caseCount": 1,
+        "scenario": "DEVICE",
+        "trialStatus": "passed",
+        "actualTouchUps": 1,
+        "dispatchBefore": 1,
+        "dispatchFinal": 1,
+        "inFlightAfterStop": true,
+        "inFlightAfterSettle": false,
+        "stopResult": "TASK_STOPPED",
+        "counterInitial": 0,
+        "counterFinal": 1,
+        "effectWrittenAfterStop": true,
+        "workerDrained": true,
+        "frozenResultUnchanged": true,
+        "secureFlagsPreserved": true,
+        "performanceSample": false
+      }
+    },
+    {
+      "kind": "overall",
+      "source": {
+        "repository": "ecojust/Agent-OS",
+        "commit": "c7bfa7c21124a2384804ba15378ce7320edb0241",
+        "runId": 41101016649,
+        "attempt": 1
+      },
+      "archive": "screenshots/demos/41101016649-1",
+      "manifestSha256": "c11c48163909bcdc961b6ec5be4dc81f52c740cf7d0d9b460066184a6ec7f5c6",
+      "sourceRunCreatedAt": "2026-10-30T17:43:04Z",
+      "sourceRunUpdatedAt": "2026-10-30T18:01:53Z",
+      "sourceRunConclusion": "success",
+      "job": {
+        "id": 124218109940,
+        "name": "record-demo (API 35)",
+        "started_at": "2026-10-30T17:43:08Z",
+        "completed_at": "2026-10-30T17:52:54Z",
+        "conclusion": "success"
+      },
+      "artifacts": [
+        {
+          "id": 12998338092,
+          "name": "demo-video-api-35-attempt-1",
+          "size_in_bytes": 1224577,
+          "created_at": "2026-10-30T17:47:19Z"
+        }
+      ],
+      "payloadFiles": 30,
+      "payloadBytes": 1370902,
+      "pngCount": 22,
+      "fullPayloadHashCheck": "passed",
+      "pinnedSourceValidator": "passed",
+      "videoPath": "screenshots/demos/41101016649-1/demo.mp4",
+      "video": {
+        "bytes": 626052,
+        "sha256": "9c8018d358b2c139f341ea271bb6b92aa21dfc87ba9b8df32053e716de97eadd",
+        "durationMs": 33533,
+        "width": 640,
+        "height": 1280,
+        "codec": "h264",
+        "pixelFormat": "yuv420p",
+        "decodedFrames": 2012,
+        "fullDecode": "passed"
+      },
+      "flow": {
+        "requiredStages": 13,
+        "passedRequiredStages": 13,
+        "confirmationCount": 8,
+        "stageNames": [
+          "ready",
+          "text_entered",
+          "text_saved",
+          "counter_verified",
+          "scrolled_down",
+          "scrolled_up",
+          "second_page",
+          "returned_to_fixture",
+          "controls_waiting",
+          "paused",
+          "resumed",
+          "stopped",
+          "stale_approval_rejected"
+        ],
+        "model": {
+          "kind": "local_synthetic_http",
+          "externalModelUsed": false
+        },
+        "secureFlagsPreserved": true
+      }
+    }
+  ],
+  "visualInspection": {
+    "status": "passed",
+    "method": "Decoded frame contact sheets inspected by the reviewing agent; all frames separately passed ffmpeg decode. Contact-sheet padding is not video content.",
+    "reviewedAt": "2026-10-31T02:42:45.550576+00:00",
+    "busyStop": {
+      "sampling": "2 frames per second across 6.965 seconds",
+      "observed": [
+        "Synthetic SlowActivity shows Count: 0.",
+        "Actual Agent overlay contains pause and stop controls.",
+        "Overlay disappears while Count: 0 remains visible.",
+        "The original slow click effect later changes the count to 1, which remains visible."
+      ],
+      "limits": "Raw one-case instrumentation establishes actual UP receipt, in-flight ownership and no new dispatch. Video sequence is illustrative, not a complete-frame latency measurement or MODEL result."
+    },
+    "overall": {
+      "sampling": "One frame every 3 seconds across 33.533 seconds",
+      "observed": [
+        "Synthetic Fixture text is entered and saved as Controller integration sample.",
+        "Counter reaches 1.",
+        "Scrolling and the second page are visible.",
+        "Paused overlay displays Continue/Stop; the final screen has no task overlay."
+      ],
+      "limits": "Thirteen required stage outcomes and eight approvals are verified from original flow records; sampled visuals alone do not establish every guard."
+    }
+  },
+  "limitations": [
+    "Both recordings are API35 dedicated-emulator synthetic Fixture/local HTTP model scenarios.",
+    "Busy-stop video contains one DEVICE walkthrough, not the eight-API pilot/formal samples or MODEL stopped-frame metric.",
+    "Video decoding and visible screens do not establish physical-present latency or physical-device acceptance."
+  ],
+  "auditScriptSha256": "ef26d1e914fe29e932e131e8fd7f9ec22769d311539034408df6948505a63e97",
+  "pinnedValidatorFiles": {
+    "demo_video.py": "0a310f66a8b76c5b240c899871b449c24a3a0857647e79a22b74231006885f0b",
+    "probe_video_archive.py": "a6e26499d1dab356e3d202aa0d988705329218fafdad66c06fd0afe539b004b2",
+    "busy_stop_video.py": "220087baf7b36943f2d2034516bb273da0d9293edd3fcb65f32d103d681c77f0",
+    "collect_busy_stop_evidence.py": "bc7441d183635a2a0e8453e280f5db8997996421502ef1ce5bc6de3f51e6c0d8",
+    "probe_video.py": "5d346980d64470853bb598f2aebf80253ac731012e5e418c1610baae19720ebe"
+  }
+}

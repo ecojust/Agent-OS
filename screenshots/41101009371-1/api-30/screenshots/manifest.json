@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "api": 30,
+  "runId": "1793382314714-4c326767",
+  "scope": "Dedicated synthetic Android fixture and verified empty application UI only",
+  "jvmTests": "No UI; no screenshot is claimed for JVM tests",
+  "tests": [
+    {
+      "schemaVersion": 1,
+      "api": 30,
+      "testClass": "dev.agentos.app.BusyStopInstrumentedTest",
+      "testName": "collectBusyStopDiagnostics",
+      "assertionResult": "fail",
+      "testResult": "fail",
+      "status": "fail",
+      "startedAt": 1793382314721,
+      "finishedAt": 1793382322838,
+      "failureClass": "AssertionError",
+      "captures": [
+        {
+          "stage": "busy-stop-sequence-before",
+          "capturedAt": 1793382315796,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "blocked",
+          "captureError": "capture_unavailable_or_blank_secure_surface_not_evidence"
+        },
+        {
+          "stage": "failed",
+          "capturedAt": 1793382322832,
+          "foregroundPackage": "dev.agentos.fixture",
+          "status": "blocked",
+          "captureError": "capture_unavailable_or_blank_secure_surface_not_evidence"
+        }
+      ]
+    }
+  ]
+}

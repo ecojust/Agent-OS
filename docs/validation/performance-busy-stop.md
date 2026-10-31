@@ -1,6 +1,6 @@
 # 受控繁忙状态下的停止响应
 
-本项继续[性能后续任务](../PERFORMANCE.md#性能后续任务)，补齐实际停止按钮、在途平台调用及本地停止反馈的证据。Android 仪器编译、lint、Fixture 编译与 3 项探针单元测试已通过；默认完整矩阵的 273 个 class#method 身份与基线逐一相同。冻结源码 `c7bfa7c21` 的 [891 项完整宿主回归](performance/busy-stop-v2/local-validation.json)无跳过且全部通过；最终严格 DRAW_START 门槛与字段命名另经 28 项证据校验、59 项归档／汇总／视频检查和 13 项独立复核检查，Android 编译与 lint 通过。针对检查与整套回归有重叠，不累加为独立用例。第三轮仍未通过首帧验收：API30 缺少可匹配报告，API32 出现延迟旧报告与歧义。已实现并通过本地回归的 schema v2 阶段时间关联与有界候选原件，已启动第四轮固定试跑及两段独立录像，等待 CI 运行器；前三轮原结论均保留，下文列明进度。既有等待确认时停止、直接取消 RunControl 的真实远端点击测试和核心取消单元测试保留原范围，不能代替本项。
+本项继续[性能后续任务](../PERFORMANCE.md#性能后续任务)，补齐实际停止按钮、在途平台调用及本地停止反馈的证据。Android 仪器编译、lint、Fixture 编译与 3 项探针单元测试已通过；默认完整矩阵的 273 个 class#method 身份与基线逐一相同。冻结源码 `c7bfa7c21` 的 [891 项完整宿主回归](performance/busy-stop-v2/local-validation.json)无跳过且全部通过；最终严格 DRAW_START 门槛与字段命名另经 28 项证据校验、59 项归档／汇总／视频检查和 13 项独立复核检查，Android 编译与 lint 通过。针对检查与整套回归有重叠，不累加为独立用例。第四轮 v2 试跑已结束：6/8 档通过，固定 32 次计划中 27 有效、2 失败、3 未执行；API30、32 仍缺少可对应首停止 traversal 的报告，原件与独立审核已归档。两段独立录像成功，未纳入性能样本。正式 1,600 次采样仍未启动，专项保持进行中。既有等待确认时停止、直接取消 RunControl 的真实远端点击测试和核心取消单元测试保留原范围，不能代替本项。
 
 本轮使用 API 30、31、32、33、34、35、36、37.0 八档专用合成模拟器，真实 Controller、生产授权与确认路径、固定本地 HTTP 测试模型和独立 Fixture APK。所有结果保持 `diagnosticOnly=true`、`budgetAcceptance=false`、`fullSuiteAcceptance=false`。受控等待不等于持续 CPU 满载，模拟器数据不代表真机、厂商 ROM 或 200 毫秒发布预算已经验收。
 
@@ -107,6 +107,19 @@ v1 的原通过状态、功能证据和历史数值不重写，但其帧关联�
 
 [原始归档](../../screenshots/41098174743-1/manifest.json)由 [41098866377](https://github.com/ecojust/Agent-OS/actions/runs/41098866377) 生成，证据提交 `4bf8fc03f849a5e16ea3ceec68cc5e45006ccba1` 的父提交为原测试源。87 个载荷、326,487 字节及 10 张 PNG 完整核验；[原 v1 汇总](performance/busy-stop-41098174743/summary.json)、[独立数值审核](performance/busy-stop-41098174743/independent-numeric-audit.json)和[归档审核](performance/busy-stop-41098174743/archive-audit.json)保留原运行失败与所有未执行项，7,670 项独立核对一致。正式采样与独立录像尚未执行。
 
-## 第四轮 v2 验证与独立录像
+## 第四轮 v2 实际结果与当前阻塞
 
-源 `c7bfa7c21124a2384804ba15378ce7320edb0241` 已于 2026-10-30 17:43 UTC 启动第四轮固定试跑 [41101009371](https://github.com/ecojust/Agent-OS/actions/runs/41101009371)，计划仍为八档共 32 次。相同源码另启动一次[繁忙停止录像 41101012830](https://github.com/ecojust/Agent-OS/actions/runs/41101012830)及一次[整体操作录像 41101016649](https://github.com/ecojust/Agent-OS/actions/runs/41101016649)。截至 2026-10-30 17:53 UTC，三项均排队超过 10 分钟，八档设备与构建作业没有分配运行器，尚无设备结果或可播放文件；不计为通过。[队列快照](performance/busy-stop-v2/workflow-queue.json)记录原运行 ID 和状态，排队不归因为产品失败。下一步先等待并审核这批原件，符合方法与样本条件后才启动正式采样；本地回归不能替代这一步。
+源 `c7bfa7c21124a2384804ba15378ce7320edb0241` 的固定试跑 [41101009371](https://github.com/ecojust/Agent-OS/actions/runs/41101009371)已完成，**6/8 档通过，32 计划中 29 份原分片、27 有效、2 失败、3 未执行**。DEVICE 为 14 通过、0 失败、2 未执行；MODEL 为 13 通过、2 失败、1 未执行。API30 的 trial001 与 API32 的 trial002 均在首停止帧证据阶段超时。两者均有实际 UP 一次、epoch2、Controller STOPPED 与零派发证据，但尚未释放保留的模型回复，不能将未执行的迟到回复和工作排空步骤补成通过。
+
+v2 没有再把旧帧误配为目标：两案 target 均为空，匹配、无效、歧义、丢失及内部 ring 溢出计数均为零。新增候选原件给出了可核对的排除原因：
+
+- API30 首停止 OnDraw 为 `81994651898` ns，drawingTime 为 `81980` ms。首个后回调候选 VSYNC 为 `81996715540` ns，四段 UI 时长均为零；重建 DRAW_START 等于 VSYNC，且 VSYNC 毫秒与冻结 traversal 不同。即使该值落在 OnDraw／读取区间，也不能认定为对应的真实 UI 报告。
+- API32 首停止 OnDraw 为 `82964807312` ns，drawingTime 为 `82954` ms。第二候选 VSYNC 为 `82954782112` ns，同样四段全零、DRAW_START 等于 VSYNC，且早于 OnDraw；同毫秒不足以建立关联，v2 正确排除了它。
+
+这些是符合 AOSP RT 合成时序形态的原始候选，不能据此证明其包含停止画面，或唯一确定原 UI 提交经历了哪个平台路径。API30 共收到 25 份报告、23 个 OnDraw 后候选，保留前 8 个、另 15 个未保留；API32 为 26／25／8／17。截断仅影响额外候选原件，完整匹配与质量计数仍继续；未保留尾部不能事后逐条重建，更不能换用后一个 OnDraw 宣布通过。详见[候选逐项分析](performance/busy-stop-41101009371/frame-candidate-analysis.md)。
+
+[原始归档](../../screenshots/41101009371-1/manifest.json)由 [41160924028](https://github.com/ecojust/Agent-OS/actions/runs/41160924028)完成；证据提交 `5cdab1996dda8c812ac9ecd6530de2bd913616e6` 基于当时的归档工作流源码，manifest 与固定源校验器仍准确绑定原测试源 c7b。88 个载荷、348,370 字节和 11 张 PNG 完整核验；[汇总](performance/busy-stop-41101009371/summary.json)、[7,847 项独立数值核对](performance/busy-stop-41101009371/independent-numeric-audit.json)及[归档审核](performance/busy-stop-41101009371/archive-audit.json)一致，正式完成为 false。
+
+相同源码的[繁忙停止演示 41101012830](../../screenshots/demos/probes-41101012830-1/manifest.json)与[整体操作演示 41101016649](../../screenshots/demos/41101016649-1/manifest.json)均成功并已归档；前者只覆盖 API35 DEVICE 一次独立操作，不代替 MODEL 首帧或八档性能验收。README 按类型链接实际录像。
+
+当前阻塞是公开 FrameMetrics 对首停止 traversal 的归属证据仍不完整。下一步需另行验证能保留原 UI 提交身份的原生 trace／平台时序采集方法，保持首次绘制、原始失败与固定样本计划；方法验证前不启动正式 1,600 次采样，也不关闭本项。上次[队列快照](performance/busy-stop-v2/workflow-queue.json)仅保留当时观测，最新结论以上述已完成运行与原件为准。

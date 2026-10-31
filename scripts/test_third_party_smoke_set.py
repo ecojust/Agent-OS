@@ -707,8 +707,13 @@ class ThirdPartySmokeSetArchiveTests(unittest.TestCase):
     def test_failed_notes_diagnostic_error_and_existing_instrumentation_are_preserved(self):
         value = notes_preparation_failure(self.lock)
         directory = self.lane(value=value)
+        confirmation_diagnostic = ("Suppressed: java.lang.AssertionError: NOTES_CONFIRMATION_DIAGNOSTIC_V1 " +
+            json.dumps({"clock": "SystemClock.elapsedRealtime", "diagnosticTruncated": False,
+                        "hiddenSamples": [{"ordinal": 1, "wms": {"outcome": "REFUSED"},
+                                           "beforeInventory": {"imeEntries": [[14, 0, 4, "BELOW_FOCUSED"]]}}]}) + "\n")
         output = ("Synthetic parser fixture failure\n" + value["apps"][1]["states"][0]["error"] + "\n" +
                   "at dev.agentos.compat.SyntheticParserFixture.sameRead(Fixture.java:1)\n" * 40 +
+                  confirmation_diagnostic +
                   "FAILURES!!!\nTests run: 4, Failures: 1\nsynthetic-complete-output-end\n")
         self.assertGreater(len(output), 1024)
         (directory / "instrumentation.json").write_text(

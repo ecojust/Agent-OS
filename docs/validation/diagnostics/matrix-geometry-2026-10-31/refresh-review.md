@@ -39,11 +39,11 @@
 
 以下均为 `android-11.0.0_r1`，不是浮动主分支：
 
-- [WindowStateAnimator.java:677](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r1/services/core/java/com/android/server/wm/WindowStateAnimator.java#677)：旋转缩放，重点 694–733。
+- [WindowStateAnimator.java:676](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r1/services/core/java/com/android/server/wm/WindowStateAnimator.java#676)：旋转缩放，重点 693–732。
 - [WindowState.java:5206](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r1/services/core/java/com/android/server/wm/WindowState.java#5206)：窗口变换矩阵。
-- [AccessibilityController.java:1506](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r1/services/core/java/com/android/server/wm/AccessibilityController.java#1506)：touchable region 映射；1307–1416 为计算与回调。
+- [AccessibilityController.java:1452](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r1/services/core/java/com/android/server/wm/AccessibilityController.java#1452)：touchable region 映射；1261–1363 为计算与回调。
 - [AccessibilityManagerService.java:641](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r1/services/accessibility/java/com/android/server/accessibility/AccessibilityManagerService.java#641)：真实来源校验，684–709 为重算后再分派。
-- [AbstractAccessibilityServiceConnection.java:1500](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r1/services/accessibility/java/com/android/server/accessibility/AbstractAccessibilityServiceConnection.java#1500)：已有窗口列表不强制刷新。
+- [AbstractAccessibilityServiceConnection.java:1491](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r1/services/accessibility/java/com/android/server/accessibility/AbstractAccessibilityServiceConnection.java#1491)：已有窗口列表不强制刷新。
 - [ViewRootImpl.java:3052](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r1/core/java/android/view/ViewRootImpl.java#3052)：框架在首次可见/重新取得焦点时自动发窗口状态事件。
 - [View.java:8210](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r1/core/java/android/view/View.java#8210)：事件来源与文本填充；8308–8328 为发送路径，8504 为 setSource(this)。
 - [AccessibilityWindowManager.java:1256](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r1/services/accessibility/java/com/android/server/accessibility/AccessibilityWindowManager.java#1256)：窗口跟踪已启用时事件不直接抢活动窗口。
@@ -51,13 +51,16 @@
 
 ## 本地已审查原件校验值
 
-目录 `/workspace/scratch/rotation-aosp11`：
+目录 `/workspace/scratch/rotation-aosp11`。两份旧同名参考文件与固定 tag 不同，以下使用重新下载并复核的 `*-r1.java` 原件；上文行号也已按 r1 核对。这里只证明固定 AOSP 版本机制，不断言原模拟器镜像逐字使用此版本源码。
 
 | 文件 | SHA-256 |
 | --- | --- |
 | `AccessibilityManagerService.java` | `5f7b720f10d4f44a738fe72d02d533e9ae09c11b0c07aa855e8ce6de79734f22` |
-| `AccessibilityController.java` | `b1da573630ecd4240369f6e42f166ead2d14f27ef82b3cbb2f6f335c3b80a59a` |
+| `AccessibilityController-r1.java` | `07fe05e9274f57cd85178a62135f3c410c742192c3af26c919e9a70603c8a02a` |
 | `AccessibilityWindowManager.java` | `044400c4e588e05d0ff4bb05961800321d616cb184a35fa0f9b0930bb8aa9911` |
-| `WindowStateAnimator.java` | `3c265c7c6911f69ac61106f742c8214feb31f68addc4499a791613f7f80ed6b4` |
+| `WindowStateAnimator-r1.java` | `cc55a3066512d6d09e105e4a539c6cb454a23f9800ed3a3b7a7a8fcbc26c2fa7` |
 | `WindowState.java` | `4be6906341c4b7c44c6a26ea28fe241e4d7239bf6aec8aaec8907cd045e4efdd` |
 | `ScreenRotationAnimation.java` | `655247d361b44279fadc4f473d4dcc1bfbf4be2ad06700596b22df976bb35869` |
+| `View.java` | `299781fbbe0ca1c096a0606fb9a8dcad8c3722b59d5130ad658693f22cd8ca66` |
+| `ViewRootImpl.java` | `4f4ed7eeb959c7f1dcd29240a3c9bd94582c24ec42b61240d14733c2610ea5d1` |
+| `AbstractAccessibilityServiceConnection.java` | `d002954683251a2f32bdef956e44841236e9dc30edf4b2503a753be2814f193e` |

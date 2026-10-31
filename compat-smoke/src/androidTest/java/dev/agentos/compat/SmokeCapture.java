@@ -223,18 +223,27 @@ final class SmokeCapture {
     }
 
     /** A single v4 preparation sample; the caller owns its original deadline and budget. */
-    static String hiddenNotesInputMethodForConfirmation(SmokeHarness harness) throws Exception {
-        ServiceInfo ime = harness.configuredSystemInputMethod();
-        if (ime == null) throw new CaptureRefused("configured_system_input_method_unverified");
+    static String hiddenNotesInputMethodForConfirmation(SmokeHarness harness, JSONObject diagnostic) throws Exception {
         try {
-            return inspectedHiddenInputMethod(harness.shell("dumpsys -t 2 window -a windows"),
-                    ime.applicationInfo.uid, ime.packageName) + "/" + ime.name;
+            ServiceInfo ime = harness.configuredSystemInputMethod();
+            if (ime == null) throw new CaptureRefused("configured_system_input_method_unverified");
+            String dump;
+            diagnostic.put("dumpStartedElapsedMillis", SystemClock.elapsedRealtime());
+            try { dump = harness.shell("dumpsys -t 2 window -a windows"); }
+            finally { diagnostic.put("dumpEndedElapsedMillis", SystemClock.elapsedRealtime()); }
+            String identity = inspectedHiddenInputMethod(dump, ime.applicationInfo.uid, ime.packageName, diagnostic);
+            diagnostic.put("outcome", "HIDDEN_VERIFIED");
+            return identity + "/" + ime.name;
         } catch (CaptureRefused refusal) {
+            diagnostic.put("outcome", "REFUSED").put("refusal", refusal.getMessage());
             // Only incomplete visibility may be observed again. Missing/foreign
             // identity still refuses immediately, and no failed sample means hidden.
             if ("input_method_is_visible_animating_or_unverified".equals(refusal.getMessage())
                     || "input_method_surface_is_visible_or_unverified".equals(refusal.getMessage())) return null;
             throw refusal;
+        } catch (Exception | AssertionError unavailable) {
+            diagnostic.put("outcome", "READ_OR_PARSE_EXCEPTION");
+            throw unavailable;
         }
     }
 

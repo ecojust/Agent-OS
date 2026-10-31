@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-31T02:43:08Z",
-  "note": "已归档第四轮停止诊断与同源两段实际录像：32计划中27有效、2失败、3未执行，原件及7847项复核一致；README新增7秒繁忙停止演示并更新33.5秒普通演示。API30旋转+2px找到平台机制候选，仍待独立实测；下一项推进Notes失败瞬间诊断。",
+  "updated_at": "2026-10-31T02:46:14Z",
+  "note": "推进真实APK日常使用验收：Notes诊断现保存原隐藏采样和同次IME层级过滤，保留v4判定、固定32项与原动作/时间预算。构建/lint、891项完整宿主回归和独立审查通过，准备八档实测及独立录像；此前失败不改判。",
   "latest_evidence": {
     "path": "screenshots/41101009371-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41101009371"
@@ -136,10 +136,10 @@
       "id": "app_acceptance",
       "name": "冻结常用应用样本与日常使用验收",
       "status": "in_progress",
-      "evidence": "screenshots/third-party-40834304846-1/manifest.json",
+      "evidence": "docs/validation/notes-confirmation-diagnostics.md",
       "scope": "Current exactdb1943/run40834304846 independently repeats the unchanged v4 contract on official unmodified Calculator1.4.0 and Notes1.7.0. All16 app/API fresh installs succeed;all32 state identity/signature/APK checks match.24/32 pass,8failed,0unverified:Calculator16/16;Notes API30/33/34/35 off+idle8/16 with one HOME and exact fresh-process title/body readback.Notes API31/32 four failures after one accepted BACK;API36/37 four with BACK0;all8 fail HIDDEN_PREPARATION with hiddenSamples4,confirm0,HOME0,no persistence proof.Identical per-combination result to historical v4 source5436/run40674357809,not a fix.56payloads/2465192B/32Calculator PNG/32Notes blocked verified,secure flags unchanged.Independent same-source standard-APK Calculator page run40834465238:20/20 across API34–37,production observe/policy with test-prepared UI,modelRequests0,capture/gesture tools remain absent;128payloads/28PNG verified,separate denominator.Original v3 two22/32 andv2 31/32 retained.Agent Controller/model-driven writes,executing state,upgrades,broad apps,phones,performance and remaining failures remain unverified. Latest exactaee3d4e01 API35 recorded rerun40876724393 passes4/4 off/idle cases;page recording40876724624 separately passes5/5.Only API35 was rerun;the other seven APIs and the eight Notes failures above are unchanged.",
-      "details": "已验证：冻结2款官方APK，八档16次安装成功，流程24/32（计算器16/16、Notes8/16）；最新API35录像4/4。未完成：Notes另8项键盘隐藏确认失败、Agent执行态、第三方应用升级，以及建议至少50款的样本扩展。下一步：定位失败，完善冻结样本的三态流程。",
-      "updated_at": "2026-10-29T14:57:50Z"
+      "details": "已验证：2款官方APK八档安装成功，历史固定流程24/32，8项Notes创建确认隐藏失败保留。新增原四次WMS字段及同次IME层级诊断，不改变v4判定、5秒或一次BACK；构建/lint、891项完整宿主回归通过。下一步同源八档32项实测及独立录像，依据拒绝瞬间原件定位原因。Agent执行态、升级和常用应用样本扩展仍未验收。",
+      "updated_at": "2026-10-31T02:46:14Z"
     },
     {
       "id": "physical_devices",

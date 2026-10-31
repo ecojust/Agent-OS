@@ -376,10 +376,17 @@ final class SmokeHarness {
     }
 
     private WindowSnapshot appWindow(boolean allowInputMethod, boolean inspectNonIntersectingInputMethod) {
+        return appWindow(allowInputMethod, inspectNonIntersectingInputMethod, null);
+    }
+
+    private WindowSnapshot appWindow(boolean allowInputMethod, boolean inspectNonIntersectingInputMethod,
+                                     NotesConfirmation confirmation) {
         require(!allowInputMethod || target == NOTES_TARGET, "Only the notes editing probe may inspect an IME");
         require(!inspectNonIntersectingInputMethod || (allowInputMethod && target == NOTES_TARGET),
                 "Only Notes confirmation may inspect a nonintersecting input method");
+        NotesImeInventory inventory = confirmation == null ? null : confirmation.beginInventory();
         List<AccessibilityWindowInfo> windows = automation.getWindows();
+        if (inventory != null) inventory.readCompletedElapsedMillis = SystemClock.elapsedRealtime();
         require(windows != null && windows.size() <= 64, "Window inventory is unavailable or truncated");
         AccessibilityWindowInfo focused = null;
         AccessibilityNodeInfo root = null;
@@ -418,6 +425,17 @@ final class SmokeHarness {
             require(!display.isEmpty() && display.contains(bounds), "Application bounds differ from default-display metrics");
             Rect inputMethod = new Rect();
             int inputMethodId = -1;
+            if (inventory != null) {
+                inventory.focusedWindowId = focused.getId();
+                inventory.focusedLayer = focused.getLayer();
+                // These are metadata getters on the same returned inventory;
+                // no second getWindows, getRoot or shell observation is made.
+                for (AccessibilityWindowInfo observed : windows) {
+                    if (observed.getType() == AccessibilityWindowInfo.TYPE_INPUT_METHOD)
+                        inventory.ime(observed.getId(), observed.getDisplayId(), observed.getLayer());
+                }
+                inventory.scanComplete = true;
+            }
             for (AccessibilityWindowInfo other : windows) {
                 if (other.getId() == focused.getId() || other.getDisplayId() != Display.DEFAULT_DISPLAY
                         || other.getLayer() < focused.getLayer()) continue;
@@ -572,7 +590,7 @@ final class SmokeHarness {
             AccessibilityNodeInfo node = null;
             boolean retryRead = false;
             try {
-                window = appWindow(true, confirmation != null);
+                window = appWindow(true, confirmation != null, confirmation);
                 wait.observation.window(window.id, window.bounds, window.display, window.inputMethodId, window.inputMethod);
                 Rect titleBounds = null;
                 if (confirmation != null) {
@@ -629,7 +647,13 @@ final class SmokeHarness {
                         wait.requireTime();
                         confirmation.requireIme(configuredSystemInputMethod());
                         wait.requireTime();
-                        String hidden = SmokeCapture.hiddenNotesInputMethodForConfirmation(this);
+                        NotesHiddenSample sample = confirmation.beginHiddenDiagnostic();
+                        String hidden;
+                        try {
+                            hidden = SmokeCapture.hiddenNotesInputMethodForConfirmation(this, sample.wms);
+                        } finally {
+                            sample.endedElapsedMillis = SystemClock.elapsedRealtime();
+                        }
                         wait.requireTime();
                         confirmation.observeHidden(hidden, SystemClock.elapsedRealtime());
                     }
@@ -701,11 +725,13 @@ final class SmokeHarness {
         NotesConfirmation confirmation = new NotesConfirmation(expectedTitle);
         notesConfirmation = confirmation;
         NotesWait wait = confirmation.wait;
+        Throwable originalFailure = null;
         try {
             confirmation.stage = ConfirmationStage.TITLE_PREPARATION;
             confirmation.requireIme(configuredSystemInputMethod());
             try (NotesTarget title = awaitNotesTarget("locked_note_title", null, wait, confirmation, false)) {
                 wait.requireTime();
+                confirmation.backDecisionInventory = confirmation.lastInventory;
                 if (!title.window.inputMethod.isEmpty()) {
                     require(wait.surfaceReady, "Visible keyboard preparation was not completed");
                     confirmation.requireIme(configuredSystemInputMethod());
@@ -736,9 +762,15 @@ final class SmokeHarness {
                 confirmation.elapsedMillis = completed - confirmation.started;
                 confirmation.stage = ConfirmationStage.CONFIRM_ACCEPTED;
             }
+        } catch (Exception | AssertionError original) {
+            originalFailure = original;
+            throw original;
         } finally {
             if (confirmation.stage != ConfirmationStage.CONFIRM_ACCEPTED)
                 confirmation.elapsedMillis = Math.max(0, SystemClock.elapsedRealtime() - confirmation.started);
+            // Freeze after the original elapsed-time accounting, but before
+            // caller capture/cleanup. The original failure and v4 JSON stay intact.
+            if (originalFailure != null) confirmation.attachFailureDiagnostic(originalFailure);
         }
         automation.waitForIdle(150, 5_000);
     }
@@ -1070,8 +1102,59 @@ final class SmokeHarness {
         NOT_STARTED, TITLE_PREPARATION, BACK_SUBMISSION, HIDDEN_PREPARATION, CONFIRM_SUBMISSION, CONFIRM_ACCEPTED
     }
 
+    /** Metadata from one existing getWindows result, without node/root/text reads. */
+    private static final class NotesImeInventory {
+        static final int CAPACITY = 8;
+        final int sequence;
+        final long startedElapsedMillis;
+        long readCompletedElapsedMillis = -1;
+        int focusedWindowId = -1, focusedLayer = -1, imeCount;
+        boolean scanComplete;
+        final int[][] entries = new int[CAPACITY][];
+        NotesImeInventory(int sequence, long startedElapsedMillis) {
+            this.sequence = sequence; this.startedElapsedMillis = startedElapsedMillis;
+        }
+        void ime(int id, int display, int layer) {
+            if (imeCount < CAPACITY) entries[imeCount] = new int[]{id, display, layer};
+            imeCount++;
+        }
+        JSONObject json() throws Exception {
+            JSONArray observed = new JSONArray();
+            for (int[] entry : entries) if (entry != null) {
+                String filter = entry[0] == focusedWindowId ? "SAME_WINDOW"
+                        : entry[1] != Display.DEFAULT_DISPLAY ? "OTHER_DISPLAY"
+                        : entry[2] < focusedLayer ? "BELOW_FOCUSED" : "CANDIDATE_REQUIRES_IDENTITY";
+                observed.put(new JSONArray().put(entry[0]).put(entry[1]).put(entry[2]).put(filter));
+            }
+            return new JSONObject().put("sequence", sequence).put("startedElapsedMillis", startedElapsedMillis)
+                    .put("readCompletedElapsedMillis", readCompletedElapsedMillis)
+                    .put("focusedWindowId", focusedWindowId).put("focusedLayer", focusedLayer)
+                    .put("scanComplete", scanComplete).put("imeCount", imeCount)
+                    .put("notRetained", Math.max(0, imeCount - CAPACITY)).put("imeEntries", observed);
+        }
+    }
+
+    private static final class NotesHiddenSample {
+        final int ordinal;
+        final long startedElapsedMillis;
+        final NotesImeInventory beforeInventory;
+        final JSONObject wms = new JSONObject();
+        long endedElapsedMillis = -1;
+        NotesHiddenSample(int ordinal, NotesImeInventory beforeInventory) {
+            this.ordinal = ordinal; this.beforeInventory = beforeInventory;
+            startedElapsedMillis = SystemClock.elapsedRealtime();
+        }
+        JSONObject json() throws Exception {
+            return new JSONObject().put("ordinal", ordinal).put("startedElapsedMillis", startedElapsedMillis)
+                    .put("endedElapsedMillis", endedElapsedMillis).put("wms", wms)
+                    .put("beforeInventory", beforeInventory == null ? JSONObject.NULL : beforeInventory.json());
+        }
+    }
+
     private static final class NotesConfirmation {
         static final int MAX_JSON_CHARS = 2048;
+        static final int MAX_DIAGNOSTIC_CHARS = 16 * 1024;
+        static final String DIAGNOSTIC_MARKER = "NOTES_CONFIRMATION_DIAGNOSTIC_V1 ";
         final NotesWait wait = new NotesWait();
         final long started = wait.deadline - 5_000;
         private final String expectedTitle;
@@ -1085,7 +1168,46 @@ final class SmokeHarness {
         Boolean backDownAccepted, backUpAccepted, preBackTitleMatched, preBackTitleFocused, preBackTitleEditable;
         Boolean postTitleMatched, postTitleFocused, postTitleEditable, confirmAccepted;
         Integer originalDialogWindowId, finalDialogWindowId;
+        private int inventorySequence, hiddenDiagnosticCount;
+        private NotesImeInventory lastInventory, backDecisionInventory;
+        private final NotesHiddenSample[] hiddenDiagnostics = new NotesHiddenSample[4];
         NotesConfirmation(String expectedTitle) { this.expectedTitle = expectedTitle; }
+        NotesImeInventory beginInventory() {
+            lastInventory = new NotesImeInventory(++inventorySequence, SystemClock.elapsedRealtime());
+            return lastInventory;
+        }
+        NotesHiddenSample beginHiddenDiagnostic() {
+            NotesHiddenSample sample = new NotesHiddenSample(hiddenSamples, lastInventory);
+            if (hiddenDiagnosticCount < hiddenDiagnostics.length) hiddenDiagnostics[hiddenDiagnosticCount] = sample;
+            hiddenDiagnosticCount++;
+            return sample;
+        }
+        void attachFailureDiagnostic(Throwable original) {
+            String message;
+            try {
+                JSONArray samples = new JSONArray();
+                for (NotesHiddenSample sample : hiddenDiagnostics) if (sample != null) samples.put(sample.json());
+                String json = new JSONObject().put("clock", "SystemClock.elapsedRealtime")
+                        .put("confirmationStartedElapsedMillis", started).put("deadlineElapsedMillis", wait.deadline)
+                        .put("frozenElapsedMillis", SystemClock.elapsedRealtime()).put("stage", stage.name())
+                        .put("hiddenSamplesClaimed", hiddenSamples).put("hiddenDiagnosticsObserved", hiddenDiagnosticCount)
+                        .put("hiddenDiagnosticsNotRetained", Math.max(0, hiddenDiagnosticCount - hiddenDiagnostics.length))
+                        .put("inventoryEntryColumns", new JSONArray().put("windowId").put("displayId").put("layer").put("filter"))
+                        .put("backDecisionInventory", backDecisionInventory == null ? JSONObject.NULL : backDecisionInventory.json())
+                        .put("lastInventory", lastInventory == null ? JSONObject.NULL : lastInventory.json())
+                        .put("hiddenSamples", samples).put("diagnosticTruncated", false).toString();
+                message = DIAGNOSTIC_MARKER + json;
+                if (message.length() > MAX_DIAGNOSTIC_CHARS) {
+                    message = DIAGNOSTIC_MARKER + "{\"diagnosticTruncated\":true,\"untruncatedChars\":"
+                            + message.length() + "}";
+                }
+            } catch (Exception | AssertionError unavailable) {
+                message = DIAGNOSTIC_MARKER + "{\"diagnosticSerializationFailed\":true}";
+            }
+            AssertionError diagnostic = new AssertionError(message);
+            diagnostic.setStackTrace(new StackTraceElement[0]);
+            original.addSuppressed(diagnostic);
+        }
         void requireDialog(int id) {
             require(id >= 0, "Creation dialog window identity is unavailable");
             if (originalDialogWindowId == null) originalDialogWindowId = id;
@@ -1357,7 +1479,73 @@ final class SmokeHarness {
             String bounded = confirmation.json().toString();
             require(bounded.length() <= NotesConfirmation.MAX_JSON_CHARS && !bounded.contains("private-title-marker")
                     && !bounded.contains("surface-A"), "Confirmation output leaked content or exceeded its bound");
+            verifyConfirmationFailureDiagnostics();
         } catch (Exception failure) { throw new AssertionError("Notes confirmation preparation boundary check failed", failure); }
+    }
+
+    private static void verifyConfirmationFailureDiagnostics() throws Exception {
+        NotesConfirmation confirmation = new NotesConfirmation("private-title-marker");
+        long deadline = confirmation.wait.deadline;
+        NotesImeInventory decision = confirmation.beginInventory();
+        decision.focusedWindowId = 12; decision.focusedLayer = 5;
+        decision.ime(12, 0, 5); decision.ime(13, 1, 6); decision.ime(14, 0, 4); decision.ime(15, 0, 5);
+        decision.scanComplete = true;
+        confirmation.backDecisionInventory = decision;
+        JSONArray entries = decision.json().getJSONArray("imeEntries");
+        for (int index = 0; index < 4; index++) require(entries.getJSONArray(index).getString(3).equals(
+                new String[]{"SAME_WINDOW", "OTHER_DISPLAY", "BELOW_FOCUSED", "CANDIDATE_REQUIRES_IDENTITY"}[index]),
+                "IME diagnostic filtering does not match the original inventory guards");
+        for (int index = 0; index < 4; index++) {
+            require(confirmation.takeHiddenSample(index * 150), "Diagnostic fixture lacks original hidden allowance");
+            NotesImeInventory inventory = confirmation.beginInventory();
+            inventory.focusedWindowId = Integer.MAX_VALUE; inventory.focusedLayer = Integer.MAX_VALUE;
+            for (int item = 0; item < 64; item++) inventory.ime(Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE);
+            inventory.scanComplete = true;
+            NotesHiddenSample sample = confirmation.beginHiddenDiagnostic();
+            JSONObject fields = new JSONObject();
+            for (String field : new String[]{"isOnScreen", "isVisible", "isReadyForDisplay()", "mLastHidden",
+                    "mEnterAnimationPending", "mAnimatingExit", "mHasSurface", "Surface: shown"})
+                fields.put(field, new JSONObject().put("count", Integer.MAX_VALUE).put("value", "CONFLICT"));
+            sample.wms.put("parseStage", "visibility").put("outcome", "REFUSED")
+                    .put("refusal", "input_method_is_visible_animating_or_unverified")
+                    .put("fields", fields).put("selectedToken", "ffffffffffffffffffffffffffffffff")
+                    .put("ownerUid", Integer.MAX_VALUE).put("ownerMatches", false)
+                    .put("displayMatches", false).put("packageMatches", false)
+                    .put("inputMethodRecordCount", Integer.MAX_VALUE).put("recordIndex", Integer.MAX_VALUE)
+                    .put("recordEnd", "next_window").put("dumpStartedElapsedMillis", Long.MAX_VALUE)
+                    .put("dumpEndedElapsedMillis", Long.MAX_VALUE);
+            sample.endedElapsedMillis = Long.MAX_VALUE;
+        }
+        require(!confirmation.takeHiddenSample(600) && confirmation.wait.deadline == deadline,
+                "Diagnostic collection renewed sampling or time limits");
+        String originalResult = confirmation.json().toString();
+        AssertionError failure = new AssertionError("original-failure");
+        confirmation.attachFailureDiagnostic(failure);
+        String frozen = failure.getSuppressed()[0].getMessage();
+        require("original-failure".equals(failure.getMessage()) && originalResult.equals(confirmation.json().toString())
+                && !confirmation.imeHiddenVerified && confirmation.backAttempts == 0 && confirmation.confirmAttempts == 0,
+                "Diagnostics changed the original failure, result or action authority");
+        require(frozen.length() <= NotesConfirmation.MAX_DIAGNOSTIC_CHARS && !frozen.contains("private-title-marker"),
+                "Diagnostic message leaked title text or exceeded its limit");
+        JSONObject saved = new JSONObject(frozen.substring(NotesConfirmation.DIAGNOSTIC_MARKER.length()));
+        require(!saved.getBoolean("diagnosticTruncated") && saved.getJSONArray("hiddenSamples").length() == 4
+                && saved.getJSONObject("lastInventory").getInt("notRetained") == 56,
+                "Diagnostic prefix loss is not explicit");
+        java.io.StringWriter trace = new java.io.StringWriter();
+        failure.printStackTrace(new java.io.PrintWriter(trace));
+        require(trace.toString().contains("Suppressed: java.lang.AssertionError: " + NotesConfirmation.DIAGNOSTIC_MARKER),
+                "Failure stack trace omitted the bounded diagnostic");
+        decision.imeCount = 0;
+        confirmation.hiddenDiagnostics[0].wms.put("outcome", "MUTATED_AFTER_FAILURE");
+        require(frozen.equals(failure.getSuppressed()[0].getMessage()), "Later mutation changed frozen failure evidence");
+        // Exercise only the diagnostic overflow fallback; this does not add a real sample.
+        confirmation.hiddenDiagnostics[0].wms.put("syntheticOverflow", new String(new char[NotesConfirmation.MAX_DIAGNOSTIC_CHARS]).replace('\0', 'x'));
+        AssertionError oversized = new AssertionError("original-failure");
+        confirmation.attachFailureDiagnostic(oversized);
+        String fallback = oversized.getSuppressed()[0].getMessage();
+        require(fallback.length() <= NotesConfirmation.MAX_DIAGNOSTIC_CHARS
+                && new JSONObject(fallback.substring(NotesConfirmation.DIAGNOSTIC_MARKER.length())).getBoolean("diagnosticTruncated"),
+                "Diagnostic overflow was not bounded and explicitly marked");
     }
 
     private static void requireConfirmationRefusal(Runnable action, String message) {

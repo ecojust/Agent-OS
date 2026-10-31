@@ -48,11 +48,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 新增失败后IME窗口候选关联采集；891项既有宿主检查、25项采集边界、26项分析检查及构建/lint通过，独立审查完成。原八项失败保留，同源32项与两类录像待运行。
+**本次更新：** 归档固定第三方应用的专用模拟器开发探针；保留关闭/空闲两态的通过、失败、受保护与未执行记录，不作为真机、升级或常用应用总体兼容验收。
 
-**记录时间：** 2026-10-31T05:43:04Z
+**记录时间：** 2026-10-31T05:48:54Z
 
-[最近测试截图与清单](screenshots/third-party-41165282816-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41165282816)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/third-party-41173725544-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41173725544)。通过、失败及未截图原因见清单。
 
 **整体操作演示：** [播放视频](screenshots/demos/41165286817-1/demo.mp4) · [录制与验证清单](screenshots/demos/41165286817-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41165286817)。
 录制版本：[`33ac5825b`](https://github.com/ecojust/Agent-OS/commit/33ac5825bc7537b9a67c9daeeee6916da12256d6)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。

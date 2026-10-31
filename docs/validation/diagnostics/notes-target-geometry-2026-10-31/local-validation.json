@@ -1,0 +1,46 @@
+{
+  "sourceBase": "1bf0f1aafaeb1d3c986b94c315a5f382a3a75d42",
+  "changedFileHashes": {
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/SmokeHarness.java": "32572c9b150263609d5cde9eccf1a1f8f2922a150db0c2ad39d932978f233f60",
+    "scripts/test_third_party_smoke_set.py": "cd402461748da10ac55b7f970c7e53d099e42d31482738274330213292bdefa1"
+  },
+  "unchanged": {
+    "app/src/main": true,
+    "core/src/main": true,
+    "fixture/src/main": true,
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/SmokeCapture.java": true,
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/ApplicationSetCompatibilityInstrumentedTest.java": true,
+    "docs/validation/third-party-app-set-lock.json": true,
+    "docs/validation/notes-dialog-confirmation-v4.md": true,
+    "scripts/third_party_smoke_set.py": true,
+    "scripts/third_party_smoke_set_archive.py": true,
+    ".github/workflows/third-party-smoke.yml": true
+  },
+  "logs": {
+    "notes-target-geometry-build.log": {
+      "bytes": 5461,
+      "sha256": "fb476904f24d7f92c13c4cd4360b686fd0cb6a228fbbd938d9bcfa7c8fa9828f"
+    },
+    "notes-target-geometry-full-host.log": {
+      "bytes": 2173,
+      "sha256": "4ac3a1cdaf0f5742fc99090169b1dc45e33ebd1a70dae4c52f922808734498a6"
+    }
+  },
+  "deviceValidation": false,
+  "fullHostSuite": {
+    "tests": 891,
+    "passed": 891,
+    "skipped": 0,
+    "durationSeconds": 112.304
+  },
+  "targetedArchiveTests": 34,
+  "targetedTestsOverlapFullSuite": true,
+  "androidTasks": [
+    ":compat-smoke:assembleDebug",
+    ":compat-smoke:assembleDebugAndroidTest",
+    ":compat-smoke:lintDebug"
+  ],
+  "androidBuildResult": "passed",
+  "androidBuildSeconds": 49,
+  "independentReviews": 2
+}

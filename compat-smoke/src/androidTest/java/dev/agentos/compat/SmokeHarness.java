@@ -850,7 +850,13 @@ final class SmokeHarness {
                 "Notes resource is not current, enabled and visible");
         Rect bounds = new Rect(); node.getBoundsInScreen(bounds);
         observation.targetBounds = new Rect(bounds);
-        require(fullyInside(window.bounds, bounds), "Notes resource is not fully inside its original application window");
+        try {
+            require(fullyInside(window.bounds, bounds), "Notes resource is not fully inside its original application window");
+        } catch (AssertionError original) {
+            NotesTargetGeometryDiagnostic.attach(original, observation, lastNotesAction, lastNotesActionResult,
+                    notesActionAttempts, notesHomeAttempts);
+            throw original;
+        }
         if (!uncoveredByInputMethod(bounds, window.inputMethod))
             throw new NotesObservationPending("notes_target_covered_by_verified_input_method");
     }
@@ -1364,6 +1370,63 @@ final class SmokeHarness {
         JSONObject diagnostic() throws Exception { return snapshot.json(); }
     }
 
+    /** Failure-only metadata from the original ordered reads, not an atomic platform snapshot. */
+    private static final class NotesTargetGeometryDiagnostic {
+        static final String MARKER = "NOTES_TARGET_GEOMETRY_DIAGNOSTIC_V1 ";
+        static final int MAX_CHARS = 4096;
+
+        static void attach(Throwable original, NotesRead read, String lastAction, String lastActionResult,
+                           int actionAttempts, int homeAttempts) {
+            String message;
+            try {
+                // Freeze before the target/window cleanup; no additional platform or clock reads.
+                NotesReadSnapshot snapshot = new NotesReadSnapshot(read);
+                String json = new JSONObject().put("schemaVersion", 1).put("guard", "TARGET_FULLY_INSIDE")
+                        .put("snapshot", snapshot.json()).put("lastAction", action(lastAction))
+                        .put("lastActionResult", result(lastActionResult))
+                        .put("actionCounterScope", "CURRENT_HARNESS")
+                        .put("actionAttempts", actionAttempts).put("actionAttemptCountCap", 64)
+                        .put("actionAttemptCountAtLimit", actionAttempts >= 64).put("homeAttempts", homeAttempts)
+                        .put("diagnosticTruncated", false).toString();
+                message = bounded(json);
+            } catch (Exception | AssertionError unavailable) {
+                message = MARKER + "{\"diagnosticSerializationFailed\":true}";
+            }
+            try {
+                AssertionError diagnostic = new AssertionError(message);
+                diagnostic.setStackTrace(new StackTraceElement[0]);
+                original.addSuppressed(diagnostic);
+            } catch (Exception | AssertionError unavailable) {
+                // Even attachment failure must not replace the original geometry refusal.
+            }
+        }
+
+        private static String bounded(String json) {
+            String message = MARKER + json;
+            return message.length() <= MAX_CHARS ? message : MARKER
+                    + "{\"diagnosticTruncated\":true,\"untruncatedChars\":" + message.length() + "}";
+        }
+
+        private static String action(String value) {
+            if (value == null) return "OTHER_ACTION";
+            switch (value) {
+                case "NONE": case "CLICK_NEW_NOTE": case "CLICK_TEXT_TYPE": case "CLICK_CONFIRM":
+                case "CLICK_OTHER": case "SET_TITLE": case "SET_BODY": case "KEY_HOME": case "KEY_BACK":
+                    return value;
+                default: return "OTHER_ACTION";
+            }
+        }
+
+        private static String result(String value) {
+            if (value == null) return "OTHER_RESULT";
+            switch (value) {
+                case "NOT_ATTEMPTED": case "SUBMISSION_UNKNOWN": case "ACCEPTED": case "REJECTED":
+                    return value;
+                default: return "OTHER_RESULT";
+            }
+        }
+    }
+
     static void verifyNotesEditingPreparation() {
         // Boundary fixtures only: never UI/app success or screenshot evidence.
         Rect app = new Rect(0, 40, 1080, 1920), ime = new Rect(0, 1200, 1080, 1920);
@@ -1393,6 +1456,7 @@ final class SmokeHarness {
         wait.pending("not_published");
         require(!wait.takeSurfaceSample(1600) && wait.deadline == deadline, "Readiness reset renewed sampling or timeout");
         verifyNotesPreparationDiagnostics();
+        verifyNotesTargetGeometryDiagnostics();
         verifyNotesConfirmationPreparation();
     }
 
@@ -1601,6 +1665,79 @@ final class SmokeHarness {
                     && wait.deadline == deadline && wait.samples == 0 && !wait.surfaceReady,
                     "Diagnostic bounds or collection altered the original wait budget");
         } catch (Exception failure) { throw new AssertionError("Notes preparation diagnostic boundary check failed", failure); }
+    }
+
+    private static void verifyNotesTargetGeometryDiagnostics() {
+        // Value fixtures only: no UI action, extra observation or claim of application success.
+        try {
+            NotesWait wait = new NotesWait(); long deadline = wait.deadline;
+            wait.beginObservation(NotesStage.SET_TITLE, NotesResource.forTarget("locked_note_title"));
+            NotesRead read = wait.observation;
+            read.window(3, new Rect(0, 24, 320, 616), new Rect(0, 0, 320, 640), -1, new Rect());
+            read.matches(1); read.visibleMatchCount = 1; read.matchScanComplete = true;
+            read.readPhase = NotesReadPhase.TARGET_CHECK; read.targetPresent = true;
+            read.visible(true); read.enabled(true); read.windowId(3);
+            read.targetBounds = new Rect(-1, 25, 200, 100);
+            String snapshotBefore = new NotesReadSnapshot(read).json().toString();
+            require(!fullyInside(read.appBounds, read.targetBounds), "Geometry fixture was not outside its window");
+            AssertionError original = new AssertionError("original-private-error-marker");
+            Exception cause = new Exception("original-private-cause-marker"); original.initCause(cause);
+            Throwable prior = new AssertionError("original-prior-suppressed-marker"); original.addSuppressed(prior);
+            StackTraceElement[] stackBefore = original.getStackTrace();
+            NotesTargetGeometryDiagnostic.attach(original, read, "CLICK_NEW_NOTE", "ACCEPTED", 1, 0);
+            require(original.getClass() == AssertionError.class && original.getMessage().equals("original-private-error-marker")
+                    && original.getCause() == cause && java.util.Arrays.equals(stackBefore, original.getStackTrace())
+                    && original.getSuppressed().length == 2 && original.getSuppressed()[0] == prior,
+                    "Geometry diagnostic replaced the original failure or prior suppressed data");
+            String frozen = original.getSuppressed()[1].getMessage();
+            JSONObject diagnostic = new JSONObject(frozen.substring(NotesTargetGeometryDiagnostic.MARKER.length()));
+            require(frozen.startsWith(NotesTargetGeometryDiagnostic.MARKER)
+                    && "TARGET_FULLY_INSIDE".equals(diagnostic.getString("guard"))
+                    && snapshotBefore.equals(diagnostic.getJSONObject("snapshot").toString())
+                    && "CLICK_NEW_NOTE".equals(diagnostic.getString("lastAction"))
+                    && "ACCEPTED".equals(diagnostic.getString("lastActionResult"))
+                    && diagnostic.getInt("actionAttempts") == 1 && !diagnostic.getBoolean("actionAttemptCountAtLimit")
+                    && diagnostic.getInt("homeAttempts") == 0 && !diagnostic.getBoolean("diagnosticTruncated")
+                    && !frozen.contains("private-error-marker") && !frozen.contains("private-cause-marker"),
+                    "Geometry diagnostic lost the original read or leaked unrelated failure text");
+            read.appBounds.setEmpty(); read.targetBounds.setEmpty(); read.imeBounds.set(1, 2, 3, 4);
+            read.targetWindowId = 99; read.visibleMatchCount = 0;
+            require(frozen.equals(original.getSuppressed()[1].getMessage()) && wait.deadline == deadline
+                    && wait.samples == 0 && !wait.surfaceReady,
+                    "Cleanup mutated frozen geometry or diagnostic collection changed the wait budget");
+
+            Rect extremes = new Rect(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
+            read.window(Integer.MIN_VALUE, extremes, extremes, Integer.MAX_VALUE, extremes);
+            read.targetWindowId = Integer.MAX_VALUE; read.matchedCount = Integer.MAX_VALUE;
+            read.visibleMatchCount = Integer.MAX_VALUE;
+            for (Rect target : new Rect[]{new Rect(), new Rect(20, 30, 10, 5), extremes}) {
+                read.targetBounds = new Rect(target);
+                AssertionError boundary = new AssertionError("boundary");
+                NotesTargetGeometryDiagnostic.attach(boundary, read, "private-action-marker", "private-result-marker", 64, 1);
+                String message = boundary.getSuppressed()[0].getMessage();
+                JSONObject saved = new JSONObject(message.substring(NotesTargetGeometryDiagnostic.MARKER.length()));
+                JSONArray rect = saved.getJSONObject("snapshot").getJSONArray("targetBounds");
+                require(rect.getInt(0) == target.left && rect.getInt(1) == target.top
+                        && rect.getInt(2) == target.right && rect.getInt(3) == target.bottom
+                        && message.length() <= NotesTargetGeometryDiagnostic.MAX_CHARS
+                        && "OTHER_ACTION".equals(saved.getString("lastAction"))
+                        && "OTHER_RESULT".equals(saved.getString("lastActionResult"))
+                        && saved.getInt("actionAttempts") == 64 && saved.getInt("actionAttemptCountCap") == 64
+                        && saved.getBoolean("actionAttemptCountAtLimit") && !message.contains("private-"),
+                        "Geometry diagnostic normalized a rectangle, exceeded its bound or exposed unknown action text");
+            }
+            AssertionError unavailable = new AssertionError("original serialization failure");
+            NotesTargetGeometryDiagnostic.attach(unavailable, null, null, null, 0, 0);
+            require(unavailable.getMessage().equals("original serialization failure") && unavailable.getSuppressed().length == 1
+                    && unavailable.getSuppressed()[0].getMessage().equals(NotesTargetGeometryDiagnostic.MARKER
+                    + "{\"diagnosticSerializationFailed\":true}"), "Serialization failure replaced the original refusal");
+            String overflow = NotesTargetGeometryDiagnostic.bounded(new String(new char[NotesTargetGeometryDiagnostic.MAX_CHARS])
+                    .replace('\0', 'x'));
+            JSONObject truncated = new JSONObject(overflow.substring(NotesTargetGeometryDiagnostic.MARKER.length()));
+            require(overflow.length() <= NotesTargetGeometryDiagnostic.MAX_CHARS && truncated.getBoolean("diagnosticTruncated")
+                    && truncated.getInt("untruncatedChars") > NotesTargetGeometryDiagnostic.MAX_CHARS,
+                    "Geometry overflow was not bounded and explicit");
+        } catch (Exception failure) { throw new AssertionError("Notes target geometry diagnostic boundary check failed", failure); }
     }
 
     /** Only these known incomplete reads are eligible for another observation. */

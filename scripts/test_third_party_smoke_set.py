@@ -711,9 +711,17 @@ class ThirdPartySmokeSetArchiveTests(unittest.TestCase):
             json.dumps({"clock": "SystemClock.elapsedRealtime", "diagnosticTruncated": False,
                         "hiddenSamples": [{"ordinal": 1, "wms": {"outcome": "REFUSED"},
                                            "beforeInventory": {"imeEntries": [[14, 0, 4, "BELOW_FOCUSED"]]}}]}) + "\n")
+        geometry_diagnostic = ("Suppressed: java.lang.AssertionError: NOTES_TARGET_GEOMETRY_DIAGNOSTIC_V1 " +
+            json.dumps({"schemaVersion": 1, "guard": "TARGET_FULLY_INSIDE", "diagnosticTruncated": False,
+                        "snapshot": {"operationStage": "CONFIRM_CREATE", "resourceClass": "TITLE_FIELD",
+                                     "readPhase": "TARGET_CHECK", "appWindowId": 12, "targetWindowId": 12,
+                                     "appBounds": [0, 24, 320, 616], "targetBounds": [-1, 25, 200, 100]},
+                        "lastAction": "CLICK_TEXT_TYPE", "lastActionResult": "ACCEPTED",
+                        "actionCounterScope": "CURRENT_HARNESS", "actionAttempts": 3,
+                        "actionAttemptCountCap": 64, "actionAttemptCountAtLimit": False, "homeAttempts": 0}) + "\n")
         output = ("Synthetic parser fixture failure\n" + value["apps"][1]["states"][0]["error"] + "\n" +
                   "at dev.agentos.compat.SyntheticParserFixture.sameRead(Fixture.java:1)\n" * 40 +
-                  confirmation_diagnostic +
+                  geometry_diagnostic + confirmation_diagnostic +
                   "FAILURES!!!\nTests run: 4, Failures: 1\nsynthetic-complete-output-end\n")
         self.assertGreater(len(output), 1024)
         (directory / "instrumentation.json").write_text(

@@ -48,14 +48,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 几何诊断冻结在33ac源码，两轮独立32项41165280718/41165282816及两段录像41165285095/41165286817已启动；891宿主检查和构建/lint通过，结果待原件审核。
+**本次更新：** Archive actual API35 walkthrough evidence; local synthetic model, secure flags preserved
 
-**记录时间：** 2026-10-31T03:41:13Z
+**记录时间：** 2026-10-31T03:45:27Z
 
 [最近测试截图与清单](screenshots/third-party-41163144860-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41163144860)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/41161481513-1/demo.mp4) · [录制与验证清单](screenshots/demos/41161481513-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41161481513)。
-录制版本：[`ad0f0a723`](https://github.com/ecojust/Agent-OS/commit/ad0f0a723e2efbb146a06e173a0ebdecc6706ee6)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/41165286817-1/demo.mp4) · [录制与验证清单](screenshots/demos/41165286817-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41165286817)。
+录制版本：[`33ac5825b`](https://github.com/ecojust/Agent-OS/commit/33ac5825bc7537b9a67c9daeeee6916da12256d6)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 最近更新时间记录该条状态或进度说明的修改时间，采用 UTC；测试发生时间以对应证据为准。
 

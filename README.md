@@ -48,9 +48,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** cdea60c1独立32项与整体录像运行中；补齐Java输出到宿主的四类边界交叉核验，旧三轮96项和24诊断通道重放一致。读取/动作额度及八项原失败保持，新实测待审核。
+**本次更新：** Archive actual API35 walkthrough evidence; local synthetic model, secure flags preserved
 
-**记录时间：** 2026-10-31T06:51:40Z
+**记录时间：** 2026-10-31T06:56:59Z
 
 [最近测试截图与清单](screenshots/third-party-41177392095-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41177392095)。通过、失败及未截图原因见清单。
 

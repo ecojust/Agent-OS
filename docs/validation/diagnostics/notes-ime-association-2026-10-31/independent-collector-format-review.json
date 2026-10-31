@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "reviewedAtUtc": "2026-10-31T05:52:36+00:00",
+  "reviewer": "independent ime_review agent",
+  "result": "PASS_WITH_DECLARED_LIMITATIONS",
+  "correctedHelperSha256": "273104d38ca9ec7e4d0fbca2aecdc00c3e24467dc66f6029776ccd861bd172e9",
+  "originalSourceCommit": "72f77af85481eb90c0511a52e61c7cbab3ac6595",
+  "originalHelperSha256": "2e6070e8d81aebaed446bbce2fa9dd26564e96e416ee2eb7b7eaabf39c0ff89a",
+  "finding": "The previous mAttrs=\\{[^}]* type expression stops at the closing brace of the legal nested sim={...} field, which precedes ty in fixed Android12L and17 LayoutParams.toString(prefix). The prior synthetic fixture omitted this legal nested shape.",
+  "sourceGrounding": {
+    "index": "independent-format-review/aosp-source-index.json",
+    "android17SimAndTypeLines": [
+      6044,
+      6052
+    ],
+    "android12LSimAndTypeLines": [
+      4388,
+      4396
+    ]
+  },
+  "originalReproduction": {
+    "fixtureType": "synthetic WMS text using fixed source output shape, not retained device dump",
+    "sourceCommit": "72f77af85481eb90c0511a52e61c7cbab3ac6595",
+    "baseline": "SELECTED with inputMethodRecordCount1",
+    "onlyAddingNestedSim": "UNAVAILABLE with inputMethodRecordCount0",
+    "record": "independent-format-review/old-source-reproduction.json"
+  },
+  "fixReview": {
+    "attributeStart": "One anchored mAttrs opening per window record",
+    "bounds": "The outer attribute block must close within8192 UTF-16 code units, nesting depth at most8, and a type value is accepted only within64 ASCII characters; token lookahead is separately finite.",
+    "typeSelection": "Exactly one whitespace-delimited type field at depth1; nested sim/rotation types are ignored; selected type must be INPUT_METHOD or2011",
+    "incompleteHandling": "Missing, duplicate, malformed, incomplete or excessive attributes return unavailable; any unparsed window prevents unique IME selection",
+    "newFields": "attributesParsedCount and attributesUnparsedCount expose the format-completeness distinction",
+    "unchanged": "Original v4 hidden predicate/actions/budgets and the other two dump parsers remain separate from this WMS format fix"
+  },
+  "independentValidation": {
+    "method": "Compiled actual corrected helper with JDK17, Android35 SDK declarations and pinned org.json; ran source-shape fixtures in separate output directory. Also repeated the previous12 independent parser/privacy/error-preservation checks and built-in parser selftests. No Gradle or Android/device run by this reviewer.",
+    "newChecksPassed": 12,
+    "repeatedPriorChecksPassed": 12,
+    "embeddedParserSelftests": "passed; separate from these24 checks",
+    "stdout": [
+      "Independent WMS nested-attribute fixtures passed: 12",
+      "Independent parser fixtures passed: 12; existing parser selftests also passed"
+    ],
+    "fixture": "independent-format-review/WmsReviewRunner.java",
+    "fixtureSha256": "88f2d0f6bcd2205135bfcf9efa2f85657fe3cb358a86dee85d5d1c6854a0cbc0",
+    "newChecks": [
+      "Legal nested sim before type selected",
+      "Numeric2011 alias selected",
+      "Multiline and nested rotation type do not replace top-level type",
+      "Nested IME type cannot override APPLICATION",
+      "Nested-only type unavailable",
+      "Duplicate identical top-level types rejected",
+      "Conflicting top-level types rejected",
+      "Unclosed outer attributes rejected",
+      "Duplicate mAttrs blocks rejected",
+      "Longer INPUT_METHOD_EXTRA does not match",
+      "Type-like substring embedded in another field does not match",
+      "Oversized attributes rejected"
+    ]
+  },
+  "limitations": [
+    "The first device round41173725544 discarded raw WMS dumps by contract; its exact mAttrs bytes cannot be reconstructed. This independently reproduced source-format defect is consistent with that round, not proof of the discarded bytes.",
+    "All eight first-round WMS receipts remain unavailable; referenceCount1 plus parsedIMEcount0 must not be reinterpreted as an absent IME or an established token mapping. Their existing hashes and records are not rewritten.",
+    "The corrected parser still needs source-pinned device validation. A successful synthetic parser review does not complete the Notes acceptance checkpoint.",
+    "Fixed AOSP source revisions establish legal output shape, not exact implementation identity for tested emulator images. Post-failure sequential token candidate association and remote-timeout limitations remain as in the original review."
+  ]
+}

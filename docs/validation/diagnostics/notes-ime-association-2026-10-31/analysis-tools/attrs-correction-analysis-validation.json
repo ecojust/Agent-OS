@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "kind": "wms-attrs-correction-host-analysis-validation",
+  "validatedAt": "2026-10-31T05:53:57Z",
+  "worktreeBaseCommit": "b5d79dcd1d8888bbbe32b1760448365d13190ef1",
+  "scope": "Optional paired WMS attribute counters and explicit incomplete-attributes state; unchanged strict binding, original outcome and candidate limitations",
+  "scripts": [
+    {
+      "path": "docs/validation/diagnostics/notes-ime-association-2026-10-31/analysis-tools/analyze_ime_association.py",
+      "bytes": 40546,
+      "sha256": "758f1ff28f9cbe5a5fdb96eb77402e69f9e4592e4aeb108346a77716c2856440"
+    },
+    {
+      "path": "docs/validation/diagnostics/notes-ime-association-2026-10-31/analysis-tools/test_analyze_ime_association.py",
+      "bytes": 23052,
+      "sha256": "587f816e5cc45c41432d18c0453be37b3f93dca99b09bd54249441104013dd46"
+    }
+  ],
+  "collectorHelperSha256": "273104d38ca9ec7e4d0fbca2aecdc00c3e24467dc66f6029776ccd861bd172e9",
+  "hostTests": {
+    "passed": 29,
+    "failed": 0,
+    "skipped": 0,
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s docs/validation/diagnostics/notes-ime-association-2026-10-31/analysis-tools -p 'test_*.py' -v",
+    "logSha256": "b187378f2f16977d990b50f4fb2c24ac53cb38602d41f9133c7ec51d715bca2e",
+    "newTests": 3,
+    "previousTestsIncluded": 26
+  },
+  "original72fReplay": {
+    "sourceCommit": "72f77af85481eb90c0511a52e61c7cbab3ac6595",
+    "sourceRunId": 41173725544,
+    "originalCounts": {
+      "passed": 24,
+      "failed": 8,
+      "unverified": 0
+    },
+    "all32OriginalCaseObjectsAndInterpretationsUnchanged": true,
+    "associationRawShaPairsUnchanged": 8,
+    "confirmationRawShaPairsUnchanged": 8,
+    "oldWmsCandidatesRemainUnavailable": 8,
+    "newAssociationConsistencyIssues": 0,
+    "newUnassignedOrMalformedOccurrences": 0,
+    "savedOriginalAssociationAnalysisSha256": "90892eb3e12355b974243823a2882663bfb51150b43f8bcb1d5b2f7f58c06f35",
+    "savedOriginalConfirmationAnalysisSha256": "016d1fb664a7ea3c41dd58670f801c4f56ba3aea64598cc1153a6524eb23558e",
+    "replayAssociationAnalysisSha256": "874dc2cd483e6393daa5fafc45321b7c854a86e5e270f78452e5921d22b627a6",
+    "replayConfirmationAnalysisSha256": "6571a2ad5d81cc5cf46b8934c03a5befd77a27761274b37bfe2f3c215690883a",
+    "historicalReportFilesOverwritten": false
+  },
+  "independentReview": {
+    "passedTests": 29,
+    "blockingFindings": 0,
+    "analyzerSha256": "758f1ff28f9cbe5a5fdb96eb77402e69f9e4592e4aeb108346a77716c2856440",
+    "testSha256": "587f816e5cc45c41432d18c0453be37b3f93dca99b09bd54249441104013dd46"
+  },
+  "limitations": [
+    "Host parsing checks do not establish corrected-parser behavior on an actual Android dump.",
+    "The old8 mClient candidates remain unavailable and no discarded dump is reconstructed.",
+    "Original analysis-validation.json remains the initial81e656 source record; this separate file binds the correction."
+  ],
+  "priorValidationSourceCommit": "72f77af85481eb90c0511a52e61c7cbab3ac6595",
+  "priorValidationReport": "analysis-validation.json",
+  "priorAnalyzerSha256": "81e656370e71f1809d02f2ceb1130082a79b29c55fa22a259322325942b4a01d",
+  "priorDeviceReport": "docs/validation/diagnostics/notes-ime-association-41173725544/findings.md"
+}

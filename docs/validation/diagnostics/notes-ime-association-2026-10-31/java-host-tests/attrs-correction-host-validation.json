@@ -1,0 +1,46 @@
+{
+  "kind": "notes-ime-association-attrs-correction-host-validation",
+  "validatedAt": "2026-10-31T05:51:43.491072Z",
+  "testedWorktreeBaseCommit": "2d25fc1444385452d646f63f7078ee1874f2c176",
+  "helperSha256": "273104d38ca9ec7e4d0fbca2aecdc00c3e24467dc66f6029776ccd861bd172e9",
+  "status": "passed",
+  "parserSelftests": "passed",
+  "collectorHostChecks": 25,
+  "blockedShellCallerElapsedMillis": 3002,
+  "androidDeviceTest": false,
+  "sourceProof": {
+    "repository": "platform/frameworks/base",
+    "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+    "path": "core/java/android/view/WindowManager.java",
+    "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/view/WindowManager.java#6043",
+    "sha256": "acb92d789151e0f0907b44223c7f23c3cbc0332e1687f93ddabc52003a7e85eb",
+    "bytes": 319657,
+    "finding": "LayoutParams.toString emits optional nested sim={...} before top-level ty; paramsForRotation later recursively emits nested LayoutParams with further ty fields."
+  },
+  "fix": "Bounded unique mAttrs brace scan (8192 characters, depth 8), selecting exactly one top-level ty; incomplete attributes invalidate candidate selection. Only post-failure test diagnostics change.",
+  "regressions": [
+    "nested sim before ty",
+    "multiline attributes and nested paramsForRotation with different ty",
+    "numeric 2011 alias",
+    "duplicate top-level same or different ty",
+    "nested-only ty",
+    "missing closing brace",
+    "type followed by unexpected opening brace",
+    "excessive depth and attribute length",
+    "duplicate mAttrs",
+    "unparsed other window invalidates uniqueness",
+    "original title/name spoofing guards retained"
+  ],
+  "limitations": [
+    "Original post-failure raw dump bytes from run41173725544 were not retained; source fixture proves unsupported legal format, not the exact bytes emitted in that run.",
+    "Run41173725544 WMS candidate failures remain unchanged and are not reclassified.",
+    "Controlled host substitutes do not establish Android-device parser or application acceptance."
+  ],
+  "jsonDependencySha256": "3cf6cd6892e32e2b4c1c39e0f52f5248a2f5b37646fdfbb79a66b46b618414ed",
+  "stdoutLog": {
+    "path": "attrs-correction-host-test-output.txt",
+    "sha256": "07a35e44c2da73dfeed9ef15a8c7a6b2c5d5b94789c583e6996b47a6e2b1529a",
+    "source": "Verbatim stdout from successful host test tool execution"
+  },
+  "command": "python3 docs/validation/diagnostics/notes-ime-association-2026-10-31/java-host-tests/run.py --java-home /workspace/scratch/jdk17 --json-jar /workspace/scratch/notes-ime-association-java/json.jar"
+}

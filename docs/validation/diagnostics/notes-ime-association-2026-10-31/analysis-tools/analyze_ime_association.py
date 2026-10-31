@@ -178,9 +178,10 @@ TOP_KEYS = {'schemaVersion', 'phase', 'clock', 'startedElapsedMillis', 'endedEla
     'commands', 'association', 'diagnosticTruncated'}
 WMS_KEYS = {'status', 'reason', 'referenceCount', 'inputMethodRecordCount', 'selectedWindowStateToken',
            'ownerUid', 'displayId', 'ownerMatches', 'displayMatches', 'packageMatches', 'mClient', 'fields'}
+WMS_ATTRIBUTE_KEYS = {'attributesParsedCount', 'attributesUnparsedCount'}
 WMS_REASONS = {'SOURCE_UNAVAILABLE', 'WMS_HEADER_UNRECOGNIZED', 'WMS_REFERENCE_MISSING_OR_AMBIGUOUS',
     'WMS_RECORD_MISSING_OR_AMBIGUOUS', 'WMS_IDENTITY_MISMATCH', 'WMS_CLIENT_UNRECOGNIZED',
-    'WMS_CLIENT_AMBIGUOUS', 'UNIQUE_CONFIGURED_IME_TEXT_CANDIDATE'}
+    'WMS_CLIENT_AMBIGUOUS', 'WMS_ATTRIBUTES_INCOMPLETE', 'UNIQUE_CONFIGURED_IME_TEXT_CANDIDATE'}
 POPULATOR_REASONS = {'SOURCE_UNAVAILABLE', 'POPULATOR_HEADER_UNRECOGNIZED',
     'POPULATOR_NOTIFICATION_UNRECOGNIZED', 'POPULATOR_NOTIFICATION_AMBIGUOUS',
     'POPULATOR_VISIBLE_AMBIGUOUS', 'POPULATOR_VISIBLE_UNRECOGNIZED', 'POPULATOR_DISPLAYS_AMBIGUOUS',
@@ -348,8 +349,25 @@ def _derive(value):
 
 
 def validate_wms(parsed, identity, check):
-    check(set(parsed) <= WMS_KEYS and {'status', 'reason'} <= set(parsed), 'unexpected WMS fields')
+    check(set(parsed) <= WMS_KEYS | WMS_ATTRIBUTE_KEYS and {'status', 'reason'} <= set(parsed), 'unexpected WMS fields')
     check(parsed.get('status') in {'SELECTED', 'UNAVAILABLE'} and parsed.get('reason') in WMS_REASONS, 'unknown WMS parse status/reason')
+    attribute_keys = set(parsed) & WMS_ATTRIBUTE_KEYS
+    check(not attribute_keys or attribute_keys == WMS_ATTRIBUTE_KEYS, 'WMS attribute accounting requires both counters')
+    for key in attribute_keys:
+        check(integer(parsed[key], 0, 2**31-1), key + ' invalid')
+    if attribute_keys == WMS_ATTRIBUTE_KEYS:
+        understood, unparsed = parsed['attributesParsedCount'], parsed['attributesUnparsedCount']
+        if integer(understood) and integer(parsed.get('inputMethodRecordCount')):
+            check(parsed['inputMethodRecordCount'] <= understood, 'IME record count exceeds successfully parsed attribute records')
+        if integer(unparsed):
+            check((unparsed > 0) == (parsed.get('reason') == 'WMS_ATTRIBUTES_INCOMPLETE'),
+                  'WMS attribute failure count/reason mismatch')
+            if unparsed > 0:
+                check(parsed.get('status') == 'UNAVAILABLE' and 'mClient' not in parsed and 'fields' not in parsed,
+                      'unparsed WMS attributes supplied a selected candidate')
+    if parsed.get('reason') == 'WMS_ATTRIBUTES_INCOMPLETE':
+        check(attribute_keys == WMS_ATTRIBUTE_KEYS and integer(parsed.get('attributesUnparsedCount'), 1),
+              'WMS incomplete attributes lack explicit positive failure count')
     for key in ['referenceCount', 'inputMethodRecordCount', 'ownerUid', 'displayId']:
         if key in parsed:
             check(integer(parsed[key], 0, 2**31-1), key + ' invalid')
@@ -362,7 +380,7 @@ def validate_wms(parsed, identity, check):
     if 'mClient' in parsed:
         check(binder(parsed['mClient']), 'mClient is not bounded Java binder text')
     if parsed.get('status') == 'SELECTED':
-        check(set(parsed) == WMS_KEYS, 'selected WMS record lacks exact selected fields')
+        check(set(parsed) - WMS_ATTRIBUTE_KEYS == WMS_KEYS, 'selected WMS record lacks exact selected fields')
         check(parsed.get('reason') == 'UNIQUE_CONFIGURED_IME_TEXT_CANDIDATE' and parsed.get('referenceCount') == 1 and parsed.get('inputMethodRecordCount') == 1,
               'WMS selection not uniquely justified')
         check(all(parsed.get(key) is True for key in ['ownerMatches', 'displayMatches', 'packageMatches'])

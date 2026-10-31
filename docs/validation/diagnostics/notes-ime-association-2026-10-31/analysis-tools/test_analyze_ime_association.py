@@ -330,5 +330,46 @@ class AdditionalConsistencyTest(unittest.TestCase):
                          case['analysis']['postFailureObservations']['finalService'])
 
 
+class AttributeAccountingTest(unittest.TestCase):
+    def test_old_schema_and_corrected_selected_accounting_both_preserved(self):
+        old = fixture()
+        self.assertEqual([], a.derive(old)['consistencyIssues'])
+        corrected = fixture()
+        corrected['commands'][0]['parsed'].update(attributesParsedCount=4, attributesUnparsedCount=0)
+        result = a.derive(corrected)
+        self.assertEqual([], result['consistencyIssues'])
+        self.assertTrue(result['interpretationAllowed'])
+        self.assertTrue(result['postFailureObservations']['wmsSelected'])
+
+    def test_incomplete_attributes_preserve_count_without_candidate(self):
+        value = fixture()
+        value['commands'][0]['parsed'] = {'status': 'UNAVAILABLE', 'reason': 'WMS_ATTRIBUTES_INCOMPLETE',
+            'referenceCount': 1, 'selectedWindowStateToken': 'aabbcc', 'inputMethodRecordCount': 1,
+            'attributesParsedCount': 2, 'attributesUnparsedCount': 1}
+        value['association']['tokenCandidate'] = None
+        summary_unavailable(value)
+        for group in [value['commands'][1]['parsed']['visible'], value['commands'][1]['parsed']['displays'], value['commands'][2]['parsed']]:
+            group.update(matchCount=None, matches=[])
+        result = a.derive(value)
+        self.assertEqual([], result['consistencyIssues'])
+        self.assertFalse(result['postFailureObservations']['wmsSelected'])
+        self.assertEqual({'availability': 'unavailable', 'matchCount': None}, result['postFailureObservations']['finalService'])
+        self.assertEqual('INCONCLUSIVE', result['association']['status'])
+
+    def test_contradictory_partial_boolean_or_missing_attribute_counts_rejected(self):
+        for changes in [{'attributesParsedCount': 2},
+                        {'attributesParsedCount': True, 'attributesUnparsedCount': 0},
+                        {'attributesParsedCount': 0, 'attributesUnparsedCount': 0},
+                        {'attributesParsedCount': 2, 'attributesUnparsedCount': 1},
+                        {'attributesParsedCount': 2, 'attributesUnparsedCount': 0, 'reason': 'WMS_ATTRIBUTES_INCOMPLETE'},
+                        {'reason': 'WMS_ATTRIBUTES_INCOMPLETE'}]:
+            value = fixture()
+            value['commands'][0]['parsed'].update(changes)
+            with self.subTest(changes=changes):
+                result = a.derive(value)
+                self.assertTrue(result['consistencyIssues'])
+                self.assertFalse(result['interpretationAllowed'])
+
+
 if __name__ == '__main__':
     unittest.main()

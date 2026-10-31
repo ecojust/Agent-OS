@@ -205,15 +205,21 @@ final class NotesImeAssociationDiagnostic {
         parsed.put("referenceCount", references).put("reason", "WMS_REFERENCE_MISSING_OR_AMBIGUOUS");
         if (references != 1) return parsed;
         String selected = null;
-        int imeCount = 0;
+        int imeCount = 0, attributesParsed = 0, attributesUnparsed = 0;
         for (String record : dump.split("(?m)(?=^[\\t ]*Window #[0-9]+ )")) {
-            if (!record.trim().startsWith("Window #") || !Pattern.compile("(?m)^[\\t ]*mAttrs=\\{[^}]*\\bty=(?:INPUT_METHOD|2011)\\b").matcher(record).find()) continue;
+            if (!record.trim().startsWith("Window #")) continue;
+            String type = windowType(record);
+            if (type == null) { attributesUnparsed++; continue; }
+            attributesParsed++;
+            if (!"INPUT_METHOD".equals(type) && !"2011".equals(type)) continue;
             imeCount++;
             if (Pattern.compile("^[\\t ]*Window #[0-9]+ Window\\{" + Pattern.quote(stateToken)
                     + "\\s+u0\\s+[^}\\r\\n]+\\}:").matcher(record).find()) selected = record;
         }
         parsed.put("inputMethodRecordCount", imeCount).put("selectedWindowStateToken", stateToken)
+                .put("attributesParsedCount", attributesParsed).put("attributesUnparsedCount", attributesUnparsed)
                 .put("reason", "WMS_RECORD_MISSING_OR_AMBIGUOUS");
+        if (attributesUnparsed != 0) return parsed.put("reason", "WMS_ATTRIBUTES_INCOMPLETE");
         if (imeCount != 1 || selected == null) return parsed;
         boolean owner = one(selected, "mOwnerUid", Integer.toString(uid));
         boolean display = one(selected, "mDisplayId", "0");
@@ -239,6 +245,34 @@ final class NotesImeAssociationDiagnostic {
         }
         return parsed.put("status", "SELECTED").put("reason", "UNIQUE_CONFIGURED_IME_TEXT_CANDIDATE")
                 .put("mClient", token).put("fields", fields);
+    }
+
+    /** LayoutParams includes nested sim={...} before ty and optional nested rotation params. */
+    private static String windowType(String record) {
+        Matcher attributes = Pattern.compile("(?m)^[\\t ]*mAttrs=\\{").matcher(record);
+        if (!attributes.find()) return null;
+        int start = attributes.end() - 1;
+        if (attributes.find()) return null;
+        int depth = 0, typeFields = 0;
+        String type = null;
+        for (int index = start; index < record.length() && index - start < 8192; index++) {
+            char current = record.charAt(index);
+            if (current == '{') {
+                if (++depth > 8) return null;
+            } else if (current == '}') {
+                if (--depth == 0) return typeFields == 1 ? type : null;
+            } else if (depth == 1 && (index == start + 1 || Character.isWhitespace(record.charAt(index - 1)))
+                    && record.startsWith("ty=", index)) {
+                int end = index + 3;
+                while (end < record.length() && end - index <= 67
+                        && !Character.isWhitespace(record.charAt(end)) && record.charAt(end) != '}' && record.charAt(end) != '{') end++;
+                String value = record.substring(index + 3, end);
+                if (!value.matches("[A-Z_0-9]{1,64}") || end < record.length() && record.charAt(end) == '{') return null;
+                type = value; typeFields++;
+                index = end - 1;
+            }
+        }
+        return null; // Missing closing brace or excessive size/depth is an unavailable format.
     }
 
     static JSONObject parsePopulator(String dump, String token) throws Exception {
@@ -466,6 +500,34 @@ final class NotesImeAssociationDiagnostic {
                 "com.android.inputmethod.latin").getString("status")), "Duplicate IME reference was selected");
         SmokeHarness.require("UNAVAILABLE".equals(parseWms(wms.replace("private-title", "ty=INPUT_METHOD").replace("ty=INPUT_METHOD}", "ty=APPLICATION}"),
                 10012, "com.android.inputmethod.latin").getString("status")), "A type-shaped title became IME attributes");
+        String nested = wms.replace("ty=INPUT_METHOD}", "sim={state=HIDDEN adjust=RESIZE} ty=INPUT_METHOD\n"
+                + "      fl=NOT_FOCUSABLE LAYOUT_IN_SCREEN\n"
+                + "      paramsForRotation:\n        ROTATION_0={(0,0)(fillxwrap) sim={adjust=RESIZE} ty=APPLICATION}\n    }");
+        JSONObject nestedSelected = parseWms(nested, 10012, "com.android.inputmethod.latin");
+        SmokeHarness.require("SELECTED".equals(nestedSelected.getString("status"))
+                && nestedSelected.getInt("attributesParsedCount") == 1 && nestedSelected.getInt("attributesUnparsedCount") == 0
+                && token.equals(nestedSelected.getString("mClient")), "Nested soft-input or rotation attributes hid the top-level IME type");
+        SmokeHarness.require("SELECTED".equals(parseWms(nested.replace("ty=INPUT_METHOD", "ty=2011"), 10012,
+                "com.android.inputmethod.latin").getString("status")), "Numeric INPUT_METHOD type alias was lost");
+        for (String attributes : new String[] {
+                "{(0,0)(fillxwrap) sim={ty=INPUT_METHOD}}",
+                "{(0,0)(fillxwrap) ty=INPUT_METHOD ty=INPUT_METHOD}",
+                "{(0,0)(fillxwrap) ty=INPUT_METHOD ty=APPLICATION}",
+                "{(0,0)(fillxwrap) sim={state=HIDDEN} ty=INPUT_METHOD",
+                "{(0,0)(fillxwrap) ty=INPUT_METHOD{unexpected}}",
+                "{(0,0)(fillxwrap) sim={{{{{{{{state=HIDDEN}}}}}}}} ty=INPUT_METHOD}",
+                "{(0,0)(fillxwrap) " + new String(new char[8192]).replace('\0', ' ') + "ty=INPUT_METHOD}"}) {
+            JSONObject refused = parseWms(wms.replace("{(0,0)(fillxwrap) ty=INPUT_METHOD}", attributes), 10012,
+                    "com.android.inputmethod.latin");
+            SmokeHarness.require("UNAVAILABLE".equals(refused.getString("status"))
+                    && "WMS_ATTRIBUTES_INCOMPLETE".equals(refused.getString("reason"))
+                    && refused.getInt("attributesUnparsedCount") == 1,
+                    "Incomplete, nested-only, duplicate or excessive attributes became an IME record");
+        }
+        SmokeHarness.require("WMS_ATTRIBUTES_INCOMPLETE".equals(parseWms(wms.replace("    mAttrs=", "    mAttrs={ty=INPUT_METHOD}\n    mAttrs="),
+                10012, "com.android.inputmethod.latin").getString("reason")), "Duplicate mAttrs block was accepted");
+        SmokeHarness.require("WMS_ATTRIBUTES_INCOMPLETE".equals(parseWms(wms + "  Window #1 Window{456 u0 private-title}:\n    mAttrs={missing-type}\n",
+                10012, "com.android.inputmethod.latin").getString("reason")), "An unreadable second window still allowed unique IME selection");
         String handle = "private-name, frame=[Rect(0, 100 - 320, 640)], touchableRegion=SkRegion((0,100,320,640)), scaleFactor=1.0, transform=null, windowToken="
                 + token + ", displayId=0, isClone=false, contentSize=Size(320, 540), alpha=1.0, canOccludePresentation=false";
         String pop = "AccessibilityWindowsPopulator\n  mWindowsNotificationEnabled: true\n  1 visible windows: [" + handle

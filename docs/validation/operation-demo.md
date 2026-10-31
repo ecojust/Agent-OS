@@ -4,6 +4,8 @@
 
 最新普通操作录像为几何诊断源码 `33ac5825bc7537b9a67c9daeeee6916da12256d6` 的[运行41165286817](https://github.com/ecojust/Agent-OS/actions/runs/41165286817)，录制于2026-10-31；[归档41165629030](https://github.com/ecojust/Agent-OS/actions/runs/41165629030)成功。[实际视频](../../screenshots/demos/41165286817-1/demo.mp4) **36.256秒、640×1280、425,247字节、515帧**；13阶段、8次确认通过。全部30载荷/1,159,207字节、22 PNG、来源、摘要、整段解码及实际关键画面[审核通过](diagnostics/notes-target-geometry-2026-10-31/overall-video-audit.json)：文本保存、Count1、滚动、第二页、暂停和最终浮条移除均可见。安全标志保留，使用合成Fixture与本地测试模型；这不是Notes几何失败画面、真实模型接管或性能验收。归档提交父版本为后续文档35a8494bc，录制源仍为33ac，二者分别记录。
 
+同源33ac的最新真实APK录像[41165285095](https://github.com/ecojust/Agent-OS/actions/runs/41165285095)及[归档41165739145](https://github.com/ecojust/Agent-OS/actions/runs/41165739145)均成功。官方Calculator1.4.0/Notes1.7.0在API35关闭/空闲两态原四项4/4通过；[视频](../../screenshots/demos/probes-41165285095-1/video/demo.mp4) **48.850秒、640×1280、776,160字节、882帧**。9载荷/1,106,698字节、4 PNG与四条Notes blocked全部保留，安全标志未清除；完整来源、哈希、解码及实际两态笔记/两次计算结果5[审核通过](diagnostics/notes-target-geometry-2026-10-31/third-party-video-audit.json)。该四项与两轮独立32项分别统计，不是API30几何失败录屏。
+
 此前普通操作与真实 APK 录像录制于 2026-10-31，固定源码为 `ad0f0a723e2efbb146a06e173a0ebdecc6706ee6`，分别使用独立 API35 模拟器。[完整审核](diagnostics/notes-confirmation-41161477724/video-audit.json)记录实际来源、载荷摘要、PNG、整段解码和关键画面；安全标志保留。
 
 普通录制 [41161481513](https://github.com/ecojust/Agent-OS/actions/runs/41161481513)及[归档41161885111](https://github.com/ecojust/Agent-OS/actions/runs/41161885111)成功。13 阶段、8 次确认通过；[视频](../../screenshots/demos/41161481513-1/demo.mp4)为 **36.162 秒、640×1280、463,411 字节、506 帧**。30 个载荷共 1,197,740 字节、22 PNG；实际画面包含输入、保存、Count 1、滚动、第二页、暂停及最终浮条移除。使用合成 Fixture 与本地测试模型，普通演示不替代真实模型接管或专项失败验收。

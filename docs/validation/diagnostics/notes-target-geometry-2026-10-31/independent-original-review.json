@@ -1,0 +1,1369 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-original-notes-geometry-run-review",
+  "reviewedAt": "2026-10-31T03:48:42.563303+00:00",
+  "status": "passed",
+  "reviewer": "geometry_review",
+  "method": "Independently parse complete original JUnit terminal blocks/class/test fields, plus numbered failure summary headers cross-checked against their explicit testcase stack frames. Join these by exact method, then decode and check each original suppressed JSON without importing the primary extractor. Compare per-case raw hashes and values afterward.",
+  "runs": [
+    {
+      "runId": 41165280718,
+      "source": "33ac5825bc7537b9a67c9daeeee6916da12256d6",
+      "archive": "screenshots/third-party-41165280718-1",
+      "manifestSha256": "4aa7d82df231510be1cdc73f90b4a8598846f951cc1587e8a35042ae5f8031f3",
+      "originalStateCounts": {
+        "passed": 24,
+        "failed": 8,
+        "unverified": 0
+      },
+      "originalJsonPayloadsChecked": 24,
+      "payloads": [
+        {
+          "api": "30",
+          "path": "report.json",
+          "bytes": 115152,
+          "sha256": "1cc9231831e5af181f7f93102d3535c545d1ad644dd868d8295313559642ce6a"
+        },
+        {
+          "api": "30",
+          "path": "ui-results.json",
+          "bytes": 110872,
+          "sha256": "9cd89ff9192cfb727a9bbe144f729fc3b8ab52bb7e67e37eaea3e776cd25629c"
+        },
+        {
+          "api": "30",
+          "path": "instrumentation.json",
+          "bytes": 2887,
+          "sha256": "212594d3af5cad2da229f96ca388d20bc3a0592d54ec116c9d2155717f82217b"
+        },
+        {
+          "api": "31",
+          "path": "report.json",
+          "bytes": 96543,
+          "sha256": "03d13fd325bdc68db768664dde4ba72a904d10d6b3c0b4745a12d31dd74ca282"
+        },
+        {
+          "api": "31",
+          "path": "ui-results.json",
+          "bytes": 92202,
+          "sha256": "af65c96c0533783e70f92f9a708cff48e1c842c81d783d255f347944c062617a"
+        },
+        {
+          "api": "31",
+          "path": "instrumentation.json",
+          "bytes": 18968,
+          "sha256": "53e6674ebdd61a4c9f82f6b4e55bad120944bacf3515ff306942a0faec11b997"
+        },
+        {
+          "api": "32",
+          "path": "report.json",
+          "bytes": 96555,
+          "sha256": "7cef7c16d9c314529b57d670c2f9b9b1876e704a0662aef5370d00248a9c646f"
+        },
+        {
+          "api": "32",
+          "path": "ui-results.json",
+          "bytes": 92214,
+          "sha256": "fe1764308b12827bf579696924a3e1726bea02b94ea446a0aadc83567a780fe8"
+        },
+        {
+          "api": "32",
+          "path": "instrumentation.json",
+          "bytes": 18974,
+          "sha256": "3497dc0fc8804fa70096d4576956d77ba46c75fc20f721abe83577e5f14a4b1d"
+        },
+        {
+          "api": "33",
+          "path": "report.json",
+          "bytes": 115157,
+          "sha256": "3d0fe8d58c8564a4ae74d22b9167b9e4f827fbd724f81601e790b55029ea5b39"
+        },
+        {
+          "api": "33",
+          "path": "ui-results.json",
+          "bytes": 110872,
+          "sha256": "48c2f597e626417c13f25bd6f60b7c7f86e4ba9db078b44b65ba270e29c7ff35"
+        },
+        {
+          "api": "33",
+          "path": "instrumentation.json",
+          "bytes": 3047,
+          "sha256": "b6e57c8a00ae00df84205d324eb7332d99b6d94302e448a2877fb408e67a2a50"
+        },
+        {
+          "api": "34",
+          "path": "report.json",
+          "bytes": 116395,
+          "sha256": "6390d54b44e8c2d13c20cdf83d723ae0b3ea7b553629f6e27f120d53ad019ae1"
+        },
+        {
+          "api": "34",
+          "path": "ui-results.json",
+          "bytes": 112110,
+          "sha256": "3ac7758f948f03402a45d89521cdf7e83714628cac8912a764445fc44209cbdd"
+        },
+        {
+          "api": "34",
+          "path": "instrumentation.json",
+          "bytes": 3047,
+          "sha256": "a31bc142a4df0e51c98be0767f0dfe2288ce2aa0d0a06b11a92c29f222ad7193"
+        },
+        {
+          "api": "35",
+          "path": "report.json",
+          "bytes": 116654,
+          "sha256": "fe434ff540a7ea7499d702675fda0950c37dd62deec1fe63fcd48549cbf39a66"
+        },
+        {
+          "api": "35",
+          "path": "ui-results.json",
+          "bytes": 112369,
+          "sha256": "57697d6f42fa89b3a405fe3056d79f0ed132130c7664b2ef0f8b3d4e7a5773ae"
+        },
+        {
+          "api": "35",
+          "path": "instrumentation.json",
+          "bytes": 2887,
+          "sha256": "8d3d041a3720e9295aff79ff8e83e08c0ad60851d01f8e7362bb0d4302edf21c"
+        },
+        {
+          "api": "36",
+          "path": "report.json",
+          "bytes": 97597,
+          "sha256": "2594e4733af701e1c4643bdae008f7ba3981a183198e24064139fcafe2416226"
+        },
+        {
+          "api": "36",
+          "path": "ui-results.json",
+          "bytes": 93256,
+          "sha256": "515fa686feee568f95c76504134ad97f84e9405eef771630770d4cd2067a222c"
+        },
+        {
+          "api": "36",
+          "path": "instrumentation.json",
+          "bytes": 18794,
+          "sha256": "042b30a77105dc8c31cf08a6c373b0d68fa6546d7ca8fbdb04701a1dc594f99d"
+        },
+        {
+          "api": "37.0",
+          "path": "report.json",
+          "bytes": 97596,
+          "sha256": "a91463f35b52e7c8762c93abb138e14e9f0095beef5d99d5e775c359791f06b8"
+        },
+        {
+          "api": "37.0",
+          "path": "ui-results.json",
+          "bytes": 93253,
+          "sha256": "184b03fb36fee5fdba4b39f4242f5bae33732c1d61ad676a953027d27e7d8a30"
+        },
+        {
+          "api": "37.0",
+          "path": "instrumentation.json",
+          "bytes": 18788,
+          "sha256": "32d996d2a9f8f4684073798dccea1ca93be07d2bdda49b055343bfe65b18f11c"
+        }
+      ],
+      "terminalCases": [
+        {
+          "api": "30",
+          "app": "notes-1.7.0",
+          "state": "off",
+          "method": "notesWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "30",
+          "app": "notes-1.7.0",
+          "state": "idle",
+          "method": "notesWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "30",
+          "app": "calculator-1.4.0",
+          "state": "idle",
+          "method": "calculatorWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "30",
+          "app": "calculator-1.4.0",
+          "state": "off",
+          "method": "calculatorWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "31",
+          "app": "notes-1.7.0",
+          "state": "off",
+          "method": "notesWithAgentDisabled",
+          "terminalCode": -2,
+          "originalStatus": "failed"
+        },
+        {
+          "api": "31",
+          "app": "notes-1.7.0",
+          "state": "idle",
+          "method": "notesWithAgentBoundAndIdle",
+          "terminalCode": -2,
+          "originalStatus": "failed"
+        },
+        {
+          "api": "31",
+          "app": "calculator-1.4.0",
+          "state": "idle",
+          "method": "calculatorWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "31",
+          "app": "calculator-1.4.0",
+          "state": "off",
+          "method": "calculatorWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "32",
+          "app": "notes-1.7.0",
+          "state": "off",
+          "method": "notesWithAgentDisabled",
+          "terminalCode": -2,
+          "originalStatus": "failed"
+        },
+        {
+          "api": "32",
+          "app": "notes-1.7.0",
+          "state": "idle",
+          "method": "notesWithAgentBoundAndIdle",
+          "terminalCode": -2,
+          "originalStatus": "failed"
+        },
+        {
+          "api": "32",
+          "app": "calculator-1.4.0",
+          "state": "idle",
+          "method": "calculatorWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "32",
+          "app": "calculator-1.4.0",
+          "state": "off",
+          "method": "calculatorWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "33",
+          "app": "notes-1.7.0",
+          "state": "off",
+          "method": "notesWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "33",
+          "app": "notes-1.7.0",
+          "state": "idle",
+          "method": "notesWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "33",
+          "app": "calculator-1.4.0",
+          "state": "idle",
+          "method": "calculatorWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "33",
+          "app": "calculator-1.4.0",
+          "state": "off",
+          "method": "calculatorWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "34",
+          "app": "notes-1.7.0",
+          "state": "off",
+          "method": "notesWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "34",
+          "app": "notes-1.7.0",
+          "state": "idle",
+          "method": "notesWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "34",
+          "app": "calculator-1.4.0",
+          "state": "idle",
+          "method": "calculatorWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "34",
+          "app": "calculator-1.4.0",
+          "state": "off",
+          "method": "calculatorWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "35",
+          "app": "notes-1.7.0",
+          "state": "off",
+          "method": "notesWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "35",
+          "app": "notes-1.7.0",
+          "state": "idle",
+          "method": "notesWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "35",
+          "app": "calculator-1.4.0",
+          "state": "idle",
+          "method": "calculatorWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "35",
+          "app": "calculator-1.4.0",
+          "state": "off",
+          "method": "calculatorWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "36",
+          "app": "notes-1.7.0",
+          "state": "off",
+          "method": "notesWithAgentDisabled",
+          "terminalCode": -2,
+          "originalStatus": "failed"
+        },
+        {
+          "api": "36",
+          "app": "notes-1.7.0",
+          "state": "idle",
+          "method": "notesWithAgentBoundAndIdle",
+          "terminalCode": -2,
+          "originalStatus": "failed"
+        },
+        {
+          "api": "36",
+          "app": "calculator-1.4.0",
+          "state": "idle",
+          "method": "calculatorWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "36",
+          "app": "calculator-1.4.0",
+          "state": "off",
+          "method": "calculatorWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "37.0",
+          "app": "notes-1.7.0",
+          "state": "off",
+          "method": "notesWithAgentDisabled",
+          "terminalCode": -2,
+          "originalStatus": "failed"
+        },
+        {
+          "api": "37.0",
+          "app": "notes-1.7.0",
+          "state": "idle",
+          "method": "notesWithAgentBoundAndIdle",
+          "terminalCode": -2,
+          "originalStatus": "failed"
+        },
+        {
+          "api": "37.0",
+          "app": "calculator-1.4.0",
+          "state": "idle",
+          "method": "calculatorWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "37.0",
+          "app": "calculator-1.4.0",
+          "state": "off",
+          "method": "calculatorWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        }
+      ],
+      "geometryDiagnosticOccurrences": 0,
+      "unassignedGeometryOccurrences": 0,
+      "unassignedConfirmationOccurrences": 0,
+      "confirmationDiagnosticOccurrences": 8,
+      "distinctConfirmationCases": 8,
+      "originalHiddenSampleCount": 32,
+      "confirmationDiagnostics": [
+        {
+          "api": "31",
+          "method": "notesWithAgentDisabled",
+          "rawJsonSha256": "50efe60fbb0c3bf6fbfa9b7ea745eeb0bfb2fd4caab9dd17e8053bd346648f7c",
+          "rawJsonBytes": 4776,
+          "samples": 4,
+          "backAttempts": 1,
+          "decisionImeCount": 1,
+          "sampleRangesFromStartMillis": [
+            [
+              1752,
+              1766
+            ],
+            [
+              1929,
+              1942
+            ],
+            [
+              2103,
+              2116
+            ],
+            [
+              2277,
+              2289
+            ]
+          ],
+          "confirmationElapsedMillis": 5043,
+          "allHiddenBeforeAndLastInventoriesEmpty": true
+        },
+        {
+          "api": "31",
+          "method": "notesWithAgentBoundAndIdle",
+          "rawJsonSha256": "645385e88cba681fc0319d5701a11d7f1e3e21dfdb7fac968b6d01023be0320b",
+          "rawJsonBytes": 4782,
+          "samples": 4,
+          "backAttempts": 1,
+          "decisionImeCount": 1,
+          "sampleRangesFromStartMillis": [
+            [
+              1698,
+              1710
+            ],
+            [
+              1869,
+              1880
+            ],
+            [
+              2040,
+              2052
+            ],
+            [
+              2210,
+              2224
+            ]
+          ],
+          "confirmationElapsedMillis": 5033,
+          "allHiddenBeforeAndLastInventoriesEmpty": true
+        },
+        {
+          "api": "32",
+          "method": "notesWithAgentDisabled",
+          "rawJsonSha256": "a25642cba0bf01b65609f3a1ce7db3aabc2749645fcad96d01e62e627cdb52c6",
+          "rawJsonBytes": 4782,
+          "samples": 4,
+          "backAttempts": 1,
+          "decisionImeCount": 1,
+          "sampleRangesFromStartMillis": [
+            [
+              1708,
+              1726
+            ],
+            [
+              1886,
+              1901
+            ],
+            [
+              2062,
+              2079
+            ],
+            [
+              2240,
+              2257
+            ]
+          ],
+          "confirmationElapsedMillis": 5021,
+          "allHiddenBeforeAndLastInventoriesEmpty": true
+        },
+        {
+          "api": "32",
+          "method": "notesWithAgentBoundAndIdle",
+          "rawJsonSha256": "948cf1294c3092fe0cefcd2a69a1a61120a6c351dbca151cef495e00af28f2d3",
+          "rawJsonBytes": 4782,
+          "samples": 4,
+          "backAttempts": 1,
+          "decisionImeCount": 1,
+          "sampleRangesFromStartMillis": [
+            [
+              1662,
+              1679
+            ],
+            [
+              1841,
+              1857
+            ],
+            [
+              2017,
+              2040
+            ],
+            [
+              2200,
+              2216
+            ]
+          ],
+          "confirmationElapsedMillis": 5041,
+          "allHiddenBeforeAndLastInventoriesEmpty": true
+        },
+        {
+          "api": "36",
+          "method": "notesWithAgentDisabled",
+          "rawJsonSha256": "b07b6650b48e5bd45d14480af926b962274d83319d22dfe206a439ded89fa0ec",
+          "rawJsonBytes": 4737,
+          "samples": 4,
+          "backAttempts": 0,
+          "decisionImeCount": 0,
+          "sampleRangesFromStartMillis": [
+            [
+              1241,
+              1253
+            ],
+            [
+              1410,
+              1423
+            ],
+            [
+              1578,
+              1590
+            ],
+            [
+              1745,
+              1756
+            ]
+          ],
+          "confirmationElapsedMillis": 5048,
+          "allHiddenBeforeAndLastInventoriesEmpty": true
+        },
+        {
+          "api": "36",
+          "method": "notesWithAgentBoundAndIdle",
+          "rawJsonSha256": "25155e2189027ff33d1c8566e8da1be1c542f06e34d592c84329ada6587e8f6f",
+          "rawJsonBytes": 4737,
+          "samples": 4,
+          "backAttempts": 0,
+          "decisionImeCount": 0,
+          "sampleRangesFromStartMillis": [
+            [
+              1274,
+              1287
+            ],
+            [
+              1449,
+              1462
+            ],
+            [
+              1617,
+              1631
+            ],
+            [
+              1787,
+              1805
+            ]
+          ],
+          "confirmationElapsedMillis": 5000,
+          "allHiddenBeforeAndLastInventoriesEmpty": true
+        },
+        {
+          "api": "37.0",
+          "method": "notesWithAgentDisabled",
+          "rawJsonSha256": "8974ff718e115ef952183c5f56ea510223f352eb71572f43933ecf28730746d0",
+          "rawJsonBytes": 4731,
+          "samples": 4,
+          "backAttempts": 0,
+          "decisionImeCount": 0,
+          "sampleRangesFromStartMillis": [
+            [
+              1257,
+              1269
+            ],
+            [
+              1428,
+              1440
+            ],
+            [
+              1598,
+              1610
+            ],
+            [
+              1768,
+              1779
+            ]
+          ],
+          "confirmationElapsedMillis": 5040,
+          "allHiddenBeforeAndLastInventoriesEmpty": true
+        },
+        {
+          "api": "37.0",
+          "method": "notesWithAgentBoundAndIdle",
+          "rawJsonSha256": "4f12b8e8591df7f5e9416d45f6f12c35eececfd03c6239b34bc2da7ce0b5d351",
+          "rawJsonBytes": 4737,
+          "samples": 4,
+          "backAttempts": 0,
+          "decisionImeCount": 0,
+          "sampleRangesFromStartMillis": [
+            [
+              1263,
+              1276
+            ],
+            [
+              1435,
+              1448
+            ],
+            [
+              1606,
+              1618
+            ],
+            [
+              1776,
+              1788
+            ]
+          ],
+          "confirmationElapsedMillis": 5047,
+          "allHiddenBeforeAndLastInventoriesEmpty": true
+        }
+      ],
+      "latestHiddenSampleEndFromStartMillis": 2289,
+      "api30NotesOffAndIdleActualFlowPassed": true,
+      "historical435dCaseStatusChanges": [
+        {
+          "api": "30",
+          "app": "notes-1.7.0",
+          "state": "off",
+          "historicalStatus": "failed",
+          "currentStatus": "passed"
+        }
+      ],
+      "primaryAnalysisBindingsAndRawHashesMatch": true,
+      "derivedAnalysisFiles": {
+        "geometry-analysis.json": "ed6f28e7f767c2937233958f34807b47bd8620a224f462406df0faf1bb74a24a",
+        "confirmation-analysis.json": "a450ead2bb50f3946aae8d55617d4a370ef837c526b1623159678607794c91b8"
+      }
+    },
+    {
+      "runId": 41165282816,
+      "source": "33ac5825bc7537b9a67c9daeeee6916da12256d6",
+      "archive": "screenshots/third-party-41165282816-1",
+      "manifestSha256": "f556737caa7a977853a300936648cbf8a5010d770721ec619e5038eb3f057127",
+      "originalStateCounts": {
+        "passed": 24,
+        "failed": 8,
+        "unverified": 0
+      },
+      "originalJsonPayloadsChecked": 24,
+      "payloads": [
+        {
+          "api": "30",
+          "path": "report.json",
+          "bytes": 115152,
+          "sha256": "00e1c95e9922b3524c2aed2b11eecf44c0545ef63274c81f5e97f52315b37a12"
+        },
+        {
+          "api": "30",
+          "path": "ui-results.json",
+          "bytes": 110872,
+          "sha256": "da31f3184f3cf1d4612d3447a74ab68bf54130c815cfdfd3c273a388e582d53a"
+        },
+        {
+          "api": "30",
+          "path": "instrumentation.json",
+          "bytes": 2887,
+          "sha256": "b53ff99bc6896f5d5b60f1e4c115ab4ec48a1e53c542e7fb6e2ccb19554db4d8"
+        },
+        {
+          "api": "31",
+          "path": "report.json",
+          "bytes": 96555,
+          "sha256": "7235efc36e973a86683938cb1f8e0b3f6466819e3fbd536867e8d3014ca95f09"
+        },
+        {
+          "api": "31",
+          "path": "ui-results.json",
+          "bytes": 92214,
+          "sha256": "80667d4a79c667f6dd6977349c833f5404089ca6b5e9ffac86d4031729e1bed5"
+        },
+        {
+          "api": "31",
+          "path": "instrumentation.json",
+          "bytes": 18968,
+          "sha256": "68ad4bc9de080762328415cf3e8bbb20c8a43547b373fffec41f4de93e73bbd2"
+        },
+        {
+          "api": "32",
+          "path": "report.json",
+          "bytes": 96478,
+          "sha256": "9f74d793f0555817ac109e47f8c812b73c995fffa97fcf2e1a0f35207340182a"
+        },
+        {
+          "api": "32",
+          "path": "ui-results.json",
+          "bytes": 92137,
+          "sha256": "5cfb443dc2964b30f46990db1863065abee4638d02911b1355bb1586fe8e4849"
+        },
+        {
+          "api": "32",
+          "path": "instrumentation.json",
+          "bytes": 19226,
+          "sha256": "624172a643cc17a6b9db406a6b67989da4690680a06e5753907921105857bdfc"
+        },
+        {
+          "api": "33",
+          "path": "report.json",
+          "bytes": 115141,
+          "sha256": "c05d4ecdab4b3fb0ccff9418abca650f8eb514fc3ff1c0a79d6cf905f01d50e9"
+        },
+        {
+          "api": "33",
+          "path": "ui-results.json",
+          "bytes": 110856,
+          "sha256": "9e34a4fded399126b37e535378e685e1f77e71253076427ae7693a3434e09dfc"
+        },
+        {
+          "api": "33",
+          "path": "instrumentation.json",
+          "bytes": 3047,
+          "sha256": "ecfdb87844e18fbca0c43c6b6a163d9191e7f5287e85e1e25fb74ab00733b23e"
+        },
+        {
+          "api": "34",
+          "path": "report.json",
+          "bytes": 116395,
+          "sha256": "89d5b35658f907100699670d574ff78b336e47421f8042b03f29273a691d875f"
+        },
+        {
+          "api": "34",
+          "path": "ui-results.json",
+          "bytes": 112110,
+          "sha256": "4b24a62a225a347e9f4d7afb250eb41c76910fbed43d9333d1590473ffd0efc3"
+        },
+        {
+          "api": "34",
+          "path": "instrumentation.json",
+          "bytes": 3047,
+          "sha256": "7d03237bdeb6b4999c7c9630d3a8cefb895f55d0543bc2de12543f6c54a90e21"
+        },
+        {
+          "api": "35",
+          "path": "report.json",
+          "bytes": 116654,
+          "sha256": "e64f2dcabc0459c48feae7d0dbc3f2c863bcfdeb3468c88228279244acf1ce70"
+        },
+        {
+          "api": "35",
+          "path": "ui-results.json",
+          "bytes": 112369,
+          "sha256": "d5667f2a7c05c065724d31224d7c422454bc928f37b85c48771847f07969ee9b"
+        },
+        {
+          "api": "35",
+          "path": "instrumentation.json",
+          "bytes": 2887,
+          "sha256": "9c954ac0ef04042b7f75f2bb2670d5b97ff987fe31ecbfddd7f9d97945a57775"
+        },
+        {
+          "api": "36",
+          "path": "report.json",
+          "bytes": 95641,
+          "sha256": "afc4d718c95d0af8045f98327a2cd5eb2aa470fcede573caf7c8e8358139b665"
+        },
+        {
+          "api": "36",
+          "path": "ui-results.json",
+          "bytes": 91300,
+          "sha256": "3353b0cd4299947dea50252fcd6ded58aed7e0b83a9aee2e216dc358586dd66f"
+        },
+        {
+          "api": "36",
+          "path": "instrumentation.json",
+          "bytes": 18794,
+          "sha256": "ae6fc994816645dc0319e7d655a1d261bc7cdde0743cce3f28cfaca6d946e307"
+        },
+        {
+          "api": "37.0",
+          "path": "report.json",
+          "bytes": 97596,
+          "sha256": "a5ac398b7e3c2743b53b380c7ea8cb53598f8f8332cb30f620dd80a91e025780"
+        },
+        {
+          "api": "37.0",
+          "path": "ui-results.json",
+          "bytes": 93253,
+          "sha256": "fe17274c3b7da5ceed4000ba5234d14cf16b7c7d4e2ef03a5909bf7492186de6"
+        },
+        {
+          "api": "37.0",
+          "path": "instrumentation.json",
+          "bytes": 18788,
+          "sha256": "7515ce433c3221e592bf7eb42f4142fe331a218321872b8784043873f963ad3e"
+        }
+      ],
+      "terminalCases": [
+        {
+          "api": "30",
+          "app": "notes-1.7.0",
+          "state": "off",
+          "method": "notesWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "30",
+          "app": "notes-1.7.0",
+          "state": "idle",
+          "method": "notesWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "30",
+          "app": "calculator-1.4.0",
+          "state": "idle",
+          "method": "calculatorWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "30",
+          "app": "calculator-1.4.0",
+          "state": "off",
+          "method": "calculatorWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "31",
+          "app": "notes-1.7.0",
+          "state": "off",
+          "method": "notesWithAgentDisabled",
+          "terminalCode": -2,
+          "originalStatus": "failed"
+        },
+        {
+          "api": "31",
+          "app": "notes-1.7.0",
+          "state": "idle",
+          "method": "notesWithAgentBoundAndIdle",
+          "terminalCode": -2,
+          "originalStatus": "failed"
+        },
+        {
+          "api": "31",
+          "app": "calculator-1.4.0",
+          "state": "idle",
+          "method": "calculatorWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "31",
+          "app": "calculator-1.4.0",
+          "state": "off",
+          "method": "calculatorWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "32",
+          "app": "notes-1.7.0",
+          "state": "off",
+          "method": "notesWithAgentDisabled",
+          "terminalCode": -2,
+          "originalStatus": "failed"
+        },
+        {
+          "api": "32",
+          "app": "notes-1.7.0",
+          "state": "idle",
+          "method": "notesWithAgentBoundAndIdle",
+          "terminalCode": -2,
+          "originalStatus": "failed"
+        },
+        {
+          "api": "32",
+          "app": "calculator-1.4.0",
+          "state": "idle",
+          "method": "calculatorWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "32",
+          "app": "calculator-1.4.0",
+          "state": "off",
+          "method": "calculatorWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "33",
+          "app": "notes-1.7.0",
+          "state": "off",
+          "method": "notesWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "33",
+          "app": "notes-1.7.0",
+          "state": "idle",
+          "method": "notesWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "33",
+          "app": "calculator-1.4.0",
+          "state": "idle",
+          "method": "calculatorWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "33",
+          "app": "calculator-1.4.0",
+          "state": "off",
+          "method": "calculatorWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "34",
+          "app": "notes-1.7.0",
+          "state": "off",
+          "method": "notesWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "34",
+          "app": "notes-1.7.0",
+          "state": "idle",
+          "method": "notesWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "34",
+          "app": "calculator-1.4.0",
+          "state": "idle",
+          "method": "calculatorWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "34",
+          "app": "calculator-1.4.0",
+          "state": "off",
+          "method": "calculatorWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "35",
+          "app": "notes-1.7.0",
+          "state": "off",
+          "method": "notesWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "35",
+          "app": "notes-1.7.0",
+          "state": "idle",
+          "method": "notesWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "35",
+          "app": "calculator-1.4.0",
+          "state": "idle",
+          "method": "calculatorWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "35",
+          "app": "calculator-1.4.0",
+          "state": "off",
+          "method": "calculatorWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "36",
+          "app": "notes-1.7.0",
+          "state": "off",
+          "method": "notesWithAgentDisabled",
+          "terminalCode": -2,
+          "originalStatus": "failed"
+        },
+        {
+          "api": "36",
+          "app": "notes-1.7.0",
+          "state": "idle",
+          "method": "notesWithAgentBoundAndIdle",
+          "terminalCode": -2,
+          "originalStatus": "failed"
+        },
+        {
+          "api": "36",
+          "app": "calculator-1.4.0",
+          "state": "idle",
+          "method": "calculatorWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "36",
+          "app": "calculator-1.4.0",
+          "state": "off",
+          "method": "calculatorWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "37.0",
+          "app": "notes-1.7.0",
+          "state": "off",
+          "method": "notesWithAgentDisabled",
+          "terminalCode": -2,
+          "originalStatus": "failed"
+        },
+        {
+          "api": "37.0",
+          "app": "notes-1.7.0",
+          "state": "idle",
+          "method": "notesWithAgentBoundAndIdle",
+          "terminalCode": -2,
+          "originalStatus": "failed"
+        },
+        {
+          "api": "37.0",
+          "app": "calculator-1.4.0",
+          "state": "idle",
+          "method": "calculatorWithAgentBoundAndIdle",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        },
+        {
+          "api": "37.0",
+          "app": "calculator-1.4.0",
+          "state": "off",
+          "method": "calculatorWithAgentDisabled",
+          "terminalCode": 0,
+          "originalStatus": "passed"
+        }
+      ],
+      "geometryDiagnosticOccurrences": 0,
+      "unassignedGeometryOccurrences": 0,
+      "unassignedConfirmationOccurrences": 0,
+      "confirmationDiagnosticOccurrences": 8,
+      "distinctConfirmationCases": 8,
+      "originalHiddenSampleCount": 32,
+      "confirmationDiagnostics": [
+        {
+          "api": "31",
+          "method": "notesWithAgentDisabled",
+          "rawJsonSha256": "dfe60c6ae176cb628030154052d4c0b606ce55b3c0035accffae40c811547876",
+          "rawJsonBytes": 4776,
+          "samples": 4,
+          "backAttempts": 1,
+          "decisionImeCount": 1,
+          "sampleRangesFromStartMillis": [
+            [
+              1692,
+              1704
+            ],
+            [
+              1863,
+              1874
+            ],
+            [
+              2033,
+              2045
+            ],
+            [
+              2203,
+              2214
+            ]
+          ],
+          "confirmationElapsedMillis": 5020,
+          "allHiddenBeforeAndLastInventoriesEmpty": true
+        },
+        {
+          "api": "31",
+          "method": "notesWithAgentBoundAndIdle",
+          "rawJsonSha256": "cac11a34ae038a6520f384cf0be1015c90ce0a6889952a841bd6f5a1f5439fbe",
+          "rawJsonBytes": 4782,
+          "samples": 4,
+          "backAttempts": 1,
+          "decisionImeCount": 1,
+          "sampleRangesFromStartMillis": [
+            [
+              1670,
+              1682
+            ],
+            [
+              1841,
+              1851
+            ],
+            [
+              2011,
+              2022
+            ],
+            [
+              2180,
+              2191
+            ]
+          ],
+          "confirmationElapsedMillis": 5008,
+          "allHiddenBeforeAndLastInventoriesEmpty": true
+        },
+        {
+          "api": "32",
+          "method": "notesWithAgentDisabled",
+          "rawJsonSha256": "59bb89b806b218f5a34fe77bc6e6511f9cf5e210bebcbfa55603b55df4343f3d",
+          "rawJsonBytes": 4782,
+          "samples": 4,
+          "backAttempts": 1,
+          "decisionImeCount": 1,
+          "sampleRangesFromStartMillis": [
+            [
+              1681,
+              1691
+            ],
+            [
+              1850,
+              1860
+            ],
+            [
+              2020,
+              2031
+            ],
+            [
+              2190,
+              2202
+            ]
+          ],
+          "confirmationElapsedMillis": 5000,
+          "allHiddenBeforeAndLastInventoriesEmpty": true
+        },
+        {
+          "api": "32",
+          "method": "notesWithAgentBoundAndIdle",
+          "rawJsonSha256": "29486329820f38137531344daa694a0dd301307d1cede2bb1bbb791dc6220793",
+          "rawJsonBytes": 4782,
+          "samples": 4,
+          "backAttempts": 1,
+          "decisionImeCount": 1,
+          "sampleRangesFromStartMillis": [
+            [
+              1716,
+              1726
+            ],
+            [
+              1885,
+              1896
+            ],
+            [
+              2054,
+              2064
+            ],
+            [
+              2223,
+              2234
+            ]
+          ],
+          "confirmationElapsedMillis": 5042,
+          "allHiddenBeforeAndLastInventoriesEmpty": true
+        },
+        {
+          "api": "36",
+          "method": "notesWithAgentDisabled",
+          "rawJsonSha256": "0c2938721b862858f137d4bbb7af5566ad69564d4f2a4fe9ae8002ef2fef4fd0",
+          "rawJsonBytes": 4737,
+          "samples": 4,
+          "backAttempts": 0,
+          "decisionImeCount": 0,
+          "sampleRangesFromStartMillis": [
+            [
+              1294,
+              1318
+            ],
+            [
+              1479,
+              1502
+            ],
+            [
+              1663,
+              1684
+            ],
+            [
+              1846,
+              1867
+            ]
+          ],
+          "confirmationElapsedMillis": 5020,
+          "allHiddenBeforeAndLastInventoriesEmpty": true
+        },
+        {
+          "api": "36",
+          "method": "notesWithAgentBoundAndIdle",
+          "rawJsonSha256": "0515362911f93a053eda07d3c41837b4540e30155e137c48908aeef9daa887a8",
+          "rawJsonBytes": 4737,
+          "samples": 4,
+          "backAttempts": 0,
+          "decisionImeCount": 0,
+          "sampleRangesFromStartMillis": [
+            [
+              1317,
+              1338
+            ],
+            [
+              1507,
+              1530
+            ],
+            [
+              1692,
+              1714
+            ],
+            [
+              1883,
+              1908
+            ]
+          ],
+          "confirmationElapsedMillis": 5043,
+          "allHiddenBeforeAndLastInventoriesEmpty": true
+        },
+        {
+          "api": "37.0",
+          "method": "notesWithAgentDisabled",
+          "rawJsonSha256": "4fae6fb250c5db0fb0d7e04861e384213eb3a8163c9215521d6db6f151649251",
+          "rawJsonBytes": 4731,
+          "samples": 4,
+          "backAttempts": 0,
+          "decisionImeCount": 0,
+          "sampleRangesFromStartMillis": [
+            [
+              1258,
+              1275
+            ],
+            [
+              1439,
+              1456
+            ],
+            [
+              1618,
+              1636
+            ],
+            [
+              1799,
+              1818
+            ]
+          ],
+          "confirmationElapsedMillis": 5050,
+          "allHiddenBeforeAndLastInventoriesEmpty": true
+        },
+        {
+          "api": "37.0",
+          "method": "notesWithAgentBoundAndIdle",
+          "rawJsonSha256": "87787cff07398bbe41685b82999c967ce11be4f43718fa9f02f460baa24edb91",
+          "rawJsonBytes": 4737,
+          "samples": 4,
+          "backAttempts": 0,
+          "decisionImeCount": 0,
+          "sampleRangesFromStartMillis": [
+            [
+              1329,
+              1346
+            ],
+            [
+              1513,
+              1530
+            ],
+            [
+              1692,
+              1713
+            ],
+            [
+              1881,
+              1904
+            ]
+          ],
+          "confirmationElapsedMillis": 5036,
+          "allHiddenBeforeAndLastInventoriesEmpty": true
+        }
+      ],
+      "latestHiddenSampleEndFromStartMillis": 2234,
+      "api30NotesOffAndIdleActualFlowPassed": true,
+      "historical435dCaseStatusChanges": [
+        {
+          "api": "30",
+          "app": "notes-1.7.0",
+          "state": "off",
+          "historicalStatus": "failed",
+          "currentStatus": "passed"
+        }
+      ],
+      "primaryAnalysisBindingsAndRawHashesMatch": true,
+      "derivedAnalysisFiles": {
+        "geometry-analysis.json": "b1c8ff202e8890c864743fe56b86331b6273fffe8d91041be303cc74644c8797",
+        "confirmation-analysis.json": "c848b0a2df657b7f9e65c4efb8c6ad20ddf775084cb2ca6a7edf56d68f2e1099"
+      }
+    }
+  ],
+  "frozenAnalysisToolBinding": {
+    "primaryExtractorSha256": "df6e44042a9a5f04a4cafaad1e8481af7355524949737db5b4c497651fd2c5c2",
+    "baseExtractorSha256": "fbe8e76c4b95a10de678f46865dbe4233a62221f4f81eba8152eaa6f6322bb83",
+    "portabilityChangeOnly": "BASE_PATH now resolves the identical base script next to the extractor; reverting that one line reconstructs the previously reviewed script hash."
+  },
+  "scriptSha256": "1460919e84db9d6973a494ac88ec266dc2ae0a07c417beaa771d7fd5e194d34f",
+  "limitations": [
+    "Each run retains its independent fixed32 denominator; no runs are merged or used to fill missing evidence.",
+    "Zero actual geometry markers means no retained failure-time rectangle evidence was produced in these runs; initialization fixtures are not actual geometry failure observations.",
+    "API30 Notes off passed in these two runs after a previous failure, but the probe only added failure metadata; this is non-reproduction, not a demonstrated behavior fix or basis to close the historical failure.",
+    "Original 8 hidden-preparation failures remain per run; missing IME inventory does not prove hidden pixels or identify a platform filtering cause.",
+    "WMS records and accessibility inventories are separate original reads without a proven common object token; no post-capture data fill their fields.",
+    "Four WMS samples do not constitute continuous five-second observation; their ranges are START-relative, not BACK-relative.",
+    "Full GitHub provenance, all payloads/PNG and official installation checks belong to the separate archive audit."
+  ]
+}

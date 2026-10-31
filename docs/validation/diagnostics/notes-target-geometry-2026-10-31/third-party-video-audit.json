@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "kind": "notes-geometry-and-overall-video-audit",
+  "auditedAt": "2026-10-31T03:47:40.900501+00:00",
+  "status": "passed",
+  "testedSource": "33ac5825bc7537b9a67c9daeeee6916da12256d6",
+  "videos": [
+    {
+      "kind": "third-party",
+      "source": {
+        "repository": "ecojust/Agent-OS",
+        "commit": "33ac5825bc7537b9a67c9daeeee6916da12256d6",
+        "runId": 41165285095,
+        "attempt": 1
+      },
+      "originalStatus": "passed",
+      "archive": "screenshots/demos/probes-41165285095-1",
+      "manifestSha256": "b0a49bb855ec21609c2b9da860d9409e938481a91350d5e2a7a422339ddcf124",
+      "sourceRunCreatedAt": "2026-10-31T03:39:04Z",
+      "sourceRunUpdatedAt": "2026-10-31T03:45:21Z",
+      "sourceRunConclusion": "success",
+      "job": {
+        "id": 124431693124,
+        "name": "probe (35)",
+        "started_at": "2026-10-31T03:42:16Z",
+        "completed_at": "2026-10-31T03:45:20Z",
+        "conclusion": "success"
+      },
+      "artifacts": [
+        {
+          "id": 13028427417,
+          "name": "third-party-smoke-v4-api-35-attempt-1",
+          "size_in_bytes": 106835,
+          "created_at": "2026-10-31T03:45:15Z"
+        },
+        {
+          "id": 13028347432,
+          "name": "probe-video-third-party-app-set-api-35-attempt-1",
+          "size_in_bytes": 754837,
+          "created_at": "2026-10-31T03:45:17Z"
+        }
+      ],
+      "payloadFiles": 9,
+      "payloadBytes": 1106698,
+      "pngCount": 4,
+      "fullPayloadHashCheck": "passed",
+      "pinnedSourceValidator": "passed",
+      "videoPath": "screenshots/demos/probes-41165285095-1/video/demo.mp4",
+      "video": {
+        "bytes": 776160,
+        "sha256": "dbfe89656ac68fca7946d35e8e0b7c4c3da7e885e49c63345aa68b25de33af4b",
+        "durationMs": 48850,
+        "width": 640,
+        "height": 1280,
+        "codec": "h264",
+        "pixelFormat": "yuv420p",
+        "decodedFrames": 882,
+        "fullDecode": "passed"
+      },
+      "flow": {
+        "caseCount": 4,
+        "caseCounts": {
+          "passed": 4,
+          "failed": 0,
+          "unverified": 0
+        },
+        "cases": [
+          {
+            "name": "calculator-1.4.0/off",
+            "appId": "calculator-1.4.0",
+            "state": "off",
+            "status": "passed"
+          },
+          {
+            "name": "calculator-1.4.0/idle",
+            "appId": "calculator-1.4.0",
+            "state": "idle",
+            "status": "passed"
+          },
+          {
+            "name": "notes-1.7.0/off",
+            "appId": "notes-1.7.0",
+            "state": "off",
+            "status": "passed"
+          },
+          {
+            "name": "notes-1.7.0/idle",
+            "appId": "notes-1.7.0",
+            "state": "idle",
+            "status": "passed"
+          }
+        ],
+        "captureCounts": {
+          "captured": 4,
+          "blocked": 4
+        },
+        "instrumentation": {
+          "available": true,
+          "terminalCases": {
+            "notesWithAgentDisabled": "passed",
+            "notesWithAgentBoundAndIdle": "passed",
+            "calculatorWithAgentBoundAndIdle": "passed",
+            "calculatorWithAgentDisabled": "passed"
+          },
+          "setupDiagnosticBlocks": []
+        },
+        "sampleId": "calculator-1.4.0-notes-1.7.0-v4",
+        "fullSuiteAcceptance": false,
+        "recordedMatrixLabels": [
+          "35"
+        ],
+        "matrixExpectedTests": 32
+      }
+    }
+  ],
+  "visualInspection": {
+    "status": "passed",
+    "reviewedAt": "2026-10-31T03:48:39.358201+00:00",
+    "method": "Inspected eight original full-frame samples at 6, 12, 20, 28, 36, 41, 45 and 48 seconds, then full original frames at 45.8, 46.2 and 48.7 seconds. Contact-sheet padding is inspection-only. All 882 original frames independently decoded without error.",
+    "observed": [
+      "Notes shows Agent OS off sample and Agent OS idle sample with the expected synthetic off/idle body text, arithmetic sample and No personal data.",
+      "The two Calculator flows show zero before input, the expression 2+3 and result 5; result 5 is visible in separate original frames at 46.2 and 48.7 seconds."
+    ],
+    "limits": "Actual service off/idle state, package identity, save and fresh-process readback are established by original four-case receipts, not inferred from image samples. Four blocked Notes captures remain blocked; this API35 video does not establish either complete32 matrix or geometry-failure reproduction."
+  },
+  "limitations": [
+    "Both recordings use dedicated API35 emulators; app-set uses official unmodified Calculator 1.4.0 and Notes 1.7.0 in off/idle states, while overall uses synthetic Fixture/local HTTP model.",
+    "App-set video contains four API35 cases, not the eight-API 32-case matrix or Agent execution/upgrade/real-model acceptance.",
+    "Video decoding and visible screens do not establish physical-present latency or physical-device acceptance."
+  ],
+  "archiveBindings": [
+    {
+      "runId": 41165285095,
+      "branch": "evidence/probe-video-41165285095-1",
+      "archiveCommit": "604276a7524930eb433dd260fe82d85f852b053b",
+      "parentCommit": "33ac5825bc7537b9a67c9daeeee6916da12256d6",
+      "sourceCommit": "33ac5825bc7537b9a67c9daeeee6916da12256d6",
+      "path": "screenshots/demos/probes-41165285095-1"
+    }
+  ],
+  "archiveRuns": [
+    {
+      "id": 41165739145,
+      "head_sha": "35a8494bc6971a2db7a8e405e3f3d2c6c563805c",
+      "path": ".github/workflows/probe-video-archive.yml",
+      "created_at": "2026-10-31T03:45:35Z",
+      "updated_at": "2026-10-31T03:46:59Z",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "auditScriptSha256": "4271955e60436985a612968601f443a6b28292de65b7c23ff8ab10f2a10db73c",
+  "pinnedValidatorFiles": {
+    "scripts/demo_video.py": "0a310f66a8b76c5b240c899871b449c24a3a0857647e79a22b74231006885f0b",
+    "scripts/probe_video_archive.py": "a6e26499d1dab356e3d202aa0d988705329218fafdad66c06fd0afe539b004b2",
+    "scripts/probe_video.py": "5d346980d64470853bb598f2aebf80253ac731012e5e418c1610baae19720ebe",
+    "scripts/third_party_smoke_set.py": "c68a8d930368430041fb2b9ce1ce9b1ff129692a524dbc46ef8edde002677fcd",
+    "scripts/third_party_smoke_set_archive.py": "bf2a7a287fbbdce20e3ffee7742342f486485da5187cc204213a0d9e924d6919",
+    "docs/validation/third-party-app-set-lock.json": "9bfd9a059cf858cdb73eb4245fa57d5f9bf2d2ebc6818f4fbfdc8a159d50c20a"
+  }
+}

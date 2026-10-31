@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-31T05:44:09Z",
-  "note": "72f77af85源码已冻结；同源完整32项41173725544、真实APK录像41173740075及整体录像41173741948已启动，结果与新视频待审核，旧失败和原视频来源保留。",
+  "updated_at": "2026-10-31T05:52:41Z",
+  "note": "72f首轮32项24通过/8失败，8份后置诊断发现WMS类型提取缺口，不能判定窗口缺失；首轮原件及两段实际录像已审核归档。正修复已复现的嵌套属性解析缺陷，之后另源验证。",
   "latest_evidence": {
-    "path": "screenshots/third-party-41165282816-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41165282816"
+    "path": "screenshots/third-party-41173725544-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41173725544"
   },
   "checkpoints": [
     {
@@ -119,10 +119,10 @@
       "id": "continuous_actions",
       "name": "普通操作连续执行与接管",
       "status": "in_progress",
-      "evidence": "screenshots/demos/41165286817-1/manifest.json",
+      "evidence": "screenshots/demos/41173741948-1/manifest.json",
       "scope": "33ac5825b源码API35普通Fixture演示13阶段、8次确认通过；36.256秒、30载荷/1159207B/22PNG及515帧完整解码核验，保留安全标志、本地合成模型；最终浮条已移除。仅启动/滚动/主页可选免确认，普通写操作连续执行与真实模型接管仍未验收。普通录像不替代真实APK、性能或历史旋转/停止帧失败。",
-      "details": "已验证：33ac源码API35普通流程13阶段、8次确认通过，36.256秒/515帧及30载荷/22PNG完整核验，安全标志保留；c7b繁忙停止独立演示1/1保留。仅启动/滚动/主页可选免确认，旧ready/旋转及MODEL帧失败仍在。未完成：普通写操作连续执行和真实模型接管。下一步冻结连续写范围，补端到端接管与启动可用性验证。",
-      "updated_at": "2026-10-31T03:47:00Z"
+      "details": "已验证：72f源码API35普通流程13阶段、8次确认通过，39.148秒/506帧及30载荷/22PNG完整核验，安全标志保留；c7b繁忙停止独立演示1/1保留。仅启动/滚动/主页可选免确认，旧ready/旋转及MODEL帧失败仍在。未完成：普通写操作连续执行和真实模型接管。下一步冻结连续写范围，补端到端接管与启动可用性验证。",
+      "updated_at": "2026-10-31T05:52:41Z"
     },
     {
       "id": "model_acceptance",
@@ -137,9 +137,9 @@
       "name": "冻结常用应用样本与日常使用验收",
       "status": "in_progress",
       "evidence": "docs/validation/notes-ime-association-diagnostics.md",
-      "scope": "33ac源码加入完整包含失败的有界原矩形诊断，原v4主JSON、错误、门槛及动作额度不变。两轮41165280718/41165282816各完整32项，均24通过/8失败/0未验证；每轮Calculator16/16、Notes8/16，各16官方安装、32身份/设置恢复、8Notes新进程全文读回。各56载荷/32CalculatorPNG及32Notesblocked已审核。API30两态两轮未复现，geometry marker0，未取得真实失败矩形；旧435d23/9与API30失败原件保留。每轮原8项隐藏失败仍保留32次WMS，31/32接受BACK后隐藏未证实，36/37原清单无IME；无BELOW_FOCUSED证据。891宿主检查、构建/lint、Android初始化及独立原件复核通过；离线分析器14检查不计设备通过。独立同源API35视频4/4、普通录像13阶段/8确认已归档。下一步独立验证IME窗口候选关联，接口可行性已核验但尚未采设备数据；执行态、升级、扩样、真实模型、真机与性能预算未验收。",
-      "details": "原33ac两轮各24/32，API31/32/36/37八项隐藏失败及旧API30标题失败保留。已加入失败后三条有界只读采集，原v4身份/遮挡/5秒与动作预算不变；891宿主、25采集、26分析检查及构建/lint通过。下一步同源完整32项，区分WMS、Populator与最终服务清单缺项，并各录一次真实APK和整体操作；执行态、升级及扩样未验收。",
-      "updated_at": "2026-10-31T05:43:04Z"
+      "scope": "72f源码新增独立失败后3次只读IME窗口诊断；原v4动作/身份/遮挡/5秒预算不变。41173725544完整32项24通过8失败0未验证；56载荷2530658B/32PNG/32Notesblocked，8原确认与8后置marker独立核验。后置23–52ms，但WMS引用1而IME解析0，未取得mClient；API31/32 a11y不可用及final旧格式，36/37格式可读但matchCount为null，不是窗口缺失证据。固定AOSP及git72f合成复现证明mAttrs嵌套sim可触发解析缺陷，原dump未保留不能重建当次字节。原八项失败及API30历史标题失败保留；先修解析再冻结另源32项，两个运行独立计数。72f官方API35四项录像4/4、整体13阶段/8确认已归档；Agent执行态、升级、正式扩样、真实模型、真机与预算未验收。",
+      "details": "72f首轮32项24通过/8失败，56载荷/32PNG及8份后置诊断已核验。WMS引用1但类型未解析，mClient与匹配计数未取得；固定AOSP与合成复现确认嵌套sim属性解析缺陷，不能称窗口缺失。原八项隐藏失败及旧API30标题失败保留。下一步修正解析后另源32项独立验证；72f真实APK4/4和整体13阶段视频已归档，执行态/升级/扩样仍未验收。",
+      "updated_at": "2026-10-31T05:52:41Z"
     },
     {
       "id": "physical_devices",
@@ -179,9 +179,9 @@
     }
   ],
   "latest_demo": {
-    "path": "screenshots/demos/41165286817-1",
-    "source_sha": "33ac5825bc7537b9a67c9daeeee6916da12256d6",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41165286817",
+    "path": "screenshots/demos/41173741948-1",
+    "source_sha": "72f77af85481eb90c0511a52e61c7cbab3ac6595",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41173741948",
     "status": "passed"
   }
 }

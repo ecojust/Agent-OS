@@ -1,0 +1,374 @@
+{
+  "schemaVersion": 1,
+  "kind": "notes-ime-association-and-overall-video-audit",
+  "status": "passed",
+  "testedSource": "72f77af85481eb90c0511a52e61c7cbab3ac6595",
+  "auditedAt": "2026-10-31T05:51:36.618393+00:00",
+  "limitations": [
+    "Both recordings use dedicated API35 emulators; app-set uses official unmodified Calculator 1.4.0 and Notes 1.7.0 in off/idle states, while overall uses synthetic Fixture/local HTTP model.",
+    "App-set video contains four API35 cases, not the eight-API 32-case matrix or Agent execution/upgrade/real-model acceptance.",
+    "Video decoding and visible screens do not establish physical-present latency or physical-device acceptance."
+  ],
+  "auditScriptSha256": "28958751cd6bfb3f37d66299cb51c907b06291cbf56c9d32ae7be9e2f11837c7",
+  "pinnedValidatorFiles": {
+    "scripts/demo_video.py": "0a310f66a8b76c5b240c899871b449c24a3a0857647e79a22b74231006885f0b",
+    "scripts/probe_video_archive.py": "a6e26499d1dab356e3d202aa0d988705329218fafdad66c06fd0afe539b004b2",
+    "scripts/probe_video.py": "5d346980d64470853bb598f2aebf80253ac731012e5e418c1610baae19720ebe",
+    "scripts/third_party_smoke_set.py": "c68a8d930368430041fb2b9ce1ce9b1ff129692a524dbc46ef8edde002677fcd",
+    "scripts/third_party_smoke_set_archive.py": "bf2a7a287fbbdce20e3ffee7742342f486485da5187cc204213a0d9e924d6919",
+    "docs/validation/third-party-app-set-lock.json": "9bfd9a059cf858cdb73eb4245fa57d5f9bf2d2ebc6818f4fbfdc8a159d50c20a"
+  },
+  "videos": [
+    {
+      "kind": "third-party",
+      "source": {
+        "repository": "ecojust/Agent-OS",
+        "commit": "72f77af85481eb90c0511a52e61c7cbab3ac6595",
+        "runId": 41173740075,
+        "attempt": 1
+      },
+      "originalStatus": "passed",
+      "archive": "screenshots/demos/probes-41173740075-1",
+      "manifestSha256": "5d1ebf03d3ba0ee09ebe008a8bf1f9eb88fd7cb247275982a999f3f51a99c58d",
+      "sourceRunCreatedAt": "2026-10-31T05:43:42Z",
+      "sourceRunUpdatedAt": "2026-10-31T05:47:59Z",
+      "sourceRunConclusion": "success",
+      "job": {
+        "id": 124457158919,
+        "name": "probe (35)",
+        "started_at": "2026-10-31T05:45:12Z",
+        "completed_at": "2026-10-31T05:47:58Z",
+        "conclusion": "success"
+      },
+      "artifacts": [
+        {
+          "id": 13031902375,
+          "name": "third-party-smoke-v4-api-35-attempt-1",
+          "size_in_bytes": 105480,
+          "created_at": "2026-10-31T05:47:55Z"
+        },
+        {
+          "id": 13031642918,
+          "name": "probe-video-third-party-app-set-api-35-attempt-1",
+          "size_in_bytes": 738873,
+          "created_at": "2026-10-31T05:47:56Z"
+        }
+      ],
+      "payloadFiles": 9,
+      "payloadBytes": 1088574,
+      "pngCount": 4,
+      "fullPayloadHashCheck": "passed",
+      "pinnedSourceValidator": "passed",
+      "videoPath": "screenshots/demos/probes-41173740075-1/video/demo.mp4",
+      "video": {
+        "bytes": 758718,
+        "sha256": "eaa0121215ea42fcf03657ab831dcf77fc35a0f1cd8478ff97f84491ad28cd8d",
+        "durationMs": 46685,
+        "width": 640,
+        "height": 1280,
+        "codec": "h264",
+        "pixelFormat": "yuv420p",
+        "decodedFrames": 843,
+        "fullDecode": "passed"
+      },
+      "flow": {
+        "caseCount": 4,
+        "caseCounts": {
+          "passed": 4,
+          "failed": 0,
+          "unverified": 0
+        },
+        "cases": [
+          {
+            "name": "calculator-1.4.0/off",
+            "appId": "calculator-1.4.0",
+            "state": "off",
+            "status": "passed"
+          },
+          {
+            "name": "calculator-1.4.0/idle",
+            "appId": "calculator-1.4.0",
+            "state": "idle",
+            "status": "passed"
+          },
+          {
+            "name": "notes-1.7.0/off",
+            "appId": "notes-1.7.0",
+            "state": "off",
+            "status": "passed"
+          },
+          {
+            "name": "notes-1.7.0/idle",
+            "appId": "notes-1.7.0",
+            "state": "idle",
+            "status": "passed"
+          }
+        ],
+        "captureCounts": {
+          "captured": 4,
+          "blocked": 4
+        },
+        "instrumentation": {
+          "available": true,
+          "terminalCases": {
+            "notesWithAgentDisabled": "passed",
+            "notesWithAgentBoundAndIdle": "passed",
+            "calculatorWithAgentBoundAndIdle": "passed",
+            "calculatorWithAgentDisabled": "passed"
+          },
+          "setupDiagnosticBlocks": []
+        },
+        "sampleId": "calculator-1.4.0-notes-1.7.0-v4",
+        "fullSuiteAcceptance": false,
+        "recordedMatrixLabels": [
+          "35"
+        ],
+        "matrixExpectedTests": 32
+      }
+    },
+    {
+      "kind": "overall",
+      "source": {
+        "repository": "ecojust/Agent-OS",
+        "commit": "72f77af85481eb90c0511a52e61c7cbab3ac6595",
+        "runId": 41173741948,
+        "attempt": 1
+      },
+      "originalStatus": "passed",
+      "archive": "screenshots/demos/41173741948-1",
+      "manifestSha256": "6f246fdac6a445d7e8e5e7ac17d7d95e8bec3009af6dff0041943519ea87e3bc",
+      "sourceRunCreatedAt": "2026-10-31T05:43:44Z",
+      "sourceRunUpdatedAt": "2026-10-31T05:48:18Z",
+      "sourceRunConclusion": "success",
+      "job": {
+        "id": 124456902770,
+        "name": "record-demo (API 35)",
+        "started_at": "2026-10-31T05:43:48Z",
+        "completed_at": "2026-10-31T05:48:17Z",
+        "conclusion": "success"
+      },
+      "artifacts": [
+        {
+          "id": 13032566594,
+          "name": "demo-video-api-35-attempt-1",
+          "size_in_bytes": 1107695,
+          "created_at": "2026-10-31T05:47:55Z"
+        }
+      ],
+      "payloadFiles": 30,
+      "payloadBytes": 1183865,
+      "pngCount": 22,
+      "fullPayloadHashCheck": "passed",
+      "pinnedSourceValidator": "passed",
+      "videoPath": "screenshots/demos/41173741948-1/demo.mp4",
+      "video": {
+        "bytes": 442972,
+        "sha256": "2c02190da1399f66ff5df634d59afcad7a5e1f754c5abf5cd3fb04417e58e1fd",
+        "durationMs": 39148,
+        "width": 640,
+        "height": 1280,
+        "codec": "h264",
+        "pixelFormat": "yuv420p",
+        "decodedFrames": 506,
+        "fullDecode": "passed"
+      },
+      "flow": {
+        "requiredStages": 13,
+        "passedRequiredStages": 13,
+        "confirmationCount": 8,
+        "stageNames": [
+          "ready",
+          "text_entered",
+          "text_saved",
+          "counter_verified",
+          "scrolled_down",
+          "scrolled_up",
+          "second_page",
+          "returned_to_fixture",
+          "controls_waiting",
+          "paused",
+          "resumed",
+          "stopped",
+          "stale_approval_rejected"
+        ],
+        "model": {
+          "kind": "local_synthetic_http",
+          "externalModelUsed": false
+        },
+        "secureFlagsPreserved": true
+      }
+    }
+  ],
+  "visualInspection": {
+    "third-party": {
+      "status": "passed",
+      "reviewedAt": "2026-10-31T05:51:35.962903+00:00",
+      "method": "Inspected the listed original video frames; every frame also independently decoded without error.",
+      "sampledOriginalFrames": [
+        {
+          "videoOffsetSeconds": 8,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/third-party-frames/8.png",
+          "sha256": "480c8e44e499a250460b0d172cf6eb5370d3a6d111e6f4c5339e60c000ea1a6f"
+        },
+        {
+          "videoOffsetSeconds": 15,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/third-party-frames/15.png",
+          "sha256": "8b13198439c4eb37af05c64cc1b0b156892b5793c55fdd08a82b216ca4c91173"
+        },
+        {
+          "videoOffsetSeconds": 22,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/third-party-frames/22.png",
+          "sha256": "196134bc8a4d89129e9b30b8ee722f6cf1fd53998ef68863cf25a8194571a6f9"
+        },
+        {
+          "videoOffsetSeconds": 28,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/third-party-frames/28.png",
+          "sha256": "c3e422b2ac1e6faa9c96edfbd1f69f618dbef8c885bb58cc91eec5fb0a259f10"
+        },
+        {
+          "videoOffsetSeconds": 34,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/third-party-frames/34.png",
+          "sha256": "e049f50e2c1e3b357cbc763bf256a3906c9e8a21f0ebd4f597f465ddec89575e"
+        },
+        {
+          "videoOffsetSeconds": 36,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/third-party-frames/36.png",
+          "sha256": "a0372b1c1b1d1605ba4912be81eb819b2a534f7fca74a0396a18350f54fe87c8"
+        },
+        {
+          "videoOffsetSeconds": 38,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/third-party-frames/38.png",
+          "sha256": "53f159f3f57df4995feb710c3663d53f94f535413e90cdc67bb411cba2da469d"
+        },
+        {
+          "videoOffsetSeconds": 40,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/third-party-frames/40.png",
+          "sha256": "5002b415934afe6d2d5b19c2a07ea47d2ffe6e1dc34eca6e094d9ffc42efa516"
+        },
+        {
+          "videoOffsetSeconds": 42,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/third-party-frames/42.png",
+          "sha256": "b39fe990e362209dbbac300b3f3bcbbaa7469be5f7590d8bc122945e4774daea"
+        },
+        {
+          "videoOffsetSeconds": 44,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/third-party-frames/44.png",
+          "sha256": "8b74f9161f16d292af6d8548f8c63fe8855e825a25de355dc8217117f651ff3c"
+        },
+        {
+          "videoOffsetSeconds": 46,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/third-party-frames/46.png",
+          "sha256": "7f2f41351ac35181fa5aa761d934214156c5fe74440c022f5bba6dca579d9638"
+        },
+        {
+          "videoOffsetSeconds": 46.5,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/third-party-frames/46.5.png",
+          "sha256": "3610c586ef7756100abbd1280b2309c61bf500cb5dde8573dc7a84d1643cc5d9"
+        }
+      ],
+      "observed": [
+        "Notes create dialog, off synthetic title/body, idle title creation, and idle synthetic body are visible.",
+        "At 44 and 46.5 seconds Calculator visibly shows 2+3 and result 5 in the two calculation sequences.",
+        "Notes keyboard, HOME transition and return to Notes are present in the actual recording."
+      ],
+      "limits": "Service off/idle state, package identity, save and fresh-process readback rely on original four-case receipts, not image samples. Four blocked Notes captures remain blocked; this API35 video does not establish the complete32 matrix, a geometry failure or an IME association failure."
+    },
+    "overall": {
+      "status": "passed",
+      "reviewedAt": "2026-10-31T05:51:35.960739+00:00",
+      "method": "Inspected the listed original video frames; every frame also independently decoded without error.",
+      "sampledOriginalFrames": [
+        {
+          "videoOffsetSeconds": 3,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/overall-frames/3.png",
+          "sha256": "0b7df4c878b45f78d81d2677cef544447c8d216f1c7ef05630c45a185e2c68f5"
+        },
+        {
+          "videoOffsetSeconds": 10,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/overall-frames/10.png",
+          "sha256": "c9f64f5c466c3ef5967df098a500946c2413dff5f8ddd7e296b006ee4cf181b1"
+        },
+        {
+          "videoOffsetSeconds": 18,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/overall-frames/18.png",
+          "sha256": "e4469937c49c2877f82aebec8a099d713eae41e3521efab0e2520bf79f7185bb"
+        },
+        {
+          "videoOffsetSeconds": 21,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/overall-frames/21.png",
+          "sha256": "ceedb80f2e058b11ecaf466de0de2bb039cddc79dfb1876ecb6d9d13b551d593"
+        },
+        {
+          "videoOffsetSeconds": 27,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/overall-frames/27.png",
+          "sha256": "c0e474d78ea56923e103c69caf6225f5d2128b6686c7e7e7e8c254878d3c15cc"
+        },
+        {
+          "videoOffsetSeconds": 33,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/overall-frames/33.png",
+          "sha256": "02358bed4734e6f52faa8f6b5fd59d58cb6cea7d9be06731f8ed6bb1fc9b0507"
+        },
+        {
+          "videoOffsetSeconds": 34.5,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/overall-frames/34.5.png",
+          "sha256": "e4043a20b96785f20fbb3a53ff2d47a661e147ec24966b9288dc8b6824d044e0"
+        },
+        {
+          "videoOffsetSeconds": 35.5,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/overall-frames/35.5.png",
+          "sha256": "749c482c3cb72ae67e877af435370f3f74fb0aee902d04e27dc3a9b5e6b28390"
+        },
+        {
+          "videoOffsetSeconds": 38.5,
+          "scratchPath": "/workspace/scratch/notes-ime-video-audit/overall-frames/38.5.png",
+          "sha256": "93d70009db307e5cf054e994aeadfa262ac47d00dff47640b6a247611e0cde3c"
+        }
+      ],
+      "observed": [
+        "Native approval overlay shows input-text, scroll-backward and return navigation requests.",
+        "Synthetic text is visibly saved with Count 1; scrolled rows and second page are reached.",
+        "At 34.5 seconds the paused overlay exposes Continue and Stop.",
+        "The final Fixture frame retains saved synthetic text and Count 1 with no task overlay."
+      ],
+      "limits": "Original receipts establish thirteen required stages and eight approvals; sampled frames do not establish physical-touch or latency acceptance."
+    }
+  },
+  "archiveBindings": [
+    {
+      "runId": 41173740075,
+      "branch": "evidence/probe-video-41173740075-1",
+      "archiveCommit": "3a595cd4ac59e5a6d0e1f0c6212928d4902762b2",
+      "parentCommit": "72f77af85481eb90c0511a52e61c7cbab3ac6595",
+      "sourceCommit": "72f77af85481eb90c0511a52e61c7cbab3ac6595",
+      "path": "screenshots/demos/probes-41173740075-1"
+    },
+    {
+      "runId": 41173741948,
+      "branch": "evidence/demo-41173741948-1",
+      "archiveCommit": "bb51c56c55110c22010b1404baf6379dc69bc27c",
+      "parentCommit": "2d25fc1444385452d646f63f7078ee1874f2c176",
+      "sourceCommit": "72f77af85481eb90c0511a52e61c7cbab3ac6595",
+      "path": "screenshots/demos/41173741948-1"
+    }
+  ],
+  "archiveRuns": [
+    {
+      "id": 41174022007,
+      "head_sha": "2d25fc1444385452d646f63f7078ee1874f2c176",
+      "path": ".github/workflows/probe-video-archive.yml",
+      "created_at": "2026-10-31T05:48:10Z",
+      "updated_at": "2026-10-31T05:49:50Z",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 41174044865,
+      "head_sha": "2d25fc1444385452d646f63f7078ee1874f2c176",
+      "path": ".github/workflows/demo-video.yml",
+      "created_at": "2026-10-31T05:48:31Z",
+      "updated_at": "2026-10-31T05:49:55Z",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ]
+}

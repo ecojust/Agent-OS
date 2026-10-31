@@ -20,6 +20,8 @@
 
 归档只保留固定字段、匹配数量、状态、读取顺序和单调时刻，不保存完整dump、任意窗口标题或输入内容。独立标记最多16KiB；采集、解析、序列化异常和超限使用明确的有限状态，不替换原异常。此上限与既有确认/几何标记分别计算，异常栈另计。
 
+完整dump在提取后丢弃，因此归档审核能独立重算载荷和诊断JSON的摘要、核验固定解析源码及字段一致性，但不能从归档重放完整dump提取或重新计算其`outputSha256`。该摘要是采集器报告的读取指纹，不能描述成已独立核验的原始dump附件。
+
 v4仍使用原5秒准备期限、最多4次visible及4次hidden WMS采样、最多一次BACK和一次确认。官方APK、锁文件、四个测试方法、窗口身份/完整包含/遮挡校验、HOME策略和安全窗口策略均保持现有契约。后置读取会消耗时间并影响调度，不宣称零扰动；它们不会授权额外动作或截图。
 
 ## 关联的含义与局限
@@ -38,14 +40,30 @@ v4仍使用原5秒准备期限、最多4次visible及4次hidden WMS采样、最�
 
 本地已覆盖891项既有宿主检查：首次发现运行880项，另一个SDK测试类因未配置环境跳过；设置实际SDK/JDK后，该类11项单独全部执行通过，未把跳过计为通过。相关归档34项属于这891项。新增[主机替身检查](diagnostics/notes-ime-association-2026-10-31/java-host-tests/host-validation.json)25项及实际helper解析自测通过，模拟阻塞调用在3004毫秒返回，余下两条跳过，占槽、迟到描述符关闭、溢出检测及原异常保留均核验。它不模拟Android Binder取消或实际服务权限。
 
-新增[分析器26项边界检查](diagnostics/notes-ime-association-2026-10-31/analysis-tools/analysis-validation.json)及独立审查通过；重放历史第二轮仍为24/8/0，原8份确认诊断的用例归属和原JSON摘要一致，新标记为零。格式或时序矛盾保留原文并禁止解释，不借用上一用例。最终源码的APK构建与lint已通过（42秒），[本地完整记录](diagnostics/notes-ime-association-2026-10-31/local-validation.json)保留源文件和日志摘要；源码已冻结为`72f77af85481eb90c0511a52e61c7cbab3ac6595`，本轮设备结果待记录。先前实测来源仍见[几何诊断报告](notes-target-geometry-diagnostics.md)。
+新增[分析器26项边界检查](diagnostics/notes-ime-association-2026-10-31/analysis-tools/analysis-validation.json)及独立审查通过；重放历史第二轮仍为24/8/0，原8份确认诊断的用例归属和原JSON摘要一致，新标记为零。格式或时序矛盾保留原文并禁止解释，不借用上一用例。最终源码的APK构建与lint已通过（42秒），[本地完整记录](diagnostics/notes-ime-association-2026-10-31/local-validation.json)保留源文件和日志摘要；源码已冻结为`72f77af85481eb90c0511a52e61c7cbab3ac6595`，首轮实际结果见下文。先前实测来源仍见[几何诊断报告](notes-target-geometry-diagnostics.md)。
 
 ## 固定源码的本轮运行
 
-以下均固定于`72f77af85481eb90c0511a52e61c7cbab3ac6595`，[派发来源记录](diagnostics/notes-ime-association-2026-10-31/source-runs.json)保留实际运行时间。结果与录像尚待审核，不预先计为通过。
+以下均固定于`72f77af85481eb90c0511a52e61c7cbab3ac6595`，[派发来源记录](diagnostics/notes-ime-association-2026-10-31/source-runs.json)保留实际运行时间。各运行分别统计，原始失败及每段录像的实际源码保留。
 
 | 运行 | 预声明范围 | 当前状态 |
 | --- | --- | --- |
-| [41173725544](https://github.com/ecojust/Agent-OS/actions/runs/41173725544) | 八档×两APK×关闭/空闲，32项 | 运行中 |
-| [41173740075](https://github.com/ecojust/Agent-OS/actions/runs/41173740075) | API35真实APK四项录像 | 运行中，录像待归档 |
-| [41173741948](https://github.com/ecojust/Agent-OS/actions/runs/41173741948) | 合成Fixture/本地模型整体录像 | 运行中，录像待归档 |
+| [41173725544](https://github.com/ecojust/Agent-OS/actions/runs/41173725544) | 八档×两APK×关闭/空闲，32项 | 24通过/8失败/0未验证；原件已归档 |
+| [41173740075](https://github.com/ecojust/Agent-OS/actions/runs/41173740075) | API35真实APK四项录像 | 4/4通过，46.685秒/843帧已审核 |
+| [41173741948](https://github.com/ecojust/Agent-OS/actions/runs/41173741948) | 合成Fixture/本地模型整体录像 | 13阶段/8确认通过，39.148秒/506帧已审核 |
+
+## 首轮实际结果与解析缺陷
+
+[72f首轮原件](../../screenshots/third-party-41173725544-1/manifest.json)完整32项，**24通过/8失败/0未验证**；Calculator16/16、Notes8/16。56载荷共2,530,658字节、32 PNG及32条Notes blocked保留，32份安装身份与设置恢复、8份Notes新进程全文读回核验。API31/32/36/37的Notes关闭/空闲仍是原隐藏准备失败，原32次WMS样本模式未变；31/32各一次BACK被接受，36/37未发送BACK，八项确认/HOME均零。API30两态通过、几何marker零，旧标题失败仍未得到真实失败矩形。
+
+八份新marker均在原确认诊断冻结后0–2毫秒启动，各用23–52毫秒完成，无超时。但八份后置WMS虽完整返回且各有一个输入法引用，解析器均给出`inputMethodRecordCount=0`，未取得`mClient`。这是**未建立候选关联**，不能解释成窗口不存在。API31/32的`window a11y`实际不可用，最终服务dump为旧式无配对格式；API36/37的Populator与最终配对格式可识别（分别4/3及3/2个可见/最终窗口），由于没有候选键，各`matchCount`均为null，不是零。原始诊断与[独立原件复核](diagnostics/notes-ime-association-2026-10-31/independent-original-review.json)保留这些限制。
+
+源码核对与首轮精确helper的合成复现发现明确解析缺陷：固定AOSP12L/17的`LayoutParams.toString`会先输出嵌套`sim={...}`，再输出顶层`ty=`。首轮`mAttrs=\{[^}]*...ty=`模式会在内层右括号提前停止，因此不支持这种合法格式。现有完整dump未归档，不能声称重建了这八次实际字节；已证明的解析缺陷与本轮未识别形状一致，需修正后独立验证。
+
+## 修正后的独立验证契约
+
+修正仅针对测试诊断中的WMS属性解析，使用有界平衡括号，且只接受顶层唯一类型字段；嵌套类型不能充当原窗口类型，未完成属性解析单列未知。原采集命令、调用额度、触发条件、原v4结果/动作/时间预算保持。首轮72f结果不重算，不把它替换成后续通过数据。
+
+完成新增解析边界检查、主机替身检查、构建与lint并冻结另一份源码后，另执行**一轮完整32项**，与72f首轮分别报告，不合并分母。再录一次该修正源码的整体操作演示；已经录制成功的72f真实APK四项视频保留其实际源码，因为本次只修正失败后的属性提取，不改API35四项核心操作。新录像不存在或失败时保留已有成功视频的原来源，不改标版本或反复补录。未修复的应用失败继续列为失败。
+
+首轮[真实APK视频](../../screenshots/demos/probes-41173740075-1/video/demo.mp4)为46.685秒、758,718字节、843帧，四项4/4；9载荷1,088,574字节、4 PNG和4条Notes blocked保留。[整体视频](../../screenshots/demos/41173741948-1/demo.mp4)为39.148秒、442,972字节、506帧，13阶段/8确认；30载荷1,183,865字节、22 PNG。两段的来源、全部载荷、固定源码验证器、全帧解码及实际画面已[审核](diagnostics/notes-ime-association-2026-10-31/video-audit.json)，README各类型已更新到这两段实际72f录像；不代表在API35复现了八项隐藏失败。

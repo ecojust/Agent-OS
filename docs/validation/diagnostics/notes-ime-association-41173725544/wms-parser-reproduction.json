@@ -1,0 +1,98 @@
+{
+  "sourceCommit": "72f77af85481eb90c0511a52e61c7cbab3ac6595",
+  "helperSha256": "2e6070e8d81aebaed446bbce2fa9dd26564e96e416ee2eb7b7eaabf39c0ff89a",
+  "files": [
+    {
+      "sourcePath": "compat-smoke/src/androidTest/java/dev/agentos/compat/NotesImeAssociationDiagnostic.java",
+      "sha256": "2e6070e8d81aebaed446bbce2fa9dd26564e96e416ee2eb7b7eaabf39c0ff89a"
+    },
+    {
+      "sourcePath": "docs/validation/diagnostics/notes-ime-association-2026-10-31/java-host-tests/android/app/UiAutomation.java",
+      "sha256": "cd4fece9c69c0b4d4f83fbf405c6582a4b71551f702591749502cd81fe243ed0"
+    },
+    {
+      "sourcePath": "docs/validation/diagnostics/notes-ime-association-2026-10-31/java-host-tests/android/os/ParcelFileDescriptor.java",
+      "sha256": "280076925b1fd4c620dd51ec9171099a972376dc9d33894be1f99db71fd8f015"
+    },
+    {
+      "sourcePath": "docs/validation/diagnostics/notes-ime-association-2026-10-31/java-host-tests/android/os/SystemClock.java",
+      "sha256": "93680c995f81b6f8b8e8b8730771be4c2987d728f29f58750035803785456b8b"
+    },
+    {
+      "sourcePath": "docs/validation/diagnostics/notes-ime-association-2026-10-31/java-host-tests/dev/agentos/compat/SmokeHarness.java",
+      "sha256": "9e4d25be01767936a485e8160078cffc384d154e0031491fa3a891f8c920f8a0"
+    },
+    {
+      "sourcePath": "synthetic-test-reproducer",
+      "sha256": "7d0d242467d24bc5e3836d27e36c1564cc36596bd4afab2db900fc80567f9a59"
+    }
+  ],
+  "jsonJarSha256": "3cf6cd6892e32e2b4c1c39e0f52f5248a2f5b37646fdfbb79a66b46b618414ed",
+  "result": {
+    "syntheticFixtureOnly": true,
+    "plain": {
+      "reason": "UNIQUE_CONFIGURED_IME_TEXT_CANDIDATE",
+      "ownerMatches": true,
+      "selectedWindowStateToken": "123",
+      "referenceCount": 1,
+      "mClient": "android.os.BinderProxy@abc123",
+      "displayMatches": true,
+      "ownerUid": 10012,
+      "displayId": 0,
+      "packageMatches": true,
+      "fields": {
+        "mLastHidden": {
+          "count": 1,
+          "value": "FALSE"
+        },
+        "isOnScreen": {
+          "count": 1,
+          "value": "TRUE"
+        },
+        "isReadyForDisplay()": {
+          "count": 1,
+          "value": "FALSE"
+        },
+        "isVisible": {
+          "count": 1,
+          "value": "FALSE"
+        },
+        "mEnterAnimationPending": {
+          "count": 1,
+          "value": "FALSE"
+        },
+        "mAnimatingExit": {
+          "count": 0,
+          "value": "MISSING"
+        },
+        "Surface: shown": {
+          "count": 1,
+          "value": "TRUE"
+        },
+        "mHasSurface": {
+          "count": 1,
+          "value": "TRUE"
+        }
+      },
+      "status": "SELECTED",
+      "inputMethodRecordCount": 1
+    },
+    "nested": {
+      "reason": "WMS_RECORD_MISSING_OR_AMBIGUOUS",
+      "selectedWindowStateToken": "123",
+      "referenceCount": 1,
+      "status": "UNAVAILABLE",
+      "inputMethodRecordCount": 0
+    }
+  },
+  "outputSha256": "19862a759c04d0360f732bf5797a941c4bd7a0e31832da23ae2f2689a8cf2268",
+  "androidDeviceTest": false,
+  "kind": "exact-original-helper-synthetic-nested-attrs-reproduction",
+  "recordedAt": "2026-10-31T05:51:46Z",
+  "reproducerPath": "NestedAttrsRepro.java",
+  "limitations": [
+    "This is an exact-source helper host test against a synthetic legal nested attribute format, not an Android-device observation.",
+    "The original full device dump was intentionally not archived; the matching defect is not proof of the exact discarded dump text.",
+    "All current and historical v4 errors/results remain unchanged."
+  ]
+}

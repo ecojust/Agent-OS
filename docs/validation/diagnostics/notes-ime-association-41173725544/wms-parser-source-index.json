@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "kind": "fixed-aosp-layoutparams-format-source-check",
+  "checkedAt": "2026-10-31T05:51:46Z",
+  "repository": "platform/frameworks/base",
+  "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+  "path": "core/java/android/view/WindowManager.java",
+  "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/view/WindowManager.java",
+  "bytes": 319657,
+  "sha256": "acb92d789151e0f0907b44223c7f23c3cbc0332e1687f93ddabc52003a7e85eb",
+  "observations": [
+    {
+      "lines": "6027–6053",
+      "finding": "LayoutParams.toString(String prefix) starts outer brace; for nonzero softInputMode, prints sim={...} and its closing brace at6044–6046 before appending ty= at6052."
+    }
+  ],
+  "actualApi36Or37ImageTagAlignmentEstablished": false,
+  "fullSourceCommitted": false
+}

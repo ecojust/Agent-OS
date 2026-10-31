@@ -38,4 +38,14 @@ v4仍使用原5秒准备期限、最多4次visible及4次hidden WMS采样、最�
 
 本地已覆盖891项既有宿主检查：首次发现运行880项，另一个SDK测试类因未配置环境跳过；设置实际SDK/JDK后，该类11项单独全部执行通过，未把跳过计为通过。相关归档34项属于这891项。新增[主机替身检查](diagnostics/notes-ime-association-2026-10-31/java-host-tests/host-validation.json)25项及实际helper解析自测通过，模拟阻塞调用在3004毫秒返回，余下两条跳过，占槽、迟到描述符关闭、溢出检测及原异常保留均核验。它不模拟Android Binder取消或实际服务权限。
 
-新增[分析器26项边界检查](diagnostics/notes-ime-association-2026-10-31/analysis-tools/analysis-validation.json)及独立审查通过；重放历史第二轮仍为24/8/0，原8份确认诊断的用例归属和原JSON摘要一致，新标记为零。格式或时序矛盾保留原文并禁止解释，不借用上一用例。最终源码的APK构建与lint已通过（42秒），[本地完整记录](diagnostics/notes-ime-association-2026-10-31/local-validation.json)保留源文件和日志摘要；源码冻结和本轮设备结果待记录。先前实测来源仍见[几何诊断报告](notes-target-geometry-diagnostics.md)。
+新增[分析器26项边界检查](diagnostics/notes-ime-association-2026-10-31/analysis-tools/analysis-validation.json)及独立审查通过；重放历史第二轮仍为24/8/0，原8份确认诊断的用例归属和原JSON摘要一致，新标记为零。格式或时序矛盾保留原文并禁止解释，不借用上一用例。最终源码的APK构建与lint已通过（42秒），[本地完整记录](diagnostics/notes-ime-association-2026-10-31/local-validation.json)保留源文件和日志摘要；源码已冻结为`72f77af85481eb90c0511a52e61c7cbab3ac6595`，本轮设备结果待记录。先前实测来源仍见[几何诊断报告](notes-target-geometry-diagnostics.md)。
+
+## 固定源码的本轮运行
+
+以下均固定于`72f77af85481eb90c0511a52e61c7cbab3ac6595`，[派发来源记录](diagnostics/notes-ime-association-2026-10-31/source-runs.json)保留实际运行时间。结果与录像尚待审核，不预先计为通过。
+
+| 运行 | 预声明范围 | 当前状态 |
+| --- | --- | --- |
+| [41173725544](https://github.com/ecojust/Agent-OS/actions/runs/41173725544) | 八档×两APK×关闭/空闲，32项 | 运行中 |
+| [41173740075](https://github.com/ecojust/Agent-OS/actions/runs/41173740075) | API35真实APK四项录像 | 运行中，录像待归档 |
+| [41173741948](https://github.com/ecojust/Agent-OS/actions/runs/41173741948) | 合成Fixture/本地模型整体录像 | 运行中，录像待归档 |

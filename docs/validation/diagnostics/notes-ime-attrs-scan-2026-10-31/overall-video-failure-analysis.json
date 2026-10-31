@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "kind": "ordinary-demo-original-failure-review",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "cdea60c126af3cb50805f6e989eccbf7a7a1efb1",
+    "runId": 41178250336,
+    "attempt": 1
+  },
+  "originalStatus": "failed",
+  "failureStage": "ready",
+  "originalAssertion": "Accessibility service did not connect",
+  "stack": [
+    "dev.agentos.app.DeviceHarness.<init>(DeviceHarness.java:73)",
+    "dev.agentos.app.DemoWalkthroughInstrumentedTest.observedActionsRequireConfirmationAndRespectUserControls(DemoWalkthroughInstrumentedTest.java:67)"
+  ],
+  "causeStack": [
+    "dev.agentos.app.DeviceHarness.await(DeviceHarness.java:782)",
+    "dev.agentos.app.DeviceHarness.<init>(DeviceHarness.java:68)"
+  ],
+  "instrumentation": {
+    "expectedTests": 1,
+    "testsRun": 1,
+    "failures": 1,
+    "exitCode": 0,
+    "instrumentationPassed": false,
+    "terminalCaseCode": -2
+  },
+  "flow": {
+    "completedRequiredStages": 0,
+    "requiredStages": 13,
+    "confirmations": 0,
+    "stages": [],
+    "elapsedMillis": 8217
+  },
+  "originalConnectionDiagnostic": {
+    "enabledServices": "null",
+    "accessibilityEnabled": "1",
+    "boundServicesEmpty": true,
+    "enabledServicesEmpty": true,
+    "bindingServicesEmpty": true,
+    "crashedServicesEmpty": true
+  },
+  "capture": {
+    "pngCount": 0,
+    "blockedCount": 1,
+    "foregroundPackage": "com.android.launcher3",
+    "reason": "foreground_is_not_an_approved_synthetic_test_screen"
+  },
+  "partialVideo": {
+    "exists": true,
+    "playable": true,
+    "durationMs": 11308,
+    "decodedFrames": 193,
+    "bytes": 69693,
+    "sha256": "56f7cb490042ca8a0f54ff29a96c4c71271634e5bbb0e36a4ee37fde1621389d",
+    "originalArchiveVideoValidation": "not_revalidated",
+    "independentFullDecode": "passed"
+  },
+  "sourceComparison": {
+    "previousSuccessfulSource": "35519e9fb77dc751bf8529768292cdcd1eb3b7ed",
+    "unchangedObjects": {
+      "app/src": {
+        "previousObject": "be3af92d2dbc9aa28ac31b37081d82bafa14820b",
+        "testedObject": "be3af92d2dbc9aa28ac31b37081d82bafa14820b",
+        "unchanged": true
+      },
+      "app/build.gradle": {
+        "previousObject": "26b4b5c83c74d7aff8d20fb3b4c2f2ef60b0a281",
+        "testedObject": "26b4b5c83c74d7aff8d20fb3b4c2f2ef60b0a281",
+        "unchanged": true
+      },
+      "fixture": {
+        "previousObject": "44456ccf73517d999ee682345bc361761a6e960b",
+        "testedObject": "44456ccf73517d999ee682345bc361761a6e960b",
+        "unchanged": true
+      },
+      ".github/workflows/demo-video.yml": {
+        "previousObject": "86ec529808dd615500c55eb6e507f7b6518af654",
+        "testedObject": "86ec529808dd615500c55eb6e507f7b6518af654",
+        "unchanged": true
+      },
+      "scripts/demo_video.py": {
+        "previousObject": "b6cbbd99c58d450e171c1e28cd6ae7519bf28323",
+        "testedObject": "b6cbbd99c58d450e171c1e28cd6ae7519bf28323",
+        "unchanged": true
+      }
+    },
+    "executionRelationship": "The failing DemoWalkthrough method belongs to app/androidTest. The changed NotesImeAssociationDiagnostic belongs only to compat-smoke/androidTest; the demo workflow builds and executes app/Fixture, not that compat-smoke collector. Failure occurs while constructing DeviceHarness, before ready completion and before any walkthrough chapter.",
+    "causalLimit": "The original diagnostic establishes that the Agent accessibility service had not connected and settings/services were empty at diagnostic time. It does not establish why the setting was empty, a platform bug, or a causal regression from the Notes diagnostic change."
+  },
+  "policy": {
+    "rerecordingDispatched": false,
+    "blockingFeatureCommit": false,
+    "retainPreviousSuccessfulVideoRun": 41177393808
+  },
+  "originalEvidence": {
+    "root": "screenshots/demos/41178250336-1",
+    "instrumentationSha256": "850a5a4f864a167b8d6fd58ad9611d66ebd6874015c43df2cc1771ee5b3f8145",
+    "runLog": {
+      "zipBytes": 71150,
+      "zipSha256": "d450c6cf1f9f54db725be3914ff1ba052a2311d9059e20d61438035053b17b3c",
+      "jobs": [
+        {
+          "name": "0_record-demo (API 35).txt",
+          "bytes": 139097,
+          "sha256": "f41f79d59edf31dcb6e04ee0f09c9f82f7c65102defbe965efd48de8da082cee"
+        }
+      ]
+    }
+  }
+}

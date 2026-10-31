@@ -1,0 +1,241 @@
+{
+  "schemaVersion": 1,
+  "kind": "notes-ime-attrs-scan-correction-overall-video-audit",
+  "auditedAt": "2026-10-31T06:58:07.415083+00:00",
+  "status": "passed",
+  "testedSource": "cdea60c126af3cb50805f6e989eccbf7a7a1efb1",
+  "videos": [
+    {
+      "kind": "overall",
+      "source": {
+        "repository": "ecojust/Agent-OS",
+        "commit": "cdea60c126af3cb50805f6e989eccbf7a7a1efb1",
+        "runId": 41178250336,
+        "attempt": 1
+      },
+      "originalStatus": "failed",
+      "archive": "screenshots/demos/41178250336-1",
+      "manifestSha256": "77cdc3c2ae15f8e383f5a689895cdf4f6acbc041a9d8068dc5a2ff6e2432ff59",
+      "sourceRunCreatedAt": "2026-10-31T06:51:04Z",
+      "sourceRunUpdatedAt": "2026-10-31T06:54:50Z",
+      "sourceRunConclusion": "failure",
+      "job": {
+        "id": 124470171445,
+        "name": "record-demo (API 35)",
+        "started_at": "2026-10-31T06:51:08Z",
+        "completed_at": "2026-10-31T06:54:49Z",
+        "conclusion": "failure"
+      },
+      "artifacts": [
+        {
+          "id": 13033003999,
+          "name": "demo-video-api-35-attempt-1",
+          "size_in_bytes": 69563,
+          "created_at": "2026-10-31T06:54:28Z"
+        }
+      ],
+      "payloadFiles": 8,
+      "payloadBytes": 88482,
+      "pngCount": 0,
+      "fullPayloadHashCheck": "passed",
+      "pinnedSourceValidator": "passed",
+      "videoPath": "screenshots/demos/41178250336-1/demo.mp4",
+      "video": {
+        "bytes": 69693,
+        "sha256": "56f7cb490042ca8a0f54ff29a96c4c71271634e5bbb0e36a4ee37fde1621389d",
+        "durationMs": 11308,
+        "width": 640,
+        "height": 1280,
+        "codec": "h264",
+        "pixelFormat": "yuv420p",
+        "decodedFrames": 193,
+        "fullDecode": "passed"
+      },
+      "flow": {
+        "requiredStages": 13,
+        "passedRequiredStages": 0,
+        "confirmationCount": 0,
+        "stageNames": [],
+        "model": {
+          "kind": "local_synthetic_http",
+          "externalModelUsed": false
+        },
+        "secureFlagsPreserved": true
+      }
+    }
+  ],
+  "visualInspection": {
+    "status": "passed",
+    "reviewedAt": "2026-10-31T06:58:07.052018+00:00",
+    "method": "Inspected the listed original frames; all 193 frames independently decoded without error.",
+    "sampledOriginalFrames": [
+      {
+        "videoOffsetSeconds": 1,
+        "scratchPath": "/workspace/scratch/notes-ime-attrs-reasons-correction-video-audit/overall-frames/1.png",
+        "sha256": "6fe38fc8a600ba144734b3387c4bd1d44579605a90ab29569ccb75fbdb1665d0"
+      },
+      {
+        "videoOffsetSeconds": 5,
+        "scratchPath": "/workspace/scratch/notes-ime-attrs-reasons-correction-video-audit/overall-frames/5.png",
+        "sha256": "d9f3d1949b58b89ac813459a94ad2ef933f0e5d736d8f14ed021492751821782"
+      },
+      {
+        "videoOffsetSeconds": 10.8,
+        "scratchPath": "/workspace/scratch/notes-ime-attrs-reasons-correction-video-audit/overall-frames/10.8.png",
+        "sha256": "b785bb6971d0286cb2f4b80d80f8e96342cc1a98894d2daa600596dae2916993"
+      }
+    ],
+    "observed": [
+      "The sampled frames at 1, 5 and 10.8 seconds show the Android launcher; no Fixture task or approval overlay appears in these samples."
+    ],
+    "limits": "Visual audit passed for this partial failure recording, not for the walkthrough. Original receipts report failure in ready during service connection, zero completed stages and zero approvals. Keep the prior successful 35519 demonstration as latest successful video; no rerecording was dispatched."
+  },
+  "limitations": [
+    "This recording uses a dedicated API35 emulator with synthetic Fixture and a local HTTP test model; no external model was used.",
+    "This ordinary walkthrough is separate from the eight-API official-APK 32-case matrix and does not execute Notes IME diagnostics, upgrade checks or physical-device acceptance.",
+    "Video decoding and visible screens do not establish physical-present latency or physical-device acceptance."
+  ],
+  "auditStatusMeaning": "Evidence/source/hash/video validation passed; original walkthrough remains failed.",
+  "failureAnalysis": {
+    "schemaVersion": 1,
+    "kind": "ordinary-demo-original-failure-review",
+    "source": {
+      "repository": "ecojust/Agent-OS",
+      "commit": "cdea60c126af3cb50805f6e989eccbf7a7a1efb1",
+      "runId": 41178250336,
+      "attempt": 1
+    },
+    "originalStatus": "failed",
+    "failureStage": "ready",
+    "originalAssertion": "Accessibility service did not connect",
+    "stack": [
+      "dev.agentos.app.DeviceHarness.<init>(DeviceHarness.java:73)",
+      "dev.agentos.app.DemoWalkthroughInstrumentedTest.observedActionsRequireConfirmationAndRespectUserControls(DemoWalkthroughInstrumentedTest.java:67)"
+    ],
+    "causeStack": [
+      "dev.agentos.app.DeviceHarness.await(DeviceHarness.java:782)",
+      "dev.agentos.app.DeviceHarness.<init>(DeviceHarness.java:68)"
+    ],
+    "instrumentation": {
+      "expectedTests": 1,
+      "testsRun": 1,
+      "failures": 1,
+      "exitCode": 0,
+      "instrumentationPassed": false,
+      "terminalCaseCode": -2
+    },
+    "flow": {
+      "completedRequiredStages": 0,
+      "requiredStages": 13,
+      "confirmations": 0,
+      "stages": [],
+      "elapsedMillis": 8217
+    },
+    "originalConnectionDiagnostic": {
+      "enabledServices": "null",
+      "accessibilityEnabled": "1",
+      "boundServicesEmpty": true,
+      "enabledServicesEmpty": true,
+      "bindingServicesEmpty": true,
+      "crashedServicesEmpty": true
+    },
+    "capture": {
+      "pngCount": 0,
+      "blockedCount": 1,
+      "foregroundPackage": "com.android.launcher3",
+      "reason": "foreground_is_not_an_approved_synthetic_test_screen"
+    },
+    "partialVideo": {
+      "exists": true,
+      "playable": true,
+      "durationMs": 11308,
+      "decodedFrames": 193,
+      "bytes": 69693,
+      "sha256": "56f7cb490042ca8a0f54ff29a96c4c71271634e5bbb0e36a4ee37fde1621389d",
+      "originalArchiveVideoValidation": "not_revalidated",
+      "independentFullDecode": "passed"
+    },
+    "sourceComparison": {
+      "previousSuccessfulSource": "35519e9fb77dc751bf8529768292cdcd1eb3b7ed",
+      "unchangedObjects": {
+        "app/src": {
+          "previousObject": "be3af92d2dbc9aa28ac31b37081d82bafa14820b",
+          "testedObject": "be3af92d2dbc9aa28ac31b37081d82bafa14820b",
+          "unchanged": true
+        },
+        "app/build.gradle": {
+          "previousObject": "26b4b5c83c74d7aff8d20fb3b4c2f2ef60b0a281",
+          "testedObject": "26b4b5c83c74d7aff8d20fb3b4c2f2ef60b0a281",
+          "unchanged": true
+        },
+        "fixture": {
+          "previousObject": "44456ccf73517d999ee682345bc361761a6e960b",
+          "testedObject": "44456ccf73517d999ee682345bc361761a6e960b",
+          "unchanged": true
+        },
+        ".github/workflows/demo-video.yml": {
+          "previousObject": "86ec529808dd615500c55eb6e507f7b6518af654",
+          "testedObject": "86ec529808dd615500c55eb6e507f7b6518af654",
+          "unchanged": true
+        },
+        "scripts/demo_video.py": {
+          "previousObject": "b6cbbd99c58d450e171c1e28cd6ae7519bf28323",
+          "testedObject": "b6cbbd99c58d450e171c1e28cd6ae7519bf28323",
+          "unchanged": true
+        }
+      },
+      "executionRelationship": "The failing DemoWalkthrough method belongs to app/androidTest. The changed NotesImeAssociationDiagnostic belongs only to compat-smoke/androidTest; the demo workflow builds and executes app/Fixture, not that compat-smoke collector. Failure occurs while constructing DeviceHarness, before ready completion and before any walkthrough chapter.",
+      "causalLimit": "The original diagnostic establishes that the Agent accessibility service had not connected and settings/services were empty at diagnostic time. It does not establish why the setting was empty, a platform bug, or a causal regression from the Notes diagnostic change."
+    },
+    "policy": {
+      "rerecordingDispatched": false,
+      "blockingFeatureCommit": false,
+      "retainPreviousSuccessfulVideoRun": 41177393808
+    },
+    "originalEvidence": {
+      "root": "screenshots/demos/41178250336-1",
+      "instrumentationSha256": "850a5a4f864a167b8d6fd58ad9611d66ebd6874015c43df2cc1771ee5b3f8145",
+      "runLog": {
+        "zipBytes": 71150,
+        "zipSha256": "d450c6cf1f9f54db725be3914ff1ba052a2311d9059e20d61438035053b17b3c",
+        "jobs": [
+          {
+            "name": "0_record-demo (API 35).txt",
+            "bytes": 139097,
+            "sha256": "f41f79d59edf31dcb6e04ee0f09c9f82f7c65102defbe965efd48de8da082cee"
+          }
+        ]
+      }
+    }
+  },
+  "archiveBindings": [
+    {
+      "runId": 41178250336,
+      "branch": "evidence/demo-41178250336-1",
+      "archiveCommit": "99cfa50a1308da82b3a6d90bd11ab3c08e3445e2",
+      "parentCommit": "9c855f7ca7b0579590534a15d65c84b2d188edf2",
+      "sourceCommit": "cdea60c126af3cb50805f6e989eccbf7a7a1efb1",
+      "path": "screenshots/demos/41178250336-1"
+    }
+  ],
+  "archiveRuns": [
+    {
+      "id": 41178567157,
+      "head_sha": "9c855f7ca7b0579590534a15d65c84b2d188edf2",
+      "path": ".github/workflows/demo-video.yml",
+      "created_at": "2026-10-31T06:56:04Z",
+      "updated_at": "2026-10-31T06:57:05Z",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "auditScriptSha256": "06003205de6476d9e493342f699bea812dce6440c1ab48991e03a4aff4aade6e",
+  "pinnedValidatorFiles": {
+    "scripts/demo_video.py": "0a310f66a8b76c5b240c899871b449c24a3a0857647e79a22b74231006885f0b",
+    "scripts/probe_video_archive.py": "a6e26499d1dab356e3d202aa0d988705329218fafdad66c06fd0afe539b004b2",
+    "scripts/probe_video.py": "5d346980d64470853bb598f2aebf80253ac731012e5e418c1610baae19720ebe",
+    "scripts/third_party_smoke_set.py": "c68a8d930368430041fb2b9ce1ce9b1ff129692a524dbc46ef8edde002677fcd",
+    "scripts/third_party_smoke_set_archive.py": "bf2a7a287fbbdce20e3ffee7742342f486485da5187cc204213a0d9e924d6919",
+    "docs/validation/third-party-app-set-lock.json": "9bfd9a059cf858cdb73eb4245fa57d5f9bf2d2ebc6818f4fbfdc8a159d50c20a"
+  }
+}

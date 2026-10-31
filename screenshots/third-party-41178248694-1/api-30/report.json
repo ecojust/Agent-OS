@@ -1,0 +1,2371 @@
+{
+  "schemaVersion": 4,
+  "kind": "third-party-app-set-smoke",
+  "sampleId": "calculator-1.4.0-notes-1.7.0-v4",
+  "lockSha256": "2bd6e4686e75c1fd3450684eb57c7bbd0dff4ebd340967f1d3be5db87651679d",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 41178248694,
+    "attempt": 1,
+    "commit": "cdea60c126af3cb50805f6e989eccbf7a7a1efb1"
+  },
+  "matrixLabel": "30",
+  "device": {
+    "serial": "emulator-5554",
+    "apiLevel": 30,
+    "fingerprint": "Android/sdk_phone_x86_64/generic_x86_64:11/RSR1.210722.013.A2/10067904:userdebug/test-keys",
+    "abi": "x86_64",
+    "kernelQemu": "1",
+    "bootQemu": ""
+  },
+  "scope": {
+    "deviceKind": "dedicated_emulator",
+    "states": [
+      "off",
+      "idle"
+    ],
+    "operation": "Fresh install and ordinary UI editing: Calculator 2 + 3 = 5; Notes keeps its default keyboard and operates only fully visible uncovered targets. Only before confirming the create dialog, at most one BACK may hide a verified IME; the same five-second preparation must revalidate the original dialog, hidden IME and uncovered confirmation target. Visible and hidden surface reads are each limited to four, eight total. Other editing sends no automatic BACK; one normal HOME saves before a new process launch verifies the note.",
+    "data": "Synthetic arithmetic and distinct per-state note text only; no accounts or user files.",
+    "executing": "unverified",
+    "upgrade": "unverified",
+    "physicalDevices": "unverified",
+    "releaseAcceptance": false,
+    "keyboardPolicy": "verified-system-ime-uncovered-targets",
+    "navigationPolicy": "single-back-only-before-notes-create-confirm"
+  },
+  "status": "passed",
+  "driverSteps": [
+    {
+      "name": "device_preflight",
+      "status": "passed"
+    },
+    {
+      "name": "apk_verification_calculator-1.4.0",
+      "status": "passed"
+    },
+    {
+      "name": "apk_verification_notes-1.7.0",
+      "status": "passed"
+    },
+    {
+      "name": "fresh_install_precondition",
+      "status": "passed"
+    },
+    {
+      "name": "install_agent",
+      "status": "passed",
+      "sha256": "c65b72b6de28e74905257acb76ed828f7f1a00675076591ef5a233f63743acd7"
+    },
+    {
+      "name": "install_calculator",
+      "status": "passed",
+      "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed"
+    },
+    {
+      "name": "install_notes",
+      "status": "passed",
+      "sha256": "5a56e0e39cc488e1f3b947d3801006d3b7450ec73c67f03195c64c5fd3b6bced"
+    },
+    {
+      "name": "install_probe",
+      "status": "passed",
+      "sha256": "e2149c6a65cb8ce576313afe09c204bd0491a1cc60977dc9e3260d9ac2721524"
+    },
+    {
+      "name": "install_probe_tests",
+      "status": "passed",
+      "sha256": "30d6ff1e531fe5360416187d6bd0cb627b89d7ae1c2756b17ed0f57fdb3e494f"
+    },
+    {
+      "name": "instrumentation",
+      "status": "passed"
+    },
+    {
+      "name": "collect_ui_results",
+      "status": "passed"
+    }
+  ],
+  "apps": [
+    {
+      "appId": "calculator-1.4.0",
+      "app": {
+        "package": "org.fossify.math",
+        "versionName": "1.4.0",
+        "versionCode": "10",
+        "url": "https://github.com/FossifyOrg/Calculator/releases/download/1.4.0/calculator-10-foss-release.apk",
+        "sizeBytes": 7047681,
+        "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "abis": [
+          "arm64-v8a",
+          "armeabi-v7a",
+          "x86",
+          "x86_64"
+        ],
+        "license": "GPL-3.0"
+      },
+      "actualInstalledIdentityVerified": true,
+      "installedIdentityFailureSeen": false,
+      "states": [
+        {
+          "state": "off",
+          "status": "passed",
+          "stage": "complete",
+          "installedIdentityVerified": true,
+          "serviceState": "disabled",
+          "serviceObservations": [
+            {
+              "stage": "before",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429680015,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429681948,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            }
+          ],
+          "serviceActionObservations": [
+            {
+              "stage": "before_launch",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429680035,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_launch",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429680871,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "before_btn_clear",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429680896,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_btn_clear",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429681174,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "before_btn_2",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429681298,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_btn_2",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429681346,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "before_btn_plus",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429681366,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_btn_plus",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429681542,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "before_btn_3",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429681563,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_btn_3",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429681594,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "before_btn_equals",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429681615,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_btn_equals",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429681796,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            }
+          ],
+          "steps": [
+            {
+              "name": "installed_identity",
+              "status": "passed",
+              "details": "PackageManager identity and installed APK digest match the frozen official release"
+            },
+            {
+              "name": "service_state_before",
+              "status": "passed",
+              "details": "Settings, accessibility binding and activity service records agree"
+            },
+            {
+              "name": "launch_calculator",
+              "status": "passed",
+              "details": "Resolved the installed package launcher and observed its focused page"
+            },
+            {
+              "name": "clear_calculator",
+              "status": "passed",
+              "details": "Long-click C invokes the pinned release's reset action; result is 0 and formula is empty"
+            },
+            {
+              "name": "click_btn_2",
+              "status": "passed",
+              "details": "Unique visible resource target accepted the accessibility action"
+            },
+            {
+              "name": "click_btn_plus",
+              "status": "passed",
+              "details": "Unique visible resource target accepted the accessibility action"
+            },
+            {
+              "name": "click_btn_3",
+              "status": "passed",
+              "details": "Unique visible resource target accepted the accessibility action"
+            },
+            {
+              "name": "click_btn_equals",
+              "status": "passed",
+              "details": "Unique visible resource target accepted the accessibility action"
+            },
+            {
+              "name": "calculator_result",
+              "status": "passed",
+              "details": "Independent read of org.fossify.math:id/result equals 5"
+            },
+            {
+              "name": "installed_identity_after",
+              "status": "passed",
+              "details": "Installed application identity is unchanged after the UI case"
+            },
+            {
+              "name": "service_state_after",
+              "status": "passed",
+              "details": "The requested service state remains true after the app-specific core workflow and capture"
+            },
+            {
+              "name": "restore_service_settings",
+              "status": "passed",
+              "details": "Original accessibility component list restored and Agent service unbound; system owns the global accessibility flag"
+            }
+          ],
+          "captures": [
+            {
+              "stage": "before",
+              "capturedAt": 1793429681176,
+              "secureFlagsCleared": false,
+              "status": "captured",
+              "path": "calculator-1.4.0-off-before-0.png",
+              "sha256": "322e4a517e9f08832c200352d01133858127d0b79065660a19ac7fbffda04f5f",
+              "bytes": 23077,
+              "width": 320,
+              "height": 640,
+              "windowId": 18,
+              "windowBounds": "[0,0][320,640]",
+              "windowFlags": "KEEP_SCREEN_ON LAYOUT_IN_SCREEN LAYOUT_INSET_DECOR SPLIT_TOUCH HARDWARE_ACCELERATED DRAWS_SYSTEM_BAR_BACKGROUNDS"
+            },
+            {
+              "stage": "result",
+              "capturedAt": 1793429681797,
+              "secureFlagsCleared": false,
+              "status": "captured",
+              "path": "calculator-1.4.0-off-result-1.png",
+              "sha256": "be6774c18612735f0bba9863e85c3921ee0d6d671b88388b2d8b869b97c3a56b",
+              "bytes": 23792,
+              "width": 320,
+              "height": 640,
+              "windowId": 18,
+              "windowBounds": "[0,0][320,640]",
+              "windowFlags": "KEEP_SCREEN_ON LAYOUT_IN_SCREEN LAYOUT_INSET_DECOR SPLIT_TOUCH HARDWARE_ACCELERATED DRAWS_SYSTEM_BAR_BACKGROUNDS"
+            }
+          ],
+          "result": {
+            "expected": "5",
+            "actual": "5",
+            "resourceId": "org.fossify.math:id/result"
+          },
+          "startedAt": 1793429679946,
+          "installedIdentity": {
+            "package": "org.fossify.math",
+            "versionName": "1.4.0",
+            "versionCode": "10",
+            "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+            "apkSha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+            "minSdk": 26,
+            "targetSdk": 36,
+            "uid": 10131
+          },
+          "finishedAt": 1793429681972
+        },
+        {
+          "state": "idle",
+          "status": "passed",
+          "stage": "complete",
+          "installedIdentityVerified": true,
+          "serviceState": "bound_idle",
+          "serviceObservations": [
+            {
+              "stage": "before",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429677381,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{afd7a0d u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n* ConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429679897,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{afd7a0d u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n* ConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            }
+          ],
+          "serviceActionObservations": [
+            {
+              "stage": "before_launch",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429677402,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{afd7a0d u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n* ConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_launch",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429678608,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{afd7a0d u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n* ConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "before_btn_clear",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429678629,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{afd7a0d u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n* ConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_btn_clear",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429678912,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{afd7a0d u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n* ConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "before_btn_2",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429679229,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{afd7a0d u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n* ConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_btn_2",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429679276,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{afd7a0d u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n* ConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "before_btn_plus",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429679297,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{afd7a0d u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n* ConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_btn_plus",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429679480,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{afd7a0d u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n* ConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "before_btn_3",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429679501,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{afd7a0d u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n* ConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_btn_3",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429679543,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{afd7a0d u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n* ConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "before_btn_equals",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429679565,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{afd7a0d u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n* ConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_btn_equals",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429679748,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{afd7a0d u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\nConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n* ConnectionRecord{ae7bca4 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@e939f37}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            }
+          ],
+          "steps": [
+            {
+              "name": "installed_identity",
+              "status": "passed",
+              "details": "PackageManager identity and installed APK digest match the frozen official release"
+            },
+            {
+              "name": "service_state_before",
+              "status": "passed",
+              "details": "Settings, accessibility binding and activity service records agree"
+            },
+            {
+              "name": "launch_calculator",
+              "status": "passed",
+              "details": "Resolved the installed package launcher and observed its focused page"
+            },
+            {
+              "name": "clear_calculator",
+              "status": "passed",
+              "details": "Long-click C invokes the pinned release's reset action; result is 0 and formula is empty"
+            },
+            {
+              "name": "click_btn_2",
+              "status": "passed",
+              "details": "Unique visible resource target accepted the accessibility action"
+            },
+            {
+              "name": "click_btn_plus",
+              "status": "passed",
+              "details": "Unique visible resource target accepted the accessibility action"
+            },
+            {
+              "name": "click_btn_3",
+              "status": "passed",
+              "details": "Unique visible resource target accepted the accessibility action"
+            },
+            {
+              "name": "click_btn_equals",
+              "status": "passed",
+              "details": "Unique visible resource target accepted the accessibility action"
+            },
+            {
+              "name": "calculator_result",
+              "status": "passed",
+              "details": "Independent read of org.fossify.math:id/result equals 5"
+            },
+            {
+              "name": "installed_identity_after",
+              "status": "passed",
+              "details": "Installed application identity is unchanged after the UI case"
+            },
+            {
+              "name": "service_state_after",
+              "status": "passed",
+              "details": "The requested service state remains true after the app-specific core workflow and capture"
+            },
+            {
+              "name": "restore_service_settings",
+              "status": "passed",
+              "details": "Original accessibility component list restored and Agent service unbound; system owns the global accessibility flag"
+            }
+          ],
+          "captures": [
+            {
+              "stage": "before",
+              "capturedAt": 1793429678916,
+              "secureFlagsCleared": false,
+              "status": "captured",
+              "path": "calculator-1.4.0-idle-before-0.png",
+              "sha256": "322e4a517e9f08832c200352d01133858127d0b79065660a19ac7fbffda04f5f",
+              "bytes": 23077,
+              "width": 320,
+              "height": 640,
+              "windowId": 16,
+              "windowBounds": "[0,0][320,640]",
+              "windowFlags": "KEEP_SCREEN_ON LAYOUT_IN_SCREEN LAYOUT_INSET_DECOR SPLIT_TOUCH HARDWARE_ACCELERATED DRAWS_SYSTEM_BAR_BACKGROUNDS"
+            },
+            {
+              "stage": "result",
+              "capturedAt": 1793429679750,
+              "secureFlagsCleared": false,
+              "status": "captured",
+              "path": "calculator-1.4.0-idle-result-1.png",
+              "sha256": "be6774c18612735f0bba9863e85c3921ee0d6d671b88388b2d8b869b97c3a56b",
+              "bytes": 23792,
+              "width": 320,
+              "height": 640,
+              "windowId": 16,
+              "windowBounds": "[0,0][320,640]",
+              "windowFlags": "KEEP_SCREEN_ON LAYOUT_IN_SCREEN LAYOUT_INSET_DECOR SPLIT_TOUCH HARDWARE_ACCELERATED DRAWS_SYSTEM_BAR_BACKGROUNDS"
+            }
+          ],
+          "result": {
+            "expected": "5",
+            "actual": "5",
+            "resourceId": "org.fossify.math:id/result"
+          },
+          "startedAt": 1793429677299,
+          "installedIdentity": {
+            "package": "org.fossify.math",
+            "versionName": "1.4.0",
+            "versionCode": "10",
+            "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+            "apkSha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+            "minSdk": 26,
+            "targetSdk": 36,
+            "uid": 10131
+          },
+          "finishedAt": 1793429679930
+        }
+      ]
+    },
+    {
+      "appId": "notes-1.7.0",
+      "app": {
+        "package": "org.fossify.notes",
+        "versionName": "1.7.0",
+        "versionCode": "13",
+        "url": "https://github.com/FossifyOrg/Notes/releases/download/1.7.0/notes-13-foss-release.apk",
+        "sizeBytes": 9528948,
+        "sha256": "5a56e0e39cc488e1f3b947d3801006d3b7450ec73c67f03195c64c5fd3b6bced",
+        "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+        "minSdk": 26,
+        "targetSdk": 36,
+        "abis": [
+          "arm64-v8a",
+          "armeabi-v7a",
+          "x86",
+          "x86_64"
+        ],
+        "license": "GPL-3.0"
+      },
+      "actualInstalledIdentityVerified": true,
+      "installedIdentityFailureSeen": false,
+      "states": [
+        {
+          "state": "off",
+          "status": "passed",
+          "stage": "complete",
+          "installedIdentityVerified": true,
+          "serviceState": "disabled",
+          "serviceObservations": [
+            {
+              "stage": "before",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429635891,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429657688,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            }
+          ],
+          "serviceActionObservations": [
+            {
+              "stage": "before_launch",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429635918,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_launch",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429638490,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "before_create_note",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429639096,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_create_note",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429646054,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "before_enter_note_body",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429646078,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_enter_note_body",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429647069,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "before_save_note",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429647093,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_save_note",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429649283,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "before_reopen",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429649306,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_reopen",
+              "state": "disabled",
+              "verified": true,
+              "observedAt": 1793429655288,
+              "raw": {
+                "settingsEnabledServices": "",
+                "settingsAccessibilityEnabled": "0",
+                "accessibilityBoundServices": "{}",
+                "accessibilityEnabledServices": "{}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            }
+          ],
+          "steps": [
+            {
+              "name": "installed_identity",
+              "status": "passed",
+              "details": "PackageManager identity and installed APK digest match the frozen official release"
+            },
+            {
+              "name": "service_state_before",
+              "status": "passed",
+              "details": "Settings, accessibility binding and activity service records agree"
+            },
+            {
+              "name": "launch_notes",
+              "status": "passed",
+              "details": "PackageManager resolved the installed launcher alias and a real notes editor became visible"
+            },
+            {
+              "name": "create_note",
+              "status": "passed",
+              "details": "Created the state's uniquely titled plain-text note through the real native menu and dialog"
+            },
+            {
+              "name": "enter_note_body",
+              "status": "passed",
+              "details": "The visible unprotected editor independently reflects the exact synthetic input"
+            },
+            {
+              "name": "save_note_by_background",
+              "status": "passed",
+              "details": "Normal HOME navigation invokes the pinned app's default onPause autosave; no app data was written by the probe"
+            },
+            {
+              "name": "reopen_notes",
+              "status": "passed",
+              "details": "The old notes process stopped and the installed launcher opened a different real process"
+            },
+            {
+              "name": "notes_persisted_result",
+              "status": "passed",
+              "details": "After a fresh process start the visible editor and note title exactly match this state's synthetic note"
+            },
+            {
+              "name": "installed_identity_after",
+              "status": "passed",
+              "details": "Installed application identity is unchanged after the UI case"
+            },
+            {
+              "name": "service_state_after",
+              "status": "passed",
+              "details": "The requested service state remains true after the app-specific core workflow and capture"
+            },
+            {
+              "name": "restore_service_settings",
+              "status": "passed",
+              "details": "Original accessibility component list restored and Agent service unbound; system owns the global accessibility flag"
+            }
+          ],
+          "captures": [
+            {
+              "stage": "before",
+              "capturedAt": 1793429638490,
+              "secureFlagsCleared": false,
+              "inputMethodObservations": [
+                {
+                  "phase": "before_capture",
+                  "attempt": 1,
+                  "status": "blocked",
+                  "parseStage": "visibility",
+                  "selectedToken": "6b607c1",
+                  "inputMethodRecordCount": 1,
+                  "recordIndex": 4,
+                  "recordEnd": "next_window",
+                  "ownerUid": 10105,
+                  "ownerMatches": true,
+                  "displayMatches": true,
+                  "packageMatches": true,
+                  "fields": {
+                    "isOnScreen": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isVisible": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isReadyForDisplay()": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "mLastHidden": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mEnterAnimationPending": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mAnimatingExit": {
+                      "count": 0,
+                      "value": "MISSING"
+                    },
+                    "mHasSurface": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "Surface: shown": {
+                      "count": 1,
+                      "value": "TRUE"
+                    }
+                  },
+                  "reason": "input_method_is_visible_animating_or_unverified",
+                  "elapsedMillis": 20
+                },
+                {
+                  "phase": "before_capture",
+                  "attempt": 2,
+                  "status": "blocked",
+                  "parseStage": "visibility",
+                  "selectedToken": "6b607c1",
+                  "inputMethodRecordCount": 1,
+                  "recordIndex": 4,
+                  "recordEnd": "next_window",
+                  "ownerUid": 10105,
+                  "ownerMatches": true,
+                  "displayMatches": true,
+                  "packageMatches": true,
+                  "fields": {
+                    "isOnScreen": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isVisible": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isReadyForDisplay()": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "mLastHidden": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mEnterAnimationPending": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mAnimatingExit": {
+                      "count": 0,
+                      "value": "MISSING"
+                    },
+                    "mHasSurface": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "Surface: shown": {
+                      "count": 1,
+                      "value": "TRUE"
+                    }
+                  },
+                  "reason": "input_method_is_visible_animating_or_unverified",
+                  "elapsedMillis": 184
+                },
+                {
+                  "phase": "before_capture",
+                  "attempt": 3,
+                  "status": "blocked",
+                  "parseStage": "visibility",
+                  "selectedToken": "6b607c1",
+                  "inputMethodRecordCount": 1,
+                  "recordIndex": 4,
+                  "recordEnd": "next_window",
+                  "ownerUid": 10105,
+                  "ownerMatches": true,
+                  "displayMatches": true,
+                  "packageMatches": true,
+                  "fields": {
+                    "isOnScreen": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isVisible": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isReadyForDisplay()": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "mLastHidden": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mEnterAnimationPending": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mAnimatingExit": {
+                      "count": 0,
+                      "value": "MISSING"
+                    },
+                    "mHasSurface": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "Surface: shown": {
+                      "count": 1,
+                      "value": "TRUE"
+                    }
+                  },
+                  "reason": "input_method_is_visible_animating_or_unverified",
+                  "elapsedMillis": 347
+                },
+                {
+                  "phase": "before_capture",
+                  "attempt": 4,
+                  "status": "blocked",
+                  "parseStage": "visibility",
+                  "selectedToken": "6b607c1",
+                  "inputMethodRecordCount": 1,
+                  "recordIndex": 4,
+                  "recordEnd": "next_window",
+                  "ownerUid": 10105,
+                  "ownerMatches": true,
+                  "displayMatches": true,
+                  "packageMatches": true,
+                  "fields": {
+                    "isOnScreen": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isVisible": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isReadyForDisplay()": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "mLastHidden": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mEnterAnimationPending": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mAnimatingExit": {
+                      "count": 0,
+                      "value": "MISSING"
+                    },
+                    "mHasSurface": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "Surface: shown": {
+                      "count": 1,
+                      "value": "TRUE"
+                    }
+                  },
+                  "reason": "input_method_is_visible_animating_or_unverified",
+                  "elapsedMillis": 517
+                }
+              ],
+              "status": "blocked",
+              "reason": "input_method_is_visible_animating_or_unverified"
+            },
+            {
+              "stage": "result",
+              "capturedAt": 1793429657078,
+              "secureFlagsCleared": false,
+              "inputMethodObservations": [
+                {
+                  "phase": "before_capture",
+                  "attempt": 1,
+                  "status": "blocked",
+                  "parseStage": "visibility",
+                  "selectedToken": "6b607c1",
+                  "inputMethodRecordCount": 1,
+                  "recordIndex": 4,
+                  "recordEnd": "next_window",
+                  "ownerUid": 10105,
+                  "ownerMatches": true,
+                  "displayMatches": true,
+                  "packageMatches": true,
+                  "fields": {
+                    "isOnScreen": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isVisible": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isReadyForDisplay()": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "mLastHidden": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mEnterAnimationPending": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mAnimatingExit": {
+                      "count": 0,
+                      "value": "MISSING"
+                    },
+                    "mHasSurface": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "Surface: shown": {
+                      "count": 1,
+                      "value": "TRUE"
+                    }
+                  },
+                  "reason": "input_method_is_visible_animating_or_unverified",
+                  "elapsedMillis": 14
+                },
+                {
+                  "phase": "before_capture",
+                  "attempt": 2,
+                  "status": "blocked",
+                  "parseStage": "visibility",
+                  "selectedToken": "6b607c1",
+                  "inputMethodRecordCount": 1,
+                  "recordIndex": 4,
+                  "recordEnd": "next_window",
+                  "ownerUid": 10105,
+                  "ownerMatches": true,
+                  "displayMatches": true,
+                  "packageMatches": true,
+                  "fields": {
+                    "isOnScreen": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isVisible": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isReadyForDisplay()": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "mLastHidden": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mEnterAnimationPending": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mAnimatingExit": {
+                      "count": 0,
+                      "value": "MISSING"
+                    },
+                    "mHasSurface": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "Surface: shown": {
+                      "count": 1,
+                      "value": "TRUE"
+                    }
+                  },
+                  "reason": "input_method_is_visible_animating_or_unverified",
+                  "elapsedMillis": 176
+                },
+                {
+                  "phase": "before_capture",
+                  "attempt": 3,
+                  "status": "blocked",
+                  "parseStage": "visibility",
+                  "selectedToken": "6b607c1",
+                  "inputMethodRecordCount": 1,
+                  "recordIndex": 4,
+                  "recordEnd": "next_window",
+                  "ownerUid": 10105,
+                  "ownerMatches": true,
+                  "displayMatches": true,
+                  "packageMatches": true,
+                  "fields": {
+                    "isOnScreen": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isVisible": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isReadyForDisplay()": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "mLastHidden": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mEnterAnimationPending": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mAnimatingExit": {
+                      "count": 0,
+                      "value": "MISSING"
+                    },
+                    "mHasSurface": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "Surface: shown": {
+                      "count": 1,
+                      "value": "TRUE"
+                    }
+                  },
+                  "reason": "input_method_is_visible_animating_or_unverified",
+                  "elapsedMillis": 340
+                },
+                {
+                  "phase": "before_capture",
+                  "attempt": 4,
+                  "status": "blocked",
+                  "parseStage": "visibility",
+                  "selectedToken": "6b607c1",
+                  "inputMethodRecordCount": 1,
+                  "recordIndex": 4,
+                  "recordEnd": "next_window",
+                  "ownerUid": 10105,
+                  "ownerMatches": true,
+                  "displayMatches": true,
+                  "packageMatches": true,
+                  "fields": {
+                    "isOnScreen": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isVisible": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isReadyForDisplay()": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "mLastHidden": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mEnterAnimationPending": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mAnimatingExit": {
+                      "count": 0,
+                      "value": "MISSING"
+                    },
+                    "mHasSurface": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "Surface: shown": {
+                      "count": 1,
+                      "value": "TRUE"
+                    }
+                  },
+                  "reason": "input_method_is_visible_animating_or_unverified",
+                  "elapsedMillis": 504
+                }
+              ],
+              "status": "blocked",
+              "reason": "input_method_is_visible_animating_or_unverified"
+            }
+          ],
+          "result": {
+            "expected": "Agent OS offline note (off)\nSynthetic sample: 2 + 3 = 5.\nNo personal data.",
+            "actual": "Agent OS offline note (off)\nSynthetic sample: 2 + 3 = 5.\nNo personal data.",
+            "resourceId": "org.fossify.notes:id/text_note_view",
+            "titleExpected": "Agent OS off sample",
+            "titleActual": "Agent OS off sample",
+            "persistenceVerified": true,
+            "reopenedInFreshProcess": true,
+            "automaticBackPolicy": "single-back-only-before-notes-create-confirm",
+            "homeAttempts": 1,
+            "confirmationPreparation": {
+              "policy": "once-verified-create-dialog",
+              "stage": "CONFIRM_ACCEPTED",
+              "backAttempts": 1,
+              "backDownAttempted": true,
+              "backDownAccepted": true,
+              "backUpAttempted": true,
+              "backUpAccepted": true,
+              "backPreconditionVerified": true,
+              "visibleSamples": 2,
+              "hiddenSamples": 2,
+              "elapsedMillis": 1893,
+              "originalDialogWindowId": 7,
+              "finalDialogWindowId": 7,
+              "preBackTitleMatched": true,
+              "preBackTitleFocused": true,
+              "preBackTitleEditable": true,
+              "postTitleMatched": true,
+              "postTitleFocused": true,
+              "postTitleEditable": true,
+              "imeHiddenVerified": true,
+              "confirmTargetReached": true,
+              "confirmAttempts": 1,
+              "confirmAccepted": true
+            }
+          },
+          "startedAt": 1793429635751,
+          "installedIdentity": {
+            "package": "org.fossify.notes",
+            "versionName": "1.7.0",
+            "versionCode": "13",
+            "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+            "apkSha256": "5a56e0e39cc488e1f3b947d3801006d3b7450ec73c67f03195c64c5fd3b6bced",
+            "minSdk": 26,
+            "targetSdk": 36,
+            "uid": 10132
+          },
+          "finishedAt": 1793429657713
+        },
+        {
+          "state": "idle",
+          "status": "passed",
+          "stage": "complete",
+          "installedIdentityVerified": true,
+          "serviceState": "bound_idle",
+          "serviceObservations": [
+            {
+              "stage": "before",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429658047,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{8ecddf5 u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n* ConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429677240,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{8ecddf5 u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n* ConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            }
+          ],
+          "serviceActionObservations": [
+            {
+              "stage": "before_launch",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429658074,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{8ecddf5 u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n* ConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_launch",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429659868,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{8ecddf5 u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n* ConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "before_create_note",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429660464,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{8ecddf5 u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n* ConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_create_note",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429666424,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{8ecddf5 u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n* ConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "before_enter_note_body",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429666447,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{8ecddf5 u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n* ConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_enter_note_body",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429667146,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{8ecddf5 u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n* ConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "before_save_note",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429667167,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{8ecddf5 u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n* ConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_save_note",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429668811,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{8ecddf5 u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n* ConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "before_reopen",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429668833,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{8ecddf5 u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n* ConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            },
+            {
+              "stage": "after_reopen",
+              "state": "bound_idle",
+              "verified": true,
+              "observedAt": 1793429674874,
+              "raw": {
+                "settingsEnabledServices": "dev.agentos.app/dev.agentos.app.AgentAccessibilityService",
+                "settingsAccessibilityEnabled": "1",
+                "accessibilityBoundServices": "{Service[label=Agent OS, feedbackType[FEEDBACK_GENERIC], capabilities=1, eventTypes=[TYPE_VIEW_CLICKED, TYPE_VIEW_LONG_CLICKED, TYPE_VIEW_SELECTED, TYPE_VIEW_FOCUSED, TYPE_VIEW_TEXT_CHANGED, TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED, TYPE_VIEW_SCROLLED, TYPE_VIEW_TEXT_SELECTION_CHANGED, TYPE_VIEW_ACCESSIBILITY_FOCUSED, TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, TYPE_WINDOWS_CHANGED], notificationTimeout=0, requestA11yBtn=false]}",
+                "accessibilityEnabledServices": "{{dev.agentos.app/dev.agentos.app.AgentAccessibilityService}}",
+                "accessibilityBindingServices": "{}",
+                "activityServiceRecords": "* ServiceRecord{8ecddf5 u0 dev.agentos.app/.AgentAccessibilityService}\napp=ProcessRecord{318d300 2819:dev.agentos.app/u0a130}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\nConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n* ConnectionRecord{30b7432 u0 CR FGSA CAPS dev.agentos.app/.AgentAccessibilityService:@7c8643d}\n",
+                "agentActivityAbsent": true,
+                "agentWindowsAbsent": true,
+                "freshInstallNoAgentActivityStarted": true
+              }
+            }
+          ],
+          "steps": [
+            {
+              "name": "installed_identity",
+              "status": "passed",
+              "details": "PackageManager identity and installed APK digest match the frozen official release"
+            },
+            {
+              "name": "service_state_before",
+              "status": "passed",
+              "details": "Settings, accessibility binding and activity service records agree"
+            },
+            {
+              "name": "launch_notes",
+              "status": "passed",
+              "details": "PackageManager resolved the installed launcher alias and a real notes editor became visible"
+            },
+            {
+              "name": "create_note",
+              "status": "passed",
+              "details": "Created the state's uniquely titled plain-text note through the real native menu and dialog"
+            },
+            {
+              "name": "enter_note_body",
+              "status": "passed",
+              "details": "The visible unprotected editor independently reflects the exact synthetic input"
+            },
+            {
+              "name": "save_note_by_background",
+              "status": "passed",
+              "details": "Normal HOME navigation invokes the pinned app's default onPause autosave; no app data was written by the probe"
+            },
+            {
+              "name": "reopen_notes",
+              "status": "passed",
+              "details": "The old notes process stopped and the installed launcher opened a different real process"
+            },
+            {
+              "name": "notes_persisted_result",
+              "status": "passed",
+              "details": "After a fresh process start the visible editor and note title exactly match this state's synthetic note"
+            },
+            {
+              "name": "installed_identity_after",
+              "status": "passed",
+              "details": "Installed application identity is unchanged after the UI case"
+            },
+            {
+              "name": "service_state_after",
+              "status": "passed",
+              "details": "The requested service state remains true after the app-specific core workflow and capture"
+            },
+            {
+              "name": "restore_service_settings",
+              "status": "passed",
+              "details": "Original accessibility component list restored and Agent service unbound; system owns the global accessibility flag"
+            }
+          ],
+          "captures": [
+            {
+              "stage": "before",
+              "capturedAt": 1793429659868,
+              "secureFlagsCleared": false,
+              "inputMethodObservations": [
+                {
+                  "phase": "before_capture",
+                  "attempt": 1,
+                  "status": "blocked",
+                  "parseStage": "visibility",
+                  "selectedToken": "6b607c1",
+                  "inputMethodRecordCount": 1,
+                  "recordIndex": 4,
+                  "recordEnd": "next_window",
+                  "ownerUid": 10105,
+                  "ownerMatches": true,
+                  "displayMatches": true,
+                  "packageMatches": true,
+                  "fields": {
+                    "isOnScreen": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isVisible": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isReadyForDisplay()": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "mLastHidden": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mEnterAnimationPending": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mAnimatingExit": {
+                      "count": 0,
+                      "value": "MISSING"
+                    },
+                    "mHasSurface": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "Surface: shown": {
+                      "count": 1,
+                      "value": "TRUE"
+                    }
+                  },
+                  "reason": "input_method_is_visible_animating_or_unverified",
+                  "elapsedMillis": 19
+                },
+                {
+                  "phase": "before_capture",
+                  "attempt": 2,
+                  "status": "blocked",
+                  "parseStage": "visibility",
+                  "selectedToken": "6b607c1",
+                  "inputMethodRecordCount": 1,
+                  "recordIndex": 4,
+                  "recordEnd": "next_window",
+                  "ownerUid": 10105,
+                  "ownerMatches": true,
+                  "displayMatches": true,
+                  "packageMatches": true,
+                  "fields": {
+                    "isOnScreen": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isVisible": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isReadyForDisplay()": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "mLastHidden": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mEnterAnimationPending": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mAnimatingExit": {
+                      "count": 0,
+                      "value": "MISSING"
+                    },
+                    "mHasSurface": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "Surface: shown": {
+                      "count": 1,
+                      "value": "TRUE"
+                    }
+                  },
+                  "reason": "input_method_is_visible_animating_or_unverified",
+                  "elapsedMillis": 188
+                },
+                {
+                  "phase": "before_capture",
+                  "attempt": 3,
+                  "status": "blocked",
+                  "parseStage": "visibility",
+                  "selectedToken": "6b607c1",
+                  "inputMethodRecordCount": 1,
+                  "recordIndex": 4,
+                  "recordEnd": "next_window",
+                  "ownerUid": 10105,
+                  "ownerMatches": true,
+                  "displayMatches": true,
+                  "packageMatches": true,
+                  "fields": {
+                    "isOnScreen": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isVisible": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isReadyForDisplay()": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "mLastHidden": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mEnterAnimationPending": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mAnimatingExit": {
+                      "count": 0,
+                      "value": "MISSING"
+                    },
+                    "mHasSurface": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "Surface: shown": {
+                      "count": 1,
+                      "value": "TRUE"
+                    }
+                  },
+                  "reason": "input_method_is_visible_animating_or_unverified",
+                  "elapsedMillis": 351
+                },
+                {
+                  "phase": "before_capture",
+                  "attempt": 4,
+                  "status": "blocked",
+                  "parseStage": "visibility",
+                  "selectedToken": "6b607c1",
+                  "inputMethodRecordCount": 1,
+                  "recordIndex": 4,
+                  "recordEnd": "next_window",
+                  "ownerUid": 10105,
+                  "ownerMatches": true,
+                  "displayMatches": true,
+                  "packageMatches": true,
+                  "fields": {
+                    "isOnScreen": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isVisible": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isReadyForDisplay()": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "mLastHidden": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mEnterAnimationPending": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mAnimatingExit": {
+                      "count": 0,
+                      "value": "MISSING"
+                    },
+                    "mHasSurface": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "Surface: shown": {
+                      "count": 1,
+                      "value": "TRUE"
+                    }
+                  },
+                  "reason": "input_method_is_visible_animating_or_unverified",
+                  "elapsedMillis": 516
+                }
+              ],
+              "status": "blocked",
+              "reason": "input_method_is_visible_animating_or_unverified"
+            },
+            {
+              "stage": "result",
+              "capturedAt": 1793429676629,
+              "secureFlagsCleared": false,
+              "inputMethodObservations": [
+                {
+                  "phase": "before_capture",
+                  "attempt": 1,
+                  "status": "blocked",
+                  "parseStage": "visibility",
+                  "selectedToken": "6b607c1",
+                  "inputMethodRecordCount": 1,
+                  "recordIndex": 4,
+                  "recordEnd": "next_window",
+                  "ownerUid": 10105,
+                  "ownerMatches": true,
+                  "displayMatches": true,
+                  "packageMatches": true,
+                  "fields": {
+                    "isOnScreen": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isVisible": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isReadyForDisplay()": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "mLastHidden": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mEnterAnimationPending": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mAnimatingExit": {
+                      "count": 0,
+                      "value": "MISSING"
+                    },
+                    "mHasSurface": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "Surface: shown": {
+                      "count": 1,
+                      "value": "TRUE"
+                    }
+                  },
+                  "reason": "input_method_is_visible_animating_or_unverified",
+                  "elapsedMillis": 12
+                },
+                {
+                  "phase": "before_capture",
+                  "attempt": 2,
+                  "status": "blocked",
+                  "parseStage": "visibility",
+                  "selectedToken": "6b607c1",
+                  "inputMethodRecordCount": 1,
+                  "recordIndex": 4,
+                  "recordEnd": "next_window",
+                  "ownerUid": 10105,
+                  "ownerMatches": true,
+                  "displayMatches": true,
+                  "packageMatches": true,
+                  "fields": {
+                    "isOnScreen": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isVisible": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isReadyForDisplay()": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "mLastHidden": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mEnterAnimationPending": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mAnimatingExit": {
+                      "count": 0,
+                      "value": "MISSING"
+                    },
+                    "mHasSurface": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "Surface: shown": {
+                      "count": 1,
+                      "value": "TRUE"
+                    }
+                  },
+                  "reason": "input_method_is_visible_animating_or_unverified",
+                  "elapsedMillis": 180
+                },
+                {
+                  "phase": "before_capture",
+                  "attempt": 3,
+                  "status": "blocked",
+                  "parseStage": "visibility",
+                  "selectedToken": "6b607c1",
+                  "inputMethodRecordCount": 1,
+                  "recordIndex": 4,
+                  "recordEnd": "next_window",
+                  "ownerUid": 10105,
+                  "ownerMatches": true,
+                  "displayMatches": true,
+                  "packageMatches": true,
+                  "fields": {
+                    "isOnScreen": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isVisible": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isReadyForDisplay()": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "mLastHidden": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mEnterAnimationPending": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mAnimatingExit": {
+                      "count": 0,
+                      "value": "MISSING"
+                    },
+                    "mHasSurface": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "Surface: shown": {
+                      "count": 1,
+                      "value": "TRUE"
+                    }
+                  },
+                  "reason": "input_method_is_visible_animating_or_unverified",
+                  "elapsedMillis": 343
+                },
+                {
+                  "phase": "before_capture",
+                  "attempt": 4,
+                  "status": "blocked",
+                  "parseStage": "visibility",
+                  "selectedToken": "6b607c1",
+                  "inputMethodRecordCount": 1,
+                  "recordIndex": 4,
+                  "recordEnd": "next_window",
+                  "ownerUid": 10105,
+                  "ownerMatches": true,
+                  "displayMatches": true,
+                  "packageMatches": true,
+                  "fields": {
+                    "isOnScreen": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isVisible": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "isReadyForDisplay()": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "mLastHidden": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mEnterAnimationPending": {
+                      "count": 1,
+                      "value": "FALSE"
+                    },
+                    "mAnimatingExit": {
+                      "count": 0,
+                      "value": "MISSING"
+                    },
+                    "mHasSurface": {
+                      "count": 1,
+                      "value": "TRUE"
+                    },
+                    "Surface: shown": {
+                      "count": 1,
+                      "value": "TRUE"
+                    }
+                  },
+                  "reason": "input_method_is_visible_animating_or_unverified",
+                  "elapsedMillis": 507
+                }
+              ],
+              "status": "blocked",
+              "reason": "input_method_is_visible_animating_or_unverified"
+            }
+          ],
+          "result": {
+            "expected": "Agent OS offline note (idle)\nSynthetic sample: 2 + 3 = 5.\nNo personal data.",
+            "actual": "Agent OS offline note (idle)\nSynthetic sample: 2 + 3 = 5.\nNo personal data.",
+            "resourceId": "org.fossify.notes:id/text_note_view",
+            "titleExpected": "Agent OS idle sample",
+            "titleActual": "Agent OS idle sample",
+            "persistenceVerified": true,
+            "reopenedInFreshProcess": true,
+            "automaticBackPolicy": "single-back-only-before-notes-create-confirm",
+            "homeAttempts": 1,
+            "confirmationPreparation": {
+              "policy": "once-verified-create-dialog",
+              "stage": "CONFIRM_ACCEPTED",
+              "backAttempts": 1,
+              "backDownAttempted": true,
+              "backDownAccepted": true,
+              "backUpAttempted": true,
+              "backUpAccepted": true,
+              "backPreconditionVerified": true,
+              "visibleSamples": 2,
+              "hiddenSamples": 2,
+              "elapsedMillis": 1824,
+              "originalDialogWindowId": 12,
+              "finalDialogWindowId": 12,
+              "preBackTitleMatched": true,
+              "preBackTitleFocused": true,
+              "preBackTitleEditable": true,
+              "postTitleMatched": true,
+              "postTitleFocused": true,
+              "postTitleEditable": true,
+              "imeHiddenVerified": true,
+              "confirmTargetReached": true,
+              "confirmAttempts": 1,
+              "confirmAccepted": true
+            }
+          },
+          "startedAt": 1793429657723,
+          "installedIdentity": {
+            "package": "org.fossify.notes",
+            "versionName": "1.7.0",
+            "versionCode": "13",
+            "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+            "apkSha256": "5a56e0e39cc488e1f3b947d3801006d3b7450ec73c67f03195c64c5fd3b6bced",
+            "minSdk": 26,
+            "targetSdk": 36,
+            "uid": 10132
+          },
+          "finishedAt": 1793429677288
+        }
+      ]
+    }
+  ],
+  "emulatorVersion": "37.2.12",
+  "verifiedDownloads": {
+    "calculator-1.4.0": {
+      "package": "org.fossify.math",
+      "versionCode": "10",
+      "versionName": "1.4.0",
+      "minSdk": 26,
+      "targetSdk": 36,
+      "abis": [
+        "arm64-v8a",
+        "armeabi-v7a",
+        "x86",
+        "x86_64"
+      ],
+      "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+      "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed"
+    },
+    "notes-1.7.0": {
+      "package": "org.fossify.notes",
+      "versionCode": "13",
+      "versionName": "1.7.0",
+      "minSdk": 26,
+      "targetSdk": 36,
+      "abis": [
+        "arm64-v8a",
+        "armeabi-v7a",
+        "x86",
+        "x86_64"
+      ],
+      "certificateSha256": "affdb124d3f4720c2f98dbca9eacba0514fba4306e20a2786c861c3c0d6ff292",
+      "sha256": "5a56e0e39cc488e1f3b947d3801006d3b7450ec73c67f03195c64c5fd3b6bced"
+    }
+  },
+  "uiResultsSha256": "edb385bc0b205a650fa2bc8a663de3cbb23927373bc3a2464d07c90be2deec80",
+  "emulatorStepOutcome": "success"
+}

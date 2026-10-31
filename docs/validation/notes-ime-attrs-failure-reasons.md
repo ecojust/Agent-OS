@@ -2,6 +2,9 @@
 
 本步骤承接[窗口关联诊断](notes-ime-association-diagnostics.md)。原9b86源码运行41174426442为24通过/8失败/0未验证：API31/32/37六项已取得配置IME的WMS候选，API37两态在后置完整Populator与最终清单中均匹配0/0/0；API36每态10项属性解析成功、1项未知，仍拒绝选择，匹配为null。原八项隐藏失败及旧API30几何失败保留。
 
+
+本步骤已完成API36后置诊断的扫描容量修正及独立实测：355轮定位8192字符上限，cdea修正轮两态均11条属性完整解析、0未知、成功取得配置IME文本候选。原应用用例仍24通过/8失败；API36与37在完整后续清单中候选均匹配0/0/0，原Notes隐藏失败未修复。整体录像修正轮在ready失败，部分视频与原件保留，README保留355成功演示。详见下方最终结果。
+
 ## 固定采集范围
 
 本次先解释已有WMS读取中的属性拒绝原因，不增加平台读取。仍只有失败结果冻结后、既有截图和清理前的三条只读dump；每条调用方等待最多3000毫秒，总期限9000毫秒，最多保留256KiB并允许1字节溢出探测。原v4四方法、官方APK/锁、5秒准备期限、四次隐藏采样、一次BACK/确认上限及所有身份/遮挡/截图准入不变。
@@ -39,12 +42,12 @@ API37过滤前信息来源并行进行固定源码核对，研究字段、权限
 
 API36关闭/空闲两态均报告`ATTRS_SIZE_LIMIT`：第3/11条正式Window分段，后面仍有下一条正式窗口，单个属性anchor位于229，整个分段11698个字符，扫描停在8192；已扫描前缀最大深度5、顶层类型出现1次，未出现已知尾部标题。因此本轮不采用[条件性尾部方案](diagnostics/notes-ime-attrs-reasons-2026-10-31/conditional-tail-inventory-plan.md)。这些字段定位的是后置诊断解析上限，不是原Notes隐藏失败原因；11698不是属性块长度，也不能证明后续闭合或类型唯一。旧9b缺少这些字段，不倒填旧记录。
 
-下一份源码将属性扫描范围绑定现有256KiB捕获上限，检查完整属性闭合、深度8、唯一顶层类型及所有窗口身份；直接超长输入与截断结果继续拒绝。嵌套结构诊断版本将显式声明该上限，并保留旧schema1的8192解释。三条命令、每条3秒/总9秒等待及原v4动作/采样额度不变。这是独立诊断容量修正，尚未验证实际记录后半段是否满足全部条件。
+下一份源码将属性扫描范围绑定现有256KiB捕获上限，检查完整属性闭合、深度8、唯一顶层类型、完整记录清单及候选身份；直接超长输入与截断结果继续拒绝。嵌套结构诊断版本将显式声明该上限，并保留旧schema1的8192解释。三条命令、每条3秒/总9秒等待及原v4动作/采样额度不变。这是独立诊断容量修正，尚未验证实际记录后半段是否满足全部条件。
 
 修正源码冻结后单独执行一轮完整32项和一次整体录像，保存全部通过、失败及未验证。原355轮不改写；原八项隐藏失败和app_acceptance检查点继续进行中。API37下一步仍需独立的类/成员可访问能力探查，源码研究不等于实际listener可用。
 
 
-## 完整捕获范围修正：待独立实测
+## 完整捕获范围修正
 
 针对355轮实际`ATTRS_SIZE_LIMIT`，修正已将扫描范围绑定原`MAX_BYTES=262144`，并在任何正则/分段前拒绝超过262144个UTF-16单元的直接输入。正常采集仍受原262144字节加1字节溢出探测约束；文本长度保护和原始字节额度分别记录。attrsDiagnostics schema2明确`scanLimitChars`与`inputLimitChars`，schema1历史字段继续按8192解释。
 
@@ -54,6 +57,31 @@ API36关闭/空闲两态均报告`ATTRS_SIZE_LIMIT`：第3/11条正式Window分�
 
 独立复核250组完整WMS比较、770断言通过，20处变化均属于旧SIZE域；8条v2详情的完整标记5923字符。[独立采集审查](diagnostics/notes-ime-attrs-scan-2026-10-31/independent-collector-review.json)记录实际worker截断拒绝等边界。分析器44项检查通过，72f/9b/355三轮各32项及原marker逐值回放一致，旧355仍按8192限制解释。构建/lint通过（44秒），见[本地回执](diagnostics/notes-ime-attrs-scan-2026-10-31/local-validation.json)。
 
-修正源码固定为`cdea60c126af3cb50805f6e989eccbf7a7a1efb1`，独立完整32项[41178248694](https://github.com/ecojust/Agent-OS/actions/runs/41178248694)及整体录像[41178250336](https://github.com/ecojust/Agent-OS/actions/runs/41178250336)已启动，尚待审核。见[修正来源绑定](diagnostics/notes-ime-attrs-scan-2026-10-31/source-runs.json)；当前README仍保留355实际影片，不把旧片标为新版本。
+修正源码固定为`cdea60c126af3cb50805f6e989eccbf7a7a1efb1`，独立完整32项[41178248694](https://github.com/ecojust/Agent-OS/actions/runs/41178248694)及整体录像[41178250336](https://github.com/ecojust/Agent-OS/actions/runs/41178250336)已完成，结果如下。见[修正来源绑定](diagnostics/notes-ime-attrs-scan-2026-10-31/source-runs.json)；README保留355实际成功影片，另列修正轮失败短片，不把旧片标为新版本。
 
 冻结后补齐的[宿主交叉验证回执](diagnostics/notes-ime-attrs-scan-2026-10-31/host-analysis-validation.json)绑定同一helper与分析器摘要：真实Java解析器输出的长闭合、长未闭合、后段重复type和直接超输入四样本均被宿主正确解释；旧三轮96项/24原始诊断通道逐值回放一致。这里只增加验证原件，运行中的测试源码保持cdea60c1。
+
+
+## 修正轮最终结果
+
+固定cdea60c1的[完整32项原件](../../screenshots/third-party-41178248694-1/manifest.json)仍为**24通过/8失败/0未验证**。[逐案分析](diagnostics/notes-ime-attrs-scan-41178248694/findings.md)与[独立原件复核](diagnostics/notes-ime-attrs-scan-2026-10-31/independent-original-review.json)一致：56载荷2,538,233字节、32安装身份/设置恢复、32PNG及32Notes受保护截图记录均通过校验；8项Notes成功用例的新进程全文读回通过。所有32项状态/主错误和原八项失败的32份隐藏样本字段与355轮相同，动态时刻和对象文本不跨运行比较。
+
+| 子项 | 状态 | 实测结果与剩余边界 |
+| --- | --- | --- |
+| API36属性拒绝原因定位 | 已完成 | 355两态均为独立扫描8192上限；非本轮尾部混入，也非原Notes失败根因 |
+| 完整捕获范围解析修正 | 已完成（本轮验证） | cdea两态11 parsed/0 unparsed，schema2显式262144；唯一IME及owner/display/package检查通过 |
+| API36/37后续候选关联 | 进行中 | 两API各两态完整可见/显示分组/最终清单匹配均0/0/0；具体筛选或读取间变化未定位 |
+| 原八项隐藏准备失败 | 进行中 | 原结果、5秒期限、4次隐藏采样、BACK/确认/HOME次数保持；不能根据后置结果放行 |
+| 整体录像修正轮 | 失败，已归档 | ready阶段辅助服务未连接，0/13阶段；未重录，保留355完整演示 |
+
+新API36两态WMS全部11条属性可解析，详情entries为空，之后Populator可见4项/1个显示组、最终3对；API37为10条属性、可见3项/1显示组、最终2对，两者通知均开启。八个原失败现均可选中WMS文本候选；API31/32后续接口仍不支持，null保持不可用，不能变成零。全扫描成功说明本轮格式通过源码条件；它不恢复旧355丢弃的完整dump、旧闭合位置或类型文本。
+
+八次后置读取均在原失败冻结后0–3毫秒开始，总耗时28–50毫秒，三条命令分别15–30/5–9/6–11毫秒，无截断或调用方超时。完整dump不保留，不能独立复算已丢弃的原字节指纹；原instrumentation/marker摘要、固定源码和字段一致性可核验。后置有序文本仍不是同一原子快照、强Binder身份或像素隐藏证明。
+
+下一步先按[过滤前接口研究](diagnostics/notes-ime-attrs-reasons-2026-10-31/upstream-source-review.md)完成独立API37类/成员访问能力探查，核对可用字段和同进程身份关联来源；不直接注册listener、不新增原矩阵读取或修改隐藏API策略。API36同类候选缺口、31/32旧接口限制、原八项失败、执行态/升级/扩样/真实模型和真机验收均未关闭。
+
+## 修正轮录像失败原件
+
+cdea整体录制41178250336在`ready`阶段报`Accessibility service did not connect`，完成0/13阶段、0次确认；原设置读到enabledServices=null，已启用/绑定/绑定中/崩溃服务均为空，为什么为空尚未定位。仅有[11.308秒桌面短片](../../screenshots/demos/41178250336-1/demo.mp4)，193帧、69,693字节，全帧解码通过；8载荷88,482字节、0PNG，唯一截图因桌面不是批准测试页面而blocked。它不证明任务过程通过。
+
+[原清单](../../screenshots/demos/41178250336-1/manifest.json)、[视频审核](diagnostics/notes-ime-attrs-scan-2026-10-31/overall-video-audit.json)和[失败分析](diagnostics/notes-ime-attrs-scan-2026-10-31/overall-video-failure-analysis.json)已归档。app/Fixture/演示脚本/工作流与355成功源相同，新增compat-smoke后置诊断不在这个演示方法中执行；不能把本次服务未连接归因为扫描修正。按既定约定不为得到成功影片重录、不阻塞已验证诊断模块，README保留355的36.571秒完整演示与72f真实APK录像实际来源。

@@ -19,7 +19,9 @@
 
 前两类由测试程序操作官方原版 APK；普通任务与繁忙停止演示使用合成 Fixture 应用与本地测试模型。各自的录制范围与测试证据见[操作演示说明](docs/validation/operation-demo.md)。
 
-上表保留各类最新的已归档录像，并标注实际源码。真实 APK 日常流程对应 `72f77af85`，普通任务演示对应 `35519e9fb`，繁忙停止演示对应 `c7bfa7c21`；`f45fbb152` 的性能专项数值与原始记录见[目标进程／启动／帧报告](docs/validation/performance-app-experience.md)。此前 ready 阶段失败的[原始记录](screenshots/demos/40907100293-1/manifest.json)继续保留。普通流程录像不代替 Settings 来源拒绝、旋转或完整 API 矩阵验收。
+上表保留各类最新完成流程的已归档录像，并标注实际源码。真实 APK 日常流程对应 `72f77af85`，普通任务演示对应 `35519e9fb`，繁忙停止演示对应 `c7bfa7c21`；`f45fbb152` 的性能专项数值与原始记录见[目标进程／启动／帧报告](docs/validation/performance-app-experience.md)。此前 ready 阶段失败的[原始记录](screenshots/demos/40907100293-1/manifest.json)继续保留。普通流程录像不代替 Settings 来源拒绝、旋转或完整 API 矩阵验收。
+
+最新录制尝试 `cdea60c1` 在准备阶段因辅助服务未连接失败（0/13阶段），已保留[11.3秒失败短片](screenshots/demos/41178250336-1/demo.mp4)和[失败清单](screenshots/demos/41178250336-1/manifest.json)，未重录。上表普通任务保留最近完成全部流程的 `35519e9fb` 录像。
 
 繁忙停止录像仅覆盖 API35 的一次在途平台调用，不作为 MODEL 首停止帧或八档性能验收；专项失败与未完成进度见[停止诊断记录](docs/validation/performance-busy-stop.md)。
 
@@ -48,11 +50,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** cdea60c1独立32项与整体录像运行中；补齐Java输出到宿主的四类边界交叉核验，旧三轮96项和24诊断通道重放一致。读取/动作额度及八项原失败保持，新实测待审核。
+**本次更新：** cdea修正轮32项24通过8失败已核验；API36诊断容量缺口已修复，两态11/0并选中IME，API36/37后续匹配0/0/0，原隐藏失败继续调查。更新检查点详情/UTC时间；整体录像ready失败已归档，保留355成功片与72f真实APK实际来源。
 
-**记录时间：** 2026-10-31T06:51:40Z
+**记录时间：** 2026-10-31T06:58:58Z
 
-[最近测试截图与清单](screenshots/third-party-41177392095-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41177392095)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/third-party-41178248694-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41178248694)。通过、失败及未截图原因见清单。
 
 **整体操作演示：** [播放视频](screenshots/demos/41177393808-1/demo.mp4) · [录制与验证清单](screenshots/demos/41177393808-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41177393808)。
 录制版本：[`35519e9fb`](https://github.com/ecojust/Agent-OS/commit/35519e9fb77dc751bf8529768292cdcd1eb3b7ed)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
@@ -77,9 +79,9 @@
 <tr><td nowrap>三态性能诊断与空闲交替配对</td><td nowrap>已完成</td><td>原诊断、压力、活跃及启动/帧子项已完成。c7b源码第四轮41101009371六档通过：27有效、2失败、3未执行；88载荷及7847项复核一致。v2已排除零UI阶段误配，API30/32仍缺首停止traversal报告，模型释放/排空未执行步骤不补成通过。独立停止/整体录像已归档。下一步验证保留原UI提交身份的原生trace方法，再判断正式1600样本；真机预算未验收。 <a href="docs/validation/performance-idle-pairs.md">依据</a></td><td nowrap>2026-10-31 02:43:08</td></tr>
 <tr><td nowrap>受控截图与视觉观察</td><td nowrap>进行中</td><td>已验证：内部验收构建在API34–37完成原生捕获、审阅和发送8/8；固定计算器页面专项20/20，最新API35录像5/5。未完成：普通APK截图入口仍关闭，旧超时根因及完整图像内存、真实模型披露待验收。下一步：明确支持页面和能力开放条件，补齐生产路径验收。 <a href="docs/VISUAL_PIPELINE.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
 <tr><td nowrap>绑定界面版本的坐标操作</td><td nowrap>进行中</td><td>已验证：只读坐标定位可解析绑定当前观察版本的节点候选。未完成：坐标点击/滑动仍关闭，图片到屏幕映射、捕获身份/时效及最终提交校验待完成。下一步：冻结最小手势合同，验证过期、遮挡、取消与未知结果不重试。 <a href="docs/VISUAL_PIPELINE.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
-<tr><td nowrap>普通操作连续执行与接管</td><td nowrap>进行中</td><td>已验证：35519源码API35普通流程13阶段、8次确认通过，36.571秒/511帧及30载荷/22PNG核验，安全标志保留；c7b繁忙停止独立演示1/1保留。仅启动/滚动/主页可选免确认，旧ready/旋转及MODEL帧失败仍在。未完成：普通写操作连续执行和真实模型接管。下一步冻结连续写范围，补端到端接管与启动可用性验证。 <a href="screenshots/demos/41177393808-1/manifest.json">依据</a></td><td nowrap>2026-10-31 06:48:46</td></tr>
+<tr><td nowrap>普通操作连续执行与接管</td><td nowrap>进行中</td><td>已验证：35519源码API35整体13阶段/8确认通过，36.571秒录像核验；c7b繁忙停止1/1保留。最新cdea录制ready阶段辅助服务未连接，0/13阶段，11.308秒桌面短片已归档且未重录，设置为空原因未明。仅启动/滚动/主页可选免确认；连续写与真实模型接管未验收。下一步查服务启用/连接时序，并冻结连续写验收范围。 <a href="screenshots/demos/41178250336-1/manifest.json">依据</a></td><td nowrap>2026-10-31 06:58:58</td></tr>
 <tr><td nowrap>真实模型跨应用任务验收</td><td nowrap>待实现</td><td>已验证：本地合成HTTP模型到执行器的链路；现有录像未使用外部模型。未完成：真实模型自主完成受控跨应用目标尚无验收证据。下一步：冻结实际模型服务、版本、授权应用和可独立核对结果的任务，在模拟器实跑并保留失败。 <a href="docs/PRODUCT_PLAN.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
-<tr><td nowrap>冻结常用应用样本与日常使用验收</td><td nowrap>进行中</td><td>35519完整32项24通过/8失败，API36后置诊断已确认8192字符扫描上限。已修正为原256KiB捕获内完整扫描，仍要求闭合、唯一类型和身份；25采集/2607差分/83边界及构建lint通过，待新来源32项实测。原隐藏失败保留，API37过滤前接口尚未实际探查；执行态、升级、扩样、真实模型与真机未验收。 <a href="docs/validation/notes-ime-attrs-failure-reasons.md">依据</a></td><td nowrap>2026-10-31 06:50:20</td></tr>
+<tr><td nowrap>冻结常用应用样本与日常使用验收</td><td nowrap>进行中</td><td>已完成API36诊断扫描修正：cdea两态11条属性全解析、0未知并取得候选，原读取/动作额度保持。完整32项仍24通过/8失败，原状态/错误/32隐藏采样一致；API36/37后续完整清单匹配均0/0/0，原Notes失败未修复。下一步独立探查过滤前接口可访问性及同进程身份来源；执行态、升级、扩样、真实模型和真机未验收。 <a href="docs/validation/notes-ime-attrs-failure-reasons.md">依据</a></td><td nowrap>2026-10-31 06:58:58</td></tr>
 <tr><td nowrap>跨厂商近五年真机与资源档验证</td><td nowrap>待外部条件</td><td>已完成：定义跨厂商、芯片、上市年份及资源档的选样要求。阻塞：尚无参考手机或真机测试环境，暂无机型验收。下一步：确定可用设备清单，按固定任务验证权限、后台行为与资源表现。 <a href="docs/COMPATIBILITY.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
 <tr><td nowrap>参考机 AOSP 集成与平台兼容套件</td><td nowrap>待外部条件</td><td>已完成：定义系统集成、特权桥接与兼容验证目标。阻塞：参考机、可解锁性、内核和厂商驱动未确定，尚无可刷写镜像。下一步：确定机型和可维护源码基线，再完成构建、启动及平台兼容套件验证。 <a href="docs/PRODUCT_PLAN.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
 <tr><td nowrap>机型 OTA 与失败启动恢复</td><td nowrap>待外部条件</td><td>已完成：定义OTA、降级限制与失败启动恢复要求。阻塞：尚无参考机镜像和可验证恢复环境，未完成实际OTA/恢复。下一步：在机型确定后验证签名、升级、失败恢复及数据保留边界。 <a href="docs/DESIGN_RULES.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>

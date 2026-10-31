@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "kind": "raw-source-overall-video-audit",
+  "auditedAt": "2026-10-31T16:22:00.195742+00:00",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "dc9326735157345e94af5181cebe895b5b8586a1",
+    "runId": 41218742663,
+    "attempt": 1
+  },
+  "archiveRun": 41219142131,
+  "archiveCommit": "6380f2ca1ab630d8b4a1c951ce82a95da822848e",
+  "archiveParent": "dc9326735157345e94af5181cebe895b5b8586a1",
+  "status": "passed",
+  "immutableArchiveBlobComparison": "passed",
+  "pinnedSourceBundleValidator": "passed",
+  "sourceRunJobArtifactValidation": "passed",
+  "payloadFiles": 30,
+  "payloadBytes": 1185549,
+  "pngCount": 22,
+  "video": {
+    "bytes": 451726,
+    "sha256": "76d824db42c4d240eb66e75193c41a23522058c75422a6e501b2c6b3625c2951",
+    "durationMs": 38130,
+    "width": 640,
+    "height": 1280,
+    "codec": "h264",
+    "pixelFormat": "yuv420p"
+  },
+  "manifestSha256": "9129bd4ea041ca18a7e9b9e8cb6e3153bbbe3963362f8845d175f64fcc477e5d",
+  "sourceMetadata": [
+    {
+      "path": "source-run.json",
+      "bytes": 11749,
+      "sha256": "7bf8ed8a4594338c6929f496b730770b7e6818aa8acfd0c09acc24f41e067c90"
+    },
+    {
+      "path": "source-jobs.json",
+      "bytes": 4764,
+      "sha256": "e875e75571e87bd7077256d83e8a5c32318745e66d0de86ee7469ea3561b320c"
+    },
+    {
+      "path": "source-artifacts.json",
+      "bytes": 722,
+      "sha256": "22ce99be973e1d86b41fe069684ca8138b4cd424a19b61ec65630c28f2123c0c"
+    },
+    {
+      "path": "archive-run.json",
+      "bytes": 11749,
+      "sha256": "299ab19124f73a1cc83c3b369a145cdf6fe1afa8a1e9dcc668e10ca2c19f7559"
+    }
+  ],
+  "scope": "API35 Fixture/local synthetic HTTP model; not raw listener, original Notes matrix, real model or physical device acceptance",
+  "flow": {
+    "requiredStages": 13,
+    "passedRequiredStages": 13,
+    "confirmationCount": 8,
+    "model": "local_synthetic_http",
+    "secureFlagsPreserved": true
+  },
+  "manualFrameReview": {
+    "reviewer": "root",
+    "frames": [
+      {
+        "atSeconds": 15.1,
+        "observed": "保存合成文本和Count1"
+      },
+      {
+        "atSeconds": 32.8,
+        "observed": "控制条明确显示已暂停"
+      },
+      {
+        "atSeconds": 37.5,
+        "observed": "保存文本和Count1保留，控制条消失"
+      }
+    ],
+    "framesAreDerivedFromArchivedVideo": true
+  }
+}

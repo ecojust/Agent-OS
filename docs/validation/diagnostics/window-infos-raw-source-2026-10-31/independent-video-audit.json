@@ -1,0 +1,144 @@
+{
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "dc9326735157345e94af5181cebe895b5b8586a1",
+    "runId": 41218742663,
+    "attempt": 1
+  },
+  "archiveStatus": "passed",
+  "reportStatus": "passed",
+  "filesVerified": 30,
+  "totalBytes": 1185549,
+  "scope": "Dedicated emulator; preconfigured app; local synthetic HTTP model; secure flags preserved; no real-model or phone acceptance.",
+  "mainStages": 13,
+  "confirmations": 8,
+  "mainStageNames": [
+    "ready",
+    "text_entered",
+    "text_saved",
+    "counter_verified",
+    "scrolled_down",
+    "scrolled_up",
+    "second_page",
+    "returned_to_fixture",
+    "controls_waiting",
+    "paused",
+    "resumed",
+    "stopped",
+    "stale_approval_rejected"
+  ],
+  "confirmationOrdinals": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "flowDurationMs": 36717,
+  "recordingFailures": [],
+  "screenshotCount": 22,
+  "foregroundPackages": [
+    "dev.agentos.fixture"
+  ],
+  "video": {
+    "bytes": 451726,
+    "sha256": "76d824db42c4d240eb66e75193c41a23522058c75422a6e501b2c6b3625c2951",
+    "durationMs": 38130,
+    "width": 640,
+    "height": 1280,
+    "codec": "h264",
+    "pixelFormat": "yuv420p"
+  },
+  "independentDecode": "passed",
+  "provenanceLimit": "Cached GitHub Actions metadata supplied by root was independently cross-checked; this audit made no network request.",
+  "contentLimit": "API35 synthetic controller walkthrough only; no evidence of API37 raw listener, IME mapping, original failure reproduction, real model, or physical device.",
+  "cachedActions": {
+    "sourceRun": 41218742663,
+    "sourceJob": 124588684023,
+    "artifactId": 13049416316,
+    "archiveRun": 41219142131,
+    "archiveCommit": "6380f2ca1ab630d8b4a1c951ce82a95da822848e",
+    "archiveCommitParent": "dc9326735157345e94af5181cebe895b5b8586a1",
+    "artifactCreatedAt": "2026-10-31T16:18:58Z",
+    "sourceJobStartedAt": "2026-10-31T16:14:55Z",
+    "sourceJobCompletedAt": "2026-10-31T16:19:18Z",
+    "checks": "passed",
+    "files": [
+      {
+        "path": "/workspace/scratch/raw-source-video/source-run.json",
+        "sha256": "7bf8ed8a4594338c6929f496b730770b7e6818aa8acfd0c09acc24f41e067c90"
+      },
+      {
+        "path": "/workspace/scratch/raw-source-video/source-jobs.json",
+        "sha256": "e875e75571e87bd7077256d83e8a5c32318745e66d0de86ee7469ea3561b320c"
+      },
+      {
+        "path": "/workspace/scratch/raw-source-video/source-artifacts.json",
+        "sha256": "22ce99be973e1d86b41fe069684ca8138b4cd424a19b61ec65630c28f2123c0c"
+      },
+      {
+        "path": "/workspace/scratch/raw-source-video/archive-run.json",
+        "sha256": "299ab19124f73a1cc83c3b369a145cdf6fe1afa8a1e9dcc668e10ca2c19f7559"
+      }
+    ]
+  },
+  "decodedFrameCount": 513,
+  "visualInspection": [
+    {
+      "frame": "/workspace/scratch/ime-identity-2026-10-31/demo-41218742663-frames/saved-counter.png",
+      "requestedSecond": 15.1,
+      "observation": "Saved: Controller integration sample and Count: 1 visible; fixture main page."
+    },
+    {
+      "frame": "/workspace/scratch/ime-identity-2026-10-31/demo-41218742663-frames/scroll.png",
+      "requestedSecond": 18.7,
+      "observation": "Scrolled list rows 4 through 16 visible; approval overlay requests backward scroll."
+    },
+    {
+      "frame": "/workspace/scratch/ime-identity-2026-10-31/demo-41218742663-frames/second-page.png",
+      "requestedSecond": 25.0,
+      "observation": "Second page reached text visible; overlay requests back approval."
+    },
+    {
+      "frame": "/workspace/scratch/ime-identity-2026-10-31/demo-41218742663-frames/pause.png",
+      "requestedSecond": 32.8,
+      "observation": "Agent 已暂停 visible with 继续/停止 controls; saved text and Count: 1 remain visible."
+    },
+    {
+      "frame": "/workspace/scratch/ime-identity-2026-10-31/demo-41218742663-frames/final.png",
+      "requestedSecond": 37.5,
+      "observation": "Saved text and Count: 1 visible; controller overlay absent in sampled frame."
+    }
+  ],
+  "frameCountEvidence": {
+    "command": [
+      "ffprobe",
+      "-v",
+      "error",
+      "-select_streams",
+      "v:0",
+      "-count_frames",
+      "-show_entries",
+      "stream=nb_read_frames,nb_frames,avg_frame_rate",
+      "-of",
+      "json",
+      "/workspace/Agent-OS/screenshots/demos/41218742663-1/demo.mp4"
+    ],
+    "exitCode": 0,
+    "result": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "avg_frame_rate": "2560000/190277",
+          "nb_frames": "513",
+          "nb_read_frames": "513"
+        }
+      ]
+    },
+    "note": "Captured from the already completed independent ffprobe call; no additional full-video run was made to save this evidence."
+  }
+}

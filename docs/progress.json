@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-31T16:14:34Z",
-  "note": "完成原始窗口来源审查：固定AOSP/ART支持独立shell诊断候选，包/UID/类型与实际Binder链已核对；未新增设备probe，原24/8保留。下一实验合同已冻结，本次整体录像待录制。",
+  "updated_at": "2026-10-31T16:22:36Z",
+  "note": "原始窗口来源核查已完成：确认shell诊断候选的字段/Binder链，冻结一次有界注册与四谓词正对照合同；尚未运行raw探针，原24/8保留。dc932整体录像38.130秒/13阶段通过并归档，README视频入口与检查点UTC进度已同步。",
   "latest_evidence": {
     "path": "screenshots/third-party-41178248694-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41178248694"
@@ -119,10 +119,10 @@
       "id": "continuous_actions",
       "name": "普通操作连续执行与接管",
       "status": "in_progress",
-      "evidence": "screenshots/demos/41180137894-1/manifest.json",
+      "evidence": "screenshots/demos/41218742663-1/manifest.json",
       "scope": "35519源码API35 Fixture本地模型整体演示13阶段/8确认通过；36.571秒511帧426563B，30载荷1160755B/22PNG完整审核，保留安全标志、最终浮条移除。未验收普通写操作连续执行与真实模型接管；不替代真实APK、性能和原矩阵失败。 cdea/41178250336独立overall录制失败，ready阶段Accessibility service did not connect，0/13阶段0确认；enabledServices=null、各服务列表空，原因未定。8载荷88482B/0PNG、1桌面截图blocked，11.308秒193帧69693B部分视频全解码。app/Fixture/演示脚本workflow与355相同，compat-smoke诊断不在该演示路径执行，未建立因果；不重录、不回填通过，继续保留355成功录像。 214e90af/41180137894新独立整体录像完成13阶段8确认，33.502秒468帧389979B，30载荷1116769B/22PNG全部来源和画面核验。仍为API35 Fixture/本地模型、保留secure flags、最后浮条移除；不执行API37元数据探针，不代替真实APK/模型/真机，不关闭旧cdea服务就绪失败根因。",
-      "details": "已验证：214e90源码API35整体13阶段/8确认通过，33.502秒/468帧、30载荷/22PNG核验；c7b繁忙停止1/1保留。旧cdea ready阶段服务未连接失败仍保留，设置为空原因未明，本次成功不算稳定修复。仅启动/滚动/主页可选免确认；连续写与真实模型接管未验收。下一步验证服务清单就绪性诊断，再冻结连续写范围。",
-      "updated_at": "2026-10-31T07:26:46Z"
+      "details": "已验证：dc932源码API35整体13阶段/8确认通过，38.130秒/513帧、30载荷/22PNG核验；c7b繁忙停止1/1保留。旧cdea ready阶段服务未连接失败仍保留，设置为空原因未明，本次成功不算稳定修复。仅启动/滚动/主页可选免确认；连续写与真实模型接管未验收。下一步验证服务清单就绪性诊断，再冻结连续写范围。",
+      "updated_at": "2026-10-31T16:22:36Z"
     },
     {
       "id": "model_acceptance",
@@ -179,9 +179,9 @@
     }
   ],
   "latest_demo": {
-    "path": "screenshots/demos/41180137894-1",
-    "source_sha": "214e90afba8481655ae33d5ad99a7d49b0a4557d",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41180137894",
+    "path": "screenshots/demos/41218742663-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41218742663",
+    "source_sha": "dc9326735157345e94af5181cebe895b5b8586a1",
     "status": "passed"
   }
 }

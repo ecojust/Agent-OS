@@ -60,4 +60,11 @@ ForTest 的 `buildParams()` 遍历原始 handles，保留 `getWindowToken()`，�
 4. 完整记录候选选择、原始四谓词、初始/回调差异、注销和退出结果。没有回调、无候选和字段不可用都可产生有效的失败诊断，不能重注册或反复操作至成功。若增加 ForTest，单列其注册预算与同窗正对照，不能将其输出当最终无障碍清单。
 5. 首个实测通过仅验收这个 API37/构建/配置 IME 的诊断入口；之后才设计原失败冻结后的独立采集和 API36 适配。仍需新证据定位 Notes 原因、实施修复并复测，才能关闭原失败。
 
-本轮仅有源码与文档检查，没有新的窗口数据或截图。按项目要求另尝试一次整体操作录像，来源与结果在完成后单列；这种 API35 Fixture 演示不充当本页 shell 实验的证据。
+来源核查本身未运行 API37 设备探针，也未采集该实验的窗口数据或截图。本次独立 API35 整体录像已完成，来源与结果见下节；Fixture 演示不充当本页 shell 实验的证据。
+
+
+## 本轮整体录像：已归档
+
+本页来源审查提交 `dc9326735157345e94af5181cebe895b5b8586a1` 的[整体录像](../../screenshots/demos/41218742663-1/demo.mp4)来自[运行41218742663](https://github.com/ecojust/Agent-OS/actions/runs/41218742663)，归档运行41219142131。视频38.130秒、640×1280、451,726字节、513帧，13阶段/8确认通过；30载荷/1,185,549字节、22PNG与来源、摘要、完整解码及关键画面均已核验。详见[原清单](../../screenshots/demos/41218742663-1/manifest.json)、[来源/合同审核](diagnostics/window-infos-raw-source-2026-10-31/overall-video-audit.json)和[独立审计](diagnostics/window-infos-raw-source-2026-10-31/independent-video-audit.json)。
+
+录像展示API35 Fixture及本地合成HTTP模型，没有运行本页API37 shell监听实验。历史cdea就绪失败保留，本次成功不构成稳定修复；原Notes32项本轮没有重跑。README每类保留最新实际影片，真实APK视频仍绑定72f源码。

@@ -1,0 +1,224 @@
+{
+  "schemaVersion": 1,
+  "kind": "agent-os-probe-video-archive",
+  "archivedAt": "2026-10-31T02:40:41.166808+00:00",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "c7bfa7c21124a2384804ba15378ce7320edb0241",
+    "runId": 41101012830,
+    "attempt": 1
+  },
+  "sourceRunUrl": "https://github.com/ecojust/Agent-OS/actions/runs/41101012830",
+  "sourceWorkflow": ".github/workflows/busy-stop-video.yml",
+  "sourceBranch": "master",
+  "sourceRunConclusion": "success",
+  "job": {
+    "id": 124218102822,
+    "name": "record-busy-stop (API 35)",
+    "conclusion": "success"
+  },
+  "profile": "busy-stop-platform",
+  "apiLevel": 35,
+  "scope": "One synthetic Fixture real in-flight platform click stopped through the actual task overlay on API35, using a local deterministic model. Separate walkthrough: not a pilot/formal performance sample, not the held-model/MainActivity scenario, not complete UI presentation, API-matrix, physical-device or budget acceptance.",
+  "status": "passed",
+  "recordingStatus": "passed",
+  "probeStatus": "passed",
+  "fullSuiteAcceptance": false,
+  "expectedTests": 1,
+  "matrixExpectedTests": 1,
+  "recordedMatrixLabels": [
+    "35"
+  ],
+  "caseCounts": {
+    "passed": 1,
+    "failed": 0,
+    "unverified": 0
+  },
+  "cases": [
+    {
+      "name": "recordBusyStopWalkthrough",
+      "status": "passed"
+    }
+  ],
+  "probe": {
+    "status": "passed",
+    "driverStatus": "passed",
+    "cases": [
+      {
+        "name": "recordBusyStopWalkthrough",
+        "status": "passed"
+      }
+    ],
+    "captureCounts": {
+      "status": "collected",
+      "casePassed": true,
+      "captured": 3,
+      "blocked": 0,
+      "failed": 0
+    },
+    "instrumentation": {
+      "passed": true,
+      "started": true,
+      "terminalFailure": false
+    },
+    "flowStatus": "passed",
+    "performanceSample": false,
+    "fullSuiteAcceptance": false
+  },
+  "recording": {
+    "schemaVersion": 1,
+    "kind": "agent-os-probe-video",
+    "source": {
+      "repository": "ecojust/Agent-OS",
+      "commit": "c7bfa7c21124a2384804ba15378ce7320edb0241",
+      "runId": 41101012830,
+      "attempt": 1
+    },
+    "profile": "busy-stop-platform",
+    "apiLevel": 35,
+    "status": "passed",
+    "recordingStatus": "recorded",
+    "callbackOutcome": "returned",
+    "callbackErrorClass": null,
+    "callbackElapsedMs": 6534,
+    "callbackStartedAfterRecorderMs": 447,
+    "callbackFinishedAfterRecorderMs": 6982,
+    "timeLimitSeconds": 120,
+    "secureFlagsPreserved": true,
+    "testOutcomeIndependent": true,
+    "coverage": {
+      "status": "covered",
+      "recorderAliveBeforeCallback": true,
+      "recorderAliveAfterCallback": true,
+      "durationToleranceMs": 1500
+    },
+    "rawVideo": {
+      "bytes": 167455,
+      "sha256": "b3dc122921ebea53293bdb11f20b3e49ab6ef826964d43405de1f54a2f0d12e5",
+      "durationMs": 6846,
+      "width": 320,
+      "height": 640,
+      "codec": "h264",
+      "pixelFormat": "yuv420p"
+    },
+    "rawRetained": false,
+    "video": {
+      "bytes": 62687,
+      "sha256": "c7c98e59f876c284819bf7728f4833620a518b1cdeda6f3f9c72188a63929172",
+      "durationMs": 6965,
+      "width": 640,
+      "height": 1280,
+      "codec": "h264",
+      "pixelFormat": "yuv420p"
+    },
+    "recorder": {
+      "started": true,
+      "exitCode": 0,
+      "stderr": {
+        "text": "",
+        "truncated": false,
+        "complete": true
+      }
+    },
+    "failures": [],
+    "probes": [
+      {
+        "stage": "raw_probe",
+        "status": "completed",
+        "exitCode": 0,
+        "stdout": "{\n    \"programs\": [\n\n    ],\n    \"streams\": [\n        {\n            \"codec_name\": \"h264\",\n            \"codec_type\": \"video\",\n            \"codec_tag_string\": \"avc1\",\n            \"width\": 320,\n            \"height\": 640,\n            \"pix_fmt\": \"yuv420p\"\n        },\n        {\n            \"codec_type\": \"data\",\n            \"codec_tag_string\": \"mett\"\n        },\n        {\n            \"codec_type\": \"data\",\n            \"codec_tag_string\": \"mett\"\n        }\n    ],\n    \"format\": {\n        \"duration\": \"6.846167\"\n    }\n}\n"
+      },
+      {
+        "stage": "encoded_probe",
+        "status": "completed",
+        "exitCode": 0,
+        "stdout": "{\n    \"programs\": [\n\n    ],\n    \"streams\": [\n        {\n            \"codec_name\": \"h264\",\n            \"codec_type\": \"video\",\n            \"codec_tag_string\": \"avc1\",\n            \"width\": 640,\n            \"height\": 1280,\n            \"pix_fmt\": \"yuv420p\"\n        }\n    ],\n    \"format\": {\n        \"duration\": \"6.965242\"\n    }\n}\n"
+      }
+    ]
+  },
+  "video": {
+    "bytes": 62687,
+    "sha256": "c7c98e59f876c284819bf7728f4833620a518b1cdeda6f3f9c72188a63929172",
+    "durationMs": 6965,
+    "width": 640,
+    "height": 1280,
+    "codec": "h264",
+    "pixelFormat": "yuv420p"
+  },
+  "videoPath": "video/demo.mp4",
+  "artifacts": {
+    "probe": {
+      "name": "busy-stop-walkthrough-api-35-attempt-1",
+      "id": 12998358614,
+      "status": "archived"
+    },
+    "video": {
+      "name": "probe-video-busy-stop-platform-api-35-attempt-1",
+      "id": 12999705692,
+      "status": "archived"
+    }
+  },
+  "fileCount": 11,
+  "totalBytes": 104131,
+  "files": [
+    {
+      "path": "video/demo.mp4",
+      "bytes": 62687,
+      "sha256": "c7c98e59f876c284819bf7728f4833620a518b1cdeda6f3f9c72188a63929172"
+    },
+    {
+      "path": "video/recording.json",
+      "bytes": 2607,
+      "sha256": "cd7e993e8e6067cfd0e17c9bf9be6fcc80e6a159d1c8149ebd713c8d912465b8"
+    },
+    {
+      "path": "probe/capture.json",
+      "bytes": 624,
+      "sha256": "8cbe96a24e8c79d5581ae0825186669efe77e36843a35fe948f9f34af2506514"
+    },
+    {
+      "path": "probe/flow-result.json",
+      "bytes": 7155,
+      "sha256": "ac81f7357f2266deb0bf4092d260209a794f8d277042f5a0256caaf5392771ea"
+    },
+    {
+      "path": "probe/instrumentation.json",
+      "bytes": 1018,
+      "sha256": "048b6f52650526f646e4ec6536dff3c8229c99cab49407f5da712eac3b7dc721"
+    },
+    {
+      "path": "probe/report.json",
+      "bytes": 1001,
+      "sha256": "3df57c26cc7c77bd04cbaaa98c84eff4ff571d61bbb72a6ccbf2b14242b4db3a"
+    },
+    {
+      "path": "probe/screenshots/api-35-recordBusyStopWalkthrough-6279583e-busy-stop-original-action-completed-once-after-stop-1.png",
+      "bytes": 7261,
+      "sha256": "21874956b7793e20c61b3e74bc1f2736317f1f0ab61163cb26488385935e97aa"
+    },
+    {
+      "path": "probe/screenshots/api-35-recordBusyStopWalkthrough-6279583e-busy-stop-ready-count-zero-0.png",
+      "bytes": 11416,
+      "sha256": "78ffc030ed6b5c8e6063e860195adb99c0d4a163ad46cbffd70fa438aa8ae634"
+    },
+    {
+      "path": "probe/screenshots/api-35-recordBusyStopWalkthrough-6279583e-finished-2.png",
+      "bytes": 7261,
+      "sha256": "21874956b7793e20c61b3e74bc1f2736317f1f0ab61163cb26488385935e97aa"
+    },
+    {
+      "path": "probe/screenshots/api-35-recordBusyStopWalkthrough-6279583e.json",
+      "bytes": 1342,
+      "sha256": "906e33dc98361ff26de8bc9de9ef8446e13b81f3cdd50ffd21a0423ef7dfea0e"
+    },
+    {
+      "path": "probe/screenshots/manifest.json",
+      "bytes": 1759,
+      "sha256": "65d23b34386701178f5878b65dc798609e83281d3059fd9ac1f0c48fb687b904"
+    }
+  ],
+  "expectedMatrixLabels": [
+    "35"
+  ],
+  "performanceSample": false
+}

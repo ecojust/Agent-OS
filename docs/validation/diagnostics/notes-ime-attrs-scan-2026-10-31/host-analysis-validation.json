@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "kind": "captured-attrs-complete-scan-host-analysis-validation",
+  "validatedAt": "2026-10-31T06:51:24.795543+00:00",
+  "worktreeBaseCommit": "2688eda9e0b56580763af9a20fce26ae25a5653b",
+  "sourceCommit": "cdea60c126af3cb50805f6e989eccbf7a7a1efb1",
+  "scope": "Accept exact attrsDiagnostics schema2 explicit character limits; preserve strict schema1 historical interpretations and original outcomes",
+  "scripts": [
+    {
+      "path": "docs/validation/diagnostics/notes-ime-association-2026-10-31/analysis-tools/analyze_ime_association.py",
+      "bytes": 51116,
+      "sha256": "56045580bd80360ccf57b5a1d4d1eeaa155da13a4733affae7ed72d516e3e9bb"
+    },
+    {
+      "path": "docs/validation/diagnostics/notes-ime-association-2026-10-31/analysis-tools/test_analyze_ime_association.py",
+      "bytes": 36386,
+      "sha256": "ac98f43375eefab6bbb74d5ddf75491e2f9b3e28c23e00fb80aab39ca0d15123"
+    }
+  ],
+  "collectorHelperSha256": "5de8008990573422edb9cbd33bace0dfaa2cfd860ddea1d49a17d30183534bec",
+  "hostTests": {
+    "passed": 44,
+    "failed": 0,
+    "skipped": 0,
+    "previousTestsIncluded": 39,
+    "newVersionAndQuotaBoundaryTests": 5,
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s docs/validation/diagnostics/notes-ime-association-2026-10-31/analysis-tools -p 'test_*.py' -v",
+    "logSha256": "381ca96b6c1bc59d922680ee15a7c77605559fcb3dafd7634a9041963e1a9205"
+  },
+  "actualJavaToHostSchemaChecks": {
+    "syntheticOnly": true,
+    "passed": 4,
+    "failed": 0,
+    "receipt": "analysis-bridge/cross-check.json",
+    "receiptSha256": "86524376e4ea0805c851444ec458caeb13ec17f6a5397a7635d84ed828e8429b"
+  },
+  "historicalReplays": [
+    {
+      "sourceCommit": "72f77af85481eb90c0511a52e61c7cbab3ac6595",
+      "sourceRunId": 41173725544,
+      "originalCounts": {
+        "passed": 24,
+        "failed": 8,
+        "unverified": 0
+      },
+      "originalCaseObjectsAndInterpretationsUnchanged": 32,
+      "originalRawLanesUnchanged": 8,
+      "confirmationCasesAndBindingAuditsUnchanged": true,
+      "originalAssociationAnalysisSha256": "90892eb3e12355b974243823a2882663bfb51150b43f8bcb1d5b2f7f58c06f35",
+      "originalConfirmationAnalysisSha256": "016d1fb664a7ea3c41dd58670f801c4f56ba3aea64598cc1153a6524eb23558e",
+      "replayAssociationAnalysisSha256": "9c18eede05c8a800dc04c531aa6abab3e17e78ea9e06e48b68d76f6fe52f7116",
+      "replayConfirmationAnalysisSha256": "4e1c4c49d5f55b06189ac66d51fbe68d404adb5a848f4a915e596e554bb6a518",
+      "historicalReportsOverwritten": false
+    },
+    {
+      "sourceCommit": "9b86b2a842f9e837e20e2df183893da697faaf40",
+      "sourceRunId": 41174426442,
+      "originalCounts": {
+        "passed": 24,
+        "failed": 8,
+        "unverified": 0
+      },
+      "originalCaseObjectsAndInterpretationsUnchanged": 32,
+      "originalRawLanesUnchanged": 8,
+      "confirmationCasesAndBindingAuditsUnchanged": true,
+      "originalAssociationAnalysisSha256": "b92b9e6b61c08efac3aa86c4b314310819d798adbe148ae1969b4af1877143dc",
+      "originalConfirmationAnalysisSha256": "3c7fce82ba7c44ff1c7f8970ecd0b45d436ffb1feccc150c828c9ace4f6728cc",
+      "replayAssociationAnalysisSha256": "ca89eea5444c6e0f277155258675fdf1cfa77ee1ba6a067b10ba57f9c22c6272",
+      "replayConfirmationAnalysisSha256": "50780378ef28a848a61113a7b676f6665af57653d10f6c87cfd0c4e75bc0bf25",
+      "historicalReportsOverwritten": false
+    },
+    {
+      "sourceCommit": "35519e9fb77dc751bf8529768292cdcd1eb3b7ed",
+      "sourceRunId": 41177392095,
+      "originalCounts": {
+        "passed": 24,
+        "failed": 8,
+        "unverified": 0
+      },
+      "originalCaseObjectsAndInterpretationsUnchanged": 32,
+      "originalRawLanesUnchanged": 8,
+      "confirmationCasesAndBindingAuditsUnchanged": true,
+      "originalAssociationAnalysisSha256": "08bab0ff35e94d85ab98e54b2efe5aeabcef0058d3471ef4aa5f8621cfef48b8",
+      "originalConfirmationAnalysisSha256": "472c5739737f6325fea4afd796dafea32f9b4b7791fe46a366b9ab9688406b40",
+      "replayAssociationAnalysisSha256": "986fd70e12ca236a075548d937f32c1e9112dda45f9302bf90a4434a4fdd26d1",
+      "replayConfirmationAnalysisSha256": "079a3f823b133538681759389f5d7c038cf509f7992b81c6514d41f872a3cf98",
+      "historicalReportsOverwritten": false
+    }
+  ],
+  "priorValidationReports": [
+    "../notes-ime-association-2026-10-31/analysis-tools/analysis-validation.json",
+    "../notes-ime-association-2026-10-31/analysis-tools/attrs-correction-analysis-validation.json",
+    "../notes-ime-attrs-reasons-2026-10-31/host-analysis-validation.json"
+  ],
+  "priorValidationReportsOverwritten": false,
+  "independentReview": {
+    "path": "independent-analyzer-review.json",
+    "sha256": "3b878f50a8a93f659a5461b206a4360d8adee869d6f3f60d40ad13c1e8e42819",
+    "passedTests": 44,
+    "blockingFindings": 0
+  },
+  "limitations": [
+    "Host and synthetic Java checks are not new device evidence.",
+    "Schema1 scanChars remains bounded8192 and its historical ATTRS_SIZE_LIMIT remains unchanged.",
+    "Schema2 scanLimitChars/inputLimitChars262144 are Java UTF16 text units, independent of unchanged raw byte/read/action budgets.",
+    "No completeness, closing point, type value or IME identity is inferred from historical prefixes or unavailable records.",
+    "No original v4 hidden sample, decision, outcome or denominator is altered by post-failure diagnostics."
+  ]
+}

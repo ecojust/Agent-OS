@@ -1,0 +1,109 @@
+{
+  "kind": "actual-java-parser-to-host-schema-cross-check",
+  "syntheticOnly": true,
+  "androidDeviceTest": false,
+  "helperSha256": "5de8008990573422edb9cbd33bace0dfaa2cfd860ddea1d49a17d30183534bec",
+  "actualJavaFixturesSha256": "7887dde4fa52d54066482095e0516ffef06daa9be48f3df70c24d6c36752850a",
+  "bridgeSourceSha256": "cd6ba79547c4e8d1592f7bdf4ec92a1f0ef12fa5c62292e79042fcc5ca11a850",
+  "analyzerSha256": "56045580bd80360ccf57b5a1d4d1eeaa155da13a4733affae7ed72d516e3e9bb",
+  "checks": [
+    {
+      "fixture": "completeBeyondLegacyLimit",
+      "wmsStatus": "SELECTED",
+      "reason": "UNIQUE_CONFIGURED_IME_TEXT_CANDIDATE",
+      "consistencyIssues": [],
+      "attrsDiagnostics": {
+        "maxRetained": 8,
+        "entries": [],
+        "schemaVersion": 2,
+        "recordCount": 1,
+        "omittedCount": 0,
+        "inputLimitChars": 262144,
+        "scanLimitChars": 262144,
+        "unparsedCount": 0
+      }
+    },
+    {
+      "fixture": "unclosedBeyondLegacyLimit",
+      "wmsStatus": "UNAVAILABLE",
+      "reason": "WMS_ATTRIBUTES_INCOMPLETE",
+      "consistencyIssues": [],
+      "attrsDiagnostics": {
+        "maxRetained": 8,
+        "entries": [
+          {
+            "firstAttrsOffset": 240,
+            "reason": "ATTRS_UNCLOSED",
+            "scanChars": 12017,
+            "recordOrdinal": 1,
+            "attrsAnchorCount": 1,
+            "maxDepth": 1,
+            "typeLexicalClass": null,
+            "topLevelTypeCount": 1,
+            "knownTailSectionBetweenAnchors": null,
+            "firstKnownTailSection": null,
+            "typeValueComplete": null,
+            "secondAttrsOffset": null,
+            "recordChars": 12257,
+            "headerRelation": "MATCHES_SELECTED_REFERENCE",
+            "recordEnd": "DUMP_END",
+            "typeValueLength": null
+          }
+        ],
+        "schemaVersion": 2,
+        "recordCount": 1,
+        "omittedCount": 0,
+        "inputLimitChars": 262144,
+        "scanLimitChars": 262144,
+        "unparsedCount": 1
+      }
+    },
+    {
+      "fixture": "duplicateTypeBeyondLegacyLimit",
+      "wmsStatus": "UNAVAILABLE",
+      "reason": "WMS_ATTRIBUTES_INCOMPLETE",
+      "consistencyIssues": [],
+      "attrsDiagnostics": {
+        "maxRetained": 8,
+        "entries": [
+          {
+            "firstAttrsOffset": 240,
+            "reason": "TOP_LEVEL_TYPE_DUPLICATE",
+            "scanChars": 12025,
+            "recordOrdinal": 1,
+            "attrsAnchorCount": 1,
+            "maxDepth": 1,
+            "typeLexicalClass": null,
+            "topLevelTypeCount": 2,
+            "knownTailSectionBetweenAnchors": null,
+            "firstKnownTailSection": null,
+            "typeValueComplete": null,
+            "secondAttrsOffset": null,
+            "recordChars": 12265,
+            "headerRelation": "MATCHES_SELECTED_REFERENCE",
+            "recordEnd": "DUMP_END",
+            "typeValueLength": null
+          }
+        ],
+        "schemaVersion": 2,
+        "recordCount": 1,
+        "omittedCount": 0,
+        "inputLimitChars": 262144,
+        "scanLimitChars": 262144,
+        "unparsedCount": 1
+      }
+    },
+    {
+      "fixture": "directInputLimit",
+      "wmsStatus": "UNAVAILABLE",
+      "reason": "WMS_INPUT_LIMIT",
+      "consistencyIssues": [],
+      "attrsDiagnostics": null
+    }
+  ],
+  "limitations": [
+    "Actual Java parseWms synthetic text only; not an Android device dump or shell collector execution.",
+    "A successful synthetic complete scan cannot establish the discarded historical API36 outer-brace position, full type value, or a new device candidate.",
+    "The UTF16 input/scan cap applies to the already captured text; raw byte and command budgets remain unchanged."
+  ]
+}

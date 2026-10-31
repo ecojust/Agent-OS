@@ -55,3 +55,5 @@ API36关闭/空闲两态均报告`ATTRS_SIZE_LIMIT`：第3/11条正式Window分�
 独立复核250组完整WMS比较、770断言通过，20处变化均属于旧SIZE域；8条v2详情的完整标记5923字符。[独立采集审查](diagnostics/notes-ime-attrs-scan-2026-10-31/independent-collector-review.json)记录实际worker截断拒绝等边界。分析器44项检查通过，72f/9b/355三轮各32项及原marker逐值回放一致，旧355仍按8192限制解释。构建/lint通过（44秒），见[本地回执](diagnostics/notes-ime-attrs-scan-2026-10-31/local-validation.json)。
 
 修正源码固定为`cdea60c126af3cb50805f6e989eccbf7a7a1efb1`，独立完整32项[41178248694](https://github.com/ecojust/Agent-OS/actions/runs/41178248694)及整体录像[41178250336](https://github.com/ecojust/Agent-OS/actions/runs/41178250336)已启动，尚待审核。见[修正来源绑定](diagnostics/notes-ime-attrs-scan-2026-10-31/source-runs.json)；当前README仍保留355实际影片，不把旧片标为新版本。
+
+冻结后补齐的[宿主交叉验证回执](diagnostics/notes-ime-attrs-scan-2026-10-31/host-analysis-validation.json)绑定同一helper与分析器摘要：真实Java解析器输出的长闭合、长未闭合、后段重复type和直接超输入四样本均被宿主正确解释；旧三轮96项/24原始诊断通道逐值回放一致。这里只增加验证原件，运行中的测试源码保持cdea60c1。

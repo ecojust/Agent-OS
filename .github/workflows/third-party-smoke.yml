@@ -34,6 +34,17 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+            app
+            core
+            fixture
+            compat-smoke
+            upgrade-smoke
+            gradle
+            docs
+            scripts
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -68,11 +79,22 @@ jobs:
     timeout-minutes: 25
     strategy:
       fail-fast: false
-      max-parallel: 3
+      max-parallel: 8
       matrix:
         api: ${{ fromJSON(inputs.record_video && '["35"]' || '["30","31","32","33","34","35","36","37.0"]') }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+            app
+            core
+            fixture
+            compat-smoke
+            upgrade-smoke
+            gradle
+            docs
+            scripts
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

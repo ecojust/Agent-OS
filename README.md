@@ -48,11 +48,11 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 新增API36属性拒绝原因元数据，原选择/判定与采集额度不变；3235组类型与445组完整WMS对照、39项分析检查及构建/lint通过，待独立32项与整体录像。API37上游来源限制已核对。
+**本次更新：** 归档固定第三方应用的专用模拟器开发探针；保留关闭/空闲两态的通过、失败、受保护与未执行记录，不作为真机、升级或常用应用总体兼容验收。
 
-**记录时间：** 2026-10-31T06:37:20Z
+**记录时间：** 2026-10-31T06:44:16Z
 
-[最近测试截图与清单](screenshots/third-party-41174426442-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41174426442)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/third-party-41177392095-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41177392095)。通过、失败及未截图原因见清单。
 
 **整体操作演示：** [播放视频](screenshots/demos/41174428202-1/demo.mp4) · [录制与验证清单](screenshots/demos/41174428202-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41174428202)。
 录制版本：[`9b86b2a84`](https://github.com/ecojust/Agent-OS/commit/9b86b2a842f9e837e20e2df183893da697faaf40)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。

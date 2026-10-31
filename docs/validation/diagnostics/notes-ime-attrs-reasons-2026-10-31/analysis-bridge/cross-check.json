@@ -1,0 +1,29 @@
+{
+  "kind": "actual-java-parser-to-host-schema-cross-check",
+  "syntheticOnly": true,
+  "androidDeviceTest": false,
+  "helperSha256": "c920dce631dbd4e81397282dbf598c0b754cbcb7934eb32c98be90172f9ca90d",
+  "actualJavaFixturesSha256": "f95d334fb9ab8cdc8039ba83d8c97cf36261244ec5784e99d387285d902c2868",
+  "bridgeSourceSha256": "0f073bc21368053fdae4e30e99cb1c9aec69d5a5bdc84015ac4b3013489d9143",
+  "analyzerSha256": "36b796e01ce9c7acafb65fde304954d551dfc4e122b6c1b5d27e8ced931d53e8",
+  "checks": [
+    {
+      "fixture": "duplicateTail",
+      "schemaAvailability": "complete",
+      "consistencyIssues": [],
+      "candidateRemainsUnavailable": true,
+      "sourceReason": "ATTRS_ANCHOR_DUPLICATE"
+    },
+    {
+      "fixture": "incompleteTypePrefix",
+      "schemaAvailability": "complete",
+      "consistencyIssues": [],
+      "candidateRemainsUnavailable": true,
+      "sourceReason": "TYPE_VALUE_UNRECOGNIZED"
+    }
+  ],
+  "limitations": [
+    "This validates actualJava parseWms outputs against the host schema using synthetic text; it is not anAndroid device dump or collector execution.",
+    "Structural metadata does not establish configuredIME identity, full rejected type values, or ownership of duplicate headers."
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "validatedAt": "2026-10-31T06:37:20.078420+00:00",
+  "sourceBase": "329429eb2f488108036985b32bdc861cdabc81b6",
+  "helperSha256": "c920dce631dbd4e81397282dbf598c0b754cbcb7934eb32c98be90172f9ca90d",
+  "unchangedFromBase": {
+    "app/src/main": true,
+    "core/src/main": true,
+    "fixture/src/main": true,
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/SmokeHarness.java": true,
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/ApplicationSetCompatibilityInstrumentedTest.java": true,
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/SmokeCapture.java": true,
+    "docs/validation/third-party-app-set-lock.json": true,
+    "docs/validation/notes-dialog-confirmation-v4.md": true,
+    "scripts/third_party_smoke_set.py": true,
+    "scripts/third_party_smoke_set_archive.py": true,
+    ".github/workflows/third-party-smoke.yml": true
+  },
+  "preWmsCollectorPrefixUnchanged": true,
+  "androidBuild": {
+    "result": "passed",
+    "seconds": 45,
+    "tasks": [
+      ":compat-smoke:assembleDebug",
+      ":compat-smoke:assembleDebugAndroidTest",
+      ":compat-smoke:lintDebug"
+    ],
+    "logBytes": 5461,
+    "logSha256": "b141097d3aa37a6145c689481510a626b330b0690365d3d977a7cad03452f337"
+  },
+  "newHostValidation": {
+    "collectorChecks": 25,
+    "metadataChecks": 129,
+    "legacyTypeDifferentialInputs": 3235,
+    "independentFullWmsDifferentialInputs": 445,
+    "independentMetadataChecks": 16,
+    "analyzerTests": 39
+  },
+  "priorFull891HostRegression": {
+    "source": "72f77af85481eb90c0511a52e61c7cbab3ac6595",
+    "rerun": false,
+    "scope": "unchanged scripts/product sources; new diagnostic and analysis tests recorded separately"
+  },
+  "deviceResults": "pending source-pinned run"
+}

@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "independent ime_review agent",
+  "reviewedAtUtc": "2026-10-31T06:35:46+00:00",
+  "result": "PASS_WITH_DECLARED_LIMITATIONS",
+  "testedHelper": {
+    "path": "compat-smoke/src/androidTest/java/dev/agentos/compat/NotesImeAssociationDiagnostic.java",
+    "sha256": "c920dce631dbd4e81397282dbf598c0b754cbcb7934eb32c98be90172f9ca90d"
+  },
+  "baseline": {
+    "sourceCommit": "9b86b2a842f9e837e20e2df183893da697faaf40",
+    "helperSha256": "273104d38ca9ec7e4d0fbca2aecdc00c3e24467dc66f6029776ccd861bd172e9"
+  },
+  "method": "Compiled the exact baseline helper (only Java class/constructor renamed) beside the actual new helper. Compared full parseWms JSON after removing only the added attrsDiagnostics object. Separately exercised full marker assembly with controlled host stubs. No Gradle or Android/device execution by this reviewer.",
+  "validation": {
+    "outcomeComparisonsPassed": 445,
+    "metadataChecksPassed": 16,
+    "embeddedParserSelftests": "passed",
+    "comparisonCoverage": [
+      "Existing valid/invalid, nested, duplicate and missing attribute records",
+      "Depth0-12 and token-length0/1/63-68/200 combinations",
+      "Type field starts around the8192 outer scan limit, including original bounded lookahead beyond that cursor boundary",
+      "All four source-grounded tail headings with duplicate mAttrs",
+      "Twenty unparsed records exercising8 retained and12 omitted entries",
+      "Invalid signed decimal and long decimal-prefix coarse classifications"
+    ],
+    "metadataChecks": [
+      "Fixed tail kind, relative position and between-anchors status",
+      "RecordEnd and reference-header relationship",
+      "Exact retained/omitted accounting",
+      "Title and invalid type contents excluded",
+      "Outer cursor<=8192, observed depth<=9, retained type prefix<=65",
+      "Invalid candidate contributes to encountered topLevelTypeCount",
+      "Long-prefix lexical class remains accompanied by typeValueComplete=false"
+    ],
+    "boundedAssembly": {
+      "retainedReasons": 8,
+      "syntheticWmsBytes": 243360,
+      "privacyAsciiOriginalPreservation": "passed",
+      "markerChars": 6202,
+      "commands": 3
+    },
+    "retained20FailureMetadataChars": 3424,
+    "reproduction": "independent-review-tests/run.py",
+    "stdout": "independent-review-tests/stdout.txt"
+  },
+  "review": {
+    "selectionEquivalence": "No changed outcome in445 full-WMS comparisons; split rule, old field values and all rejection branches preserved. Every unparsed window still prevents selecting a unique IME candidate.",
+    "fixedReasons": "Missing/duplicate mAttrs, depth cap, invalid type/following brace, missing/duplicate top-level type, size cap and unclosed attributes are distinguished without raw field text.",
+    "fieldMeaning": {
+      "firstAttrsOffset": "UTF-16 character offset of opening mAttrs brace within original split record; not an offset into a newly truncated snippet",
+      "topLevelTypeCount": "Count of encountered depth1 ty candidates, including an invalid one; the original accepted-type decision counter remains separate",
+      "scanChars": "Extent reached by the outer scan cursor, excluding separately bounded type lookahead; ATTRS_SIZE_LIMIT need not equal scanChars8192",
+      "typeLexicalClass": "Fixed coarse class of the retained value; when typeValueComplete=false this describes only its bounded prefix",
+      "tailMetadata": "Literal recognized heading kind/offset and whether any recognized heading lies between the first two attrs anchors; it does not itself prove a semantic boundary or authorize dropping a record"
+    },
+    "privacyAndBounds": "Only fixed enums, bounded integers/booleans/null and source-grounded heading kinds are added. First8 unparsed records retained with omitted count. Tested full marker6202 ASCII chars under16KiB for243360-byte synthetic WMS; raw title/padding absent. Original Throwable and prior suppressed diagnostic preserved. General overflow/failure fallback remains unchanged."
+  },
+  "unchangedBoundaries": {
+    "collectionLaunchReadTimeoutSerializationPrefixEqual": true,
+    "prefixSha256": "17b75c7f254b865f78880dfcb991b5d1da1e74b683fb3ac9983929e19ed3e8bd",
+    "populatorAccessibilityAssociationAndUtilitySuffixBeforeSelftestsEqual": true,
+    "suffixSha256": "d2795fb6589ce9d420ac84ad5d65cedc953c455987485545a6925c02f4f62e84",
+    "integrationFiles": [
+      {
+        "path": "compat-smoke/src/androidTest/java/dev/agentos/compat/SmokeHarness.java",
+        "sha256": "4324b113631f1e3b1f1d2346abebc532450ee043eaa0a8995a2fa05aa1293acb",
+        "equalToBaseline": true
+      },
+      {
+        "path": "compat-smoke/src/androidTest/java/dev/agentos/compat/SmokeCapture.java",
+        "sha256": "43ee713a2a8c8410caadb4d95366fa7f7aa8456d0ba2b6731d27c65a3a4c1d96",
+        "equalToBaseline": true
+      },
+      {
+        "path": "compat-smoke/src/androidTest/java/dev/agentos/compat/ApplicationSetCompatibilityInstrumentedTest.java",
+        "sha256": "b029e1b5c84970709b07d4f333ddf00070116149ba71b1df4b09f575bc524000",
+        "equalToBaseline": true
+      }
+    ]
+  },
+  "sourceInvestigation": {
+    "revision": "99b01a65cc4c104933788b3143285ab6bae65827",
+    "index": "aosp16-wms-source-index.json",
+    "note": "aosp16-wms-record-boundaries.md",
+    "reviewedFiles": 6,
+    "finding": "Four conditional WMS tail sections can repeat WindowState.dump/mAttrs without a new Window # header. This is a source-supported candidate for a last-record duplicate, not evidence that a specific tail existed in the old API36 run."
+  },
+  "limitations": [
+    "Synthetic differential/stub tests are not Android shell availability, actual Binder cancellation or physical-device acceptance.",
+    "The445 comparisons exercise relevant boundaries but are not a proof over every possible input string.",
+    "The old API36 10 parsed/1 unparsed receipt does not identify the failed record or exact reason; raw dump was discarded. Neither historical count nor null matches are reinterpreted.",
+    "Fixed Android16r1 sources establish possible output structure, not byte identity with the tested image.",
+    "Tail heading presence can guide a later investigation; no existing Window # partition, uniqueness guard or action authority is relaxed in this change.",
+    "Post-failure reads remain sequential, weak text association with unverified system_server lifetime; original v4 samples and decisions are not backfilled.",
+    "The marker size check uses a large synthetic case; MAX_CHARS and the unchanged overflow fallback remain the general serialization bound."
+  ]
+}

@@ -1,0 +1,1 @@
+package dev.agentos.compat; public final class ReviewEntry { public static void main(String[] args) throws Exception { NotesImeAssociationDiagnostic.verifyParsers(); ReasonDifferentialReview.main(args); ReasonMarkerReview.main(args); System.out.println("embedded_parser_selftests=passed"); } }

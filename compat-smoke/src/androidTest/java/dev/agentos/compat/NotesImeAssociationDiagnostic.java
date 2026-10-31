@@ -205,11 +205,21 @@ final class NotesImeAssociationDiagnostic {
         parsed.put("referenceCount", references).put("reason", "WMS_REFERENCE_MISSING_OR_AMBIGUOUS");
         if (references != 1) return parsed;
         String selected = null;
-        int imeCount = 0, attributesParsed = 0, attributesUnparsed = 0;
-        for (String record : dump.split("(?m)(?=^[\\t ]*Window #[0-9]+ )")) {
+        int imeCount = 0, attributesParsed = 0, attributesUnparsed = 0, recordCount = 0;
+        JSONArray failures = new JSONArray();
+        String[] records = dump.split("(?m)(?=^[\\t ]*Window #[0-9]+ )");
+        for (int recordIndex = 0; recordIndex < records.length; recordIndex++) {
+            String record = records[recordIndex];
             if (!record.trim().startsWith("Window #")) continue;
-            String type = windowType(record);
-            if (type == null) { attributesUnparsed++; continue; }
+            recordCount++;
+            WindowTypeResult attributes = windowType(record);
+            String type = attributes.type;
+            if (type == null) {
+                attributesUnparsed++;
+                if (failures.length() < 8) failures.put(attributes.diagnostic(record, recordCount,
+                        recordIndex == records.length - 1 ? "DUMP_END" : "NEXT_WINDOW_HEADER", stateToken));
+                continue;
+            }
             attributesParsed++;
             if (!"INPUT_METHOD".equals(type) && !"2011".equals(type)) continue;
             imeCount++;
@@ -218,6 +228,9 @@ final class NotesImeAssociationDiagnostic {
         }
         parsed.put("inputMethodRecordCount", imeCount).put("selectedWindowStateToken", stateToken)
                 .put("attributesParsedCount", attributesParsed).put("attributesUnparsedCount", attributesUnparsed)
+                .put("attrsDiagnostics", new JSONObject().put("schemaVersion", 1).put("maxRetained", 8)
+                        .put("recordCount", recordCount).put("unparsedCount", attributesUnparsed)
+                        .put("omittedCount", Math.max(0, attributesUnparsed - failures.length())).put("entries", failures))
                 .put("reason", "WMS_RECORD_MISSING_OR_AMBIGUOUS");
         if (attributesUnparsed != 0) return parsed.put("reason", "WMS_ATTRIBUTES_INCOMPLETE");
         if (imeCount != 1 || selected == null) return parsed;
@@ -247,32 +260,113 @@ final class NotesImeAssociationDiagnostic {
                 .put("mClient", token).put("fields", fields);
     }
 
-    /** LayoutParams includes nested sim={...} before ty and optional nested rotation params. */
-    private static String windowType(String record) {
+    private enum AttrsReason {
+        PARSED, ATTRS_ANCHOR_MISSING, ATTRS_ANCHOR_DUPLICATE, DEPTH_LIMIT,
+        TYPE_VALUE_UNRECOGNIZED, TYPE_VALUE_FOLLOWED_BY_OPEN_BRACE,
+        TOP_LEVEL_TYPE_MISSING, TOP_LEVEL_TYPE_DUPLICATE, ATTRS_SIZE_LIMIT, ATTRS_UNCLOSED
+    }
+
+    /** The type is internal only; failure receipts contain fixed structure, never field contents. */
+    private static final class WindowTypeResult {
+        final String type, typeLexicalClass;
+        final AttrsReason reason;
+        final int anchorCount, firstAnchor, secondAnchor, scanChars, maxDepth, typeFields;
+        final Integer typeValueLength;
+        final Boolean typeValueComplete;
+        WindowTypeResult(String type, AttrsReason reason, int anchorCount, int firstAnchor, int secondAnchor,
+                         int scanChars, int maxDepth, int typeFields, String invalidValue, Boolean completeValue) {
+            this.type = type; this.reason = reason; this.anchorCount = anchorCount;
+            this.firstAnchor = firstAnchor; this.secondAnchor = secondAnchor;
+            this.scanChars = scanChars; this.maxDepth = maxDepth; this.typeFields = typeFields;
+            typeValueLength = invalidValue == null ? null : invalidValue.length();
+            typeLexicalClass = invalidValue == null ? null : lexicalClass(invalidValue);
+            typeValueComplete = completeValue;
+        }
+
+        JSONObject diagnostic(String record, int ordinal, String recordEnd, String selectedToken) throws Exception {
+            Matcher header = Pattern.compile("^[\\t ]*Window #[0-9]+ Window\\{([0-9a-fA-F]{1,32})\\s+u([0-9]{1,8})\\s+[^}\\r\\n]+\\}:").matcher(record);
+            String relation = "UNRECOGNIZED";
+            if (header.find()) relation = selectedToken.equals(header.group(1)) && "0".equals(header.group(2))
+                    ? "MATCHES_SELECTED_REFERENCE" : "OTHER_RECOGNIZED_WINDOW";
+            String[] headings = {"Hiding System Alert Windows:", "Windows force removing:",
+                    "Windows waiting to destroy their surface:", "Windows waiting to resize:"};
+            String[] kinds = {"HIDING_SYSTEM_ALERT_WINDOWS", "FORCE_REMOVING_WINDOWS", "DESTROY_SURFACE_WINDOWS", "RESIZING_WINDOWS"};
+            int firstTail = -1;
+            String firstKind = null;
+            boolean tailBetweenAnchors = false;
+            for (int i = 0; i < headings.length; i++) {
+                Matcher tail = Pattern.compile("(?m)^[\\t ]*" + Pattern.quote(headings[i]) + "[\\t ]*\\r?$").matcher(record);
+                while (tail.find()) {
+                    int offset = tail.start();
+                    if (firstTail < 0 || offset < firstTail) { firstTail = offset; firstKind = kinds[i]; }
+                    if (firstAnchor >= 0 && secondAnchor >= 0 && offset > firstAnchor && offset < secondAnchor) tailBetweenAnchors = true;
+                }
+            }
+            Object tail = firstTail < 0 ? JSONObject.NULL : new JSONObject().put("kind", firstKind).put("offset", firstTail);
+            return new JSONObject().put("recordOrdinal", ordinal).put("recordEnd", recordEnd).put("headerRelation", relation)
+                    .put("attrsAnchorCount", anchorCount).put("firstAttrsOffset", firstAnchor < 0 ? JSONObject.NULL : firstAnchor)
+                    .put("secondAttrsOffset", secondAnchor < 0 ? JSONObject.NULL : secondAnchor)
+                    .put("recordChars", record.length()).put("scanChars", scanChars).put("maxDepth", maxDepth)
+                    .put("topLevelTypeCount", typeFields).put("reason", reason.name())
+                    .put("typeLexicalClass", value(typeLexicalClass)).put("typeValueLength", value(typeValueLength))
+                    .put("typeValueComplete", value(typeValueComplete)).put("firstKnownTailSection", tail)
+                    .put("knownTailSectionBetweenAnchors", secondAnchor < 0 ? JSONObject.NULL : tailBetweenAnchors);
+        }
+    }
+
+    private static String lexicalClass(String value) {
+        if (value.isEmpty()) return "EMPTY";
+        if (value.matches("[0-9]+")) return "DECIMAL";
+        if (value.matches("[+-][0-9]+")) return "SIGNED_DECIMAL";
+        if (value.matches("[+-]?0[xX][0-9a-fA-F]+")) return "HEX";
+        if (value.matches("[A-Z_][A-Z_0-9]*")) return "UPPERCASE_SYMBOL";
+        return "OTHER";
+    }
+
+    /** Same acceptance as 9b86: metadata does not widen types, bounds or Window # partitions. */
+    private static WindowTypeResult windowType(String record) {
         Matcher attributes = Pattern.compile("(?m)^[\\t ]*mAttrs=\\{").matcher(record);
-        if (!attributes.find()) return null;
-        int start = attributes.end() - 1;
-        if (attributes.find()) return null;
-        int depth = 0, typeFields = 0;
+        int anchors = 0, start = -1, second = -1;
+        while (attributes.find()) {
+            if (anchors == 0) start = attributes.end() - 1;
+            else if (anchors == 1) second = attributes.end() - 1;
+            anchors++;
+        }
+        if (anchors == 0 || anchors > 1) return new WindowTypeResult(null,
+                anchors == 0 ? AttrsReason.ATTRS_ANCHOR_MISSING : AttrsReason.ATTRS_ANCHOR_DUPLICATE,
+                anchors, start, second, 0, 0, 0, null, null);
+        int depth = 0, typeFields = 0, observedTypeFields = 0, scanChars = 0, maxDepth = 0;
         String type = null;
         for (int index = start; index < record.length() && index - start < 8192; index++) {
+            scanChars = index - start + 1;
             char current = record.charAt(index);
             if (current == '{') {
-                if (++depth > 8) return null;
+                depth++; maxDepth = Math.max(maxDepth, depth);
+                if (depth > 8) return new WindowTypeResult(null, AttrsReason.DEPTH_LIMIT,
+                        anchors, start, second, scanChars, maxDepth, observedTypeFields, null, null);
             } else if (current == '}') {
-                if (--depth == 0) return typeFields == 1 ? type : null;
+                if (--depth == 0) return new WindowTypeResult(typeFields == 1 ? type : null,
+                        typeFields == 1 ? AttrsReason.PARSED : typeFields == 0 ? AttrsReason.TOP_LEVEL_TYPE_MISSING : AttrsReason.TOP_LEVEL_TYPE_DUPLICATE,
+                        anchors, start, second, scanChars, maxDepth, observedTypeFields, null, null);
             } else if (depth == 1 && (index == start + 1 || Character.isWhitespace(record.charAt(index - 1)))
                     && record.startsWith("ty=", index)) {
+                observedTypeFields++;
                 int end = index + 3;
                 while (end < record.length() && end - index <= 67
                         && !Character.isWhitespace(record.charAt(end)) && record.charAt(end) != '}' && record.charAt(end) != '{') end++;
                 String value = record.substring(index + 3, end);
-                if (!value.matches("[A-Z_0-9]{1,64}") || end < record.length() && record.charAt(end) == '{') return null;
+                boolean completeValue = end == record.length() || Character.isWhitespace(record.charAt(end))
+                        || record.charAt(end) == '}' || record.charAt(end) == '{';
+                if (!value.matches("[A-Z_0-9]{1,64}") || end < record.length() && record.charAt(end) == '{')
+                    return new WindowTypeResult(null, !value.matches("[A-Z_0-9]{1,64}")
+                            ? AttrsReason.TYPE_VALUE_UNRECOGNIZED : AttrsReason.TYPE_VALUE_FOLLOWED_BY_OPEN_BRACE,
+                            anchors, start, second, scanChars, maxDepth, observedTypeFields, value, completeValue);
                 type = value; typeFields++;
                 index = end - 1;
             }
         }
-        return null; // Missing closing brace or excessive size/depth is an unavailable format.
+        return new WindowTypeResult(null, record.length() - start >= 8192 ? AttrsReason.ATTRS_SIZE_LIMIT : AttrsReason.ATTRS_UNCLOSED,
+                anchors, start, second, scanChars, maxDepth, observedTypeFields, null, null);
     }
 
     static JSONObject parsePopulator(String dump, String token) throws Exception {

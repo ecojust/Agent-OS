@@ -371,5 +371,141 @@ class AttributeAccountingTest(unittest.TestCase):
                 self.assertFalse(result['interpretationAllowed'])
 
 
+def attrs_failure_entry():
+    return {'recordOrdinal': 3, 'recordEnd': 'DUMP_END', 'headerRelation': 'OTHER_RECOGNIZED_WINDOW',
+        'attrsAnchorCount': 2, 'firstAttrsOffset': 100, 'secondAttrsOffset': 200,
+        'recordChars': 1000, 'scanChars': 0, 'maxDepth': 0, 'topLevelTypeCount': 0,
+        'reason': 'ATTRS_ANCHOR_DUPLICATE', 'typeLexicalClass': None, 'typeValueLength': None,
+        'typeValueComplete': None, 'firstKnownTailSection': {'kind': 'HIDING_SYSTEM_ALERT_WINDOWS', 'offset': 150},
+        'knownTailSectionBetweenAnchors': True}
+
+
+def attrs_failure_fixture():
+    value = fixture()
+    value['commands'][0]['parsed'] = {'status': 'UNAVAILABLE', 'reason': 'WMS_ATTRIBUTES_INCOMPLETE',
+        'referenceCount': 1, 'selectedWindowStateToken': 'aabbcc', 'inputMethodRecordCount': 1,
+        'attributesParsedCount': 2, 'attributesUnparsedCount': 1,
+        'attrsDiagnostics': {'schemaVersion': 1, 'maxRetained': 8, 'recordCount': 3,
+            'unparsedCount': 1, 'omittedCount': 0, 'entries': [attrs_failure_entry()]}}
+    value['association']['tokenCandidate'] = None
+    summary_unavailable(value)
+    for group in [value['commands'][1]['parsed']['visible'], value['commands'][1]['parsed']['displays'], value['commands'][2]['parsed']]:
+        group.update(matchCount=None, matches=[])
+    return value
+
+
+class AttributeReasonTest(unittest.TestCase):
+    def test_complete_new_structural_details_do_not_authorize_candidate(self):
+        value = attrs_failure_fixture()
+        result = a.derive(value)
+        self.assertEqual([], result['consistencyIssues'])
+        self.assertEqual('INCONCLUSIVE', result['association']['status'])
+        self.assertIsNone(result['association']['tokenCandidate'])
+        self.assertEqual({'availability': 'unavailable', 'matchCount': None}, result['postFailureObservations']['finalService'])
+        for relation in ['MATCHES_SELECTED_REFERENCE', 'OTHER_RECOGNIZED_WINDOW', 'UNRECOGNIZED']:
+            value['commands'][0]['parsed']['attrsDiagnostics']['entries'][0]['headerRelation'] = relation
+            result = a.derive(value)
+            self.assertEqual([], result['consistencyIssues'])
+            self.assertIsNone(result['association']['tokenCandidate'])
+
+    def test_empty_reason_list_for_complete_selected_records(self):
+        value = fixture()
+        value['commands'][0]['parsed'].update(attributesParsedCount=4, attributesUnparsedCount=0,
+            attrsDiagnostics={'schemaVersion': 1, 'maxRetained': 8, 'recordCount': 4,
+                'unparsedCount': 0, 'omittedCount': 0, 'entries': []})
+        self.assertEqual([], a.derive(value)['consistencyIssues'])
+
+    def test_eight_retained_details_and_omission_are_distinct(self):
+        value = attrs_failure_fixture()
+        parsed = value['commands'][0]['parsed']
+        parsed.update(attributesParsedCount=1, attributesUnparsedCount=10)
+        details = parsed['attrsDiagnostics']
+        entries = [dict(attrs_failure_entry(), recordOrdinal=i, recordEnd='NEXT_WINDOW_HEADER') for i in range(1,9)]
+        details.update(recordCount=11, unparsedCount=10, omittedCount=2, entries=entries)
+        self.assertEqual([], a.derive(value)['consistencyIssues'])
+        for key, bad in [('omittedCount', 0), ('unparsedCount', 9), ('recordCount', 12), ('maxRetained', 9), ('schemaVersion', True), ('entries', entries+[dict(entries[-1],recordOrdinal=9)])]:
+            invalid = copy.deepcopy(value)
+            invalid['commands'][0]['parsed']['attrsDiagnostics'][key] = bad
+            self.assertTrue(a.derive(invalid)['consistencyIssues'])
+
+    def test_unknown_reason_raw_fields_bounds_and_ordinal_collision_refused(self):
+        for key, bad in [('reason','private-window-title'), ('recordEnd','OTHER'), ('recordOrdinal',0),
+                         ('attrsAnchorCount',True), ('firstAttrsOffset',1001), ('secondAttrsOffset',99),
+                         ('recordChars',262145), ('scanChars',8193), ('maxDepth',10), ('topLevelTypeCount',8193),
+                         ('extraRawType','private-window-title')]:
+            value=attrs_failure_fixture()
+            value['commands'][0]['parsed']['attrsDiagnostics']['entries'][0][key]=bad
+            with self.subTest(key=key): self.assertTrue(a.derive(value)['consistencyIssues'])
+        value=attrs_failure_fixture()
+        parsed=value['commands'][0]['parsed'];parsed.update(attributesUnparsedCount=2)
+        d=parsed['attrsDiagnostics'];d.update(recordCount=4,unparsedCount=2,entries=[dict(attrs_failure_entry(),recordEnd='NEXT_WINDOW_HEADER')]*2)
+        self.assertTrue(a.derive(value)['consistencyIssues'])
+
+    def test_prefix_classification_is_bounded_and_does_not_imply_full_value(self):
+        value=attrs_failure_fixture();entry=value['commands'][0]['parsed']['attrsDiagnostics']['entries'][0]
+        entry.update(attrsAnchorCount=1,secondAttrsOffset=None,scanChars=50,maxDepth=1,topLevelTypeCount=1,
+            reason='TYPE_VALUE_UNRECOGNIZED',typeLexicalClass='OTHER',typeValueLength=65,typeValueComplete=False,
+            firstKnownTailSection=None,knownTailSectionBetweenAnchors=None)
+        result=a.derive(value);self.assertEqual([],result['consistencyIssues']);self.assertIsNone(result['association']['tokenCandidate'])
+        for key,bad in [('typeValueLength',64),('typeValueComplete',None),('typeLexicalClass','UNKNOWN'),('topLevelTypeCount',0)]:
+            invalid=copy.deepcopy(value);invalid['commands'][0]['parsed']['attrsDiagnostics']['entries'][0][key]=bad
+            self.assertTrue(a.derive(invalid)['consistencyIssues'])
+        entry.update(reason='TYPE_VALUE_FOLLOWED_BY_OPEN_BRACE',typeLexicalClass='UPPERCASE_SYMBOL',typeValueLength=12,typeValueComplete=True)
+        self.assertEqual([],a.derive(value)['consistencyIssues'])
+
+    def test_outer_cursor_scan_can_stop_before_size_limit_after_lookahead(self):
+        value=attrs_failure_fixture();entry=value['commands'][0]['parsed']['attrsDiagnostics']['entries'][0]
+        entry.update(attrsAnchorCount=1,secondAttrsOffset=None,recordChars=9000,scanChars=8188,maxDepth=1,topLevelTypeCount=1,
+            reason='ATTRS_SIZE_LIMIT',firstKnownTailSection=None,knownTailSectionBetweenAnchors=None)
+        self.assertEqual([],a.derive(value)['consistencyIssues'])
+        entry.update(recordChars=1000,reason='ATTRS_UNCLOSED',scanChars=895)
+        self.assertEqual([],a.derive(value)['consistencyIssues'])
+        entry['reason']='ATTRS_SIZE_LIMIT';self.assertTrue(a.derive(value)['consistencyIssues'])
+
+    def test_tail_first_only_receipt_does_not_infer_absence_of_later_heading(self):
+        value=attrs_failure_fixture();entry=value['commands'][0]['parsed']['attrsDiagnostics']['entries'][0]
+        entry['firstKnownTailSection']['offset']=50
+        for between in [False,True]:
+            entry['knownTailSectionBetweenAnchors']=between
+            self.assertEqual([],a.derive(value)['consistencyIssues'])
+        entry['firstKnownTailSection']['offset']=150;entry['knownTailSectionBetweenAnchors']=False
+        self.assertTrue(a.derive(value)['consistencyIssues'])
+        entry['firstKnownTailSection']['offset']=250;entry['knownTailSectionBetweenAnchors']=True
+        self.assertTrue(a.derive(value)['consistencyIssues'])
+        entry['firstKnownTailSection']=None
+        self.assertTrue(a.derive(value)['consistencyIssues'])
+
+    def test_reason_specific_scan_and_type_metadata_cannot_be_filled_for_missing_attrs(self):
+        value=attrs_failure_fixture();entry=value['commands'][0]['parsed']['attrsDiagnostics']['entries'][0]
+        entry.update(attrsAnchorCount=0,firstAttrsOffset=None,secondAttrsOffset=None,reason='ATTRS_ANCHOR_MISSING',
+            firstKnownTailSection=None,knownTailSectionBetweenAnchors=None)
+        self.assertEqual([],a.derive(value)['consistencyIssues'])
+        entry['typeLexicalClass']='EMPTY';self.assertTrue(a.derive(value)['consistencyIssues'])
+        entry['typeLexicalClass']=None;entry['scanChars']=1;self.assertTrue(a.derive(value)['consistencyIssues'])
+
+
+class AttributeSemanticConsistencyTest(unittest.TestCase):
+    def test_type_prefix_class_cannot_contradict_original_rejection_order(self):
+        for reason, lexical in [('TYPE_VALUE_FOLLOWED_BY_OPEN_BRACE','SIGNED_DECIMAL'),
+                                ('TYPE_VALUE_UNRECOGNIZED','DECIMAL'),
+                                ('TYPE_VALUE_UNRECOGNIZED','UPPERCASE_SYMBOL')]:
+            value=attrs_failure_fixture();entry=value['commands'][0]['parsed']['attrsDiagnostics']['entries'][0]
+            entry.update(attrsAnchorCount=1,secondAttrsOffset=None,scanChars=20,maxDepth=1,topLevelTypeCount=1,
+                reason=reason,typeLexicalClass=lexical,typeValueLength=4,typeValueComplete=True,
+                firstKnownTailSection=None,knownTailSectionBetweenAnchors=None)
+            with self.subTest(reason=reason,lexical=lexical): self.assertTrue(a.derive(value)['consistencyIssues'])
+        for lexical in ['HEX','OTHER']:
+            entry.update(reason='TYPE_VALUE_FOLLOWED_BY_OPEN_BRACE',typeLexicalClass=lexical)
+            self.assertEqual([],a.derive(value)['consistencyIssues'])
+
+    def test_depth_and_type_field_count_cannot_exceed_outer_cursor_extent(self):
+        for depth, types in [(9,0),(1,2)]:
+            value=attrs_failure_fixture();entry=value['commands'][0]['parsed']['attrsDiagnostics']['entries'][0]
+            entry.update(attrsAnchorCount=1,secondAttrsOffset=None,scanChars=1,maxDepth=depth,topLevelTypeCount=types,
+                reason='DEPTH_LIMIT'if depth==9 else'ATTRS_UNCLOSED',
+                firstKnownTailSection=None,knownTailSectionBetweenAnchors=None)
+            self.assertTrue(a.derive(value)['consistencyIssues'])
+
+
 if __name__ == '__main__':
     unittest.main()

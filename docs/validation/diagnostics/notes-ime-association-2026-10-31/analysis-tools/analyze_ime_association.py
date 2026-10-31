@@ -179,6 +179,17 @@ TOP_KEYS = {'schemaVersion', 'phase', 'clock', 'startedElapsedMillis', 'endedEla
 WMS_KEYS = {'status', 'reason', 'referenceCount', 'inputMethodRecordCount', 'selectedWindowStateToken',
            'ownerUid', 'displayId', 'ownerMatches', 'displayMatches', 'packageMatches', 'mClient', 'fields'}
 WMS_ATTRIBUTE_KEYS = {'attributesParsedCount', 'attributesUnparsedCount'}
+WMS_ATTRIBUTE_DETAIL_KEYS = {'attrsDiagnostics'}
+ATTRS_REASONS = {'ATTRS_ANCHOR_MISSING', 'ATTRS_ANCHOR_DUPLICATE', 'DEPTH_LIMIT',
+    'TYPE_VALUE_UNRECOGNIZED', 'TYPE_VALUE_FOLLOWED_BY_OPEN_BRACE', 'TOP_LEVEL_TYPE_MISSING',
+    'TOP_LEVEL_TYPE_DUPLICATE', 'ATTRS_SIZE_LIMIT', 'ATTRS_UNCLOSED'}
+ATTRS_LEXICAL_CLASSES = {'EMPTY', 'DECIMAL', 'SIGNED_DECIMAL', 'HEX', 'UPPERCASE_SYMBOL', 'OTHER'}
+ATTRS_TAIL_KINDS = {'HIDING_SYSTEM_ALERT_WINDOWS', 'FORCE_REMOVING_WINDOWS',
+                    'DESTROY_SURFACE_WINDOWS', 'RESIZING_WINDOWS'}
+ATTRS_ENTRY_KEYS = {'recordOrdinal', 'recordEnd', 'headerRelation', 'attrsAnchorCount',
+    'firstAttrsOffset', 'secondAttrsOffset', 'recordChars', 'scanChars', 'maxDepth',
+    'topLevelTypeCount', 'reason', 'typeLexicalClass', 'typeValueLength', 'typeValueComplete',
+    'firstKnownTailSection', 'knownTailSectionBetweenAnchors'}
 WMS_REASONS = {'SOURCE_UNAVAILABLE', 'WMS_HEADER_UNRECOGNIZED', 'WMS_REFERENCE_MISSING_OR_AMBIGUOUS',
     'WMS_RECORD_MISSING_OR_AMBIGUOUS', 'WMS_IDENTITY_MISMATCH', 'WMS_CLIENT_UNRECOGNIZED',
     'WMS_CLIENT_AMBIGUOUS', 'WMS_ATTRIBUTES_INCOMPLETE', 'UNIQUE_CONFIGURED_IME_TEXT_CANDIDATE'}
@@ -349,7 +360,7 @@ def _derive(value):
 
 
 def validate_wms(parsed, identity, check):
-    check(set(parsed) <= WMS_KEYS | WMS_ATTRIBUTE_KEYS and {'status', 'reason'} <= set(parsed), 'unexpected WMS fields')
+    check(set(parsed) <= WMS_KEYS | WMS_ATTRIBUTE_KEYS | WMS_ATTRIBUTE_DETAIL_KEYS and {'status', 'reason'} <= set(parsed), 'unexpected WMS fields')
     check(parsed.get('status') in {'SELECTED', 'UNAVAILABLE'} and parsed.get('reason') in WMS_REASONS, 'unknown WMS parse status/reason')
     attribute_keys = set(parsed) & WMS_ATTRIBUTE_KEYS
     check(not attribute_keys or attribute_keys == WMS_ATTRIBUTE_KEYS, 'WMS attribute accounting requires both counters')
@@ -368,6 +379,9 @@ def validate_wms(parsed, identity, check):
     if parsed.get('reason') == 'WMS_ATTRIBUTES_INCOMPLETE':
         check(attribute_keys == WMS_ATTRIBUTE_KEYS and integer(parsed.get('attributesUnparsedCount'), 1),
               'WMS incomplete attributes lack explicit positive failure count')
+    if 'attrsDiagnostics' in parsed:
+        check(attribute_keys == WMS_ATTRIBUTE_KEYS, 'WMS attribute details lack original paired counters')
+        validate_attrs_diagnostics(parsed['attrsDiagnostics'], parsed, check)
     for key in ['referenceCount', 'inputMethodRecordCount', 'ownerUid', 'displayId']:
         if key in parsed:
             check(integer(parsed[key], 0, 2**31-1), key + ' invalid')
@@ -380,7 +394,7 @@ def validate_wms(parsed, identity, check):
     if 'mClient' in parsed:
         check(binder(parsed['mClient']), 'mClient is not bounded Java binder text')
     if parsed.get('status') == 'SELECTED':
-        check(set(parsed) - WMS_ATTRIBUTE_KEYS == WMS_KEYS, 'selected WMS record lacks exact selected fields')
+        check(set(parsed) - WMS_ATTRIBUTE_KEYS - WMS_ATTRIBUTE_DETAIL_KEYS == WMS_KEYS, 'selected WMS record lacks exact selected fields')
         check(parsed.get('reason') == 'UNIQUE_CONFIGURED_IME_TEXT_CANDIDATE' and parsed.get('referenceCount') == 1 and parsed.get('inputMethodRecordCount') == 1,
               'WMS selection not uniquely justified')
         check(all(parsed.get(key) is True for key in ['ownerMatches', 'displayMatches', 'packageMatches'])
@@ -394,6 +408,122 @@ def validate_wms(parsed, identity, check):
                 check(valid, 'invalid WMS visibility observation')
                 if valid:
                     check((item['count'] == 0) == (item['value'] == 'MISSING'), 'WMS missing field/count mismatch')
+
+
+def validate_attrs_diagnostics(value, wms, check):
+    """Validate bounded structural metadata; never infer ownership or relax selection."""
+    expected = {'schemaVersion', 'maxRetained', 'recordCount', 'unparsedCount', 'omittedCount', 'entries'}
+    check(type(value) is dict and set(value) == expected, 'attribute details have unexpected fields')
+    if type(value) is not dict:
+        return
+    check(type(value.get('schemaVersion')) is int and value['schemaVersion'] == 1,
+          'attribute details schema version differs')
+    check(type(value.get('maxRetained')) is int and value['maxRetained'] == 8,
+          'attribute retained detail cap differs')
+    for key in ['recordCount', 'unparsedCount', 'omittedCount']:
+        check(integer(value.get(key), 0, 262144), 'attribute ' + key + ' is not a bounded count')
+    records, failures, omitted = (value.get(k) for k in ['recordCount', 'unparsedCount', 'omittedCount'])
+    parsed, unparsed = wms.get('attributesParsedCount'), wms.get('attributesUnparsedCount')
+    if all(integer(n, 0, 262144) for n in [records, failures, omitted, parsed, unparsed]):
+        check(records == parsed + unparsed and failures == unparsed,
+              'attribute record/failure accounting differs from original counters')
+    entries = value.get('entries')
+    check(type(entries) is list and len(entries) <= 8, 'attribute details exceed retained cap or are not a list')
+    if type(entries) is not list:
+        return
+    if integer(failures):
+        check(len(entries) == min(failures, 8) and omitted == failures - len(entries),
+              'attribute retained prefix/omitted count mismatch')
+    previous = 0
+    for entry in entries:
+        check(type(entry) is dict and set(entry) == ATTRS_ENTRY_KEYS, 'unexpected attribute failure entry fields')
+        if type(entry) is not dict:
+            continue
+        ordinal, chars = entry.get('recordOrdinal'), entry.get('recordChars')
+        check(integer(ordinal, 1, records if integer(records) else 0) and ordinal > previous,
+              'attribute failure ordinals are missing, duplicated, reordered or outside record count')
+        if integer(ordinal):
+            previous = ordinal
+        check(entry.get('recordEnd') == ('DUMP_END' if ordinal == records else 'NEXT_WINDOW_HEADER'),
+              'attribute record boundary differs from ordinal/count')
+        check(entry.get('headerRelation') in {'MATCHES_SELECTED_REFERENCE', 'OTHER_RECOGNIZED_WINDOW', 'UNRECOGNIZED'},
+              'unknown attribute header text relation')
+        check(integer(chars, 1, 262144), 'attribute record UTF16 length outside retained output bound')
+        anchors, first, second, scan, depth, types = (entry.get(k) for k in [
+            'attrsAnchorCount', 'firstAttrsOffset', 'secondAttrsOffset', 'scanChars', 'maxDepth', 'topLevelTypeCount'])
+        check(integer(anchors, 0, chars if integer(chars) else 0), 'attribute anchor count invalid')
+        for key, offset in [('first', first), ('second', second)]:
+            check(offset is None or integer(offset, 0, chars-1 if integer(chars) else -1), key + ' attribute offset outside record')
+        check(integer(scan, 0, 8192) and integer(depth, 0, 9) and integer(types, 0, 8192),
+              'attribute scan/depth/type counters outside fixed bounds')
+        if all(integer(n) for n in [scan, depth, types]):
+            check(depth <= scan and types <= scan, 'attribute depth/type counters exceed observed outer cursor prefix')
+        reason = entry.get('reason')
+        check(reason in ATTRS_REASONS, 'unknown attribute rejection reason')
+        if integer(anchors):
+            check((first is None) == (anchors == 0) and (second is None) == (anchors < 2),
+                  'attribute anchor offsets do not match anchor count')
+            if anchors >= 2 and integer(first) and integer(second):
+                check(first < second, 'first two attribute offsets are not ordered')
+            if anchors != 1:
+                check(reason == ('ATTRS_ANCHOR_MISSING' if anchors == 0 else 'ATTRS_ANCHOR_DUPLICATE')
+                      and scan == 0 and depth == 0 and types == 0, 'early anchor refusal has inferred scan metadata')
+            else:
+                check(reason not in {'ATTRS_ANCHOR_MISSING', 'ATTRS_ANCHOR_DUPLICATE'}, 'one anchor cannot have missing/duplicate reason')
+                check(integer(scan, 1, 8192) and integer(depth, 1, 9), 'scanned attribute record lacks opening-brace progress')
+                if integer(first) and integer(chars) and integer(scan):
+                    check(scan <= chars-first, 'outer cursor scan exceeds remaining record characters')
+                    if reason == 'ATTRS_SIZE_LIMIT':
+                        check(chars-first >= 8192, 'size limit without at least8192 available codeunits')
+                    if reason == 'ATTRS_UNCLOSED':
+                        check(chars-first < 8192, 'unclosed reason exceeds size-limit classification')
+        if reason == 'DEPTH_LIMIT':
+            check(depth == 9, 'depth limit did not reach first disallowed depth')
+        elif integer(depth):
+            check(depth <= 8, 'non-depth refusal exceeded depth limit')
+        if reason == 'TOP_LEVEL_TYPE_MISSING':
+            check(types == 0, 'missing top-level type has an observed type')
+        elif reason == 'TOP_LEVEL_TYPE_DUPLICATE':
+            check(integer(types, 2, 8192), 'duplicate top-level type lacks two observed fields')
+        lexical, length, complete = (entry.get(k) for k in ['typeLexicalClass', 'typeValueLength', 'typeValueComplete'])
+        if reason in {'TYPE_VALUE_UNRECOGNIZED', 'TYPE_VALUE_FOLLOWED_BY_OPEN_BRACE'}:
+            check(lexical in ATTRS_LEXICAL_CLASSES and integer(length, 0, 65) and type(complete) is bool,
+                  'invalid bounded type-prefix metadata')
+            check(integer(types, 1, 8192), 'type-value refusal lacks encountered top-level type field')
+            check((lexical == 'EMPTY') == (length == 0), 'empty type-prefix class/length mismatch')
+            if lexical == 'SIGNED_DECIMAL':
+                check(integer(length, 2, 65), 'signed decimal prefix too short')
+            if lexical == 'HEX':
+                check(integer(length, 3, 65), 'hex prefix too short')
+            if complete is False:
+                check(length == 65, 'incomplete type prefix did not reach fixed lookahead cap')
+            if reason == 'TYPE_VALUE_FOLLOWED_BY_OPEN_BRACE':
+                check(integer(length, 1, 64) and complete is True,
+                      'brace-followed recognized type has incomplete/empty/overlong value')
+                check(lexical != 'SIGNED_DECIMAL', 'signed type value cannot reach recognized-type brace refusal')
+            elif lexical in {'DECIMAL', 'UPPERCASE_SYMBOL'} and integer(length, 1, 64):
+                check(False, 'unrecognized type contradicts a bounded class accepted by the original parser')
+        else:
+            check(lexical is None and length is None and complete is None,
+                  'non-type refusal contains type contents or inferred lexical metadata')
+        tail, between = entry.get('firstKnownTailSection'), entry.get('knownTailSectionBetweenAnchors')
+        tail_valid = (type(tail) is dict and set(tail) == {'kind', 'offset'} and tail.get('kind') in ATTRS_TAIL_KINDS
+            and integer(tail.get('offset'), 0, chars-1 if integer(chars) else -1))
+        check(tail is None or tail_valid, 'unknown/nonstructural tail heading or invalid offset')
+        if integer(anchors) and anchors < 2:
+            check(between is None, 'fewer than two anchors has inferred between-anchor heading result')
+        elif integer(anchors):
+            check(type(between) is bool, 'between-anchor heading result is not boolean')
+            if tail is None:
+                check(between is False, 'between-anchor heading true without any known heading')
+            elif tail_valid and integer(first) and integer(second):
+                offset = tail['offset']
+                if first < offset < second:
+                    check(between is True, 'known first heading between anchors was ignored')
+                elif offset >= second:
+                    check(between is False, 'first heading after second anchor cannot establish a heading between')
+                # When first heading precedes first anchor, a later heading may be
+                # between anchors. The first-only receipt cannot infer absence.
 
 
 def validate_matches(group, keys, count, check):

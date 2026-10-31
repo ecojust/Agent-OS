@@ -1,0 +1,137 @@
+[
+  {
+    "revision": "99b01a65cc4c104933788b3143285ab6bae65827",
+    "path": "services/core/java/com/android/server/wm/WindowManagerService.java",
+    "url": "https://android.googlesource.com/platform/frameworks/base/+/99b01a65cc4c104933788b3143285ab6bae65827/services/core/java/com/android/server/wm/WindowManagerService.java?format=TEXT",
+    "bytes": 457129,
+    "sha256": "3d1f843d3f5bff9bd3271747a8c7b26f5f3921db06d7aa8af87d856518b8edb3",
+    "localPath": "/workspace/scratch/notes-ime-attrs-reasons-aosp16/WindowManagerService.java",
+    "lineReferences": [
+      {
+        "start": 6821,
+        "end": 6824,
+        "fact": "Formal window list is dumped first."
+      },
+      {
+        "start": 6826,
+        "end": 6839,
+        "fact": "Hiding System Alert Windows tail uses #N then w.dump when dumpAll."
+      },
+      {
+        "start": 6841,
+        "end": 6854,
+        "fact": "Force-removing tail uses Removing #N then w.dump when dumpAll."
+      },
+      {
+        "start": 6856,
+        "end": 6871,
+        "fact": "Destroy-surface tail uses Destroy #N then w.dump when dumpAll."
+      },
+      {
+        "start": 6873,
+        "end": 6888,
+        "fact": "Resize tail uses Resizing #N then w.dump when dumpAll."
+      },
+      {
+        "start": 6890,
+        "end": 6904,
+        "fact": "Waiting-for-drawn tail emits Waiting # references, not w.dump; global configuration follows."
+      },
+      {
+        "start": 7177,
+        "end": 7181,
+        "fact": "windows command calls dumpWindowsLocked with dumpAll=true."
+      }
+    ]
+  },
+  {
+    "revision": "99b01a65cc4c104933788b3143285ab6bae65827",
+    "path": "services/core/java/com/android/server/wm/WindowState.java",
+    "url": "https://android.googlesource.com/platform/frameworks/base/+/99b01a65cc4c104933788b3143285ab6bae65827/services/core/java/com/android/server/wm/WindowState.java?format=TEXT",
+    "bytes": 254268,
+    "sha256": "9de7d8fd858683a379470cd6ac634c880737d62d88bc75cbf5027d1273834d01",
+    "localPath": "/workspace/scratch/notes-ime-attrs-reasons-aosp16/WindowState.java",
+    "lineReferences": [
+      {
+        "start": 3974,
+        "end": 3986,
+        "fact": "WindowState.dump unconditionally prints mAttrs once after display/client/owner fields."
+      },
+      {
+        "start": 4067,
+        "end": 4070,
+        "fact": "WindowState calls superclass and animator dump after its own attributes."
+      }
+    ]
+  },
+  {
+    "revision": "99b01a65cc4c104933788b3143285ab6bae65827",
+    "path": "core/java/android/view/WindowManager.java",
+    "url": "https://android.googlesource.com/platform/frameworks/base/+/99b01a65cc4c104933788b3143285ab6bae65827/core/java/android/view/WindowManager.java?format=TEXT",
+    "bytes": 298830,
+    "sha256": "74beb0d7a6e72e9924c2e33552f3128d0536eccb8547bdce585607bc6be62ea0",
+    "localPath": "/workspace/scratch/notes-ime-attrs-reasons-aosp16/WindowManager.java",
+    "lineReferences": [
+      {
+        "start": 2148,
+        "end": 2194,
+        "fact": "Known type output names use uppercase and underscores; INPUT_METHOD mapping is explicit."
+      },
+      {
+        "start": 5843,
+        "end": 5869,
+        "fact": "LayoutParams opens outer brace, prints nested sim before mandatory ty."
+      },
+      {
+        "start": 6021,
+        "end": 6033,
+        "fact": "Optional paramsForRotation recursively prints LayoutParams and final outer brace closes."
+      }
+    ]
+  },
+  {
+    "revision": "99b01a65cc4c104933788b3143285ab6bae65827",
+    "path": "services/core/java/com/android/server/wm/RootWindowContainer.java",
+    "url": "https://android.googlesource.com/platform/frameworks/base/+/99b01a65cc4c104933788b3143285ab6bae65827/services/core/java/com/android/server/wm/RootWindowContainer.java?format=TEXT",
+    "bytes": 174194,
+    "sha256": "084fed47859933bf56b1c9768ca032c94022667c586bd722e5d31aa49d8b8f49",
+    "localPath": "/workspace/scratch/notes-ime-attrs-reasons-aosp16/RootWindowContainer.java",
+    "lineReferences": [
+      {
+        "start": 1086,
+        "end": 1094,
+        "fact": "Formal records use Window #N and invoke WindowState.dump."
+      }
+    ]
+  },
+  {
+    "revision": "99b01a65cc4c104933788b3143285ab6bae65827",
+    "path": "core/java/android/view/ViewDebug.java",
+    "url": "https://android.googlesource.com/platform/frameworks/base/+/99b01a65cc4c104933788b3143285ab6bae65827/core/java/android/view/ViewDebug.java?format=TEXT",
+    "bytes": 81767,
+    "sha256": "04d33839685757a388445b71f03fa94366548a98987b61155d9d5abb562c0ed5",
+    "localPath": "/workspace/scratch/notes-ime-attrs-reasons-aosp16/ViewDebug.java",
+    "lineReferences": [
+      {
+        "start": 1628,
+        "end": 1641,
+        "fact": "Known type values return mapping name; unknown values use decimal Integer.toString, including minus sign for a negative integer."
+      }
+    ]
+  },
+  {
+    "revision": "99b01a65cc4c104933788b3143285ab6bae65827",
+    "path": "services/core/java/com/android/server/wm/WindowContainer.java",
+    "url": "https://android.googlesource.com/platform/frameworks/base/+/99b01a65cc4c104933788b3143285ab6bae65827/services/core/java/com/android/server/wm/WindowContainer.java?format=TEXT",
+    "bytes": 153277,
+    "sha256": "d8b9fb3a413d9f771370f1382a2a8647ad03ed2b9057bb6e539119965ce0d272",
+    "localPath": "/workspace/scratch/notes-ime-attrs-reasons-aosp16/WindowContainer.java",
+    "lineReferences": [
+      {
+        "start": 3190,
+        "end": 3209,
+        "fact": "Superclass dump prints animation/orientation/local-insets/safe-region metadata; does not recursively dump another WindowState or mAttrs."
+      }
+    ]
+  }
+]

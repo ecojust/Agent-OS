@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "kind": "bounded-attrs-rejection-reasons-host-analysis-validation",
+  "validatedAt": "2026-10-31T06:37:14Z",
+  "worktreeBaseCommit": "329429eb2f488108036985b32bdc861cdabc81b6",
+  "scope": "Additive optional attrsDiagnostics; bounds/counts/known enums only, no selection or original outcome changes",
+  "scripts": [
+    {
+      "path": "docs/validation/diagnostics/notes-ime-association-2026-10-31/analysis-tools/analyze_ime_association.py",
+      "bytes": 50167,
+      "sha256": "36b796e01ce9c7acafb65fde304954d551dfc4e122b6c1b5d27e8ced931d53e8"
+    },
+    {
+      "path": "docs/validation/diagnostics/notes-ime-association-2026-10-31/analysis-tools/test_analyze_ime_association.py",
+      "bytes": 32737,
+      "sha256": "5a0f14612fe13c1cdf58abd084911381ac43025beb0a095df0ff3d0bc9c08050"
+    }
+  ],
+  "collectorHelperSha256": "c920dce631dbd4e81397282dbf598c0b754cbcb7934eb32c98be90172f9ca90d",
+  "hostTests": {
+    "passed": 39,
+    "failed": 0,
+    "skipped": 0,
+    "previousTestsIncluded": 29,
+    "newStructuralMetadataBoundaryTests": 10,
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s docs/validation/diagnostics/notes-ime-association-2026-10-31/analysis-tools -p 'test_*.py' -v",
+    "logSha256": "2c25741e743628b704e92848c52879247602ee0dbf1ed9d496f0a7ebc1964c2f"
+  },
+  "actualJavaToHostSchemaChecks": {
+    "syntheticOnly": true,
+    "passed": 2,
+    "failed": 0,
+    "receipt": "analysis-bridge/cross-check.json",
+    "receiptSha256": "c7ae3c4340ee7598daa6cbb4fccdb71904bc0172ed4797be2e99062d7c7ffc39",
+    "javaFixtureSha256": "f95d334fb9ab8cdc8039ba83d8c97cf36261244ec5784e99d387285d902c2868",
+    "bridgeSourceSha256": "0f073bc21368053fdae4e30e99cb1c9aec69d5a5bdc84015ac4b3013489d9143"
+  },
+  "historicalReplays": [
+    {
+      "sourceCommit": "72f77af85481eb90c0511a52e61c7cbab3ac6595",
+      "sourceRunId": 41173725544,
+      "originalCounts": {
+        "passed": 24,
+        "failed": 8,
+        "unverified": 0
+      },
+      "originalCaseObjectsAndInterpretationsUnchanged": 32,
+      "associationRawMethodShaPairsUnchanged": 8,
+      "confirmationRawMethodShaPairsUnchanged": 8,
+      "newConsistencyIssues": 0,
+      "unassignedOrMalformedOccurrences": 0,
+      "originalAssociationAnalysisSha256": "90892eb3e12355b974243823a2882663bfb51150b43f8bcb1d5b2f7f58c06f35",
+      "originalConfirmationAnalysisSha256": "016d1fb664a7ea3c41dd58670f801c4f56ba3aea64598cc1153a6524eb23558e",
+      "replayAssociationAnalysisSha256": "bf1e9cdf2a42cd30220ba58bb29abb453e3b0e1a3ca2c287ecffaec60a8645a5",
+      "replayConfirmationAnalysisSha256": "35cbb2c8c4abe34f5c72af7d0534c6fc53713dbd626f3dc0de95af0271f56e4a",
+      "historicalReportsOverwritten": false
+    },
+    {
+      "sourceCommit": "9b86b2a842f9e837e20e2df183893da697faaf40",
+      "sourceRunId": 41174426442,
+      "originalCounts": {
+        "passed": 24,
+        "failed": 8,
+        "unverified": 0
+      },
+      "originalCaseObjectsAndInterpretationsUnchanged": 32,
+      "associationRawMethodShaPairsUnchanged": 8,
+      "confirmationRawMethodShaPairsUnchanged": 8,
+      "newConsistencyIssues": 0,
+      "unassignedOrMalformedOccurrences": 0,
+      "originalAssociationAnalysisSha256": "b92b9e6b61c08efac3aa86c4b314310819d798adbe148ae1969b4af1877143dc",
+      "originalConfirmationAnalysisSha256": "3c7fce82ba7c44ff1c7f8970ecd0b45d436ffb1feccc150c828c9ace4f6728cc",
+      "replayAssociationAnalysisSha256": "62ff4a1172f3b9f1dc7a58ab57b7b0c1d91b22a1a43bff2500d3626a191afba4",
+      "replayConfirmationAnalysisSha256": "1c068991277679469102fa68dbd792ac46043be4db9f872659e5f320c6cd3a15",
+      "historicalReportsOverwritten": false
+    }
+  ],
+  "priorValidationReports": [
+    "../notes-ime-association-2026-10-31/analysis-tools/analysis-validation.json",
+    "../notes-ime-association-2026-10-31/analysis-tools/attrs-correction-analysis-validation.json"
+  ],
+  "priorValidationReportsOverwritten": false,
+  "independentReview": {
+    "passedTests": 39,
+    "blockingFindings": 0,
+    "analyzerSha256": "36b796e01ce9c7acafb65fde304954d551dfc4e122b6c1b5d27e8ced931d53e8",
+    "testSha256": "5a0f14612fe13c1cdf58abd084911381ac43025beb0a095df0ff3d0bc9c08050"
+  },
+  "limitations": [
+    "No liveAndroid metadata reason is demonstrated by these host checks.",
+    "Reason entries retain only the first8 failures; omitted failures have no reconstructed reason or header ownership.",
+    "Header relation is bounded text relation only, not Binder identity or evidence that a rejected record is unrelated to the IME.",
+    "Type lexical class may cover only an incomplete65-codeunit prefix; no original type value is reconstructed.",
+    "scanChars measures the outer cursor extent; the unchanged bounded type lookahead can read beyond that extent.",
+    "The first known tail heading cannot prove absence of a later heading between anchors.",
+    "The old72f unavailable candidates and9b API36null/API37postfailurezeros remain exactly as archived."
+  ]
+}

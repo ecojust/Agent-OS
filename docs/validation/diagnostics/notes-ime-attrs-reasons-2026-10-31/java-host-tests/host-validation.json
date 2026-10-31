@@ -1,0 +1,44 @@
+{
+  "kind": "notes-ime-attrs-reasons-host-validation",
+  "validatedAt": "2026-10-31T06:35:09.067556Z",
+  "testedWorktreeBaseCommit": "329429eb2f488108036985b32bdc861cdabc81b6",
+  "helperSha256": "c920dce631dbd4e81397282dbf598c0b754cbcb7934eb32c98be90172f9ca90d",
+  "status": "passed",
+  "collectorHostChecks": 25,
+  "parserSelftests": "passed",
+  "legacyTypeDifferentialCases": 3235,
+  "attrsMetadataChecks": 129,
+  "blockedShellCallerElapsedMillis": 3004,
+  "androidDeviceTest": false,
+  "legacyOracle": {
+    "commit": "9b86b2a842f9e837e20e2df183893da697faaf40",
+    "helperSha256": "273104d38ca9ec7e4d0fbca2aecdc00c3e24467dc66f6029776ccd861bd172e9",
+    "originalMethodSha256": "5afef7af6d1257a413187890241380ef5834ee38302639d0b2efe68224d1333f",
+    "change": "Only method visibility is changed in the frozen host oracle."
+  },
+  "limitations": [
+    "Host substitutes do not establish Android Binder, service permission, actual dump or APK acceptance.",
+    "Synthetic tail fixtures do not establish the original API36 reason; old source/run remains unchanged.",
+    "Known fixed heading text and header relation do not authorize candidate selection.",
+    "Type lexical class for an incomplete prefix says nothing about the full unknown value."
+  ],
+  "jsonDependencySha256": "3cf6cd6892e32e2b4c1c39e0f52f5248a2f5b37646fdfbb79a66b46b618414ed",
+  "stdoutLog": {
+    "path": "host-test-output.txt",
+    "sha256": "79f8786d4631d2666ee7e92825b11e5da1ca79b7908acdf60b403d3bf60a0c90",
+    "source": "Verbatim stdout from successful host test tool execution"
+  },
+  "command": "python3 docs/validation/diagnostics/notes-ime-attrs-reasons-2026-10-31/java-host-tests/run.py --java-home /workspace/scratch/jdk17 --json-jar /workspace/scratch/notes-ime-association-java/json.jar",
+  "filesSha256": {
+    "docs/validation/diagnostics/notes-ime-attrs-reasons-2026-10-31/java-host-tests/README.md": "03b42d7ecbc8a60990e21dad95d6e4ac8c8d51755b2f17823bb24ab09c9db102",
+    "docs/validation/diagnostics/notes-ime-attrs-reasons-2026-10-31/java-host-tests/android/app/UiAutomation.java": "cd4fece9c69c0b4d4f83fbf405c6582a4b71551f702591749502cd81fe243ed0",
+    "docs/validation/diagnostics/notes-ime-attrs-reasons-2026-10-31/java-host-tests/android/os/ParcelFileDescriptor.java": "280076925b1fd4c620dd51ec9171099a972376dc9d33894be1f99db71fd8f015",
+    "docs/validation/diagnostics/notes-ime-attrs-reasons-2026-10-31/java-host-tests/android/os/SystemClock.java": "93680c995f81b6f8b8e8b8730771be4c2987d728f29f58750035803785456b8b",
+    "docs/validation/diagnostics/notes-ime-attrs-reasons-2026-10-31/java-host-tests/dev/agentos/compat/AttrsReasonsHostTest.java": "9d202fb9e6a3143ab1bc083ef4479c13a3c51107a1124aca2780d6b19b4b257c",
+    "docs/validation/diagnostics/notes-ime-attrs-reasons-2026-10-31/java-host-tests/dev/agentos/compat/CollectorHostTest.java": "75b243c44f28ad8f4fc1d26f470ad8784c2b6a72293352236eccf486589f8455",
+    "docs/validation/diagnostics/notes-ime-attrs-reasons-2026-10-31/java-host-tests/dev/agentos/compat/LegacyWindowTypeOracle.java": "bd5e3a2cdd50d8dd1060850ceb28d7919f95060fac35630634ab5d70e39e90e8",
+    "docs/validation/diagnostics/notes-ime-attrs-reasons-2026-10-31/java-host-tests/dev/agentos/compat/SmokeHarness.java": "9e4d25be01767936a485e8160078cffc384d154e0031491fa3a891f8c920f8a0",
+    "docs/validation/diagnostics/notes-ime-attrs-reasons-2026-10-31/java-host-tests/host-test-output.txt": "79f8786d4631d2666ee7e92825b11e5da1ca79b7908acdf60b403d3bf60a0c90",
+    "docs/validation/diagnostics/notes-ime-attrs-reasons-2026-10-31/java-host-tests/run.py": "fe87c11d1b754b9bf46236b63413dedd50a3d4d3edd7130fa635d2459cefa50a"
+  }
+}

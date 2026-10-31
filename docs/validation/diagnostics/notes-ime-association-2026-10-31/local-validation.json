@@ -1,0 +1,73 @@
+{
+  "sourceBase": "bc181046f96cd3690aa943f6dd4f5fe79c2e6e92",
+  "unchanged": {
+    "app/src/main": true,
+    "core/src/main": true,
+    "fixture/src/main": true,
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/SmokeCapture.java": true,
+    "docs/validation/third-party-app-set-lock.json": true,
+    "docs/validation/notes-dialog-confirmation-v4.md": true,
+    "scripts/third_party_smoke_set.py": true,
+    "scripts/third_party_smoke_set_archive.py": true,
+    ".github/workflows/third-party-smoke.yml": true
+  },
+  "originalTestMethodsUnchanged": true,
+  "originalTestMethods": [
+    "@Test public void calculatorWithAgentDisabled() throws Exception { exercise(SmokeHarness.CALCULATOR_TARGET, \"off\"); }",
+    "@Test public void calculatorWithAgentBoundAndIdle() throws Exception { exercise(SmokeHarness.CALCULATOR_TARGET, \"idle\"); }",
+    "@Test public void notesWithAgentDisabled() throws Exception { exercise(SmokeHarness.NOTES_TARGET, \"off\"); }",
+    "@Test public void notesWithAgentBoundAndIdle() throws Exception { exercise(SmokeHarness.NOTES_TARGET, \"idle\"); }"
+  ],
+  "changedFileHashes": {
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/NotesImeAssociationDiagnostic.java": "2e6070e8d81aebaed446bbce2fa9dd26564e96e416ee2eb7b7eaabf39c0ff89a",
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/SmokeHarness.java": "4324b113631f1e3b1f1d2346abebc532450ee043eaa0a8995a2fa05aa1293acb",
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/ApplicationSetCompatibilityInstrumentedTest.java": "b029e1b5c84970709b07d4f333ddf00070116149ba71b1df4b09f575bc524000",
+    "scripts/test_third_party_smoke_set.py": "e16acf4778da6ee52c8749a59fe8466835a437cae78d4c89e1d3e125e203dac7"
+  },
+  "logs": {
+    "notes-ime-association-build-frozen.log": {
+      "bytes": 5461,
+      "sha256": "719414fc08211ad07f4573973dbe565cbaf100a3105aa08090c1160e4719d369"
+    },
+    "notes-ime-association-full-host.log": {
+      "bytes": 2175,
+      "sha256": "206bec5e1e7efd0c3c6006ca36815f44fc86220d18553b9a35ca1e5a71cf2496"
+    },
+    "notes-ime-association-sdk-host.log": {
+      "bytes": 111,
+      "sha256": "f02c6cadbf034ffe96a4ea6eb02d44b00915cc91448bfd272e2320c5b6f2b6b7"
+    }
+  },
+  "validatedAt": "2026-10-31T05:43:04.316264+00:00",
+  "deviceValidation": false,
+  "hostRegression": {
+    "uniquePassedTestMethods": 891,
+    "discovery": {
+      "reportedTests": 880,
+      "skippedClasses": 1,
+      "durationSeconds": 114.715,
+      "skipReason": "SDK environment absent for RealSdkTest"
+    },
+    "separateActualSdkClass": {
+      "passedTests": 11,
+      "skipped": 0,
+      "durationSeconds": 42.384,
+      "environmentConfigured": true
+    },
+    "targetedArchiveTests": 34,
+    "targetedTestsOverlapDiscovery": true
+  },
+  "newChecks": {
+    "collectorHostChecks": 25,
+    "independentCollectorChecks": 12,
+    "hostAnalyzerTests": 26,
+    "builtinParserSelfTests": "passed on actual helper with host substitutes; Android execution pending"
+  },
+  "androidTasks": [
+    ":compat-smoke:assembleDebug",
+    ":compat-smoke:assembleDebugAndroidTest",
+    ":compat-smoke:lintDebug"
+  ],
+  "androidBuildResult": "passed",
+  "androidBuildSeconds": 42
+}

@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "independent ime_review agent",
+  "reviewedAtUtc": "2026-10-31T05:42:25+00:00",
+  "result": "PASS_WITH_DECLARED_LIMITATIONS",
+  "sourceFiles": [
+    {
+      "path": "compat-smoke/src/androidTest/java/dev/agentos/compat/NotesImeAssociationDiagnostic.java",
+      "sha256": "2e6070e8d81aebaed446bbce2fa9dd26564e96e416ee2eb7b7eaabf39c0ff89a"
+    },
+    {
+      "path": "compat-smoke/src/androidTest/java/dev/agentos/compat/SmokeHarness.java",
+      "sha256": "4324b113631f1e3b1f1d2346abebc532450ee043eaa0a8995a2fa05aa1293acb"
+    },
+    {
+      "path": "compat-smoke/src/androidTest/java/dev/agentos/compat/ApplicationSetCompatibilityInstrumentedTest.java",
+      "sha256": "b029e1b5c84970709b07d4f333ddf00070116149ba71b1df4b09f575bc524000"
+    }
+  ],
+  "independentValidation": {
+    "method": "Compiled the actual helper with JDK17, Android35 SDK declarations and an org.json implementation; ran pure parser fixtures and a stub-platform native-linkage failure injection in a separate output directory. No Gradle or Android device execution by this reviewer.",
+    "checksPassed": 12,
+    "additionalEmbeddedParserSelftests": "passed; not included in the 12 independent checks",
+    "fixtureSha256": "3b536706a05ee7254d1c40a7bd324d6b7d84e74ce7b2903b6058736415256c2b",
+    "fixtureWorkspacePath": "/workspace/scratch/notes-ime-review/dev/agentos/compat/ReviewRunner.java",
+    "stdout": "Independent parser fixtures passed: 12; existing parser selftests also passed",
+    "checks": [
+      "Actual InputWindowHandle Matrix/Size/name output shape recognized",
+      "Arbitrary handle name excluded from output",
+      "Malformed trailing array record rejected",
+      "Extra display group rejected",
+      "Actual title/displayId/id A11yWindow ordering recognized",
+      "Arbitrary final window title excluded from output",
+      "Incomplete WindowInfo closing structure rejected",
+      "Display context mismatch rejected",
+      "Missing accessibility manager header rejected",
+      "Matched final type other than 2011 yields inconclusive candidate attributes",
+      "Native linkage failure preserves original Throwable message/stack and existing suppressed object",
+      "Native linkage failure emits only bounded fixed serialization fallback"
+    ]
+  },
+  "staticReview": {
+    "failurePreservation": "Eligible frozen Notes hidden-preparation failures only; entry error and failure step already stored before supplementary reads. Original confirmation result, action budget and guards are unchanged. Optional diagnostic guards Throwable, including fallback allocation/attachment failure.",
+    "boundedness": "UiAutomation synchronous launch, stream read and parsing run on a daemon worker. Caller wait deadline is finite; a lingering worker holds the global slot until its finally exits. Timeout/service-timeout stops later commands. Construction/start failures release the slot and carry start/end timestamps. At most 256KiB retained plus one overflow-detection byte read per command; a byte-limited prefix is not parsed.",
+    "parsing": "WMS type is selected from mAttrs and owner/display/package/mClient are checked. Populator visible and grouped presentations are counted separately, full fixed suffixes consumed and malformed/duplicate/extra groups remain unavailable. Final manager header, display context, paired record structure and complete line endings are required. Candidate display/type mismatches remain inconclusive.",
+    "privacy": "Only fixed field names/enums, bounded numeric geometry/regions/transforms, ASCII configured component/token and hashes are serialized; tested titles/names and raw exception messages are excluded.",
+    "integration": "No new platform reads inside the original five-second confirmation preparation. No additional input action, screenshot authority, window refresh, tracing or secure-flag change."
+  },
+  "sourceChecks": [
+    {
+      "revision": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "repository": "platform/frameworks/base",
+      "reference": "docs/validation/diagnostics/notes-ime-interfaces-2026-10-31/ime-interface-source-index.json",
+      "checkedShapes": [
+        "WindowState mClient/display/owner/package/type",
+        "InputWindowHandle frame/touchableRegion/transform/windowToken/display/clone/alpha",
+        "AccessibilityWindowsPopulator duplicate visible and display-group presentations",
+        "AccessibilityWindowManager paired A11yWindow and WindowInfo output",
+        "WindowInfo fixed field ordering"
+      ]
+    },
+    {
+      "revision": "cf4b54771d1781281377ef64bb6f609842f376ba",
+      "repository": "platform/frameworks/base",
+      "path": "services/accessibility/java/com/android/server/accessibility/AccessibilityWindowManager.java",
+      "bytes": 77531,
+      "sha256": "73edfabfe1bc21f2922de61d065d594912c7957e55b242b71c4a2b4f27e00ed1",
+      "verification": "Downloaded exact revision from Gitiles and matched local bytes. Lines784-815 emit legacy Window[AccessibilityWindowInfo] with no paired WindowInfo token; this is unsupported mapping, not a missing candidate."
+    }
+  ],
+  "limitations": [
+    "Synthetic host parser/stub checks are not Android device collection or physical-device acceptance. Collector worker timing tests from the implementation agent are separate evidence and are not counted here.",
+    "Fixed AOSP tags establish field origin and expected shape, not byte identity with the actual API36/37 system images.",
+    "The three dumps are sequential post-failure observations. Binder text is a candidate, not a strong reference; system_server lifetime and atomicity are not established.",
+    "EOF means only stdout ended; this UiAutomation API exposes no process exit code or stderr. Observed missing token counts do not prove upstream absence, a specific filter, hidden pixels or a platform bug.",
+    "UiAutomation source calls shell without retaining its own lock, but remote dumps can hold WMS/accessibility locks or outlive the caller and affect later capture/cleanup. The diagnostic bounds its own caller waits, not remote termination or the existing harness operations; the host instrumentation timeout remains the outer test limit.",
+    "Under resource exhaustion even allocating the optional fallback can fail; the original Throwable is preserved but a diagnostic marker may be absent."
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-31T03:49:26Z",
-  "note": "33ac源码同源两轮各32项均24通过/8失败，API30两态未复现且无实际几何失败样本；原八项隐藏失败分别保留。完整来源/载荷/原诊断双重复核通过，真实APK与整体新视频均已更新README。",
+  "updated_at": "2026-10-31T05:43:04Z",
+  "note": "新增失败后IME窗口候选关联采集；891项既有宿主检查、25项采集边界、26项分析检查及构建/lint通过，独立审查完成。原八项失败保留，同源32项与两类录像待运行。",
   "latest_evidence": {
     "path": "screenshots/third-party-41165282816-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41165282816"
@@ -136,10 +136,10 @@
       "id": "app_acceptance",
       "name": "冻结常用应用样本与日常使用验收",
       "status": "in_progress",
-      "evidence": "docs/validation/notes-target-geometry-diagnostics.md",
+      "evidence": "docs/validation/notes-ime-association-diagnostics.md",
       "scope": "33ac源码加入完整包含失败的有界原矩形诊断，原v4主JSON、错误、门槛及动作额度不变。两轮41165280718/41165282816各完整32项，均24通过/8失败/0未验证；每轮Calculator16/16、Notes8/16，各16官方安装、32身份/设置恢复、8Notes新进程全文读回。各56载荷/32CalculatorPNG及32Notesblocked已审核。API30两态两轮未复现，geometry marker0，未取得真实失败矩形；旧435d23/9与API30失败原件保留。每轮原8项隐藏失败仍保留32次WMS，31/32接受BACK后隐藏未证实，36/37原清单无IME；无BELOW_FOCUSED证据。891宿主检查、构建/lint、Android初始化及独立原件复核通过；离线分析器14检查不计设备通过。独立同源API35视频4/4、普通录像13阶段/8确认已归档。下一步独立验证IME窗口候选关联，接口可行性已核验但尚未采设备数据；执行态、升级、扩样、真实模型、真机与性能预算未验收。",
-      "details": "33ac同源两轮各32项均24通过/8失败；API30两态未复现标题失败，未取得真实失败矩形，旧记录保留。已实现有界原读取诊断，891宿主检查及构建/lint通过；各56载荷/32PNG与8Notes新进程读回核验。原8项隐藏失败每轮保留32次WMS；下一步独立采集IME窗口候选关联，核对清单缺项与父层状态。真实APK4/4及整体13阶段录像已归档；执行态、升级和扩样未验收。",
-      "updated_at": "2026-10-31T03:49:26Z"
+      "details": "原33ac两轮各24/32，API31/32/36/37八项隐藏失败及旧API30标题失败保留。已加入失败后三条有界只读采集，原v4身份/遮挡/5秒与动作预算不变；891宿主、25采集、26分析检查及构建/lint通过。下一步同源完整32项，区分WMS、Populator与最终服务清单缺项，并各录一次真实APK和整体操作；执行态、升级及扩样未验收。",
+      "updated_at": "2026-10-31T05:43:04Z"
     },
     {
       "id": "physical_devices",

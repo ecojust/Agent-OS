@@ -131,6 +131,7 @@ public final class ApplicationSetCompatibilityInstrumentedTest {
         if (stability.observe(5, "resizing", 2400) || stability.observe(5, "resizing", 2999)
                 || !stability.observe(5, "resizing", 3000)) throw new AssertionError("Interrupted window observation kept stale readiness");
         SmokeCapture.verifyWindowParser();
+        NotesImeAssociationDiagnostic.verifyParsers();
     }
 
     private void exercise(SmokeHarness.Target target, String state) throws Exception {
@@ -285,6 +286,9 @@ public final class ApplicationSetCompatibilityInstrumentedTest {
             }
             entry.put("status", "failed").put("stage", phase).put("error", safeError(error));
             steps.put(new JSONObject().put("name", phase).put("status", "failed").put("details", safeError(error)));
+            // Supplemental reads happen only after the original result/error are frozen.
+            // They cannot authorize a capture, renew preparation, or change the v4 result.
+            if (entry.optBoolean("installedIdentityVerified")) harness.notesAttachPostFailureImeDiagnostic(error);
             if (entry.optBoolean("installedIdentityVerified")) {
                 SmokeCapture.capture(harness, directory, capturePrefix, "failure", captures);
             } else {

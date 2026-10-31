@@ -719,9 +719,17 @@ class ThirdPartySmokeSetArchiveTests(unittest.TestCase):
                         "lastAction": "CLICK_TEXT_TYPE", "lastActionResult": "ACCEPTED",
                         "actionCounterScope": "CURRENT_HARNESS", "actionAttempts": 3,
                         "actionAttemptCountCap": 64, "actionAttemptCountAtLimit": False, "homeAttempts": 0}) + "\n")
+        association_diagnostic = ("Suppressed: java.lang.AssertionError: NOTES_IME_ASSOCIATION_DIAGNOSTIC_V1 " +
+            json.dumps({"schemaVersion": 1, "phase": "POST_FAILURE_BEFORE_CAPTURE_CLEANUP",
+                        "diagnosticTruncated": False, "commands": [
+                            {"ordinal": 1, "id": "WMS_WINDOWS", "status": "TIMEOUT", "outputComplete": False},
+                            {"ordinal": 2, "id": "WMS_A11Y", "status": "SKIPPED_AFTER_TIMEOUT", "outputComplete": False},
+                            {"ordinal": 3, "id": "ACCESSIBILITY", "status": "SKIPPED_AFTER_TIMEOUT", "outputComplete": False}],
+                        "association": {"status": "INCONCLUSIVE", "systemServerLifetime": "NOT_VERIFIED",
+                                        "atomicSnapshot": False}}) + "\n")
         output = ("Synthetic parser fixture failure\n" + value["apps"][1]["states"][0]["error"] + "\n" +
                   "at dev.agentos.compat.SyntheticParserFixture.sameRead(Fixture.java:1)\n" * 40 +
-                  geometry_diagnostic + confirmation_diagnostic +
+                  geometry_diagnostic + confirmation_diagnostic + association_diagnostic +
                   "FAILURES!!!\nTests run: 4, Failures: 1\nsynthetic-complete-output-end\n")
         self.assertGreater(len(output), 1024)
         (directory / "instrumentation.json").write_text(

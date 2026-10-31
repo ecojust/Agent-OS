@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "kind": "post-failure-ime-association-host-analysis-validation",
+  "validatedAt": "2026-10-31T05:41:51Z",
+  "scripts": [
+    {
+      "path": "docs/validation/diagnostics/notes-ime-association-2026-10-31/analysis-tools/analyze_ime_association.py",
+      "bytes": 39116,
+      "sha256": "81e656370e71f1809d02f2ceb1130082a79b29c55fa22a259322325942b4a01d"
+    },
+    {
+      "path": "docs/validation/diagnostics/notes-ime-association-2026-10-31/analysis-tools/test_analyze_ime_association.py",
+      "bytes": 20550,
+      "sha256": "ce80d696c0c7667081158f62cc0786c4edf09b90d7daa60b850a7dca83fb54ab"
+    },
+    {
+      "path": "docs/validation/diagnostics/notes-target-geometry-2026-10-31/analysis-tools/analyze_geometry.py",
+      "bytes": 14803,
+      "sha256": "df6e44042a9a5f04a4cafaad1e8481af7355524949737db5b4c497651fd2c5c2"
+    },
+    {
+      "path": "docs/validation/diagnostics/notes-target-geometry-2026-10-31/analysis-tools/analyze_notes_confirmation.py",
+      "bytes": 23461,
+      "sha256": "fbe8e76c4b95a10de678f46865dbe4233a62221f4f81eba8152eaa6f6322bb83"
+    },
+    {
+      "path": "scripts/test_third_party_smoke_set.py",
+      "bytes": 58212,
+      "sha256": "e16acf4778da6ee52c8749a59fe8466835a437cae78d4c89e1d3e125e203dac7"
+    }
+  ],
+  "tests": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s docs/validation/diagnostics/notes-ime-association-2026-10-31/analysis-tools -p 'test_*.py' -v",
+      "passed": 26,
+      "failed": 0,
+      "skipped": 0,
+      "scope": "strict case binding, malformed JSON retention, exact schema/bounds, unavailable-vs-zero, partial-source retention, timeout stop, hash scopes, candidate attributes, original freeze ordering and interpretation suppression",
+      "logSha256": "8488b9a2d29719d573abe5cb1ec1a0052dbf93dc1135a12311bd8e14cb0ef6ef"
+    },
+    {
+      "command": "python3 -m unittest discover -s scripts -p 'test_third_party_smoke_set.py' -v",
+      "passed": 34,
+      "failed": 0,
+      "skipped": 0,
+      "scope": "existing app-set collector/archive tests with additional bounded marker raw preservation fixture; overlaps full host suite",
+      "logSha256": "05aebafb3d38fb396ba0975b6504823cb6d0b6eb0023f42ed6e31df6814f5f5a"
+    }
+  ],
+  "historicalReplay": {
+    "sourceRunId": 41165282816,
+    "sourceCommit": "33ac5825bc7537b9a67c9daeeee6916da12256d6",
+    "archive": "screenshots/third-party-41165282816-1",
+    "stateCounts": {
+      "passed": 24,
+      "failed": 8,
+      "unverified": 0
+    },
+    "originalDistinctConfirmationMethodAndRawShaCount": 8,
+    "allOriginalMethodAndRawShaPairsUnchanged": true,
+    "newAssociationMarkerCases": 0,
+    "newAssociationMarkerUnassigned": 0,
+    "malformedAssociationOccurrences": 0,
+    "unassignedOrMalformedConfirmationOccurrences": 0,
+    "caseConsistencyIssueCount": 0,
+    "associationReplayOutputSha256": "380d4eb5e4e03639998139142add2d2ee76e05e91a1038da9243a772bc057337",
+    "confirmationReplayOutputSha256": "b138392f5f4e345758e9727b93be7c024938509a7392f329ba9a947ea9107aac"
+  },
+  "independentReview": {
+    "blockingFindings": 0,
+    "independentlyPassedTests": 26,
+    "originalTerminalSummaryAndRawShaReviewSha256": "b1b6b1dc794baf33ba74e9aa10da2f39242533e4eeed59e73754d2e8c39a952b"
+  },
+  "limitations": [
+    "These host checks do not demonstrate actual dump availability or live-device behavior.",
+    "The historical source did not include this marker; zero markers is expected and is not a device test of the collector.",
+    "New analysis tests are separate from the full host suite; the existing 34 archive tests overlap that suite.",
+    "The base provenance/hash checks still fail closed; only malformed diagnostic schemas are retained without interpretation."
+  ]
+}

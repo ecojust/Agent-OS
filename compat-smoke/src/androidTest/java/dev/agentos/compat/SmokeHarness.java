@@ -811,6 +811,15 @@ final class SmokeHarness {
         return notesConfirmation == null ? new NotesConfirmation(null).json() : notesConfirmation.json();
     }
 
+    /** The original failure and confirmation diagnostics already exist; no live identity lookup. */
+    void notesAttachPostFailureImeDiagnostic(Throwable original) {
+        if (!dedicated || target != NOTES_TARGET || !(original instanceof NotesPreparationTimeout)
+                || notesConfirmation == null || notesConfirmation.stage != ConfirmationStage.HIDDEN_PREPARATION
+                || !"confirmation_input_method_hidden_not_verified".equals(notesConfirmation.wait.last)
+                || notesConfirmation.imeUid == null || notesConfirmation.imeComponent == null) return;
+        NotesImeAssociationDiagnostic.attach(original, automation, notesConfirmation.imeUid, notesConfirmation.imeComponent);
+    }
+
     void notesClick(String resource) throws Exception {
         NotesWait wait = new NotesWait();
         try (NotesTarget ready = awaitNotesTarget(resource, wait)) {

@@ -4,7 +4,13 @@
 
 ## 2026-10-31：补齐创建确认的原读取诊断
 
-开始按[原读取诊断方案](notes-confirmation-diagnostics.md)推进八项 Notes 隐藏准备失败。原 v4 判定与 32 项样本、APK 身份、5 秒期限、四次隐藏读取和一次 BACK 均保持；只在原错误上附加有界 suppressed 数据，保存原四次 WMS 字段及同一次窗口清单的 IME 层级过滤信息。构建/lint、891 项完整宿主回归与独立审查通过，准备同源八档复测及独立录像。当前没有新增设备通过结论，下面各历史轮次保留原分母。
+开始按[原读取诊断方案](notes-confirmation-diagnostics.md)推进八项 Notes 隐藏准备失败。原 v4 判定与 32 项样本、APK 身份、5 秒期限、四次隐藏读取和一次 BACK 均保持；只在原错误上附加有界 suppressed 数据，保存原四次 WMS 字段及同一次窗口清单的 IME 层级过滤信息。构建/lint、891 项完整宿主回归与独立审查通过，同源八档复测正在执行；独立 API35 录像四项已通过并归档，见下节。下面各历史轮次保留原分母。
+
+## API35实际操作录像（2026-10-31）
+
+固定诊断源码 `ad0f0a723e2efbb146a06e173a0ebdecc6706ee6` 的[运行41161479506](https://github.com/ecojust/Agent-OS/actions/runs/41161479506)重新安装相同官方 Calculator 1.4.0 与 Notes 1.7.0，关闭/空闲四项 **4/4 通过**。[连续视频](../../screenshots/demos/probes-41161479506-1/video/demo.mp4)为 45.813 秒、746,015 字节、789 帧，实际画面包含两态笔记标题/正文及两次计算结果 5。保存、新进程和完整文本读回由[原始回执](../../screenshots/demos/probes-41161479506-1/manifest.json)独立核对。
+
+9 个载荷共 1,075,539 字节、4 PNG，文件摘要、原源码校验器、全部帧解码及关键画面[审核通过](diagnostics/notes-confirmation-41161477724/video-audit.json)。四条 Notes blocked 截图仍保留，安全标志未清除。此独立 API35 录像不并入八档运行 41161477724 的固定 32 项，也不覆盖历史八项 Notes 失败。
 
 ## API35实际操作录像（2026-10-29）
 

@@ -24,6 +24,6 @@
 
 ## 本轮运行与后续 CI 调度
 
-固定源码 `ad0f0a723e2efbb146a06e173a0ebdecc6706ee6` 已启动[八档32项41161477724](https://github.com/ecojust/Agent-OS/actions/runs/41161477724)、[API35真实APK录像41161479506](https://github.com/ecojust/Agent-OS/actions/runs/41161479506)及[整体录像41161481513](https://github.com/ecojust/Agent-OS/actions/runs/41161481513)。当前正在执行，结果分别保留；原批次按启动时的三档并行计划继续，不取消、不替换。
+固定源码 `ad0f0a723e2efbb146a06e173a0ebdecc6706ee6` 已启动[八档32项41161477724](https://github.com/ecojust/Agent-OS/actions/runs/41161477724)、[API35真实APK录像41161479506](https://github.com/ecojust/Agent-OS/actions/runs/41161479506)及[整体录像41161481513](https://github.com/ecojust/Agent-OS/actions/runs/41161481513)。八档仍在执行，原批次按启动时的三档并行计划继续，不取消、不替换。API35真实APK录像4/4及整体录像13阶段/8确认均通过；两段实际视频、完整载荷及解码[审核已归档](diagnostics/notes-confirmation-41161477724/video-audit.json)，各分母分别保留。
 
 后续第三方工作流的构建/探针改为只获取构建与验证所需目录，保留全部五个Gradle模块、根配置、脚本、文档及锁文件，排除历史screenshots；归档作业仍完整取出并切换到原测试源码。允许八个独立runner并行，固定八档矩阵、fail-fast=false、每档四方法及录像仅API35保持。已在真正的稀疏检出中通过100项第三方检查、31项录像检查及进度一致性检查，actionlint通过；未来运行耗时仍以实际结果为准。

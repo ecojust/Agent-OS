@@ -1,0 +1,266 @@
+{
+  "schemaVersion": 1,
+  "kind": "notes-and-overall-video-audit",
+  "auditedAt": "2026-10-31T02:59:38.758467+00:00",
+  "status": "passed",
+  "testedSource": "ad0f0a723e2efbb146a06e173a0ebdecc6706ee6",
+  "videos": [
+    {
+      "kind": "third-party",
+      "source": {
+        "repository": "ecojust/Agent-OS",
+        "commit": "ad0f0a723e2efbb146a06e173a0ebdecc6706ee6",
+        "runId": 41161479506,
+        "attempt": 1
+      },
+      "originalStatus": "passed",
+      "archive": "screenshots/demos/probes-41161479506-1",
+      "manifestSha256": "e0f757228c2f8f9dcc29a3dbe7a96244f8c3c4bd94340883ac95aadca243f647",
+      "sourceRunCreatedAt": "2026-10-31T02:46:24Z",
+      "sourceRunUpdatedAt": "2026-10-31T02:53:11Z",
+      "sourceRunConclusion": "success",
+      "job": {
+        "id": 124420357132,
+        "name": "probe (35)",
+        "started_at": "2026-10-31T02:49:11Z",
+        "completed_at": "2026-10-31T02:53:10Z",
+        "conclusion": "success"
+      },
+      "artifacts": [
+        {
+          "id": 13027406849,
+          "name": "third-party-smoke-v4-api-35-attempt-1",
+          "size_in_bytes": 105255,
+          "created_at": "2026-10-31T02:53:06Z"
+        },
+        {
+          "id": 13027197269,
+          "name": "probe-video-third-party-app-set-api-35-attempt-1",
+          "size_in_bytes": 727347,
+          "created_at": "2026-10-31T02:53:07Z"
+        }
+      ],
+      "payloadFiles": 9,
+      "payloadBytes": 1075539,
+      "pngCount": 4,
+      "fullPayloadHashCheck": "passed",
+      "pinnedSourceValidator": "passed",
+      "videoPath": "screenshots/demos/probes-41161479506-1/video/demo.mp4",
+      "video": {
+        "bytes": 746015,
+        "sha256": "fbdbbc3f7fcf8216333432b50b5b1ddf918e274db5539e8d1907449196ebb986",
+        "durationMs": 45813,
+        "width": 640,
+        "height": 1280,
+        "codec": "h264",
+        "pixelFormat": "yuv420p",
+        "decodedFrames": 789,
+        "fullDecode": "passed"
+      },
+      "flow": {
+        "caseCount": 4,
+        "caseCounts": {
+          "passed": 4,
+          "failed": 0,
+          "unverified": 0
+        },
+        "cases": [
+          {
+            "name": "calculator-1.4.0/off",
+            "appId": "calculator-1.4.0",
+            "state": "off",
+            "status": "passed"
+          },
+          {
+            "name": "calculator-1.4.0/idle",
+            "appId": "calculator-1.4.0",
+            "state": "idle",
+            "status": "passed"
+          },
+          {
+            "name": "notes-1.7.0/off",
+            "appId": "notes-1.7.0",
+            "state": "off",
+            "status": "passed"
+          },
+          {
+            "name": "notes-1.7.0/idle",
+            "appId": "notes-1.7.0",
+            "state": "idle",
+            "status": "passed"
+          }
+        ],
+        "captureCounts": {
+          "captured": 4,
+          "blocked": 4
+        },
+        "instrumentation": {
+          "available": true,
+          "terminalCases": {
+            "notesWithAgentDisabled": "passed",
+            "notesWithAgentBoundAndIdle": "passed",
+            "calculatorWithAgentBoundAndIdle": "passed",
+            "calculatorWithAgentDisabled": "passed"
+          },
+          "setupDiagnosticBlocks": []
+        },
+        "sampleId": "calculator-1.4.0-notes-1.7.0-v4",
+        "fullSuiteAcceptance": false,
+        "recordedMatrixLabels": [
+          "35"
+        ],
+        "matrixExpectedTests": 32
+      }
+    },
+    {
+      "kind": "overall",
+      "source": {
+        "repository": "ecojust/Agent-OS",
+        "commit": "ad0f0a723e2efbb146a06e173a0ebdecc6706ee6",
+        "runId": 41161481513,
+        "attempt": 1
+      },
+      "originalStatus": "passed",
+      "archive": "screenshots/demos/41161481513-1",
+      "manifestSha256": "219d685841a34967053e9826c6745c49303bbe7d52b24c0e366c67a08eb18786",
+      "sourceRunCreatedAt": "2026-10-31T02:46:26Z",
+      "sourceRunUpdatedAt": "2026-10-31T02:51:38Z",
+      "sourceRunConclusion": "success",
+      "job": {
+        "id": 124419780582,
+        "name": "record-demo (API 35)",
+        "started_at": "2026-10-31T02:46:31Z",
+        "completed_at": "2026-10-31T02:51:38Z",
+        "conclusion": "success"
+      },
+      "artifacts": [
+        {
+          "id": 13027506370,
+          "name": "demo-video-api-35-attempt-1",
+          "size_in_bytes": 1120435,
+          "created_at": "2026-10-31T02:51:17Z"
+        }
+      ],
+      "payloadFiles": 30,
+      "payloadBytes": 1197740,
+      "pngCount": 22,
+      "fullPayloadHashCheck": "passed",
+      "pinnedSourceValidator": "passed",
+      "videoPath": "screenshots/demos/41161481513-1/demo.mp4",
+      "video": {
+        "bytes": 463411,
+        "sha256": "656b4c759a9e18fb329969117e2e3bd687b8ca057e9d297a25b9bc842549e960",
+        "durationMs": 36162,
+        "width": 640,
+        "height": 1280,
+        "codec": "h264",
+        "pixelFormat": "yuv420p",
+        "decodedFrames": 506,
+        "fullDecode": "passed"
+      },
+      "flow": {
+        "requiredStages": 13,
+        "passedRequiredStages": 13,
+        "confirmationCount": 8,
+        "stageNames": [
+          "ready",
+          "text_entered",
+          "text_saved",
+          "counter_verified",
+          "scrolled_down",
+          "scrolled_up",
+          "second_page",
+          "returned_to_fixture",
+          "controls_waiting",
+          "paused",
+          "resumed",
+          "stopped",
+          "stale_approval_rejected"
+        ],
+        "model": {
+          "kind": "local_synthetic_http",
+          "externalModelUsed": false
+        },
+        "secureFlagsPreserved": true
+      }
+    }
+  ],
+  "visualInspections": {
+    "third-party": {
+      "status": "passed",
+      "reviewedAt": "2026-10-31T02:57:51.077840+00:00",
+      "method": "Sampled original decoded frames every 5 seconds, then 2 fps over the final Calculator operations; contact-sheet padding is not video content. All 789 original frames separately decoded without error.",
+      "observed": [
+        "Notes off and idle flows show the synthetic titles Agent OS off sample / Agent OS idle sample.",
+        "Synthetic note bodies contain the expected off/idle labels, 2 + 3 = 5, and No personal data.",
+        "Both Calculator flows visibly change from 0 to the expression 2+3 and result 5."
+      ],
+      "limits": "Actual process restart/readback and Agent off/idle binding are verified by original four-case receipts, not inferred from sampled images. Four blocked Notes captures remain blocked; the playable video does not replace them or prove the other seven APIs."
+    },
+    "overall": {
+      "status": "passed",
+      "reviewedAt": "2026-10-31T02:59:38.082982+00:00",
+      "method": "Sampled original decoded frames at 3-second intervals; all 506 original frames separately decoded without error.",
+      "observed": [
+        "Actual confirmation UI displays type_text, save, counter click, scroll, second-page navigation and return.",
+        "Synthetic text Controller integration sample is saved, and counter reaches 1.",
+        "The paused overlay displays Continue/Stop.",
+        "Final Fixture screen retains saved text and has no task overlay."
+      ],
+      "limits": "The original flow receipts establish thirteen required stages and eight approvals. Sampled images are not a physical-touch or latency proof."
+    }
+  },
+  "archiveBindings": [
+    {
+      "runId": 41161479506,
+      "branch": "evidence/probe-video-41161479506-1",
+      "archiveCommit": "6f1ccb13d1f0fa2fe20e5ff22ca8e23ebab8133a",
+      "parentCommit": "ad0f0a723e2efbb146a06e173a0ebdecc6706ee6",
+      "sourceCommit": "ad0f0a723e2efbb146a06e173a0ebdecc6706ee6",
+      "path": "screenshots/demos/probes-41161479506-1"
+    },
+    {
+      "runId": 41161481513,
+      "branch": "evidence/demo-41161481513-1",
+      "archiveCommit": "2ed9c62b73b4e89d96aa9ce50d6cdf9efe7659a4",
+      "parentCommit": "ad0f0a723e2efbb146a06e173a0ebdecc6706ee6",
+      "sourceCommit": "ad0f0a723e2efbb146a06e173a0ebdecc6706ee6",
+      "path": "screenshots/demos/41161481513-1"
+    }
+  ],
+  "archiveRuns": [
+    {
+      "id": 41162015007,
+      "head_sha": "73d713d2bdd7268ce440a2d9675b86f638f48f50",
+      "path": ".github/workflows/probe-video-archive.yml",
+      "created_at": "2026-10-31T02:54:04Z",
+      "updated_at": "2026-10-31T02:56:12Z",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 41161885111,
+      "head_sha": "ad0f0a723e2efbb146a06e173a0ebdecc6706ee6",
+      "path": ".github/workflows/demo-video.yml",
+      "created_at": "2026-10-31T02:52:08Z",
+      "updated_at": "2026-10-31T02:59:08Z",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "auditScriptSha256": "4680a913314a3591b1905daf8a3ea63dad8c74cff3051a6322c6e3753d18e464",
+  "pinnedValidatorFiles": {
+    "scripts/demo_video.py": "0a310f66a8b76c5b240c899871b449c24a3a0857647e79a22b74231006885f0b",
+    "scripts/probe_video_archive.py": "a6e26499d1dab356e3d202aa0d988705329218fafdad66c06fd0afe539b004b2",
+    "scripts/probe_video.py": "5d346980d64470853bb598f2aebf80253ac731012e5e418c1610baae19720ebe",
+    "scripts/third_party_smoke_set.py": "c68a8d930368430041fb2b9ce1ce9b1ff129692a524dbc46ef8edde002677fcd",
+    "scripts/third_party_smoke_set_archive.py": "bf2a7a287fbbdce20e3ffee7742342f486485da5187cc204213a0d9e924d6919",
+    "docs/validation/third-party-app-set-lock.json": "9bfd9a059cf858cdb73eb4245fa57d5f9bf2d2ebc6818f4fbfdc8a159d50c20a"
+  },
+  "limitations": [
+    "The four API35 real-APK video cases remain separate from the eight-API 32-case matrix and historical failures.",
+    "Actual official Calculator 1.4.0 and Notes 1.7.0 off/idle flows are test-driven and do not establish Agent executing state, upgrades or broad app acceptance.",
+    "Overall video uses dedicated API35 synthetic Fixture/local HTTP model; it does not establish real-model or physical-device acceptance.",
+    "Four Notes blocked screenshots remain blocked; the continuous video is separately archived evidence."
+  ]
+}

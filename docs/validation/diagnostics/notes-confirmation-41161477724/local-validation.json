@@ -1,0 +1,46 @@
+{
+  "kind": "notes-confirmation-local-validation",
+  "sourceCommit": "ad0f0a723e2efbb146a06e173a0ebdecc6706ee6",
+  "deviceValidation": false,
+  "fullHostSuite": {
+    "tests": 891,
+    "passed": 891,
+    "skipped": 0,
+    "durationSeconds": 118.732
+  },
+  "targetedArchiveTests": 34,
+  "targetedCountsOverlapFullSuite": true,
+  "androidTasks": [
+    ":compat-smoke:assembleDebug",
+    ":compat-smoke:assembleDebugAndroidTest",
+    ":compat-smoke:lintDebug"
+  ],
+  "androidResult": "passed",
+  "logs": {
+    "notes-confirmation-diagnostic-build.log": {
+      "bytes": 5056,
+      "sha256": "f590a168832705cc1073eb52da292d17670755eaec094e2e7059de5f938192d7"
+    },
+    "notes-confirmation-diagnostic-full-host.log": {
+      "bytes": 2173,
+      "sha256": "5cb664375f5dc18d0e57fb2ece95e6d51296d9acfbfb1a0bc534b934cd4cd447"
+    },
+    "notes-confirmation-diagnostic-host.log": {
+      "bytes": 133,
+      "sha256": "904acb7ea6079385d8bf226567bb1ef89d23afc88708b18c1d89b0100b922ad3"
+    }
+  },
+  "sourceBoundaries": {
+    "before": "618429335cd36af8d753b8ba6bf7997eee88de93",
+    "after": "ad0f0a723e2efbb146a06e173a0ebdecc6706ee6",
+    "unchanged": {
+      "app/src/main": true,
+      "core/src/main": true,
+      "fixture/src/main": true,
+      "docs/validation/third-party-app-set-lock.json": true,
+      "docs/validation/third-party-calculator-lock.json": true,
+      "compat-smoke/src/androidTest/java/dev/agentos/compat/ApplicationSetCompatibilityInstrumentedTest.java": true
+    },
+    "meaning": "Production sources, frozen APK locks and original four instrumented methods unchanged; new preparation diagnostics remain test-only."
+  }
+}

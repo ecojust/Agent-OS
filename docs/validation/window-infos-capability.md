@@ -47,3 +47,5 @@
 [Java宿主检查](diagnostics/window-infos-capability-2026-10-31/java-host-tests/host-validation.json)81项通过，验证固定访问、非初始化查找、至多一次构造、缺失/拒绝/签名变化/期限及输出限制；这些使用受控替身，不能当作设备结果。[主机与协议验证](diagnostics/window-infos-capability-2026-10-31/host-validation.json)和[归档/工作流验证](diagnostics/window-infos-capability-2026-10-31/archive-workflow-validation.json)共54项通过，包括实际子进程超时/输出上限/读取异常/EOF后取消清理、完整17命令原件重放和归档边界。
 
 真实Java合成输出与Python严格协议交叉验证通过；本地两份实际APK的aapt输出已回放，测试APK正常的空versionCode被独立内部解析器处理，不放宽官方APK验证器。最终构建/lint通过（27秒），工作流actionlint及[独立实现审查](diagnostics/window-infos-capability-2026-10-31/independent-implementation-review.json)通过，来源见[本地回执](diagnostics/window-infos-capability-2026-10-31/local-validation.json)。原产品、原32项入口/诊断、旧工作流和APK锁均保持；新设备探查尚未执行。
+
+源码固定为`214e90afba8481655ae33d5ad99a7d49b0a4557d`。独立API37[41180160267](https://github.com/ecojust/Agent-OS/actions/runs/41180160267)及整体录像[41180137894](https://github.com/ecojust/Agent-OS/actions/runs/41180137894)已启动，结果尚待审核；[来源绑定](diagnostics/window-infos-capability-2026-10-31/source-runs.json)分别保留两运行。冻结后仅清理五个Java宿主替身的空行尾空格，[格式记录](diagnostics/window-infos-capability-2026-10-31/post-freeze-fixture-formatting.json)说明原宿主回执仍绑定214源码字节，执行源码不变。

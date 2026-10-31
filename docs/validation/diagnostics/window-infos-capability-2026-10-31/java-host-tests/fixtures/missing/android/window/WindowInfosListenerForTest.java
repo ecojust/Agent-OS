@@ -23,7 +23,7 @@ public class WindowInfosListenerForTest {
         private final Region touchableRegion=null;
         public final Matrix transform=null;
         public final boolean isTrustedOverlay=false,isVisible=false,isTouchable=false,isFocusable=false,isDuplicateTouchToWallpaper=false,isWatchOutsideTouch=false;
-        
+
     }
     public static class DisplayInfo {
         static { CapabilityHostState.displayInitialized++; }

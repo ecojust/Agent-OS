@@ -24,8 +24,12 @@
 
 API37过滤前信息来源并行进行固定源码核对，研究字段、权限、隐藏API边界和对象关联。它不加入本轮设备采集，不自动采用跨进程对象字符串、窗口名字或InputDispatcher输入通道token作为IWindow身份，也不以shell权限替代实际可调用性验证。任何后续listener或额外命令须单独定义范围和预算。
 
-本地采集检查25项、属性元数据检查129项及3235组旧类型解析器差分通过；另有独立445组完整WMS差分、16项结构检查，原判断字段完全一致。243360字节合成WMS的完整标记6202字符，低于16KiB且未保留标题原文；这些均为主机替身检查，不代表设备运行。APK构建与lint通过（45秒）。宿主分析器39项检查及独立复审通过；重放72f/9b旧两轮，原32项及诊断解释均不变。[本地验证](diagnostics/notes-ime-attrs-reasons-2026-10-31/local-validation.json)保留来源与日志摘要。固定源码及本轮设备结果待记录。
+本地采集检查25项、属性元数据检查129项及3235组旧类型解析器差分通过；另有独立445组完整WMS差分、16项结构检查，原判断字段完全一致。243360字节合成WMS的完整标记6202字符，低于16KiB且未保留标题原文；这些均为主机替身检查，不代表设备运行。APK构建与lint通过（45秒）。宿主分析器39项检查及独立复审通过；重放72f/9b旧两轮，原32项及诊断解释均不变。[本地验证](diagnostics/notes-ime-attrs-reasons-2026-10-31/local-validation.json)保留来源与日志摘要。源码已冻结为`35519e9fb77dc751bf8529768292cdcd1eb3b7ed`；本轮设备结果待审核。
 
 固定AOSP16的[记录边界研究](diagnostics/notes-ime-attrs-reasons-2026-10-31/aosp16-wms-record-boundaries.md)和六份[源码索引](diagnostics/notes-ime-attrs-reasons-2026-10-31/aosp16-wms-source-index.json)已保存。API37的[过滤前接口研究](diagnostics/notes-ime-attrs-reasons-2026-10-31/upstream-source-review.md)及22份[源码索引](diagnostics/notes-ime-attrs-reasons-2026-10-31/upstream-source-index.json)区分TestApi访问、权限委托、字段缺失与同进程Binder身份要求；尚未执行listener能力探查。它不证明存在可直接替换当前诊断的完整接口。
 
 本步骤不预先将原八项应用失败或整体应用验收检查点标为完成。
+
+## 本轮固定来源
+
+[来源记录](diagnostics/notes-ime-attrs-reasons-2026-10-31/source-runs.json)绑定上述35519源码。独立完整32项[41177392095](https://github.com/ecojust/Agent-OS/actions/runs/41177392095)及整体录像[41177393808](https://github.com/ecojust/Agent-OS/actions/runs/41177393808)已启动。原始结果、结构原因和录像尚待审核，未预先标为通过；既有72f真实APK录像保留原来源。

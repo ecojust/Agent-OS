@@ -8,7 +8,7 @@
 
 在独立`NOTES_IME_ASSOCIATION_DIAGNOSTIC_V1`中增加可选属性结构诊断。最多保留8条未解析记录，其余只计遗漏数量；只输出固定原因、计数、偏移、括号深度、词法类别及与原IME引用的关系。固定源码支持的WMS尾部标题可以编码为有限枚举，不能输出任意标题、原属性字符串、未知类型文本或异常内容。整个标记继续限制16KiB，超限或采集错误保留明确回退，原Throwable和旧诊断不被替换。
 
-属性分析应与9b86的接受/拒绝及唯一候选选择保持等价。缺失、重复、未闭合、大小/深度超限及类型字段异常分别记录；未知记录仍阻止唯一选择。结构计数说明解析器拒绝的原因，不自动证明窗口不存在或哪个平台行为出错。完整dump不归档，不能从旧摘要恢复其字节；旧两个运行不依据新增逻辑重算。
+35519原因诊断版的属性分析与9b86的接受/拒绝及唯一候选选择保持等价。缺失、重复、未闭合、大小/深度超限及类型字段异常分别记录；未知记录仍阻止唯一选择。结构计数说明解析器拒绝的原因，不自动证明窗口不存在或哪个平台行为出错。完整dump不归档，不能从旧摘要恢复其字节；旧两个运行不依据新增逻辑重算。
 
 偏移和长度按Java UTF-16字符单元计，属性位置指向左括号；主扫描位置不等于包括类型前探在内的全部访问长度。类型值可能只读到有限前缀，未读完时词法类别不能代表完整类型。固定尾部标题只记录出现及相对位置，不说明其全部内容已解析，也不授权忽略尾部窗口。
 
@@ -24,7 +24,7 @@
 
 API37过滤前信息来源并行进行固定源码核对，研究字段、权限、隐藏API边界和对象关联。它不加入本轮设备采集，不自动采用跨进程对象字符串、窗口名字或InputDispatcher输入通道token作为IWindow身份，也不以shell权限替代实际可调用性验证。任何后续listener或额外命令须单独定义范围和预算。
 
-本地采集检查25项、属性元数据检查129项及3235组旧类型解析器差分通过；另有独立445组完整WMS差分、16项结构检查，原判断字段完全一致。243360字节合成WMS的完整标记6202字符，低于16KiB且未保留标题原文；这些均为主机替身检查，不代表设备运行。APK构建与lint通过（45秒）。宿主分析器39项检查及独立复审通过；重放72f/9b旧两轮，原32项及诊断解释均不变。[本地验证](diagnostics/notes-ime-attrs-reasons-2026-10-31/local-validation.json)保留来源与日志摘要。源码已冻结为`35519e9fb77dc751bf8529768292cdcd1eb3b7ed`；本轮设备结果待审核。
+本地采集检查25项、属性元数据检查129项及3235组旧类型解析器差分通过；另有独立445组完整WMS差分、16项结构检查，原判断字段完全一致。243360字节合成WMS的完整标记6202字符，低于16KiB且未保留标题原文；这些均为主机替身检查，不代表设备运行。APK构建与lint通过（45秒）。宿主分析器39项检查及独立复审通过；重放72f/9b旧两轮，原32项及诊断解释均不变。[本地验证](diagnostics/notes-ime-attrs-reasons-2026-10-31/local-validation.json)保留来源与日志摘要。源码已冻结为`35519e9fb77dc751bf8529768292cdcd1eb3b7ed`；本轮设备结果已审核如下。
 
 固定AOSP16的[记录边界研究](diagnostics/notes-ime-attrs-reasons-2026-10-31/aosp16-wms-record-boundaries.md)和六份[源码索引](diagnostics/notes-ime-attrs-reasons-2026-10-31/aosp16-wms-source-index.json)已保存。API37的[过滤前接口研究](diagnostics/notes-ime-attrs-reasons-2026-10-31/upstream-source-review.md)及22份[源码索引](diagnostics/notes-ime-attrs-reasons-2026-10-31/upstream-source-index.json)区分TestApi访问、权限委托、字段缺失与同进程Binder身份要求；尚未执行listener能力探查。它不证明存在可直接替换当前诊断的完整接口。
 
@@ -32,4 +32,13 @@ API37过滤前信息来源并行进行固定源码核对，研究字段、权限
 
 ## 本轮固定来源
 
-[来源记录](diagnostics/notes-ime-attrs-reasons-2026-10-31/source-runs.json)绑定上述35519源码。独立完整32项[41177392095](https://github.com/ecojust/Agent-OS/actions/runs/41177392095)及整体录像[41177393808](https://github.com/ecojust/Agent-OS/actions/runs/41177393808)已启动。原始结果、结构原因和录像尚待审核，未预先标为通过；既有72f真实APK录像保留原来源。
+[来源记录](diagnostics/notes-ime-attrs-reasons-2026-10-31/source-runs.json)绑定上述35519源码。独立完整32项[41177392095](https://github.com/ecojust/Agent-OS/actions/runs/41177392095)及整体录像[41177393808](https://github.com/ecojust/Agent-OS/actions/runs/41177393808)已完成审核。完整32项仍为24通过/8失败/0未验证，56载荷/2,534,874字节及32PNG核验，原状态、主错误和八项原失败的32次隐藏采样字段与9b一致。详见[逐案结果](diagnostics/notes-ime-attrs-reasons-41177392095/findings.md)及[独立原件审核](diagnostics/notes-ime-attrs-reasons-2026-10-31/independent-original-review.json)。整体录像36.571秒、511帧，13阶段/8确认通过；[视频](../../screenshots/demos/41177393808-1/demo.mp4)及[审核](diagnostics/notes-ime-attrs-reasons-2026-10-31/overall-video-audit.json)已归档。既有72f真实APK录像保留原来源。
+
+
+## 实测原因与独立修正安排
+
+API36关闭/空闲两态均报告`ATTRS_SIZE_LIMIT`：第3/11条正式Window分段，后面仍有下一条正式窗口，单个属性anchor位于229，整个分段11698个字符，扫描停在8192；已扫描前缀最大深度5、顶层类型出现1次，未出现已知尾部标题。因此本轮不采用[条件性尾部方案](diagnostics/notes-ime-attrs-reasons-2026-10-31/conditional-tail-inventory-plan.md)。这些字段定位的是后置诊断解析上限，不是原Notes隐藏失败原因；11698不是属性块长度，也不能证明后续闭合或类型唯一。旧9b缺少这些字段，不倒填旧记录。
+
+下一份源码将属性扫描范围绑定现有256KiB捕获上限，检查完整属性闭合、深度8、唯一顶层类型及所有窗口身份；直接超长输入与截断结果继续拒绝。嵌套结构诊断版本将显式声明该上限，并保留旧schema1的8192解释。三条命令、每条3秒/总9秒等待及原v4动作/采样额度不变。这是独立诊断容量修正，尚未验证实际记录后半段是否满足全部条件。
+
+修正源码冻结后单独执行一轮完整32项和一次整体录像，保存全部通过、失败及未验证。原355轮不改写；原八项隐藏失败和app_acceptance检查点继续进行中。API37下一步仍需独立的类/成员可访问能力探查，源码研究不等于实际listener可用。

@@ -48,14 +48,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 9b86b2a84修正源码已冻结；独立32项41174426442与整体录像41174428202已启动。72f首轮24/32、未关联诊断与两段实际录像均已归档，旧结果不重算，新结果待审核。
+**本次更新：** Archive actual API35 walkthrough evidence; local synthetic model, secure flags preserved
 
-**记录时间：** 2026-10-31T05:55:01Z
+**记录时间：** 2026-10-31T06:01:14Z
 
 [最近测试截图与清单](screenshots/third-party-41173725544-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41173725544)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/41173741948-1/demo.mp4) · [录制与验证清单](screenshots/demos/41173741948-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41173741948)。
-录制版本：[`72f77af85`](https://github.com/ecojust/Agent-OS/commit/72f77af85481eb90c0511a52e61c7cbab3ac6595)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/41174428202-1/demo.mp4) · [录制与验证清单](screenshots/demos/41174428202-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41174428202)。
+录制版本：[`9b86b2a84`](https://github.com/ecojust/Agent-OS/commit/9b86b2a842f9e837e20e2df183893da697faaf40)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 最近更新时间记录该条状态或进度说明的修改时间，采用 UTC；测试发生时间以对应证据为准。
 

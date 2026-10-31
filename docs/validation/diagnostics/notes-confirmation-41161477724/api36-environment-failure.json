@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "kind": "original-job-environment-failure-attribution",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "ad0f0a723e2efbb146a06e173a0ebdecc6706ee6",
+    "runId": 41161477724,
+    "attempt": 1,
+    "jobId": 124420300775,
+    "apiLevel": 36
+  },
+  "logsZip": {
+    "bytes": 328775,
+    "sha256": "48f15361e4c8573f2f4f67e988fdaa8298f5bedb2f800485c8f3040a09685d94"
+  },
+  "originalJobLog": {
+    "entry": "5_probe (36).txt",
+    "bytes": 137260,
+    "sha256": "9be384ca5ef489838dd4ff104887ba5339d4f11fe1d9612fa68590798409caf5"
+  },
+  "fatal": [
+    {
+      "line": 450,
+      "text": "2026-10-31T02:58:16.7595692Z FATAL        | Not enough space to create userdata partition. Available: 5144.23 MB at /home/runner/.android/avd/agent-os-third-party.avd, need 7372.80 MB."
+    }
+  ],
+  "subsequentBootTimeout": [
+    {
+      "line": 1362,
+      "text": "2026-10-31T03:08:18.8430832Z ##[error]Timeout waiting for emulator to boot."
+    }
+  ],
+  "fatalContext": [
+    {
+      "line": 447,
+      "text": "2026-10-31T02:58:16.7593528Z INFO         |   Checking: hasSufficientSystem"
+    },
+    {
+      "line": 448,
+      "text": "2026-10-31T02:58:16.7593869Z INFO         |      Ok: System requirements to run avd: `agent-os-third-party` are met"
+    },
+    {
+      "line": 449,
+      "text": "2026-10-31T02:58:16.7594541Z WARNING      | Feature QuickbootFileBacked is disabled due to stability issues, if you really want that, the environment variable ANDROID_EMU_FORCE_QUICKBOOT_FILE_BACKED need to set to 1"
+    },
+    {
+      "line": 450,
+      "text": "2026-10-31T02:58:16.7595692Z FATAL        | Not enough space to create userdata partition. Available: 5144.23 MB at /home/runner/.android/avd/agent-os-third-party.avd, need 7372.80 MB."
+    },
+    {
+      "line": 451,
+      "text": "2026-10-31T02:58:16.7621374Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed"
+    },
+    {
+      "line": 452,
+      "text": "2026-10-31T02:58:16.7855120Z * daemon not running; starting now at tcp:5037"
+    },
+    {
+      "line": 453,
+      "text": "2026-10-31T02:58:16.8514128Z * daemon started successfully"
+    }
+  ],
+  "attribution": "Emulator startup rejected userdata creation because the reported free disk was below the required partition size; boot subsequently timed out. No app compatibility result is supplied by this lane.",
+  "actualProbeCommandObserved": false,
+  "emulatorBootedMarkerObserved": false,
+  "futureChangeLimit": "Later sparse checkout changes are not part of this run and have not established available disk or a successful API36 boot."
+}

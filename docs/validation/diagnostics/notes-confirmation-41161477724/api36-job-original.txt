@@ -1,0 +1,1423 @@
+﻿2026-10-31T02:56:18.1996804Z Current runner version: '2.338.2'
+2026-10-31T02:56:18.2023663Z ##[group]Runner Image Provisioner
+2026-10-31T02:56:18.2024555Z Hosted Compute Agent
+2026-10-31T02:56:18.2025600Z Version: 20261015.610
+2026-10-31T02:56:18.2026276Z Commit: 267fdb4e8bbec4ab5ea31367f3a00d5c480c7656
+2026-10-31T02:56:18.2027034Z Build Date: 2026-10-14T17:06:54Z
+2026-10-31T02:56:18.2027695Z Worker ID: {70a26c70-15ac-4db5-8af9-1915f3590acf}
+2026-10-31T02:56:18.2028433Z Region: us-east-1
+2026-10-31T02:56:18.2028944Z Cloud: AWS
+2026-10-31T02:56:18.2029460Z ##[endgroup]
+2026-10-31T02:56:18.2031029Z ##[group]Operating System
+2026-10-31T02:56:18.2031622Z Ubuntu
+2026-10-31T02:56:18.2032174Z 24.04.5
+2026-10-31T02:56:18.2032692Z LTS
+2026-10-31T02:56:18.2033214Z ##[endgroup]
+2026-10-31T02:56:18.2033761Z ##[group]Runner Image
+2026-10-31T02:56:18.2034365Z Image: ubuntu-24.04
+2026-10-31T02:56:18.2035151Z Version: 20261018.96.1
+2026-10-31T02:56:18.2036516Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261018.96/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-31T02:56:18.2038069Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261018.96
+2026-10-31T02:56:18.2039046Z ##[endgroup]
+2026-10-31T02:56:18.2040147Z ##[group]GITHUB_TOKEN Permissions
+2026-10-31T02:56:18.2042105Z Contents: read
+2026-10-31T02:56:18.2042703Z Metadata: read
+2026-10-31T02:56:18.2043320Z ##[endgroup]
+2026-10-31T02:56:18.2045765Z Secret source: Actions
+2026-10-31T02:56:18.2046804Z Cache mode: write
+2026-10-31T02:56:18.2047497Z Prepare workflow directory
+2026-10-31T02:56:18.2382432Z Prepare all required actions
+2026-10-31T02:56:18.2435088Z Getting action download info
+2026-10-31T02:56:18.4265784Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-31T02:56:20.6287933Z Download action repository 'actions/setup-java@v4' (SHA:cf277c60eb25467037889841efdb72551f06f6c3)
+2026-10-31T02:56:20.8074483Z Download action repository 'actions/download-artifact@v4' (SHA:d3f86a106a0bac45b974a628896c90dbdf5c8093)
+2026-10-31T02:56:20.9368814Z Download action repository 'reactivecircus/android-emulator-runner@v2' (SHA:a421e43855164a8197daf9d8d40fe71c6996bb0d)
+2026-10-31T02:56:21.0502292Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-10-31T02:56:21.4500692Z Complete job name: probe (36)
+2026-10-31T02:56:21.5279379Z ##[group]Run actions/checkout@v4
+2026-10-31T02:56:21.5280433Z with:
+2026-10-31T02:56:21.5281212Z   repository: ecojust/Agent-OS
+2026-10-31T02:56:21.5287379Z   token: ***
+2026-10-31T02:56:21.5288137Z   ssh-strict: true
+2026-10-31T02:56:21.5288876Z   ssh-user: git
+2026-10-31T02:56:21.5289607Z   persist-credentials: true
+2026-10-31T02:56:21.5290458Z   clean: true
+2026-10-31T02:56:21.5291211Z   sparse-checkout-cone-mode: true
+2026-10-31T02:56:21.5292102Z   fetch-depth: 1
+2026-10-31T02:56:21.5292857Z   fetch-tags: false
+2026-10-31T02:56:21.5293592Z   show-progress: true
+2026-10-31T02:56:21.5294357Z   lfs: false
+2026-10-31T02:56:21.5295280Z   submodules: false
+2026-10-31T02:56:21.5296056Z   set-safe-directory: true
+2026-10-31T02:56:21.5297016Z   allow-unsafe-pr-checkout: false
+2026-10-31T02:56:21.5298118Z ##[endgroup]
+2026-10-31T02:56:21.6077104Z Syncing repository: ecojust/Agent-OS
+2026-10-31T02:56:21.6079508Z ##[group]Getting Git version info
+2026-10-31T02:56:21.6080795Z Working directory is '/home/runner/work/Agent-OS/Agent-OS'
+2026-10-31T02:56:21.6082347Z [command]/usr/bin/git version
+2026-10-31T02:56:21.9335255Z git version 2.55.0
+2026-10-31T02:56:21.9351555Z ##[endgroup]
+2026-10-31T02:56:21.9361068Z Temporarily overriding HOME='/home/runner/work/_temp/f1d4e731-ef7c-4c41-9d24-e5015ea1f9e5' before making global git config changes
+2026-10-31T02:56:21.9363940Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-31T02:56:21.9366141Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Agent-OS/Agent-OS
+2026-10-31T02:56:21.9847123Z Deleting the contents of '/home/runner/work/Agent-OS/Agent-OS'
+2026-10-31T02:56:21.9850282Z ##[group]Initializing the repository
+2026-10-31T02:56:21.9854788Z [command]/usr/bin/git init /home/runner/work/Agent-OS/Agent-OS
+2026-10-31T02:56:22.0634747Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-31T02:56:22.0637120Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-31T02:56:22.0638797Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-31T02:56:22.0639932Z hint: call:
+2026-10-31T02:56:22.0640614Z hint:
+2026-10-31T02:56:22.0641489Z hint: 	git config --global init.defaultBranch <name>
+2026-10-31T02:56:22.0642997Z hint:
+2026-10-31T02:56:22.0644114Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-31T02:56:22.0645723Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-31T02:56:22.0646892Z hint:
+2026-10-31T02:56:22.0647560Z hint: 	git branch -m <name>
+2026-10-31T02:56:22.0648319Z hint:
+2026-10-31T02:56:22.0649355Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-31T02:56:22.0650841Z Initialized empty Git repository in /home/runner/work/Agent-OS/Agent-OS/.git/
+2026-10-31T02:56:22.0653503Z [command]/usr/bin/git remote add origin https://github.com/ecojust/Agent-OS
+2026-10-31T02:56:22.0684973Z ##[endgroup]
+2026-10-31T02:56:22.0686276Z ##[group]Disabling automatic garbage collection
+2026-10-31T02:56:22.0688032Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-31T02:56:22.0714094Z ##[endgroup]
+2026-10-31T02:56:22.0715646Z ##[group]Setting up auth
+2026-10-31T02:56:22.0717994Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-31T02:56:22.0744695Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-31T02:56:22.5521728Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-31T02:56:22.5550364Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-31T02:56:22.5704432Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-31T02:56:22.5729768Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-31T02:56:22.5880612Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-31T02:56:22.5909281Z ##[endgroup]
+2026-10-31T02:56:22.5910544Z ##[group]Fetching the repository
+2026-10-31T02:56:22.5915972Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +ad0f0a723e2efbb146a06e173a0ebdecc6706ee6:refs/remotes/origin/master
+2026-10-31T02:57:14.4192781Z From https://github.com/ecojust/Agent-OS
+2026-10-31T02:57:14.4193479Z  * [new ref]             ad0f0a723e2efbb146a06e173a0ebdecc6706ee6 -> origin/master
+2026-10-31T02:57:14.4203180Z ##[endgroup]
+2026-10-31T02:57:14.4203687Z ##[group]Determining the checkout info
+2026-10-31T02:57:14.4204113Z ##[endgroup]
+2026-10-31T02:57:14.4204571Z [command]/usr/bin/git sparse-checkout disable
+2026-10-31T02:57:14.4238245Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-31T02:57:14.4261619Z ##[group]Checking out the ref
+2026-10-31T02:57:14.4265997Z [command]/usr/bin/git checkout --progress --force -B master refs/remotes/origin/master
+2026-10-31T02:57:15.7469400Z Updating files:   5% (13381/264453)
+2026-10-31T02:57:15.9147579Z Updating files:   6% (15868/264453)
+2026-10-31T02:57:16.0820758Z Updating files:   7% (18512/264453)
+2026-10-31T02:57:16.2454398Z Updating files:   8% (21157/264453)
+2026-10-31T02:57:16.4148561Z Updating files:   9% (23801/264453)
+2026-10-31T02:57:16.5849154Z Updating files:  10% (26446/264453)
+2026-10-31T02:57:16.5894153Z Updating files:  11% (29090/264453)
+2026-10-31T02:57:16.7518208Z Updating files:  11% (29165/264453)
+2026-10-31T02:57:16.9218655Z Updating files:  12% (31735/264453)
+2026-10-31T02:57:17.0955349Z Updating files:  13% (34379/264453)
+2026-10-31T02:57:17.2707813Z Updating files:  14% (37024/264453)
+2026-10-31T02:57:17.4444444Z Updating files:  15% (39668/264453)
+2026-10-31T02:57:17.5899669Z Updating files:  16% (42313/264453)
+2026-10-31T02:57:17.6220880Z Updating files:  16% (44423/264453)
+2026-10-31T02:57:17.7851242Z Updating files:  17% (44958/264453)
+2026-10-31T02:57:17.9457273Z Updating files:  18% (47602/264453)
+2026-10-31T02:57:18.0947601Z Updating files:  19% (50247/264453)
+2026-10-31T02:57:18.2479342Z Updating files:  20% (52891/264453)
+2026-10-31T02:57:18.3930700Z Updating files:  21% (55536/264453)
+2026-10-31T02:57:18.5349765Z Updating files:  22% (58180/264453)
+2026-10-31T02:57:18.5899634Z Updating files:  23% (60825/264453)
+2026-10-31T02:57:18.6728617Z Updating files:  23% (61869/264453)
+2026-10-31T02:57:18.8170090Z Updating files:  24% (63469/264453)
+2026-10-31T02:57:18.9525845Z Updating files:  25% (66114/264453)
+2026-10-31T02:57:19.0888581Z Updating files:  26% (68758/264453)
+2026-10-31T02:57:19.2254068Z Updating files:  27% (71403/264453)
+2026-10-31T02:57:19.3592639Z Updating files:  28% (74047/264453)
+2026-10-31T02:57:19.4885609Z Updating files:  29% (76692/264453)
+2026-10-31T02:57:19.5896067Z Updating files:  30% (79336/264453)
+2026-10-31T02:57:19.6356376Z Updating files:  30% (81076/264453)
+2026-10-31T02:57:19.7721716Z Updating files:  31% (81981/264453)
+2026-10-31T02:57:19.9164670Z Updating files:  32% (84625/264453)
+2026-10-31T02:57:20.0862363Z Updating files:  33% (87270/264453)
+2026-10-31T02:57:20.2822303Z Updating files:  34% (89915/264453)
+2026-10-31T02:57:20.4530405Z Updating files:  35% (92559/264453)
+2026-10-31T02:57:20.5897893Z Updating files:  36% (95204/264453)
+2026-10-31T02:57:20.6478506Z Updating files:  36% (96744/264453)
+2026-10-31T02:57:20.7878005Z Updating files:  37% (97848/264453)
+2026-10-31T02:57:20.9418387Z Updating files:  38% (100493/264453)
+2026-10-31T02:57:21.0899101Z Updating files:  39% (103137/264453)
+2026-10-31T02:57:21.2389793Z Updating files:  40% (105782/264453)
+2026-10-31T02:57:21.3830693Z Updating files:  41% (108426/264453)
+2026-10-31T02:57:21.5897752Z Updating files:  42% (111071/264453)
+2026-10-31T02:57:21.8020472Z Updating files:  42% (112672/264453)
+2026-10-31T02:57:21.9810676Z Updating files:  43% (113715/264453)
+2026-10-31T02:57:22.1410047Z Updating files:  44% (116360/264453)
+2026-10-31T02:57:22.3016791Z Updating files:  45% (119004/264453)
+2026-10-31T02:57:22.5896176Z Updating files:  46% (121649/264453)
+2026-10-31T02:57:22.6003857Z Updating files:  46% (124076/264453)
+2026-10-31T02:57:22.7507109Z Updating files:  47% (124293/264453)
+2026-10-31T02:57:22.9017938Z Updating files:  48% (126938/264453)
+2026-10-31T02:57:23.0531689Z Updating files:  49% (129582/264453)
+2026-10-31T02:57:23.2150244Z Updating files:  50% (132227/264453)
+2026-10-31T02:57:23.3672748Z Updating files:  51% (134872/264453)
+2026-10-31T02:57:23.5537714Z Updating files:  52% (137516/264453)
+2026-10-31T02:57:23.5894808Z Updating files:  53% (140161/264453)
+2026-10-31T02:57:23.7017537Z Updating files:  53% (140775/264453)
+2026-10-31T02:57:23.8562868Z Updating files:  54% (142805/264453)
+2026-10-31T02:57:24.0156418Z Updating files:  55% (145450/264453)
+2026-10-31T02:57:24.1668143Z Updating files:  56% (148094/264453)
+2026-10-31T02:57:24.4474332Z Updating files:  57% (150739/264453)
+2026-10-31T02:57:24.5895441Z Updating files:  58% (153383/264453)
+2026-10-31T02:57:24.6099800Z Updating files:  58% (155712/264453)
+2026-10-31T02:57:24.7623485Z Updating files:  59% (156028/264453)
+2026-10-31T02:57:24.9194319Z Updating files:  60% (158672/264453)
+2026-10-31T02:57:25.0718524Z Updating files:  61% (161317/264453)
+2026-10-31T02:57:25.2208028Z Updating files:  62% (163961/264453)
+2026-10-31T02:57:25.4066869Z Updating files:  63% (166606/264453)
+2026-10-31T02:57:25.5590971Z Updating files:  64% (169250/264453)
+2026-10-31T02:57:25.5895009Z Updating files:  65% (171895/264453)
+2026-10-31T02:57:25.7157036Z Updating files:  65% (172433/264453)
+2026-10-31T02:57:25.8718857Z Updating files:  66% (174539/264453)
+2026-10-31T02:57:26.0217499Z Updating files:  67% (177184/264453)
+2026-10-31T02:57:26.1914195Z Updating files:  68% (179829/264453)
+2026-10-31T02:57:26.3986192Z Updating files:  69% (182473/264453)
+2026-10-31T02:57:26.5493427Z Updating files:  70% (185118/264453)
+2026-10-31T02:57:26.5894512Z Updating files:  71% (187762/264453)
+2026-10-31T02:57:26.7007519Z Updating files:  71% (188488/264453)
+2026-10-31T02:57:26.8503498Z Updating files:  72% (190407/264453)
+2026-10-31T02:57:27.0036857Z Updating files:  73% (193051/264453)
+2026-10-31T02:57:27.2179933Z Updating files:  74% (195696/264453)
+2026-10-31T02:57:27.3738436Z Updating files:  75% (198340/264453)
+2026-10-31T02:57:27.5216190Z Updating files:  76% (200985/264453)
+2026-10-31T02:57:27.5895260Z Updating files:  77% (203629/264453)
+2026-10-31T02:57:27.6682965Z Updating files:  77% (204819/264453)
+2026-10-31T02:57:27.8386429Z Updating files:  78% (206274/264453)
+2026-10-31T02:57:27.9868697Z Updating files:  79% (208918/264453)
+2026-10-31T02:57:28.1376517Z Updating files:  80% (211563/264453)
+2026-10-31T02:57:28.2908104Z Updating files:  81% (214207/264453)
+2026-10-31T02:57:28.4556176Z Updating files:  82% (216852/264453)
+2026-10-31T02:57:28.5897868Z Updating files:  83% (219496/264453)
+2026-10-31T02:57:28.6064580Z Updating files:  83% (221880/264453)
+2026-10-31T02:57:28.7637517Z Updating files:  84% (222141/264453)
+2026-10-31T02:57:28.9195911Z Updating files:  85% (224786/264453)
+2026-10-31T02:57:29.0818140Z Updating files:  86% (227430/264453)
+2026-10-31T02:57:29.2354178Z Updating files:  87% (230075/264453)
+2026-10-31T02:57:29.3835850Z Updating files:  88% (232719/264453)
+2026-10-31T02:57:29.5341707Z Updating files:  89% (235364/264453)
+2026-10-31T02:57:29.5895947Z Updating files:  90% (238008/264453)
+2026-10-31T02:57:29.6908029Z Updating files:  90% (238923/264453)
+2026-10-31T02:57:29.8460443Z Updating files:  91% (240653/264453)
+2026-10-31T02:57:30.0156276Z Updating files:  92% (243297/264453)
+2026-10-31T02:57:30.1680502Z Updating files:  93% (245942/264453)
+2026-10-31T02:57:30.3247103Z Updating files:  94% (248586/264453)
+2026-10-31T02:57:30.4790318Z Updating files:  95% (251231/264453)
+2026-10-31T02:57:30.5895760Z Updating files:  96% (253875/264453)
+2026-10-31T02:57:30.8792404Z Updating files:  96% (254709/264453)
+2026-10-31T02:57:31.4732265Z Updating files:  97% (256520/264453)
+2026-10-31T02:57:31.6643637Z Updating files:  98% (259164/264453)
+2026-10-31T02:57:32.1120784Z Updating files:  98% (259996/264453)
+2026-10-31T02:57:32.4056863Z Updating files:  99% (261809/264453)
+2026-10-31T02:57:32.4057376Z Updating files: 100% (264453/264453)
+2026-10-31T02:57:32.4057837Z Updating files: 100% (264453/264453), done.
+2026-10-31T02:57:32.7215795Z Reset branch 'master'
+2026-10-31T02:57:32.7216492Z branch 'master' set up to track 'origin/master'.
+2026-10-31T02:57:32.7414294Z ##[endgroup]
+2026-10-31T02:57:32.7459284Z [command]/usr/bin/git log -1 --format=%H
+2026-10-31T02:57:32.7480175Z ad0f0a723e2efbb146a06e173a0ebdecc6706ee6
+2026-10-31T02:57:32.7714338Z ##[group]Run actions/setup-java@v4
+2026-10-31T02:57:32.7714629Z with:
+2026-10-31T02:57:32.7715039Z   distribution: temurin
+2026-10-31T02:57:32.7715303Z   java-version: 17
+2026-10-31T02:57:32.7715567Z   java-package: jdk
+2026-10-31T02:57:32.7715788Z   check-latest: false
+2026-10-31T02:57:32.7716041Z   server-id: github
+2026-10-31T02:57:32.7716281Z   server-username: GITHUB_ACTOR
+2026-10-31T02:57:32.7716543Z   server-password: GITHUB_TOKEN
+2026-10-31T02:57:32.7716822Z   overwrite-settings: true
+2026-10-31T02:57:32.7717067Z   job-status: success
+2026-10-31T02:57:32.7718825Z   token: ***
+2026-10-31T02:57:32.7719159Z ##[endgroup]
+2026-10-31T02:57:32.9014303Z ##[warning]setup-java v4 is deprecated and will no longer receive updates. Please migrate to actions/setup-java@v5.
+2026-10-31T02:57:32.9020787Z ##[group]Installed distributions
+2026-10-31T02:57:32.9398985Z Resolved Java 17.0.20+1 from tool-cache
+2026-10-31T02:57:32.9399385Z Setting Java 17.0.20+1 as the default
+2026-10-31T02:57:32.9406238Z (node:2108) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-31T02:57:32.9406776Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-31T02:57:32.9408763Z Creating toolchains.xml for JDK version 17 from temurin
+2026-10-31T02:57:32.9460854Z Writing to /home/runner/.m2/toolchains.xml
+2026-10-31T02:57:32.9461184Z 
+2026-10-31T02:57:32.9461324Z Java configuration:
+2026-10-31T02:57:32.9461717Z   Distribution: temurin
+2026-10-31T02:57:32.9462022Z   Version: 17.0.20+1
+2026-10-31T02:57:32.9462338Z   Path: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-10-31T02:57:32.9462731Z 
+2026-10-31T02:57:32.9463344Z ##[endgroup]
+2026-10-31T02:57:32.9483360Z Creating settings.xml with server-id: github
+2026-10-31T02:57:32.9515835Z Writing to /home/runner/.m2/settings.xml
+2026-10-31T02:57:32.9648181Z ##[group]Run python3 scripts/third_party_smoke_set.py prepare --api '36' --output "$RUNNER_TEMP/third-party-evidence/api-36"
+2026-10-31T02:57:32.9648955Z [36;1mpython3 scripts/third_party_smoke_set.py prepare --api '36' --output "$RUNNER_TEMP/third-party-evidence/api-36"[0m
+2026-10-31T02:57:32.9685793Z shell: /usr/bin/bash -e {0}
+2026-10-31T02:57:32.9686103Z env:
+2026-10-31T02:57:32.9686440Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-10-31T02:57:32.9686939Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-10-31T02:57:32.9687327Z ##[endgroup]
+2026-10-31T02:57:33.0461793Z ##[group]Run actions/download-artifact@v4
+2026-10-31T02:57:33.0462090Z with:
+2026-10-31T02:57:33.0462304Z   name: third-party-probe-apks
+2026-10-31T02:57:33.0462560Z   path: /home/runner/work/_temp/third-party-apks
+2026-10-31T02:57:33.0462859Z   merge-multiple: false
+2026-10-31T02:57:33.0463107Z   repository: ecojust/Agent-OS
+2026-10-31T02:57:33.0463337Z   run-id: 41161477724
+2026-10-31T02:57:33.0463564Z env:
+2026-10-31T02:57:33.0463849Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-10-31T02:57:33.0464309Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-10-31T02:57:33.0464619Z ##[endgroup]
+2026-10-31T02:57:33.1627154Z Downloading single artifact
+2026-10-31T02:57:33.1739923Z (node:2124) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-31T02:57:33.1740608Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-31T02:57:33.2979983Z Preparing to download the following artifacts:
+2026-10-31T02:57:33.2981158Z - third-party-probe-apks (ID: 13027970122, Size: 2038110, Expected Digest: sha256:92ff7a3443f1748400a2fb7c2a4c2ba11dabeb02430cd4f89ea6b80b69bdfb05)
+2026-10-31T02:57:33.4296342Z Redirecting to blob download url: https://productionresultssa11.blob.core.windows.net/actions-results/c2e02dd6-2afe-4fa8-9b2a-bf9fa6c283d3/workflow-job-run-c66ab2e8-4f6f-57fa-a165-a9567499c3f1/artifacts/d60dcb3ba74255cfef133b6eca0a9b09b0e06ab3bcff087fa9530703aaca8ee4.zip
+2026-10-31T02:57:33.4297674Z Starting download of artifact to: /home/runner/work/_temp/third-party-apks
+2026-10-31T02:57:33.5033135Z (node:2124) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+2026-10-31T02:57:33.5515867Z SHA256 digest of downloaded artifact is 92ff7a3443f1748400a2fb7c2a4c2ba11dabeb02430cd4f89ea6b80b69bdfb05
+2026-10-31T02:57:33.5516487Z Artifact download completed successfully.
+2026-10-31T02:57:33.5516782Z Total of 1 artifact(s) downloaded
+2026-10-31T02:57:33.5520663Z Download artifact has finished successfully
+2026-10-31T02:57:33.5633384Z ##[group]Run python3 scripts/third_party_smoke_set.py download --app-id calculator-1.4.0 --output "$RUNNER_TEMP/calculator-1.4.0.apk"
+2026-10-31T02:57:33.5634248Z [36;1mpython3 scripts/third_party_smoke_set.py download --app-id calculator-1.4.0 --output "$RUNNER_TEMP/calculator-1.4.0.apk"[0m
+2026-10-31T02:57:33.5634856Z [36;1mpython3 scripts/third_party_smoke_set.py download --app-id notes-1.7.0 --output "$RUNNER_TEMP/notes-1.7.0.apk"[0m
+2026-10-31T02:57:33.5663461Z shell: /usr/bin/bash -e {0}
+2026-10-31T02:57:33.5663818Z env:
+2026-10-31T02:57:33.5664162Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-10-31T02:57:33.5664600Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-10-31T02:57:33.5665097Z ##[endgroup]
+2026-10-31T02:57:33.7762949Z Official release size and SHA-256 verified
+2026-10-31T02:57:34.0436519Z Official release size and SHA-256 verified
+2026-10-31T02:57:34.0564351Z ##[group]Run sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+2026-10-31T02:57:34.0565095Z [36;1msdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"[0m
+2026-10-31T02:57:34.0565522Z [36;1mecho "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"[0m
+2026-10-31T02:57:34.0565851Z [36;1mecho "ANDROID_SDK_ROOT=$sdk_root" >> "$GITHUB_ENV"[0m
+2026-10-31T02:57:34.0566225Z [36;1mecho "$sdk_root/platform-tools" >> "$GITHUB_PATH"[0m
+2026-10-31T02:57:34.0566772Z [36;1mprintf 'y\n%.0s' {1..100} | "$sdk_root/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$sdk_root" 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'[0m
+2026-10-31T02:57:34.0594745Z shell: /usr/bin/bash -e {0}
+2026-10-31T02:57:34.0595235Z env:
+2026-10-31T02:57:34.0595562Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-10-31T02:57:34.0596012Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-10-31T02:57:34.0596457Z ##[endgroup]
+2026-10-31T02:57:39.1616496Z Loading package information...                                                  
+2026-10-31T02:57:39.2151364Z Loading local repository...                                                     
+2026-10-31T02:57:39.2153316Z [                                       ] 3% Loading local repository...        
+2026-10-31T02:57:40.1636199Z [                                       ] 3% Fetch remote repository...         
+2026-10-31T02:57:40.5938760Z [=                                      ] 3% Fetch remote repository...         
+2026-10-31T02:57:40.6530631Z [=                                      ] 4% Fetch remote repository...         
+2026-10-31T02:57:40.6766111Z [=                                      ] 5% Fetch remote repository...         
+2026-10-31T02:57:40.7128118Z [==                                     ] 5% Fetch remote repository...         
+2026-10-31T02:57:40.7678745Z [==                                     ] 6% Fetch remote repository...         
+2026-10-31T02:57:40.9006531Z [==                                     ] 7% Fetch remote repository...         
+2026-10-31T02:57:40.9021114Z [==                                     ] 7% Computing updates...               
+2026-10-31T02:57:40.9081006Z [===                                    ] 8% Computing updates...               
+2026-10-31T02:57:40.9128149Z [===                                    ] 10% Computing updates...              
+2026-10-31T02:57:40.9129064Z [=======================================] 100% Computing updates...             
+2026-10-31T02:57:40.9129552Z 
+2026-10-31T02:57:40.9632927Z ##[group]Run echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+2026-10-31T02:57:40.9633680Z [36;1mecho 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules[0m
+2026-10-31T02:57:40.9634166Z [36;1msudo udevadm control --reload-rules[0m
+2026-10-31T02:57:40.9634467Z [36;1msudo udevadm trigger --name-match=kvm[0m
+2026-10-31T02:57:40.9668324Z shell: /usr/bin/bash -e {0}
+2026-10-31T02:57:40.9668737Z env:
+2026-10-31T02:57:40.9669326Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-10-31T02:57:40.9670213Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-10-31T02:57:40.9670798Z   ANDROID_HOME: /usr/local/lib/android/sdk
+2026-10-31T02:57:40.9671268Z   ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+2026-10-31T02:57:40.9671779Z ##[endgroup]
+2026-10-31T02:57:40.9820043Z KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"
+2026-10-31T02:57:41.0236526Z ##[group]Run reactivecircus/android-emulator-runner@v2
+2026-10-31T02:57:41.0236849Z with:
+2026-10-31T02:57:41.0237454Z   api-level: 35
+2026-10-31T02:57:41.0237697Z   system-image-api-level: 36
+2026-10-31T02:57:41.0237948Z   emulator-build: 16428233
+2026-10-31T02:57:41.0238196Z   arch: x86_64
+2026-10-31T02:57:41.0238431Z   target: default
+2026-10-31T02:57:41.0238680Z   avd-name: agent-os-third-party
+2026-10-31T02:57:41.0238947Z   enable-hw-keyboard: false
+2026-10-31T02:57:41.0239365Z   pre-emulator-launch-script: python3 scripts/configure_emulator_phone.py --avd-name agent-os-third-party
+2026-10-31T02:57:41.0239836Z   disable-animations: false
+2026-10-31T02:57:41.0240250Z   emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+2026-10-31T02:57:41.0242141Z   script: python3 scripts/configure_emulator_phone.py --avd-name agent-os-third-party --check
+python3 scripts/third_party_smoke_set.py run --api '36' --output "$RUNNER_TEMP/third-party-evidence/api-36" --sdk-root "$ANDROID_HOME" --calculator-apk "$RUNNER_TEMP/calculator-1.4.0.apk" --notes-apk "$RUNNER_TEMP/notes-1.7.0.apk" --agent-apk "$RUNNER_TEMP/third-party-apks/app/build/outputs/apk/debug/app-debug.apk" --probe-apk "$RUNNER_TEMP/third-party-apks/compat-smoke/build/outputs/apk/debug/compat-smoke-debug.apk" --test-apk "$RUNNER_TEMP/third-party-apks/compat-smoke/build/outputs/apk/androidTest/debug/compat-smoke-debug-androidTest.apk" 
+
+2026-10-31T02:57:41.0243738Z   cores: 2
+2026-10-31T02:57:41.0243995Z   force-avd-creation: true
+2026-10-31T02:57:41.0244241Z   emulator-boot-timeout: 600
+2026-10-31T02:57:41.0244526Z   emulator-port: 5554
+2026-10-31T02:57:41.0244770Z   disable-spellchecker: false
+2026-10-31T02:57:41.0245172Z   disable-linux-hw-accel: auto
+2026-10-31T02:57:41.0245434Z   channel: stable
+2026-10-31T02:57:41.0245644Z env:
+2026-10-31T02:57:41.0245967Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-10-31T02:57:41.0246391Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-10-31T02:57:41.0246741Z   ANDROID_HOME: /usr/local/lib/android/sdk
+2026-10-31T02:57:41.0247068Z   ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+2026-10-31T02:57:41.0247351Z ##[endgroup]
+2026-10-31T02:57:41.0709135Z ##[group]Configure emulator
+2026-10-31T02:57:41.0709604Z API level: 35
+2026-10-31T02:57:41.0709993Z System image API level: 36
+2026-10-31T02:57:41.0710331Z target: default
+2026-10-31T02:57:41.0710700Z CPU architecture: x86_64
+2026-10-31T02:57:41.0711016Z Hardware profile: 
+2026-10-31T02:57:41.0713512Z Cores: 2
+2026-10-31T02:57:41.0713933Z RAM size: 
+2026-10-31T02:57:41.0714189Z Heap size: 
+2026-10-31T02:57:41.0714498Z SD card path or size: 
+2026-10-31T02:57:41.0714814Z Disk size: 
+2026-10-31T02:57:41.0715317Z AVD name: agent-os-third-party
+2026-10-31T02:57:41.0715711Z force avd creation: true
+2026-10-31T02:57:41.0716222Z Emulator boot timeout: 600
+2026-10-31T02:57:41.0716552Z emulator port: 5554
+2026-10-31T02:57:41.0717147Z emulator options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+2026-10-31T02:57:41.0717733Z disable animations: false
+2026-10-31T02:57:41.0718059Z disable spellchecker: false
+2026-10-31T02:57:41.0718411Z disable Linux hardware acceleration: false
+2026-10-31T02:57:41.0718830Z enable hardware keyboard: false
+2026-10-31T02:57:41.0719101Z using emulator build: 16428233
+2026-10-31T02:57:41.0719374Z Channel: 0 (stable)
+2026-10-31T02:57:41.0719807Z Script:
+2026-10-31T02:57:41.0721793Z python3 scripts/configure_emulator_phone.py --avd-name agent-os-third-party --check
+2026-10-31T02:57:41.0723781Z python3 scripts/third_party_smoke_set.py run --api '36' --output "$RUNNER_TEMP/third-party-evidence/api-36" --sdk-root "$ANDROID_HOME" --calculator-apk "$RUNNER_TEMP/calculator-1.4.0.apk" --notes-apk "$RUNNER_TEMP/notes-1.7.0.apk" --agent-apk "$RUNNER_TEMP/third-party-apks/app/build/outputs/apk/debug/app-debug.apk" --probe-apk "$RUNNER_TEMP/third-party-apks/compat-smoke/build/outputs/apk/debug/compat-smoke-debug.apk" --test-apk "$RUNNER_TEMP/third-party-apks/compat-smoke/build/outputs/apk/androidTest/debug/compat-smoke-debug-androidTest.apk"
+2026-10-31T02:57:41.0725569Z Pre emulator launch script:
+2026-10-31T02:57:41.0725992Z python3 scripts/configure_emulator_phone.py --avd-name agent-os-third-party
+2026-10-31T02:57:41.0726595Z ##[endgroup]
+2026-10-31T02:57:41.0727026Z ##[group]Install Android SDK
+2026-10-31T02:57:41.0749265Z [command]/usr/bin/sh -c \yes | sdkmanager --licenses > /dev/null
+2026-10-31T02:57:42.2310482Z Installing latest build tools, platform tools, and platform.
+2026-10-31T02:57:42.2318789Z [command]/usr/bin/sh -c \sdkmanager --install 'build-tools;37.0.0' platform-tools 'platforms;android-35'> /dev/null
+2026-10-31T02:57:43.3654316Z Installing latest emulator.
+2026-10-31T02:57:43.3664341Z [command]/usr/bin/sh -c \sdkmanager --install emulator --channel=0 > /dev/null
+2026-10-31T02:57:50.0370585Z Installing emulator build 16428233.
+2026-10-31T02:57:50.0378432Z [command]/usr/bin/curl -fo emulator.zip https://dl.google.com/android/repository/emulator-linux_x64-16428233.zip
+2026-10-31T02:57:50.0432217Z   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+2026-10-31T02:57:50.0432833Z                                  Dload  Upload   Total   Spent    Left  Speed
+2026-10-31T02:57:50.0433103Z 
+2026-10-31T02:57:51.0418064Z   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+2026-10-31T02:57:51.4763190Z  66  333M   66  221M    0     0   221M      0  0:00:01 --:--:--  0:00:01  221M
+2026-10-31T02:57:51.4763716Z 100  333M  100  333M    0     0   232M      0  0:00:01  0:00:01 --:--:--  232M
+2026-10-31T02:57:51.4794180Z [command]/usr/bin/unzip -o -q emulator.zip -d /usr/local/lib/android/sdk
+2026-10-31T02:57:57.0344626Z Installing system images.
+2026-10-31T02:57:57.0353087Z [command]/usr/bin/sh -c \sdkmanager --install 'system-images;android-36;default;x86_64' --channel=0 > /dev/null
+2026-10-31T02:58:16.0108396Z ##[endgroup]
+2026-10-31T02:58:16.0109372Z ##[group]Create AVD
+2026-10-31T02:58:16.0109845Z Creating AVD.
+2026-10-31T02:58:16.0120787Z [command]/usr/bin/sh -c \echo no | avdmanager create avd --force -n agent-os-third-party --package 'system-images;android-36;default;x86_64'
+2026-10-31T02:58:16.5514604Z Loading local repository...                                                     
+2026-10-31T02:58:16.5520078Z [=========                              ] 25% Loading local repository...       
+2026-10-31T02:58:16.5520775Z [=========                              ] 25% Fetch remote repository...        
+2026-10-31T02:58:16.5521354Z [=======================================] 100% Fetch remote repository...       
+2026-10-31T02:58:16.6325151Z Auto-selecting single ABI x86_64
+2026-10-31T02:58:16.6831211Z Do you wish to create a custom hardware profile? [no] [command]/usr/bin/sh -c \printf 'hw.cpu.ncore=2\n' >> /home/runner/.android/avd/agent-os-third-party.avd/config.ini
+2026-10-31T02:58:16.6849105Z ##[endgroup]
+2026-10-31T02:58:16.6849782Z ##[group]Run pre emulator launch script
+2026-10-31T02:58:16.6860717Z [command]/usr/bin/sh -c python3 scripts/configure_emulator_phone.py --avd-name agent-os-third-party
+2026-10-31T02:58:16.7080940Z Verified AVD agent-os-third-party: hw.keyboard=no (touchscreen phone baseline)
+2026-10-31T02:58:16.7119046Z ##[endgroup]
+2026-10-31T02:58:16.7121765Z ##[group]Launch Emulator
+2026-10-31T02:58:16.7122166Z Starting emulator.
+2026-10-31T02:58:16.7132391Z [command]/usr/bin/sh -c \/usr/local/lib/android/sdk/emulator/emulator -port 5554 -avd agent-os-third-party -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none &
+2026-10-31T02:58:16.7221762Z INFO         | Android emulator version 37.2.12.0 (build_id 16428233) (CL:N/A)
+2026-10-31T02:58:16.7222329Z INFO         | Graphics backend: gfxstream
+2026-10-31T02:58:16.7222842Z INFO         | Found systemPath /usr/local/lib/android/sdk/system-images/android-36/default/x86_64/
+2026-10-31T02:58:16.7584440Z INFO         | Saving last run QEMU version for the AVD to 2
+2026-10-31T02:58:16.7585292Z INFO         | Guest usage of host flag 'VulkanVirtualQueue' will be ignored.
+2026-10-31T02:58:16.7585762Z INFO         | Increasing RAM size to 2560MB
+2026-10-31T02:58:16.7586196Z ##############################################################################
+2026-10-31T02:58:16.7586655Z ##                        WARNING - ACTION REQUIRED                         ##
+2026-10-31T02:58:16.7587062Z ##  Consider using the '-metrics-collection' flag to help improve the       ##
+2026-10-31T02:58:16.7587473Z ##  emulator by sending anonymized usage data. Or use the '-no-metrics'     ##
+2026-10-31T02:58:16.7587887Z ##  flag to bypass this warning and turn off the metrics collection.        ##
+2026-10-31T02:58:16.7588318Z ##  In a future release this warning will turn into a one-time blocking     ##
+2026-10-31T02:58:16.7588734Z ##  prompt to ask for explicit user input regarding metrics collection.     ##
+2026-10-31T02:58:16.7589076Z ##                                                                          ##
+2026-10-31T02:58:16.7589461Z ##  Please see '-help-metrics-collection' for more details. You can use     ##
+2026-10-31T02:58:16.7589866Z ##  '-metrics-to-file' or '-metrics-to-console' flags to see what type of   ##
+2026-10-31T02:58:16.7590271Z ##  data is being collected by emulator as part of usage statistics.        ##
+2026-10-31T02:58:16.7590634Z ##############################################################################
+2026-10-31T02:58:16.7590966Z INFO         | Guest GLES Driver: Auto (ext controls)
+2026-10-31T02:58:16.7591372Z INFO         | emuglConfig_init: vulkan_mode_selected:swiftshader gles_mode_selected:swiftshader
+2026-10-31T02:58:16.7591783Z INFO         | Checking system compatibility:
+2026-10-31T02:58:16.7592103Z INFO         |   Checking: hasSufficientDiskSpace
+2026-10-31T02:58:16.7592478Z INFO         |      Ok: Disk space requirements to run avd: `agent-os-third-party` are met
+2026-10-31T02:58:16.7592836Z INFO         |   Checking: hasSufficientHwGpu
+2026-10-31T02:58:16.7593164Z INFO         |      Ok: Hardware GPU compatibility checks are not required
+2026-10-31T02:58:16.7593528Z INFO         |   Checking: hasSufficientSystem
+2026-10-31T02:58:16.7593869Z INFO         |      Ok: System requirements to run avd: `agent-os-third-party` are met
+2026-10-31T02:58:16.7594541Z WARNING      | Feature QuickbootFileBacked is disabled due to stability issues, if you really want that, the environment variable ANDROID_EMU_FORCE_QUICKBOOT_FILE_BACKED need to set to 1
+2026-10-31T02:58:16.7595692Z FATAL        | Not enough space to create userdata partition. Available: 5144.23 MB at /home/runner/.android/avd/agent-os-third-party.avd, need 7372.80 MB.
+2026-10-31T02:58:16.7621374Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:16.7855120Z * daemon not running; starting now at tcp:5037
+2026-10-31T02:58:16.8514128Z * daemon started successfully
+2026-10-31T02:58:16.8514696Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:16.8519407Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:18.8561686Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:18.8587249Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:18.8589987Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:20.8636024Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:20.8662331Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:20.8665574Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:22.8699543Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:22.8728640Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:22.8731538Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:24.8771231Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:24.8798956Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:24.8801858Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:26.8839581Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:26.8866607Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:26.8869960Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:28.8908405Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:28.8934436Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:28.8936843Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:30.8968163Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:30.8995702Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:30.8998225Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:32.9033820Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:32.9060832Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:32.9065260Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:34.9107289Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:34.9132555Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:34.9134695Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:36.9173153Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:36.9199554Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:36.9202155Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:38.9227681Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:38.9253104Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:38.9256731Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:40.9305822Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:40.9331562Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:40.9333706Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:42.9372119Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:42.9397410Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:42.9399796Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:44.9435786Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:44.9461568Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:44.9466485Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:46.9494608Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:46.9522181Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:46.9525087Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:48.9566412Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:48.9594009Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:48.9598026Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:50.9635776Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:50.9662317Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:50.9665071Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:52.9699032Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:52.9729717Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:52.9732014Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:54.9749787Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:54.9776385Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:54.9779006Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:56.9810420Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:56.9837337Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:56.9840118Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:58:58.9876477Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:58:58.9904362Z adb: device 'emulator-5554' not found
+2026-10-31T02:58:58.9907817Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:00.9949026Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:00.9975127Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:00.9978386Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:03.0006061Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:03.0034175Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:03.0037807Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:05.0080850Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:05.0109679Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:05.0113716Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:07.0148157Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:07.0176111Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:07.0178321Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:09.0220144Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:09.0248127Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:09.0251147Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:11.0287105Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:11.0314628Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:11.0317190Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:13.0357327Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:13.0385127Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:13.0388862Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:15.0436568Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:15.0465183Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:15.0468206Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:17.0504863Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:17.0531529Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:17.0533598Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:19.0554106Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:19.0580882Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:19.0583037Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:21.0608014Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:21.0635409Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:21.0637724Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:23.0679239Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:23.0708054Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:23.0710885Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:25.0758964Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:25.0786402Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:25.0788708Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:27.0806363Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:27.0833302Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:27.0835669Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:29.0883871Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:29.0911953Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:29.0914042Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:31.0954284Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:31.0981985Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:31.0984073Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:33.1025640Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:33.1052105Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:33.1054103Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:35.1077830Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:35.1105596Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:35.1108426Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:37.1149346Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:37.1175122Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:37.1178731Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:39.1226732Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:39.1253360Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:39.1255794Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:41.1284729Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:41.1312123Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:41.1315287Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:43.1331268Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:43.1359401Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:43.1362356Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:45.1397193Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:45.1426027Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:45.1429149Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:47.1473983Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:47.1501433Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:47.1504247Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:49.1549654Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:49.1577269Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:49.1579954Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:51.1607133Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:51.1632748Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:51.1635266Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:53.1679913Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:53.1707683Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:53.1709929Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:55.1751975Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:55.1778725Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:55.1781136Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:57.1820681Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:57.1848790Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:57.1851162Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T02:59:59.1877892Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T02:59:59.1904651Z adb: device 'emulator-5554' not found
+2026-10-31T02:59:59.1906975Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:01.1938851Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:01.1962960Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:01.1965334Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:03.2001150Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:03.2028422Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:03.2031040Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:05.2075161Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:05.2103674Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:05.2106527Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:07.2125009Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:07.2151717Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:07.2154829Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:09.2192598Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:09.2219437Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:09.2221788Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:11.2261954Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:11.2289703Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:11.2292000Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:13.2336038Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:13.2363107Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:13.2366692Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:15.2386892Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:15.2414086Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:15.2416540Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:17.2457561Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:17.2485166Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:17.2487311Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:19.2527810Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:19.2554358Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:19.2556740Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:21.2598304Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:21.2625227Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:21.2627813Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:23.2648694Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:23.2675743Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:23.2678808Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:25.2712893Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:25.2740622Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:25.2744504Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:27.2779923Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:27.2806638Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:27.2810006Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:29.2838976Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:29.2864743Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:29.2868387Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:31.2889529Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:31.2915333Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:31.2918570Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:33.2951377Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:33.2977295Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:33.2979935Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:35.3024846Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:35.3050467Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:35.3052668Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:37.3091009Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:37.3120678Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:37.3123822Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:39.3157779Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:39.3183076Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:39.3186386Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:41.3224150Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:41.3250883Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:41.3254464Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:43.3292732Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:43.3320634Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:43.3323186Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:45.3362316Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:45.3390896Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:45.3393276Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:47.3426632Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:47.3453719Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:47.3457325Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:49.3499271Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:49.3525352Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:49.3527513Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:51.3565914Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:51.3591744Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:51.3594025Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:53.3640455Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:53.3668469Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:53.3670889Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:55.3709749Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:55.3737050Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:55.3741906Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:57.3781988Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:57.3809691Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:57.3812429Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:00:59.3850568Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:00:59.3877796Z adb: device 'emulator-5554' not found
+2026-10-31T03:00:59.3880751Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:01.3918626Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:01.3945896Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:01.3948447Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:03.3984795Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:03.4012144Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:03.4014320Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:05.4040820Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:05.4069470Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:05.4072470Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:07.4108802Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:07.4135052Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:07.4137806Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:09.4174598Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:09.4201486Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:09.4204163Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:11.4245155Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:11.4271040Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:11.4273909Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:13.4299792Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:13.4327557Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:13.4330887Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:15.4370164Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:15.4396441Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:15.4398835Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:17.4444050Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:17.4471302Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:17.4473549Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:19.4509796Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:19.4536661Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:19.4539185Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:21.4579761Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:21.4606694Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:21.4609309Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:23.4649229Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:23.4676479Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:23.4678884Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:25.4717902Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:25.4744402Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:25.4746859Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:27.4785295Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:27.4812679Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:27.4815088Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:29.4836448Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:29.4864135Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:29.4866609Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:31.4899518Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:31.4927018Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:31.4929567Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:33.4975096Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:33.5002284Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:33.5004293Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:35.5044644Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:35.5072615Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:35.5075939Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:37.5125053Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:37.5152409Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:37.5155785Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:39.5190618Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:39.5218907Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:39.5222080Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:41.5257841Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:41.5285839Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:41.5289026Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:43.5331705Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:43.5358617Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:43.5362300Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:45.5392734Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:45.5420967Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:45.5424390Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:47.5464156Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:47.5491938Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:47.5494974Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:49.5533165Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:49.5561279Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:49.5564515Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:51.5600324Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:51.5627977Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:51.5630270Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:53.5641803Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:53.5668739Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:53.5670972Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:55.5706753Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:55.5734029Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:55.5736373Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:57.5784121Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:57.5811665Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:57.5813723Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:01:59.5854623Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:01:59.5882668Z adb: device 'emulator-5554' not found
+2026-10-31T03:01:59.5885209Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:01.5907582Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:01.5934390Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:01.5936626Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:03.5976440Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:03.6003568Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:03.6006363Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:05.6047806Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:05.6075980Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:05.6080384Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:07.6118626Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:07.6146430Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:07.6150244Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:09.6170517Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:09.6198209Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:09.6200794Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:11.6240987Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:11.6268431Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:11.6272764Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:13.6307348Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:13.6336955Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:13.6339673Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:15.6376741Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:15.6402634Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:15.6405187Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:17.6426732Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:17.6454129Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:17.6457430Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:19.6502887Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:19.6529357Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:19.6531689Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:21.6575551Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:21.6602067Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:21.6696323Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:23.6640177Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:23.6667435Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:23.6670672Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:25.6689876Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:25.6718354Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:25.6720797Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:27.6765862Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:27.6792233Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:27.6794796Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:29.6832321Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:29.6859025Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:29.6861609Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:31.6911199Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:31.6937711Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:31.6940310Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:33.6966084Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:33.6992430Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:33.6995611Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:35.7039850Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:35.7068836Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:35.7071075Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:37.7109145Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:37.7137681Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:37.7140411Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:39.7180865Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:39.7208268Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:39.7210438Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:41.7229689Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:41.7258295Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:41.7260762Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:43.7303288Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:43.7332109Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:43.7334626Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:45.7373198Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:45.7401268Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:45.7403859Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:47.7441253Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:47.7468685Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:47.7471446Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:49.7489326Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:49.7516534Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:49.7520565Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:51.7556925Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:51.7587239Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:51.7589385Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:53.7628953Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:53.7658228Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:53.7661426Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:55.7696738Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:55.7722860Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:55.7726303Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:57.7747270Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:57.7775779Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:57.7778542Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:02:59.7821288Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:02:59.7849635Z adb: device 'emulator-5554' not found
+2026-10-31T03:02:59.7852919Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:01.7906047Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:01.7934071Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:01.7936830Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:03.7981677Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:03.8008736Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:03.8011178Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:05.8036705Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:05.8065401Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:05.8068256Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:07.8117134Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:07.8145459Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:07.8147764Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:09.8193935Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:09.8222033Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:09.8224728Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:11.8263092Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:11.8292010Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:11.8296098Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:13.8317081Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:13.8345128Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:13.8348080Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:15.8391576Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:15.8418785Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:15.8422074Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:17.8458722Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:17.8486010Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:17.8489311Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:19.8534024Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:19.8561627Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:19.8564627Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:21.8587562Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:21.8614813Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:21.8617984Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:23.8642074Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:23.8670440Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:23.8673434Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:25.8718498Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:25.8745736Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:25.8749022Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:27.8789563Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:27.8816828Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:27.8819904Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:29.8834174Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:29.8866314Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:29.8868342Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:31.8904685Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:31.8933078Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:31.8936699Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:33.8980193Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:33.9008347Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:33.9010355Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:35.9047379Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:35.9077195Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:35.9079175Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:37.9104417Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:37.9133006Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:37.9136776Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:39.9172262Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:39.9199945Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:39.9202524Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:41.9237906Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:41.9265711Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:41.9268067Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:43.9312775Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:43.9340802Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:43.9343373Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:45.9365289Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:45.9393553Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:45.9396957Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:47.9436258Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:47.9463161Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:47.9465859Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:49.9503879Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:49.9528982Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:49.9532347Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:51.9567718Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:51.9595377Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:51.9598719Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:53.9623146Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:53.9650605Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:53.9653470Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:55.9686271Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:55.9711465Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:55.9714009Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:57.9746079Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:57.9771178Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:57.9773740Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:03:59.9811522Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:03:59.9838248Z adb: device 'emulator-5554' not found
+2026-10-31T03:03:59.9841162Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:01.9859356Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:01.9886929Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:01.9889418Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:03.9921297Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:03.9947167Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:03.9949748Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:05.9984475Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:06.0011491Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:06.0013951Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:08.0054176Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:08.0079219Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:08.0081789Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:10.0101173Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:10.0126334Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:10.0129071Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:12.0167910Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:12.0193873Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:12.0198003Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:14.0236486Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:14.0264240Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:14.0267296Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:16.0312329Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:16.0339983Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:16.0342109Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:18.0379765Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:18.0406703Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:18.0408973Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:20.0452780Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:20.0480637Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:20.0483056Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:22.0522880Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:22.0551292Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:22.0554623Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:24.0599056Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:24.0625849Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:24.0628347Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:26.0664782Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:26.0692646Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:26.0694728Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:28.0728464Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:28.0754465Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:28.0758461Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:30.0800663Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:30.0828335Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:30.0830793Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:32.0876266Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:32.0902651Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:32.0905731Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:34.0943666Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:34.0970320Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:34.0973065Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:36.0993628Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:36.1020198Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:36.1023207Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:38.1058268Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:38.1085231Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:38.1088036Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:40.1127077Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:40.1153285Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:40.1157270Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:42.1201217Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:42.1229013Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:42.1231361Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:44.1275419Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:44.1302598Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:44.1305132Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:46.1344490Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:46.1372502Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:46.1375290Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:48.1419041Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:48.1447119Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:48.1451189Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:50.1485981Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:50.1514394Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:50.1517489Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:52.1561839Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:52.1589918Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:52.1592963Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:54.1629196Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:54.1657667Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:54.1660633Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:56.1710451Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:56.1738384Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:56.1741031Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:04:58.1777776Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:04:58.1806017Z adb: device 'emulator-5554' not found
+2026-10-31T03:04:58.1808662Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:00.1853786Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:00.1881392Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:00.1883825Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:02.1911097Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:02.1938683Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:02.1941774Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:04.1974488Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:04.1999906Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:04.2002814Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:06.2043951Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:06.2069269Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:06.2071962Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:08.2095647Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:08.2121079Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:08.2124453Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:10.2164785Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:10.2190148Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:10.2193090Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:12.2239315Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:12.2265695Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:12.2267972Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:14.2307757Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:14.2334878Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:14.2337419Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:16.2367686Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:16.2395108Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:16.2397223Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:18.2439625Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:18.2466512Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:18.2468882Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:20.2514292Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:20.2541285Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:20.2543839Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:22.2591142Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:22.2618894Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:22.2620792Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:24.2638479Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:24.2666265Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:24.2668728Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:26.2706155Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:26.2734197Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:26.2736966Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:28.2781875Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:28.2809817Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:28.2812637Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:30.2851576Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:30.2879540Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:30.2881944Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:32.2905340Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:32.2932440Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:32.2935650Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:34.2966956Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:34.2993310Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:34.2995904Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:36.3032514Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:36.3058099Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:36.3061350Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:38.3093682Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:38.3118789Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:38.3121754Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:40.3145520Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:40.3171172Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:40.3173799Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:42.3211012Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:42.3238001Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:42.3240681Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:44.3273283Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:44.3299360Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:44.3302241Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:46.3337005Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:46.3364027Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:46.3366596Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:48.3397561Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:48.3423281Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:48.3426192Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:50.3465078Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:50.3490708Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:50.3493574Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:52.3524837Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:52.3552239Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:52.3555410Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:54.3586953Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:54.3613892Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:54.3616846Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:56.3647332Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:56.3673898Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:56.3676565Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:05:58.3717948Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:05:58.3744768Z adb: device 'emulator-5554' not found
+2026-10-31T03:05:58.3747800Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:00.3783515Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:00.3809956Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:00.3812604Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:02.3848414Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:02.3875464Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:02.3878492Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:04.3911085Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:04.3936581Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:04.3940127Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:06.3986009Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:06.4013558Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:06.4015910Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:08.4062837Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:08.4090205Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:08.4092590Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:10.4129424Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:10.4157735Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:10.4160352Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:12.4187729Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:12.4216407Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:12.4219494Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:14.4255971Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:14.4284323Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:14.4287790Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:16.4329475Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:16.4357370Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:16.4360111Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:18.4396256Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:18.4424475Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:18.4427662Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:20.4455826Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:20.4483680Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:20.4486944Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:22.4527587Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:22.4554240Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:22.4556974Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:24.4600275Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:24.4627314Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:24.4630407Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:26.4663070Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:26.4690997Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:26.4693806Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:28.4711594Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:28.4739831Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:28.4746929Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:30.4784373Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:30.4811061Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:30.4813782Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:32.4849365Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:32.4876842Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:32.4879738Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:34.4923864Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:34.4951364Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:34.4954285Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:36.4971422Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:36.4999946Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:36.5002841Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:38.5034163Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:38.5061230Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:38.5066352Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:40.5099503Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:40.5126540Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:40.5130123Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:42.5160224Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:42.5186624Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:42.5190055Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:44.5194375Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:44.5222108Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:44.5224357Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:46.5255803Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:46.5285076Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:46.5287877Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:48.5323108Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:48.5349336Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:48.5351580Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:50.5397945Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:50.5425682Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:50.5427998Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:52.5455910Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:52.5483932Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:52.5486503Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:54.5524197Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:54.5551369Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:54.5553652Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:56.5589664Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:56.5617901Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:56.5620188Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:06:58.5665069Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:06:58.5692663Z adb: device 'emulator-5554' not found
+2026-10-31T03:06:58.5695302Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:00.5723974Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:00.5751649Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:00.5754479Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:02.5799889Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:02.5826443Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:02.5829021Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:04.5873812Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:04.5900751Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:04.5903089Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:06.5941620Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:06.5968352Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:06.5971147Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:08.5989384Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:08.6015826Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:08.6018218Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:10.6062863Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:10.6090226Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:10.6091991Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:12.6137787Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:12.6164747Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:12.6167553Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:14.6211454Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:14.6238516Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:14.6241174Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:16.6265478Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:16.6292982Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:16.6295915Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:18.6337531Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:18.6364705Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:18.6367018Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:20.6407266Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:20.6433740Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:20.6436282Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:22.6471078Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:22.6496428Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:22.6498756Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:24.6528263Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:24.6554756Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:24.6557256Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:26.6595456Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:26.6622416Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:26.6624566Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:28.6664272Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:28.6691330Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:28.6694659Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:30.6733893Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:30.6761605Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:30.6764285Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:32.6782980Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:32.6809853Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:32.6813008Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:34.6849089Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:34.6877061Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:34.6879987Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:36.6925728Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:36.6953609Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:36.6956479Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:38.6999766Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:38.7027812Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:38.7030711Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:40.7047542Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:40.7076477Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:40.7079244Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:42.7118595Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:42.7145981Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:42.7148873Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:44.7186408Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:44.7214575Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:44.7216523Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:46.7261841Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:46.7289536Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:46.7292376Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:48.7306542Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:48.7333968Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:48.7337116Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:50.7420003Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:50.7448833Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:50.7452107Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:52.7477759Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:52.7505918Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:52.7509015Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:54.7547530Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:54.7575757Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:54.7578478Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:56.7617328Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:56.7645471Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:56.7648215Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:07:58.7681576Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:07:58.7708711Z adb: device 'emulator-5554' not found
+2026-10-31T03:07:58.7711732Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:08:00.7756162Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:08:00.7783745Z adb: device 'emulator-5554' not found
+2026-10-31T03:08:00.7786901Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:08:02.7826448Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:08:02.7853345Z adb: device 'emulator-5554' not found
+2026-10-31T03:08:02.7856640Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:08:04.7892881Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:08:04.7920759Z adb: device 'emulator-5554' not found
+2026-10-31T03:08:04.7922987Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:08:06.7959977Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:08:06.7987482Z adb: device 'emulator-5554' not found
+2026-10-31T03:08:06.7989590Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:08:08.8035925Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:08:08.8063928Z adb: device 'emulator-5554' not found
+2026-10-31T03:08:08.8066429Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:08:10.8105238Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:08:10.8134058Z adb: device 'emulator-5554' not found
+2026-10-31T03:08:10.8136986Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:08:12.8172428Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:08:12.8200987Z adb: device 'emulator-5554' not found
+2026-10-31T03:08:12.8204317Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:08:14.8228762Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:08:14.8254112Z adb: device 'emulator-5554' not found
+2026-10-31T03:08:14.8256983Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:08:16.8287883Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:08:16.8313054Z adb: device 'emulator-5554' not found
+2026-10-31T03:08:16.8315839Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:08:18.8347667Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+2026-10-31T03:08:18.8374559Z adb: device 'emulator-5554' not found
+2026-10-31T03:08:18.8377280Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:08:18.8377927Z ##[endgroup]
+2026-10-31T03:08:18.8379243Z ##[group]Terminate Emulator
+2026-10-31T03:08:18.8389497Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 emu kill
+2026-10-31T03:08:18.8408935Z error: could not connect to TCP port 5554: Connection refused
+2026-10-31T03:08:18.8410576Z The process '/usr/local/lib/android/sdk/platform-tools/adb' failed with exit code 1
+2026-10-31T03:08:18.8426141Z ##[endgroup]
+2026-10-31T03:08:18.8430832Z ##[error]Timeout waiting for emulator to boot.
+2026-10-31T03:08:18.8497383Z ##[group]Run python3 scripts/third_party_smoke_set.py finalize --api '36' --output "$RUNNER_TEMP/third-party-evidence/api-36" --outcome "${EMULATOR_OUTCOME:-unknown}"
+2026-10-31T03:08:18.8498135Z [36;1mpython3 scripts/third_party_smoke_set.py finalize --api '36' --output "$RUNNER_TEMP/third-party-evidence/api-36" --outcome "${EMULATOR_OUTCOME:-unknown}"[0m
+2026-10-31T03:08:18.8526669Z shell: /usr/bin/bash -e {0}
+2026-10-31T03:08:18.8526886Z env:
+2026-10-31T03:08:18.8527126Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-10-31T03:08:18.8527481Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-10-31T03:08:18.8527769Z   ANDROID_HOME: /usr/local/lib/android/sdk
+2026-10-31T03:08:18.8528003Z   ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+2026-10-31T03:08:18.8528236Z   ANDROID_AVD_HOME: /home/runner/.android/avd
+2026-10-31T03:08:18.8528452Z   EMULATOR_OUTCOME: failure
+2026-10-31T03:08:18.8528643Z ##[endgroup]
+2026-10-31T03:08:18.9094688Z ##[group]Run actions/upload-artifact@v4
+2026-10-31T03:08:18.9095116Z with:
+2026-10-31T03:08:18.9095310Z   name: third-party-smoke-v4-api-36-attempt-1
+2026-10-31T03:08:18.9095583Z   path: /home/runner/work/_temp/third-party-evidence/api-36/
+2026-10-31T03:08:18.9095837Z   if-no-files-found: error
+2026-10-31T03:08:18.9096015Z   retention-days: 30
+2026-10-31T03:08:18.9096187Z   compression-level: 6
+2026-10-31T03:08:18.9096352Z   overwrite: false
+2026-10-31T03:08:18.9096526Z   include-hidden-files: false
+2026-10-31T03:08:18.9096708Z env:
+2026-10-31T03:08:18.9096931Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-10-31T03:08:18.9097278Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+2026-10-31T03:08:18.9097573Z   ANDROID_HOME: /usr/local/lib/android/sdk
+2026-10-31T03:08:18.9097800Z   ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+2026-10-31T03:08:18.9098029Z   ANDROID_AVD_HOME: /home/runner/.android/avd
+2026-10-31T03:08:18.9098280Z ##[endgroup]
+2026-10-31T03:08:19.0265822Z (node:2934) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-31T03:08:19.0266318Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-31T03:08:19.0349826Z With the provided path, there will be 1 file uploaded
+2026-10-31T03:08:19.0350234Z Artifact name is valid!
+2026-10-31T03:08:19.0350428Z Root directory input is valid!
+2026-10-31T03:08:19.2246194Z Beginning upload of artifact content to blob storage
+2026-10-31T03:08:19.2381563Z (node:2934) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-31T03:08:19.2623056Z Uploaded bytes 1504
+2026-10-31T03:08:19.2764635Z Finished uploading artifact content to blob storage!
+2026-10-31T03:08:19.2765423Z SHA256 digest of uploaded artifact zip is 428dcab1b8d35e8e9c471a6b1d7e06ba8e6e5f821dbb81f425b435c9fe07606f
+2026-10-31T03:08:19.2765953Z Finalizing artifact upload
+2026-10-31T03:08:19.6713926Z Artifact third-party-smoke-v4-api-36-attempt-1.zip successfully finalized. Artifact ID 13027713268
+2026-10-31T03:08:19.6715252Z Artifact third-party-smoke-v4-api-36-attempt-1 has been successfully uploaded! Final size is 1504 bytes. Artifact ID is 13027713268
+2026-10-31T03:08:19.6719426Z Artifact download URL: https://github.com/ecojust/Agent-OS/actions/runs/41161477724/artifacts/13027713268
+2026-10-31T03:08:19.6863130Z Post job cleanup.
+2026-10-31T03:08:19.7838911Z (node:2946) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-31T03:08:19.7839587Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-31T03:08:19.7958159Z Post job cleanup.
+2026-10-31T03:08:19.8610884Z [command]/usr/bin/git version
+2026-10-31T03:08:19.8646476Z git version 2.55.0
+2026-10-31T03:08:19.8676436Z Temporarily overriding HOME='/home/runner/work/_temp/a41dbd7e-7ade-4754-a644-e24351c4f6a1' before making global git config changes
+2026-10-31T03:08:19.8677253Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-31T03:08:19.8681029Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Agent-OS/Agent-OS
+2026-10-31T03:08:19.8709880Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-31T03:08:19.8734173Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-31T03:08:19.9339761Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-31T03:08:19.9356023Z http.https://github.com/.extraheader
+2026-10-31T03:08:19.9362579Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-31T03:08:19.9386255Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-31T03:08:19.9908406Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-31T03:08:19.9934808Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-31T03:08:20.0548719Z Cleaning up orphan processes
+2026-10-31T03:08:20.0772242Z Terminate orphan process: pid (2547) (adb)
+2026-10-31T03:08:20.0822461Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/download-artifact@v4, actions/setup-java@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

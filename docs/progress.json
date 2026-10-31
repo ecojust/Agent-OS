@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-31T03:08:18Z",
-  "note": "补齐Android12/12L输入法隐藏源码调查：40份固定源码索引核验，区分父层隐藏、子表面账本与条件性5秒缓存；原v4判定不变，八档实测仍等待最后API36。",
+  "updated_at": "2026-10-31T03:12:23Z",
+  "note": "Notes原诊断第一批已归档：22通过/6失败/4未验证，API36明确为磁盘不足；24次原WMS区分31/32隐藏未证实与37清单缺IME。独立稀疏检出批次41163144860执行中，历史分母保留。",
   "latest_evidence": {
-    "path": "screenshots/41101009371-1",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41101009371"
+    "path": "screenshots/third-party-41161477724-1",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41161477724"
   },
   "checkpoints": [
     {
@@ -137,9 +137,9 @@
       "name": "冻结常用应用样本与日常使用验收",
       "status": "in_progress",
       "evidence": "docs/validation/notes-confirmation-diagnostics.md",
-      "scope": "Current exactdb1943/run40834304846 independently repeats the unchanged v4 contract on official unmodified Calculator1.4.0 and Notes1.7.0. All16 app/API fresh installs succeed;all32 state identity/signature/APK checks match.24/32 pass,8failed,0unverified:Calculator16/16;Notes API30/33/34/35 off+idle8/16 with one HOME and exact fresh-process title/body readback.Notes API31/32 four failures after one accepted BACK;API36/37 four with BACK0;all8 fail HIDDEN_PREPARATION with hiddenSamples4,confirm0,HOME0,no persistence proof.Identical per-combination result to historical v4 source5436/run40674357809,not a fix.56payloads/2465192B/32Calculator PNG/32Notes blocked verified,secure flags unchanged.Independent same-source standard-APK Calculator page run40834465238:20/20 across API34–37,production observe/policy with test-prepared UI,modelRequests0,capture/gesture tools remain absent;128payloads/28PNG verified,separate denominator.Original v3 two22/32 andv2 31/32 retained.Agent Controller/model-driven writes,executing state,upgrades,broad apps,phones,performance and remaining failures remain unverified. Latest exactad0f0a723 API35 recorded run41161479506 passes4/4 off/idle cases, with 45.813s/789-frame video audited;page recording40876724624 remains separately5/5 at exactaee3d4e01. New fixed32 matrix41161477724 at ad0f is in progress; no matrix pass/fail conclusion yet. Historical eight Notes failures retained.",
-      "details": "历史官方APK24/32，8项Notes隐藏准备失败保留。ad0f原读取诊断通过891项宿主检查和构建/lint；API35独立录像4/4、整体13阶段/8确认已归档。AOSP12/12L已确认父层隐藏与子表面shown可并存及条件性5秒缓存，尚非现场根因。八档32项41161477724仍等API36；下一步核对原决策清单与四次WMS，必要时独立验证父层身份/时序。原v4预算不变；执行态、升级和扩样未验收。",
-      "updated_at": "2026-10-31T03:08:18Z"
+      "scope": "ad0f源码41161477724固定32项为22通过、6失败、4未验证。API36因userdata磁盘不足未启动；七档14次官方Calculator1.4.0/Notes1.7.0安装、28次身份/设置恢复已核验。Calculator14通过/2未验证；Notes8通过/6失败/2未验证。六失败共24次原WMS诊断：31/32一次接受BACK后不满足隐藏；37原决策清单无IME而随后WMS可见，没有BELOW_FOCUSED证据。50载荷2210433B/28PNG及28Notesblocked已核验；原v4规则未改。独立API35视频4/4，不并入矩阵。历史db1943轮24/32、v4首轮24/32、v3两轮22/32及v2的31/32分别保留。稀疏检出源码435d的独立固定32项41163144860正在执行。执行态写操作、升级、扩大样本、真实模型、真机及性能预算未验收。",
+      "details": "ad0f固定32项22通过/6失败/4未验证，API36因磁盘不足未启动。六失败共24次原WMS已归档：31/32接受BACK后隐藏未证实；37原决策完整清单无IME，非已证实层级过滤。50载荷/28PNG审核通过，独立API35录像4/4。435d稀疏检出独立32项41163144860执行中；下一步核对API36及重复诊断，再验证IME清单/父层隐藏来源。原v4不放宽；执行态、升级和扩样未验收。",
+      "updated_at": "2026-10-31T03:12:23Z"
     },
     {
       "id": "physical_devices",

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-31T07:20:24Z",
-  "note": "214e90独立API37单项41180160267与整体录像41180137894已启动，结果待审核。81 Java/54主机归档及构建/lint通过；固定来源与旧失败保留，未注册窗口监听或重跑原32项。",
+  "updated_at": "2026-10-31T07:27:36Z",
+  "note": "214e90独立API37能力探查1/1完成：22项签名匹配、构造成功，5关键字段未找到或被过滤，未注册监听/读取窗口。原32项24/8未改判；检查点详情和UTC时间已更新，整体录像33.502秒/13阶段通过并链接，旧失败保留。",
   "latest_evidence": {
     "path": "screenshots/third-party-41178248694-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41178248694"
@@ -119,10 +119,10 @@
       "id": "continuous_actions",
       "name": "普通操作连续执行与接管",
       "status": "in_progress",
-      "evidence": "screenshots/demos/41178250336-1/manifest.json",
-      "scope": "35519源码API35 Fixture本地模型整体演示13阶段/8确认通过；36.571秒511帧426563B，30载荷1160755B/22PNG完整审核，保留安全标志、最终浮条移除。未验收普通写操作连续执行与真实模型接管；不替代真实APK、性能和原矩阵失败。 cdea/41178250336独立overall录制失败，ready阶段Accessibility service did not connect，0/13阶段0确认；enabledServices=null、各服务列表空，原因未定。8载荷88482B/0PNG、1桌面截图blocked，11.308秒193帧69693B部分视频全解码。app/Fixture/演示脚本workflow与355相同，compat-smoke诊断不在该演示路径执行，未建立因果；不重录、不回填通过，继续保留355成功录像。",
-      "details": "已验证：35519源码API35整体13阶段/8确认通过，36.571秒录像核验；c7b繁忙停止1/1保留。最新cdea录制ready阶段辅助服务未连接，0/13阶段，11.308秒桌面短片已归档且未重录，设置为空原因未明。仅启动/滚动/主页可选免确认；连续写与真实模型接管未验收。下一步查服务启用/连接时序，并冻结连续写验收范围。",
-      "updated_at": "2026-10-31T06:58:58Z"
+      "evidence": "screenshots/demos/41180137894-1/manifest.json",
+      "scope": "35519源码API35 Fixture本地模型整体演示13阶段/8确认通过；36.571秒511帧426563B，30载荷1160755B/22PNG完整审核，保留安全标志、最终浮条移除。未验收普通写操作连续执行与真实模型接管；不替代真实APK、性能和原矩阵失败。 cdea/41178250336独立overall录制失败，ready阶段Accessibility service did not connect，0/13阶段0确认；enabledServices=null、各服务列表空，原因未定。8载荷88482B/0PNG、1桌面截图blocked，11.308秒193帧69693B部分视频全解码。app/Fixture/演示脚本workflow与355相同，compat-smoke诊断不在该演示路径执行，未建立因果；不重录、不回填通过，继续保留355成功录像。 214e90af/41180137894新独立整体录像完成13阶段8确认，33.502秒468帧389979B，30载荷1116769B/22PNG全部来源和画面核验。仍为API35 Fixture/本地模型、保留secure flags、最后浮条移除；不执行API37元数据探针，不代替真实APK/模型/真机，不关闭旧cdea服务就绪失败根因。",
+      "details": "已验证：214e90源码API35整体13阶段/8确认通过，33.502秒/468帧、30载荷/22PNG核验；c7b繁忙停止1/1保留。旧cdea ready阶段服务未连接失败仍保留，设置为空原因未明，本次成功不算稳定修复。仅启动/滚动/主页可选免确认；连续写与真实模型接管未验收。下一步验证服务清单就绪性诊断，再冻结连续写范围。",
+      "updated_at": "2026-10-31T07:26:46Z"
     },
     {
       "id": "model_acceptance",
@@ -137,9 +137,9 @@
       "name": "冻结常用应用样本与日常使用验收",
       "status": "in_progress",
       "evidence": "docs/validation/window-infos-capability.md",
-      "scope": "原v4四方法、官方APK/锁、身份/遮挡/5秒/4隐藏采样与动作额度保持。72f/41173725544、9b86/41174426442、35519/41177392095、cdea60c1/41178248694四份独立源码各32项，均24通过8失败0未验证，不合并或替换历史失败。355明确36两态ATTRS_SIZE_LIMIT：3/11正式分段、单anchor229、recordChars11698/scan8192、无tail；只定位后置诊断子限，不倒填9b或原Notes根因。cdea将扫描绑定原262144字节捕获对应字符上限，schema2声明scan/input262144，保持闭合/depth8/唯一type/全记录属性及候选身份，截断不解析；API36两态11parsed/0、唯一IME及身份通过，后续可见4/1display/final3匹配0/0/0。API37为10parsed、3/1/2，匹配同为0/0/0；31/32仍旧接口不可用null。新56载荷2538233B/32PNG/32Notesblocked，32身份恢复、8Notes新进程读回、8原确认及8后置marker独立核验；全部原状态主错和32hidden样本字段与355一致，后置gap0–3ms/读取28–50ms，无截断超时。匹配仅失败后有序文本，不是强Binder/原子快照/像素证据；完整dump丢弃不能独立重算outputSha。25采集/2607扫描差分/83边界、独立250组770断言、44分析/四Java桥接及旧三轮回放、构建lint通过。cdea整体ready失败0/13、11.308秒桌面片保留，355完整36.571秒和72f真实APK4/4保持实际来源。下一步独立过滤前类/成员能力与同进程身份研究，原八隐藏失败、API30历史几何失败及执行态/升级/扩样/真实模型/真机未关闭。 后续独立API37能力探针单列公开27lookup及一次ForTest构造，沿用Instrumentation默认TestApi条件、无额外hidden豁免/权限委托/listener注册/窗口字段读取；设备待执行，不替代原32项或关闭应用检查点。",
-      "details": "API36扫描修正已验证，原32项仍24通过/8失败。独立API37能力探针27项查询及单次构造已实现，81项Java/54项主机归档、交叉核验和构建lint通过；下一步固定来源单次实测。仅查公开TestApi元数据，尚未注册监听或建立IME同进程身份，原隐藏失败及执行态/升级/扩样未验收。",
-      "updated_at": "2026-10-31T07:19:15Z"
+      "scope": "原v4四方法、官方APK/锁、身份/遮挡/5秒/4隐藏采样与动作额度保持。72f/41173725544、9b86/41174426442、35519/41177392095、cdea60c1/41178248694四份独立源码各32项，均24通过8失败0未验证，不合并或替换历史失败。355明确36两态ATTRS_SIZE_LIMIT：3/11正式分段、单anchor229、recordChars11698/scan8192、无tail；只定位后置诊断子限，不倒填9b或原Notes根因。cdea将扫描绑定原262144字节捕获对应字符上限，schema2声明scan/input262144，保持闭合/depth8/唯一type/全记录属性及候选身份，截断不解析；API36两态11parsed/0、唯一IME及身份通过，后续可见4/1display/final3匹配0/0/0。API37为10parsed、3/1/2，匹配同为0/0/0；31/32仍旧接口不可用null。新56载荷2538233B/32PNG/32Notesblocked，32身份恢复、8Notes新进程读回、8原确认及8后置marker独立核验；全部原状态主错和32hidden样本字段与355一致，后置gap0–3ms/读取28–50ms，无截断超时。匹配仅失败后有序文本，不是强Binder/原子快照/像素证据；完整dump丢弃不能独立重算outputSha。25采集/2607扫描差分/83边界、独立250组770断言、44分析/四Java桥接及旧三轮回放、构建lint通过。cdea整体ready失败0/13、11.308秒桌面片保留，355完整36.571秒和72f真实APK4/4保持实际来源。前序类/成员能力计划由后续独立探针验证，同进程身份仍待研究；原八隐藏失败、API30历史几何失败及执行态/升级/扩样/真实模型/真机未关闭。 后续214e90af/41180160267独立API37能力探查recorded1/1，27lookup全尝试：3类/1构造查找/4方法/14字段共22匹配，inputConfig/isClone/frame/layoutParamsType/ownerUid五名称NOT_FOUND_OR_FILTERED；无参构造1/1，SF权限DENIED，反射及构造6ms，host仪器1255ms。实际Android17 buildCE2A.260420.051.A3/x86_64/target35/UID10156，默认Instrumentation TestApi语境不推广普通APK；无额外hidden豁免、权限委托、listener注册或窗口字段读取。17固定命令/6422B完整marker（JSON6395B）/8执行源文件及6索引载荷71561B/7Git原文件核验，原APK字节未归档，不声称独立重算。81Java/54Python+真实输出桥接/构建lint通过。此子任务已完成，完整过滤前字段和同进程IME映射仍不足；原32未重跑、旧失败保持。214整体33.502秒13阶段8确认通过，不关闭cdea ready故障；72f真实APK实际来源保留。",
+      "details": "已完成API37接口能力探查1/1：22项声明匹配、构造1次成功，5个关键字段未找到或被过滤，当前SF权限拒绝；未注册监听或读取窗口。原32项本轮未重跑，仍保留24通过/8失败。下一步确定原始输入配置/矩形及IME同进程身份来源；当前接口不足以完整解释过滤，原隐藏失败、执行态/升级/扩样未验收。",
+      "updated_at": "2026-10-31T07:27:36Z"
     },
     {
       "id": "physical_devices",
@@ -179,9 +179,9 @@
     }
   ],
   "latest_demo": {
-    "path": "screenshots/demos/41177393808-1",
-    "source_sha": "35519e9fb77dc751bf8529768292cdcd1eb3b7ed",
-    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41177393808",
+    "path": "screenshots/demos/41180137894-1",
+    "source_sha": "214e90afba8481655ae33d5ad99a7d49b0a4557d",
+    "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41180137894",
     "status": "passed"
   }
 }

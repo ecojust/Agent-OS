@@ -1,0 +1,331 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-window-infos-capability-original-review",
+  "reviewedAt": "2026-10-31T07:25:52.381953+00:00",
+  "status": "passed",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 41180160267,
+    "attempt": 1,
+    "commit": "214e90afba8481655ae33d5ad99a7d49b0a4557d"
+  },
+  "archiveCommit": "bdea5876cfd23d221de6e8d647f07df048bc75a6",
+  "archiveParent": "214e90afba8481655ae33d5ad99a7d49b0a4557d",
+  "manifestSha256": "090ae6a872c75a23ce807fb998aaaf45a347a71c899f48396071beb9bd90806d",
+  "originalFiles": [
+    {
+      "path": "payload/capture.json",
+      "bytes": 340,
+      "sha256": "3517345e13649e6f0954d9931e53d0ccb4b200d4eb8636f57771006db8c3173d"
+    },
+    {
+      "path": "payload/commands.json",
+      "bytes": 34409,
+      "sha256": "1aafec261b366d84d374ff84c714f5d771923bb633df96c1a4d9a62ab0c6aeda"
+    },
+    {
+      "path": "payload/instrumentation.json",
+      "bytes": 8663,
+      "sha256": "045cf287337c6f27d21caee1a0b2348528e8f58e0995bc435013fe0bfa89746d"
+    },
+    {
+      "path": "payload/report.json",
+      "bytes": 13229,
+      "sha256": "9b687aaed2b0ca2dcf9e1ef2c8465e8038643cf89a5aa5aebc4555a61bad4c80"
+    },
+    {
+      "path": "source-run.json",
+      "bytes": 13050,
+      "sha256": "6cb90e06a109eb7e1215af81cac9f6e1d627bee56568df469dc9f94e3bac423f"
+    },
+    {
+      "path": "source-artifacts.json",
+      "bytes": 1870,
+      "sha256": "9c9ca6c131e34789ec505b98a41948bc5464774b8fced9a456e3f48323e3ad14"
+    }
+  ],
+  "exactGitBlobsVerified": 7,
+  "executionSources": [
+    {
+      "path": "scripts/window_infos_capability.py",
+      "bytes": 48485,
+      "sha256": "723ae37d40a299c5db4b337cb0aff88a9a4dd18864dff73a8d4ba750d3e3a45c"
+    },
+    {
+      "path": "scripts/window_infos_capability_archive.py",
+      "bytes": 13158,
+      "sha256": "dc8af1e33d669c66a14bd20b387e43082c5412395212db5d4657258136e7259c"
+    },
+    {
+      "path": "scripts/third_party_smoke.py",
+      "bytes": 27947,
+      "sha256": "e15ba7930e9daf6393e80156121316032bef6bfe6ffabf5e462fc2d082e5a30e"
+    },
+    {
+      "path": "scripts/third_party_smoke_archive.py",
+      "bytes": 23102,
+      "sha256": "84bf08eded010c1cb0d58f4f8b90ebecf7cc32768d66639348e79ba83621f0f2"
+    },
+    {
+      "path": "compat-smoke/src/androidTest/java/dev/agentos/compat/WindowInfosCapabilityInstrumentedTest.java",
+      "bytes": 5377,
+      "sha256": "f40ea789523622b4abda09f24e825de14aa8ee9128630f6e31f7c04f4a85b8d1"
+    },
+    {
+      "path": "compat-smoke/src/androidTest/java/dev/agentos/compat/WindowInfosCapabilityProbe.java",
+      "bytes": 13338,
+      "sha256": "d49c8330114cae134f704123c91c23ca966f01164d656044730eec3144d6b396"
+    },
+    {
+      "path": "compat-smoke/build.gradle",
+      "bytes": 817,
+      "sha256": "fca4a5de7778383b232c9b3f501bd4eee4e43eed762160bc8afaf61d86c12e11"
+    },
+    {
+      "path": ".github/workflows/window-infos-capability.yml",
+      "bytes": 9308,
+      "sha256": "027b9e1e91761844627f24a2c7a770b2fef571880b873bf418023a55deb79a2a"
+    }
+  ],
+  "sourceConclusion": "success",
+  "probeStatus": "recorded",
+  "capabilityObservation": {
+    "lookupStatuses": {
+      "FOUND_MATCHED": 22,
+      "NOT_FOUND_OR_FILTERED": 5
+    },
+    "requiredMatched": 22,
+    "gaps": [
+      {
+        "id": "gap.windowInfo.inputConfig",
+        "status": "NOT_FOUND_OR_FILTERED",
+        "attempted": true,
+        "public": null,
+        "static": null,
+        "final": null,
+        "observedType": null,
+        "typeMatches": null,
+        "declaringClassMatches": null
+      },
+      {
+        "id": "gap.windowInfo.isClone",
+        "status": "NOT_FOUND_OR_FILTERED",
+        "attempted": true,
+        "public": null,
+        "static": null,
+        "final": null,
+        "observedType": null,
+        "typeMatches": null,
+        "declaringClassMatches": null
+      },
+      {
+        "id": "gap.windowInfo.frame",
+        "status": "NOT_FOUND_OR_FILTERED",
+        "attempted": true,
+        "public": null,
+        "static": null,
+        "final": null,
+        "observedType": null,
+        "typeMatches": null,
+        "declaringClassMatches": null
+      },
+      {
+        "id": "gap.windowInfo.layoutParamsType",
+        "status": "NOT_FOUND_OR_FILTERED",
+        "attempted": true,
+        "public": null,
+        "static": null,
+        "final": null,
+        "observedType": null,
+        "typeMatches": null,
+        "declaringClassMatches": null
+      },
+      {
+        "id": "gap.windowInfo.ownerUid",
+        "status": "NOT_FOUND_OR_FILTERED",
+        "attempted": true,
+        "public": null,
+        "static": null,
+        "final": null,
+        "observedType": null,
+        "typeMatches": null,
+        "declaringClassMatches": null
+      }
+    ],
+    "constructor": {
+      "status": "CONSTRUCTED",
+      "attempts": 1,
+      "completed": 1
+    },
+    "permissions": {
+      "accessSurfaceFlinger": "DENIED"
+    },
+    "process": {
+      "uid": 10156,
+      "targetSdk": 35,
+      "targetPackage": "dev.agentos.compat",
+      "testPackage": "dev.agentos.compat.test"
+    },
+    "actualSdkInt": 37,
+    "build": {
+      "buildId": "CE2A.260420.051.A3",
+      "valueRelease": "17",
+      "fingerprintSha256": "35abb7613e43fefcf91fd83137ec1d613853bc67499c826f80f06cb034ad8fc8",
+      "buildIdStatus": "AVAILABLE",
+      "releaseStatus": "AVAILABLE",
+      "fingerprintStatus": "AVAILABLE"
+    },
+    "elapsedMillis": 6
+  },
+  "rawMarkerSha256": "5877218fd0087b376656e2fdb7107aabbc7f0e6401828e8c182556526df97144",
+  "rawMarkerBytes": 6395,
+  "device": {
+    "serial": "emulator-5554",
+    "apiLevel": 37,
+    "emulatorVersion": "37.2.12",
+    "emulatorSourceProperties": "Pkg.UserSrc=false\nPkg.Revision=37.2.12\nPkg.Path=emulator\nPkg.Desc=Android Emulator\nPkg.BuildId=16428233",
+    "properties": {
+      "ro.kernel.qemu": "1",
+      "ro.boot.qemu": "1",
+      "ro.build.version.sdk": "37",
+      "ro.product.cpu.abi": "x86_64",
+      "sys.boot_completed": "1",
+      "ro.build.fingerprint": "Android/sdk_phone64_x86_64/emu64x:17/CE2A.260420.051.A3/16571990:userdebug/test-keys"
+    }
+  },
+  "retainedCommandBytes": 16743,
+  "commandIds": [
+    "devices",
+    "property_ro.kernel.qemu",
+    "property_ro.boot.qemu",
+    "property_ro.build.version.sdk",
+    "property_ro.product.cpu.abi",
+    "property_sys.boot_completed",
+    "property_ro.build.fingerprint",
+    "current_user",
+    "installed_packages",
+    "apk_badging_probe",
+    "apk_badging_tests",
+    "install_probe",
+    "installed_paths_probe",
+    "install_tests",
+    "installed_paths_tests",
+    "instrumentation_registration",
+    "instrumentation"
+  ],
+  "instrumentationSha256": "79c2e66b72502fcbfcfbe7c17cb9b3f9901a82cf089afe7f30d97a6d06a24e8e",
+  "actualInstrumentationArgv": [
+    "/usr/local/lib/android/sdk/platform-tools/adb",
+    "-s",
+    "emulator-5554",
+    "shell",
+    "am",
+    "instrument",
+    "-w",
+    "-r",
+    "-e",
+    "class",
+    "dev.agentos.compat.WindowInfosCapabilityInstrumentedTest#inspectPublicTestApiSurface",
+    "-e",
+    "windowInfosCapability",
+    "true",
+    "-e",
+    "sourceSha",
+    "214e90afba8481655ae33d5ad99a7d49b0a4557d",
+    "-e",
+    "runId",
+    "41180160267",
+    "-e",
+    "runAttempt",
+    "1",
+    "-e",
+    "expectedApi",
+    "37",
+    "-e",
+    "deviceSerial",
+    "emulator-5554",
+    "dev.agentos.compat.test/androidx.test.runner.AndroidJUnitRunner"
+  ],
+  "apks": {
+    "probe": {
+      "package": "dev.agentos.compat",
+      "bytes": 6127,
+      "sha256": "42547748bae9ec9bc744d686fa432d0aa21c4d4beccb2d23398d420e9a53f3fa",
+      "minSdk": 30,
+      "targetSdk": 35,
+      "installedPaths": [
+        "/data/app/~~IdlHqmNLSecrEosBc_Wskg==/dev.agentos.compat-JaSbvr7Fws1TLeRLnHpw2g==/base.apk"
+      ]
+    },
+    "tests": {
+      "package": "dev.agentos.compat.test",
+      "bytes": 4649935,
+      "sha256": "41c85fcc1fc2a2a64a50687cafd5278109c089884ad9f1f444bc1ada3addb594",
+      "minSdk": 30,
+      "targetSdk": 35,
+      "installedPaths": [
+        "/data/app/~~1Vt8WpqQhJx228CpkCkE1Q==/dev.agentos.compat.test-OAtD2hRUM8n9ce5Vtb3jGQ==/base.apk"
+      ]
+    }
+  },
+  "githubJobs": [
+    {
+      "name": "build",
+      "id": 124475748484,
+      "head_sha": "214e90afba8481655ae33d5ad99a7d49b0a4557d",
+      "conclusion": "success",
+      "started_at": "2026-10-31T07:19:47Z",
+      "completed_at": "2026-10-31T07:20:59Z"
+    },
+    {
+      "name": "probe",
+      "id": 124476006353,
+      "head_sha": "214e90afba8481655ae33d5ad99a7d49b0a4557d",
+      "conclusion": "success",
+      "started_at": "2026-10-31T07:21:02Z",
+      "completed_at": "2026-10-31T07:22:44Z"
+    }
+  ],
+  "githubJobsMetadataSha256": "5e7907bdac61ab6f7f7facc2a313bc33e54d6acc6324a7d1bc7efc5a4fee2d98",
+  "archiveWorkflowMetadata": {
+    "runId": 41180389001,
+    "workflowHead": "baf9b427191a0f603eb3cd5e22c440d375064447",
+    "sourceBindingSha256": "53cb872b8f2bfb1cb4f2397b27a7d6264a60f91a67b9eacf32a39bd9b8544bf2",
+    "runMetadataSha256": "3823e785bc56cfd9f3005cde332235451a241f9ac386c9b4c899937a290d6eb1"
+  },
+  "sourceArtifacts": [
+    {
+      "id": 13034542610,
+      "name": "window-infos-capability-apks-attempt-1",
+      "created_at": "2026-10-31T07:20:37Z",
+      "workflow_run": {
+        "id": 41180160267,
+        "repository_id": 1434369895,
+        "head_repository_id": 1434369895,
+        "head_branch": "master",
+        "head_sha": "214e90afba8481655ae33d5ad99a7d49b0a4557d"
+      }
+    },
+    {
+      "id": 13034074454,
+      "name": "window-infos-capability-api-37.0-attempt-1",
+      "created_at": "2026-10-31T07:22:42Z",
+      "workflow_run": {
+        "id": 41180160267,
+        "repository_id": 1434369895,
+        "head_repository_id": 1434369895,
+        "head_branch": "master",
+        "head_sha": "214e90afba8481655ae33d5ad99a7d49b0a4557d"
+      }
+    }
+  ],
+  "limitations": [
+    "No primary parser or archive implementation is imported by this independent audit.",
+    "Construction, metadata lookup and app permission checks do not establish listener registration, permission delegation, callback, field value reads or full prefilter data.",
+    "NOT_FOUND_OR_FILTERED is not proof of underlying implementation absence. Five source-unlisted field names do not exhaust private implementation fields.",
+    "No original 32-case app matrix was executed in this isolated capability run; no Notes failure is reclassified.",
+    "APK SHA/byte counts are producer-reported in the retained receipt; this archive retains metadata rather than APK binaries. APK artifact origin and exact source job are independently bound here.",
+    "No window content or visual output is collected; static source and explicit command scope substantiate the absence of requested UI actions, not every behavior of the system process startup."
+  ],
+  "reviewScriptSha256": "a9e92529eb493198d1b33449fa3b59ea6b25d98559bc6667031fe31c4f17ae13"
+}

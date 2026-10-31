@@ -1,0 +1,629 @@
+{
+  "schemaVersion": 1,
+  "kind": "window-infos-capability-findings",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 41180160267,
+    "attempt": 1,
+    "commit": "214e90afba8481655ae33d5ad99a7d49b0a4557d"
+  },
+  "sourceConclusion": "success",
+  "status": "recorded",
+  "expectedTests": 1,
+  "recordedTests": 1,
+  "device": {
+    "serial": "emulator-5554",
+    "apiLevel": 37,
+    "emulatorVersion": "37.2.12",
+    "emulatorSourceProperties": "Pkg.UserSrc=false\nPkg.Revision=37.2.12\nPkg.Path=emulator\nPkg.Desc=Android Emulator\nPkg.BuildId=16428233",
+    "properties": {
+      "ro.kernel.qemu": "1",
+      "ro.boot.qemu": "1",
+      "ro.build.version.sdk": "37",
+      "ro.product.cpu.abi": "x86_64",
+      "sys.boot_completed": "1",
+      "ro.build.fingerprint": "Android/sdk_phone64_x86_64/emu64x:17/CE2A.260420.051.A3/16571990:userdebug/test-keys"
+    }
+  },
+  "installedApks": {
+    "probe": {
+      "package": "dev.agentos.compat",
+      "bytes": 6127,
+      "sha256": "42547748bae9ec9bc744d686fa432d0aa21c4d4beccb2d23398d420e9a53f3fa",
+      "minSdk": 30,
+      "targetSdk": 35,
+      "installedPaths": [
+        "/data/app/~~IdlHqmNLSecrEosBc_Wskg==/dev.agentos.compat-JaSbvr7Fws1TLeRLnHpw2g==/base.apk"
+      ]
+    },
+    "tests": {
+      "package": "dev.agentos.compat.test",
+      "bytes": 4649935,
+      "sha256": "41c85fcc1fc2a2a64a50687cafd5278109c089884ad9f1f444bc1ada3addb594",
+      "minSdk": 30,
+      "targetSdk": 35,
+      "installedPaths": [
+        "/data/app/~~1Vt8WpqQhJx228CpkCkE1Q==/dev.agentos.compat.test-OAtD2hRUM8n9ce5Vtb3jGQ==/base.apk"
+      ]
+    }
+  },
+  "method": {
+    "class": "dev.agentos.compat.WindowInfosCapabilityInstrumentedTest",
+    "method": "inspectPublicTestApiSurface",
+    "count": 1
+  },
+  "lookupGroups": {
+    "class.": {
+      "count": 3,
+      "statusCounts": {
+        "FOUND_MATCHED": 3
+      },
+      "entries": [
+        {
+          "id": "class.forTest",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": false,
+          "observedType": "CLASS",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "class.windowInfo",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": true,
+          "final": false,
+          "observedType": "CLASS",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "class.displayInfo",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": true,
+          "final": false,
+          "observedType": "CLASS",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        }
+      ]
+    },
+    "constructor.": {
+      "count": 1,
+      "statusCounts": {
+        "FOUND_MATCHED": 1
+      },
+      "entries": [
+        {
+          "id": "constructor.forTest",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": false,
+          "observedType": "CONSTRUCTOR",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        }
+      ]
+    },
+    "method.": {
+      "count": 4,
+      "statusCounts": {
+        "FOUND_MATCHED": 4
+      },
+      "entries": [
+        {
+          "id": "method.add.consumer",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": false,
+          "observedType": "VOID",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "method.add.biConsumer",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": false,
+          "observedType": "VOID",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "method.remove.consumer",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": false,
+          "observedType": "VOID",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "method.remove.biConsumer",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": false,
+          "observedType": "VOID",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        }
+      ]
+    },
+    "field.": {
+      "count": 14,
+      "statusCounts": {
+        "FOUND_MATCHED": 14
+      },
+      "entries": [
+        {
+          "id": "field.windowInfo.windowToken",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "IBINDER",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.name",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "STRING",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.displayId",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "INT",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.bounds",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "RECT",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.touchableRegion",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "REGION",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.transform",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "MATRIX",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.isTrustedOverlay",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "BOOLEAN",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.isVisible",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "BOOLEAN",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.isTouchable",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "BOOLEAN",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.isFocusable",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "BOOLEAN",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.isDuplicateTouchToWallpaper",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "BOOLEAN",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.isWatchOutsideTouch",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "BOOLEAN",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.displayInfo.displayId",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "INT",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.displayInfo.transform",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "MATRIX",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        }
+      ]
+    },
+    "gap.": {
+      "count": 5,
+      "statusCounts": {
+        "NOT_FOUND_OR_FILTERED": 5
+      },
+      "entries": [
+        {
+          "id": "gap.windowInfo.inputConfig",
+          "status": "NOT_FOUND_OR_FILTERED",
+          "attempted": true,
+          "public": null,
+          "static": null,
+          "final": null,
+          "observedType": null,
+          "typeMatches": null,
+          "declaringClassMatches": null
+        },
+        {
+          "id": "gap.windowInfo.isClone",
+          "status": "NOT_FOUND_OR_FILTERED",
+          "attempted": true,
+          "public": null,
+          "static": null,
+          "final": null,
+          "observedType": null,
+          "typeMatches": null,
+          "declaringClassMatches": null
+        },
+        {
+          "id": "gap.windowInfo.frame",
+          "status": "NOT_FOUND_OR_FILTERED",
+          "attempted": true,
+          "public": null,
+          "static": null,
+          "final": null,
+          "observedType": null,
+          "typeMatches": null,
+          "declaringClassMatches": null
+        },
+        {
+          "id": "gap.windowInfo.layoutParamsType",
+          "status": "NOT_FOUND_OR_FILTERED",
+          "attempted": true,
+          "public": null,
+          "static": null,
+          "final": null,
+          "observedType": null,
+          "typeMatches": null,
+          "declaringClassMatches": null
+        },
+        {
+          "id": "gap.windowInfo.ownerUid",
+          "status": "NOT_FOUND_OR_FILTERED",
+          "attempted": true,
+          "public": null,
+          "static": null,
+          "final": null,
+          "observedType": null,
+          "typeMatches": null,
+          "declaringClassMatches": null
+        }
+      ]
+    }
+  },
+  "probeElapsedMillis": 6,
+  "betweenOperationDeadlineMillis": 5000,
+  "constructor": {
+    "status": "CONSTRUCTED",
+    "attempts": 1,
+    "completed": 1
+  },
+  "permissions": {
+    "accessSurfaceFlinger": "DENIED"
+  },
+  "process": {
+    "uid": 10156,
+    "targetSdk": 35,
+    "targetPackage": "dev.agentos.compat",
+    "testPackage": "dev.agentos.compat.test"
+  },
+  "build": {
+    "buildId": "CE2A.260420.051.A3",
+    "valueRelease": "17",
+    "fingerprintSha256": "35abb7613e43fefcf91fd83137ec1d613853bc67499c826f80f06cb034ad8fc8",
+    "buildIdStatus": "AVAILABLE",
+    "releaseStatus": "AVAILABLE",
+    "fingerprintStatus": "AVAILABLE"
+  },
+  "capability": {
+    "requiredSurface": "MATCHED",
+    "listenerRegistration": "NOT_ATTEMPTED",
+    "windowData": "NOT_READ"
+  },
+  "executionContext": "DEFAULT_INSTRUMENTATION_TEST_PROCESS",
+  "reflectionPolicy": "PUBLIC_WHITELIST_ONLY_NO_ADDITIONAL_EXEMPTION_REQUEST",
+  "commands": [
+    {
+      "id": "devices",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 5,
+      "bytes": 47,
+      "timeoutSeconds": 10,
+      "byteLimit": 65536
+    },
+    {
+      "id": "property_ro.kernel.qemu",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 95,
+      "bytes": 2,
+      "timeoutSeconds": 10,
+      "byteLimit": 65536
+    },
+    {
+      "id": "property_ro.boot.qemu",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 210,
+      "bytes": 2,
+      "timeoutSeconds": 10,
+      "byteLimit": 65536
+    },
+    {
+      "id": "property_ro.build.version.sdk",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 77,
+      "bytes": 3,
+      "timeoutSeconds": 10,
+      "byteLimit": 65536
+    },
+    {
+      "id": "property_ro.product.cpu.abi",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 146,
+      "bytes": 7,
+      "timeoutSeconds": 10,
+      "byteLimit": 65536
+    },
+    {
+      "id": "property_sys.boot_completed",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 22,
+      "bytes": 2,
+      "timeoutSeconds": 10,
+      "byteLimit": 65536
+    },
+    {
+      "id": "property_ro.build.fingerprint",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 282,
+      "bytes": 85,
+      "timeoutSeconds": 10,
+      "byteLimit": 65536
+    },
+    {
+      "id": "current_user",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 93,
+      "bytes": 2,
+      "timeoutSeconds": 10,
+      "byteLimit": 65536
+    },
+    {
+      "id": "installed_packages",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 257,
+      "bytes": 7542,
+      "timeoutSeconds": 10,
+      "byteLimit": 65536
+    },
+    {
+      "id": "apk_badging_probe",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 201,
+      "bytes": 559,
+      "timeoutSeconds": 10,
+      "byteLimit": 65536
+    },
+    {
+      "id": "apk_badging_tests",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 4,
+      "bytes": 669,
+      "timeoutSeconds": 10,
+      "byteLimit": 65536
+    },
+    {
+      "id": "install_probe",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 2466,
+      "bytes": 36,
+      "timeoutSeconds": 60,
+      "byteLimit": 65536
+    },
+    {
+      "id": "installed_paths_probe",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 127,
+      "bytes": 98,
+      "timeoutSeconds": 10,
+      "byteLimit": 65536
+    },
+    {
+      "id": "install_tests",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 660,
+      "bytes": 36,
+      "timeoutSeconds": 60,
+      "byteLimit": 65536
+    },
+    {
+      "id": "installed_paths_tests",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 40,
+      "bytes": 103,
+      "timeoutSeconds": 10,
+      "byteLimit": 65536
+    },
+    {
+      "id": "instrumentation_registration",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 38,
+      "bytes": 108,
+      "timeoutSeconds": 10,
+      "byteLimit": 65536
+    },
+    {
+      "id": "instrumentation",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 1255,
+      "bytes": 7442,
+      "timeoutSeconds": 60,
+      "byteLimit": 262144
+    }
+  ],
+  "capture": {
+    "schemaVersion": 1,
+    "kind": "window-infos-capability-capture",
+    "source": {
+      "repository": "ecojust/Agent-OS",
+      "commit": "214e90afba8481655ae33d5ad99a7d49b0a4557d",
+      "runId": 41180160267,
+      "attempt": 1
+    },
+    "apiLevel": 37,
+    "captureStatus": "nonvisual",
+    "reason": "metadata_only_no_visual_capture",
+    "files": []
+  },
+  "original32CaseRunnerExecuted": false,
+  "oldNotesFailuresChanged": false,
+  "reports": {
+    "archive-audit.json": {
+      "sha256": "1117d73267dfb80160c38de32c25b86f871c5278c0628b50494b027cebc2c61d",
+      "bytes": 16428
+    },
+    "archive-source-binding.json": {
+      "sha256": "53cb872b8f2bfb1cb4f2397b27a7d6264a60f91a67b9eacf32a39bd9b8544bf2",
+      "bytes": 504
+    },
+    "marker-analysis.json": {
+      "sha256": "d2d6e39fab76cb73c052a45795816a06a519ea13b7ee9e9f41d431f1549fa877",
+      "bytes": 17610
+    },
+    "source-jobs.json": {
+      "bytes": 9751,
+      "sha256": "5e7907bdac61ab6f7f7facc2a313bc33e54d6acc6324a7d1bc7efc5a4fee2d98"
+    },
+    "archive-run.json": {
+      "bytes": 11728,
+      "sha256": "3823e785bc56cfd9f3005cde332235451a241f9ac386c9b4c899937a290d6eb1"
+    },
+    "original-log-index.json": {
+      "bytes": 519,
+      "sha256": "85a509867fa2cdb64a10aa56c826b787a4719e91079eeba3eead674750a29f24"
+    }
+  },
+  "limitations": [
+    "Default instrumentation has source-defined TestApi exemptions; this does not prove identical ordinary APK access or direct effective ART policy measurement.",
+    "NOT_FOUND_OR_FILTERED deliberately does not separate source absence from access filtering.",
+    "A successful wrapper constructor does not register a listener, establish ACCESS_SURFACE_FLINGER permission, obtain callback windows, or prove a safe cleanup contract.",
+    "No raw listener or hidden API exemption was requested, no shell permission was adopted, and no field value/window data/pixels were read.",
+    "These observations do not fill historical IME candidates or repair the original eight Notes hidden-preparation failures."
+  ]
+}

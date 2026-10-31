@@ -1,0 +1,414 @@
+{
+  "schemaVersion": 1,
+  "kind": "window-infos-capability-archive",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 41180160267,
+    "attempt": 1,
+    "commit": "214e90afba8481655ae33d5ad99a7d49b0a4557d"
+  },
+  "workflow": ".github/workflows/window-infos-capability.yml",
+  "runUrl": "https://github.com/ecojust/Agent-OS/actions/runs/41180160267",
+  "sourceConclusion": "success",
+  "archivedAt": "2026-10-31T07:24:30.759944+00:00",
+  "summary": {
+    "status": "recorded",
+    "expectedTests": 1,
+    "recordedTests": 1,
+    "apiLevel": 37,
+    "nonvisual": true,
+    "capability": {
+      "schemaVersion": 1,
+      "kind": "window-infos-public-test-api-capability",
+      "catalogVersion": 1,
+      "executionContext": "DEFAULT_INSTRUMENTATION_TEST_PROCESS",
+      "reflectionPolicy": "PUBLIC_WHITELIST_ONLY_NO_ADDITIONAL_EXEMPTION_REQUEST",
+      "clock": "SystemClock.elapsedRealtime",
+      "startedElapsedMillis": 35150,
+      "endedElapsedMillis": 35156,
+      "betweenOperationDeadlineMillis": 5000,
+      "deadlineExceeded": false,
+      "probeExecution": "COMPLETE",
+      "lookupLimit": 27,
+      "lookupAttempts": 27,
+      "lookups": [
+        {
+          "id": "class.forTest",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": false,
+          "observedType": "CLASS",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "class.windowInfo",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": true,
+          "final": false,
+          "observedType": "CLASS",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "class.displayInfo",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": true,
+          "final": false,
+          "observedType": "CLASS",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "constructor.forTest",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": false,
+          "observedType": "CONSTRUCTOR",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "method.add.consumer",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": false,
+          "observedType": "VOID",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "method.add.biConsumer",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": false,
+          "observedType": "VOID",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "method.remove.consumer",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": false,
+          "observedType": "VOID",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "method.remove.biConsumer",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": false,
+          "observedType": "VOID",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.windowToken",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "IBINDER",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.name",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "STRING",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.displayId",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "INT",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.bounds",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "RECT",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.touchableRegion",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "REGION",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.transform",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "MATRIX",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.isTrustedOverlay",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "BOOLEAN",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.isVisible",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "BOOLEAN",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.isTouchable",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "BOOLEAN",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.isFocusable",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "BOOLEAN",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.isDuplicateTouchToWallpaper",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "BOOLEAN",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.windowInfo.isWatchOutsideTouch",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "BOOLEAN",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.displayInfo.displayId",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "INT",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "field.displayInfo.transform",
+          "status": "FOUND_MATCHED",
+          "attempted": true,
+          "public": true,
+          "static": false,
+          "final": true,
+          "observedType": "MATRIX",
+          "typeMatches": true,
+          "declaringClassMatches": true
+        },
+        {
+          "id": "gap.windowInfo.inputConfig",
+          "status": "NOT_FOUND_OR_FILTERED",
+          "attempted": true,
+          "public": null,
+          "static": null,
+          "final": null,
+          "observedType": null,
+          "typeMatches": null,
+          "declaringClassMatches": null
+        },
+        {
+          "id": "gap.windowInfo.isClone",
+          "status": "NOT_FOUND_OR_FILTERED",
+          "attempted": true,
+          "public": null,
+          "static": null,
+          "final": null,
+          "observedType": null,
+          "typeMatches": null,
+          "declaringClassMatches": null
+        },
+        {
+          "id": "gap.windowInfo.frame",
+          "status": "NOT_FOUND_OR_FILTERED",
+          "attempted": true,
+          "public": null,
+          "static": null,
+          "final": null,
+          "observedType": null,
+          "typeMatches": null,
+          "declaringClassMatches": null
+        },
+        {
+          "id": "gap.windowInfo.layoutParamsType",
+          "status": "NOT_FOUND_OR_FILTERED",
+          "attempted": true,
+          "public": null,
+          "static": null,
+          "final": null,
+          "observedType": null,
+          "typeMatches": null,
+          "declaringClassMatches": null
+        },
+        {
+          "id": "gap.windowInfo.ownerUid",
+          "status": "NOT_FOUND_OR_FILTERED",
+          "attempted": true,
+          "public": null,
+          "static": null,
+          "final": null,
+          "observedType": null,
+          "typeMatches": null,
+          "declaringClassMatches": null
+        }
+      ],
+      "constructor": {
+        "status": "CONSTRUCTED",
+        "attempts": 1,
+        "completed": 1
+      },
+      "capability": {
+        "requiredSurface": "MATCHED",
+        "listenerRegistration": "NOT_ATTEMPTED",
+        "windowData": "NOT_READ"
+      },
+      "diagnosticTruncated": false,
+      "source": {
+        "sourceSha": "214e90afba8481655ae33d5ad99a7d49b0a4557d",
+        "runId": "41180160267",
+        "runAttempt": "1",
+        "expectedApi": "37",
+        "deviceSerial": "emulator-5554"
+      },
+      "sdkInt": 37,
+      "build": {
+        "buildId": "CE2A.260420.051.A3",
+        "valueRelease": "17",
+        "fingerprintSha256": "35abb7613e43fefcf91fd83137ec1d613853bc67499c826f80f06cb034ad8fc8",
+        "buildIdStatus": "AVAILABLE",
+        "releaseStatus": "AVAILABLE",
+        "fingerprintStatus": "AVAILABLE"
+      },
+      "process": {
+        "uid": 10156,
+        "targetSdk": 35,
+        "targetPackage": "dev.agentos.compat",
+        "testPackage": "dev.agentos.compat.test"
+      },
+      "permissions": {
+        "accessSurfaceFlinger": "DENIED"
+      }
+    }
+  },
+  "applicationCompatibilityAcceptance": false,
+  "capture": {
+    "status": "nonvisual",
+    "screenshots": false,
+    "video": false
+  },
+  "artifact": {
+    "status": "archived",
+    "name": "window-infos-capability-api-37.0-attempt-1",
+    "id": 13034074454
+  },
+  "files": [
+    {
+      "path": "payload/capture.json",
+      "bytes": 340,
+      "sha256": "3517345e13649e6f0954d9931e53d0ccb4b200d4eb8636f57771006db8c3173d"
+    },
+    {
+      "path": "payload/commands.json",
+      "bytes": 34409,
+      "sha256": "1aafec261b366d84d374ff84c714f5d771923bb633df96c1a4d9a62ab0c6aeda"
+    },
+    {
+      "path": "payload/instrumentation.json",
+      "bytes": 8663,
+      "sha256": "045cf287337c6f27d21caee1a0b2348528e8f58e0995bc435013fe0bfa89746d"
+    },
+    {
+      "path": "payload/report.json",
+      "bytes": 13229,
+      "sha256": "9b687aaed2b0ca2dcf9e1ef2c8465e8038643cf89a5aa5aebc4555a61bad4c80"
+    },
+    {
+      "path": "source-run.json",
+      "bytes": 13050,
+      "sha256": "6cb90e06a109eb7e1215af81cac9f6e1d627bee56568df469dc9f94e3bac423f"
+    },
+    {
+      "path": "source-artifacts.json",
+      "bytes": 1870,
+      "sha256": "9c9ca6c131e34789ec505b98a41948bc5464774b8fced9a456e3f48323e3ad14"
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 
 本步骤承接[API36后置属性扫描修正](notes-ime-attrs-failure-reasons.md)。cdea60c1的独立32项仍24通过/8失败，API36/37各两态在完整后置Populator与最终窗口清单中均未匹配配置IME候选。已消除的属性扫描限制不解释原Notes隐藏失败。
 
-本轮目标是实际验证固定API37模拟器上的公开测试接口能否被发现，以及一个无参构造能否调用。它不是窗口监听实验、原32项应用回归或原八项失败的修复验收。
+本轮已完成固定API37模拟器上的公开测试接口能力探查：22项声明签名匹配，5个关键字段未找到或被过滤，一次无参构造成功，详见最终实测结果。它不是窗口监听实验、原32项应用回归或原八项失败的修复验收。
 
 ## 冻结范围与结果含义
 
@@ -46,6 +46,33 @@
 
 [Java宿主检查](diagnostics/window-infos-capability-2026-10-31/java-host-tests/host-validation.json)81项通过，验证固定访问、非初始化查找、至多一次构造、缺失/拒绝/签名变化/期限及输出限制；这些使用受控替身，不能当作设备结果。[主机与协议验证](diagnostics/window-infos-capability-2026-10-31/host-validation.json)和[归档/工作流验证](diagnostics/window-infos-capability-2026-10-31/archive-workflow-validation.json)共54项通过，包括实际子进程超时/输出上限/读取异常/EOF后取消清理、完整17命令原件重放和归档边界。
 
-真实Java合成输出与Python严格协议交叉验证通过；本地两份实际APK的aapt输出已回放，测试APK正常的空versionCode被独立内部解析器处理，不放宽官方APK验证器。最终构建/lint通过（27秒），工作流actionlint及[独立实现审查](diagnostics/window-infos-capability-2026-10-31/independent-implementation-review.json)通过，来源见[本地回执](diagnostics/window-infos-capability-2026-10-31/local-validation.json)。原产品、原32项入口/诊断、旧工作流和APK锁均保持；新设备探查尚未执行。
+真实Java合成输出与Python严格协议交叉验证通过；本地两份实际APK的aapt输出已回放，测试APK正常的空versionCode被独立内部解析器处理，不放宽官方APK验证器。最终构建/lint通过（27秒），工作流actionlint及[独立实现审查](diagnostics/window-infos-capability-2026-10-31/independent-implementation-review.json)通过，来源见[本地回执](diagnostics/window-infos-capability-2026-10-31/local-validation.json)。原产品、原32项入口/诊断、旧工作流和APK锁均保持；该回执是冻结前的本地验证；设备实测结果另列如下。
 
-源码固定为`214e90afba8481655ae33d5ad99a7d49b0a4557d`。独立API37[41180160267](https://github.com/ecojust/Agent-OS/actions/runs/41180160267)及整体录像[41180137894](https://github.com/ecojust/Agent-OS/actions/runs/41180137894)已启动，结果尚待审核；[来源绑定](diagnostics/window-infos-capability-2026-10-31/source-runs.json)分别保留两运行。冻结后仅清理五个Java宿主替身的空行尾空格，[格式记录](diagnostics/window-infos-capability-2026-10-31/post-freeze-fixture-formatting.json)说明原宿主回执仍绑定214源码字节，执行源码不变。
+源码固定为`214e90afba8481655ae33d5ad99a7d49b0a4557d`。独立API37[41180160267](https://github.com/ecojust/Agent-OS/actions/runs/41180160267)及整体录像[41180137894](https://github.com/ecojust/Agent-OS/actions/runs/41180137894)已完成，结果已归档审核；[来源绑定](diagnostics/window-infos-capability-2026-10-31/source-runs.json)分别保留两运行。冻结后仅清理五个Java宿主替身的空行尾空格，[格式记录](diagnostics/window-infos-capability-2026-10-31/post-freeze-fixture-formatting.json)说明原宿主回执仍绑定214源码字节，执行源码不变。
+
+
+## 最终实测结果：本步骤已完成
+
+冻结源码`214e90afba8481655ae33d5ad99a7d49b0a4557d`的独立API37运行41180160267执行**1/1项探查**，归档41180389001。[原始清单](diagnostics/window-infos-capability-41180160267-1/manifest.json)、[逐项结果](diagnostics/window-infos-capability-41180160267-1-analysis/findings.md)及[独立原件审查](diagnostics/window-infos-capability-2026-10-31/independent-original-review.json)一致。
+
+| 项目 | 本轮实际结果 | 结论范围 |
+| --- | --- | --- |
+| 测试环境 | Android17/API37、x86_64，build CE2A.260420.051.A3；目标SDK35、UID10156 | 专用模拟器与默认Instrumentation测试上下文 |
+| 公开签名查找 | 3类+1构造+4方法+14字段＝22项全部匹配 | 仅固定目录中的元数据，方法/字段值未调用或读取 |
+| 5个缺口名称 | inputConfig、isClone、frame、layoutParamsType、ownerUid均NOT_FOUND_OR_FILTERED | 不能仅由此区分实现不存在与访问过滤，不补造字段值 |
+| 公开无参构造 | 尝试1次、完成1次 | 包装对象构造成功，不等于监听器注册成功 |
+| SurfaceFlinger权限 | ACCESS_SURFACE_FLINGER=DENIED | 当前进程权限检查结果；未委托shell权限或实测注册路径 |
+| 监听与窗口数据 | NOT_ATTEMPTED / NOT_READ | 未注册、无回调、无窗口字段/名字/token/像素读取 |
+| 时序与输出 | 27槽全部尝试，反射及构造区间6ms，完整标记6422字节（JSON6395字节） | 6ms不含主机安装/启动；instrumentation主机命令1255ms，不是性能预算验收 |
+
+17条固定主机命令全部完成，无超时或截断。唯一用例的开始/标记/结束`[1,2,0]`及最后的instrumentation结束码均核对，原marker、设备属性与构建指纹一致，8个执行源码文件与214提交字节相同。四份测试原JSON共56,641字节，加两份来源JSON共6份索引载荷71,561字节；含manifest的7个归档Git文件逐字节核验。内部APK的包名/SDK、安装路径、命令及生产器记录的字节摘要已核对；APK二进制未收入该非视觉归档，独立审查没有声称重新计算未保存的APK字节。
+
+接口的基本声明形状与一次构造已得到实测依据，**完整筛选前诊断仍未就绪**：尚无原始inputConfig/CLONE/frame等必需信息，以及配置IME与同进程IWindow对象的可信映射。ForTest的变换后bounds、窗口名字或跨进程BinderProxy文本不能替代这些条件。下一步应先确定受支持的原始元数据和同进程身份来源，再决定是否值得设计独立注册实验；仅增加一次注册不能自行填补本轮发现的缺口。
+
+原Notes32项没有在本轮重跑；最近cdea运行仍为24通过/8失败，原API36/37后置匹配0/0/0和八项隐藏失败保留。这里只关闭本页的公开成员能力探查子任务，常用应用验收检查点仍为进行中。
+
+## 同源整体操作录像
+
+214源码的[33.502秒整体录像](../../screenshots/demos/41180137894-1/demo.mp4)完成13阶段、8次确认；[原清单](../../screenshots/demos/41180137894-1/manifest.json)和[审核](diagnostics/window-infos-capability-2026-10-31/overall-video-audit.json)保存来源、30载荷/22PNG与468帧完整解码核验。视频为API35 Fixture及本地测试模型，既不是本页非视觉接口探针的录像，也不是真实模型或真机验收。
+
+README普通任务类型更新为本轮实际影片；72f真实APK录像保持实际来源。旧cdea ready阶段服务未连接的[失败短片](../../screenshots/demos/41178250336-1/demo.mp4)和[原件](../../screenshots/demos/41178250336-1/manifest.json)保留。本轮录像成功不说明旧就绪性故障已稳定修复，服务设置变空的原因仍未定位；没有为获取成功片重复录制本轮源码。

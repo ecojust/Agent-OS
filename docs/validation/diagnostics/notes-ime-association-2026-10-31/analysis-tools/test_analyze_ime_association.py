@@ -507,5 +507,55 @@ class AttributeSemanticConsistencyTest(unittest.TestCase):
             self.assertTrue(a.derive(value)['consistencyIssues'])
 
 
+def attrs_version_two(value):
+    value['commands'][0]['parsed']['attrsDiagnostics'].update(schemaVersion=2, scanLimitChars=262144, inputLimitChars=262144)
+    return value
+
+
+class AttributeScanVersionTest(unittest.TestCase):
+    def test_version2_uses_explicit_existing_input_character_bound(self):
+        value=attrs_version_two(attrs_failure_fixture())
+        self.assertEqual([],a.derive(value)['consistencyIssues'])
+        for key,bad in [('scanLimitChars',8192),('scanLimitChars',524288),('inputLimitChars',524288),('inputLimitChars',True),('schemaVersion',3)]:
+            invalid=copy.deepcopy(value);invalid['commands'][0]['parsed']['attrsDiagnostics'][key]=bad
+            self.assertTrue(a.derive(invalid)['consistencyIssues'])
+        invalid=copy.deepcopy(value);del invalid['commands'][0]['parsed']['attrsDiagnostics']['scanLimitChars']
+        self.assertTrue(a.derive(invalid)['consistencyIssues'])
+
+    def test_legacy_version1_limit_is_not_silently_reclassified(self):
+        value=attrs_failure_fixture();entry=value['commands'][0]['parsed']['attrsDiagnostics']['entries'][0]
+        entry.update(attrsAnchorCount=1,firstAttrsOffset=229,secondAttrsOffset=None,recordChars=11698,scanChars=8192,
+            maxDepth=5,topLevelTypeCount=1,reason='ATTRS_SIZE_LIMIT',firstKnownTailSection=None,knownTailSectionBetweenAnchors=None)
+        self.assertEqual([],a.derive(value)['consistencyIssues'])
+        attrs_version_two(value)
+        self.assertTrue(a.derive(value)['consistencyIssues'])
+        value['commands'][0]['parsed']['attrsDiagnostics']['schemaVersion']=1
+        self.assertTrue(a.derive(value)['consistencyIssues'])
+
+    def test_version2_large_unclosed_metadata_remains_unavailable(self):
+        value=attrs_version_two(attrs_failure_fixture());entry=value['commands'][0]['parsed']['attrsDiagnostics']['entries'][0]
+        entry.update(attrsAnchorCount=1,firstAttrsOffset=100,secondAttrsOffset=None,recordChars=20000,scanChars=19900,
+            maxDepth=5,topLevelTypeCount=1,reason='ATTRS_UNCLOSED',firstKnownTailSection=None,knownTailSectionBetweenAnchors=None)
+        result=a.derive(value);self.assertEqual([],result['consistencyIssues']);self.assertIsNone(result['association']['tokenCandidate'])
+        for key,bad in [('recordChars',262145),('scanChars',262145),('maxDepth',10),('topLevelTypeCount',262145)]:
+            invalid=copy.deepcopy(value);invalid['commands'][0]['parsed']['attrsDiagnostics']['entries'][0][key]=bad
+            self.assertTrue(a.derive(invalid)['consistencyIssues'])
+
+    def test_input_limit_is_explicit_without_inferred_record_metadata(self):
+        value=attrs_failure_fixture();value['commands'][0]['parsed']={'status':'UNAVAILABLE','reason':'WMS_INPUT_LIMIT'}
+        result=a.derive(value);self.assertEqual([],result['consistencyIssues']);self.assertIsNone(result['association']['tokenCandidate'])
+        for key,bad in [('referenceCount',1),('attrsDiagnostics',{}),('mClient','android.os.BinderProxy@123')]:
+            invalid=copy.deepcopy(value);invalid['commands'][0]['parsed'][key]=bad
+            self.assertTrue(a.derive(invalid)['consistencyIssues'])
+
+    def test_version2_does_not_enlarge_dump_or_marker_contract(self):
+        value=attrs_version_two(attrs_failure_fixture())
+        for target,key,bad in [('top','maxOutputBytesPerCommand',524288),('command','outputBytes',262145),('top','perCommandTimeoutMillis',6000)]:
+            invalid=copy.deepcopy(value)
+            (invalid if target=='top' else invalid['commands'][0])[key]=bad
+            self.assertTrue(a.derive(invalid)['consistencyIssues'])
+        self.assertEqual(16384,a.MAX_CHARS)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -192,7 +192,7 @@ ATTRS_ENTRY_KEYS = {'recordOrdinal', 'recordEnd', 'headerRelation', 'attrsAnchor
     'firstKnownTailSection', 'knownTailSectionBetweenAnchors'}
 WMS_REASONS = {'SOURCE_UNAVAILABLE', 'WMS_HEADER_UNRECOGNIZED', 'WMS_REFERENCE_MISSING_OR_AMBIGUOUS',
     'WMS_RECORD_MISSING_OR_AMBIGUOUS', 'WMS_IDENTITY_MISMATCH', 'WMS_CLIENT_UNRECOGNIZED',
-    'WMS_CLIENT_AMBIGUOUS', 'WMS_ATTRIBUTES_INCOMPLETE', 'UNIQUE_CONFIGURED_IME_TEXT_CANDIDATE'}
+    'WMS_CLIENT_AMBIGUOUS', 'WMS_ATTRIBUTES_INCOMPLETE', 'WMS_INPUT_LIMIT', 'UNIQUE_CONFIGURED_IME_TEXT_CANDIDATE'}
 POPULATOR_REASONS = {'SOURCE_UNAVAILABLE', 'POPULATOR_HEADER_UNRECOGNIZED',
     'POPULATOR_NOTIFICATION_UNRECOGNIZED', 'POPULATOR_NOTIFICATION_AMBIGUOUS',
     'POPULATOR_VISIBLE_AMBIGUOUS', 'POPULATOR_VISIBLE_UNRECOGNIZED', 'POPULATOR_DISPLAYS_AMBIGUOUS',
@@ -362,6 +362,9 @@ def _derive(value):
 def validate_wms(parsed, identity, check):
     check(set(parsed) <= WMS_KEYS | WMS_ATTRIBUTE_KEYS | WMS_ATTRIBUTE_DETAIL_KEYS and {'status', 'reason'} <= set(parsed), 'unexpected WMS fields')
     check(parsed.get('status') in {'SELECTED', 'UNAVAILABLE'} and parsed.get('reason') in WMS_REASONS, 'unknown WMS parse status/reason')
+    if parsed.get('reason') == 'WMS_INPUT_LIMIT':
+        check(parsed == {'status': 'UNAVAILABLE', 'reason': 'WMS_INPUT_LIMIT'},
+              'input-limit refusal supplied metadata from unparsed input')
     attribute_keys = set(parsed) & WMS_ATTRIBUTE_KEYS
     check(not attribute_keys or attribute_keys == WMS_ATTRIBUTE_KEYS, 'WMS attribute accounting requires both counters')
     for key in attribute_keys:
@@ -413,11 +416,21 @@ def validate_wms(parsed, identity, check):
 def validate_attrs_diagnostics(value, wms, check):
     """Validate bounded structural metadata; never infer ownership or relax selection."""
     expected = {'schemaVersion', 'maxRetained', 'recordCount', 'unparsedCount', 'omittedCount', 'entries'}
+    version = value.get('schemaVersion') if type(value) is dict else None
+    if type(version) is int and version == 2:
+        expected |= {'scanLimitChars', 'inputLimitChars'}
     check(type(value) is dict and set(value) == expected, 'attribute details have unexpected fields')
     if type(value) is not dict:
         return
-    check(type(value.get('schemaVersion')) is int and value['schemaVersion'] == 1,
+    check(type(version) is int and version in {1, 2},
           'attribute details schema version differs')
+    scan_limit = 262144 if type(version) is int and version == 2 else 8192
+    input_limit = 262144
+    if type(version) is int and version == 2:
+        check(type(value.get('scanLimitChars')) is int and value['scanLimitChars'] == scan_limit,
+              'version2 attribute scan limit differs from the frozen retained-input character bound')
+        check(type(value.get('inputLimitChars')) is int and value['inputLimitChars'] == input_limit,
+              'version2 attribute input character limit differs')
     check(type(value.get('maxRetained')) is int and value['maxRetained'] == 8,
           'attribute retained detail cap differs')
     for key in ['recordCount', 'unparsedCount', 'omittedCount']:
@@ -454,7 +467,7 @@ def validate_attrs_diagnostics(value, wms, check):
         check(integer(anchors, 0, chars if integer(chars) else 0), 'attribute anchor count invalid')
         for key, offset in [('first', first), ('second', second)]:
             check(offset is None or integer(offset, 0, chars-1 if integer(chars) else -1), key + ' attribute offset outside record')
-        check(integer(scan, 0, 8192) and integer(depth, 0, 9) and integer(types, 0, 8192),
+        check(integer(scan, 0, scan_limit) and integer(depth, 0, 9) and integer(types, 0, scan_limit),
               'attribute scan/depth/type counters outside fixed bounds')
         if all(integer(n) for n in [scan, depth, types]):
             check(depth <= scan and types <= scan, 'attribute depth/type counters exceed observed outer cursor prefix')
@@ -470,13 +483,13 @@ def validate_attrs_diagnostics(value, wms, check):
                       and scan == 0 and depth == 0 and types == 0, 'early anchor refusal has inferred scan metadata')
             else:
                 check(reason not in {'ATTRS_ANCHOR_MISSING', 'ATTRS_ANCHOR_DUPLICATE'}, 'one anchor cannot have missing/duplicate reason')
-                check(integer(scan, 1, 8192) and integer(depth, 1, 9), 'scanned attribute record lacks opening-brace progress')
+                check(integer(scan, 1, scan_limit) and integer(depth, 1, 9), 'scanned attribute record lacks opening-brace progress')
                 if integer(first) and integer(chars) and integer(scan):
                     check(scan <= chars-first, 'outer cursor scan exceeds remaining record characters')
                     if reason == 'ATTRS_SIZE_LIMIT':
-                        check(chars-first >= 8192, 'size limit without at least8192 available codeunits')
+                        check(chars-first >= scan_limit, 'size limit without the versioned number of available codeunits')
                     if reason == 'ATTRS_UNCLOSED':
-                        check(chars-first < 8192, 'unclosed reason exceeds size-limit classification')
+                        check(chars-first < scan_limit, 'unclosed reason exceeds versioned size-limit classification')
         if reason == 'DEPTH_LIMIT':
             check(depth == 9, 'depth limit did not reach first disallowed depth')
         elif integer(depth):
@@ -484,12 +497,12 @@ def validate_attrs_diagnostics(value, wms, check):
         if reason == 'TOP_LEVEL_TYPE_MISSING':
             check(types == 0, 'missing top-level type has an observed type')
         elif reason == 'TOP_LEVEL_TYPE_DUPLICATE':
-            check(integer(types, 2, 8192), 'duplicate top-level type lacks two observed fields')
+            check(integer(types, 2, scan_limit), 'duplicate top-level type lacks two observed fields')
         lexical, length, complete = (entry.get(k) for k in ['typeLexicalClass', 'typeValueLength', 'typeValueComplete'])
         if reason in {'TYPE_VALUE_UNRECOGNIZED', 'TYPE_VALUE_FOLLOWED_BY_OPEN_BRACE'}:
             check(lexical in ATTRS_LEXICAL_CLASSES and integer(length, 0, 65) and type(complete) is bool,
                   'invalid bounded type-prefix metadata')
-            check(integer(types, 1, 8192), 'type-value refusal lacks encountered top-level type field')
+            check(integer(types, 1, scan_limit), 'type-value refusal lacks encountered top-level type field')
             check((lexical == 'EMPTY') == (length == 0), 'empty type-prefix class/length mismatch')
             if lexical == 'SIGNED_DECIMAL':
                 check(integer(length, 2, 65), 'signed decimal prefix too short')

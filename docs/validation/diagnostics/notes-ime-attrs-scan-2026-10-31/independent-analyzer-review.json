@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-ime-attribute-scan-analyzer-review",
+  "reviewedAt": "2026-10-31T06:50:40.354027+00:00",
+  "sourceBase": "2688eda9e0b56580763af9a20fce26ae25a5653b",
+  "status": "passed",
+  "deviceExecutionThisReview": false,
+  "reviewedFiles": {
+    "docs/validation/diagnostics/notes-ime-association-2026-10-31/analysis-tools/analyze_ime_association.py": {
+      "bytes": 51116,
+      "sha256": "56045580bd80360ccf57b5a1d4d1eeaa155da13a4733affae7ed72d516e3e9bb"
+    },
+    "docs/validation/diagnostics/notes-ime-association-2026-10-31/analysis-tools/test_analyze_ime_association.py": {
+      "bytes": 36386,
+      "sha256": "ac98f43375eefab6bbb74d5ddf75491e2f9b3e28c23e00fb80aab39ca0d15123"
+    }
+  },
+  "tests": {
+    "command": "python3 -m unittest discover -s docs/validation/diagnostics/notes-ime-association-2026-10-31/analysis-tools -p 'test_*.py'",
+    "tests": 44,
+    "passed": 44,
+    "durationSeconds": 0.027,
+    "exitCode": 0
+  },
+  "diffWhitespaceCheck": "passed",
+  "reviewConclusions": [
+    "Nested attrsDiagnostics version2 requires exactly the explicit scanLimitChars/inputLimitChars262144 fields; version1 remains8192 and rejects version2-only fields.",
+    "The existing command count, output byte cap, wait bounds, marker cap, depth and unique/closed/identity requirements remain enforced by the host schema.",
+    "A version1 8192-character ATTRS_SIZE_LIMIT is not reclassified using version2 capacity; incompatible metadata suppresses interpretation and remains raw evidence.",
+    "WMS_INPUT_LIMIT must be explicit unavailability without metadata inferred from an unparsed input.",
+    "Three old source/run/attempt-bound archives retain all32 case interpretations and8 raw diagnostic lanes exactly; no old receipt is overwritten."
+  ],
+  "historicalReplays": [
+    {
+      "sourceRun": {
+        "repository": "ecojust/Agent-OS",
+        "runId": 41173725544,
+        "attempt": 1,
+        "commit": "72f77af85481eb90c0511a52e61c7cbab3ac6595",
+        "url": "https://github.com/ecojust/Agent-OS/actions/runs/41173725544",
+        "conclusion": "failure",
+        "event": "workflow_dispatch",
+        "branch": "master"
+      },
+      "archivePath": "screenshots/third-party-41173725544-1",
+      "manifestSha256": "a507c1ae111177cbde4dc741e395eb0898240f89bf471a40c77b0df08264d69e",
+      "priorAnalysisPath": "docs/validation/diagnostics/notes-ime-association-41173725544/association-analysis.json",
+      "priorAnalysisSha256": "90892eb3e12355b974243823a2882663bfb51150b43f8bcb1d5b2f7f58c06f35",
+      "comparedFields": [
+        "sourceRun",
+        "originalStateCounts",
+        "cases",
+        "lanes"
+      ],
+      "identicalCases": 32,
+      "identicalRawLanes": 8,
+      "counts": {
+        "passed": 24,
+        "failed": 8,
+        "unverified": 0
+      },
+      "allComparedValuesIdentical": true
+    },
+    {
+      "sourceRun": {
+        "repository": "ecojust/Agent-OS",
+        "runId": 41174426442,
+        "attempt": 1,
+        "commit": "9b86b2a842f9e837e20e2df183893da697faaf40",
+        "url": "https://github.com/ecojust/Agent-OS/actions/runs/41174426442",
+        "conclusion": "failure",
+        "event": "workflow_dispatch",
+        "branch": "master"
+      },
+      "archivePath": "screenshots/third-party-41174426442-1",
+      "manifestSha256": "6db7511b825fccfbef547dcc85e1fa55d48563f98ef6a53b5e47f3a80168b6a3",
+      "priorAnalysisPath": "docs/validation/diagnostics/notes-ime-association-41174426442/association-analysis.json",
+      "priorAnalysisSha256": "b92b9e6b61c08efac3aa86c4b314310819d798adbe148ae1969b4af1877143dc",
+      "comparedFields": [
+        "sourceRun",
+        "originalStateCounts",
+        "cases",
+        "lanes"
+      ],
+      "identicalCases": 32,
+      "identicalRawLanes": 8,
+      "counts": {
+        "passed": 24,
+        "failed": 8,
+        "unverified": 0
+      },
+      "allComparedValuesIdentical": true
+    },
+    {
+      "sourceRun": {
+        "repository": "ecojust/Agent-OS",
+        "runId": 41177392095,
+        "attempt": 1,
+        "commit": "35519e9fb77dc751bf8529768292cdcd1eb3b7ed",
+        "url": "https://github.com/ecojust/Agent-OS/actions/runs/41177392095",
+        "conclusion": "failure",
+        "event": "workflow_dispatch",
+        "branch": "master"
+      },
+      "archivePath": "screenshots/third-party-41177392095-1",
+      "manifestSha256": "337a1618c0b0b2ba04d59a1bfb13e155569cb3588ee017a509f2481ed0974356",
+      "priorAnalysisPath": "docs/validation/diagnostics/notes-ime-attrs-reasons-41177392095/association-analysis.json",
+      "priorAnalysisSha256": "08bab0ff35e94d85ab98e54b2efe5aeabcef0058d3471ef4aa5f8621cfef48b8",
+      "comparedFields": [
+        "sourceRun",
+        "originalStateCounts",
+        "cases",
+        "lanes"
+      ],
+      "identicalCases": 32,
+      "identicalRawLanes": 8,
+      "counts": {
+        "passed": 24,
+        "failed": 8,
+        "unverified": 0
+      },
+      "allComparedValuesIdentical": true
+    }
+  ],
+  "limitations": [
+    "This is host/source review and replay of already archived device evidence, not new device execution.",
+    "Historical replay runs the candidate analyzer against immutable original payloads and compares its cases/raw lanes with committed prior analyses; separate independent raw-terminal reviews remain attached to those historical runs.",
+    "Full discarded shell dumps cannot be reconstructed or re-extracted, and no old outer-brace position or type content is inferred."
+  ]
+}

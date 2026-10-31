@@ -24,6 +24,9 @@ final class NotesImeAssociationDiagnostic {
     static final String MARKER = "NOTES_IME_ASSOCIATION_DIAGNOSTIC_V1 ";
     static final int MAX_CHARS = 16 * 1024;
     static final int MAX_BYTES = 256 * 1024;
+    // A decoded capture cannot contain more UTF-16 units than its retained byte ceiling.
+    // Scan complete attributes within that existing input bound; never accept at the first type.
+    static final int MAX_ATTRS_SCAN_CHARS = MAX_BYTES;
     static final int COMMAND_MILLIS = 3000, TOTAL_MILLIS = 9000;
     private static final String[] IDS = {"WMS_WINDOWS", "WMS_A11Y", "ACCESSIBILITY"};
     private static final String[] COMMANDS = {"dumpsys -t 2 window -a windows",
@@ -196,6 +199,8 @@ final class NotesImeAssociationDiagnostic {
     }
 
     static JSONObject parseWms(String dump, int uid, String packageName) throws Exception {
+        // Direct parser callers get the same text-size ceiling before regex/split allocation.
+        if (dump.length() > MAX_BYTES) return unavailable("WMS_INPUT_LIMIT");
         JSONObject parsed = unavailable("WMS_HEADER_UNRECOGNIZED");
         if (!dump.startsWith("WINDOW MANAGER WINDOWS")) return parsed;
         Matcher reference = Pattern.compile("(?m)^[\\t ]*mInputMethodWindow=Window\\{([0-9a-fA-F]{1,32})\\s+u0\\s+[^}\\r\\n]+\\}").matcher(dump);
@@ -228,7 +233,8 @@ final class NotesImeAssociationDiagnostic {
         }
         parsed.put("inputMethodRecordCount", imeCount).put("selectedWindowStateToken", stateToken)
                 .put("attributesParsedCount", attributesParsed).put("attributesUnparsedCount", attributesUnparsed)
-                .put("attrsDiagnostics", new JSONObject().put("schemaVersion", 1).put("maxRetained", 8)
+                .put("attrsDiagnostics", new JSONObject().put("schemaVersion", 2)
+                        .put("scanLimitChars", MAX_ATTRS_SCAN_CHARS).put("inputLimitChars", MAX_BYTES).put("maxRetained", 8)
                         .put("recordCount", recordCount).put("unparsedCount", attributesUnparsed)
                         .put("omittedCount", Math.max(0, attributesUnparsed - failures.length())).put("entries", failures))
                 .put("reason", "WMS_RECORD_MISSING_OR_AMBIGUOUS");
@@ -323,7 +329,7 @@ final class NotesImeAssociationDiagnostic {
         return "OTHER";
     }
 
-    /** Same acceptance as 9b86: metadata does not widen types, bounds or Window # partitions. */
+    /** Complete captured attributes; type grammar, depth and Window # partitions stay strict. */
     private static WindowTypeResult windowType(String record) {
         Matcher attributes = Pattern.compile("(?m)^[\\t ]*mAttrs=\\{").matcher(record);
         int anchors = 0, start = -1, second = -1;
@@ -337,7 +343,7 @@ final class NotesImeAssociationDiagnostic {
                 anchors, start, second, 0, 0, 0, null, null);
         int depth = 0, typeFields = 0, observedTypeFields = 0, scanChars = 0, maxDepth = 0;
         String type = null;
-        for (int index = start; index < record.length() && index - start < 8192; index++) {
+        for (int index = start; index < record.length() && index - start < MAX_ATTRS_SCAN_CHARS; index++) {
             scanChars = index - start + 1;
             char current = record.charAt(index);
             if (current == '{') {
@@ -365,7 +371,7 @@ final class NotesImeAssociationDiagnostic {
                 index = end - 1;
             }
         }
-        return new WindowTypeResult(null, record.length() - start >= 8192 ? AttrsReason.ATTRS_SIZE_LIMIT : AttrsReason.ATTRS_UNCLOSED,
+        return new WindowTypeResult(null, record.length() - start >= MAX_ATTRS_SCAN_CHARS ? AttrsReason.ATTRS_SIZE_LIMIT : AttrsReason.ATTRS_UNCLOSED,
                 anchors, start, second, scanChars, maxDepth, observedTypeFields, null, null);
     }
 
@@ -603,14 +609,22 @@ final class NotesImeAssociationDiagnostic {
                 && token.equals(nestedSelected.getString("mClient")), "Nested soft-input or rotation attributes hid the top-level IME type");
         SmokeHarness.require("SELECTED".equals(parseWms(nested.replace("ty=INPUT_METHOD", "ty=2011"), 10012,
                 "com.android.inputmethod.latin").getString("status")), "Numeric INPUT_METHOD type alias was lost");
+        String longAttributes = wms.replace("ty=INPUT_METHOD}", "ty=INPUT_METHOD\n"
+                + new String(new char[8192]).replace('\0', ' ') + "}");
+        JSONObject longSelected = parseWms(longAttributes, 10012, "com.android.inputmethod.latin");
+        SmokeHarness.require("SELECTED".equals(longSelected.getString("status"))
+                && longSelected.getJSONObject("attrsDiagnostics").getInt("schemaVersion") == 2
+                && longSelected.getJSONObject("attrsDiagnostics").getInt("scanLimitChars") == MAX_BYTES,
+                "Complete captured attributes were still cut off at the old parser-only bound");
+        SmokeHarness.require("WMS_ATTRIBUTES_INCOMPLETE".equals(parseWms(longAttributes.replace("        }", "        ty=APPLICATION}"),
+                10012, "com.android.inputmethod.latin").getString("reason")), "A type beyond the old bound was ignored");
         for (String attributes : new String[] {
                 "{(0,0)(fillxwrap) sim={ty=INPUT_METHOD}}",
                 "{(0,0)(fillxwrap) ty=INPUT_METHOD ty=INPUT_METHOD}",
                 "{(0,0)(fillxwrap) ty=INPUT_METHOD ty=APPLICATION}",
                 "{(0,0)(fillxwrap) sim={state=HIDDEN} ty=INPUT_METHOD",
                 "{(0,0)(fillxwrap) ty=INPUT_METHOD{unexpected}}",
-                "{(0,0)(fillxwrap) sim={{{{{{{{state=HIDDEN}}}}}}}} ty=INPUT_METHOD}",
-                "{(0,0)(fillxwrap) " + new String(new char[8192]).replace('\0', ' ') + "ty=INPUT_METHOD}"}) {
+                "{(0,0)(fillxwrap) sim={{{{{{{{state=HIDDEN}}}}}}}} ty=INPUT_METHOD}"}) {
             JSONObject refused = parseWms(wms.replace("{(0,0)(fillxwrap) ty=INPUT_METHOD}", attributes), 10012,
                     "com.android.inputmethod.latin");
             SmokeHarness.require("UNAVAILABLE".equals(refused.getString("status"))

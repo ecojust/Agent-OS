@@ -1,0 +1,57 @@
+{
+  "kind": "notes-ime-attrs-complete-scan-host-validation",
+  "validatedAt": "2026-10-31T06:48:54.611597Z",
+  "testedWorktreeBaseCommit": "2688eda9e0b56580763af9a20fce26ae25a5653b",
+  "helperSha256": "5de8008990573422edb9cbd33bace0dfaa2cfd860ddea1d49a17d30183534bec",
+  "status": "passed",
+  "collectorHostChecks": 25,
+  "parserSelftests": "passed",
+  "scannerDifferentialCases": 2607,
+  "preservedOutsideOldSizeLimitDomain": 1789,
+  "changedWithinOldSizeLimitDomain": 818,
+  "boundaryChecks": 83,
+  "blockedShellCallerElapsedMillis": 3003,
+  "androidDeviceTest": false,
+  "legacyOracle": {
+    "commit": "35519e9fb77dc751bf8529768292cdcd1eb3b7ed",
+    "helperSha256": "c920dce631dbd4e81397282dbf598c0b754cbcb7934eb32c98be90172f9ca90d",
+    "originalMethodSha256": "8cce091ea7488d04bcb4d1b9940e2f6f66d5576721b8fbaab6b2eee42f98ab55",
+    "change": "Scanner visibility only; result constructor projects unchanged type and reason, ignoring non-decision metadata."
+  },
+  "declaredChange": {
+    "attrsDiagnosticsSchemaVersion": 2,
+    "scanLimitChars": 262144,
+    "inputLimitChars": 262144,
+    "newDirectOversizedInputReason": "WMS_INPUT_LIMIT",
+    "retainedSourceBytesUnchanged": 262144,
+    "overflowProbeBytesUnchanged": 1,
+    "commandsUnchanged": 3,
+    "perCommandCallerWaitMillisUnchanged": 3000,
+    "totalCallerWaitMillisUnchanged": 9000
+  },
+  "limitations": [
+    "Synthetic host data does not establish actual API36 attribute closure positions or new device acceptance.",
+    "Historical355 record and its former8192 scan limit are preserved.",
+    "UTF16 text input guard is separate from unchanged raw byte capture cap.",
+    "No early type acceptance, no identity relaxation and no parsing of truncated source prefixes."
+  ],
+  "jsonDependencySha256": "3cf6cd6892e32e2b4c1c39e0f52f5248a2f5b37646fdfbb79a66b46b618414ed",
+  "stdoutLog": {
+    "path": "host-test-output.txt",
+    "sha256": "0b3b5d8f125a37182f11bf499a6fb90a31047052f1ffef6667a580a5da78f815",
+    "source": "Verbatim stdout from successful host test tool execution"
+  },
+  "command": "python3 docs/validation/diagnostics/notes-ime-attrs-scan-2026-10-31/java-host-tests/run.py --java-home /workspace/scratch/jdk17 --json-jar /workspace/scratch/notes-ime-association-java/json.jar",
+  "filesSha256": {
+    "docs/validation/diagnostics/notes-ime-attrs-scan-2026-10-31/java-host-tests/README.md": "a59700f1fcd3bcc01773eb3ad6d5d9a4934e47de6737fda633abd31db95c4190",
+    "docs/validation/diagnostics/notes-ime-attrs-scan-2026-10-31/java-host-tests/android/app/UiAutomation.java": "cd4fece9c69c0b4d4f83fbf405c6582a4b71551f702591749502cd81fe243ed0",
+    "docs/validation/diagnostics/notes-ime-attrs-scan-2026-10-31/java-host-tests/android/os/ParcelFileDescriptor.java": "280076925b1fd4c620dd51ec9171099a972376dc9d33894be1f99db71fd8f015",
+    "docs/validation/diagnostics/notes-ime-attrs-scan-2026-10-31/java-host-tests/android/os/SystemClock.java": "93680c995f81b6f8b8e8b8730771be4c2987d728f29f58750035803785456b8b",
+    "docs/validation/diagnostics/notes-ime-attrs-scan-2026-10-31/java-host-tests/dev/agentos/compat/AttrsScanHostTest.java": "76acebe99461b259113c2b81e7db858c0babbdb130b3451cb500d671de54229b",
+    "docs/validation/diagnostics/notes-ime-attrs-scan-2026-10-31/java-host-tests/dev/agentos/compat/CollectorHostTest.java": "75b243c44f28ad8f4fc1d26f470ad8784c2b6a72293352236eccf486589f8455",
+    "docs/validation/diagnostics/notes-ime-attrs-scan-2026-10-31/java-host-tests/dev/agentos/compat/LegacyAttrsScanOracle.java": "c915c7c9771fd025794b3294c8a496d3c6af7dfa71b2c98d939104872a0c2fe0",
+    "docs/validation/diagnostics/notes-ime-attrs-scan-2026-10-31/java-host-tests/dev/agentos/compat/SmokeHarness.java": "9e4d25be01767936a485e8160078cffc384d154e0031491fa3a891f8c920f8a0",
+    "docs/validation/diagnostics/notes-ime-attrs-scan-2026-10-31/java-host-tests/host-test-output.txt": "0b3b5d8f125a37182f11bf499a6fb90a31047052f1ffef6667a580a5da78f815",
+    "docs/validation/diagnostics/notes-ime-attrs-scan-2026-10-31/java-host-tests/run.py": "f8ed12356df967301484f227a9f60fec06ba805fe08ceb248de2118a4dcd21fb"
+  }
+}

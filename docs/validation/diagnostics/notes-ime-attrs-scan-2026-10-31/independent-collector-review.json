@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "independent ime_review agent",
+  "reviewedAtUtc": "2026-10-31T06:50:29+00:00",
+  "result": "PASS_WITH_DECLARED_LIMITATIONS",
+  "testedHelper": {
+    "path": "compat-smoke/src/androidTest/java/dev/agentos/compat/NotesImeAssociationDiagnostic.java",
+    "sha256": "5de8008990573422edb9cbd33bace0dfaa2cfd860ddea1d49a17d30183534bec"
+  },
+  "baseline": {
+    "sourceCommit": "35519e9fb77dc751bf8529768292cdcd1eb3b7ed",
+    "helperSha256": "c920dce631dbd4e81397282dbf598c0b754cbcb7934eb32c98be90172f9ca90d"
+  },
+  "changeReviewed": "Complete attribute scanning is tied to the existing256KiB retained capture ceiling; direct parse input additionally rejects UTF-16 length above262144. attrsDiagnostics schema2 explicitly records scanLimitChars and inputLimitChars. No early acceptance before closing the outer attributes.",
+  "independentValidation": {
+    "method": "Compiled exact355 baseline (only class/constructor renamed) alongside actual corrected helper and controlled host stubs. Compared full parseWms outputs with attrsDiagnostics removed; differences were permitted only for cases with baseline ATTRS_SIZE_LIMIT. Independently tested explicit refusal branches and collector serialization/byte limits. No Gradle or Android/device execution by this reviewer.",
+    "metrics": {
+      "retained8DetailsMarkerChars": 5923,
+      "overCaptureTransport": "BYTE_LIMIT_UNPARSED",
+      "fullWmsComparisons": 250,
+      "completeCaptureMarkerChars": 2864,
+      "truncatedMarkerChars": 2006,
+      "changesConfinedToOldSizeDomain": 20,
+      "exactCaptureChars": 262144,
+      "assertionsPassed": 770
+    },
+    "countMeaning": "250 full-WMS comparison inputs;770 assertion evaluations include repeated size/schema/privacy checks and are not770 independent device cases.20 compared outputs changed only within the declared old-size-limit domain; remaining compared original fields were equal.",
+    "coverage": [
+      "Padding before/after8192 and up to200000 characters",
+      "Type positions at depth0-10 and valid/numeric/signed/overlong values",
+      "Complete long attributes at depth5",
+      "Complete long non-IME record no longer prevents unique candidate; incomplete non-IME still prevents it",
+      "After old limit: second top-level type, invalid type, excessive depth, unclosed outer block and second mAttrs remain refused",
+      "Exactly262144-character complete ASCII dump parsed both directly and through collector worker",
+      "Direct input262145 chars rejected before record parsing asWMS_INPUT_LIMIT",
+      "Raw capture262145 bytes with an already complete valid prefix remainsBYTE_LIMIT and is not parsed",
+      "Full schema2 marker with8 retained failure details stays below16KiB; no synthetic title/padding text, ASCII only",
+      "Original Throwable and existing suppressed diagnostic remain preserved"
+    ],
+    "embeddedParserSelftests": "passed within independent runner",
+    "reproduction": "independent-review-tests/run.py",
+    "stdout": "independent-review-tests/stdout.txt"
+  },
+  "staticBoundaries": {
+    "collectionAttachReadWorkerTimeoutServiceStatusCodeEqualToBaseline": true,
+    "collectionCodeSha256": "ec8d791a1d736c4f591b0a839779cdaa07beb47d17c41c748954408695b67b43",
+    "windowTypeBodyEqualAfterOnlyReplacingNewLimitConstantWith8192": true,
+    "populatorAccessibilityAssociationAndUtilityCodeEqualToBaseline": true,
+    "suffixSha256": "d2795fb6589ce9d420ac84ad5d65cedc953c455987485545a6925c02f4f62e84",
+    "integrationFiles": [
+      {
+        "path": "compat-smoke/src/androidTest/java/dev/agentos/compat/SmokeHarness.java",
+        "sha256": "4324b113631f1e3b1f1d2346abebc532450ee043eaa0a8995a2fa05aa1293acb",
+        "equalToBaseline": true
+      },
+      {
+        "path": "compat-smoke/src/androidTest/java/dev/agentos/compat/SmokeCapture.java",
+        "sha256": "43ee713a2a8c8410caadb4d95366fa7f7aa8456d0ba2b6731d27c65a3a4c1d96",
+        "equalToBaseline": true
+      },
+      {
+        "path": "compat-smoke/src/androidTest/java/dev/agentos/compat/ApplicationSetCompatibilityInstrumentedTest.java",
+        "sha256": "b029e1b5c84970709b07d4f333ddf00070116149ba71b1df4b09f575bc524000",
+        "equalToBaseline": true
+      }
+    ]
+  },
+  "retainedConstraints": [
+    "Same three commands, once each, same3second per-command worker wait and9second collection deadline",
+    "Same256KiB retained output plus one overflow-detection byte; truncated output is never parsed",
+    "Same depth8, finite type grammar/lookahead, unique top-level type and unique mAttrs anchor requirements",
+    "All records must still parse completely before a configured IME candidate can be selected",
+    "Same full window identity checks, text-only association and16KiB marker/fallback bound",
+    "Original v4 five-second preparation, actions, sample quotas, screenshot policy and failure receipts unchanged"
+  ],
+  "interpretation": [
+    "The actual355 API36 receipt reports an internal8192-character scan limit in record3of11, not a tail-boundary rejection. The conditional tail-inventory design is not adopted by this fix.",
+    "The helper now inspects more of an already captured bounded string; it does not request more platform data or enlarge raw capture limits.",
+    "The direct input limit and scanning limit count UTF-16 code units. The capture ceiling counts bytes; they share a numeric cap, not identical units.",
+    "A complete parsed candidate is still only post-failure text evidence and cannot authorize BACK, confirmation or a screenshot."
+  ],
+  "limitations": [
+    "Host inputs and substitutes do not establish actual Android parsing success, Binder cancellation or physical-device acceptance.",
+    "The discarded355 raw dump cannot be reconstructed; the later portion of the actual11698-character record still requires a new source-pinned device run.",
+    "250 comparisons cover relevant boundaries but do not prove behavior over every possible input.",
+    "The changed diagnostic acceptance domain is explicitly the former parser-only size limit; original355 evidence and its unavailable result are not rewritten.",
+    "General marker-size enforcement remainsMAX_CHARS plus the unchanged bounded fallback; the recorded5923-character stress example is not a mathematical maximum over every serialization."
+  ]
+}

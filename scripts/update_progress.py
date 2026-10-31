@@ -21,8 +21,7 @@ def single_line(value):
 
 
 def table_text(value):
-    text = html.escape(" ".join(str(value).split()), quote=False)
-    return re.sub(r"([\\`*_\[\]|])", r"\\\1", text)
+    return html.escape(" ".join(str(value).split()), quote=False)
 
 
 def validate_timestamp(value):
@@ -79,7 +78,7 @@ def checkpoint_evidence(value):
     if (not re.fullmatch(r"[A-Za-z0-9._/-]+", path)
             or any(part in ("", ".", "..") for part in path.split("/"))):
         raise ValueError("Checkpoint evidence must be a safe repository path or repository HTTPS URL")
-    return f"[依据]({value})"
+    return f'<a href="{html.escape(value, quote=True)}">依据</a>'
 
 
 def render(data):
@@ -123,16 +122,21 @@ def render(data):
             f"录制版本：[`{source[:9]}`](https://github.com/ecojust/Agent-OS/commit/{source})。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。", ""])
     else:
         lines.extend(["**整体操作演示：** 正在接入真实操作录制，完成后提供小于 100 MB 的视频与对应源码记录；尚未录制的过程不以示意动画代替。", ""])
+    # GitHub preserves the HTML nowrap attribute while stripping inline styles.
+    # Let these columns size to their content and keep the detailed progress wrapping.
     lines.extend(["最近更新时间记录该条状态或进度说明的修改时间，采用 UTC；测试发生时间以对应证据为准。", "",
-                  "| 检查点 | 状态 | 详细进度 | 最近更新时间（UTC） |", "| --- | --- | --- | --- |"])
+                  "<table>", "<thead>",
+                  "<tr><th nowrap>检查点</th><th nowrap>状态</th><th>详细进度</th><th nowrap>最近更新时间（UTC）</th></tr>",
+                  "</thead>", "<tbody>"])
     for item in points:
         detail = table_text(item.get("details") or item.get("reason") or "尚未记录详细进度")
         if item.get("evidence"):
             detail += " " + checkpoint_evidence(item["evidence"])
         updated_at = item.get("updated_at")
         when = updated_at.replace("T", " ").removesuffix("Z") if updated_at else "未记录"
-        lines.append(f"| {table_text(item['name'])} | {LABELS[item['status']]} | {detail} | {when} |")
-    lines.extend(["", "依据：[进度源数据](docs/progress.json) · [实现与验证范围](IMPLEMENTATION.md) · [测试截图](screenshots/README.md) · [操作演示说明](docs/validation/operation-demo.md)。", END])
+        lines.append(f"<tr><td nowrap>{table_text(item['name'])}</td><td nowrap>{LABELS[item['status']]}</td>"
+                     f"<td>{detail}</td><td nowrap>{when}</td></tr>")
+    lines.extend(["</tbody>", "</table>", "", "依据：[进度源数据](docs/progress.json) · [实现与验证范围](IMPLEMENTATION.md) · [测试截图](screenshots/README.md) · [操作演示说明](docs/validation/operation-demo.md)。", END])
     return "\n".join(lines), svg
 
 

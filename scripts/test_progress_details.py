@@ -61,10 +61,10 @@ class ProgressDetailsTest(unittest.TestCase):
     def test_four_columns_and_legacy_fallback_do_not_invent_row_time(self):
         self.data["checkpoints"].append({"id": "empty", "name": "无说明", "status": "pending"})
         section, _ = update_progress.render(self.data)
-        self.assertIn("| 检查点 | 状态 | 详细进度 | 最近更新时间（UTC） |", section)
-        self.assertIn("| 第一项 | 待实现 | 旧说明 | 2026-10-27 01:02:03 |", section)
-        self.assertIn("| 旧条目 | 待外部条件 | 需要参考设备 | 未记录 |", section)
-        self.assertIn("| 无说明 | 待实现 | 尚未记录详细进度 | 未记录 |", section)
+        self.assertIn("<tr><th nowrap>检查点</th><th nowrap>状态</th><th>详细进度</th><th nowrap>最近更新时间（UTC）</th></tr>", section)
+        self.assertIn("<tr><td nowrap>第一项</td><td nowrap>待实现</td><td>旧说明</td><td nowrap>2026-10-27 01:02:03</td></tr>", section)
+        self.assertIn("<tr><td nowrap>旧条目</td><td nowrap>待外部条件</td><td>需要参考设备</td><td nowrap>未记录</td></tr>", section)
+        self.assertIn("<tr><td nowrap>无说明</td><td nowrap>待实现</td><td>尚未记录详细进度</td><td nowrap>未记录</td></tr>", section)
         self.assertIn("测试发生时间以对应证据为准", section)
 
     def test_table_text_is_plain_text_and_does_not_split_rows_or_columns(self):
@@ -73,15 +73,15 @@ class ProgressDetailsTest(unittest.TestCase):
             "evidence": "docs/DESIGN_RULES.md",
         })
         section, _ = update_progress.render(self.data)
-        expected = (r"| 名\|称 下一行 | 待实现 | &lt;tag&gt; &amp; \`code\` \[link\](x) "
-                    r"\\\| \*bold\* \_under\_ 下一步 [依据](docs/DESIGN_RULES.md) | 2026-10-27 01:02:03 |")
+        expected = ('<tr><td nowrap>名|称 下一行</td><td nowrap>待实现</td><td>&lt;tag&gt; &amp; `code` [link](x) '
+                    '\\| *bold* _under_ 下一步 <a href="docs/DESIGN_RULES.md">依据</a></td><td nowrap>2026-10-27 01:02:03</td></tr>')
         self.assertIn(expected, section.splitlines())
         self.assertNotIn("<tag>", section)
 
     def test_evidence_links_accept_only_safe_repository_paths_or_urls(self):
         for evidence in (".github/workflows/android.yml", "core/src/test/java", "https://github.com/ecojust/Agent-OS/actions/runs/123"):
             with self.subTest(evidence=evidence):
-                self.assertEqual(f"[依据]({evidence})", update_progress.checkpoint_evidence(evidence))
+                self.assertEqual(f'<a href="{evidence}">依据</a>', update_progress.checkpoint_evidence(evidence))
         for evidence in ("../README.md", "/etc/passwd", "docs/../README.md", "docs//rules.md",
                          "https://other.example/test", "https://github.com/ecojust/Agent-OS/../other",
                          "docs/x) [bad](https://example.com)", "docs/x\nnext", "docs/x%29", 42):

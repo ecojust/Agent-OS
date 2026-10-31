@@ -27,3 +27,9 @@
 固定源码 `ad0f0a723e2efbb146a06e173a0ebdecc6706ee6` 已启动[八档32项41161477724](https://github.com/ecojust/Agent-OS/actions/runs/41161477724)、[API35真实APK录像41161479506](https://github.com/ecojust/Agent-OS/actions/runs/41161479506)及[整体录像41161481513](https://github.com/ecojust/Agent-OS/actions/runs/41161481513)。八档仍在执行，原批次按启动时的三档并行计划继续，不取消、不替换。API35真实APK录像4/4及整体录像13阶段/8确认均通过；两段实际视频、完整载荷及解码[审核已归档](diagnostics/notes-confirmation-41161477724/video-audit.json)，各分母分别保留。
 
 后续第三方工作流的构建/探针改为只获取构建与验证所需目录，保留全部五个Gradle模块、根配置、脚本、文档及锁文件，排除历史screenshots；归档作业仍完整取出并切换到原测试源码。允许八个独立runner并行，固定八档矩阵、fail-fast=false、每档四方法及录像仅API35保持。已在真正的稀疏检出中通过100项第三方检查、31项录像检查及进度一致性检查，actionlint通过；未来运行耗时仍以实际结果为准。
+
+## Android12/12L 源码调查
+
+已核对固定 AOSP 版本的[隐藏字段与表面生命周期](diagnostics/notes-confirmation-41161477724/ime-hidden-research-summary.md)，并保存40份文件的[源码链接及摘要](diagnostics/notes-confirmation-41161477724/ime-hidden-source-index.json)。`isOnScreen`、`isVisible`、`isReadyForDisplay()`检查不同条件；Insets父层隐藏与子表面`shown=true`可以并存，非fullscreen的表面移除还有条件性的5000毫秒延迟。这为历史API31/32字段组合提供可检验机制，不证明测试镜像逐字采用该版本、当次进入缓存分支或屏幕已经没有键盘影像。
+
+原诊断没有BACK按下/抬起的精确时间戳，只记录准备开始、清单与WMS读起止，不能计算精确“BACK后耗时”或倒推缓存计时已开始。本轮仍按原v4判定，下一步依据归档原四次样本分别核对过滤、身份、字段与时序；如需验证父层/Insets控制目标及延后移除，另立有界诊断，不增加本轮动作或改写原32项。

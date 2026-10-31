@@ -1,0 +1,29 @@
+{
+  "syntheticFixture": false,
+  "kind": "actual-local-aapt-output-parser-cross-check",
+  "deviceExecution": false,
+  "outputs": [
+    {
+      "role": "probe",
+      "bytes": 559,
+      "sha256": "bf551e0d6c33dd0b1898acafb16231be1116820b2344bf4048c9470f54caffe8",
+      "output": "package: name='dev.agentos.compat' versionCode='1' versionName='1.0' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'\nsdkVersion:'30'\ntargetSdkVersion:'35'\napplication: label='' icon=''\ntestOnly='-1'\napplication-debuggable\nfeature-group: label=''\n  uses-feature: name='android.hardware.faketouch'\n  uses-implied-feature: name='android.hardware.faketouch' reason='default feature for all apps'\nsupports-screens: 'small' 'normal' 'large' 'xlarge'\nsupports-any-density: 'true'\nlocales:\ndensities:\n",
+      "parsed": {
+        "package": "dev.agentos.compat",
+        "minSdk": 30,
+        "targetSdk": 35
+      }
+    },
+    {
+      "role": "test",
+      "bytes": 669,
+      "sha256": "69d30ade1d1dbfb45595c650126f74df02a2377ba280cc55cbfc37f9cc1fdc8a",
+      "output": "package: name='dev.agentos.compat.test' versionCode='' versionName='' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'\nsdkVersion:'30'\ntargetSdkVersion:'35'\nuses-permission: name='android.permission.REORDER_TASKS'\napplication: label='' icon=''\napplication-debuggable\nuses-library:'android.test.runner'\nfeature-group: label=''\n  uses-feature: name='android.hardware.faketouch'\n  uses-implied-feature: name='android.hardware.faketouch' reason='default feature for all apps'\nother-activities\nsupports-screens: 'small' 'normal' 'large' 'xlarge'\nsupports-any-density: 'true'\nlocales: '--_--'\ndensities: '160'\n",
+      "parsed": {
+        "package": "dev.agentos.compat.test",
+        "minSdk": 30,
+        "targetSdk": 35
+      }
+    }
+  ]
+}

@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-window-infos-capability-implementation-review",
+  "reviewedAt": "2026-10-31T07:18:54.290720+00:00",
+  "status": "passed_no_blocking_findings",
+  "worktreeBase": "4ceaad9def5ce5a5ba7c3fd0213f447e737f0c37",
+  "androidDeviceExecuted": false,
+  "gradleExecutedByThisReviewer": false,
+  "reviewedFiles": {
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/WindowInfosCapabilityProbe.java": {
+      "bytes": 13338,
+      "sha256": "d49c8330114cae134f704123c91c23ca966f01164d656044730eec3144d6b396"
+    },
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/WindowInfosCapabilityInstrumentedTest.java": {
+      "bytes": 5377,
+      "sha256": "f40ea789523622b4abda09f24e825de14aa8ee9128630f6e31f7c04f4a85b8d1"
+    },
+    "scripts/window_infos_capability.py": {
+      "bytes": 48485,
+      "sha256": "723ae37d40a299c5db4b337cb0aff88a9a4dd18864dff73a8d4ba750d3e3a45c"
+    },
+    "scripts/test_window_infos_capability.py": {
+      "bytes": 25838,
+      "sha256": "ee72fffe539d6181cb794e5415b5a5d28401f06740f8c5bf9f34635ed7b759d6"
+    },
+    "scripts/window_infos_capability_archive.py": {
+      "bytes": 13158,
+      "sha256": "dc8af1e33d669c66a14bd20b387e43082c5412395212db5d4657258136e7259c"
+    },
+    "scripts/test_window_infos_capability_archive.py": {
+      "bytes": 14822,
+      "sha256": "7424d1cdee344198fbea607ffae4b892a3ce1c56cf480996c8180b6f63c81138"
+    },
+    ".github/workflows/window-infos-capability.yml": {
+      "bytes": 9308,
+      "sha256": "027b9e1e91761844627f24a2c7a770b2fef571880b873bf418023a55deb79a2a"
+    }
+  },
+  "reviewScope": {
+    "fixedPublicLookupSlots": 27,
+    "requiredSurfaceSlots": 22,
+    "sourceUnlistedGapSlots": 5,
+    "maximumForTestConstructorInvocationAttempts": 1,
+    "listenerInvocations": 0,
+    "fieldValueReads": 0,
+    "uiAutomationOrShellPermissionAdoption": false,
+    "hiddenApiPolicyChanges": false,
+    "instrumentationContext": "Existing am instrument -w -r default TestApi exemption; no additional exemption request, not ordinary APK access acceptance"
+  },
+  "independentVerification": {
+    "pythonSuites": {
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_window_infos_capability*.py'",
+      "tests": 54,
+      "passed": 54,
+      "secondsReportedByUnittest": 0.43
+    },
+    "actualJavaHostFixtures": {
+      "checks": 81,
+      "passed": 81,
+      "controlledAndroidJvmSubstitutes": true,
+      "actualHelperSha256": "d49c8330114cae134f704123c91c23ca966f01164d656044730eec3144d6b396",
+      "actualEntrySha256": "f40ea789523622b4abda09f24e825de14aa8ee9128630f6e31f7c04f4a85b8d1",
+      "crossFixtureSha256": "847a297f316615255f223263587fb1ebc3fead99b1960784870c63916614bd6c",
+      "javaOutputPassedHostSchema": true,
+      "javaOutputPassedStrictInstrumentedCaseBinding": true
+    },
+    "additionalAdversarialChecks": [
+      "A final instrumentation code preceding the new case is rejected; no retrospective terminal borrowing.",
+      "An extra anonymous status block after completion is rejected.",
+      "Four impossible nonpublic/CLASS/CONSTRUCTOR/VOID public-gap metadata variants are rejected.",
+      "Cancellation after child stdout/stderr EOF is recorded cancelled, with child killed and reaped."
+    ],
+    "realLocalApkBadging": {
+      "probe": {
+        "outputSha256": "bf551e0d6c33dd0b1898acafb16231be1116820b2344bf4048c9470f54caffe8",
+        "package": "dev.agentos.compat",
+        "minSdk": 30,
+        "targetSdk": 35
+      },
+      "tests": {
+        "outputSha256": "69d30ade1d1dbfb45595c650126f74df02a2377ba280cc55cbfc37f9cc1fdc8a",
+        "package": "dev.agentos.compat.test",
+        "versionCodeObserved": "",
+        "minSdk": 30,
+        "targetSdk": 35
+      },
+      "interpretation": "Existing local APK metadata compatibility only; this check does not establish the APK bytecode is the final source freeze."
+    },
+    "diffWhitespaceCheck": "passed"
+  },
+  "resolvedFindings": [
+    "Nonconcrete class shapes no longer authorize constructor lookup/invocation.",
+    "Original setup command bytes are replayed against device/APK/install/path/runner receipts.",
+    "Final JUnit terminal order and fixed three-block class/method binding are enforced.",
+    "Public field/type-category impossible combinations are rejected without inventing gap expected types.",
+    "Read errors preserve captured prefix and terminate/reap children; file reads enforce limits before loading.",
+    "EOF wait observes cancellation and deadline; deep malformed JSON remains a failed preserved run.",
+    "Test APK empty version fields are accepted by a separate package/minSdk/targetSdk parser; original official-app parser is unchanged.",
+    "All executed Java probe sources and archive validation helpers are in sourceFiles; archive checkout is exact tested source."
+  ],
+  "actionIntegration": {
+    "kind": "window-infos-artifact-action-integration-source-review",
+    "reviewedAt": "2026-10-31T07:17:18.654962+00:00",
+    "status": "no_blocking_findings",
+    "ciOrDeviceExecuted": false,
+    "workflowSha256": "027b9e1e91761844627f24a2c7a770b2fef571880b873bf418023a55deb79a2a",
+    "sourceIndexSha256": "47153100c200ab86a3b4dc263865da4188d7d52038f468f1f62ae804f8278193",
+    "downloadArchive": {
+      "inputs": {
+        "name": null,
+        "artifactIdsCount": 1,
+        "mergeMultiple": false
+      },
+      "isSingleArtifactDownload": false,
+      "destination": "window-infos-input/<artifact.name>/",
+      "matchesArchiver": true,
+      "source": "download-artifact.ts:47,172-180",
+      "distSameBranchVerified": true
+    },
+    "apkUploadDownload": {
+      "leastCommonAncestor": "compat-smoke/build/outputs/apk",
+      "relativePaths": [
+        "debug/compat-smoke-debug.apk",
+        "androidTest/debug/compat-smoke-debug-androidTest.apk"
+      ],
+      "namedDownloadExtraArtifactDirectory": false,
+      "matchesProbeArguments": true
+    },
+    "sourceBinding": {
+      "buildAndProbeCheckoutDefault": "github.context.sha for the same workflow repository",
+      "sameRunArtifactDownload": true,
+      "artifactNameContainsCurrentAttempt": true,
+      "archiveExplicitVerifiedSourceCommitCheckout": true,
+      "archiveGitHeadEqualityCheck": true
+    },
+    "limitations": [
+      "Source-only verification; no workflow or artifact download was executed.",
+      "Action v4 tags were resolved at review time; actual CI resolved commits must be checked from execution metadata if the tags move."
+    ]
+  },
+  "actionSourceIndexSha256": "47153100c200ab86a3b4dc263865da4188d7d52038f468f1f62ae804f8278193",
+  "protectedExistingPaths": {
+    "relativeTo": "worktreeBase",
+    "paths": [
+      "app/src/main",
+      "core/src/main",
+      "fixture/src/main",
+      "compat-smoke/src/androidTest/java/dev/agentos/compat/SmokeHarness.java",
+      "compat-smoke/src/androidTest/java/dev/agentos/compat/ApplicationSetCompatibilityInstrumentedTest.java",
+      "scripts/third_party_smoke.py",
+      "scripts/third_party_smoke_archive.py",
+      "scripts/third_party_smoke_set.py",
+      "scripts/third_party_smoke_set_archive.py",
+      ".github/workflows/third-party-smoke.yml"
+    ],
+    "changed": []
+  },
+  "limitations": [
+    "Host fixture results do not establish actual API37 class availability, effective ART policy, constructor behavior or permissions.",
+    "Lookup success, constructor success, current app permission check and registration/callback/data access are separate observations.",
+    "No listener is registered; no window content is read; full inputConfig/CLONE/raw-frame and configured IME strong Binder mapping remain unverified.",
+    "Observed type metadata uses finite categories including OTHER; it does not retain arbitrary unknown class names.",
+    "The source-only action review resolves moving v4 tags at review time; actual CI action commits and source/run/artifact identities still need raw-run verification.",
+    "No original 32-case acceptance was rerun or changed by this review."
+  ]
+}

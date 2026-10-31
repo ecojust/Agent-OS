@@ -1,0 +1,308 @@
+{
+  "kind": "independent-api37-testapi-capability-probe-design",
+  "reviewedAt": "2026-10-31T07:09:50.160137+00:00",
+  "repositoryHead": "4ceaad9def5ce5a5ba7c3fd0213f447e737f0c37",
+  "deviceExecution": false,
+  "sourceIndex": "docs/validation/diagnostics/notes-ime-attrs-reasons-2026-10-31/upstream-source-index.json",
+  "sourceIndexSha256": "952822e0d7ae9be74c23b8744958f634948dd2027598b1b914b3e4429605af29",
+  "fixedSourcesRehashed": 22,
+  "classes": [
+    {
+      "name": "android.window.WindowInfosListenerForTest",
+      "public": true,
+      "abstract": false
+    },
+    {
+      "name": "android.window.WindowInfosListenerForTest$WindowInfo",
+      "public": true,
+      "static": true
+    },
+    {
+      "name": "android.window.WindowInfosListenerForTest$DisplayInfo",
+      "public": true,
+      "static": true
+    }
+  ],
+  "constructor": {
+    "declaringClass": "android.window.WindowInfosListenerForTest",
+    "parameters": [],
+    "public": true,
+    "maximumInvocationAttempts": 1,
+    "sourceLines": [
+      197,
+      200
+    ],
+    "fixedSourceBehavior": "Allocate two ArrayMap instances; no WindowInfosListener construction, listener registration, window read or permission delegation"
+  },
+  "methods": [
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest",
+      "name": "addWindowInfosListener",
+      "parameterTypes": [
+        "java.util.function.BiConsumer"
+      ],
+      "returnType": "void",
+      "public": true,
+      "static": false,
+      "invocationAttempts": 0
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest",
+      "name": "addWindowInfosListener",
+      "parameterTypes": [
+        "java.util.function.Consumer"
+      ],
+      "returnType": "void",
+      "public": true,
+      "static": false,
+      "invocationAttempts": 0
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest",
+      "name": "removeWindowInfosListener",
+      "parameterTypes": [
+        "java.util.function.BiConsumer"
+      ],
+      "returnType": "void",
+      "public": true,
+      "static": false,
+      "invocationAttempts": 0
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest",
+      "name": "removeWindowInfosListener",
+      "parameterTypes": [
+        "java.util.function.Consumer"
+      ],
+      "returnType": "void",
+      "public": true,
+      "static": false,
+      "invocationAttempts": 0
+    }
+  ],
+  "fields": [
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest$WindowInfo",
+      "name": "windowToken",
+      "type": "android.os.IBinder",
+      "public": true,
+      "final": true,
+      "static": false,
+      "valueReads": 0
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest$WindowInfo",
+      "name": "name",
+      "type": "java.lang.String",
+      "public": true,
+      "final": true,
+      "static": false,
+      "valueReads": 0
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest$WindowInfo",
+      "name": "displayId",
+      "type": "int",
+      "public": true,
+      "final": true,
+      "static": false,
+      "valueReads": 0
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest$WindowInfo",
+      "name": "bounds",
+      "type": "android.graphics.Rect",
+      "public": true,
+      "final": true,
+      "static": false,
+      "valueReads": 0
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest$WindowInfo",
+      "name": "touchableRegion",
+      "type": "android.graphics.Region",
+      "public": true,
+      "final": true,
+      "static": false,
+      "valueReads": 0
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest$WindowInfo",
+      "name": "transform",
+      "type": "android.graphics.Matrix",
+      "public": true,
+      "final": true,
+      "static": false,
+      "valueReads": 0
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest$WindowInfo",
+      "name": "isTrustedOverlay",
+      "type": "boolean",
+      "public": true,
+      "final": true,
+      "static": false,
+      "valueReads": 0
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest$WindowInfo",
+      "name": "isVisible",
+      "type": "boolean",
+      "public": true,
+      "final": true,
+      "static": false,
+      "valueReads": 0
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest$WindowInfo",
+      "name": "isTouchable",
+      "type": "boolean",
+      "public": true,
+      "final": true,
+      "static": false,
+      "valueReads": 0
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest$WindowInfo",
+      "name": "isFocusable",
+      "type": "boolean",
+      "public": true,
+      "final": true,
+      "static": false,
+      "valueReads": 0
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest$WindowInfo",
+      "name": "isDuplicateTouchToWallpaper",
+      "type": "boolean",
+      "public": true,
+      "final": true,
+      "static": false,
+      "valueReads": 0
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest$WindowInfo",
+      "name": "isWatchOutsideTouch",
+      "type": "boolean",
+      "public": true,
+      "final": true,
+      "static": false,
+      "valueReads": 0
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest$DisplayInfo",
+      "name": "displayId",
+      "type": "int",
+      "public": true,
+      "final": true,
+      "static": false,
+      "valueReads": 0
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest$DisplayInfo",
+      "name": "transform",
+      "type": "android.graphics.Matrix",
+      "public": true,
+      "final": true,
+      "static": false,
+      "valueReads": 0
+    }
+  ],
+  "fixedTestApiMemberCount": 19,
+  "fixedTestApiClassCount": 3,
+  "staticSourceOnlyMissingSurface": [
+    "full inputConfig",
+    "CLONE/isClone",
+    "raw untransformed frame",
+    "layoutParamsType",
+    "ownerUid"
+  ],
+  "runtimeSemantics": {
+    "lookupSuccess": "Expected public metadata resolved in this instrumented process; no claim of invocation or data access",
+    "constructorSuccess": "Exactly one public no-arg constructor invocation returned; no registration, permission or field-read claim",
+    "notFound": "Class/member absent OR hidden by this runtime access surface; cause cannot be disambiguated from this exception alone",
+    "signatureMismatch": "Named member resolved but declaring class, raw type, arity or public/instance/final shape differs from the fixed expected signature",
+    "accessRejected": "Explicit SecurityException/IllegalAccessException; not inferred from absent metadata",
+    "invocationFailure": "Constructor invocation attempted but threw; preserve bounded exception class and cause class, no retry",
+    "unverifiedRuntimeFailure": "Missing final report, host timeout or instrumentation process failure; do not promote earlier partial rows to complete capability success",
+    "gapFound": "Public field resolved by exact name although absent from fixed TestApi source; preserve observed declaring class/type/modifiers, without inventing expected type or upgrading supported-surface/IME capability"
+  },
+  "prohibitedOperations": [
+    "listener registration/unregistration invocation",
+    "raw WindowInfosListener or InputWindowHandle reflective access",
+    "setAccessible/trySetAccessible/VMRuntime hidden-api exemption",
+    "hidden_api_policy or am --no-hidden-api-checks changes",
+    "Field.get/Field.set or window object toString",
+    "UiAutomation connection or shell permission adoption",
+    "window enumeration/refresh/events/input injection",
+    "constructing WindowInfo/DisplayInfo via nonpublic constructors"
+  ],
+  "identityGap": "Callback IWindow BinderProxy would be local to test process. System_server mClient text is not a cross-process identity; no configured IME strong-reference mapping has been established.",
+  "launchAudit": {
+    "actualExistingPrefix": [
+      "adb",
+      "-s",
+      "SERIAL",
+      "shell",
+      "am",
+      "instrument",
+      "-w",
+      "-r"
+    ],
+    "script": "scripts/third_party_smoke_set.py:314-321",
+    "workflow": ".github/workflows/third-party-smoke.yml:140-153",
+    "compileSdk": 35,
+    "targetSdk": 35,
+    "fixedAospDefaultDisableTestApiChecks": true,
+    "fixedAospDefaultDisableHiddenApiChecks": false,
+    "actualImagePolicyDirectlyMeasured": false
+  },
+  "gapFieldLookups": [
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest$WindowInfo",
+      "name": "inputConfig",
+      "fixedSourcePresence": false,
+      "expectedType": null,
+      "publicLookupOnly": true,
+      "valueReads": 0,
+      "unexpectedPresenceMeaning": "Record observed metadata; not part of fixed supported TestApi surface"
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest$WindowInfo",
+      "name": "isClone",
+      "fixedSourcePresence": false,
+      "expectedType": null,
+      "publicLookupOnly": true,
+      "valueReads": 0,
+      "unexpectedPresenceMeaning": "Record observed metadata; not part of fixed supported TestApi surface"
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest$WindowInfo",
+      "name": "frame",
+      "fixedSourcePresence": false,
+      "expectedType": null,
+      "publicLookupOnly": true,
+      "valueReads": 0,
+      "unexpectedPresenceMeaning": "Record observed metadata; not part of fixed supported TestApi surface"
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest$WindowInfo",
+      "name": "layoutParamsType",
+      "fixedSourcePresence": false,
+      "expectedType": null,
+      "publicLookupOnly": true,
+      "valueReads": 0,
+      "unexpectedPresenceMeaning": "Record observed metadata; not part of fixed supported TestApi surface"
+    },
+    {
+      "declaringClass": "android.window.WindowInfosListenerForTest$WindowInfo",
+      "name": "ownerUid",
+      "fixedSourcePresence": false,
+      "expectedType": null,
+      "publicLookupOnly": true,
+      "valueReads": 0,
+      "unexpectedPresenceMeaning": "Record observed metadata; not part of fixed supported TestApi surface"
+    }
+  ],
+  "primaryLookupCount": 27
+}

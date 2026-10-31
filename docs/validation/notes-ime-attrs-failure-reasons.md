@@ -85,3 +85,5 @@ API36关闭/空闲两态均报告`ATTRS_SIZE_LIMIT`：第3/11条正式Window分�
 cdea整体录制41178250336在`ready`阶段报`Accessibility service did not connect`，完成0/13阶段、0次确认；原设置读到enabledServices=null，已启用/绑定/绑定中/崩溃服务均为空，为什么为空尚未定位。仅有[11.308秒桌面短片](../../screenshots/demos/41178250336-1/demo.mp4)，193帧、69,693字节，全帧解码通过；8载荷88,482字节、0PNG，唯一截图因桌面不是批准测试页面而blocked。它不证明任务过程通过。
 
 [原清单](../../screenshots/demos/41178250336-1/manifest.json)、[视频审核](diagnostics/notes-ime-attrs-scan-2026-10-31/overall-video-audit.json)和[失败分析](diagnostics/notes-ime-attrs-scan-2026-10-31/overall-video-failure-analysis.json)已归档。app/Fixture/演示脚本/工作流与355成功源相同，新增compat-smoke后置诊断不在这个演示方法中执行；不能把本次服务未连接归因为扫描修正。按既定约定不为得到成功影片重录、不阻塞已验证诊断模块，README保留355的36.571秒完整演示与72f真实APK录像实际来源。
+
+后续独立实现及验证范围见[API37过滤前测试接口能力探查](window-infos-capability.md)，与本页原32项结果分别记录。

@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "kind": "window-infos-capability-archive-workflow-host-validation",
+  "reviewedAt": "2026-10-31T07:18:48.375511+00:00",
+  "baseCommit": "4ceaad9def5ce5a5ba7c3fd0213f447e737f0c37",
+  "sourceFiles": {
+    "scripts/window_infos_capability.py": {
+      "bytes": 48485,
+      "sha256": "723ae37d40a299c5db4b337cb0aff88a9a4dd18864dff73a8d4ba750d3e3a45c"
+    },
+    "scripts/window_infos_capability_archive.py": {
+      "bytes": 13158,
+      "sha256": "dc8af1e33d669c66a14bd20b387e43082c5412395212db5d4657258136e7259c"
+    },
+    "scripts/third_party_smoke.py": {
+      "bytes": 27947,
+      "sha256": "e15ba7930e9daf6393e80156121316032bef6bfe6ffabf5e462fc2d082e5a30e"
+    },
+    "scripts/third_party_smoke_archive.py": {
+      "bytes": 23102,
+      "sha256": "84bf08eded010c1cb0d58f4f8b90ebecf7cc32768d66639348e79ba83621f0f2"
+    },
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/WindowInfosCapabilityInstrumentedTest.java": {
+      "bytes": 5377,
+      "sha256": "f40ea789523622b4abda09f24e825de14aa8ee9128630f6e31f7c04f4a85b8d1"
+    },
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/WindowInfosCapabilityProbe.java": {
+      "bytes": 13338,
+      "sha256": "d49c8330114cae134f704123c91c23ca966f01164d656044730eec3144d6b396"
+    },
+    "compat-smoke/build.gradle": {
+      "bytes": 817,
+      "sha256": "fca4a5de7778383b232c9b3f501bd4eee4e43eed762160bc8afaf61d86c12e11"
+    },
+    ".github/workflows/window-infos-capability.yml": {
+      "bytes": 9308,
+      "sha256": "027b9e1e91761844627f24a2c7a770b2fef571880b873bf418023a55deb79a2a"
+    },
+    "scripts/test_window_infos_capability.py": {
+      "bytes": 25838,
+      "sha256": "ee72fffe539d6181cb794e5415b5a5d28401f06740f8c5bf9f34635ed7b759d6"
+    },
+    "scripts/test_window_infos_capability_archive.py": {
+      "bytes": 14822,
+      "sha256": "7424d1cdee344198fbea607ffae4b892a3ce1c56cf480996c8180b6f63c81138"
+    }
+  },
+  "checks": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_window_infos_capability*.py' -v",
+      "exitCode": 0,
+      "tests": 54,
+      "runnerTests": 28,
+      "archiveTests": 26,
+      "result": "OK",
+      "reportedSeconds": 0.434,
+      "executionAgent": "/root/ime_analysis",
+      "logSha256": "786f076541b648f22ee390a0106e550454ab8e897405696a6bb2bc95c3a3bbbc"
+    },
+    {
+      "command": "/workspace/scratch/actionlint/actionlint .github/workflows/window-infos-capability.yml",
+      "exitCode": 0,
+      "version": "1.7.12",
+      "configuration": "default invocation, no checks disabled",
+      "output": "",
+      "sourceUnchangedAfterValidation": true
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0,
+      "output": ""
+    }
+  ],
+  "fullFixture": {
+    "method": "recorded_payloads runs prepare, run_probe and finalize with synthetic subprocess outputs; archive invokes the real validators and exact source-file digest verification",
+    "commands": 17,
+    "payloads": [
+      "capture.json",
+      "commands.json",
+      "instrumentation.json",
+      "report.json"
+    ],
+    "positiveArchiveVerified": true,
+    "changedOriginalCommandRejected": true,
+    "sourceFailureConclusionPreserved": true,
+    "byteForBytePayloadCopiesVerified": true
+  },
+  "archiveBoundaries": [
+    "completed manual master source identity and artifact origin/times",
+    "unique artifact for current attempt; old attempt ignored",
+    "exact checked-out source file hashes",
+    "bounded four-JSON payload; duplicates, nonfinite values, excessive nesting and unknown files rejected",
+    "source-bound raw output revalidation",
+    "symlink/traversal/overwrite rejection",
+    "missing/expired/partial/failed evidence not promoted",
+    "nonvisual manifest and no application acceptance"
+  ],
+  "workflowReview": {
+    "singleApi": "37.0",
+    "matrix": false,
+    "attemptNamedApkAndReceiptArtifacts": true,
+    "exactSourceCheckoutBeforeArchive": true,
+    "archiveUpdatesLatestScreenshotLink": false,
+    "downloadArtifactLayout": "Reviewed actions/download-artifact v4 src/download-artifact.ts: artifact-ids mode without name and merge-multiple=false uses path.join(root, artifact.name).",
+    "downloadArtifactSourceUrl": "https://raw.githubusercontent.com/actions/download-artifact/v4/src/download-artifact.ts",
+    "downloadArtifactSourceSha256": "1c67eb1bb4f77a462522341189f433422c4d35a6999d0dea2a1846e6edfedd80"
+  },
+  "limitations": [
+    "Host validation and synthetic command fixtures are not emulator or physical-device evidence.",
+    "Default am instrument source policy facts are not an effective ART policy readback.",
+    "A recorded receipt is diagnostic completion, not listener-registration or application compatibility acceptance.",
+    "The action source URL names a mutable v4 ref; its reviewed content hash is recorded here."
+  ],
+  "deviceExecution": false,
+  "hostResultProvenance": {
+    "receipt": "host-validation.json",
+    "receiptSha256": "bee68b02aee009faf27a050edefcfc3998b8bfc54044b2e2aa05af68e7e0960f",
+    "finalNewBoundary": "Cancellation after output EOF remains cancelled; child is killed/reaped while bounded wait polls cancellation/deadline."
+  }
+}

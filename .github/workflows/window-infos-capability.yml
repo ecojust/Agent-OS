@@ -1,0 +1,204 @@
+name: WindowInfos capability
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Run one independent API37 capability receipt or archive a completed run
+        required: true
+        default: test
+        type: choice
+        options: [test, archive]
+      run_id:
+        description: Completed source run ID, required for archive
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: window-infos-capability-${{ inputs.mode }}-${{ inputs.run_id || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/master' && inputs.mode == 'test'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+            app
+            core
+            fixture
+            compat-smoke
+            upgrade-smoke
+            gradle
+            docs
+            scripts
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Verify independent capability boundaries
+        run: |
+          python3 scripts/update_progress.py --check
+          python3 -m unittest discover -s scripts -p 'test_window_infos_capability*.py'
+      - name: Prepare build SDK
+        run: |
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk_root" >> "$GITHUB_ENV"
+          printf 'y\n%.0s' {1..100} | "$sdk_root/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$sdk_root" 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Build only the isolated compatibility APKs
+        run: ./gradlew --no-daemon :compat-smoke:assembleDebug :compat-smoke:assembleDebugAndroidTest :compat-smoke:lintDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: window-infos-capability-apks-attempt-${{ github.run_attempt }}
+          path: |
+            compat-smoke/build/outputs/apk/debug/*.apk
+            compat-smoke/build/outputs/apk/androidTest/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  probe:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+            app
+            core
+            fixture
+            compat-smoke
+            upgrade-smoke
+            gradle
+            docs
+            scripts
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Preserve an initial unverified receipt
+        run: python3 scripts/window_infos_capability.py prepare --output "$RUNNER_TEMP/window-infos-capability"
+      - uses: actions/download-artifact@v4
+        with:
+          name: window-infos-capability-apks-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/window-infos-apks
+      - name: Prepare API37 SDK tooling
+        run: |
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk_root" >> "$GITHUB_ENV"
+          echo "$sdk_root/platform-tools" >> "$GITHUB_PATH"
+          printf 'y\n%.0s' {1..100} | "$sdk_root/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$sdk_root" 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0' 'cmdline-tools;23.0'
+          test -x "$sdk_root/cmdline-tools/23.0/bin/sdkmanager"
+          mv "$sdk_root/cmdline-tools/latest" "$sdk_root/cmdline-tools/pre-api37"
+          ln -s 23.0 "$sdk_root/cmdline-tools/latest"
+      - name: Enable hardware virtualization
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Record one nonvisual API37 capability case
+        id: instrumentation
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: '35'
+          system-image-api-level: '37.0'
+          emulator-build: '16428233'
+          arch: x86_64
+          target: default
+          avd-name: agent-os-window-infos-capability
+          enable-hw-keyboard: false
+          pre-emulator-launch-script: python3 scripts/configure_emulator_phone.py --avd-name agent-os-window-infos-capability
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            python3 scripts/configure_emulator_phone.py --avd-name agent-os-window-infos-capability --check
+            python3 scripts/window_infos_capability.py run --output "$RUNNER_TEMP/window-infos-capability" --sdk-root "$ANDROID_HOME" --probe-apk "$RUNNER_TEMP/window-infos-apks/debug/compat-smoke-debug.apk" --test-apk "$RUNNER_TEMP/window-infos-apks/androidTest/debug/compat-smoke-debug-androidTest.apk"
+      - name: Preserve failed and unexecuted cases
+        if: always()
+        env:
+          EMULATOR_OUTCOME: ${{ steps.instrumentation.outcome }}
+        run: python3 scripts/window_infos_capability.py finalize --output "$RUNNER_TEMP/window-infos-capability" --outcome "${EMULATOR_OUTCOME:-unknown}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: window-infos-capability-api-37.0-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/window-infos-capability/
+          if-no-files-found: error
+          retention-days: 30
+
+  archive:
+    if: github.ref == 'refs/heads/master' && inputs.mode == 'archive'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify completed source and current-attempt artifact
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.run_id }}
+        run: |
+          [[ "$SOURCE_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > "$RUNNER_TEMP/window-infos-source.json"
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/window-infos-artifacts.json"
+          python3 scripts/window_infos_capability_archive.py validate-source --source-run-json "$RUNNER_TEMP/window-infos-source.json" --artifact-index "$RUNNER_TEMP/window-infos-artifacts.json" --github-output "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.source.outputs.commit }}
+          persist-credentials: false
+      - name: Verify exact source checkout
+        env:
+          SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_COMMIT"
+      - uses: actions/download-artifact@v4
+        if: steps.source.outputs.artifactIds != ''
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.source.outputs.runId }}
+          artifact-ids: ${{ steps.source.outputs.artifactIds }}
+          merge-multiple: false
+          path: ${{ runner.temp }}/window-infos-input
+      - name: Archive bounded nonvisual evidence
+        env:
+          EVIDENCE_PATH: ${{ steps.source.outputs.evidencePath }}
+        run: |
+          python3 scripts/window_infos_capability_archive.py archive --source-run-json "$RUNNER_TEMP/window-infos-source.json" --artifact-index "$RUNNER_TEMP/window-infos-artifacts.json" --incoming "$RUNNER_TEMP/window-infos-input" --output "$EVIDENCE_PATH"
+          python3 scripts/update_progress.py --note '归档独立API37类、公开TestApi成员和一次构造能力探查；仅保留非视觉回执与实际来源，不将符号可见性计为应用兼容或监听器验收。'
+          python3 scripts/update_progress.py --check
+      - name: Commit evidence on an isolated branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVIDENCE_PATH: ${{ steps.source.outputs.evidencePath }}
+          SOURCE_RUN_ID: ${{ steps.source.outputs.runId }}
+          SOURCE_ATTEMPT: ${{ steps.source.outputs.attempt }}
+        run: |
+          branch="evidence/window-infos-capability-$SOURCE_RUN_ID-$SOURCE_ATTEMPT"
+          gh auth setup-git
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            echo 'Evidence branch already exists; refusing to overwrite it.'
+            exit 1
+          fi
+          git switch -c "$branch"
+          git config user.name agent
+          git config user.email 30574854+ecojust@users.noreply.github.com
+          git add -- "$EVIDENCE_PATH" README.md docs/progress.json docs/diagrams/development-progress.svg
+          git diff --cached --check
+          git commit -m "Archive WindowInfos capability $SOURCE_RUN_ID [skip ci]"
+          git push origin "HEAD:refs/heads/$branch"
+          echo "Evidence branch: https://github.com/$GITHUB_REPOSITORY/tree/$branch" >> "$GITHUB_STEP_SUMMARY"

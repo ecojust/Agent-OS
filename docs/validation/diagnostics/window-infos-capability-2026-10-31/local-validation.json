@@ -1,0 +1,59 @@
+{
+  "validatedAt": "2026-10-31T07:18:16.197614+00:00",
+  "sourceBase": "4ceaad9def5ce5a5ba7c3fd0213f447e737f0c37",
+  "javaSources": {
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/WindowInfosCapabilityProbe.java": "d49c8330114cae134f704123c91c23ca966f01164d656044730eec3144d6b396",
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/WindowInfosCapabilityInstrumentedTest.java": "f40ea789523622b4abda09f24e825de14aa8ee9128630f6e31f7c04f4a85b8d1"
+  },
+  "unchangedFromBase": {
+    "app": true,
+    "core": true,
+    "fixture": true,
+    "compat-smoke/build.gradle": true,
+    "compat-smoke/src/main": true,
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/NotesImeAssociationDiagnostic.java": true,
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/SmokeHarness.java": true,
+    "compat-smoke/src/androidTest/java/dev/agentos/compat/ApplicationSetCompatibilityInstrumentedTest.java": true,
+    ".github/workflows/third-party-smoke.yml": true,
+    ".github/workflows/demo-video.yml": true,
+    "scripts/run_bounded_instrumentation.py": true,
+    "scripts/third_party_smoke.py": true,
+    "scripts/third_party_smoke_archive.py": true,
+    "docs/validation/third-party-app-set-lock.json": true,
+    "docs/validation/notes-dialog-confirmation-v4.md": true
+  },
+  "androidBuild": {
+    "status": "passed",
+    "tasks": [
+      ":compat-smoke:assembleDebug",
+      ":compat-smoke:assembleDebugAndroidTest",
+      ":compat-smoke:lintDebug"
+    ],
+    "seconds": 27,
+    "logBytes": 4874,
+    "logSha256": "9046ce4cde90e0f87c8d0d4fa636b400fa8dc7094fa62b82a57159221245d6f4"
+  },
+  "javaHostChecks": 81,
+  "deviceValidation": "pending one source-frozen API37 capability case; not an application test rerun",
+  "walkthrough": "pending one source-frozen overall attempt; failure nonblocking, no repeat for success",
+  "original32Cases": {
+    "latestSource": "cdea60c126af3cb50805f6e989eccbf7a7a1efb1",
+    "runId": 41178248694,
+    "passed": 24,
+    "failed": 8,
+    "unverified": 0,
+    "rerunThisStep": false
+  },
+  "fullProductHostRegression": "not rerun; unchanged product and old probe sources, new module tests recorded separately",
+  "pythonChecks": {
+    "passed": 54,
+    "runner": 28,
+    "archive": 26
+  },
+  "validationReceipts": {
+    "host-validation.json": "bee68b02aee009faf27a050edefcfc3998b8bfc54044b2e2aa05af68e7e0960f",
+    "archive-workflow-validation.json": "2a7d3974b02ea2649c872a175fd2d2353cc69aeeb8b9a8da4a66508640125fdb",
+    "java-host-tests/host-validation.json": "463fc44e1d75f13452f45de11490b974f35a6996cf4e0cbd5a5fff6592c17cb6",
+    "independent-implementation-review.json": "86e76c6fad5aea969fab8841e460ede481cf6504225357b107b92188f2d1d6a2"
+  }
+}

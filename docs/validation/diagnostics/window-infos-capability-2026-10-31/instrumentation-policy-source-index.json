@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "kind": "instrumentation-policy-source-and-cached-artifact-review",
+  "deviceEvidence": false,
+  "sourceFiles": [
+    {
+      "revision": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "cmds/am/src/com/android/commands/am/Instrument.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/cmds/am/src/com/android/commands/am/Instrument.java?format=TEXT",
+      "bytes": 23250,
+      "sha256": "bd20c48fe4d4817442b3ddce2737ac5fb9c8b5bd0ffcc15740baeee0a4f01c4b",
+      "localPath": "/workspace/scratch/ime-capability-hidden-policy/Instrument.java"
+    },
+    {
+      "revision": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "cmds/am/src/com/android/commands/am/Am.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/cmds/am/src/com/android/commands/am/Am.java?format=TEXT",
+      "bytes": 7950,
+      "sha256": "a724cc63abca4a09267fdb1718d3814ae85bc5cd8e196ad30c971a74dcbbcc06",
+      "localPath": "/workspace/scratch/ime-capability-hidden-policy/Am.java"
+    },
+    {
+      "revision": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/app/ActivityThread.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/app/ActivityThread.java?format=TEXT",
+      "bytes": 431950,
+      "sha256": "2d7bd7d9a9978258776a98ffe60589585a215688da303da7c71be7af961dc210",
+      "localPath": "/workspace/scratch/ime-capability-hidden-policy/ActivityThread.java"
+    },
+    {
+      "revision": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/content/pm/ApplicationInfo.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/content/pm/ApplicationInfo.java?format=TEXT",
+      "bytes": 121758,
+      "sha256": "a46506ebb136bc5d5259a033bc87613c0f6e507aefbf1d201821d651b019d823",
+      "localPath": "/workspace/scratch/ime-capability-hidden-policy/ApplicationInfo.java"
+    },
+    {
+      "revision": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "services/core/java/com/android/server/am/ActivityManagerService.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/services/core/java/com/android/server/am/ActivityManagerService.java?format=TEXT",
+      "bytes": 946188,
+      "sha256": "17923170a97fb001c3892ab4e0d71f9e249f9ea0b427a7aaf29916aae5208797",
+      "localPath": "/workspace/scratch/ime-capability-hidden-policy/ActivityManagerService.java"
+    },
+    {
+      "revision": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/app/ActivityManager.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/app/ActivityManager.java?format=TEXT",
+      "bytes": 287152,
+      "sha256": "b77a98e9aad8110436048ded1c86f36515fba9ac406703eaf21f297acfb7af02",
+      "localPath": "/workspace/scratch/ime-capability-hidden-policy/ActivityManager.java"
+    },
+    {
+      "revision": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "services/core/java/com/android/server/am/ProcessList.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/services/core/java/com/android/server/am/ProcessList.java?format=TEXT",
+      "bytes": 282564,
+      "sha256": "96bfea0a32f822a04e46a16279100d5fdc718b909999df4962f2bd15c8ac55fc",
+      "localPath": "/workspace/scratch/ime-capability-hidden-policy/ProcessList.java"
+    },
+    {
+      "revision": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/window/WindowInfosListenerForTest.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/window/WindowInfosListenerForTest.java",
+      "bytes": 12287,
+      "sha256": "61e3f783d45eaa0e750ee649119c6f8a18a74b606f2997bfe3f15401e0af0068",
+      "localPath": "/workspace/scratch/notes-ime-upstream-source/core__java__android__window__WindowInfosListenerForTest.java",
+      "verification": "Reused bytes match archived upstream-source-index.json; constructor body lines197-200 initializes two ArrayMaps only"
+    }
+  ],
+  "cachedArtifacts": {
+    "method": "Static constant-pool byte search plus javap review of default entrypoints; absence of searched symbols is not a proof of arbitrary dynamic/runtime behavior",
+    "searchedPolicySymbols": [
+      "setHiddenApiExemptions",
+      "setHiddenApiEnforcementPolicy",
+      "disableHiddenApi",
+      "disableTestApi",
+      "hidden_api_policy",
+      "HiddenApiBypass",
+      "dalvik/system/VMRuntime",
+      "allowHiddenApi",
+      "setTargetSdkVersion"
+    ],
+    "artifacts": [
+      {
+        "artifact": "runner-1.6.2.aar",
+        "localPath": "/home/agent/.gradle/caches/modules-2/files-2.1/androidx.test/runner/1.6.2/b65768fd399679596090ca2a9f6bcb84d89b5a50/runner-1.6.2.aar",
+        "aarBytes": 284526,
+        "aarSha256": "d8eac6d9864f432b15962b2c2739a7b31685c87777364ac97323c9e4b2c94744",
+        "classesJarSha256": "34d09ad45b5b82c04b2e1ec3775b15125e99fbe26a7bbd5663020dce94a9ce9f",
+        "classCount": 262,
+        "policySymbolMatches": []
+      },
+      {
+        "artifact": "monitor-1.7.2.aar",
+        "localPath": "/home/agent/.gradle/caches/modules-2/files-2.1/androidx.test/monitor/1.7.2/84b6b1761cca2b9d0b214bf466b735ed3031bf8c/monitor-1.7.2.aar",
+        "aarBytes": 102970,
+        "aarSha256": "868cc120d10d024b886fa157e1e1eaee0e6a8e5d55e7f765ef41d8fc0fea775b",
+        "classesJarSha256": "d10797c3b5386a352f1601bc100cb3872d3841eda06a6216c7a5502479119206",
+        "classCount": 95,
+        "policySymbolMatches": []
+      },
+      {
+        "artifact": "storage-1.5.0.aar",
+        "localPath": "/home/agent/.gradle/caches/modules-2/files-2.1/androidx.test.services/storage/1.5.0/2565386ffab255ae5ad1f0a03ccb9f8927d0213c/storage-1.5.0.aar",
+        "aarBytes": 16924,
+        "aarSha256": "d59621845cff5ff5e8a6906445ef1b2d83624d796cbfad9a52e86a3ab42f8c48",
+        "classesJarSha256": "f2b284e70f8c1f8fbebff4d0697a8ea9e67614b315a0d373c8128acb08e2d734",
+        "classCount": 12,
+        "policySymbolMatches": []
+      },
+      {
+        "artifact": "tracing-1.1.0.aar",
+        "localPath": "/home/agent/.gradle/caches/modules-2/files-2.1/androidx.tracing/tracing/1.1.0/cdc41b1335c3857e4136d399f6a7962663d05e5e/tracing-1.1.0.aar",
+        "aarBytes": 5149,
+        "aarSha256": "5b78e2c618fc10b3d14decc01df76158f15954ad746aacf0607766721da081f6",
+        "classesJarSha256": "5b38ee5a4e85053febd548cb1e9d443af8809c86d209bdcf7d86abb5e7438655",
+        "classCount": 3,
+        "policySymbolMatches": []
+      }
+    ]
+  }
+}

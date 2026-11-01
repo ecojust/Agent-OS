@@ -140,7 +140,7 @@ def parse_event_hub(lines):
         suffix = ' (aka device 0 - built-in keyboard)'
         alias = match[2].endswith(suffix)
         device_name = name(match[2][:-len(suffix)] if alias else match[2])
-        require(alias == (built_in == device_id), 'BUILT_IN_ALIAS_MISMATCH')
+        require(alias == (built_in >= 0 and built_in == device_id), 'BUILT_IN_ALIAS_MISMATCH')
         classes = flags(unique(block, '      Classes:', r'      Classes: (.+)', 'EVENT_HUB_CLASSES')[1], CLASS_NAMES)
         enabled = unique(block, '      Enabled:', r'      Enabled: (true|false)', 'EVENT_HUB_ENABLED')[1] == 'true'
         # This unconditional late field establishes that every selected device's base dump finished.
@@ -182,6 +182,7 @@ def parse_reader(lines, declared, built_in, event_hub):
         raw_ids = unique(block, '    EventHub Devices:', r'    EventHub Devices: \[ ((?:' + NUMBER + r' )+)\] ', 'READER_EVENT_HUB_IDS')[1]
         raw_ids = [integer(v) for v in raw_ids.split()]
         require(1 <= len(raw_ids) <= MAX_EVENT_HUB_IDS and len(set(raw_ids)) == len(raw_ids), 'READER_EVENT_HUB_IDS')
+        require(0 not in raw_ids or built_in >= 0, 'READER_EVENT_HUB_ASSOCIATION')
         resolved_ids = [built_in if v == 0 else v for v in raw_ids]
         require(all(v in hubs for v in resolved_ids) and len(set(resolved_ids)) == len(resolved_ids)
                 and not used_hubs.intersection(resolved_ids), 'READER_EVENT_HUB_ASSOCIATION')

@@ -30,6 +30,6 @@ A确认安装了本次合成包后，仅卸载该 `dev.agentos.compat` 并核对
 
 ## 实施进度
 
-宿主协调、输入设备解析、嵌套归档与专用CI接线已完成，[195项本地验证](diagnostics/window-infos-keyboard-2026-11-01/local-validation.json)通过：既有raw宿主/归档/构建74、IME33、新input解析26、新协调23及新归档39。归档其中10项使用真实协调校验器联合验证，覆盖A失败/B成功、两种原值恢复、恢复失败、输入未知及原件篡改；[具体回执](diagnostics/window-infos-keyboard-2026-11-01/archive-validation.json)保持合成数据的范围。actionlint与进度一致性检查通过，Android及产品代码未改。
+宿主协调、输入设备解析、嵌套归档与专用CI接线已完成，[196项本地验证](diagnostics/window-infos-keyboard-2026-11-01/local-validation.json)通过：既有raw宿主/归档/构建74、IME33、新input解析27、新协调23及新归档39。归档其中10项使用真实协调校验器联合验证，覆盖A失败/B成功、两种原值恢复、恢复失败、输入未知及原件篡改；[具体回执](diagnostics/window-infos-keyboard-2026-11-01/archive-validation.json)保持合成数据的范围。actionlint与进度一致性检查通过，Android及产品代码未改。[最后独立复核](diagnostics/window-infos-keyboard-2026-11-01/input-parser-final-review.json)补齐负内建键盘ID不能别名为设备0的边界；无效关联保持未知，正常内建及虚拟设备保留。
 
 本次设备对照和同源API35整体操作录像待源码冻结后各执行一次；API35影片只展示Fixture与本地模型普通流程，不冒充API37专项录像。原Notes32项不在本次执行范围，原24通过/8失败、API36后续适配与修复复测均未关闭。

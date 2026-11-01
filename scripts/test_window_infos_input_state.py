@@ -148,6 +148,13 @@ class InputStateTest(unittest.TestCase):
             synthetic_dump().replace(b'EventHub Devices: [ 1 ] ', b'EventHub Devices: [ 9 ] ')):
             self.unavailable(data)
 
+    def test_negative_builtin_sentinel_cannot_alias_reader_zero(self):
+        data = synthetic_dump(built_in=True).replace(b'BuiltInKeyboardId: 42', b'BuiltInKeyboardId: -2')
+        data = data.replace(b'    42: Synthetic', b'    -2: Synthetic')
+        self.unavailable(data, 'BUILT_IN_ALIAS_MISMATCH')
+        self.unavailable(data.replace(b' (aka device 0 - built-in keyboard)', b''),
+                         'READER_EVENT_HUB_ASSOCIATION')
+
     def test_unknown_hex_bits_preserved_without_interpreting_as_absent(self):
         value = state.analyze(synthetic_dump(sources='0x00000002', classes='KEYBOARD | 0x40000000'))
         self.assertEqual('recorded', value['status'])

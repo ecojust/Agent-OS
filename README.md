@@ -50,9 +50,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** API37键盘设置对照补齐无内建键盘时的无效别名拒绝；196项本地检查通过，原窗口采集与恢复合同不变。最终源码将各执行一次专项和整体录像，尚无新设备结论。
+**本次更新：** Archive actual API35 walkthrough evidence; local synthetic model, secure flags preserved
 
-**记录时间：** 2026-11-01T12:19:10Z
+**记录时间：** 2026-11-01T12:24:09Z
 
 [最近测试截图与清单](screenshots/window-infos-raw-41293997835-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41293997835)。通过、失败及未截图原因见清单。
 

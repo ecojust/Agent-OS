@@ -1,0 +1,214 @@
+{
+  "schemaVersion": 1,
+  "kind": "window-infos-keyboard-archive",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 41305950037,
+    "attempt": 1,
+    "commit": "aee08f1976f29ebcb62ddd15d37ae30663445228"
+  },
+  "workflow": ".github/workflows/window-infos-raw.yml",
+  "runUrl": "https://github.com/ecojust/Agent-OS/actions/runs/41305950037",
+  "sourceConclusion": "success",
+  "keyboardJob": {
+    "id": 124846568570,
+    "conclusion": "success"
+  },
+  "archivedAt": "2026-11-01T12:24:34.014315+00:00",
+  "status": "passed",
+  "diagnosticReportStatus": "passed",
+  "summary": {
+    "expectedComparisons": 1,
+    "passedComparisons": 1,
+    "expectedArms": 2,
+    "passedArms": 1,
+    "failedArms": 1,
+    "unverifiedArms": 0,
+    "apiLevel": 37
+  },
+  "arms": {
+    "baseline": {
+      "status": "failed",
+      "failureReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED",
+      "positiveCallbackCount": 0,
+      "imeStateStatus": "recorded",
+      "comparable": true,
+      "reported": true
+    },
+    "enabled": {
+      "status": "passed",
+      "failureReason": null,
+      "positiveCallbackCount": 1,
+      "imeStateStatus": "recorded",
+      "comparable": true,
+      "reported": true
+    }
+  },
+  "restoration": {
+    "status": "confirmed",
+    "mutationAttempted": true,
+    "restoreAttempted": true
+  },
+  "scope": {
+    "keyboardSettingComparisonOnly": true,
+    "sameEmulatorRequired": true,
+    "settingIntervention": "SHOW_IME_WITH_HARD_KEYBOARD_TO_1",
+    "settingRestorationRequiredForComparisonPass": true,
+    "baselineResultPromotedByComparison": false,
+    "applicationCompatibilityAcceptance": false,
+    "originalNotesCasesRerun": false,
+    "productionApkCapabilityAcceptance": false
+  },
+  "capture": {
+    "status": "recorded",
+    "screenshots": [
+      "baseline/screenshot.png",
+      "enabled/screenshot.png"
+    ],
+    "recordedArmCount": 2,
+    "video": false,
+    "meaning": "Per-arm later synthetic fixture UI captures; not atomic raw-window snapshots or Binder identity proof."
+  },
+  "artifact": {
+    "status": "archived",
+    "name": "window-infos-keyboard-api-37.0-attempt-1",
+    "id": 13082703218
+  },
+  "files": [
+    {
+      "path": "avd-config.ini",
+      "bytes": 3502,
+      "sha256": "5fd25703acfb1cab9452dfa51b1a2300bd9c8eec993f5d705d1a7995908c7176"
+    },
+    {
+      "path": "baseline/capture.json",
+      "bytes": 575,
+      "sha256": "2c0a4c8e73cdde71b6c88b45a34e77cf31fae7aa6f3580e863d53b1050a86112"
+    },
+    {
+      "path": "baseline/commands.json",
+      "bytes": 152803,
+      "sha256": "2e99f08a88b3b1c9c23659156ed52fe1f8ace08efea6d09a19dcfa23584c4557"
+    },
+    {
+      "path": "baseline/fixture.json",
+      "bytes": 540,
+      "sha256": "6f5704ff6fabea012012efb2c202ad564d28a47882e5b21b5ca4173a417e068a"
+    },
+    {
+      "path": "baseline/ime-state.json",
+      "bytes": 4400,
+      "sha256": "f64bd6079eacbfca29e6cdcbe2ea7a38d0dc48698f60d1a288a169d3ba52c588"
+    },
+    {
+      "path": "baseline/probe-build.json",
+      "bytes": 4333,
+      "sha256": "f78d208e0fb53542b3325039b82fc9f38897024bc2f5823cfdc1a7f34b1402aa"
+    },
+    {
+      "path": "baseline/probe.jar",
+      "bytes": 11317,
+      "sha256": "15db65c205ab3d2e1f3fc4f83b39e515a46d1cdf04a242dc19dc5a784e627813"
+    },
+    {
+      "path": "baseline/raw-result.json",
+      "bytes": 40827,
+      "sha256": "ed02dcfd1e4672760611628ca973e0a1af4c04074270e8a2fe503d23bbded524"
+    },
+    {
+      "path": "baseline/report.json",
+      "bytes": 5917,
+      "sha256": "c87d032f221ebd0d12b6887835263422624587970b3ee395d62e82531e0fdbfa"
+    },
+    {
+      "path": "baseline/screenshot.png",
+      "bytes": 14665,
+      "sha256": "63916b0a49c33bc85a15f25a46f44f76c8a09c99e1911cecea3afb8f3ed8a0d5"
+    },
+    {
+      "path": "commands.json",
+      "bytes": 141903,
+      "sha256": "92588f56183c8106c3ec899f9f27d4baad88cc1b50f86f57add437c9d69cb537"
+    },
+    {
+      "path": "enabled/capture.json",
+      "bytes": 575,
+      "sha256": "d24b8f6ebb1aa7bbb7df73dce8484ae464fc2f82616400657213d34d392ef02b"
+    },
+    {
+      "path": "enabled/commands.json",
+      "bytes": 175875,
+      "sha256": "a52839a7ea6cdc42d0574dc585761c795a976710fa43446e238e8d2977d46755"
+    },
+    {
+      "path": "enabled/fixture.json",
+      "bytes": 540,
+      "sha256": "4de3b0c1ae06851baf2b96dcf850831d9886aa92754fb6af5b0494e98f54252a"
+    },
+    {
+      "path": "enabled/ime-state.json",
+      "bytes": 4511,
+      "sha256": "80a102f2511f726ccaed99fc09bbdfc5e1b533632cb09b33043f4b2e4df26d01"
+    },
+    {
+      "path": "enabled/probe-build.json",
+      "bytes": 4333,
+      "sha256": "f78d208e0fb53542b3325039b82fc9f38897024bc2f5823cfdc1a7f34b1402aa"
+    },
+    {
+      "path": "enabled/probe.jar",
+      "bytes": 11317,
+      "sha256": "15db65c205ab3d2e1f3fc4f83b39e515a46d1cdf04a242dc19dc5a784e627813"
+    },
+    {
+      "path": "enabled/raw-result.json",
+      "bytes": 33547,
+      "sha256": "04d52e4d7b6f6e1356bb23a5e1966e7acc58d27522839ed349f542b1c530938f"
+    },
+    {
+      "path": "enabled/report.json",
+      "bytes": 5884,
+      "sha256": "1dbaf3b65891bda411a61a07f11ff6c67b3d9003e7adbd3f848373877f60b63b"
+    },
+    {
+      "path": "enabled/screenshot.png",
+      "bytes": 30491,
+      "sha256": "0c898cfa109d6df44a28f1696d7a6d0192321822af1c7f569e8205df1c66145a"
+    },
+    {
+      "path": "fixture.apk",
+      "bytes": 13853,
+      "sha256": "32714d9d9af4d155d4da38727afe70fb427d4aec130b0ca4b42b8bf867a826c3"
+    },
+    {
+      "path": "input-devices.json",
+      "bytes": 14203,
+      "sha256": "a49ff420b5aed07b023c494f9ef155cbd0f98e1db1f765c93d3506c293bef5f6"
+    },
+    {
+      "path": "journal.json",
+      "bytes": 463,
+      "sha256": "2b0e9ff9f13bc7feec02b33a3f7b6baa54112cabdd1429c2b0b9015b27ca6138"
+    },
+    {
+      "path": "report.json",
+      "bytes": 6812,
+      "sha256": "443e54a595ee94d5b7b5cecee0b370db1ffe7b0e7992811ba76ca0dc889a0801"
+    },
+    {
+      "path": "source-run.json",
+      "bytes": 13067,
+      "sha256": "1bc8164c1be16484cd6e3df84629e59196d73f3c2dd1cf7fd67a25f47bf5f0e5"
+    },
+    {
+      "path": "source-jobs.json",
+      "bytes": 12736,
+      "sha256": "9771d91ea26cdb01d4ca03fa5f04277ae295fa4abd583313d0a13d84d69bcbee"
+    },
+    {
+      "path": "source-artifacts.json",
+      "bytes": 1864,
+      "sha256": "ad61223b58eeba6bbb2d053527ef213c3f9671050c737129feb3a59d0c1ea8f9"
+    }
+  ]
+}

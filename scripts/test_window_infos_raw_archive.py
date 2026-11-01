@@ -78,7 +78,7 @@ class RawArchiveTests(unittest.TestCase):
             self.run_archive(**kwargs)
         self.assertFalse((self.repo / self.output).exists())
 
-    def complete_synthetic_payload(self, raw=None, expected='passed'):
+    def complete_synthetic_payload(self, raw=None, expected='passed', mutate=None):
         # All execution is a synthetic driver; no Android process or real screenshot is used.
         (self.repo / 'tools/window-infos-raw/src/dev/agentos/raw/Synthetic.java').unlink()
         for name in host_fixtures.JAVA:
@@ -88,9 +88,28 @@ class RawArchiveTests(unittest.TestCase):
         with patch.object(host_fixtures, 'SOURCE', self.source), \
                 patch.object(host_fixtures, 'IDENTITIES', identities), \
                 patch.object(probe, 'now', return_value='2026-11-01T10:02:00Z'):
-            result = host_fixtures.passed_payloads(raw=raw)
+            result = host_fixtures.passed_payloads(raw=raw, mutate=mutate)
         self.assertEqual(result['report.json']['status'], expected)
         return result
+
+    @staticmethod
+    def legacy_payload(values):
+        """Model the old contract without manufacturing a device result."""
+        values = copy.deepcopy(values)
+        report = values['report.json']
+        report['schemaVersion'] = 1
+        report['scope'] = copy.deepcopy(probe.LEGACY_SCOPE)
+        report.pop('imeStateStatus')
+        report['sourceFiles'].pop('scripts/window_infos_ime_state.py')
+        values.pop('ime-state.json')
+        commands = values['commands.json']['commands']
+        commands[:] = [item for item in commands if item['id'] != 'ime_state']
+        for ordinal, command in enumerate(commands, 1): command['ordinal'] = ordinal
+        return values
+
+    @staticmethod
+    def unavailable_ime_dump(argv, data):
+        return b'Unsupported synthetic IME dump format\n' if '/system/bin/dumpsys' in argv else data
 
     def test_complete_synthetic_driver_bundle_is_revalidated_and_preserved(self):
         values = self.complete_synthetic_payload(); directory = self.write_payload(values)
@@ -99,6 +118,10 @@ class RawArchiveTests(unittest.TestCase):
         self.assertEqual(manifest['status'], 'passed')
         self.assertEqual(manifest['summary']['passedCases'], 1)
         self.assertEqual(set(originals), probe.FILES)
+        self.assertEqual(values['report.json']['schemaVersion'], 2)
+        self.assertEqual(values['report.json']['imeStateStatus'], 'recorded')
+        self.assertEqual(values['report.json']['positiveCallbackCount'], 1)
+        self.assertEqual(len(values['commands.json']['commands']), 30)
         self.assertEqual(manifest['capture']['status'], 'recorded')
         self.assertIn('not an atomic', manifest['capture']['meaning'])
         self.assertEqual(len(manifest['files']), len(probe.FILES) + 3)
@@ -123,6 +146,134 @@ class RawArchiveTests(unittest.TestCase):
         self.assertEqual(manifest['summary']['passedCases'], 0)
         self.assertEqual((self.repo / self.output / 'raw-result.json').read_bytes(), original)
         self.assertTrue(values['raw-result.json']['samples'][0]['rows'][0]['notVisible'])
+
+    def test_unknown_ime_observation_preserves_raw_positive_but_not_overall_pass(self):
+        values = self.complete_synthetic_payload(expected='failed', mutate=self.unavailable_ime_dump)
+        report = values['report.json']
+        self.assertEqual(report['failureReason'], 'IME_STATE_NOT_RECORDED')
+        self.assertEqual(report['imeStateStatus'], 'unavailable')
+        self.assertEqual(report['positiveCallbackCount'], 1)
+        self.assertTrue(probe.raw_passed(values['raw-result.json']))
+        self.assertEqual(values['ime-state.json']['status'], 'unavailable')
+        directory = self.write_payload(values)
+        original = (directory / 'ime-state.json').read_bytes()
+        manifest = self.run_archive()
+        self.assertEqual(manifest['status'], 'failed')
+        self.assertEqual(manifest['summary']['passedCases'], 0)
+        self.assertEqual((self.repo / self.output / 'ime-state.json').read_bytes(), original)
+
+    def test_unavailable_ime_observation_does_not_replace_raw_failure(self):
+        raw = host_fixtures.raw_result(); raw['source'] = self.source
+        raw['samples'][0] = host_fixtures.sample(rows=[host_fixtures.row(config=2)])
+        values = self.complete_synthetic_payload(raw=raw, expected='failed', mutate=self.unavailable_ime_dump)
+        self.assertEqual(values['report.json']['failureReason'], 'RAW_POSITIVE_CALLBACK_NOT_OBSERVED')
+        self.assertEqual(values['report.json']['positiveCallbackCount'], 0)
+        self.assertEqual(values['report.json']['imeStateStatus'], 'unavailable')
+        self.write_payload(values)
+        self.assertEqual(self.run_archive()['diagnosticReportStatus'], 'failed')
+
+    def test_ime_receipt_missing_or_derived_state_changed_is_rejected(self):
+        original = self.complete_synthetic_payload()
+        variants = []
+        missing = copy.deepcopy(original); missing.pop('ime-state.json'); variants.append(missing)
+        altered = copy.deepcopy(original)
+        altered['ime-state.json']['expected']['uid'] += 1; variants.append(altered)
+        altered = copy.deepcopy(original)
+        altered['ime-state.json']['source']['commit'] = 'b' * 40; variants.append(altered)
+        altered = copy.deepcopy(original)
+        command = next(item for item in altered['commands.json']['commands'] if item['id'] == 'ime_state')
+        data = b'Unsupported altered dump after source receipt\n'
+        command.update(outputBase64=base64.b64encode(data).decode(), bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+        variants.append(altered)
+        for index, values in enumerate(variants):
+            with self.subTest(variant=index):
+                directory = self.write_payload(values); self.rejected()
+                for path in directory.iterdir(): path.unlink()
+                directory.rmdir()
+
+    def test_changed_ime_parser_source_is_rejected(self):
+        self.write_payload(self.complete_synthetic_payload())
+        (self.repo / 'scripts/window_infos_ime_state.py').write_text('Changed parser after report')
+        with self.assertRaisesRegex(ValueError, 'SOURCE_FILES_MISMATCH'): self.run_archive()
+        self.assertFalse((self.repo / self.output).exists())
+
+    def test_interrupted_ime_receipt_recovers_without_promoting_unverified_run(self):
+        values = self.complete_synthetic_payload()
+        commands = values['commands.json']['commands']
+        commands[:] = commands[:next(i for i, c in enumerate(commands) if c['id'] == 'ime_state') + 1]
+        for name in ['screenshot.png', 'fixture.json']: values.pop(name)
+        values['capture.json'] = probe.empty_capture(self.source)
+        report = values['report.json']
+        report.update(status='unverified', stage='ime_state', failureReason='NOT_EXECUTED',
+                      imeStateStatus='unavailable', positiveCallbackCount=0,
+                      completedAt=None, emulatorStepOutcome=None)
+        report['ime'].update(componentAfter=None, uidAfter=None)
+        report['cleanup'] = {'fixture': 'NOT_ATTEMPTED', 'probeFile': 'NOT_ATTEMPTED'}
+        directory = self.write_payload(values)
+        original = (directory / 'ime-state.json').read_bytes()
+        with patch.object(probe, 'now', return_value='2026-11-01T10:02:00Z'):
+            finalized = probe.finalize(directory, self.source, 'failure')
+        self.assertEqual(finalized['imeStateStatus'], 'recorded')
+        self.assertEqual(finalized['status'], 'unverified')
+        self.assertEqual(finalized['stage'], 'ime_state')
+        self.assertEqual(finalized['failureReason'], 'NOT_EXECUTED')
+        manifest = self.run_archive()
+        self.assertEqual(manifest['status'], 'unverified')
+        self.assertEqual(manifest['summary']['passedCases'], 0)
+        self.assertEqual((self.repo / self.output / 'ime-state.json').read_bytes(), original)
+
+    def test_ime_receipt_recovery_preserves_existing_raw_failure(self):
+        raw = host_fixtures.raw_result(); raw['source'] = self.source
+        raw['samples'][0] = host_fixtures.sample(rows=[host_fixtures.row(config=2)])
+        values = self.complete_synthetic_payload(raw=raw, expected='failed')
+        values['report.json']['imeStateStatus'] = 'unavailable'
+        directory = self.write_payload(values)
+        finalized = probe.finalize(directory, self.source, 'failure')
+        self.assertEqual(finalized['imeStateStatus'], 'recorded')
+        self.assertEqual(finalized['status'], 'failed')
+        self.assertEqual(finalized['positiveCallbackCount'], 0)
+        self.assertEqual(finalized['failureReason'], 'RAW_POSITIVE_CALLBACK_NOT_OBSERVED')
+        self.assertEqual(self.run_archive()['status'], 'failed')
+
+    def test_ime_recovery_cannot_rewrite_tampered_receipt_as_verified(self):
+        values = self.complete_synthetic_payload()
+        values['report.json']['imeStateStatus'] = 'unavailable'
+        values['ime-state.json']['expected']['uid'] += 1
+        directory = self.write_payload(values)
+        originals = {path.name: path.read_bytes() for path in directory.iterdir()}
+        with self.assertRaises(ValueError): probe.finalize(directory, self.source, 'failure')
+        for name, data in originals.items(): self.assertEqual((directory / name).read_bytes(), data)
+        self.rejected()
+
+    def test_legacy_complete_contract_keeps_its_original_pass_without_ime_dump(self):
+        values = self.legacy_payload(self.complete_synthetic_payload())
+        self.assertEqual(len(values['commands.json']['commands']), 29)
+        self.assertNotIn('scripts/window_infos_ime_state.py', values['report.json']['sourceFiles'])
+        self.assertEqual(values['report.json']['sourceFiles'], probe.source_files(self.repo, schema_version=1))
+        directory = self.write_payload(values)
+        originals = {path.name: path.read_bytes() for path in directory.iterdir()}
+        manifest = self.run_archive()
+        self.assertEqual(manifest['status'], 'passed')
+        self.assertEqual(manifest['summary']['passedCases'], 1)
+        self.assertNotIn('ime-state.json', {item['path'] for item in manifest['files']})
+        for name, data in originals.items(): self.assertEqual((self.repo / self.output / name).read_bytes(), data)
+
+    def test_legacy_contract_rejects_retroactive_ime_payload_command_and_source(self):
+        original = self.complete_synthetic_payload()
+        legacy = self.legacy_payload(original)
+        variants = []
+        injected = copy.deepcopy(legacy)
+        injected['ime-state.json'] = original['ime-state.json']; variants.append(injected)
+        injected = copy.deepcopy(legacy)
+        injected['commands.json'] = original['commands.json']; variants.append(injected)
+        injected = copy.deepcopy(legacy)
+        injected['report.json']['sourceFiles']['scripts/window_infos_ime_state.py'] = original['report.json']['sourceFiles']['scripts/window_infos_ime_state.py']
+        variants.append(injected)
+        for index, values in enumerate(variants):
+            with self.subTest(variant=index):
+                directory = self.write_payload(values); self.rejected()
+                for path in directory.iterdir(): path.unlink()
+                directory.rmdir()
 
     def test_complete_bundle_foreign_marker_or_changed_source_is_rejected(self):
         original = self.complete_synthetic_payload()
@@ -295,7 +446,8 @@ class RawArchiveTests(unittest.TestCase):
         self.rejected()
         target.write_text(json.dumps(probe.empty_capture(self.source)))
         with patch.object(archive, 'MAX_PAYLOAD_BYTES', 100): self.rejected()
-        for name, size in [('screenshot.png', probe.MAX_PNG + 1), ('probe.jar', probe.MAX_JAR + 1)]:
+        for name, size in [('screenshot.png', probe.MAX_PNG + 1), ('probe.jar', probe.MAX_JAR + 1),
+                           ('ime-state.json', archive.MAX_FILE_BYTES + 1)]:
             path = directory / name
             with path.open('wb') as stream: stream.truncate(size)
             self.rejected(); path.unlink()

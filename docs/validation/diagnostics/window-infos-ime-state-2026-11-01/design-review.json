@@ -1,0 +1,294 @@
+{
+  "schemaVersion": 1,
+  "kind": "bounded-ime-dump-design-review",
+  "reviewedAt": "2026-11-01T09:32:03.211003+00:00",
+  "newDeviceCommandsExecutedByReviewer": 0,
+  "repositoryFilesChangedByReviewer": false,
+  "sourceImageEquivalenceVerified": false,
+  "previousExperiment": {
+    "source": "2eeb64be2be468f1aac4d521a5cf89a85a9fcaa0",
+    "runId": 41278377093,
+    "status": "failed",
+    "reason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED"
+  },
+  "scope": {
+    "newObservation": "One ordinary text input_method dump after raw process completion and before one screenshot/fixture cleanup.",
+    "rawObservationBudgetChanged": false,
+    "showStimulusChanged": false,
+    "fourPredicateGuardChanged": false,
+    "original32CasesRerun": false,
+    "retryAuthorized": false
+  },
+  "recommendedCommand": {
+    "deviceArgv": [
+      "/system/bin/timeout",
+      "-s",
+      "KILL",
+      "8s",
+      "/system/bin/dumpsys",
+      "-t",
+      "5",
+      "input_method",
+      "--user",
+      "0"
+    ],
+    "hostBudgetSeconds": 12,
+    "budgetStatus": "Root and host owners froze internal5s/remote8s/host12s; slow IPC remains unknown, no retry or budget extension.",
+    "fixedSourceSyntaxValid": true,
+    "serviceArguments": [
+      "--user",
+      "0"
+    ],
+    "notes": [
+      "dumpsys option parsing stops at input_method and forwards the two service arguments unchanged.",
+      "IMMS parses --user using Arrays.binarySearch; exactly this two-element argument order is supported, do not casually append unsorted service arguments.",
+      "No -w, --proto or --dump-priority CRITICAL. A single selected service has no DUMP OF SERVICE wrapper header/footer.",
+      "CLI return0 is necessary but insufficient. Internal timeout/read/Binder errors can also exit0.",
+      "External timeout matches the prior executed wrapper syntax; no new device syntax probe or toybox exit-code assumption."
+    ]
+  },
+  "timingAssessment": {
+    "verdict": "Acceptable as an explicitly later diagnostic",
+    "benefit": "Collection is already frozen and process exited, so dump cannot affect the stored raw callback set or extend the raw deadline.",
+    "requiredOrdering": [
+      "raw_process ended",
+      "ime_dump started",
+      "ime_dump ended",
+      "screenshot started",
+      "fixture cleanup"
+    ],
+    "requiredEvidence": [
+      "bounded original combined stdout/stderr or separately preserved originals",
+      "exact argv/status/exitCode/byte limit/truncation outcome",
+      "host command start/end time interval",
+      "raw end and screenshot start command order"
+    ],
+    "limits": [
+      "Host wall-clock intervals do not map the entire remote dump to a single device elapsedRealtime instant.",
+      "IMMS captures current binder then dumps client and IME sequentially; selected component, client state and service state are not an atomic cross-process snapshot.",
+      "IInputMethodWrapper schedules its dump at front of IME main-thread queue, so it can briefly perturb states observed by the subsequent screenshot.",
+      "Timeout/pipe closure does not prove remote system_server or IME work was cancelled; report failure/unknown without retry."
+    ]
+  },
+  "identityContract": {
+    "outer": [
+      "Exactly one Input Method Manager Service state: header.",
+      "Exactly one top-level selected UserId=0 block. Do not confuse user-repository/history text with the selected user block.",
+      "Within its mBindingController block, unique mSelectedImeId and mCurImeId normalized to configured component; mCurDisplayId=0; mCurIme non-null.",
+      "Configured package UID continues to come from existing validated before/after package evidence. InputMethodInfo list UID is installed metadata, not an independently sampled IME process UID."
+    ],
+    "service": [
+      "Exactly one Input method service state for <expanded configured service class>@<identity hash>: header, after selected user/current binding context.",
+      "Read fields only within that service block, using exact indentation and field grammar. Never choose the first or last global field match.",
+      "Require one final base sentinel mBackCallbackRegistered=(true|false), and no second service/current-user section, duplicate required fields or rejection text.",
+      "A subclass may omit/override base dump or format. Missing/unsupported expected structure remains unknown, not a fallback to client/history fields."
+    ],
+    "client": [
+      "Within IMS mInputEditorInfo subblock, packageName should be dev.agentos.compat for interpreting this synthetic editor. A null EditorInfo is a legitimate negative observation but cannot establish client association.",
+      "Optional mInputBinding UID validation compares existing fixture receipt UID, not IME UID. InputBinding UID denotes the client app.",
+      "Binder/token object strings and Java hash codes are not the held raw-window Binder identity and must not establish same-window equivalence."
+    ],
+    "strength": "Evidence of a configured current IMMS binder choice and corresponding later service-class dump, not atomic component/process/window attestation."
+  },
+  "requiredFields": [
+    "mViewsCreated",
+    "mDecorViewVisible",
+    "mDecorViewWasVisible",
+    "mWindowVisible",
+    "mInShowWindow",
+    "Configuration with keyboard and hardKeyboardHidden",
+    "mInputStarted",
+    "mInputViewStarted",
+    "mCandidatesViewStarted",
+    "mInputEditorInfo presence and, when nonnull, inputType/packageName",
+    "mShowInputRequested",
+    "mLastShowInputRequested",
+    "mShowInputFlags",
+    "mCandidatesVisibility",
+    "mFullscreenApplied",
+    "mIsFullscreen",
+    "mExtractViewHidden",
+    "mIsInputViewShown",
+    "Last computed insets contentTopInsets/visibleTopInsets/touchableInsets/touchableRegion",
+    "mSettingsObserver hard-keyboard cache or explicit null",
+    "mBackCallbackRegistered terminal"
+  ],
+  "fieldSemantics": [
+    "mViewsCreated is not proof that onCreateInputView returned a non-null view.",
+    "mInputViewStarted is callback/start state, mIsInputViewShown is the last visibility decision; neither gives actual input frame height or rendered keys.",
+    "Configuration uses keyboard tokens -keyb/qwerty/12key and hidden suffixes /v,/h,/s; preserve unknown values rather than map them to no keyboard.",
+    "SettingsObserver cache 0=unknown,1=false,2=true; null/unknown is data, not false.",
+    "Last computed Insets are the IMS cached values. VISIBLE mode can have empty touchableRegion normally, because WMS computes the actual region using visible insets.",
+    "Keep a bounded raw region representation; parsing it does not make it the final WMS or SF region.",
+    "mInputView nullness, actual mInputFrame visibility/heights, WMS final region and SF crop/pre-JNI region remain unobserved."
+  ],
+  "rejectionRules": {
+    "transport": [
+      "not completed",
+      "nonzero exit",
+      "host or remote timeout",
+      "stdout/stderr truncation or byte limit reached without complete preservation",
+      "invalid UTF-8/control/malformed required lines",
+      "missing/foreign/duplicate mandatory boundary or field"
+    ],
+    "cliText": [
+      "*** SERVICE 'input_method' DUMP TIMEOUT (",
+      "Can't find service: input_method",
+      "Error with service 'input_method' while ",
+      "Failed to create pipe to dump service info for input_method:",
+      "Error in poll while dumping service input_method :",
+      "Failed to read while dumping service input_method:",
+      "Failed to write while dumping service input_method:",
+      "Error: invalid timeout(seconds) number:",
+      "Error: invalid timeout(milliseconds) number:",
+      "usage: dumpsys"
+    ],
+    "immsOrImeText": [
+      "Failed to dump input method client:",
+      "Failed to dump input method client in focused window:",
+      "Failed to dump input method service:",
+      "No input method client.",
+      "No input method service.",
+      "Warning: Current input method client doesn't match the last focused window.",
+      "Permission Denial:",
+      "Timeout waiting for dump",
+      "Interrupted waiting for dump",
+      "Exception:"
+    ],
+    "interpretation": "Any rejection prevents a complete recorded inference. Preserve bounded original bytes and individual available/unknown statuses; do not convert missing/ambiguous values to false or use duplicate fallback. False/null diagnostic states themselves are not retry triggers and do not make raw acceptance pass."
+  },
+  "timeoutSources": {
+    "dumpsysInternalDefaultMs": 10000,
+    "transferPipeDefaultMs": 5000,
+    "imeMainThreadWaitSeconds": 5,
+    "limitations": "Several sequential IPC stages may exhaust the fixed outer budget; this yields a preserved unknown observation instead of extending time or repeating."
+  },
+  "files": [
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/inputmethodservice/InputMethodService.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/inputmethodservice/InputMethodService.java",
+      "bytes": 203126,
+      "sha256": "327bc0eae0c5cbc12fd103aef3f50121b49bca728fdcf59d84b99faa3edd3c1c",
+      "localPath": "/workspace/scratch/ime-identity-2026-10-31/core__java__android__inputmethodservice__InputMethodService.java",
+      "reviewedLineRanges": [
+        "1574-1581",
+        "1613-1629",
+        "1647-1649",
+        "2314-2359",
+        "2374-2401",
+        "4535-4588"
+      ]
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "services/core/java/com/android/server/inputmethod/InputMethodManagerService.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/InputMethodManagerService.java",
+      "bytes": 338892,
+      "sha256": "84333a7af594118a473b697a84c70cce29173adea904b69b5dd8b36a3b9191f4",
+      "reviewedLineRanges": [
+        "6479-6535",
+        "6540-6618"
+      ]
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/content/res/Configuration.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/content/res/Configuration.java",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/Configuration.java",
+      "bytes": 134461,
+      "sha256": "33c7dc1e5ce83861d288c35ccfcad628bf887cec5d80852d23b749d7cab9b455",
+      "reviewedLineRanges": [
+        "1255-1274"
+      ]
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "services/core/java/com/android/server/inputmethod/InputMethodBindingController.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/services/core/java/com/android/server/inputmethod/InputMethodBindingController.java",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/ime-dump-review/InputMethodBindingController.java",
+      "bytes": 52620,
+      "sha256": "08eb9186542044ffc4613cdf18fa7962519a183fbb2391eb850e036c9fba49fd",
+      "reviewedLineRanges": [
+        "1319-1341"
+      ]
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/inputmethodservice/IInputMethodWrapper.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/inputmethodservice/IInputMethodWrapper.java",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/ime-dump-review/IInputMethodWrapper.java",
+      "bytes": 22752,
+      "sha256": "368679cc2d14c9dd68368a389d9a5e9e124afd0b38129aaaa07fbf92ce018f59",
+      "reviewedLineRanges": [
+        "156-177",
+        "333-357"
+      ]
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/com/android/internal/os/TransferPipe.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/com/android/internal/os/TransferPipe.java",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/ime-dump-review/TransferPipe.java",
+      "bytes": 10000,
+      "sha256": "f80e94781f49e82fdff114d9ad510529656eddfa5ce194830925e1ce37da0cbb",
+      "reviewedLineRanges": [
+        "46",
+        "89-92",
+        "154-215"
+      ]
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/view/inputmethod/InputBinding.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/view/inputmethod/InputBinding.java",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/ime-dump-review/InputBinding.java",
+      "bytes": 4334,
+      "sha256": "01a2eac64e0ae6a113922de11d112bcf06a3ed458d559e43c3a96bcd7dfdad27",
+      "reviewedLineRanges": [
+        "53-65",
+        "120-122"
+      ]
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/view/inputmethod/EditorInfo.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/view/inputmethod/EditorInfo.java",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/ime-dump-review/EditorInfo.java",
+      "bytes": 71411,
+      "sha256": "c913aebd2c38b5a3c329c2858c565a1064246c4d4fd97f03298a850fa4223ba9",
+      "reviewedLineRanges": [
+        "1291-1325"
+      ]
+    },
+    {
+      "project": "frameworks/native",
+      "commit": "ae266dcb706d083868578cfedce381ef44488a07",
+      "path": "cmds/dumpsys/dumpsys.cpp",
+      "url": "https://android.googlesource.com/platform/frameworks/native/+/ae266dcb706d083868578cfedce381ef44488a07/cmds/dumpsys/dumpsys.cpp",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/ime-dump-review/dumpsys.cpp",
+      "bytes": 21398,
+      "sha256": "6b4e0a0b0f86c59648b416b95c1d5ede734f45a8a362546dbfb0ced0c07363d9",
+      "reviewedLineRanges": [
+        "65-88",
+        "128-155",
+        "190-210",
+        "228-247",
+        "257-260",
+        "280-313",
+        "418-474",
+        "477-486",
+        "503-566"
+      ]
+    }
+  ]
+}

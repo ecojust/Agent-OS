@@ -21,6 +21,7 @@ import zipfile
 import window_infos_capability as common
 import build_window_infos_raw as dex_build
 import third_party_smoke as devices
+import window_infos_ime_state as ime_state
 
 REPOSITORY = 'ecojust/Agent-OS'
 WORKFLOW = 'window-infos-raw.yml'
@@ -42,27 +43,31 @@ MAX_FILE_BYTES = 4 * 1024 * 1024
 MAX_TOTAL_BYTES = 16 * 1024 * 1024
 MAX_COMMANDS = 40
 FILES = {'report.json', 'commands.json', 'capture.json', 'raw-result.json', 'fixture.json',
-         'probe-build.json', 'probe.jar', 'screenshot.png'}
+         'probe-build.json', 'probe.jar', 'screenshot.png', 'ime-state.json'}
 PROPERTIES = ('ro.kernel.qemu', 'ro.boot.qemu', 'ro.build.version.sdk', 'ro.product.cpu.abi',
               'sys.boot_completed', 'ro.build.fingerprint')
-SOURCE_PATHS = ('scripts/window_infos_raw.py', 'scripts/window_infos_raw_archive.py',
+LEGACY_SOURCE_PATHS = ('scripts/window_infos_raw.py', 'scripts/window_infos_raw_archive.py',
                 'scripts/build_window_infos_raw.py', 'scripts/window_infos_capability.py',
                 'scripts/third_party_smoke.py', 'scripts/third_party_smoke_archive.py',
                 'compat-smoke/src/main/java/dev/agentos/compat/RawWindowFixtureActivity.java',
                 'compat-smoke/src/main/AndroidManifest.xml', 'compat-smoke/build.gradle',
                 '.github/workflows/window-infos-raw.yml')
-SCOPE = {'diagnosticOnly': True, 'executionContext': 'DEDICATED_EMULATOR_SHELL_APP_PROCESS',
+SOURCE_PATHS = LEGACY_SOURCE_PATHS + ('scripts/window_infos_ime_state.py',)
+LEGACY_SCOPE = {'diagnosticOnly': True, 'executionContext': 'DEDICATED_EMULATOR_SHELL_APP_PROCESS',
          'rawRegistrationLimit': 1, 'showImeRequestLimit': 1, 'forTestListener': False,
          'hiddenApiPolicyMutation': False, 'rootRequested': False, 'fixtureScreenshot': True,
          'agentOrNotesInstalled': False, 'originalNotesCasesRerun': 0,
          'applicationCompatibilityAcceptance': False,
          'permissionPrecheck': 'NOT_INDEPENDENTLY_QUERIED',
          'nativeUnregisterReturnIsSfRemovalAcknowledgement': False}
+SCOPE = dict(LEGACY_SCOPE, imeStateDumpLimit=1, imeStatePhase='AFTER_RAW_EXIT_BEFORE_SCREENSHOT')
 PRE_IDS = ('devices', *('property_' + p for p in PROPERTIES), 'extra_vm_options', 'current_user',
            'shell_uid', 'timeout_available', 'installed_packages', 'ime_before', 'ime_list',
            'ime_uid', 'apk_badging', 'install_fixture', 'fixture_paths', 'fixture_uid',
            'push_probe', 'probe_digest')
-POST_IDS = ('screenshot', 'fixture_receipt', 'ime_after', 'ime_uid_after', 'cleanup_fixture', 'cleanup_probe')
+LEGACY_POST_IDS = ('screenshot', 'fixture_receipt', 'ime_after', 'ime_uid_after', 'cleanup_fixture', 'cleanup_probe')
+POST_IDS = ('ime_state',) + LEGACY_POST_IDS
+LEGACY_COMMAND_IDS = PRE_IDS + ('raw_probe', 'fixture_start') + LEGACY_POST_IDS
 COMMAND_IDS = PRE_IDS + ('raw_probe', 'fixture_start') + POST_IDS
 CANCELLED = False
 Rejected = common.Rejected
@@ -96,15 +101,16 @@ def source_from_environment(env=None):
     return common.source_from_environment(copied)
 
 
-def source_files(repo=None):
+def source_files(repo=None, schema_version=2):
     repo = Path(repo) if repo is not None else Path(__file__).resolve().parents[1]
     extra = sorted(str(p.relative_to(repo)) for p in (repo / 'tools/window-infos-raw').rglob('*.java'))
     require(extra and len(extra) <= 32, 'JAVA_SOURCES_MISSING')
-    return {name: identity(read_bounded(repo / name, MAX_FILE_BYTES)) for name in (*SOURCE_PATHS, *extra)}
+    paths = LEGACY_SOURCE_PATHS if schema_version == 1 else SOURCE_PATHS
+    return {name: identity(read_bounded(repo / name, MAX_FILE_BYTES)) for name in (*paths, *extra)}
 
 
 def verify_source_files(report, repo):
-    require(report.get('sourceFiles') == source_files(repo), 'SOURCE_FILES_MISMATCH')
+    require(report.get('sourceFiles') == source_files(repo, report['schemaVersion']), 'SOURCE_FILES_MISMATCH')
     return True
 
 
@@ -122,7 +128,7 @@ def read_payloads(directory):
 
 
 def empty_report(source, identities=None):
-    return {'schemaVersion': 1, 'kind': KIND, 'source': copy.deepcopy(validate_source(source)),
+    return {'schemaVersion': 2, 'kind': KIND, 'source': copy.deepcopy(validate_source(source)),
             'apiLevel': API, 'matrixLabel': LABEL, 'scope': copy.deepcopy(SCOPE),
             'sourceFiles': source_files() if identities is None else copy.deepcopy(identities),
             'status': 'unverified', 'stage': 'prepared', 'failureReason': 'NOT_EXECUTED',
@@ -130,6 +136,7 @@ def empty_report(source, identities=None):
             'device': None, 'tools': None, 'inputs': {}, 'ime': None,
             'rawAttempted': False, 'fixtureAttempted': False,
             'positiveCallbackCount': 0, 'remoteProcessExit': 'NOT_OBSERVED',
+            'imeStateStatus': 'not_attempted',
             'cleanup': {'fixture': 'NOT_ATTEMPTED', 'probeFile': 'NOT_ATTEMPTED'},
             'emulatorTeardown': 'WORKFLOW_RESPONSIBILITY_NOT_OBSERVED'}
 
@@ -188,6 +195,32 @@ def fixture_command(adb, serial, source):
             '--es', 'runAttempt', str(source['attempt']), '--ez', 'rawWindowProbe', 'true']
 
 
+def ime_state_command(adb, serial):
+    return [adb, '-s', serial, 'shell', '/system/bin/timeout', '-s', 'KILL', '8s',
+            '/system/bin/dumpsys', '-t', '5', 'input_method', '--user', '0']
+
+
+def derive_ime_state(command, source, ime):
+    """Recompute the separate observation from original bytes; never alter raw predicates."""
+    expected = {'component': ime['componentBefore'], 'package': ime['package'],
+                'uid': ime['uid'], 'userId': 0}
+    analysis = None
+    if command_ok(command):
+        try:
+            analysis = ime_state.analyze(command_data(command), expected['component'],
+                                         expected['package'], expected['uid'], expected['userId'])
+        except Exception as failure:
+            analysis = {'status': 'unavailable', 'reason': 'PARSER_EXCEPTION',
+                        'exceptionType': type(failure).__name__}
+    return {'schemaVersion': 1, 'kind': 'window-infos-ime-state', 'source': copy.deepcopy(source),
+            'scope': 'AFTER_RAW_EXIT_BEFORE_SCREENSHOT_NON_ATOMIC', 'expected': expected,
+            'command': {key: command[key] for key in ('id', 'bytes', 'sha256', 'startedAt',
+                        'endedAt', 'elapsedMillis', 'status', 'exitCode')},
+            'status': analysis['status'] if analysis is not None else 'unavailable',
+            'reason': analysis['reason'] if analysis is not None else 'COMMAND_NOT_COMPLETE',
+            'analysis': analysis}
+
+
 def validate_ready(value, source, ime):
     exact(value, {'schemaVersion', 'source', 'imePackage', 'imeUid', 'displayId', 'registered',
                   'elapsedRealtimeMs'}, 'READY_FIELDS')
@@ -244,6 +277,7 @@ def stream_capture(argv, seconds, limit, on_ready, source, ime, progress=None, r
 
 def command_limits(name):
     if name == 'raw_probe': return 60, MAX_OUTPUT
+    if name == 'ime_state': return 12, MAX_OUTPUT
     if name == 'screenshot': return 10, MAX_PNG
     return (60 if name == 'install_fixture' else 10), MAX_SETUP_OUTPUT
 
@@ -359,6 +393,7 @@ def validate_jar(data):
 def run_probe(args, source, runner_factory=CommandRunner):
     directory = Path(args.output); payloads = read_payloads(directory); report = payloads['report.json']
     require(report['source'] == source and report['status'] == 'unverified', 'RUN_SOURCE_OR_STATE')
+    require(report['schemaVersion'] == 2, 'RUN_REPORT_VERSION')
     require(report['sourceFiles'] == source_files(), 'RUN_SOURCE_FILES')
     runner = runner_factory(directory, source); capture = empty_capture(source)
     report['failureReason'] = None; report['stage'] = 'inputs'
@@ -424,6 +459,12 @@ def run_probe(args, source, runner_factory=CommandRunner):
         except Rejected:
             raw = None
         if report['fixtureAttempted']:
+            if command_ok(command) and raw is not None and raw['collectionFrozen']:
+                report['stage'] = 'ime_state'; report['imeStateStatus'] = 'unavailable'; save()
+                _, state_command = runner.call('ime_state', ime_state_command(adb, serial))
+                state = derive_ime_state(state_command, source, report['ime'])
+                write_json(directory / 'ime-state.json', state)
+                report['imeStateStatus'] = state['status']; save()
             report['stage'] = 'fixture_capture'; save()
             png, shot = runner.call('screenshot', prefix + ['exec-out', 'screencap', '-p'])
             capture['status'] = 'unavailable'
@@ -450,7 +491,11 @@ def run_probe(args, source, runner_factory=CommandRunner):
         count = positive_callbacks(raw, fixture)
         report['positiveCallbackCount'] = count
         require(raw_passed(raw) and count > 0, 'RAW_POSITIVE_CALLBACK_NOT_OBSERVED')
+        require(raw['times']['readyElapsedMs'] <= fixture['startedElapsedMs'] <= fixture['showRequestedElapsedMs']
+                <= fixture['firstImeVisibleElapsedMs'] <= raw['process']['finishedElapsedMs'],
+                'FIXTURE_STIMULUS_OUTSIDE_RAW_WINDOW')
         require(capture['status'] == 'captured', 'FIXTURE_CAPTURE_UNAVAILABLE')
+        require(report['imeStateStatus'] == 'recorded', 'IME_STATE_NOT_RECORDED')
         report['status'], report['stage'], report['failureReason'] = 'passed', 'complete', None
     except Exception as failure:
         report['status'] = 'failed'
@@ -474,13 +519,24 @@ def run_probe(args, source, runner_factory=CommandRunner):
 
 
 def finalize(directory, source, outcome):
-    payloads = read_payloads(directory); report = payloads['report.json']
+    payloads = read_payloads(directory); report = copy.deepcopy(payloads['report.json'])
     require(report['source'] == source, 'FINALIZE_SOURCE')
     if report['status'] == 'passed' and outcome != 'success':
         report['status'], report['failureReason'] = 'failed', 'EMULATOR_STEP_' + outcome.upper()
     report['emulatorStepOutcome'] = outcome; report['completedAt'] = report['completedAt'] or now()
+    # A process may stop after the sidecar is written but before its summary is saved.
+    # Recover only this derived summary, from the unique original command, without
+    # upgrading the experiment status or replacing any existing primary failure.
+    if report.get('schemaVersion') == 2 and 'ime-state.json' in payloads:
+        commands = validate_commands(payloads['commands.json'], report, source)
+        require('ime_state' in commands and report['ime'] is not None, 'FINALIZE_IME_STATE_ORIGINAL')
+        state = derive_ime_state(commands['ime_state'], source, report['ime'])
+        require(common.equal(state, payloads['ime-state.json']), 'FINALIZE_IME_STATE_DERIVATION')
+        report['imeStateStatus'] = state['status']
+    payloads['report.json'] = report
+    result = validate_evidence(payloads, source)
     write_json(Path(directory) / 'report.json', report)
-    return validate_evidence(read_payloads(directory), source)
+    return result
 
 
 def main():
@@ -694,6 +750,8 @@ def validate_command_argv(item, report, source, commands):
         require(report['ime'] is not None and argv == raw_command(adb, serial, source, report['ime']), 'RAW_ARGV'); return
     elif name == 'fixture_start':
         require(argv == fixture_command(adb, serial, source), 'FIXTURE_ARGV'); return
+    elif name == 'ime_state':
+        require(argv == ime_state_command(adb, serial), 'IME_STATE_ARGV'); return
     elif name == 'screenshot': tail = ['exec-out', 'screencap', '-p']
     elif name == 'fixture_receipt': tail = ['shell', 'run-as', PACKAGE, 'cat', 'files/raw-window-fixture.json']
     elif name == 'cleanup_fixture': tail = ['shell', 'am', 'force-stop', '--user', '0', PACKAGE]
@@ -707,14 +765,15 @@ def validate_commands(value, report, source):
     require(type(value['schemaVersion']) is int and value['schemaVersion'] == 1
             and value['kind'] == KIND + '-commands' and common.equal(value['source'], source), 'COMMANDS_IDENTITY')
     entries = value['commands']; require(type(entries) is list and len(entries) <= MAX_COMMANDS, 'COMMANDS_BOUND')
+    command_ids = LEGACY_COMMAND_IDS if report['schemaVersion'] == 1 else COMMAND_IDS
     by_id = {}; total = 0; previous_position = -1; previous_start = common.timestamp(report['createdAt'])
     end = common.timestamp(report['completedAt']) if report['completedAt'] else None
     for index, item in enumerate(entries):
         exact(item, {'ordinal', 'id', 'argv', 'timeoutSeconds', 'byteLimit', 'startedAt', 'endedAt',
                      'elapsedMillis', 'status', 'exitCode', 'exceptionType', 'bytes', 'sha256', 'outputBase64'}, 'COMMAND_FIELDS')
         require(integer(item['ordinal'], 1, MAX_COMMANDS) and item['ordinal'] == index + 1
-                and item['id'] in COMMAND_IDS and item['id'] not in by_id, 'COMMAND_ID')
-        position = COMMAND_IDS.index(item['id']); require(position > previous_position, 'COMMAND_ORDER'); previous_position = position
+                and item['id'] in command_ids and item['id'] not in by_id, 'COMMAND_ID')
+        position = command_ids.index(item['id']); require(position > previous_position, 'COMMAND_ORDER'); previous_position = position
         require(type(item['argv']) is list and 1 <= len(item['argv']) <= 32
                 and all(isinstance(v, str) and 0 < len(v) <= 1024 and '\x00' not in v for v in item['argv']), 'COMMAND_ARGV_SHAPE')
         seconds, limit = command_limits(item['id'])
@@ -744,7 +803,8 @@ def validate_commands(value, report, source):
 
 
 def validate_passed_setup(commands, report):
-    require(tuple(commands) == COMMAND_IDS and all(command_ok(c) for c in commands.values()), 'COMPLETE_COMMAND_SEQUENCE')
+    command_ids = LEGACY_COMMAND_IDS if report['schemaVersion'] == 1 else COMMAND_IDS
+    require(tuple(commands) == command_ids and all(command_ok(c) for c in commands.values()), 'COMPLETE_COMMAND_SEQUENCE')
     output = lambda name: command_text(commands[name])
     device = report['device']; require(device is not None, 'PASSED_DEVICE')
     require(devices.select_emulator(output('devices')) == device['serial'], 'DEVICE_RECEIPT')
@@ -776,16 +836,25 @@ def validate_evidence(payloads, source=None):
     require(type(payloads) is dict and set(payloads) <= FILES
             and {'report.json', 'commands.json', 'capture.json'} <= set(payloads), 'PAYLOAD_FILESET')
     report = payloads['report.json']
-    exact(report, {'schemaVersion', 'kind', 'source', 'apiLevel', 'matrixLabel', 'scope', 'sourceFiles',
+    require(type(report) is dict and type(report.get('schemaVersion')) is int
+            and report['schemaVersion'] in {1, 2}, 'REPORT_VERSION')
+    version = report['schemaVersion']
+    keys = {'schemaVersion', 'kind', 'source', 'apiLevel', 'matrixLabel', 'scope', 'sourceFiles',
                   'status', 'stage', 'failureReason', 'createdAt', 'completedAt', 'emulatorStepOutcome',
                   'device', 'tools', 'inputs', 'ime', 'rawAttempted', 'fixtureAttempted',
-                  'positiveCallbackCount', 'remoteProcessExit', 'cleanup', 'emulatorTeardown'}, 'REPORT_FIELDS')
+                  'positiveCallbackCount', 'remoteProcessExit', 'cleanup', 'emulatorTeardown'}
+    if version == 2: keys.add('imeStateStatus')
+    exact(report, keys, 'REPORT_FIELDS')
     validate_source(report['source']); source = report['source'] if source is None else validate_source(source)
-    require(report['source'] == source and report['schemaVersion'] == 1 and type(report['schemaVersion']) is int
+    require(report['source'] == source
             and report['kind'] == KIND and report['apiLevel'] == 37 and type(report['apiLevel']) is int
-            and report['matrixLabel'] == LABEL and common.equal(report['scope'], SCOPE), 'REPORT_CONTRACT')
+            and report['matrixLabel'] == LABEL
+            and common.equal(report['scope'], LEGACY_SCOPE if version == 1 else SCOPE), 'REPORT_CONTRACT')
+    if version == 1: require('ime-state.json' not in payloads, 'LEGACY_IME_STATE')
+    else: require(report['imeStateStatus'] in {'not_attempted', 'unavailable', 'recorded'}, 'IME_STATE_STATUS')
     require(report['status'] in {'passed', 'failed', 'unverified'}
-            and report['stage'] in {'prepared', 'inputs', 'raw_probe', 'fixture_capture', 'postcheck', 'complete'}
+            and report['stage'] in ({'prepared', 'inputs', 'raw_probe', 'fixture_capture', 'postcheck', 'complete'}
+                                   | ({'ime_state'} if version == 2 else set()))
             and (report['failureReason'] is None or (isinstance(report['failureReason'], str)
                  and re.fullmatch('[A-Z][A-Za-z0-9_]{0,127}', report['failureReason'])))
             and report['emulatorStepOutcome'] in {None, 'success', 'failure', 'cancelled', 'skipped', 'unknown'}, 'REPORT_STATUS')
@@ -798,7 +867,8 @@ def validate_evidence(payloads, source=None):
     start = common.timestamp(report['createdAt'])
     if report['completedAt'] is not None: require(common.timestamp(report['completedAt']) >= start, 'REPORT_TIME')
     require(type(report['sourceFiles']) is dict and 10 <= len(report['sourceFiles']) <= 64, 'SOURCE_FILES')
-    require(set(SOURCE_PATHS) <= set(report['sourceFiles']), 'SOURCE_PATHS')
+    require(set(LEGACY_SOURCE_PATHS if version == 1 else SOURCE_PATHS) <= set(report['sourceFiles']), 'SOURCE_PATHS')
+    if version == 1: require('scripts/window_infos_ime_state.py' not in report['sourceFiles'], 'LEGACY_SOURCE_PATHS')
     for path, ident in report['sourceFiles'].items():
         require(isinstance(path, str) and re.fullmatch('[A-Za-z0-9_./-]+', path)
                 and '..' not in Path(path).parts and not path.startswith('/'), 'SOURCE_PATH')
@@ -854,6 +924,33 @@ def validate_evidence(payloads, source=None):
                 and 'uid' in report['inputs'].get('fixtureApk', {}), 'FIXTURE_RECEIPT_ORIGINAL')
         fixture = validate_fixture(decode_json(command_data(commands['fixture_receipt'])), source, report['inputs']['fixtureApk']['uid'])
         require(common.equal(fixture, payloads['fixture.json']), 'FIXTURE_DERIVED_MISMATCH')
+    if version == 2:
+        if 'ime_state' in commands:
+            require('fixture_start' in commands and report['fixtureAttempted']
+                    and raw is not None and raw['collectionFrozen']
+                    and command_ok(commands['raw_probe']) and commands['raw_probe']['endedAt'] is not None,
+                    'IME_STATE_WITHOUT_FROZEN_RAW')
+            require(common.timestamp(commands['ime_state']['startedAt'])
+                    >= common.timestamp(commands['raw_probe']['endedAt']), 'IME_STATE_BEFORE_RAW_EXIT')
+            require(all(key in commands and command_ok(commands[key])
+                        for key in ('ime_before', 'ime_uid', 'current_user'))
+                    and command_text(commands['ime_before']) == report['ime']['componentBefore']
+                    and parse_uid(command_text(commands['ime_uid']), report['ime']['package']) == report['ime']['uid']
+                    and command_text(commands['current_user']) == '0', 'IME_STATE_EXTERNAL_IDENTITY')
+            if 'screenshot' in commands:
+                require(commands['ime_state']['endedAt'] is not None
+                        and common.timestamp(commands['ime_state']['endedAt'])
+                        <= common.timestamp(commands['screenshot']['startedAt']), 'IME_STATE_AFTER_SCREENSHOT')
+            require(report['imeStateStatus'] != 'not_attempted', 'IME_STATE_ATTEMPT_STATUS')
+        if 'ime-state.json' in payloads:
+            require('ime_state' in commands and report['ime'] is not None, 'IME_STATE_ORIGINAL_MISSING')
+            state = derive_ime_state(commands['ime_state'], source, report['ime'])
+            require(common.equal(state, payloads['ime-state.json']), 'IME_STATE_DERIVED_MISMATCH')
+            require(report['imeStateStatus'] == state['status'], 'IME_STATE_REPORT_MISMATCH')
+        else:
+            require(report['imeStateStatus'] != 'recorded', 'IME_STATE_RECEIPT_MISSING')
+            if report['imeStateStatus'] == 'not_attempted':
+                require('ime_state' not in commands, 'IME_STATE_UNREPORTED_ATTEMPT')
     require(report['positiveCallbackCount'] == (positive_callbacks(raw, fixture) if raw is not None and fixture is not None else 0), 'POSITIVE_COUNT_DERIVATION')
     if report['status'] == 'passed':
         require(report['completedAt'] is not None and report['stage'] == 'complete' and report['failureReason'] is None
@@ -866,6 +963,9 @@ def validate_evidence(payloads, source=None):
         require(raw['times']['readyElapsedMs'] <= fixture['startedElapsedMs'] <= fixture['showRequestedElapsedMs']
                 <= fixture['firstImeVisibleElapsedMs'] <= raw['process']['finishedElapsedMs'], 'PASSED_STIMULUS_WINDOW')
         require(report['positiveCallbackCount'] == positive_callbacks(raw, fixture) > 0, 'PASSED_POSITIVE_CALLBACK')
+        if version == 2:
+            require(report['imeStateStatus'] == 'recorded' and 'ime-state.json' in payloads,
+                    'PASSED_IME_STATE_OBSERVATION')
     return report
 
 

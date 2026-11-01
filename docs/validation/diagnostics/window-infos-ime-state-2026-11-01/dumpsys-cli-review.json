@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "kind": "fixed-dumpsys-cli-review",
+  "reviewedAt": "2026-11-01T09:30:44.202414+00:00",
+  "deviceCommandsExecuted": 0,
+  "repoFilesChanged": false,
+  "sourceImageEquivalenceVerified": false,
+  "proposedCommand": [
+    "/system/bin/timeout",
+    "-s",
+    "KILL",
+    "12s",
+    "/system/bin/dumpsys",
+    "-t",
+    "8",
+    "input_method",
+    "--user",
+    "0"
+  ],
+  "dumpsysSyntaxVerified": true,
+  "facts": [
+    {
+      "lines": "128-155,190-210",
+      "text": "Default internal timeout is 10000ms. -t accepts a positive integer number of seconds, -T positive integer milliseconds. Invalid values fail argument parsing; use -t before the service name."
+    },
+    {
+      "lines": "155,228-247",
+      "text": "Leading + in getopt_long option string stops option parsing at input_method. Following --user and 0 are added unchanged to service args. Exactly one input_method service is selected."
+    },
+    {
+      "lines": "257-260",
+      "text": "With an explicit single service, setServiceArgs is not called. The fixed command adds no -a, priority or proto service arguments."
+    },
+    {
+      "lines": "287-313,488-501",
+      "text": "Only multiple-service mode adds DUMP OF SERVICE header/footer. The single-service contract must use the IMMS/IMS service-produced headers; requiring a dumpsys wrapper header rejects valid output."
+    },
+    {
+      "lines": "295-313,503-566",
+      "text": "writeDump reads from the service pipe with a steady-clock total deadline. Internal timeout can produce the SERVICE DUMP TIMEOUT marker twice (writeDump and main). main still returns 0 after timeout or read/write errors."
+    },
+    {
+      "lines": "418-474,313",
+      "text": "Missing service, pipe creation failure or Binder service->dump error can print stderr while main returns 0. Exit code0 alone is insufficient for a complete dump."
+    },
+    {
+      "lines": "477-486",
+      "text": "On incomplete dump the worker thread is detached and read end closed. The CLI timeout is not proof that remote system_server/IME dump work was cancelled or all remote work completed."
+    }
+  ],
+  "mustRejectEvenWithExitZero": [
+    "*** SERVICE 'input_method' DUMP TIMEOUT (",
+    "Can't find service: input_method",
+    "Error with service 'input_method' while ",
+    "Failed to create pipe to dump service info for input_method:",
+    "Error in poll while dumping service input_method :",
+    "Failed to read while dumping service input_method:",
+    "Failed to write while dumping service input_method:",
+    "Error: invalid timeout(seconds) number:",
+    "Error: invalid timeout(milliseconds) number:",
+    "usage: dumpsys"
+  ],
+  "hostContract": [
+    "Preserve bounded combined stdout/stderr (or both originals) and command status, exit code, before/after times and truncation outcome.",
+    "Require command completed with zero exit, no host/remote timeout, no byte truncation, no transport failure, no dumpsys error markers, and a complete strictly parsed selected-current-IME body.",
+    "Any nonzero exit is unknown/incomplete; do not rely on an assumed timeout-specific numeric exit status to identify failure.",
+    "Outer timeout and host budget cover service lookup/start and thread join in addition to the internal -t read budget.",
+    "No -w: that flag waits indefinitely for service startup before writeDump timeout begins.",
+    "Do not invoke help/probe retries: this was a source review only and the requested command remains single-shot."
+  ],
+  "outerTimeoutScope": "The proposed -s KILL syntax matches the existing raw experiment's already-executed /system/bin/timeout -s KILL 40s wrapper. This review does not pin toybox timeout.c or assert its exact timeout exit code. Require completion/exit0 and reject every failure; neither layer proves cancellation of remote Binder work.",
+  "files": [
+    {
+      "project": "frameworks/native",
+      "commit": "ae266dcb706d083868578cfedce381ef44488a07",
+      "path": "cmds/dumpsys/dumpsys.cpp",
+      "url": "https://android.googlesource.com/platform/frameworks/native/+/ae266dcb706d083868578cfedce381ef44488a07/cmds/dumpsys/dumpsys.cpp",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/ime-dump-review/dumpsys.cpp",
+      "bytes": 21398,
+      "sha256": "6b4e0a0b0f86c59648b416b95c1d5ede734f45a8a362546dbfb0ced0c07363d9",
+      "reviewedLineRanges": [
+        "65-88",
+        "128-155",
+        "190-210",
+        "228-247",
+        "257-260",
+        "280-313",
+        "418-474",
+        "477-486",
+        "503-566"
+      ]
+    }
+  ]
+}

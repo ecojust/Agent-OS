@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-11-01T05:59:38Z",
-  "note": "2eeb源码首次API37原始窗口实测：注册成功、57完整回调，但18条IME候选均为空触摸区域，正对照0通过/1失败，原Notes24/8保持；原件及失败源码复核已归档。同源API35整体录像13阶段/8确认通过，README更新32.7秒视频。",
+  "updated_at": "2026-11-01T09:37:57Z",
+  "note": "实现API37原始监听结束后的单次IME状态观测，固定5/8/12秒与输出边界，107项本地检查及独立审查通过；旧失败原件保持，设备实测与同源录像待执行。",
   "latest_evidence": {
     "path": "screenshots/window-infos-raw-41278377093-1",
     "run_url": "https://github.com/ecojust/Agent-OS/actions/runs/41278377093"
@@ -136,10 +136,10 @@
       "id": "app_acceptance",
       "name": "冻结常用应用样本与日常使用验收",
       "status": "in_progress",
-      "evidence": "docs/validation/window-infos-raw.md",
+      "evidence": "docs/validation/window-infos-ime-state.md",
       "scope": "原v4四方法、官方APK/锁、身份/遮挡/5秒/4隐藏采样与动作额度保持。72f/41173725544、9b86/41174426442、35519/41177392095、cdea60c1/41178248694四份独立源码各32项，均24通过8失败0未验证，不合并或替换历史失败。355明确36两态ATTRS_SIZE_LIMIT：3/11正式分段、单anchor229、recordChars11698/scan8192、无tail；只定位后置诊断子限，不倒填9b或原Notes根因。cdea将扫描绑定原262144字节捕获对应字符上限，schema2声明scan/input262144，保持闭合/depth8/唯一type/全记录属性及候选身份，截断不解析；API36两态11parsed/0、唯一IME及身份通过，后续可见4/1display/final3匹配0/0/0。API37为10parsed、3/1/2，匹配同为0/0/0；31/32仍旧接口不可用null。新56载荷2538233B/32PNG/32Notesblocked，32身份恢复、8Notes新进程读回、8原确认及8后置marker独立核验；全部原状态主错和32hidden样本字段与355一致，后置gap0–3ms/读取28–50ms，无截断超时。匹配仅失败后有序文本，不是强Binder/原子快照/像素证据；完整dump丢弃不能独立重算outputSha。25采集/2607扫描差分/83边界、独立250组770断言、44分析/四Java桥接及旧三轮回放、构建lint通过。cdea整体ready失败0/13、11.308秒桌面片保留，355完整36.571秒和72f真实APK4/4保持实际来源。前序类/成员能力计划由后续独立探针验证，同进程身份仍待研究；原八隐藏失败、API30历史几何失败及执行态/升级/扩样/真实模型/真机未关闭。 后续214e90af/41180160267独立API37能力探查recorded1/1，27lookup全尝试：3类/1构造查找/4方法/14字段共22匹配，inputConfig/isClone/frame/layoutParamsType/ownerUid五名称NOT_FOUND_OR_FILTERED；无参构造1/1，SF权限DENIED，反射及构造6ms，host仪器1255ms。实际Android17 buildCE2A.260420.051.A3/x86_64/target35/UID10156，默认Instrumentation TestApi语境不推广普通APK；无额外hidden豁免、权限委托、listener注册或窗口字段读取。17固定命令/6422B完整marker（JSON6395B）/8执行源文件及6索引载荷71561B/7Git原文件核验，原APK字节未归档，不声称独立重算。81Java/54Python+真实输出桥接/构建lint通过。此子任务已完成，完整过滤前字段和同进程IME映射仍不足；原32未重跑、旧失败保持。214整体33.502秒13阶段8确认通过，不关闭cdea ready故障；72f真实APK实际来源保留。 后续2eeb/41278377093独立API37 raw采集0通过1失败：18元数据匹配，shellUID2000显式构造/注册/注销各1，57回调完整0丢弃；18条同Binder候选全regionEmpty，7NOT_VISIBLE/3frameEmpty/0clone，11条可见非空frame仍不通过。fixture单次显示请求接受、早先Insets可见，后置PNG无软键盘；正对照0，失败RAW_POSITIVE_CALLBACK_NOT_OBSERVED保持。11载荷177340B、29命令45928输出字节、17冻结源文件245693B原件独立复核；原Notes32项未重跑。后续先补IME输入视图与最后Insets状态的有界观测，不能将JNI/固定源码推论或当前注册成功作为原8失败修复。",
-      "details": "已实测2eeb源码API37：18项准入匹配、单次注册成功，57完整回调/18条同Binder候选均为空触摸区域，正对照0通过1失败。页面曾报IME可见，后置截图无键盘；11载荷及29命令独立审核，未确认根因。下一步单次有界读取IME输入视图/最后Insets状态，保持显示动作与四项门槛；原Notes24/8、API36适配和修复复测仍未完成。",
-      "updated_at": "2026-11-01T05:59:38Z"
+      "details": "首轮2eeb原始监听注册成功但18候选区域全空，正对照0/1失败保持。已实现冻结后单次IME状态读取：5/8/12秒边界，15个状态字段，原命令重算及schema1兼容；107项本地检查、独立反例与旧原件回放通过。下一步冻结源码执行API37单次实测，对照输入视图/Insets与后置截图；原Notes24/8、API36适配和实际修复仍未完成。",
+      "updated_at": "2026-11-01T09:37:57Z"
     },
     {
       "id": "physical_devices",

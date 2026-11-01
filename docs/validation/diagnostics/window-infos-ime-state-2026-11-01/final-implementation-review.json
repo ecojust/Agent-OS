@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-ime-parser-host-implementation-review",
+  "reviewedAt": "2026-11-01T09:37:13.421478+00:00",
+  "newDeviceCommands": 0,
+  "repositoryFilesChanged": false,
+  "status": "accepted",
+  "unresolvedBlockingFindings": [],
+  "resolvedFindings": [
+    {
+      "id": "trailing_duplicate_target_ignored",
+      "originalReproduction": "Appending mInputStarted composite, contentTopInsets composite or mInputEditorInfo:null after mBackCallbackRegistered was incorrectly recorded.",
+      "resolution": "Known targeted prefixes after terminal are rejected; standalone composite members also rejected. Independent counterexamples confirm unavailable."
+    },
+    {
+      "id": "orphan_editor_children",
+      "originalRisk": "A null EditorInfo could ignore contradictory inputType/packageName child lines.",
+      "resolution": "Editor target child lines must belong to a unique non-null EditorInfo block; null+children is invalid."
+    },
+    {
+      "id": "creation_state_not_derived",
+      "originalRisk": "mViewsCreated existed only in preserved original text.",
+      "resolution": "Now explicitly parsed as bool; scope states viewsCreatedProvesNonNullInputView=false."
+    }
+  ],
+  "reviewedContracts": [
+    "Command fixed5s dumpsys/8s wrapper/12s host and262144B; executed once after normal frozen raw result and before screenshot.",
+    "Raw Android producer, fixture and four predicates unchanged; later dump cannot add raw positive callback.",
+    "Original output is preserved and every derived ime-state sidecar is recomputed from the unique original command during validation.",
+    "Source report2 binds new parser path; schema1 keeps legacy source paths and29command order, forbids new ime-state sidecar.",
+    "Expected packageUID stays external setup evidence; current binder component and service-class boundaries do not claim same raw-window Binder.",
+    "False/null/foreign EditorInfo state is preserved as explicit observation, not promoted to fixture identity or converted to false for missing values.",
+    "Error/timeout/invalid/partial output remains unavailable while preserving screenshot and raw failure; primary RAW_POSITIVE_CALLBACK_NOT_OBSERVED stays primary.",
+    "Finalization can recover derived imeStateStatus from a fully rederived sidecar without promoting experiment status.",
+    "Service body hash now uses exact original byte slice includingCRLF."
+  ],
+  "validation": {
+    "independentCounterexamples": {
+      "path": "final-parser-counterexamples.json",
+      "sha256": "3d89a7b0ccf9cecca5c965ba2bbcaa30c7c76c96d28a2794131955f8774aa93f",
+      "count": 12,
+      "passed": 12
+    },
+    "parserUnitTests": {
+      "completed": 33,
+      "failures": 0,
+      "note": "The initial mixed unittest invocation also named a nonexistent DriverTest twice, producing two loader errors after33 parser tests; these were reviewer selection errors, not parser failures."
+    },
+    "correctedTargetedHostTests": {
+      "count": 2,
+      "passed": 2,
+      "names": [
+        "EndToEndHostTest.test_ime_dump_unavailable_does_not_replace_raw_failure",
+        "EndToEndHostTest.test_ime_derived_original_and_timing_tampering_rejected"
+      ],
+      "commandExitCode": 0
+    }
+  },
+  "files": [
+    {
+      "path": "scripts/window_infos_ime_state.py",
+      "bytes": 20876,
+      "sha256": "648b46728ae57367884068daff2a43455d5245cdae85765ba3f289bca6b4dbff"
+    },
+    {
+      "path": "scripts/window_infos_raw.py",
+      "bytes": 73784,
+      "sha256": "a5f4df94c4a63ba9624cc7aa4ce4e0b0bf8cfb87b0b776f440e5faa80181db8e"
+    },
+    {
+      "path": "scripts/window_infos_raw_archive.py",
+      "bytes": 17185,
+      "sha256": "aaba8be3f1b67dc9ab07e901bf07a46efacaf0424c492ba8b59a4693165e18ea"
+    },
+    {
+      "path": "scripts/test_window_infos_ime_state.py",
+      "bytes": 22442,
+      "sha256": "c9b801a4a2ccd4ee616d465f363c4f0b106493a55bcc1a030b81ffa624f8412e"
+    },
+    {
+      "path": "scripts/test_window_infos_raw.py",
+      "bytes": 25426,
+      "sha256": "0eda7620e12c5cfe5a5f638a907820319c344da6daea11dcd44ade0a0ee57ae5"
+    },
+    {
+      "path": "scripts/test_window_infos_raw_archive.py",
+      "bytes": 29381,
+      "sha256": "843764444b6eeace11e584a6cda294745608ce4f697d219c04b468a6eab4ec28"
+    }
+  ],
+  "limitations": [
+    "Synthetic parser/host validation only; actual API37 dump structure/result not yet observed in this review.",
+    "Current source tag and emulator image equivalence remain unverified.",
+    "Unrelated subclass custom trailing details are permitted, but any reserved target/peer identity collision makes observation unavailable.",
+    "No actual inputView object/nullness/height, final WMS/SF region or synchronized keyboard pixel proof is added."
+  ]
+}

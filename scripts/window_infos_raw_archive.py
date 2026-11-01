@@ -2,7 +2,9 @@
 """Archive one trusted API37 raw-window diagnostic without changing its result.
 
 This module performs no device operation, network request, or Git mutation.
-The fixture screenshot is a separate, later UI observation, not a raw-window snapshot.
+The fixture screenshot and optional post-run IME state are separate later observations.
+Their presence never substitutes for the source-bound raw-window result. Report versions
+are validated by the matching host contract; the archive manifest format stays unchanged.
 """
 import argparse
 from datetime import datetime, timezone

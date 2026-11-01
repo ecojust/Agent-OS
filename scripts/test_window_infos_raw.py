@@ -16,6 +16,7 @@ import zipfile
 import zlib
 
 import window_infos_raw as w
+from test_window_infos_ime_state import synthetic_dump
 
 SOURCE = {'repository': w.REPOSITORY, 'commit': 'a' * 40, 'runId': 123, 'attempt': 1}
 IME = {'componentBefore': 'org.example.ime/.Ime', 'componentAfter': 'org.example.ime/.Ime',
@@ -116,7 +117,7 @@ def synthetic_build():
     return jar, build
 
 
-def fake_executor(jar, raw=None, fixture_value=None, mutate=None):
+def fake_executor(jar, raw=None, fixture_value=None, mutate=None, ime_result=None):
     properties = dict(zip(w.PROPERTIES, ['1', '1', '37', 'x86_64', '1', 'synthetic/fingerprint']))
     def execute(argv, seconds, limit):
         if argv[-1] == 'devices': data = b'List of devices attached\nemulator-5554\tdevice\n'
@@ -134,11 +135,13 @@ def fake_executor(jar, raw=None, fixture_value=None, mutate=None):
         elif 'push' in argv: data = b'1 file pushed\n'
         elif 'sha256sum' in argv: data = (w.sha(jar) + '  ' + w.remote_jar(SOURCE) + '\n').encode()
         elif 'start' in argv: data = b'Status: ok\nActivity: dev.agentos.compat/.RawWindowFixtureActivity\nComplete\n'
+        elif '/system/bin/dumpsys' in argv: data = synthetic_dump()
         elif 'screencap' in argv: data = png()
         elif 'run-as' in argv: data = json.dumps(fixture() if fixture_value is None else fixture_value).encode()
         elif 'force-stop' in argv or 'rm' in argv: data = b''
         else: raise AssertionError(argv)
         if mutate: data = mutate(argv, data)
+        if '/system/bin/dumpsys' in argv and ime_result is not None: return data, ime_result
         return data, {'status': 'completed', 'exitCode': 0, 'exceptionType': None}
     def stream(argv, seconds, limit, on_ready, source, ime, progress):
         data = marker_bytes(raw)
@@ -147,12 +150,12 @@ def fake_executor(jar, raw=None, fixture_value=None, mutate=None):
     return execute, stream
 
 
-def passed_payloads(raw=None, fixture_value=None, mutate=None):
+def passed_payloads(raw=None, fixture_value=None, mutate=None, ime_result=None):
     with tempfile.TemporaryDirectory() as temporary:
         root = Path(temporary); jar, build = synthetic_build()
         (root/'fixture.apk').write_bytes(b'synthetic-apk'); (root/'probe.jar').write_bytes(jar)
         (root/'probe.jar.json').write_text(json.dumps(build)); output = root/'output'
-        execute, stream = fake_executor(jar, raw, fixture_value, mutate)
+        execute, stream = fake_executor(jar, raw, fixture_value, mutate, ime_result)
         with patch.object(w, 'source_files', return_value=IDENTITIES):
             w.prepare(output, SOURCE)
             args = SimpleNamespace(output=output, sdk_root=root/'sdk', fixture_apk=root/'fixture.apk', probe_jar=root/'probe.jar')
@@ -271,6 +274,77 @@ class EndToEndHostTest(unittest.TestCase):
         def mutate(argv,data):return b'-Xhidden-api-policy:disabled\n' if argv[-1]=='dalvik.vm.extra-opts' else data
         p=passed_payloads(mutate=mutate);self.assertEqual('failed',p['report.json']['status'])
         self.assertFalse(p['report.json']['rawAttempted']);self.assertNotIn('install_fixture',[c['id'] for c in p['commands.json']['commands']])
+
+    def test_one_ime_observation_after_raw_before_screenshot(self):
+        p = passed_payloads(); report = p['report.json']
+        self.assertEqual(2, report['schemaVersion']); self.assertEqual('recorded', report['imeStateStatus'])
+        commands = p['commands.json']['commands']; ids = [c['id'] for c in commands]
+        self.assertEqual(30, len(ids)); self.assertEqual(1, ids.count('ime_state'))
+        self.assertLess(ids.index('raw_probe'), ids.index('ime_state'))
+        self.assertLess(ids.index('ime_state'), ids.index('screenshot'))
+        observed = commands[ids.index('ime_state')]
+        self.assertEqual((12, 262144), (observed['timeoutSeconds'], observed['byteLimit']))
+        self.assertEqual(w.ime_state_command(report['tools']['adb'], report['device']['serial']), observed['argv'])
+        self.assertEqual('AFTER_RAW_EXIT_BEFORE_SCREENSHOT_NON_ATOMIC', p['ime-state.json']['scope'])
+
+    def test_ime_dump_failed_outcomes_retain_prefix_and_finish_postchecks(self):
+        for status, code in [('timed_out', -9), ('output_limit', -9), ('cancelled', -9), ('completed', 1)]:
+            for raw_failure in (False, True):
+                raw = raw_result()
+                if raw_failure: raw['samples'][0] = sample(rows=[row(region=True)])
+                p = passed_payloads(raw=raw, ime_result={'status': status, 'exitCode': code, 'exceptionType': None})
+                self.assertEqual('RAW_POSITIVE_CALLBACK_NOT_OBSERVED' if raw_failure else 'IME_STATE_NOT_RECORDED',
+                                 p['report.json']['failureReason'])
+                self.assertEqual(0 if raw_failure else 1, p['report.json']['positiveCallbackCount'])
+                self.assertEqual('unavailable', p['ime-state.json']['status'])
+                self.assertIsNone(p['ime-state.json']['analysis'])
+                commands = {c['id']: c for c in p['commands.json']['commands']}
+                self.assertEqual(synthetic_dump(), w.command_data(commands['ime_state']))
+                self.assertEqual('captured', p['capture.json']['status'])
+                self.assertTrue(all(w.command_ok(commands[key]) for key in w.LEGACY_POST_IDS))
+                w.validate_evidence(p, SOURCE)
+
+    def test_ime_dump_unavailable_does_not_replace_raw_failure(self):
+        raw = raw_result(); raw['samples'][0] = sample(rows=[row(region=True)])
+        for bad in (b'*** SERVICE DUMP TIMEOUT EXPIRED ***\n', b'\xff', b'partial\n'):
+            p = passed_payloads(raw=raw, mutate=lambda argv,data: bad if '/system/bin/dumpsys' in argv else data)
+            self.assertEqual('RAW_POSITIVE_CALLBACK_NOT_OBSERVED', p['report.json']['failureReason'])
+            self.assertEqual('unavailable', p['report.json']['imeStateStatus'])
+            self.assertEqual(0, p['report.json']['positiveCallbackCount'])
+            self.assertEqual('captured', p['capture.json']['status']); w.validate_evidence(p, SOURCE)
+
+    def test_unexpected_parser_exception_remains_separate(self):
+        raw = raw_result(); raw['samples'][0] = sample(rows=[row(region=True)])
+        with patch.object(w.ime_state, 'analyze', side_effect=RuntimeError('synthetic parser fault')):
+            p = passed_payloads(raw=raw)
+            self.assertEqual('RAW_POSITIVE_CALLBACK_NOT_OBSERVED', p['report.json']['failureReason'])
+            self.assertEqual('PARSER_EXCEPTION', p['ime-state.json']['reason'])
+            self.assertEqual('captured', p['capture.json']['status']); w.validate_evidence(p, SOURCE)
+
+    def test_late_fixture_visibility_cannot_extend_raw_window(self):
+        value = fixture(); value.update(firstImeVisibleElapsedMs=15000, receiptWrittenElapsedMs=15001)
+        p = passed_payloads(fixture_value=value)
+        self.assertEqual('failed', p['report.json']['status'])
+        self.assertEqual('FIXTURE_STIMULUS_OUTSIDE_RAW_WINDOW', p['report.json']['failureReason'])
+        self.assertEqual(1, p['report.json']['positiveCallbackCount']); w.validate_evidence(p, SOURCE)
+
+    def test_ime_derived_original_and_timing_tampering_rejected(self):
+        original = passed_payloads()
+        def command(p): return next(c for c in p['commands.json']['commands'] if c['id'] == 'ime_state')
+        mutations = [lambda p: p['ime-state.json']['expected'].update(uid=10043),
+                     lambda p: p['ime-state.json'].update(reason='INVENTED'),
+                     lambda p: p['report.json'].update(imeStateStatus='not_attempted'),
+                     lambda p: command(p)['argv'].__setitem__(7, '80s'),
+                     lambda p: command(p).update(startedAt=p['commands.json']['commands'][0]['startedAt']),
+                     lambda p: p.pop('ime-state.json')]
+        for mutate in mutations:
+            p = copy.deepcopy(original); mutate(p)
+            with self.assertRaises(ValueError): w.validate_evidence(p, SOURCE)
+
+    def test_ime_observation_cannot_follow_abnormal_raw_exit(self):
+        p = passed_payloads(); p['report.json'].update(status='failed', failureReason='RAW_PROCESS_NOT_NORMAL')
+        next(c for c in p['commands.json']['commands'] if c['id'] == 'raw_probe')['exitCode'] = 1
+        with self.assertRaises(ValueError): w.validate_evidence(p, SOURCE)
 
 
 class StreamingProcessTest(unittest.TestCase):

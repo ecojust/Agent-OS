@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-keyboard-controller-cases",
+  "syntheticOnly": true,
+  "deviceRuns": 0,
+  "cases": [
+    {
+      "case": "absence_restored",
+      "status": "passed",
+      "failureReason": null,
+      "restoration": {
+        "status": "confirmed",
+        "mutationAttempted": true,
+        "restoreAttempted": true
+      },
+      "baseline": {
+        "status": "failed",
+        "failureReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED",
+        "positiveCallbackCount": 0,
+        "imeStateStatus": "recorded",
+        "comparable": true
+      },
+      "enabled": {
+        "status": "passed",
+        "failureReason": null,
+        "positiveCallbackCount": 1,
+        "imeStateStatus": "recorded",
+        "comparable": true
+      },
+      "settingWrites": 1,
+      "restoreWrites": 1,
+      "passed": true
+    },
+    {
+      "case": "zero_restored",
+      "status": "passed",
+      "failureReason": null,
+      "restoration": {
+        "status": "confirmed",
+        "mutationAttempted": true,
+        "restoreAttempted": true
+      },
+      "baseline": {
+        "status": "failed",
+        "failureReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED",
+        "positiveCallbackCount": 0,
+        "imeStateStatus": "recorded",
+        "comparable": true
+      },
+      "enabled": {
+        "status": "passed",
+        "failureReason": null,
+        "positiveCallbackCount": 1,
+        "imeStateStatus": "recorded",
+        "comparable": true
+      },
+      "settingWrites": 1,
+      "restoreWrites": 1,
+      "passed": true
+    },
+    {
+      "case": "empty_original",
+      "status": "failed",
+      "failureReason": "SETTING_EMPTY_OR_INCOMPLETE_LINE",
+      "restoration": {
+        "status": "not_needed",
+        "mutationAttempted": false,
+        "restoreAttempted": false
+      },
+      "baseline": {
+        "status": "unverified",
+        "failureReason": "NOT_EXECUTED",
+        "positiveCallbackCount": 0,
+        "imeStateStatus": "not_attempted",
+        "comparable": false
+      },
+      "enabled": {
+        "status": "unverified",
+        "failureReason": "NOT_EXECUTED",
+        "positiveCallbackCount": 0,
+        "imeStateStatus": "not_attempted",
+        "comparable": false
+      },
+      "settingWrites": 0,
+      "restoreWrites": 0,
+      "passed": true
+    },
+    {
+      "case": "empty_restore",
+      "status": "failed",
+      "failureReason": "KEYBOARD_RESTORE_NOT_CONFIRMED",
+      "restoration": {
+        "status": "failed_or_unobserved",
+        "mutationAttempted": true,
+        "restoreAttempted": true
+      },
+      "baseline": {
+        "status": "failed",
+        "failureReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED",
+        "positiveCallbackCount": 0,
+        "imeStateStatus": "recorded",
+        "comparable": true
+      },
+      "enabled": {
+        "status": "passed",
+        "failureReason": null,
+        "positiveCallbackCount": 1,
+        "imeStateStatus": "recorded",
+        "comparable": true
+      },
+      "settingWrites": 1,
+      "restoreWrites": 1,
+      "passed": true
+    },
+    {
+      "case": "foreign_settings_context",
+      "status": "failed",
+      "failureReason": "SETTING_CONTEXT_CHANGED",
+      "restoration": {
+        "status": "not_needed",
+        "mutationAttempted": false,
+        "restoreAttempted": false
+      },
+      "baseline": {
+        "status": "failed",
+        "failureReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED",
+        "positiveCallbackCount": 0,
+        "imeStateStatus": "recorded",
+        "comparable": true
+      },
+      "enabled": {
+        "status": "unverified",
+        "failureReason": "NOT_EXECUTED",
+        "positiveCallbackCount": 0,
+        "imeStateStatus": "not_attempted",
+        "comparable": false
+      },
+      "settingWrites": 0,
+      "restoreWrites": 0,
+      "passed": true
+    },
+    {
+      "case": "enable_error",
+      "status": "failed",
+      "failureReason": "KEYBOARD_ENABLED_SETTING_NOT_CONFIRMED",
+      "restoration": {
+        "status": "confirmed",
+        "mutationAttempted": true,
+        "restoreAttempted": true
+      },
+      "baseline": {
+        "status": "failed",
+        "failureReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED",
+        "positiveCallbackCount": 0,
+        "imeStateStatus": "recorded",
+        "comparable": true
+      },
+      "enabled": {
+        "status": "unverified",
+        "failureReason": "NOT_EXECUTED",
+        "positiveCallbackCount": 0,
+        "imeStateStatus": "not_attempted",
+        "comparable": false
+      },
+      "settingWrites": 1,
+      "restoreWrites": 1,
+      "passed": true
+    },
+    {
+      "case": "baseline_raw_fail_enabled_raw_fail",
+      "status": "failed",
+      "failureReason": "KEYBOARD_ENABLED_ARM_NOT_PASSED",
+      "restoration": {
+        "status": "confirmed",
+        "mutationAttempted": true,
+        "restoreAttempted": true
+      },
+      "baseline": {
+        "status": "failed",
+        "failureReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED",
+        "positiveCallbackCount": 0,
+        "imeStateStatus": "recorded",
+        "comparable": true
+      },
+      "enabled": {
+        "status": "failed",
+        "failureReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED",
+        "positiveCallbackCount": 0,
+        "imeStateStatus": "recorded",
+        "comparable": true
+      },
+      "settingWrites": 1,
+      "restoreWrites": 1,
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-keyboard-setting-controller-review",
+  "reviewedAt": "2026-11-01T12:18:17.998983+00:00",
+  "status": "accepted",
+  "unresolvedBlockingFindings": [],
+  "deviceCommandsExecuted": 0,
+  "repositoryFilesChanged": false,
+  "reviewedRunnerSha256": "2fa9ee79d90797409f1e2cc9b88080d91e071feb232d0763b46707e31f81b15d",
+  "resolvedFinding": {
+    "id": "empty_list_could_mean_absence",
+    "before": "parse_setting accepted empty exit-zero output as absent and could falsely confirm restoration.",
+    "after": "Nonempty newline-complete UTF8 list, unique legitimate keys and configured default_input_method context anchor are required; context is tied to baseline before uninstall and to enable/restoration readbacks. Empty/malformed/missing/foreign anchors remain rejected. Literal target null is present and ineligible."
+  },
+  "fixedSourceSemantics": [
+    "SettingsService get prints returned String; printed null cannot distinguish absent value and literal string null.",
+    "list uses one provider.call, gets its array, sorts and prints each key=value line. There is no explicit footer; require complete bounded exit-zero command and context anchor. RemoteException throws; provider getAllSecureSettings builds a cursor under lock and only bluetooth_address has the separate accessibility special case. The target setting is @Readable.",
+    "put has no affirmative result text and ignores provider mutation result. Readback1 is mandatory; SettingsProvider may return false for restrictions/ownership.",
+    "delete targets the selected secure key/user and prints Deleted N rows; restoration relies on independently validated absence/value from the full list, not this text alone.",
+    "No TAG/default/overrideableByRestore/reset arguments are added. Restoration attests logical existence/value only, not provider metadata or immediate IME cache convergence."
+  ],
+  "controllerReview": [
+    "Fixed same-emulator A then B, no ABAB or loop. Both arms call unchanged raw probe once and retain its complete fresh-install checks.",
+    "Only a complete comparable A (passed or primary RAW_POSITIVE_CALLBACK_NOT_OBSERVED) and cacheFALSE permits uninstall of its proven newly installed fixture; B then reinstalls identical APK/jar bytes and validates its own UID.",
+    "Original missing or string0 accepted; original1/literalnull/other values prohibit intervention. A/B setting, IME Configuration and post-dump cache state are distinct observations.",
+    "Original and mutation intent are atomically published and fsynced before enable command. A failed/timed-out write still obliges restoration.",
+    "Restore intent is persisted before its one write; finally temporarily clears only bounded_capture cancellation for restoration and restores the prior cancellation flag. Reinvocation does not repeat a restore after intent.",
+    "Restore and finalizer verify journal/source/original/baseline proof before the fixed old-value write, independently read back the settings list, and cannot claim confirmed after failure or empty output.",
+    "Interruption after restore intent may leave restoration unobserved and deliberately does not retry; outer workflow may run after emulator teardown. Documentation explicitly disclaims a guaranteed live-device fallback.",
+    "Arms preserve independent status and denominators; failed A is not relabeled by successful B, and restore failure prevents top-level pass.",
+    "Validation recomputes settings existence/value, sidecar states, summaries, original command bytes, ordering, source and APK/jar binding. Runtime input, AVD file and IME resource state remain separate layers."
+  ],
+  "inputParserReview": [
+    "Selected EventHub and InputReader sections have unique ordered native/Java boundary headers, declared Reader count, exact fixed indentation, late per-device sentinels and Reader Configuration boundary.",
+    "Reader EventHub device0 resolves through BuiltInKeyboardId/aka marker; duplicate or missing associations are unavailable. Logical Reader IDs are not used as EventHub IDs.",
+    "Sources/KeyboardType/external/virtual/enabled are capabilities and associations only; missing keyboard/hardKeyboardHidden in this dump is explicitly NOT_PRINTED.",
+    "Whole service-tail completeness is delegated to command_ok and timeout/error rejection; selected section boundaries are not described as an atomic snapshot or proof of qwerty cause."
+  ],
+  "validation": {
+    "controllerUnitTests": {
+      "count": 23,
+      "passed": 23,
+      "commandExitCode": 0
+    },
+    "independentControllerScenarios": {
+      "count": 7,
+      "passed": 7,
+      "path": "/workspace/scratch/raw-design-2026-11-01/hardware-setting-review/independent-controller-cases.json",
+      "sha256": "16ea20baf8f8a661bf060891444799ed47cc630b818505040d3b1a14a45cc6da"
+    },
+    "manualSettingsCases": [
+      "empty rejected",
+      "blank rejected",
+      "target-only rejected",
+      "error-pair-only rejected",
+      "valid absent eligible",
+      "valid0 eligible",
+      "literalnull ineligible",
+      "duplicate context rejected",
+      "null context rejected"
+    ],
+    "inputParserTests": {
+      "count": 26,
+      "passed": 26,
+      "commandExitCode": 0
+    }
+  },
+  "remainingLimits": [
+    "Synthetic validation only; no actual A/B device result yet.",
+    "Fixed order, warm IME and fixture reinstall/possibleUID change are disclosed confounds.",
+    "AVD file and one input-device snapshot do not prove continuous device identity or final IME Configuration cause.",
+    "Source tag/device image equivalence remains unverified."
+  ],
+  "files": [
+    {
+      "path": "scripts/window_infos_keyboard.py",
+      "bytes": 42814,
+      "sha256": "2fa9ee79d90797409f1e2cc9b88080d91e071feb232d0763b46707e31f81b15d"
+    },
+    {
+      "path": "scripts/window_infos_input_state.py",
+      "bytes": 14825,
+      "sha256": "89d7b336725fefa7a7dc56ccecdc0d5a71707867e86c9e03ff8873f18cd2e1f9"
+    },
+    {
+      "path": "scripts/test_window_infos_keyboard.py",
+      "bytes": 22239,
+      "sha256": "3babb000310260db5d322ad159adfc765ba328e236b5fd8b5d31f8ea400e3b23"
+    },
+    {
+      "path": "scripts/test_window_infos_input_state.py",
+      "bytes": 15648,
+      "sha256": "1c00d653dc9b9f02c501d9bc7e091037660914ba76a6423ef9a5dd9078efae20"
+    },
+    {
+      "path": "scripts/window_infos_keyboard_archive.py",
+      "bytes": 19841,
+      "sha256": "b80aa08fa676e93acb3443871853053fd5bec03b04e5d3de36accca910c21461"
+    }
+  ],
+  "fixedSettingSources": [
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "packages/SettingsProvider/src/com/android/providers/settings/SettingsService.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/packages/SettingsProvider/src/com/android/providers/settings/SettingsService.java",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/hardware-setting-review/SettingsService.java",
+      "bytes": 23274,
+      "sha256": "d410c8cf0a1a06824660f10387d2cc19869b38caa1ec18e2cd47f56ecb7525e0",
+      "reviewedLineRanges": [
+        "128-152",
+        "260-287",
+        "327-348",
+        "350-376",
+        "379-420",
+        "423-448"
+      ]
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/packages/SettingsProvider/src/com/android/providers/settings/SettingsProvider.java",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/hardware-setting-review/SettingsProvider.java",
+      "bytes": 362848,
+      "sha256": "7a7f39ecbb2319a468e8c45a6edfa8fa56fdeecb5e9b36d5e5bbf0b2810bfcfa",
+      "reviewedLineRanges": [
+        "481-489",
+        "516-524",
+        "579-583",
+        "616-622",
+        "700-713",
+        "1712-1777",
+        "1953-2015",
+        "2328-2342"
+      ]
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/provider/Settings.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/provider/Settings.java",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/hardware-setting-review/Settings.java",
+      "bytes": 898487,
+      "sha256": "73ff89ec4deb252465b8e8993764301fef96004d141c1d8fde4d6cb4f97a42e2",
+      "reviewedLineRanges": [
+        "8684-8695"
+      ]
+    }
+  ]
+}

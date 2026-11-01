@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "kind": "keyboard-archive-local-validation",
+  "checkedAt": "2026-11-01T12:16:59.863469+00:00",
+  "scope": "Synthetic local execution and immutable-archive validation only; no Android/device run, no network, no repository commit",
+  "status": "passed",
+  "testCommand": "python3 -B -m unittest discover -s scripts -p test_window_infos_keyboard_archive.py -v",
+  "tests": {
+    "total": 39,
+    "passed": 39,
+    "policyWithExplicitValidatorStubs": 29,
+    "actualHostValidatorAndSourceByteHashIntegration": 10
+  },
+  "durationSeconds": 1.803,
+  "syntaxAndTrailingWhitespace": "passed",
+  "ownedFiles": {
+    "scripts/window_infos_keyboard_archive.py": {
+      "bytes": 19841,
+      "sha256": "b80aa08fa676e93acb3443871853053fd5bec03b04e5d3de36accca910c21461"
+    },
+    "scripts/test_window_infos_keyboard_archive.py": {
+      "bytes": 36217,
+      "sha256": "d065668e7bacc1a445e6360666a91c7f5c5277aebb949ba25bd112fc9e84bc4c"
+    }
+  },
+  "sourceCatalog": {
+    "coordinator": 22,
+    "perRawArm": 18
+  },
+  "completeSyntheticBundle": {
+    "originalFiles": 24,
+    "archivedIndexedFiles": 27,
+    "comparisonStatus": "passed",
+    "baselineStatus": "failed",
+    "baselineReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED",
+    "baselinePositiveCallbackCount": 0,
+    "enabledStatus": "passed",
+    "enabledPositiveCallbackCount": 1,
+    "restorationStatus": "confirmed",
+    "originalMissingAndOriginalZeroBothCovered": true,
+    "originalBytesAndPerFileDigestsPreserved": true,
+    "fixtureApkAndAvdIniOriginalsIncluded": true
+  },
+  "checks": [
+    "Strict source/workflow-mode, job, attempt, commit, artifact identity and job-time binding",
+    "Missing and expired artifacts preserve two unverified arms and unobserved restoration",
+    "Comparison denominator and two raw-arm denominators remain separate",
+    "Failed enabled arm, failed setting restoration and unavailable input observation are archived without promotion",
+    "Incomplete baseline preserves unexecuted enabled arm and no setting mutation",
+    "Source verification uses actual temporary-repository byte hashes; host validators are not mocked in integration tests",
+    "Each raw arm source catalog is bound to parent catalog; changed source bytes are rejected",
+    "Missing or altered fixture APK, altered AVD config, forged original-setting journal, rehashed wrong restoration output, rehashed foreign raw marker and inconsistent IME sidecar are rejected",
+    "Only baseline/enabled nesting is allowed; symlinks, deep paths, nonregular files and malformed JSON are rejected",
+    "Per-file limits, original 16MiB per-arm bounds and shared 36MiB tree bound are preserved",
+    "Existing archive paths are never overwritten"
+  ],
+  "readOnlyReview": {
+    "status": "no_blocking_findings",
+    "reviewer": "/root/raw_archive/archive_review",
+    "scope": "Archive provenance, bounds, original bytes, missing/expired status and comparison/arm/restoration separation"
+  },
+  "limitations": [
+    "Synthetic responses are not real APK or keyboard acceptance.",
+    "The controller and workflow require their own integration and dedicated-emulator validation."
+  ]
+}

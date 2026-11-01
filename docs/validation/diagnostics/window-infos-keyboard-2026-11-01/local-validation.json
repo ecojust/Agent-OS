@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "kind": "window-infos-keyboard-local-validation",
+  "checkedAt": "2026-11-01T12:17:59.843509+00:00",
+  "status": "passed",
+  "tests": 195,
+  "checks": [
+    {
+      "command": "python3 -m unittest discover -s scripts -p 'test_window_infos_raw*.py'",
+      "tests": 74,
+      "status": "passed"
+    },
+    {
+      "command": "python3 -m unittest discover -s scripts -p 'test_window_infos_ime_state.py'",
+      "tests": 33,
+      "status": "passed"
+    },
+    {
+      "command": "python3 -m unittest discover -s scripts -p 'test_window_infos_input_state.py'",
+      "tests": 26,
+      "status": "passed"
+    },
+    {
+      "command": "python3 -m unittest discover -s scripts -p 'test_window_infos_keyboard*.py'",
+      "tests": 62,
+      "status": "passed"
+    }
+  ],
+  "otherChecks": {
+    "actionlint": "passed",
+    "gitDiffCheck": "passed",
+    "progressCheck": "passed"
+  },
+  "sourceFiles": {
+    ".github/workflows/window-infos-raw.yml": {
+      "bytes": 17878,
+      "sha256": "c92594a87303f3afaac5beb6b888bbd7ddb95aa4bb9a152d7a32118dd8efa9bf"
+    },
+    "scripts/window_infos_keyboard.py": {
+      "bytes": 42814,
+      "sha256": "2fa9ee79d90797409f1e2cc9b88080d91e071feb232d0763b46707e31f81b15d"
+    },
+    "scripts/test_window_infos_keyboard.py": {
+      "bytes": 22239,
+      "sha256": "3babb000310260db5d322ad159adfc765ba328e236b5fd8b5d31f8ea400e3b23"
+    },
+    "scripts/window_infos_keyboard_archive.py": {
+      "bytes": 19841,
+      "sha256": "b80aa08fa676e93acb3443871853053fd5bec03b04e5d3de36accca910c21461"
+    },
+    "scripts/test_window_infos_keyboard_archive.py": {
+      "bytes": 36217,
+      "sha256": "d065668e7bacc1a445e6360666a91c7f5c5277aebb949ba25bd112fc9e84bc4c"
+    },
+    "scripts/window_infos_input_state.py": {
+      "bytes": 14825,
+      "sha256": "89d7b336725fefa7a7dc56ccecdc0d5a71707867e86c9e03ff8873f18cd2e1f9"
+    },
+    "scripts/test_window_infos_input_state.py": {
+      "bytes": 15648,
+      "sha256": "1c00d653dc9b9f02c501d9bc7e091037660914ba76a6423ef9a5dd9078efae20"
+    }
+  },
+  "scope": "Local synthetic host/parser/archive/build-boundary checks. No device result. Android/product source unchanged; CI build and real emulator run pending."
+}

@@ -1,0 +1,362 @@
+{
+  "schemaVersion": 1,
+  "kind": "raw-window-failure-fixed-source-review",
+  "reviewedAt": "2026-11-01T05:59:06.442825+00:00",
+  "source": {
+    "commit": "2eeb64be2be468f1aac4d521a5cf89a85a9fcaa0",
+    "runId": 41278377093,
+    "attempt": 1
+  },
+  "archiveCommit": "10e53ee9712e384077a20b6ed0b6ca1a1b762ac9",
+  "newDeviceRuns": 0,
+  "codeChanged": false,
+  "sourceImageEquivalenceVerified": false,
+  "independentOriginalAudit": "41278377093-independent-analysis.json",
+  "observed": {
+    "metadataMatched": 18,
+    "callbacksComplete": 57,
+    "candidateCallbacks": 18,
+    "candidateSequences": [
+      40,
+      57
+    ],
+    "candidateBinderId": 1,
+    "allCandidateRegionsEmpty": true,
+    "visibleNonemptyFrameCandidateCallbacks": 11,
+    "lateInputConfig": 260,
+    "rawPositiveCallbacks": 0,
+    "failureReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED",
+    "fixtureShowRequestedElapsedMs": 27201,
+    "fixtureImeInsetsVisibleElapsedMs": 27874,
+    "lastCallbackElapsedMs": 28260,
+    "freezeElapsedMs": 37829,
+    "postCollectionScreenshot": {
+      "width": 320,
+      "height": 640,
+      "visibleKeyboardKeys": false,
+      "scope": "Single independent later image; not proof of all earlier visual states."
+    }
+  },
+  "findings": [
+    {
+      "id": "config_bits",
+      "status": "EXPLAINED",
+      "text": "260 = NOT_FOCUSABLE(4) | TRUSTED_OVERLAY(256); 262 also has NOT_VISIBLE(2). Neither has NOT_TOUCHABLE(8), NO_INPUT_CHANNEL(1), or CLONE(65536). These flags do not prove keyboard content or a nonempty touch region.",
+      "sources": [
+        "libs/input/android/os/InputConfig.aidl:36-91"
+      ]
+    },
+    {
+      "id": "one_show_not_blocked_by_showOnFocus_flag",
+      "status": "SOURCE_PATH_REVIEWED",
+      "text": "TextView.setShowSoftInputOnFocus(false) writes only the Editor field. onCheckIsTextEditor/onCreateInputConnection do not gate on this field, IMM getStartInputFlags uses onCheckIsTextEditor, and explicit IMM.showSoftInput does not read the field. No source evidence that this setting disables the explicit request or its EditorInfo/InputConnection. Actual IME start/binding completion was not recorded.",
+      "sources": [
+        "core/java/android/widget/TextView.java:5684-5702",
+        "core/java/android/widget/TextView.java:10116-10229",
+        "core/java/android/view/inputmethod/InputMethodManager.java:2559-2615",
+        "core/java/android/view/inputmethod/InputMethodManager.java:3928-3934",
+        "core/java/android/view/inputmethod/InputMethodManager.java:5494-5520"
+      ]
+    },
+    {
+      "id": "show_implicit_old_semantics",
+      "status": "RULED_OUT_AS_FIXED_SOURCE_EXPLANATION",
+      "text": "Fixed API37 IMM documentation says SHOW_IMPLICIT has no effect starting Android B. The show implementation does not consume flags and routes to InsetsController.show. Legacy implicit-show/hardware-keyboard rejection must not be claimed as this run's cause.",
+      "sources": [
+        "core/java/android/view/inputmethod/InputMethodManager.java:2425-2434",
+        "core/java/android/view/inputmethod/InputMethodManager.java:2559-2615"
+      ]
+    },
+    {
+      "id": "insets_visible_not_input_content_proof",
+      "status": "SOURCE_PATH_REVIEWED",
+      "text": "WindowInsets.isVisible reads the type visibility map, not the IME view dimensions or touch region. IMS.isInputViewShown returns mDecorViewVisible in this fixed source; computeImeWindowVis uses that method. mIsInputViewShown and input/candidate content state are separate.",
+      "sources": [
+        "core/java/android/view/WindowInsets.java:414-432",
+        "core/java/android/inputmethodservice/InputMethodService.java:2374-2376",
+        "core/java/android/inputmethodservice/InputMethodService.java:4508-4511"
+      ]
+    },
+    {
+      "id": "ims_default_empty_region_path",
+      "status": "PLAUSIBLE_NOT_ESTABLISHED",
+      "text": "Default IMS onComputeInsets uses input/candidate view positions. When neither frame is visible, visibleTopInsets becomes decor height; default touchableInsets is VISIBLE and touchableRegion is empty. WMS VISIBLE mode computes frame minus visible insets, which can be empty. Empty mTmpInsets.touchableRegion alone is normal for VISIBLE mode and is not proof of an empty outgoing WMS region. Base implementation may be overridden, and navigation-bar adjustments also apply.",
+      "sources": [
+        "core/java/android/inputmethodservice/InputMethodService.java:678-700",
+        "core/java/android/inputmethodservice/InputMethodService.java:2314-2359",
+        "services/core/java/com/android/server/wm/WindowState.java:3654-3687"
+      ]
+    },
+    {
+      "id": "hardware_keyboard",
+      "status": "UNMEASURED_RUNTIME_BRANCH",
+      "text": "IMS input-view evaluation uses show-with-hard-keyboard setting, Configuration.keyboard and Configuration.hardKeyboardHidden. Workflow has enable-hw-keyboard:false and a checked hw.keyboard=no AVD configuration, so hardware-keyboard suppression is only a branch to measure, not an established cause.",
+      "sources": [
+        "core/java/android/inputmethodservice/InputMethodService.java:2390-2401",
+        "core/java/android/inputmethodservice/InputMethodService.java:1613-1629"
+      ]
+    },
+    {
+      "id": "wms_overlay_reset",
+      "status": "DOES_NOT_MATCH_RECORDED_SHAPE_IN_FIXED_SOURCE",
+      "text": "populateOverlayInputInfo clears region but sets type TYPE_APPLICATION(2), token null and NOT_TOUCHABLE/NO_INPUT_CHANNEL. Recorded type2011/config260 is not this reset shape. InputMonitor normally writes getSurfaceTouchableRegion to the animator surface; present evidence does not identify a separate actual input child layer.",
+      "sources": [
+        "services/core/java/com/android/server/wm/InputMonitor.java:253-335",
+        "services/core/java/com/android/server/wm/InputMonitor.java:619-628",
+        "services/core/java/com/android/server/wm/InputMonitor.java:670-715"
+      ]
+    },
+    {
+      "id": "sf_region_geometry",
+      "status": "PLAUSIBLE_NOT_ESTABLISHED",
+      "text": "SF can clear region for invalid input bounds, transform/drop invalid rectangles, or intersect a touch crop. A nonempty frame alone cannot identify the outgoing region. This run omitted layerId/crop/input bounds/pre-JNI region so it cannot locate the first empty stage.",
+      "sources": [
+        "services/surfaceflinger/FrontEnd/LayerSnapshotBuilder.cpp:87-214",
+        "services/surfaceflinger/FrontEnd/LayerSnapshotBuilder.cpp:1640-1711"
+      ]
+    },
+    {
+      "id": "jni_copy",
+      "status": "SOURCE_COPY_PRESENT",
+      "text": "WindowInfosListener passes each WindowInfo through fromWindowInfo; it creates a new SkRegion, unions every native touchable rectangle, constructs Java Region(long), and writes touchableRegion. There is no source branch that deliberately replaces a nonempty native region with the Java default merely because it is an IME. Actual native input region was not separately captured; source-to-image equivalence remains unverified.",
+      "sources": [
+        "core/jni/android_window_WindowInfosListener.cpp:47-60",
+        "core/jni/android_hardware_input_InputWindowHandle.cpp:228-299"
+      ]
+    },
+    {
+      "id": "registration_cleanup_scope",
+      "status": "BOUNDED_EVIDENCE",
+      "text": "Initial cache and callback order are not an atomic full-WMS enumeration. Unregister returned once and process exited normally; native unregister discards the removal result, so RETURNED is not a SurfaceFlinger acknowledgement. No natural callbacks after28260ms means settled callbacks, not continuous sampling until37829ms.",
+      "sources": [
+        "core/jni/android_window_WindowInfosListener.cpp:149-171"
+      ]
+    }
+  ],
+  "nextMinimalObservation": {
+    "proposalOnly": true,
+    "command": "One bounded ordinary text dumpsys input_method --user 0 while fixture remains foreground; no critical or proto variant, no retry.",
+    "purpose": "Identify IME binding/start, actual IME Configuration, visibility/input-view decision, and last computed insets without changing the one-show stimulus or raw four-predicate guard.",
+    "availableFromBaseImeDump": [
+      "Configuration (keyboard/keyboardHidden/hardKeyboardHidden)",
+      "mViewsCreated (not proof of input view object)",
+      "mDecorViewVisible/mWindowVisible",
+      "mInputStarted/mInputViewStarted/mCandidatesViewStarted",
+      "mInputEditorInfo present/null and inputType",
+      "mShowInputRequested/mLastShowInputRequested/mShowInputFlags",
+      "mCandidatesVisibility",
+      "mIsInputViewShown (decision state)",
+      "contentTopInsets/visibleTopInsets/touchableInsets/touchableRegion (last computed IMS values)",
+      "SettingsObserver mShowImeWithHardKeyboard: 0 unknown,1 false,2 true"
+    ],
+    "notAvailableFromBaseImeDump": [
+      "mInputView null/non-null or onCreateInputView returned non-null",
+      "actual mInputFrame visibility",
+      "input/decor view height or geometry",
+      "final WMS computed region after mode/crop/exclusion",
+      "SF pre-JNI region / correlated layer crop and bounds"
+    ],
+    "limits": [
+      "Ordinary IMMS dump transfers to current client and current IME; dump failure or missing overridden service fields remains unknown.",
+      "Snapshot is asynchronous and not atomic with callback; record before/after elapsed time and preserve bounded original bytes/outcome.",
+      "Do not treat mInputViewStarted or mIsInputViewShown alone as actual nonzero-height keyboard pixels.",
+      "Do not infer final WMS/SF region from an empty IMS touchableRegion when touchableInsets is VISIBLE.",
+      "No new run, query, implementation, extra show request or predicate relaxation performed in this review."
+    ],
+    "sources": [
+      "services/core/java/com/android/server/inputmethod/InputMethodManagerService.java:6413-6450",
+      "services/core/java/com/android/server/inputmethod/InputMethodManagerService.java:6479-6618",
+      "core/java/android/inputmethodservice/InputMethodService.java:4535-4588",
+      "core/java/android/content/res/Configuration.java:1255-1274"
+    ]
+  },
+  "files": [
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/inputmethodservice/InputMethodService.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/inputmethodservice/InputMethodService.java",
+      "bytes": 203126,
+      "sha256": "327bc0eae0c5cbc12fd103aef3f50121b49bca728fdcf59d84b99faa3edd3c1c",
+      "localPath": "/workspace/scratch/ime-identity-2026-10-31/core__java__android__inputmethodservice__InputMethodService.java",
+      "reviewedLineRanges": [
+        "678-700",
+        "1574-1581",
+        "1613-1629",
+        "1647-1649",
+        "2314-2359",
+        "2374-2401",
+        "3002-3024",
+        "3196-3235",
+        "4489-4491",
+        "4508-4511",
+        "4535-4588"
+      ]
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/inputmethodservice/SoftInputWindow.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/inputmethodservice/SoftInputWindow.java",
+      "bytes": 11535,
+      "sha256": "7275d4231d955f23a80a52ed3e38c1132e0c508bd849d85fc52db0e3c8b7e8ba",
+      "localPath": "/workspace/scratch/ime-identity-2026-10-31/core__java__android__inputmethodservice__SoftInputWindow.java",
+      "reviewedLineRanges": [
+        "95-110"
+      ]
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/view/inputmethod/InputMethodManager.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/view/inputmethod/InputMethodManager.java",
+      "bytes": 253775,
+      "sha256": "cd2018d6352ca310f40ac907cfa87799f6842bc558eea478844554b2220d7fa5",
+      "localPath": "/workspace/scratch/ime-identity-2026-10-31/core__java__android__view__inputmethod__InputMethodManager.java",
+      "reviewedLineRanges": [
+        "2425-2434",
+        "2559-2615",
+        "2920-2959",
+        "3928-3934",
+        "5494-5520"
+      ]
+    },
+    {
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/widget/TextView.java",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/widget/TextView.java",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/TextView.java",
+      "bytes": 683818,
+      "sha256": "10d6b16ff319be1df762eb63193189664f6e6e33b611f5820d01bac05cbe42c2",
+      "reviewedLineRanges": [
+        "5684-5702",
+        "10116-10129",
+        "10127-10229",
+        "13353-13361",
+        "15183-15190"
+      ]
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "services/core/java/com/android/server/wm/InputMonitor.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/services/core/java/com/android/server/wm/InputMonitor.java",
+      "bytes": 35975,
+      "sha256": "9cf0b0936f61a9a013032c07c5de6486e7538893102b6f0264da1080359d401b",
+      "reviewedLineRanges": [
+        "253-335",
+        "619-628",
+        "670-674",
+        "697-715"
+      ],
+      "localPath": "/workspace/scratch/notes-ime-interfaces/InputMonitor.java"
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "services/core/java/com/android/server/wm/WindowState.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/services/core/java/com/android/server/wm/WindowState.java",
+      "bytes": 274963,
+      "sha256": "d3c8b8345a985f1d67cff37819244bc19887a4b6195460ab2780e877daec0909",
+      "reviewedLineRanges": [
+        "2735-2787",
+        "3654-3687"
+      ],
+      "localPath": "/workspace/scratch/notes-ime-interfaces/WindowState.java"
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/jni/android_hardware_input_InputWindowHandle.cpp",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/jni/android_hardware_input_InputWindowHandle.cpp",
+      "bytes": 18564,
+      "sha256": "781b7cff0f97f91cf4d8aafa79e744cf180c43e6e986565acb5f0004e53c8fb9",
+      "reviewedLineRanges": [
+        "228-299"
+      ],
+      "localPath": "/workspace/scratch/notes-ime-upstream-source/core__jni__android_hardware_input_InputWindowHandle.cpp"
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/jni/android_window_WindowInfosListener.cpp",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/jni/android_window_WindowInfosListener.cpp",
+      "bytes": 8138,
+      "sha256": "4d02877c9979ec5fdfa72a42325452b871c79ca2345d9946a9de6f679667f42a",
+      "reviewedLineRanges": [
+        "47-60",
+        "104-120",
+        "149-171"
+      ],
+      "localPath": "/workspace/scratch/notes-ime-upstream-source/core__jni__android_window_WindowInfosListener.cpp"
+    },
+    {
+      "project": "frameworks/native",
+      "commit": "ae266dcb706d083868578cfedce381ef44488a07",
+      "path": "libs/input/android/os/InputConfig.aidl",
+      "url": "https://android.googlesource.com/platform/frameworks/native/+/ae266dcb706d083868578cfedce381ef44488a07/libs/input/android/os/InputConfig.aidl",
+      "bytes": 7381,
+      "sha256": "ed0b87b798370891f561c6a8fb8a3940af1757c5dc99830e7a283cbe7cec67c6",
+      "reviewedLineRanges": [
+        "36-56",
+        "84-91",
+        "142-145"
+      ],
+      "localPath": "/workspace/scratch/ime-native-proto-2026-10-31/libs__input__android__os__InputConfig.aidl"
+    },
+    {
+      "project": "frameworks/native",
+      "commit": "ae266dcb706d083868578cfedce381ef44488a07",
+      "path": "services/surfaceflinger/FrontEnd/LayerSnapshotBuilder.cpp",
+      "url": "https://android.googlesource.com/platform/frameworks/native/+/ae266dcb706d083868578cfedce381ef44488a07/services/surfaceflinger/FrontEnd/LayerSnapshotBuilder.cpp",
+      "bytes": 89995,
+      "sha256": "5204084f33a7dc6b6e7c3d6d8f6c0bb0da5ee1c42d47e4fa3c28f85e45f9559d",
+      "reviewedLineRanges": [
+        "87-113",
+        "138-214",
+        "1451-1510",
+        "1640-1711"
+      ],
+      "localPath": "/workspace/scratch/ime-native-proto-2026-10-31/services__surfaceflinger__FrontEnd__LayerSnapshotBuilder.cpp"
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "services/core/java/com/android/server/inputmethod/InputMethodManagerService.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/services/core/java/com/android/server/inputmethod/InputMethodManagerService.java",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/InputMethodManagerService.java",
+      "bytes": 338892,
+      "sha256": "84333a7af594118a473b697a84c70cce29173adea904b69b5dd8b36a3b9191f4",
+      "reviewedLineRanges": [
+        "6413-6450",
+        "6479-6535",
+        "6540-6618"
+      ]
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/content/res/Configuration.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/content/res/Configuration.java",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/Configuration.java",
+      "bytes": 134461,
+      "sha256": "33c7dc1e5ce83861d288c35ccfcad628bf887cec5d80852d23b749d7cab9b455",
+      "reviewedLineRanges": [
+        "1255-1274"
+      ]
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/view/WindowInsets.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/view/WindowInsets.java",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/WindowInsets.java",
+      "bytes": 89159,
+      "sha256": "4bf6707346c8f698e4ebd25a6afd9734369ba9658083c318b7bc93645195399e",
+      "reviewedLineRanges": [
+        "414-432"
+      ]
+    }
+  ],
+  "conclusion": "First raw registration/collection succeeded but no qualifying nonempty touch-region candidate was observed. Root cause remains undetermined. Keep failed acceptance and all four guards; next experiment should add bounded IME state/insets evidence before changing stimulus or collection semantics."
+}

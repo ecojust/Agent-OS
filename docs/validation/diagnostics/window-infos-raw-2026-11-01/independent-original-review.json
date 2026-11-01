@@ -1,0 +1,489 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-raw-window-original-audit",
+  "auditedAt": "2026-11-01T05:54:57.965807+00:00",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 41278377093,
+    "attempt": 1,
+    "commit": "2eeb64be2be468f1aac4d521a5cf89a85a9fcaa0"
+  },
+  "archiveCommit": "10e53ee9712e384077a20b6ed0b6ca1a1b762ac9",
+  "status": "passed",
+  "originalDiagnosticStatus": "failed",
+  "originalArchiveStatus": "failed",
+  "payloadFiles": 11,
+  "payloadBytes": 177340,
+  "sourceFiles": 17,
+  "sourceBytes": 245693,
+  "commandCount": 29,
+  "commandOutputBytes": 45928,
+  "rawSummary": {
+    "status": "RECORDED",
+    "callbacksSeen": 57,
+    "callbacksStored": 57,
+    "callbacksDropped": 0,
+    "positiveCallbacksRecomputed": 0,
+    "totalStoredCandidateRows": 18,
+    "filteredRowsPreserved": 18
+  },
+  "gitBlobComparison": "passed",
+  "sourceRunJobArtifactBinding": "passed",
+  "sourceFilesAtExactCommit": "passed",
+  "originalCommandBytesAndRawMarker": "passed",
+  "fourPredicatesRecomputed": "passed",
+  "limits": [
+    "This audit does not assert source AOSP tag equals device image bytes.",
+    "Candidate package/UID/type identity is not independent proof of a particular IME service component.",
+    "Screenshot is later than raw collection and is not an atomic snapshot.",
+    "APK bytes are absent from this bundle; their digest is not independently recomputed here.",
+    "Fixed raw records do not contain discarded noncandidate window fields, so selector counts cannot be recomputed from a complete system dump.",
+    "Native unregister RETURNED is not a SurfaceFlinger removal acknowledgement; the raw process completed normally, later emulator teardown is not directly observed here."
+  ],
+  "pinnedHostValidator": "passed: failed diagnostic faithfully revalidated",
+  "observedFacts": {
+    "reportStatus": "failed",
+    "failureReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED",
+    "rawResultStatus": "RECORDED",
+    "process": {
+      "sdk": 37,
+      "uid": 2000,
+      "startedElapsedMs": 25823,
+      "finishedElapsedMs": 37830,
+      "fingerprintSha256": "35abb7613e43fefcf91fd83137ec1d613853bc67499c826f80f06cb034ad8fc8"
+    },
+    "registration": "REGISTERED",
+    "unregistration": "RETURNED",
+    "attempts": [
+      1,
+      1,
+      1
+    ],
+    "initial": {
+      "rawWindowCount": 0,
+      "candidateRowCount": 0
+    },
+    "candidateRows": 18,
+    "configValues": [
+      260,
+      262
+    ],
+    "regionEmptyRows": 18,
+    "notVisibleRows": 7,
+    "cloneRows": 0,
+    "frameEmptyRows": 3,
+    "binderIds": [
+      1
+    ],
+    "fixture": {
+      "schemaVersion": 1,
+      "kind": "agent-os-raw-window-fixture",
+      "source": {
+        "repository": "ecojust/Agent-OS",
+        "commit": "2eeb64be2be468f1aac4d521a5cf89a85a9fcaa0",
+        "runId": 41278377093,
+        "attempt": 1
+      },
+      "phase": "ime_visible",
+      "sdkInt": 37,
+      "uid": 10156,
+      "displayId": 0,
+      "startedElapsedMs": 26447,
+      "showImeAttempts": 1,
+      "showImeAccepted": true,
+      "showRequestedElapsedMs": 27201,
+      "imeVisibleObserved": true,
+      "firstImeVisibleElapsedMs": 27874,
+      "receiptWrites": 3,
+      "receiptWrittenElapsedMs": 27874
+    },
+    "maxCommandElapsedMillis": 12186,
+    "admissionCount": 18,
+    "admissionAllMatched": true,
+    "configuredIme": {
+      "componentBefore": "com.android.inputmethod.latin/.LatinIME",
+      "componentAfter": "com.android.inputmethod.latin/.LatinIME",
+      "package": "com.android.inputmethod.latin",
+      "uid": 10112,
+      "uidAfter": 10112,
+      "displayId": 0
+    },
+    "registrationTimes": {
+      "constructedElapsedMs": 25824,
+      "registeredElapsedMs": 25829,
+      "readyElapsedMs": 25829,
+      "observationDeadlineElapsedMs": 37829,
+      "freezeElapsedMs": 37829,
+      "unregisteredElapsedMs": 37830
+    }
+  },
+  "fixtureScreenshotReview": {
+    "width": 320,
+    "height": 640,
+    "viewedActualImage": true,
+    "observed": "Compatibility Test heading and Synthetic input window sample editor; no soft keyboard is visible in this later screenshot.",
+    "limitation": "Does not invalidate earlier Insets visibility event or prove keyboard never appeared; capture is after the raw process and is not atomic with a callback."
+  },
+  "candidateTimeline": [
+    {
+      "sequence": 40,
+      "elapsedMs": 27428,
+      "afterShowRequestMs": 227,
+      "rows": [
+        {
+          "binderId": 1,
+          "inputConfig": 262,
+          "frame": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "regionEmpty": true,
+          "notVisible": true,
+          "frameEmpty": true
+        }
+      ]
+    },
+    {
+      "sequence": 41,
+      "elapsedMs": 27494,
+      "afterShowRequestMs": 293,
+      "rows": [
+        {
+          "binderId": 1,
+          "inputConfig": 262,
+          "frame": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "regionEmpty": true,
+          "notVisible": true,
+          "frameEmpty": true
+        }
+      ]
+    },
+    {
+      "sequence": 42,
+      "elapsedMs": 27695,
+      "afterShowRequestMs": 494,
+      "rows": [
+        {
+          "binderId": 1,
+          "inputConfig": 262,
+          "frame": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "regionEmpty": true,
+          "notVisible": true,
+          "frameEmpty": true
+        }
+      ]
+    },
+    {
+      "sequence": 43,
+      "elapsedMs": 27778,
+      "afterShowRequestMs": 577,
+      "rows": [
+        {
+          "binderId": 1,
+          "inputConfig": 262,
+          "frame": [
+            0,
+            0,
+            320,
+            616
+          ],
+          "regionEmpty": true,
+          "notVisible": true,
+          "frameEmpty": false
+        }
+      ]
+    },
+    {
+      "sequence": 44,
+      "elapsedMs": 27864,
+      "afterShowRequestMs": 663,
+      "rows": [
+        {
+          "binderId": 1,
+          "inputConfig": 262,
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": true,
+          "frameEmpty": false
+        }
+      ]
+    },
+    {
+      "sequence": 45,
+      "elapsedMs": 27883,
+      "afterShowRequestMs": 682,
+      "rows": [
+        {
+          "binderId": 1,
+          "inputConfig": 262,
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": true,
+          "frameEmpty": false
+        }
+      ]
+    },
+    {
+      "sequence": 46,
+      "elapsedMs": 27895,
+      "afterShowRequestMs": 694,
+      "rows": [
+        {
+          "binderId": 1,
+          "inputConfig": 262,
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": true,
+          "frameEmpty": false
+        }
+      ]
+    },
+    {
+      "sequence": 47,
+      "elapsedMs": 27929,
+      "afterShowRequestMs": 728,
+      "rows": [
+        {
+          "binderId": 1,
+          "inputConfig": 260,
+          "frame": [
+            0,
+            81,
+            320,
+            697
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "frameEmpty": false
+        }
+      ]
+    },
+    {
+      "sequence": 48,
+      "elapsedMs": 28002,
+      "afterShowRequestMs": 801,
+      "rows": [
+        {
+          "binderId": 1,
+          "inputConfig": 260,
+          "frame": [
+            0,
+            67,
+            320,
+            683
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "frameEmpty": false
+        }
+      ]
+    },
+    {
+      "sequence": 49,
+      "elapsedMs": 28032,
+      "afterShowRequestMs": 831,
+      "rows": [
+        {
+          "binderId": 1,
+          "inputConfig": 260,
+          "frame": [
+            0,
+            32,
+            320,
+            648
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "frameEmpty": false
+        }
+      ]
+    },
+    {
+      "sequence": 50,
+      "elapsedMs": 28045,
+      "afterShowRequestMs": 844,
+      "rows": [
+        {
+          "binderId": 1,
+          "inputConfig": 260,
+          "frame": [
+            0,
+            29,
+            320,
+            645
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "frameEmpty": false
+        }
+      ]
+    },
+    {
+      "sequence": 51,
+      "elapsedMs": 28061,
+      "afterShowRequestMs": 860,
+      "rows": [
+        {
+          "binderId": 1,
+          "inputConfig": 260,
+          "frame": [
+            0,
+            26,
+            320,
+            642
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "frameEmpty": false
+        }
+      ]
+    },
+    {
+      "sequence": 52,
+      "elapsedMs": 28079,
+      "afterShowRequestMs": 878,
+      "rows": [
+        {
+          "binderId": 1,
+          "inputConfig": 260,
+          "frame": [
+            0,
+            25,
+            320,
+            641
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "frameEmpty": false
+        }
+      ]
+    },
+    {
+      "sequence": 53,
+      "elapsedMs": 28095,
+      "afterShowRequestMs": 894,
+      "rows": [
+        {
+          "binderId": 1,
+          "inputConfig": 260,
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "frameEmpty": false
+        }
+      ]
+    },
+    {
+      "sequence": 54,
+      "elapsedMs": 28111,
+      "afterShowRequestMs": 910,
+      "rows": [
+        {
+          "binderId": 1,
+          "inputConfig": 260,
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "frameEmpty": false
+        }
+      ]
+    },
+    {
+      "sequence": 55,
+      "elapsedMs": 28240,
+      "afterShowRequestMs": 1039,
+      "rows": [
+        {
+          "binderId": 1,
+          "inputConfig": 260,
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "frameEmpty": false
+        }
+      ]
+    },
+    {
+      "sequence": 56,
+      "elapsedMs": 28243,
+      "afterShowRequestMs": 1042,
+      "rows": [
+        {
+          "binderId": 1,
+          "inputConfig": 260,
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "frameEmpty": false
+        }
+      ]
+    },
+    {
+      "sequence": 57,
+      "elapsedMs": 28260,
+      "afterShowRequestMs": 1059,
+      "rows": [
+        {
+          "binderId": 1,
+          "inputConfig": 260,
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "frameEmpty": false
+        }
+      ]
+    }
+  ]
+}

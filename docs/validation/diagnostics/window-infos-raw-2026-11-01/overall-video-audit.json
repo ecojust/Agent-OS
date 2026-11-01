@@ -1,0 +1,159 @@
+{
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "2eeb64be2be468f1aac4d521a5cf89a85a9fcaa0",
+    "runId": 41278369605,
+    "attempt": 1
+  },
+  "archiveStatus": "passed",
+  "reportStatus": "passed",
+  "filesVerified": 30,
+  "totalBytes": 1142785,
+  "scope": "Dedicated emulator; preconfigured app; local synthetic HTTP model; secure flags preserved; no real-model or phone acceptance.",
+  "mainStages": 13,
+  "confirmations": 8,
+  "mainStageNames": [
+    "ready",
+    "text_entered",
+    "text_saved",
+    "counter_verified",
+    "scrolled_down",
+    "scrolled_up",
+    "second_page",
+    "returned_to_fixture",
+    "controls_waiting",
+    "paused",
+    "resumed",
+    "stopped",
+    "stale_approval_rejected"
+  ],
+  "confirmationOrdinals": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "flowDurationMs": 31731,
+  "recordingFailures": [],
+  "screenshotCount": 22,
+  "foregroundPackages": [
+    "dev.agentos.fixture"
+  ],
+  "video": {
+    "bytes": 402418,
+    "sha256": "d552bcbef90a8b09a61ead9a22dc3ec366feafc94549ab1f520f15371346b0b3",
+    "durationMs": 32688,
+    "width": 640,
+    "height": 1280,
+    "codec": "h264",
+    "pixelFormat": "yuv420p"
+  },
+  "decodedFrameCount": 447,
+  "frameCountEvidence": {
+    "method": "ffmpeg full decode with passthrough timestamps",
+    "command": [
+      "ffmpeg",
+      "-nostdin",
+      "-v",
+      "error",
+      "-xerror",
+      "-i",
+      "/workspace/Agent-OS/screenshots/demos/41278369605-1/demo.mp4",
+      "-map",
+      "0:v:0",
+      "-vsync",
+      "0",
+      "-progress",
+      "pipe:1",
+      "-nostats",
+      "-f",
+      "null",
+      "-"
+    ],
+    "exitCode": 0,
+    "declaredFrames": "447",
+    "averageFrameRate": "40050000/2928793",
+    "progressSha256": "c66d7ab7008ca876b94297e5c57b63bee0bf129eea0a991e57faac054cbf6f0e"
+  },
+  "independentDecode": "passed",
+  "provenanceLimit": "Local archive consistency; external Actions metadata not queried by this script.",
+  "contentLimit": "API35 synthetic controller walkthrough only; no evidence of API37 raw listener, IME mapping, original failure reproduction, real model, or physical device.",
+  "gitArchive": {
+    "commit": "199f71b176ac39fdad3693811aea32e58470b895",
+    "parent": "2eeb64be2be468f1aac4d521a5cf89a85a9fcaa0",
+    "sourceParentMatches": true,
+    "checkedBlobCount": 31,
+    "allBytesIdentical": true,
+    "archiveRunId": 41278821423,
+    "archiveRunMetadataQueried": false
+  },
+  "derivedFrames": [
+    {
+      "name": "saved-counter",
+      "atSeconds": 12.9,
+      "path": "/workspace/scratch/raw-overall-video-41278369605/frames/saved-counter.png",
+      "bytes": 164399,
+      "sha256": "ccf5e6519ec5a35504d5526a72332a6a18774367ba386401eda41c6df9a929f2"
+    },
+    {
+      "name": "scroll",
+      "atSeconds": 15.8,
+      "path": "/workspace/scratch/raw-overall-video-41278369605/frames/scroll.png",
+      "bytes": 181516,
+      "sha256": "6be8d5a23e25a5d60c62eadcd8a18eea2f261086b745c24a39298a4f6a1d47ab"
+    },
+    {
+      "name": "second-page",
+      "atSeconds": 21.5,
+      "path": "/workspace/scratch/raw-overall-video-41278369605/frames/second-page.png",
+      "bytes": 119672,
+      "sha256": "43ec40407bca2224cff7985228eb9a0d0c5d7d587213e468110b8a0819ba0011"
+    },
+    {
+      "name": "pause",
+      "atSeconds": 28.0,
+      "path": "/workspace/scratch/raw-overall-video-41278369605/frames/pause.png",
+      "bytes": 163588,
+      "sha256": "284c33f429340ec13f81e309b2443a42ddd8e400b446c56e627040639218d900"
+    },
+    {
+      "name": "final",
+      "atSeconds": 32.0,
+      "path": "/workspace/scratch/raw-overall-video-41278369605/frames/final.png",
+      "bytes": 128043,
+      "sha256": "ef3c9952db8137c10aecce5d8d8d6a874552cbdbc43d80539ceed1562271228a"
+    }
+  ],
+  "auditedAt": "2026-11-01T05:59:55.321627+00:00",
+  "manualFrameReview": {
+    "reviewer": "raw_android",
+    "status": "passed",
+    "observations": [
+      {
+        "atSeconds": 12.9,
+        "observed": "Saved: Controller integration sample 与 Count:1 可见；控制条正在等待界面焦点稳定"
+      },
+      {
+        "atSeconds": 15.8,
+        "observed": "已滚动到行4–16，控制条显示向后滚动待确认"
+      },
+      {
+        "atSeconds": 21.5,
+        "observed": "Second page reached 可见，控制条显示返回动作待确认"
+      },
+      {
+        "atSeconds": 28.0,
+        "observed": "控制条明确显示已暂停，保存文本及Count1仍在"
+      },
+      {
+        "atSeconds": 32.0,
+        "observed": "保存文本和Count1保留，控制浮条消失"
+      }
+    ],
+    "limit": "只核普通Fixture演示画面，不证明API37原始输入法实验或原8项失败修复"
+  }
+}

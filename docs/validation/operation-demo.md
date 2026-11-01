@@ -2,7 +2,9 @@
 
 最新视频入口集中在 [README 的演示视频栏目](../../README.md#演示视频)。按实际录制内容分类，每类只列一份最新的已验证视频；历史源码对应的录像与失败记录仍保留，不把普通 Fixture 演示改称某个专项测试的视频。
 
-最新普通操作为源码 `dc9326735157345e94af5181cebe895b5b8586a1` 的[38.130秒录像](../../screenshots/demos/41218742663-1/demo.mp4)，录制于2026-10-31；[清单](../../screenshots/demos/41218742663-1/manifest.json)记录13阶段/8确认通过。30载荷/1,185,549字节、22PNG及513帧均已核验，安全标志保留；[来源与审核](diagnostics/window-infos-raw-source-2026-10-31/overall-video-audit.json)独立记录。它展示API35 Fixture及本地测试模型，不是API37原始窗口实验或旧Notes失败的修复证据。最新真实APK录像仍为72f源码的[计算器与Notes流程](../../screenshots/demos/probes-41173740075-1/video/demo.mp4)，不重标为本次源码。
+最新普通操作为源码 `2eeb64be2be468f1aac4d521a5cf89a85a9fcaa0` 的[32.688秒录像](../../screenshots/demos/41278369605-1/demo.mp4)，录制于2026-11-01；[清单](../../screenshots/demos/41278369605-1/manifest.json)记录13阶段/8确认通过。30载荷/1,142,785字节、22PNG及447帧均已核验，视频402,418字节，640×1280/H.264/yuv420p，安全标志保留；[来源与审核](diagnostics/window-infos-raw-2026-11-01/overall-video-audit.json)独立记录。唯一录制运行41278369605，归档运行41278821423、提交199f71b176ac39fdad3693811aea32e58470b895。它展示API35 Fixture及本地测试模型；独立API37原始窗口实验正对照失败仍保留，不据普通录像关闭旧Notes或cdea服务就绪失败。最新真实APK录像仍为72f源码的[计算器与Notes流程](../../screenshots/demos/probes-41173740075-1/video/demo.mp4)，不重标为本次源码。
+
+此前dc932源码的[38.130秒整体录像](../../screenshots/demos/41218742663-1/demo.mp4)录制于2026-10-31，13阶段/8确认通过，30载荷/1,185,549字节、22PNG及513帧，原[来源与审核](diagnostics/window-infos-raw-source-2026-10-31/overall-video-audit.json)保持实际日期与版本。
 
 此前普通操作录像为几何诊断源码 `33ac5825bc7537b9a67c9daeeee6916da12256d6` 的[运行41165286817](https://github.com/ecojust/Agent-OS/actions/runs/41165286817)，录制于2026-10-31；[归档41165629030](https://github.com/ecojust/Agent-OS/actions/runs/41165629030)成功。[实际视频](../../screenshots/demos/41165286817-1/demo.mp4) **36.256秒、640×1280、425,247字节、515帧**；13阶段、8次确认通过。全部30载荷/1,159,207字节、22 PNG、来源、摘要、整段解码及实际关键画面[审核通过](diagnostics/notes-target-geometry-2026-10-31/overall-video-audit.json)：文本保存、Count1、滚动、第二页、暂停和最终浮条移除均可见。安全标志保留，使用合成Fixture与本地测试模型；这不是Notes几何失败画面、真实模型接管或性能验收。归档提交父版本为后续文档35a8494bc，录制源仍为33ac，二者分别记录。
 

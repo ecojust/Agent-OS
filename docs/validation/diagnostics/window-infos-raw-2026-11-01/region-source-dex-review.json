@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "kind": "raw-window-region-source-dex-review",
+  "reviewedAt": "2026-11-01T06:00:58.229356+00:00",
+  "source": {
+    "commit": "2eeb64be2be468f1aac4d521a5cf89a85a9fcaa0",
+    "runId": 41278377093,
+    "attempt": 1
+  },
+  "newDeviceRuns": 0,
+  "sourceImageEquivalenceVerified": false,
+  "files": [
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "graphics/java/android/graphics/Region.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/graphics/java/android/graphics/Region.java",
+      "localPath": "/workspace/scratch/raw-region-jni-2026-11-01/graphics__java__android__graphics__Region.java",
+      "bytes": 14778,
+      "sha256": "464216ba9d5caf43924b1c703e0dede4049f417c03eb3fcf3c81c386c23e1ade"
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "libs/hwui/jni/Region.cpp",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/libs/hwui/jni/Region.cpp",
+      "localPath": "/workspace/scratch/raw-region-jni-2026-11-01/libs__hwui__jni__Region.cpp",
+      "bytes": 14113,
+      "sha256": "92e881e028540ae51e5bbe1d46dc6a8e6c4e92b4ed816af2810332d48b115a2e"
+    }
+  ],
+  "probeJar": {
+    "path": "screenshots/window-infos-raw-41278377093-1/probe.jar",
+    "bytes": 11317,
+    "sha256": "15db65c205ab3d2e1f3fc4f83b39e515a46d1cdf04a242dc19dc5a784e627813"
+  },
+  "actualArchivedDexReaderDisassembly": "name          : 'regionEmpty'\n      type          : '(I)Z'\n      access        : 0x0401 (PUBLIC ABSTRACT)\n      code          : (none)",
+  "fixedSourceFindings": [
+    "Region.java:407–412 assigns nonzero incoming native pointer to mNativeRegion.",
+    "Region.cpp:36–40 reads mNativeRegion as SkRegion;118–120 calls its isEmpty;335 maps the Java method.",
+    "The archived DEX reader gets InputWindowHandle.touchableRegion and invokes Region.isEmpty; it does not return a constant or read a packaged null Android stub."
+  ],
+  "limits": [
+    "Does not observe the actual native input region before JNI on the device.",
+    "Fixed framework source is not proven byte-equivalent to this emulator image.",
+    "No proof of root cause or original Notes fix; failed positive control remains failed."
+  ]
+}

@@ -1,0 +1,212 @@
+{
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "aee08f1976f29ebcb62ddd15d37ae30663445228",
+    "runId": 41305953660,
+    "attempt": 1
+  },
+  "archiveStatus": "failed",
+  "reportStatus": "failed",
+  "filesVerified": 8,
+  "failureStage": "instrumentation",
+  "flowStatus": "failed",
+  "recordingStatus": "recorded",
+  "screenshotsStatus": "collected",
+  "instrumentationPassed": false,
+  "instrumentationExitCode": 0,
+  "mainStages": 0,
+  "confirmations": 0,
+  "video": {
+    "bytes": 58367,
+    "sha256": "3daf9361bdfb19b2ebe55fdf46bdee5a5e2f717fc230013aec7aa44e2fa42e11",
+    "durationMs": 6185,
+    "width": 640,
+    "height": 1280,
+    "codec": "h264",
+    "pixelFormat": "yuv420p"
+  },
+  "independentDecode": "passed",
+  "totalBytes": 69087,
+  "scope": "Dedicated emulator; preconfigured app; local synthetic HTTP model; secure flags preserved; no real-model or phone acceptance.",
+  "archiveCommit": "0e786fe822cbaa24c12e07778ca47cd8101360ba",
+  "gitBlobsVerified": 9,
+  "pngDecodeCount": 0,
+  "pngDimensions": [],
+  "instrumentationOriginal": {
+    "schemaVersion": 1,
+    "runner": "direct_adb_instrumentation",
+    "selectedClass": "dev.agentos.app.DemoWalkthroughInstrumentedTest",
+    "selectedMethod": "observedActionsRequireConfirmationAndRespectUserControls",
+    "expectedTests": 1,
+    "status": "completed",
+    "exitCode": 0,
+    "stdout": "INSTRUMENTATION_STATUS: class=dev.agentos.app.DemoWalkthroughInstrumentedTest\nINSTRUMENTATION_STATUS: current=1\nINSTRUMENTATION_STATUS: id=AndroidJUnitRunner\nINSTRUMENTATION_STATUS: numtests=1\nINSTRUMENTATION_STATUS: stream=\ndev.agentos.app.DemoWalkthroughInstrumentedTest:\nINSTRUMENTATION_STATUS: test=observedActionsRequireConfirmationAndRespectUserControls\nINSTRUMENTATION_STATUS_CODE: 1\nINSTRUMENTATION_STATUS: class=dev.agentos.app.DemoWalkthroughInstrumentedTest\nINSTRUMENTATION_STATUS: current=1\nINSTRUMENTATION_STATUS: id=AndroidJUnitRunner\nINSTRUMENTATION_STATUS: numtests=1\nINSTRUMENTATION_STATUS: stack=dev.agentos.core.TaskControlException: 任务已停止。\n\tat dev.agentos.core.RunControl.checkCancelled(RunControl.java:192)\n\tat dev.agentos.core.RunControl.checkExecutionEpoch(RunControl.java:197)\n\tat dev.agentos.app.AndroidDeviceTools.cancelOriginal(AndroidDeviceTools.java:1547)\n\tat dev.agentos.app.AndroidDeviceTools.requireReady(AndroidDeviceTools.java:1558)\n\tat dev.agentos.app.AndroidDeviceTools.lambda$onMain$19(AndroidDeviceTools.java:2057)\n\tat dev.agentos.app.AndroidDeviceTools.$r8$lambda$wRFurg5TTHUdc0Z6CR0N50nPuZs(Unknown Source:0)\n\tat dev.agentos.app.AndroidDeviceTools$$ExternalSyntheticLambda4.run(D8$$SyntheticClass:0)\n\tat android.os.Handler.handleCallback(Handler.java:959)\n\tat android.os.Handler.dispatchMessage(Handler.java:100)\n\tat android.os.Looper.loopOnce(Looper.java:232)\n\tat android.os.Looper.loop(Looper.java:317)\n\tat android.app.ActivityThread.main(ActivityThread.java:8705)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)\n\tat com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)\n\nINSTRUMENTATION_STATUS: stream=\nError in observedActionsRequireConfirmationAndRespectUserControls(dev.agentos.app.DemoWalkthroughInstrumentedTest):\ndev.agentos.core.TaskControlException: 任务已停止。\n\tat dev.agentos.core.RunControl.checkCancelled(RunControl.java:192)\n\tat dev.agentos.core.RunControl.checkExecutionEpoch(RunControl.java:197)\n\tat dev.agentos.app.AndroidDeviceTools.cancelOriginal(AndroidDeviceTools.java:1547)\n\tat dev.agentos.app.AndroidDeviceTools.requireReady(AndroidDeviceTools.java:1558)\n\tat dev.agentos.app.AndroidDeviceTools.lambda$onMain$19(AndroidDeviceTools.java:2057)\n\tat dev.agentos.app.AndroidDeviceTools.$r8$lambda$wRFurg5TTHUdc0Z6CR0N50nPuZs(Unknown Source:0)\n\tat dev.agentos.app.AndroidDeviceTools$$ExternalSyntheticLambda4.run(D8$$SyntheticClass:0)\n\tat android.os.Handler.handleCallback(Handler.java:959)\n\tat android.os.Handler.dispatchMessage(Handler.java:100)\n\tat android.os.Looper.loopOnce(Looper.java:232)\n\tat android.os.Looper.loop(Looper.java:317)\n\tat android.app.ActivityThread.main(ActivityThread.java:8705)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)\n\tat com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)\n\nINSTRUMENTATION_STATUS: test=observedActionsRequireConfirmationAndRespectUserControls\nINSTRUMENTATION_STATUS_CODE: -2\nINSTRUMENTATION_RESULT: stream=\n\nTime: 4.169\nThere was 1 failure:\n1) observedActionsRequireConfirmationAndRespectUserControls(dev.agentos.app.DemoWalkthroughInstrumentedTest)\ndev.agentos.core.TaskControlException: 任务已停止。\n\tat dev.agentos.core.RunControl.checkCancelled(RunControl.java:192)\n\tat dev.agentos.core.RunControl.checkExecutionEpoch(RunControl.java:197)\n\tat dev.agentos.app.AndroidDeviceTools.cancelOriginal(AndroidDeviceTools.java:1547)\n\tat dev.agentos.app.AndroidDeviceTools.requireReady(AndroidDeviceTools.java:1558)\n\tat dev.agentos.app.AndroidDeviceTools.lambda$onMain$19(AndroidDeviceTools.java:2057)\n\tat dev.agentos.app.AndroidDeviceTools.$r8$lambda$wRFurg5TTHUdc0Z6CR0N50nPuZs(Unknown Source:0)\n\tat dev.agentos.app.AndroidDeviceTools$$ExternalSyntheticLambda4.run(D8$$SyntheticClass:0)\n\tat android.os.Handler.handleCallback(Handler.java:959)\n\tat android.os.Handler.dispatchMessage(Handler.java:100)\n\tat android.os.Looper.loopOnce(Looper.java:232)\n\tat android.os.Looper.loop(Looper.java:317)\n\tat android.app.ActivityThread.main(ActivityThread.java:8705)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)\n\tat com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)\n\nFAILURES!!!\nTests run: 1,  Failures: 1\n\n\nINSTRUMENTATION_CODE: -1\n"
+  },
+  "flowFailure": {
+    "stage": "ready",
+    "errorClass": "dev.agentos.core.TaskControlException"
+  },
+  "mainStageNames": [],
+  "confirmationOrdinals": [],
+  "flowDurationMs": 3748,
+  "recordingFailures": [
+    {
+      "stage": "instrumentation",
+      "errorClass": "dev.agentos.core.TaskControlException"
+    }
+  ],
+  "recorder": {
+    "started": true,
+    "exitCode": 0,
+    "stderr": {
+      "text": "",
+      "truncated": false,
+      "complete": true
+    }
+  },
+  "captureRecords": [
+    {
+      "stage": "failed",
+      "capturedAt": 1793535765271,
+      "foregroundPackage": "dev.agentos.fixture",
+      "status": "blocked",
+      "captureError": "capture_unavailable_or_blank_secure_surface_not_evidence"
+    }
+  ],
+  "screenshotCaseResult": "fail",
+  "screenshotCount": 0,
+  "foregroundPackages": [
+    "dev.agentos.fixture"
+  ],
+  "decodedFrameCount": 98,
+  "frameCountEvidence": {
+    "method": "ffmpeg full decode with passthrough timestamps",
+    "command": [
+      "ffmpeg",
+      "-nostdin",
+      "-v",
+      "error",
+      "-xerror",
+      "-i",
+      "/workspace/Agent-OS/screenshots/demos/41305953660-1/demo.mp4",
+      "-map",
+      "0:v:0",
+      "-vsync",
+      "0",
+      "-progress",
+      "pipe:1",
+      "-nostats",
+      "-f",
+      "null",
+      "-"
+    ],
+    "exitCode": 0,
+    "declaredFrames": "98",
+    "averageFrameRate": "8640000/545279",
+    "progressSha256": "e3694f5aa6401b2987c3ffc59ac50d997e7763cacb5cc94ba0a18eace79a012a"
+  },
+  "provenanceLimit": "Every local archive byte matches archive commit 0e786fe822cbaa24c12e07778ca47cd8101360ba, whose direct parent is the tested source. External Actions metadata was not queried by this audit; archive run ID and run conclusions were provided by the parent agent.",
+  "contentLimit": "Failed partial API35 synthetic-controller demonstration only: zero recorded main stages and zero confirmations. A successful independent decode is not walkthrough success and does not change the original manifest videoValidation=not_revalidated.",
+  "archiveParentCommit": "aee08f1976f29ebcb62ddd15d37ae30663445228",
+  "archiveRunIdProvidedByParent": 41306247313,
+  "archiveVideoValidationPreserved": "not_revalidated",
+  "auditFinding": "Failed run evidence is internally consistent; independent video decoding succeeded but the walkthrough did not pass.",
+  "auditedAt": "2026-11-01T12:25:42Z",
+  "visualReview": {
+    "reviewedBy": "raw_android agent using view_image",
+    "allFramesPersonallyViewed": true,
+    "method": "Three individual timestamp seeks after one complete video decode; no recording or download.",
+    "frames": [
+      {
+        "path": "/workspace/scratch/raw-overall-video-41305953660/frames/early.png",
+        "videoTimestampSeconds": 1.0,
+        "bytes": 2560,
+        "sha256": "28ac675710d4369952248fa64485d5691cde98134efef857a8379c54ff1845ef",
+        "observation": "Entire image is black; no action result is visible."
+      },
+      {
+        "path": "/workspace/scratch/raw-overall-video-41305953660/frames/middle.png",
+        "videoTimestampSeconds": 3.5,
+        "bytes": 217769,
+        "sha256": "3fdbe8e0965941ec8bc2baf2b86224f90fe1bb14689189f1a9701dd5591f7b4b",
+        "observation": "System launcher is visible; no fixture action result is shown."
+      },
+      {
+        "path": "/workspace/scratch/raw-overall-video-41305953660/frames/end.png",
+        "videoTimestampSeconds": 5.8,
+        "bytes": 61389,
+        "sha256": "c42c014ea994a850ee24ca387e4ba4f0a128b279acfcd29ca3fa091ac7629114",
+        "observation": "Agent · Integration test overlay with Pause/Stop controls appears over blank content; no saved text, counter result, or completed demo chapter is visible."
+      }
+    ]
+  },
+  "failureSourceReview": {
+    "sourceFiles": [
+      {
+        "path": "app/src/main/java/dev/agentos/app/AndroidDeviceTools.java",
+        "commit": "aee08f1976f29ebcb62ddd15d37ae30663445228",
+        "bytes": 143307,
+        "sha256": "9f7052839f20fabd506419077da455c85ec7ce05a931bd1f65c4e69fa6496e23",
+        "relevantLines": [
+          1547,
+          1558,
+          2057
+        ]
+      },
+      {
+        "path": "app/src/main/java/dev/agentos/app/AgentAccessibilityService.java",
+        "commit": "aee08f1976f29ebcb62ddd15d37ae30663445228",
+        "bytes": 88215,
+        "sha256": "fd2928bfef9ee3c593c555ea509ea5edf873fcb05a31943decdcc52c191edb66",
+        "relevantLines": [
+          404
+        ]
+      },
+      {
+        "path": "core/src/main/java/dev/agentos/core/RunControl.java",
+        "commit": "aee08f1976f29ebcb62ddd15d37ae30663445228",
+        "bytes": 12522,
+        "sha256": "9adcbb2efa4daba714b2369d786d458dd1278ff5cf29d6b67a299eee8b6d9025",
+        "relevantLines": [
+          192,
+          197
+        ]
+      },
+      {
+        "path": "app/src/androidTest/java/dev/agentos/app/DeviceHarness.java",
+        "commit": "aee08f1976f29ebcb62ddd15d37ae30663445228",
+        "bytes": 48050,
+        "sha256": "ec0a2ac8c21232c15ef11d8edfe9b9efa8b21bc7bd413e8d30d8bb9e9ff034f2",
+        "relevantLines": [
+          57,
+          84,
+          85,
+          87,
+          91,
+          98,
+          104
+        ]
+      },
+      {
+        "path": "app/src/androidTest/java/dev/agentos/app/DemoWalkthroughInstrumentedTest.java",
+        "commit": "aee08f1976f29ebcb62ddd15d37ae30663445228",
+        "bytes": 33088,
+        "sha256": "042692e830e9035c64a708f8672225777a3167e86eaffa2d6d80f89752ea71c2",
+        "relevantLines": [
+          54,
+          67,
+          74
+        ]
+      }
+    ],
+    "immediateFailure": "The original stack names AndroidDeviceTools.requireReady line1558; this exact source line calls cancelOriginal when service.isControlAvailable() is false, then RunControl.checkExecutionEpoch throws TASK_STOPPED.",
+    "availabilityPredicate": "!controlRemovalPending && overlay != null && overlay.isAttachedToWindow() && callbacks != null",
+    "unknown": "The archived output does not identify which availability subcondition was false or why. A later video frame showing the overlay does not establish availability at the earlier guard.",
+    "notClaimed": [
+      "No complete demonstration",
+      "No 13-stage or 8-confirmation success",
+      "No API37 control/raw/IME cause conclusion",
+      "No physical-device acceptance"
+    ]
+  }
+}

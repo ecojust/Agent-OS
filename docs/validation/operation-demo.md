@@ -2,6 +2,8 @@
 
 最新视频入口集中在 [README 的演示视频栏目](../../README.md#演示视频)。按实际录制内容分类，每类只列一份最新的已验证视频；历史源码对应的录像与失败记录仍保留，不把普通 Fixture 演示改称某个专项测试的视频。
 
+2026-11-01，后续 `aee08f1976f29ebcb62ddd15d37ae30663445228` 的唯一整体运行41305953660在ready阶段失败，归档41306247313、提交0e786fe822cbaa24c12e07778ca47cd8101360ba。[部分录像](../../screenshots/demos/41305953660-1/demo.mp4)6.185秒、58,367字节、640×1280、98帧完整解码；[8载荷/69,087字节及9个Git原件](../../screenshots/demos/41305953660-1/manifest.json)核验通过。流程0/13阶段、0确认、0PNG，一项截图blocked；原failed及videoValidation=not_revalidated保持。[独立审计](diagnostics/window-infos-keyboard-2026-11-01/overall-video-audit.json)从原JUnit栈定位到控制条不可用触发取消，具体失效子条件未知；不能将末段浮层可见回填为失败时可用，也不能直接归为cdea辅助服务未连接故障。app/core/fixture与演示脚本/workflow相对de150无变化，API37设置实验未在本流程执行。本次不重录，不阻塞专项归档；最新成功普通录像继续如下保留实际de150来源。
+
 最新普通操作为源码 `de150f4c975eec6c9d0b2f2b44e825c60fd0130a` 的[41.493秒录像](../../screenshots/demos/41294000343-1/demo.mp4)，录制于2026-11-01；[清单](../../screenshots/demos/41294000343-1/manifest.json)记录13阶段/8确认通过。30载荷/1,185,751字节、22PNG及524帧均已核验，视频451,929字节，640×1280/H.264/yuv420p，安全标志保留；[独立审核](diagnostics/window-infos-ime-state-2026-11-01/overall-video-audit.json)包括全部Git字节、完整解码与实际保存/滚动/第二页/暂停/最终浮条移除画面。唯一录制运行41294000343，归档运行41294302477、提交50fae3099a00a94e39d6c6633af13deed8eb0b9c。它展示API35 Fixture及本地测试模型；独立API37输入法后置观测虽完整，raw正对照仍失败，不能用此片关闭该失败、旧Notes或cdea服务就绪失败。最新真实APK录像仍为72f源码的[计算器与Notes流程](../../screenshots/demos/probes-41173740075-1/video/demo.mp4)，不重标为本次源码。
 
 此前2eeb源码的[32.688秒整体录像](../../screenshots/demos/41278369605-1/demo.mp4)录制于2026-11-01，13阶段/8确认通过，30载荷/1,142,785字节、22PNG及447帧，[原审核](diagnostics/window-infos-raw-2026-11-01/overall-video-audit.json)保持实际日期与版本。

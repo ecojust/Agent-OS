@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-negative-builtin-alias-regression",
+  "syntheticOnly": true,
+  "deviceCommandsExecuted": 0,
+  "parserSha256": "a059ee1608e1b01580a9c7b67e72eaea270f8fa9de0e1d38ce4e53e38821fec0",
+  "testSha256": "29513e0ecf4fa641e30edb6d75d8310d3a97efa193fa7327e743be13f777675b",
+  "cases": [
+    {
+      "case": "valid_builtin",
+      "status": "recorded",
+      "reason": null,
+      "expected": "recorded",
+      "passed": true
+    },
+    {
+      "case": "negative_builtin_with_alias",
+      "status": "unavailable",
+      "reason": "BUILT_IN_ALIAS_MISMATCH",
+      "expected": "unavailable",
+      "passed": true
+    },
+    {
+      "case": "negative_builtin_without_alias",
+      "status": "unavailable",
+      "reason": "READER_EVENT_HUB_ASSOCIATION",
+      "expected": "unavailable",
+      "passed": true
+    }
+  ]
+}

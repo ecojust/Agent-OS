@@ -1,0 +1,387 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-keyboard-archive-provenance-audit",
+  "status": "passed",
+  "auditedAt": "2026-11-01T12:26:14.199419+00:00",
+  "method": "Python stdlib + read-only Git objects; no repository validator imports, downloads, or device operations.",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 41305950037,
+    "attempt": 1,
+    "commit": "aee08f1976f29ebcb62ddd15d37ae30663445228"
+  },
+  "sourceRunConclusion": "success",
+  "sourceMode": {
+    "inferred": "keyboard",
+    "basis": "source workflow keyboard-only job condition; build and keyboard success; probe/archive/archive_keyboard skipped",
+    "workflowInputsPresentInRunMetadata": false
+  },
+  "sourceTiming": {
+    "created_at": "2026-11-01T12:19:40Z",
+    "run_started_at": "2026-11-01T12:19:40Z",
+    "updated_at": "2026-11-01T12:23:16Z"
+  },
+  "sourceJobs": [
+    {
+      "id": 124846242679,
+      "name": "build",
+      "run_id": 41305950037,
+      "run_attempt": 1,
+      "head_sha": "aee08f1976f29ebcb62ddd15d37ae30663445228",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-11-01T12:19:44Z",
+      "completed_at": "2026-11-01T12:21:00Z"
+    },
+    {
+      "id": 124846243848,
+      "name": "archive_keyboard",
+      "run_id": 41305950037,
+      "run_attempt": 1,
+      "head_sha": "aee08f1976f29ebcb62ddd15d37ae30663445228",
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-11-01T12:19:42Z",
+      "completed_at": "2026-11-01T12:19:41Z"
+    },
+    {
+      "id": 124846244037,
+      "name": "archive",
+      "run_id": 41305950037,
+      "run_attempt": 1,
+      "head_sha": "aee08f1976f29ebcb62ddd15d37ae30663445228",
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-11-01T12:19:42Z",
+      "completed_at": "2026-11-01T12:19:41Z"
+    },
+    {
+      "id": 124846568570,
+      "name": "keyboard",
+      "run_id": 41305950037,
+      "run_attempt": 1,
+      "head_sha": "aee08f1976f29ebcb62ddd15d37ae30663445228",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-11-01T12:21:02Z",
+      "completed_at": "2026-11-01T12:23:15Z"
+    },
+    {
+      "id": 124846569850,
+      "name": "probe",
+      "run_id": 41305950037,
+      "run_attempt": 1,
+      "head_sha": "aee08f1976f29ebcb62ddd15d37ae30663445228",
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2026-11-01T12:21:00Z",
+      "completed_at": "2026-11-01T12:21:00Z"
+    }
+  ],
+  "skippedJobTimePolicy": "Skipped jobs did not execute. Their API completed_at may precede started_at; not treated as execution intervals.",
+  "artifact": {
+    "id": 13082703218,
+    "name": "window-infos-keyboard-api-37.0-attempt-1",
+    "size_in_bytes": 209776,
+    "created_at": "2026-11-01T12:23:13Z",
+    "updated_at": "2026-11-01T12:23:13Z",
+    "expires_at": "2026-12-01T12:23:12Z",
+    "digest": "sha256:fd95ce147c6a31d8ff5cdefb3a203d493ce527b645806d7fe4c6f5d1615bec2b"
+  },
+  "archiveCommit": {
+    "sha": "73fa7067db671a2d66c52db32bae81bf021eff63",
+    "parents": [
+      "aee08f1976f29ebcb62ddd15d37ae30663445228"
+    ],
+    "committedAt": "2026-11-01T12:24:35Z",
+    "sourceCommittedAt": "2026-11-01T12:19:31Z",
+    "newEvidenceTree": true,
+    "changedPaths": [
+      "README.md",
+      "docs/progress.json",
+      "screenshots/window-infos-keyboard-41305950037-1/avd-config.ini",
+      "screenshots/window-infos-keyboard-41305950037-1/baseline/capture.json",
+      "screenshots/window-infos-keyboard-41305950037-1/baseline/commands.json",
+      "screenshots/window-infos-keyboard-41305950037-1/baseline/fixture.json",
+      "screenshots/window-infos-keyboard-41305950037-1/baseline/ime-state.json",
+      "screenshots/window-infos-keyboard-41305950037-1/baseline/probe-build.json",
+      "screenshots/window-infos-keyboard-41305950037-1/baseline/probe.jar",
+      "screenshots/window-infos-keyboard-41305950037-1/baseline/raw-result.json",
+      "screenshots/window-infos-keyboard-41305950037-1/baseline/report.json",
+      "screenshots/window-infos-keyboard-41305950037-1/baseline/screenshot.png",
+      "screenshots/window-infos-keyboard-41305950037-1/commands.json",
+      "screenshots/window-infos-keyboard-41305950037-1/enabled/capture.json",
+      "screenshots/window-infos-keyboard-41305950037-1/enabled/commands.json",
+      "screenshots/window-infos-keyboard-41305950037-1/enabled/fixture.json",
+      "screenshots/window-infos-keyboard-41305950037-1/enabled/ime-state.json",
+      "screenshots/window-infos-keyboard-41305950037-1/enabled/probe-build.json",
+      "screenshots/window-infos-keyboard-41305950037-1/enabled/probe.jar",
+      "screenshots/window-infos-keyboard-41305950037-1/enabled/raw-result.json",
+      "screenshots/window-infos-keyboard-41305950037-1/enabled/report.json",
+      "screenshots/window-infos-keyboard-41305950037-1/enabled/screenshot.png",
+      "screenshots/window-infos-keyboard-41305950037-1/fixture.apk",
+      "screenshots/window-infos-keyboard-41305950037-1/input-devices.json",
+      "screenshots/window-infos-keyboard-41305950037-1/journal.json",
+      "screenshots/window-infos-keyboard-41305950037-1/manifest.json",
+      "screenshots/window-infos-keyboard-41305950037-1/report.json",
+      "screenshots/window-infos-keyboard-41305950037-1/source-artifacts.json",
+      "screenshots/window-infos-keyboard-41305950037-1/source-jobs.json",
+      "screenshots/window-infos-keyboard-41305950037-1/source-run.json"
+    ]
+  },
+  "archiveWorkflowRun": {
+    "runId": 41306264093,
+    "callerReportedConclusion": "success",
+    "independentlyChecked": false,
+    "reason": "No local archive-run API metadata/log receipt supplied; no network request performed."
+  },
+  "files": [
+    {
+      "path": "avd-config.ini",
+      "bytes": 3502,
+      "sha256": "5fd25703acfb1cab9452dfa51b1a2300bd9c8eec993f5d705d1a7995908c7176",
+      "gitBlob": "aa90eeb129e65d67cb0a47b2ad68c3e39d33612b",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "baseline/capture.json",
+      "bytes": 575,
+      "sha256": "2c0a4c8e73cdde71b6c88b45a34e77cf31fae7aa6f3580e863d53b1050a86112",
+      "gitBlob": "511385c393e40dd57a7a009ae50f9639104125ce",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "baseline/commands.json",
+      "bytes": 152803,
+      "sha256": "2e99f08a88b3b1c9c23659156ed52fe1f8ace08efea6d09a19dcfa23584c4557",
+      "gitBlob": "8ac597a9a8bba38f73fe664ffb7171b79056ef14",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "baseline/fixture.json",
+      "bytes": 540,
+      "sha256": "6f5704ff6fabea012012efb2c202ad564d28a47882e5b21b5ca4173a417e068a",
+      "gitBlob": "99eb2c0462340732cf085cf7172ca032a287084a",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "baseline/ime-state.json",
+      "bytes": 4400,
+      "sha256": "f64bd6079eacbfca29e6cdcbe2ea7a38d0dc48698f60d1a288a169d3ba52c588",
+      "gitBlob": "d0a8432f0b7eaf85dbcabb74f06d99c85ca69079",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "baseline/probe-build.json",
+      "bytes": 4333,
+      "sha256": "f78d208e0fb53542b3325039b82fc9f38897024bc2f5823cfdc1a7f34b1402aa",
+      "gitBlob": "f54cfb133ed885d547a38b4b23ada41b24d12828",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "baseline/probe.jar",
+      "bytes": 11317,
+      "sha256": "15db65c205ab3d2e1f3fc4f83b39e515a46d1cdf04a242dc19dc5a784e627813",
+      "gitBlob": "a275086a5e49c17cd4529ce9bcbad78867c5b5b6",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "baseline/raw-result.json",
+      "bytes": 40827,
+      "sha256": "ed02dcfd1e4672760611628ca973e0a1af4c04074270e8a2fe503d23bbded524",
+      "gitBlob": "2e29020007c857ff84f9480e4b13b71fea55d51f",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "baseline/report.json",
+      "bytes": 5917,
+      "sha256": "c87d032f221ebd0d12b6887835263422624587970b3ee395d62e82531e0fdbfa",
+      "gitBlob": "3d399837c751a91ab2af900db186506dadbcfe36",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "baseline/screenshot.png",
+      "bytes": 14665,
+      "sha256": "63916b0a49c33bc85a15f25a46f44f76c8a09c99e1911cecea3afb8f3ed8a0d5",
+      "gitBlob": "5481c2ac30c0ab5d98d895da625ab6a8a72181a4",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "commands.json",
+      "bytes": 141903,
+      "sha256": "92588f56183c8106c3ec899f9f27d4baad88cc1b50f86f57add437c9d69cb537",
+      "gitBlob": "aa7249aedf55e4170700f4f1dd1014011db816cf",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "enabled/capture.json",
+      "bytes": 575,
+      "sha256": "d24b8f6ebb1aa7bbb7df73dce8484ae464fc2f82616400657213d34d392ef02b",
+      "gitBlob": "8697df87c6ed890def953a708b7f5292ee127018",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "enabled/commands.json",
+      "bytes": 175875,
+      "sha256": "a52839a7ea6cdc42d0574dc585761c795a976710fa43446e238e8d2977d46755",
+      "gitBlob": "0197825fdce9bb47bf45e57763dd86ecfb9352c7",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "enabled/fixture.json",
+      "bytes": 540,
+      "sha256": "4de3b0c1ae06851baf2b96dcf850831d9886aa92754fb6af5b0494e98f54252a",
+      "gitBlob": "61669ad0170f8e70e46607ad6d2a0125738eaf44",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "enabled/ime-state.json",
+      "bytes": 4511,
+      "sha256": "80a102f2511f726ccaed99fc09bbdfc5e1b533632cb09b33043f4b2e4df26d01",
+      "gitBlob": "f5048a8572ae8abcb8975bb8720aff463e307b04",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "enabled/probe-build.json",
+      "bytes": 4333,
+      "sha256": "f78d208e0fb53542b3325039b82fc9f38897024bc2f5823cfdc1a7f34b1402aa",
+      "gitBlob": "f54cfb133ed885d547a38b4b23ada41b24d12828",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "enabled/probe.jar",
+      "bytes": 11317,
+      "sha256": "15db65c205ab3d2e1f3fc4f83b39e515a46d1cdf04a242dc19dc5a784e627813",
+      "gitBlob": "a275086a5e49c17cd4529ce9bcbad78867c5b5b6",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "enabled/raw-result.json",
+      "bytes": 33547,
+      "sha256": "04d52e4d7b6f6e1356bb23a5e1966e7acc58d27522839ed349f542b1c530938f",
+      "gitBlob": "0adf7e6ee98a645e2c2b3a98874f6d25a9d7642d",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "enabled/report.json",
+      "bytes": 5884,
+      "sha256": "1dbaf3b65891bda411a61a07f11ff6c67b3d9003e7adbd3f848373877f60b63b",
+      "gitBlob": "27748e9078f0cbf0b95a2c1f9d7681c02e4ab127",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "enabled/screenshot.png",
+      "bytes": 30491,
+      "sha256": "0c898cfa109d6df44a28f1696d7a6d0192321822af1c7f569e8205df1c66145a",
+      "gitBlob": "49022f10b65d38c27ed7c60255bec30cfb4f7007",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "fixture.apk",
+      "bytes": 13853,
+      "sha256": "32714d9d9af4d155d4da38727afe70fb427d4aec130b0ca4b42b8bf867a826c3",
+      "gitBlob": "6cde030f5f7c1b1b22e83cfa92ec18a50ae67bd8",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "input-devices.json",
+      "bytes": 14203,
+      "sha256": "a49ff420b5aed07b023c494f9ef155cbd0f98e1db1f765c93d3506c293bef5f6",
+      "gitBlob": "e3f47138a700c4bce4cd4d91d31d391a483c1456",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "journal.json",
+      "bytes": 463,
+      "sha256": "2b0e9ff9f13bc7feec02b33a3f7b6baa54112cabdd1429c2b0b9015b27ca6138",
+      "gitBlob": "cd71f6172759c4f4ec0c64d26b00e52b99b2ce1d",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "report.json",
+      "bytes": 6812,
+      "sha256": "443e54a595ee94d5b7b5cecee0b370db1ffe7b0e7992811ba76ca0dc889a0801",
+      "gitBlob": "50657898ffa8bc22ecf12de03d669086e2bb8ea2",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "source-artifacts.json",
+      "bytes": 1864,
+      "sha256": "ad61223b58eeba6bbb2d053527ef213c3f9671050c737129feb3a59d0c1ea8f9",
+      "gitBlob": "91df2974cffcbe6cbab108cbecd25ceb20520d9f",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "source-jobs.json",
+      "bytes": 12736,
+      "sha256": "9771d91ea26cdb01d4ca03fa5f04277ae295fa4abd583313d0a13d84d69bcbee",
+      "gitBlob": "56882eb7532a3b0d78b18bcbf31afeef6dc62379",
+      "currentMatchesArchiveCommit": true
+    },
+    {
+      "path": "source-run.json",
+      "bytes": 13067,
+      "sha256": "1bc8164c1be16484cd6e3df84629e59196d73f3c2dd1cf7fd67a25f47bf5f0e5",
+      "gitBlob": "4c6ffc05c55b267646fc68703007e97651064986",
+      "currentMatchesArchiveCommit": true
+    }
+  ],
+  "counts": {
+    "indexedFiles": 27,
+    "gitBlobsIncludingManifest": 28,
+    "payloadFiles": 24,
+    "metadataFiles": 3,
+    "payloadBytes": 683186,
+    "indexedBytes": 710853,
+    "allBytesIncludingManifest": 717192,
+    "armBytes": {
+      "baseline": 235377,
+      "enabled": 267073
+    }
+  },
+  "manifest": {
+    "bytes": 6339,
+    "sha256": "d5bc9373393a3e48f4b9c786454cb9fbbd3ea7c67826e3d16add1542f1983213",
+    "gitBlob": "5fb090f1b540456c443300a7d998cf595318a005",
+    "currentMatchesArchiveCommit": true
+  },
+  "summaryPreserved": {
+    "expectedComparisons": 1,
+    "passedComparisons": 1,
+    "expectedArms": 2,
+    "passedArms": 1,
+    "failedArms": 1,
+    "unverifiedArms": 0,
+    "apiLevel": 37
+  },
+  "armsPreserved": {
+    "baseline": {
+      "status": "failed",
+      "failureReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED",
+      "positiveCallbackCount": 0,
+      "imeStateStatus": "recorded",
+      "comparable": true,
+      "reported": true
+    },
+    "enabled": {
+      "status": "passed",
+      "failureReason": null,
+      "positiveCallbackCount": 1,
+      "imeStateStatus": "recorded",
+      "comparable": true,
+      "reported": true
+    }
+  },
+  "restorationSummaryPreserved": {
+    "status": "confirmed",
+    "mutationAttempted": true,
+    "restoreAttempted": true
+  },
+  "limitations": [
+    "Archive API artifact ZIP digest is retained as metadata, not recomputed because the original ZIP is unavailable.",
+    "Source API metadata is audited as archived bytes; no fresh GitHub API query was made.",
+    "Source file catalogs, binary semantic binding, command originals and raw callback predicates are delegated to the separate independent audit.",
+    "Restoration is compared across archived summaries here; command-derived restoration proof is delegated to the separate audit.",
+    "Screenshots are byte-audited only and do not prove atomic raw-window state or general application compatibility."
+  ]
+}

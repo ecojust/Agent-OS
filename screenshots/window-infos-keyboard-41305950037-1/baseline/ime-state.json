@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "kind": "window-infos-ime-state",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "aee08f1976f29ebcb62ddd15d37ae30663445228",
+    "runId": 41305950037,
+    "attempt": 1
+  },
+  "scope": "AFTER_RAW_EXIT_BEFORE_SCREENSHOT_NON_ATOMIC",
+  "expected": {
+    "component": "com.android.inputmethod.latin/.LatinIME",
+    "package": "com.android.inputmethod.latin",
+    "uid": 10112,
+    "userId": 0
+  },
+  "command": {
+    "id": "ime_state",
+    "bytes": 48469,
+    "sha256": "b5d15619535c11ebe1c9967140cd95b458ff0c5bdcfb227e7a9edb758696613b",
+    "startedAt": "2026-11-01T12:22:56.022256+00:00",
+    "endedAt": "2026-11-01T12:22:56.048077+00:00",
+    "elapsedMillis": 25,
+    "status": "completed",
+    "exitCode": 0
+  },
+  "status": "recorded",
+  "reason": null,
+  "analysis": {
+    "schemaVersion": 1,
+    "status": "recorded",
+    "reason": null,
+    "scope": {
+      "observation": "later_non_atomic_current_ime_service_dump",
+      "configuredUidSource": "external_expected_only",
+      "currentImeProcessUidVerified": false,
+      "rawWindowBinderAssociation": false,
+      "rawPositiveResultMayBeUpgraded": false,
+      "settingsObserverIsLiveSettingRead": false,
+      "computedInsetsAreFinalWmsOrSfRegion": false,
+      "viewsCreatedProvesNonNullInputView": false,
+      "sourceImageEquivalenceVerified": false
+    },
+    "input": {
+      "bytes": 48469,
+      "sha256": "b5d15619535c11ebe1c9967140cd95b458ff0c5bdcfb227e7a9edb758696613b"
+    },
+    "identity": {
+      "matched": true,
+      "expectedComponent": "com.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME",
+      "expectedPackage": "com.android.inputmethod.latin",
+      "configuredUid": 10112,
+      "uidSource": "external_expected_only",
+      "expectedUserId": 0,
+      "managerUserId": 0,
+      "userId": 0,
+      "selectedImeId": "com.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME",
+      "currentImeId": "com.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME",
+      "currentDisplayId": 0,
+      "currentImePresent": true,
+      "serviceClass": "com.android.inputmethod.latin.LatinIME"
+    },
+    "boundary": {
+      "managerHeaderCount": 1,
+      "userHeaderCount": 1,
+      "bindingControllerCount": 1,
+      "serviceHeaderCount": 1,
+      "serviceTerminalCount": 1,
+      "serviceBodyBytes": 2134,
+      "serviceBodySha256": "adf4cf895e8bde4eed2ce305cf59b792389f913e1d42f287d9054bed87d1420a"
+    },
+    "fields": {
+      "configuration": {
+        "status": "present",
+        "value": {
+          "keyboard": 2,
+          "keyboardHidden": 1,
+          "hardKeyboardHidden": 1,
+          "printedToken": "qwerty/v/v"
+        }
+      },
+      "mViewsCreated": {
+        "status": "present",
+        "value": true
+      },
+      "mInputStarted": {
+        "status": "present",
+        "value": true
+      },
+      "mInputViewStarted": {
+        "status": "present",
+        "value": true
+      },
+      "mShowInputRequested": {
+        "status": "present",
+        "value": true
+      },
+      "mIsInputViewShown": {
+        "status": "present",
+        "value": false
+      },
+      "mDecorViewVisible": {
+        "status": "present",
+        "value": true
+      },
+      "mWindowVisible": {
+        "status": "present",
+        "value": true
+      },
+      "mCandidatesVisibility": {
+        "status": "present",
+        "value": 4
+      },
+      "contentTopInsets": {
+        "status": "present",
+        "value": 616
+      },
+      "visibleTopInsets": {
+        "status": "present",
+        "value": 616
+      },
+      "touchableInsets": {
+        "status": "present",
+        "value": 2
+      },
+      "touchableRegion": {
+        "status": "present",
+        "value": {
+          "rectangles": [],
+          "empty": true,
+          "coordinateOrder": "left_top_right_bottom",
+          "scope": "InputMethodService_mTmpInsets_touchableRegion_only"
+        }
+      },
+      "settingsObserver": {
+        "status": "present",
+        "value": {
+          "observerPresent": true,
+          "cachedShowImeWithHardKeyboard": 1,
+          "cacheMeaning": "FALSE"
+        }
+      },
+      "inputEditorInfo": {
+        "status": "present",
+        "value": {
+          "isNull": false,
+          "inputType": 2097153,
+          "packageName": "dev.agentos.compat",
+          "fixturePackageMatches": true
+        }
+      }
+    }
+  }
+}

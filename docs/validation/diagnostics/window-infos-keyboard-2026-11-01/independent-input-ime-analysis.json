@@ -1,0 +1,693 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-keyboard-input-and-ime-actual-evidence-audit",
+  "auditedAt": "2026-11-01T12:27:36.712621+00:00",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 41305950037,
+    "attempt": 1,
+    "commit": "aee08f1976f29ebcb62ddd15d37ae30663445228"
+  },
+  "archiveCommit": "73fa7067db671a2d66c52db32bae81bf021eff63",
+  "newDeviceCommands": 0,
+  "repositoryFilesModified": false,
+  "sourceImageEquivalenceVerified": false,
+  "originals": {
+    "manifestFilesVerified": 27,
+    "manifestPayloadBytesVerified": 710853,
+    "commandOriginalsVerified": 73,
+    "allFileSizesAndHashesMatched": true,
+    "allCommandBase64SizesAndHashesMatched": true
+  },
+  "avd": {
+    "bytes": 3502,
+    "sha256": "5fd25703acfb1cab9452dfa51b1a2300bd9c8eec993f5d705d1a7995908c7176",
+    "fields": {
+      "hw.keyboard": "no",
+      "hw.keyboard.charmap": "qwerty2",
+      "hw.keyboard.lid": "yes"
+    },
+    "meaning": "A single original host AVD config.ini snapshot; not proof of effective launch options or absent guest keyboard nodes."
+  },
+  "nativeInput": {
+    "command": {
+      "ordinal": 6,
+      "id": "input_dump",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "/system/bin/timeout",
+        "-s",
+        "KILL",
+        "8s",
+        "/system/bin/dumpsys",
+        "-t",
+        "5",
+        "input"
+      ],
+      "timeoutSeconds": 12,
+      "byteLimit": 262144,
+      "startedAt": "2026-11-01T12:22:39.006202+00:00",
+      "endedAt": "2026-11-01T12:22:39.199662+00:00",
+      "elapsedMillis": 193,
+      "status": "completed",
+      "exitCode": 0,
+      "exceptionType": null,
+      "bytes": 83573,
+      "sha256": "2216041e44e0a0f79751495f38a0d9c418becb6fee280fb4b196853d06f95a21"
+    },
+    "headersUniqueAndOrdered": true,
+    "declaredReaderDeviceCount": 14,
+    "independentReaderDeviceCount": 14,
+    "independentEventHubDeviceCount": 14,
+    "allExplicitRawReferencesResolved": true,
+    "eachEventHubDeviceReferencedExactlyOnce": true,
+    "builtInKeyboardId": -2,
+    "builtInMeaning": "NO_BUILT_IN_KEYBOARD sentinel; no raw0 alias in this observation. Does not mean no alphabetic keyboard.",
+    "producerFieldsMatchIndependentDerivation": true,
+    "associations": [
+      {
+        "readerId": 14,
+        "readerName": "virtio_input_multi_touch_11",
+        "eventHubIds": [
+          1
+        ],
+        "sources": "KEYBOARD | TOUCHSCREEN | STYLUS",
+        "keyboardType": 1,
+        "isExternal": false,
+        "isVirtualDevice": false,
+        "eventHubNames": [
+          "virtio_input_multi_touch_11"
+        ]
+      },
+      {
+        "readerId": 11,
+        "readerName": "virtio_input_multi_touch_8",
+        "eventHubIds": [
+          4
+        ],
+        "sources": "KEYBOARD | TOUCHSCREEN | STYLUS",
+        "keyboardType": 1,
+        "isExternal": false,
+        "isVirtualDevice": false,
+        "eventHubNames": [
+          "virtio_input_multi_touch_8"
+        ]
+      },
+      {
+        "readerId": 13,
+        "readerName": "virtio_input_multi_touch_10",
+        "eventHubIds": [
+          2
+        ],
+        "sources": "KEYBOARD | TOUCHSCREEN | STYLUS",
+        "keyboardType": 1,
+        "isExternal": false,
+        "isVirtualDevice": false,
+        "eventHubNames": [
+          "virtio_input_multi_touch_10"
+        ]
+      },
+      {
+        "readerId": 4,
+        "readerName": "virtio_input_multi_touch_1",
+        "eventHubIds": [
+          11
+        ],
+        "sources": "KEYBOARD | TOUCHSCREEN | STYLUS",
+        "keyboardType": 1,
+        "isExternal": false,
+        "isVirtualDevice": false,
+        "eventHubNames": [
+          "virtio_input_multi_touch_1"
+        ]
+      },
+      {
+        "readerId": 9,
+        "readerName": "virtio_input_multi_touch_6",
+        "eventHubIds": [
+          6
+        ],
+        "sources": "KEYBOARD | TOUCHSCREEN | STYLUS",
+        "keyboardType": 1,
+        "isExternal": false,
+        "isVirtualDevice": false,
+        "eventHubNames": [
+          "virtio_input_multi_touch_6"
+        ]
+      },
+      {
+        "readerId": 12,
+        "readerName": "virtio_input_multi_touch_9",
+        "eventHubIds": [
+          3
+        ],
+        "sources": "KEYBOARD | TOUCHSCREEN | STYLUS",
+        "keyboardType": 1,
+        "isExternal": false,
+        "isVirtualDevice": false,
+        "eventHubNames": [
+          "virtio_input_multi_touch_9"
+        ]
+      },
+      {
+        "readerId": 8,
+        "readerName": "virtio_input_multi_touch_5",
+        "eventHubIds": [
+          7
+        ],
+        "sources": "KEYBOARD | TOUCHSCREEN | STYLUS",
+        "keyboardType": 1,
+        "isExternal": false,
+        "isVirtualDevice": false,
+        "eventHubNames": [
+          "virtio_input_multi_touch_5"
+        ]
+      },
+      {
+        "readerId": -1,
+        "readerName": "Virtual",
+        "eventHubIds": [
+          -1
+        ],
+        "sources": "KEYBOARD | DPAD",
+        "keyboardType": 2,
+        "isExternal": false,
+        "isVirtualDevice": false,
+        "eventHubNames": [
+          "Virtual"
+        ]
+      },
+      {
+        "readerId": 6,
+        "readerName": "virtio_input_multi_touch_3",
+        "eventHubIds": [
+          9
+        ],
+        "sources": "KEYBOARD | TOUCHSCREEN | STYLUS",
+        "keyboardType": 1,
+        "isExternal": false,
+        "isVirtualDevice": false,
+        "eventHubNames": [
+          "virtio_input_multi_touch_3"
+        ]
+      },
+      {
+        "readerId": 5,
+        "readerName": "virtio_input_multi_touch_2",
+        "eventHubIds": [
+          10
+        ],
+        "sources": "KEYBOARD | TOUCHSCREEN | STYLUS",
+        "keyboardType": 1,
+        "isExternal": false,
+        "isVirtualDevice": false,
+        "eventHubNames": [
+          "virtio_input_multi_touch_2"
+        ]
+      },
+      {
+        "readerId": 10,
+        "readerName": "virtio_input_multi_touch_7",
+        "eventHubIds": [
+          5
+        ],
+        "sources": "KEYBOARD | TOUCHSCREEN | STYLUS",
+        "keyboardType": 1,
+        "isExternal": false,
+        "isVirtualDevice": false,
+        "eventHubNames": [
+          "virtio_input_multi_touch_7"
+        ]
+      },
+      {
+        "readerId": 7,
+        "readerName": "virtio_input_multi_touch_4",
+        "eventHubIds": [
+          8
+        ],
+        "sources": "KEYBOARD | TOUCHSCREEN | STYLUS",
+        "keyboardType": 1,
+        "isExternal": false,
+        "isVirtualDevice": false,
+        "eventHubNames": [
+          "virtio_input_multi_touch_4"
+        ]
+      },
+      {
+        "readerId": 3,
+        "readerName": "AT Translated Set 2 keyboard",
+        "eventHubIds": [
+          12
+        ],
+        "sources": "KEYBOARD",
+        "keyboardType": 2,
+        "isExternal": false,
+        "isVirtualDevice": false,
+        "eventHubNames": [
+          "AT Translated Set 2 keyboard"
+        ]
+      },
+      {
+        "readerId": 2,
+        "readerName": "Power Button",
+        "eventHubIds": [
+          13
+        ],
+        "sources": "KEYBOARD",
+        "keyboardType": 1,
+        "isExternal": false,
+        "isVirtualDevice": false,
+        "eventHubNames": [
+          "Power Button"
+        ]
+      }
+    ],
+    "atKeyboard": {
+      "id": 12,
+      "name": "AT Translated Set 2 keyboard",
+      "Classes": "KEYBOARD | ALPHAKEY",
+      "Path": "/dev/input/event1",
+      "Enabled": "true",
+      "Descriptor": "485d69228e24f5e46da1598745890b214130dbc4",
+      "Location": "isa0060/serio0/input0",
+      "Identifier": "bus=0x0011, vendor=0x0001, product=0x0001, version=0xab41, bluetoothAddress=<not set>",
+      "KeyLayoutFile": "/system/usr/keylayout/Generic.kl",
+      "KeyCharacterMapFile": "/system/usr/keychars/Generic.kcm",
+      "ConfigurationFile": "<none>",
+      "SysfsDevicePath": "/sys/devices/platform/i8042/serio0"
+    },
+    "reservedVirtualKeyboard": {
+      "id": -1,
+      "name": "Virtual",
+      "Classes": "KEYBOARD | ALPHAKEY | DPAD | VIRTUAL",
+      "Path": "<virtual>",
+      "Enabled": "true",
+      "Descriptor": "a718a782d34bc767f4689c232d64d527998ea7fd",
+      "Location": "",
+      "Identifier": "bus=0x0000, vendor=0x0000, product=0x0000, version=0x0000, bluetoothAddress=<not set>",
+      "KeyLayoutFile": "/system/usr/keylayout/Generic.kl",
+      "KeyCharacterMapFile": "/system/usr/keychars/Virtual.kcm",
+      "ConfigurationFile": "<none>",
+      "SysfsDevicePath": "<none>"
+    },
+    "readerConfigurationKeyboard": "NOT_PRINTED",
+    "readerConfigurationHardKeyboardHidden": "NOT_PRINTED"
+  },
+  "settingsSnapshots": [
+    {
+      "id": "settings_before",
+      "targetPresent": true,
+      "value": "0",
+      "contextComponent": "com.android.inputmethod.latin/.LatinIME",
+      "command": {
+        "ordinal": 7,
+        "id": "settings_before",
+        "argv": [
+          "/usr/local/lib/android/sdk/platform-tools/adb",
+          "-s",
+          "emulator-5554",
+          "shell",
+          "settings",
+          "--user",
+          "0",
+          "list",
+          "secure"
+        ],
+        "timeoutSeconds": 10,
+        "byteLimit": 65536,
+        "startedAt": "2026-11-01T12:22:39.216798+00:00",
+        "endedAt": "2026-11-01T12:22:39.290637+00:00",
+        "elapsedMillis": 73,
+        "status": "completed",
+        "exitCode": 0,
+        "exceptionType": null,
+        "bytes": 2563,
+        "sha256": "5318906c5ee913bf09e8e0c0340fb40509cd8f96dc9b390eee67f4e5bc6f78b9"
+      }
+    },
+    {
+      "id": "settings_enabled",
+      "targetPresent": true,
+      "value": "1",
+      "contextComponent": "com.android.inputmethod.latin/.LatinIME",
+      "command": {
+        "ordinal": 11,
+        "id": "settings_enabled",
+        "argv": [
+          "/usr/local/lib/android/sdk/platform-tools/adb",
+          "-s",
+          "emulator-5554",
+          "shell",
+          "settings",
+          "--user",
+          "0",
+          "list",
+          "secure"
+        ],
+        "timeoutSeconds": 10,
+        "byteLimit": 65536,
+        "startedAt": "2026-11-01T12:22:56.623663+00:00",
+        "endedAt": "2026-11-01T12:22:56.686843+00:00",
+        "elapsedMillis": 63,
+        "status": "completed",
+        "exitCode": 0,
+        "exceptionType": null,
+        "bytes": 2997,
+        "sha256": "5813f9c645569c002c55a7c53dfa8a7836032329f05baad0a5a10b39c73d1fd9"
+      }
+    },
+    {
+      "id": "settings_restored",
+      "targetPresent": true,
+      "value": "0",
+      "contextComponent": "com.android.inputmethod.latin/.LatinIME",
+      "command": {
+        "ordinal": 13,
+        "id": "settings_restored",
+        "argv": [
+          "/usr/local/lib/android/sdk/platform-tools/adb",
+          "-s",
+          "emulator-5554",
+          "shell",
+          "settings",
+          "--user",
+          "0",
+          "list",
+          "secure"
+        ],
+        "timeoutSeconds": 10,
+        "byteLimit": 65536,
+        "startedAt": "2026-11-01T12:23:10.073742+00:00",
+        "endedAt": "2026-11-01T12:23:10.105393+00:00",
+        "elapsedMillis": 31,
+        "status": "completed",
+        "exitCode": 0,
+        "exceptionType": null,
+        "bytes": 2997,
+        "sha256": "993918e1ff99c53dbe44c582284b9eb79f301eba0e4ef0c9049a9b877beb22e5"
+      }
+    }
+  ],
+  "imeArms": {
+    "baseline": {
+      "command": {
+        "ordinal": 24,
+        "id": "ime_state",
+        "argv": [
+          "/usr/local/lib/android/sdk/platform-tools/adb",
+          "-s",
+          "emulator-5554",
+          "shell",
+          "/system/bin/timeout",
+          "-s",
+          "KILL",
+          "8s",
+          "/system/bin/dumpsys",
+          "-t",
+          "5",
+          "input_method",
+          "--user",
+          "0"
+        ],
+        "timeoutSeconds": 12,
+        "byteLimit": 262144,
+        "startedAt": "2026-11-01T12:22:56.022256+00:00",
+        "endedAt": "2026-11-01T12:22:56.048077+00:00",
+        "elapsedMillis": 25,
+        "status": "completed",
+        "exitCode": 0,
+        "exceptionType": null,
+        "bytes": 48469,
+        "sha256": "b5d15619535c11ebe1c9967140cd95b458ff0c5bdcfb227e7a9edb758696613b"
+      },
+      "serviceHeader": "com.android.inputmethod.latin.LatinIME@e572970",
+      "serviceBodyBytes": 2134,
+      "serviceBodySha256": "adf4cf895e8bde4eed2ce305cf59b792389f913e1d42f287d9054bed87d1420a",
+      "configurationPrinted": "{1.0 310mcc260mnc [en_US] ldltr sw320dp w320dp h640dp 160dpi nrml long compactNeeded port finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 320, 640) mAppBounds=Rect(0, 0 - 320, 640) mMaxBounds=Rect(0, 0 - 320, 640) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} as.2 s.21 fontWeightAdjustment=0}",
+      "configurationToken": "qwerty/v/v",
+      "keyboard": 2,
+      "keyboardHidden": 1,
+      "hardKeyboardHidden": 1,
+      "fields": {
+        "mViewsCreated": true,
+        "mDecorViewVisible": true,
+        "mWindowVisible": true,
+        "mInputStarted": true,
+        "mInputViewStarted": true,
+        "mShowInputRequested": true,
+        "mIsInputViewShown": false
+      },
+      "settingsObserverCachedCode": 1,
+      "settingsObserverCachedMeaning": "FALSE",
+      "inputBindingClientUid": 10156,
+      "inputBindingClientPid": 2105,
+      "computedInsets": {
+        "contentTop": 616,
+        "visibleTop": 616,
+        "touchableInsets": 2,
+        "touchableRegionPrinted": "SkRegion()"
+      },
+      "screenshot": {
+        "path": "baseline/screenshot.png",
+        "sha256": "63916b0a49c33bc85a15f25a46f44f76c8a09c99e1911cecea3afb8f3ed8a0d5",
+        "visibleSoftwareKeyboard": false,
+        "inspection": "Viewed full 320x640 PNG; later than raw and IME dump, not atomic."
+      }
+    },
+    "enabled": {
+      "command": {
+        "ordinal": 24,
+        "id": "ime_state",
+        "argv": [
+          "/usr/local/lib/android/sdk/platform-tools/adb",
+          "-s",
+          "emulator-5554",
+          "shell",
+          "/system/bin/timeout",
+          "-s",
+          "KILL",
+          "8s",
+          "/system/bin/dumpsys",
+          "-t",
+          "5",
+          "input_method",
+          "--user",
+          "0"
+        ],
+        "timeoutSeconds": 12,
+        "byteLimit": 262144,
+        "startedAt": "2026-11-01T12:23:09.587078+00:00",
+        "endedAt": "2026-11-01T12:23:09.613681+00:00",
+        "elapsedMillis": 26,
+        "status": "completed",
+        "exitCode": 0,
+        "exceptionType": null,
+        "bytes": 54488,
+        "sha256": "dff6f6bf1b3efa93298b227d8277ab80f9b6d799412f3c05441650ffcccec2ad"
+      },
+      "serviceHeader": "com.android.inputmethod.latin.LatinIME@e572970",
+      "serviceBodyBytes": 2148,
+      "serviceBodySha256": "797d4c83de9f93e9a686c09876bc5b32132c532b3fe249d26ac80cd984a749c0",
+      "configurationPrinted": "{1.0 310mcc260mnc [en_US] ldltr sw320dp w320dp h640dp 160dpi nrml long compactNeeded port finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 320, 640) mAppBounds=Rect(0, 0 - 320, 640) mMaxBounds=Rect(0, 0 - 320, 640) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} as.2 s.21 fontWeightAdjustment=0}",
+      "configurationToken": "qwerty/v/v",
+      "keyboard": 2,
+      "keyboardHidden": 1,
+      "hardKeyboardHidden": 1,
+      "fields": {
+        "mViewsCreated": true,
+        "mDecorViewVisible": true,
+        "mWindowVisible": true,
+        "mInputStarted": true,
+        "mInputViewStarted": true,
+        "mShowInputRequested": true,
+        "mIsInputViewShown": true
+      },
+      "settingsObserverCachedCode": 2,
+      "settingsObserverCachedMeaning": "TRUE",
+      "inputBindingClientUid": 10157,
+      "inputBindingClientPid": 2715,
+      "computedInsets": {
+        "contentTop": 370,
+        "visibleTop": 370,
+        "touchableInsets": 3,
+        "touchableRegionPrinted": "SkRegion((0,370,320,616))"
+      },
+      "screenshot": {
+        "path": "enabled/screenshot.png",
+        "sha256": "0c898cfa109d6df44a28f1696d7a6d0192321822af1c7f569e8205df1c66145a",
+        "visibleSoftwareKeyboard": true,
+        "inspection": "Viewed full 320x640 PNG; later than raw and IME dump, not atomic."
+      }
+    }
+  },
+  "sourceInterpretation": [
+    {
+      "sources": [
+        "InputDevice.cpp:146-179",
+        "EventHub.cpp:3181-3270"
+      ],
+      "finding": "Use Reader EventHub Devices references to associate logical device3 with raw node12; numeric IDs are different namespaces."
+    },
+    {
+      "sources": [
+        "EventHub.cpp:2445-2536",
+        "EventHub.cpp:2957-2970",
+        "InputDevice.cpp:344-352"
+      ],
+      "finding": "AT node is guest-visible /dev/input/event1 with i8042/serio0 metadata. Reserved Virtual -1 has VIRTUAL class/path<virtual>. IsVirtualDevice=false in both means no matched virtualDevicePorts association, not proof of physical host hardware."
+    },
+    {
+      "sources": [
+        "InputReader.cpp:974-1021",
+        "Configuration.java:1255-1274"
+      ],
+      "finding": "Reader Configuration does not print keyboard/hardKeyboardHidden; both later IME dumps independently print qwerty/v/v, decoded to keyboard2, keyboardHidden1, hardKeyboardHidden1."
+    },
+    {
+      "sources": [
+        "InputMethodService.java:1574-1581",
+        "InputMethodService.java:1613-1649",
+        "InputMethodService.java:2347-2359",
+        "InputMethodService.java:2390-2401"
+      ],
+      "finding": "Under fixed base IMS logic, cacheFALSE plus keyboard2/hardKeyboardHidden1 yields onEvaluateInputViewShown=false; cacheTRUE yields true even with unchanged Configuration. Observed mIsInputViewShown false->true matches this policy branch. A cached observer dump is not a live provider read; separate setting snapshots show0->1->0."
+    },
+    {
+      "sources": [
+        "InputMethodService.java:2314-2336",
+        "WindowState.java:3654-3687"
+      ],
+      "finding": "Baseline computed modeVISIBLE2+empty cached Region is not a direct final WMS/SF-region measurement. Enabled modeREGION3 and rectangle are still later IMS data; do not backfill callback region or Binder identity."
+    }
+  ],
+  "conclusions": {
+    "avdRuntimeDifferenceObserved": true,
+    "description": "hw.keyboard=no coexists in this run with guest alphabetic AT keyboard node and later qwerty/v/v IME resources. Setting intervention changes software-input-view state while the full printed IME Configuration stays identical.",
+    "settingLogicalRestoration": "Original target present0, enabled1, restored present0; provider metadata and immediate IME cache restoration are not established.",
+    "originalArmResultsPreserved": {
+      "baseline": "failed RAW_POSITIVE_CALLBACK_NOT_OBSERVED, 0 positive callbacks (report supplied, raw callback audit owned separately)",
+      "enabled": "passed, 1 positive callback (report supplied, raw callback audit owned separately)"
+    },
+    "limitations": [
+      "One input inventory before baseline; Reader/EventHub and later IMS observations are not atomic or continuous.",
+      "AT node causally determining IME resource Configuration is not proved; emulator host/guest configuration source of this node is unresolved.",
+      "Fixed A then B, warm IME, fixture reinstall and changed client UID10156->10157 are disclosed confounds; no randomized strong causal claim.",
+      "Both screenshots are later observations; baseline has no visible soft keyboard and enabled does.",
+      "Framework source/image equivalence not verified; no production APK or original32 Notes acceptance upgrade."
+    ]
+  },
+  "files": [
+    {
+      "project": "frameworks/native",
+      "commit": "ae266dcb706d083868578cfedce381ef44488a07",
+      "path": "services/inputflinger/reader/InputReader.cpp",
+      "url": "https://android.googlesource.com/platform/frameworks/native/+/ae266dcb706d083868578cfedce381ef44488a07/services/inputflinger/reader/InputReader.cpp",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/hardware-setting-review/InputReader.cpp",
+      "bytes": 40549,
+      "sha256": "3a5acd8dbbd4d880a27eb84d9de68cbcceb81a91593749340a1800be7856eb5d",
+      "reviewedLineRanges": [
+        "49-67",
+        "299-316",
+        "974-1030"
+      ]
+    },
+    {
+      "project": "frameworks/native",
+      "commit": "ae266dcb706d083868578cfedce381ef44488a07",
+      "path": "services/inputflinger/reader/EventHub.cpp",
+      "url": "https://android.googlesource.com/platform/frameworks/native/+/ae266dcb706d083868578cfedce381ef44488a07/services/inputflinger/reader/EventHub.cpp",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/hardware-setting-review/EventHub.cpp",
+      "bytes": 131347,
+      "sha256": "38f5775af51d5bbe09d7c87778a510a35f52120e46f1b000202aa16052659d97",
+      "reviewedLineRanges": [
+        "748-757",
+        "1701-1753",
+        "1898-1906",
+        "2445-2536",
+        "2573-2597",
+        "2685-2704",
+        "2745-2752",
+        "2957-2970",
+        "3181-3270"
+      ]
+    },
+    {
+      "project": "frameworks/native",
+      "commit": "ae266dcb706d083868578cfedce381ef44488a07",
+      "path": "services/inputflinger/reader/InputDevice.cpp",
+      "url": "https://android.googlesource.com/platform/frameworks/native/+/ae266dcb706d083868578cfedce381ef44488a07/services/inputflinger/reader/InputDevice.cpp",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/hardware-setting-review/InputDevice.cpp",
+      "bytes": 39271,
+      "sha256": "5a27592c180326513ef9aa3260a8f126ada0c5b3cfe24b942bf63c59ae339cea",
+      "reviewedLineRanges": [
+        "146-197",
+        "260-278",
+        "344-352",
+        "565-569",
+        "640-654"
+      ]
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/inputmethodservice/InputMethodService.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/inputmethodservice/InputMethodService.java",
+      "bytes": 203126,
+      "sha256": "327bc0eae0c5cbc12fd103aef3f50121b49bca728fdcf59d84b99faa3edd3c1c",
+      "localPath": "/workspace/scratch/ime-identity-2026-10-31/core__java__android__inputmethodservice__InputMethodService.java",
+      "reviewedLineRanges": [
+        "678-700",
+        "1574-1581",
+        "1613-1629",
+        "1647-1649",
+        "2314-2359",
+        "2374-2401",
+        "3002-3024",
+        "3196-3235",
+        "4489-4491",
+        "4508-4511",
+        "4535-4588"
+      ]
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "services/core/java/com/android/server/wm/WindowState.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/services/core/java/com/android/server/wm/WindowState.java",
+      "bytes": 274963,
+      "sha256": "d3c8b8345a985f1d67cff37819244bc19887a4b6195460ab2780e877daec0909",
+      "reviewedLineRanges": [
+        "2735-2787",
+        "3654-3687"
+      ],
+      "localPath": "/workspace/scratch/notes-ime-interfaces/WindowState.java"
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/content/res/Configuration.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/content/res/Configuration.java",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/Configuration.java",
+      "bytes": 134461,
+      "sha256": "33c7dc1e5ce83861d288c35ccfcad628bf887cec5d80852d23b749d7cab9b455",
+      "reviewedLineRanges": [
+        "1255-1274"
+      ]
+    },
+    {
+      "project": "frameworks/native",
+      "commit": "ae266dcb706d083868578cfedce381ef44488a07",
+      "path": "services/inputflinger/reader/include/EventHub.h",
+      "url": "https://android.googlesource.com/platform/frameworks/native/+/ae266dcb706d083868578cfedce381ef44488a07/services/inputflinger/reader/include/EventHub.h",
+      "localPath": "/workspace/scratch/window-infos-input-state-source/services__inputflinger__reader__include__EventHub.h",
+      "bytes": 35549,
+      "sha256": "de24488773f4a1ca117102a3db8f57e032d7beb8e8eaa84935e9675e30050d18",
+      "reviewedLineRanges": [
+        "804-809"
+      ]
+    }
+  ]
+}

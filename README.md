@@ -50,14 +50,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 输入法离线时间线模块完成20项测试及既有原件预检，记录重建追踪到首正回调178ms的线索；原Notes时限起点已校正。未重跑API37、未改变原24/8；同源整体录像待执行。
+**本次更新：** Archive actual API35 walkthrough evidence; local synthetic model, secure flags preserved
 
-**记录时间：** 2026-11-01T12:48:46Z
+**记录时间：** 2026-11-01T12:55:45Z
 
 [最近测试截图与清单](screenshots/window-infos-keyboard-41305950037-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41305950037)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/41294000343-1/demo.mp4) · [录制与验证清单](screenshots/demos/41294000343-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41294000343)。
-录制版本：[`de150f4c9`](https://github.com/ecojust/Agent-OS/commit/de150f4c975eec6c9d0b2f2b44e825c60fd0130a)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/41308310840-1/demo.mp4) · [录制与验证清单](screenshots/demos/41308310840-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41308310840)。
+录制版本：[`5ac5030a4`](https://github.com/ecojust/Agent-OS/commit/5ac5030a423bed97470b30b22bb031bcd65d7a16)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 最近更新时间记录该条状态或进度说明的修改时间，采用 UTC；测试发生时间以对应证据为准。
 

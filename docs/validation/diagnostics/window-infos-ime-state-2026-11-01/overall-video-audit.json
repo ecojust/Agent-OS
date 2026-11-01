@@ -1,0 +1,160 @@
+{
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "de150f4c975eec6c9d0b2f2b44e825c60fd0130a",
+    "runId": 41294000343,
+    "attempt": 1
+  },
+  "archiveStatus": "passed",
+  "reportStatus": "passed",
+  "filesVerified": 30,
+  "totalBytes": 1185751,
+  "scope": "Dedicated emulator; preconfigured app; local synthetic HTTP model; secure flags preserved; no real-model or phone acceptance.",
+  "archiveCommit": "50fae3099a00a94e39d6c6633af13deed8eb0b9c",
+  "gitBlobsVerified": 31,
+  "pngDecodeCount": 22,
+  "pngDimensions": [
+    [
+      320,
+      640
+    ]
+  ],
+  "mainStages": 13,
+  "confirmations": 8,
+  "mainStageNames": [
+    "ready",
+    "text_entered",
+    "text_saved",
+    "counter_verified",
+    "scrolled_down",
+    "scrolled_up",
+    "second_page",
+    "returned_to_fixture",
+    "controls_waiting",
+    "paused",
+    "resumed",
+    "stopped",
+    "stale_approval_rejected"
+  ],
+  "confirmationOrdinals": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "flowDurationMs": 38542,
+  "recordingFailures": [],
+  "screenshotCount": 22,
+  "foregroundPackages": [
+    "dev.agentos.fixture"
+  ],
+  "video": {
+    "bytes": 451929,
+    "sha256": "03ea72460fdea43ec5c3d12ccba3c707b2c1cdbe8cc0471bcc2340cad9edcc61",
+    "durationMs": 41493,
+    "width": 640,
+    "height": 1280,
+    "codec": "h264",
+    "pixelFormat": "yuv420p"
+  },
+  "decodedFrameCount": 524,
+  "frameCountEvidence": {
+    "method": "ffmpeg full decode with passthrough timestamps",
+    "command": [
+      "ffmpeg",
+      "-nostdin",
+      "-v",
+      "error",
+      "-xerror",
+      "-i",
+      "/workspace/Agent-OS/screenshots/demos/41294000343-1/demo.mp4",
+      "-map",
+      "0:v:0",
+      "-vsync",
+      "0",
+      "-progress",
+      "pipe:1",
+      "-nostats",
+      "-f",
+      "null",
+      "-"
+    ],
+    "exitCode": 0,
+    "declaredFrames": "524",
+    "averageFrameRate": "23490000/1860071",
+    "progressSha256": "8740f193ea4183dbb5654ee4906c2c9327c42aefd50908fe18c17edf81c686ce"
+  },
+  "independentDecode": "passed",
+  "provenanceLimit": "All local archive payload hashes and bytes match archive commit 50fae3099a00a94e39d6c6633af13deed8eb0b9c, whose direct parent is the tested source. External Actions metadata was not queried by this audit; archive run ID and successful run conclusions were provided by the parent agent.",
+  "contentLimit": "API35 synthetic controller walkthrough only; no evidence of API37 raw listener, IME mapping, original failure reproduction, real model, or physical device.",
+  "archiveParentCommit": "de150f4c975eec6c9d0b2f2b44e825c60fd0130a",
+  "archiveRunIdProvidedByParent": 41294302477,
+  "auditedAt": "2026-11-01T09:45:57Z",
+  "visualReview": {
+    "reviewedBy": "raw_android agent using view_image",
+    "allFramesPersonallyViewed": true,
+    "method": "Eight individual timestamp seeks after one complete video decode; no recording or downloads.",
+    "frames": [
+      {
+        "path": "/workspace/scratch/raw-overall-video-41294000343/frames/counter-confirmation.png",
+        "videoTimestampSeconds": 18.0,
+        "bytes": 206747,
+        "sha256": "9fc12ebdecb3d1c23905fb13c54881fcd2ea55bf63afb945b6c0d7b260cb39ee",
+        "observation": "Saved synthetic text is visible; counter is still 0 while the explicit increment confirmation is pending."
+      },
+      {
+        "path": "/workspace/scratch/raw-overall-video-41294000343/frames/saved-counter.png",
+        "videoTimestampSeconds": 19.3,
+        "bytes": 121191,
+        "sha256": "fa2ed4a7832006dac2ce226e1782df8512654ddf8145fb8915cee681b840cdd0",
+        "observation": "Saved synthetic text and Count: 1 are visible."
+      },
+      {
+        "path": "/workspace/scratch/raw-overall-video-41294000343/frames/scroll.png",
+        "videoTimestampSeconds": 22.0,
+        "bytes": 141623,
+        "sha256": "ff960f2f901f82747e683660c6330d8b7bf32189b21e84625c44a4d3d5ba27a3",
+        "observation": "Fixture list is scrolled to rows 4–16 while the controller is observing the current screen."
+      },
+      {
+        "path": "/workspace/scratch/raw-overall-video-41294000343/frames/fixture-before-second-page.png",
+        "videoTimestampSeconds": 28.0,
+        "bytes": 163563,
+        "sha256": "cb3ccc34a3019f94ba7097e25d5f5edb2b69a6503ef05ecfd4f114370639b55c",
+        "observation": "Fixture shows saved synthetic text and Count: 1 before the second-page transition."
+      },
+      {
+        "path": "/workspace/scratch/raw-overall-video-41294000343/frames/second-page.png",
+        "videoTimestampSeconds": 30.0,
+        "bytes": 118899,
+        "sha256": "3571d0712903da92ae913e9844cebaf826da16ced0bcf7dfcbb9dea457bebc85",
+        "observation": "Second page reached is visible with a pending back confirmation."
+      },
+      {
+        "path": "/workspace/scratch/raw-overall-video-41294000343/frames/controls-waiting.png",
+        "videoTimestampSeconds": 35.5,
+        "bytes": 201380,
+        "sha256": "2c87ea1cc06e8a5f5cfd06d90b51956ca56067874b41cbcc25c21e969d320f67",
+        "observation": "Controller is waiting for an increment confirmation; saved text and Count: 1 remain visible."
+      },
+      {
+        "path": "/workspace/scratch/raw-overall-video-41294000343/frames/pause.png",
+        "videoTimestampSeconds": 37.0,
+        "bytes": 156320,
+        "sha256": "0ce94ddfd05b9194682c2a9334ff28fde7adfa9cac45f2a9d9f43e6a07b25805",
+        "observation": "Controller explicitly displays 已暂停 with Continue and Stop controls; saved text and Count: 1 remain visible."
+      },
+      {
+        "path": "/workspace/scratch/raw-overall-video-41294000343/frames/final.png",
+        "videoTimestampSeconds": 40.0,
+        "bytes": 122888,
+        "sha256": "80e38abeaecb05e84dc699ee7da7ec81b7c870940772289f64b630f8d446aa87",
+        "observation": "Saved text and Count: 1 remain visible with the controller overlay absent."
+      }
+    ]
+  }
+}

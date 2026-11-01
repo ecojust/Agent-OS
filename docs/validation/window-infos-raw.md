@@ -101,7 +101,7 @@
 
 固定JNI会把native触摸区域逐矩形并集后赋给Java handle的Region，生产采集器直接读取该对象的`isEmpty()`；未找到只因窗口类型是IME就替换成默认空区域的分支。[补充Region/Dex核查](diagnostics/window-infos-raw-2026-11-01/region-source-dex-review.json)核对两份底层源码及本次实际归档jar的反汇编：Region保留传入native指针，`isEmpty()`调用SkRegion，实际Reader确实读取该Region，没有常量true替代。固定新版IMM的显式显示路径不读取`SHOW_IMPLICIT`标志，TextView关闭自动焦点显示也没有直接关闭EditorInfo/InputConnection的证据。因此暂不修改这两个参数来尝试让本轮变绿；这些源码路径仍不是当前镜像运行时根因证明。
 
-下一次实验先保持同一显示动作和四项门槛，增加一次有界普通`dumpsys input_method --user 0`，保存实际来源与采样时间，提取当前IME子dump中的Configuration、输入视图启动/显示状态、窗口可见状态及最后计算的Insets模式/边界/区域。该接口不直接报告`mInputView`是否为空或视图实际高度，也不与原回调原子同步；超时、截断或缺失IME子dump均保持未知，不补成通过。本轮尚未执行这个新增观测。
+下一次实验先保持同一显示动作和四项门槛，增加一次有界普通`dumpsys input_method --user 0`，保存实际来源与采样时间，提取当前IME子dump中的Configuration、输入视图启动/显示状态、窗口可见状态及最后计算的Insets模式/边界/区域。该接口不直接报告`mInputView`是否为空或视图实际高度，也不与原回调原子同步；超时、截断或缺失IME子dump均保持未知，不补成通过。该首轮尚未执行这个新增观测；后续de150源码已完成单次实测，见[输入法状态实际结果](window-infos-ime-state.md)。
 
 
 ## 同源整体录像

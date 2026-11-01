@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "kind": "avd-file-check-versus-ime-runtime-review",
+  "source": {
+    "commit": "de150f4c975eec6c9d0b2f2b44e825c60fd0130a",
+    "runId": 41293997835,
+    "attempt": 1,
+    "jobId": 124811122970
+  },
+  "reviewedAt": "2026-11-01T09:46:01.522115+00:00",
+  "sourceFiles": {
+    "scripts/configure_emulator_phone.py": {
+      "bytes": 2136,
+      "sha256": "6e47a74d6b62fe8c1d8e459e51748ca9ccac1f32f2c09a972215a1e634821eed"
+    },
+    ".github/workflows/window-infos-raw.yml": {
+      "bytes": 9952,
+      "sha256": "e47094fcbf9b45f7ccafc9e467d51156118343e93bc4cf4dd939bd25f6d41211"
+    }
+  },
+  "ciLog": {
+    "url": "https://github.com/ecojust/Agent-OS/actions/runs/41293997835/job/124811122970",
+    "retrieval": "gh run view 41293997835 --log-failed",
+    "bytes": 44637,
+    "sha256": "16b210ad22a7eddedd35e5ae62922ca7b6aadcfd5fd8075491bb3393218195cc",
+    "fullLogArchivedHere": false,
+    "excerpts": [
+      {
+        "line": 120,
+        "text": "probe\tRun one raw registration and one later IME state observation\t2026-11-01T09:40:28.4672734Z Verified AVD agent-os-window-infos-raw: hw.keyboard=no (touchscreen phone baseline)"
+      },
+      {
+        "line": 257,
+        "text": "probe\tRun one raw registration and one later IME state observation\t2026-11-01T09:41:01.6750538Z Verified AVD agent-os-window-infos-raw: hw.keyboard=no (touchscreen phone baseline)"
+      }
+    ]
+  },
+  "originalAvdConfigArchived": false,
+  "runtimeEvidence": "screenshots/window-infos-raw-41293997835-1/ime-state.json",
+  "conclusion": "CI reported the named AVD file contained exactly one hw.keyboard=no before and after launch. The later actual IME Resources Configuration was qwerty/v/v. File checks do not establish runtime keyboard conditions; the source of that divergence remains unobserved."
+}

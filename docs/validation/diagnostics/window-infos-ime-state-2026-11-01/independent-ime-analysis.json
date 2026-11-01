@@ -1,0 +1,354 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-api37-later-ime-state-result-analysis",
+  "auditedAt": "2026-11-01T09:44:27.570857+00:00",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "de150f4c975eec6c9d0b2f2b44e825c60fd0130a",
+    "runId": 41293997835,
+    "attempt": 1
+  },
+  "archiveCommit": "758db509a825b5e10953918897817839cb15b4e6",
+  "newDeviceCommands": 0,
+  "repositoryFilesChanged": false,
+  "original32CasesRerun": false,
+  "sourceImageEquivalenceVerified": false,
+  "originalAudit": {
+    "path": "41293997835-independent-analysis.json",
+    "manifestFiles": 12,
+    "manifestPayloadBytes": 262666,
+    "commands": 30,
+    "rawSnapshots": 70,
+    "rawCallbacks": 69,
+    "rawRows": 25,
+    "independentFieldAndIdentityChecks": 455,
+    "positiveCallbacks": 0,
+    "reportStatus": "failed",
+    "failureReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED"
+  },
+  "rawFacts": {
+    "initialRawWindows": 0,
+    "allCallbacksComplete": true,
+    "dropped": 0,
+    "outsideWindow": 0,
+    "candidateSequences": [
+      45,
+      69
+    ],
+    "candidateElapsedMs": [
+      33890,
+      34607
+    ],
+    "relativeToShowRequestMs": [
+      323,
+      1040
+    ],
+    "candidateBinderIds": [
+      1
+    ],
+    "predicateCounts": {
+      "notVisible": 4,
+      "isClone": 0,
+      "frameEmpty": 1,
+      "regionEmpty": 25,
+      "passesFourPredicates": 0
+    },
+    "visibleNonemptyFrameCandidates": 21,
+    "rawLateInputConfig": 260,
+    "showRequestedElapsedMs": 33567,
+    "fixtureFirstImeVisibleElapsedMs": 34137,
+    "readyElapsedMs": 31954,
+    "deadlineElapsedMs": 43954,
+    "unregisterReturnedElapsedMs": 43955,
+    "unregisterMeaning": "Java returned once, not an independent SurfaceFlinger removal acknowledgement"
+  },
+  "dumpIndependentDerivation": {
+    "status": "matched",
+    "inputBytes": 49154,
+    "inputSha256": "de08af98c9e8c9831671dbba26614cb4022504df1c0b86b2bb8be10fe5182894",
+    "serviceBodyBytes": 2133,
+    "serviceBodySha256": "20d38af4d76c69e949a32432f3208400ba6e0fcfaf9392b55ab97ca968fd66c7",
+    "serviceHeaderLine": 451,
+    "serviceTerminalLine": 481,
+    "fieldsIndependentlyRecomputed": 15,
+    "fields": {
+      "mViewsCreated": true,
+      "mShowInputRequested": true,
+      "mIsInputViewShown": false,
+      "mDecorViewVisible": true,
+      "mWindowVisible": true,
+      "mInputStarted": true,
+      "mInputViewStarted": true,
+      "mCandidatesVisibility": 4,
+      "configuration": {
+        "keyboard": 2,
+        "keyboardHidden": 1,
+        "hardKeyboardHidden": 1,
+        "printedToken": "qwerty/v/v"
+      },
+      "contentTopInsets": 616,
+      "visibleTopInsets": 616,
+      "touchableInsets": 2,
+      "touchableRegion": {
+        "rectangles": [],
+        "empty": true,
+        "coordinateOrder": "left_top_right_bottom",
+        "scope": "InputMethodService_mTmpInsets_touchableRegion_only"
+      },
+      "settingsObserver": {
+        "observerPresent": true,
+        "cachedShowImeWithHardKeyboard": 1,
+        "cacheMeaning": "FALSE"
+      },
+      "inputEditorInfo": {
+        "isNull": false,
+        "inputType": 2097153,
+        "packageName": "dev.agentos.compat",
+        "fixturePackageMatches": true
+      }
+    },
+    "clientBindingUid": 10156,
+    "clientBindingPid": 2085,
+    "clientBindingMeaning": "Client app UID, matched fixture receipt; not IME process UID",
+    "noKnownDumpErrorMarkers": true,
+    "scope": "Later39ms non-atomic IMMS/client/IME observation; frozen parser not imported for this derivation"
+  },
+  "hostTimeline": [
+    {
+      "id": "raw_probe",
+      "startedAt": "2026-11-01T09:41:03.387672+00:00",
+      "endedAt": "2026-11-01T09:41:15.681044+00:00",
+      "elapsedMillis": 12293,
+      "status": "completed",
+      "exitCode": 0
+    },
+    {
+      "id": "ime_state",
+      "startedAt": "2026-11-01T09:41:15.685024+00:00",
+      "endedAt": "2026-11-01T09:41:15.724765+00:00",
+      "elapsedMillis": 39,
+      "status": "completed",
+      "exitCode": 0
+    },
+    {
+      "id": "screenshot",
+      "startedAt": "2026-11-01T09:41:15.733022+00:00",
+      "endedAt": "2026-11-01T09:41:15.855712+00:00",
+      "elapsedMillis": 122,
+      "status": "completed",
+      "exitCode": 0
+    },
+    {
+      "id": "fixture_receipt",
+      "startedAt": "2026-11-01T09:41:15.860148+00:00",
+      "endedAt": "2026-11-01T09:41:15.887369+00:00",
+      "elapsedMillis": 27,
+      "status": "completed",
+      "exitCode": 0
+    },
+    {
+      "id": "ime_after",
+      "startedAt": "2026-11-01T09:41:15.889791+00:00",
+      "endedAt": "2026-11-01T09:41:15.911650+00:00",
+      "elapsedMillis": 21,
+      "status": "completed",
+      "exitCode": 0
+    },
+    {
+      "id": "cleanup_fixture",
+      "startedAt": "2026-11-01T09:41:15.941462+00:00",
+      "endedAt": "2026-11-01T09:41:15.990699+00:00",
+      "elapsedMillis": 49,
+      "status": "completed",
+      "exitCode": 0
+    }
+  ],
+  "screenshot": {
+    "viewed": true,
+    "width": 320,
+    "height": 640,
+    "bytes": 14800,
+    "sha256": "d9ea72b7ab36ffb3469b23ba90ce3d6be6e8a06ba8794988a51353992dd69889",
+    "visibleSoftKeyboard": false,
+    "content": "Synthetic editor and app title; empty pale area below, no keyboard keys.",
+    "scope": "Single post-dump image; does not prove pixels at earlier callbacks."
+  },
+  "sourceInterpretation": [
+    {
+      "status": "OBSERVED_RUNTIME_CONDITIONS",
+      "text": "IME Resources Configuration prints qwerty/v/v and SettingsObserver cache1(FALSE); a hardware keyboard is reported present/unhidden by this IME configuration while cached show-with-hard-keyboard is disabled. This is stronger evidence than the intended AVD file setting for the later service state.",
+      "sources": [
+        "Configuration.java:1255-1274",
+        "InputMethodService.java:1574-1581",
+        "InputMethodService.java:1613-1629"
+      ]
+    },
+    {
+      "status": "FIXED_BASE_BRANCH_MATCH",
+      "text": "Given these observed values, fixed base IMS onEvaluateInputViewShown evaluates false: keyboard!=KEYBOARD_NOKEYS and hardKeyboardHidden!=YES and setting false. updateInputViewShown combines that with show requested; observed mIsInputViewShown=false is consistent with hiding the input frame, while decor/window remain visible. Actual call execution and exact image-source equivalence are not traced.",
+      "sources": [
+        "InputMethodService.java:2347-2359",
+        "InputMethodService.java:2390-2401"
+      ]
+    },
+    {
+      "status": "STARTED_DOES_NOT_PROVE_CONTENT",
+      "text": "Fixed startViews sets mInputViewStarted before onStartInputView without requiring a non-null input view. LatinIME can return early when mainKeyboardView is null. Thus observed inputViewStarted=true does not contradict mIsInputViewShown=false or prove a loaded keyboard.",
+      "sources": [
+        "InputMethodService.java:3222-3235",
+        "LatinIME.java:925-974"
+      ]
+    },
+    {
+      "status": "EMPTY_REGION_GENERATION_CONSISTENT_NOT_PROVEN",
+      "text": "Observed candidatesVisibility4(INVISIBLE), visible/contentTop616, touchableInsets2(VISIBLE), empty cached IMS region are consistent with default insets when no input/candidate frame is visible. VISIBLE means WMS derives region from frame/insets; cached empty Region is not itself final WMS/SF empty-region proof. Later616 must not be combined atomically with earlier616-high raw frame.",
+      "sources": [
+        "InputMethodService.java:2314-2336",
+        "WindowState.java:3654-3687"
+      ]
+    },
+    {
+      "status": "LATINIME_OVERRIDE_LIMIT",
+      "text": "Fixed LatinIME may force onEvaluateInputViewShown true while its private start-show helper is executing; its hardware-hidden branch additionally requires SettingsValues.mHasHardwareKeyboard and KeyboardSwitchState.HIDDEN. Neither private flag nor toggle was captured. onComputeInsets preserves superclass mode on early returns, and only a shown keyboard child switches to REGION. These are candidate paths, not established actual branch execution.",
+      "sources": [
+        "LatinIME.java:777-780",
+        "LatinIME.java:1245-1283",
+        "LatinIME.java:1286-1313",
+        "KeyboardSwitcher.java:274-291"
+      ]
+    }
+  ],
+  "avdRuntimeDiscrepancy": {
+    "repositoryIntent": "enable-hw-keyboard:false and checked AVD hw.keyboard=no",
+    "actualImeLaterConfiguration": "qwerty/v/v",
+    "ciLogChecksReportedByRoot": [
+      "2026-11-01T09:40:28.467Z",
+      "2026-11-01T09:41:01.675Z"
+    ],
+    "ciLogCheckScope": "Reported by root from original CI log; this agent independently checked repository configuration and actual archived IME dump, not CI log bytes.",
+    "interpretation": "AVD configuration intent/check does not prove runtime IME resource keyboard state; discrepancy remains to explain."
+  },
+  "conclusion": {
+    "rawControlStatus": "failed",
+    "imeStateObservation": "recorded",
+    "runtimeHardwarePolicyConditionObserved": true,
+    "earlierRawCauseProven": false,
+    "originalNotesFailuresFixed": false,
+    "summary": "Runtime hardware-keyboard policy conditions were actually observed later and match the fixed base input-view suppression decision. This narrows the investigation but does not prove the earlier raw empty-region causal chain or a fix."
+  },
+  "nextStep": {
+    "proposalOnly": true,
+    "options": [
+      "Diagnose why checked hw.keyboard=no differs from runtime IME Configuration qwerty/v/v, using a separately frozen bounded input-device/configuration observation.",
+      "Alternatively freeze a one-variable synthetic-device show_ime_with_hard_keyboard positive control with exact old-value capture and restoration, retaining the same stimulus/raw budget/guards and reporting resulting runtime state."
+    ],
+    "notPerformed": "No setting was changed or device run repeated for this analysis."
+  },
+  "files": [
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/inputmethodservice/InputMethodService.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/inputmethodservice/InputMethodService.java",
+      "bytes": 203126,
+      "sha256": "327bc0eae0c5cbc12fd103aef3f50121b49bca728fdcf59d84b99faa3edd3c1c",
+      "localPath": "/workspace/scratch/ime-identity-2026-10-31/core__java__android__inputmethodservice__InputMethodService.java",
+      "reviewedLineRanges": [
+        "678-700",
+        "1574-1581",
+        "1613-1629",
+        "1647-1649",
+        "2314-2359",
+        "2374-2401",
+        "3002-3024",
+        "3196-3235",
+        "4489-4491",
+        "4508-4511",
+        "4535-4588"
+      ]
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "services/core/java/com/android/server/wm/WindowState.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/services/core/java/com/android/server/wm/WindowState.java",
+      "bytes": 274963,
+      "sha256": "d3c8b8345a985f1d67cff37819244bc19887a4b6195460ab2780e877daec0909",
+      "reviewedLineRanges": [
+        "2735-2787",
+        "3654-3687"
+      ],
+      "localPath": "/workspace/scratch/notes-ime-interfaces/WindowState.java"
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/content/res/Configuration.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/content/res/Configuration.java",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/Configuration.java",
+      "bytes": 134461,
+      "sha256": "33c7dc1e5ce83861d288c35ccfcad628bf887cec5d80852d23b749d7cab9b455",
+      "reviewedLineRanges": [
+        "1255-1274"
+      ]
+    },
+    {
+      "project": "frameworks/base",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/view/WindowInsets.java",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/view/WindowInsets.java",
+      "localPath": "/workspace/scratch/raw-design-2026-11-01/WindowInsets.java",
+      "bytes": 89159,
+      "sha256": "4bf6707346c8f698e4ebd25a6afd9734369ba9658083c318b7bc93645195399e",
+      "reviewedLineRanges": [
+        "414-432"
+      ]
+    },
+    {
+      "commit": "afe0d5c261c3a0c88b38894981a7b332da93e7dd",
+      "path": "java/src/com/android/inputmethod/latin/LatinIME.java",
+      "url": "https://android.googlesource.com/platform/packages/inputmethods/LatinIME/+/afe0d5c261c3a0c88b38894981a7b332da93e7dd/java/src/com/android/inputmethod/latin/LatinIME.java",
+      "bytes": 94295,
+      "sha256": "f96661c795c9334f226071336e7e664fc8c0c90bcf871588857bdce56fd54b0e",
+      "localPath": "/workspace/scratch/raw-latinime-2026-11-01/LatinIME.java",
+      "reviewedLineRanges": [
+        "777-780",
+        "847-865",
+        "925-974",
+        "1003-1064",
+        "1245-1283",
+        "1299-1313",
+        "1342-1364",
+        "1683-1696"
+      ]
+    },
+    {
+      "commit": "afe0d5c261c3a0c88b38894981a7b332da93e7dd",
+      "path": "java/src/com/android/inputmethod/keyboard/KeyboardSwitcher.java",
+      "url": "https://android.googlesource.com/platform/packages/inputmethods/LatinIME/+/afe0d5c261c3a0c88b38894981a7b332da93e7dd/java/src/com/android/inputmethod/keyboard/KeyboardSwitcher.java",
+      "bytes": 21072,
+      "sha256": "226e8499a544c0a4bddc449d801eacc2b0789310fb00f708d2c8df86ab9699c5",
+      "localPath": "/workspace/scratch/raw-latinime-2026-11-01/KeyboardSwitcher.java",
+      "reviewedLineRanges": [
+        "114-135",
+        "148-174",
+        "182-186",
+        "274-291",
+        "434-444",
+        "461-483"
+      ]
+    },
+    {
+      "commit": "afe0d5c261c3a0c88b38894981a7b332da93e7dd",
+      "path": "java/src/com/android/inputmethod/latin/InputView.java",
+      "url": "https://android.googlesource.com/platform/packages/inputmethods/LatinIME/+/afe0d5c261c3a0c88b38894981a7b332da93e7dd/java/src/com/android/inputmethod/latin/InputView.java",
+      "bytes": 10509,
+      "sha256": "e2dfc6136decf9d29ab4e13a2b6ac4a2d801b3acbfbc55d147099bc90549a3a7",
+      "localPath": "/workspace/scratch/raw-latinime-2026-11-01/InputView.java",
+      "reviewedLineRanges": [
+        "31-55",
+        "58-108"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 1,
+  "kind": "bounded-latinime-view-path-source-precheck",
+  "reviewedAt": "2026-11-01T09:41:01.044603+00:00",
+  "tag": "android-17.0.0_r1",
+  "project": "packages/inputmethods/LatinIME",
+  "commit": "afe0d5c261c3a0c88b38894981a7b332da93e7dd",
+  "sourceFilesRead": 3,
+  "repositoryFilesChanged": false,
+  "deviceCommandsExecuted": 0,
+  "sourceImageEquivalenceVerified": false,
+  "actualRuntimeCauseEstablished": false,
+  "pendingObservationRunId": 41293997835,
+  "files": [
+    {
+      "commit": "afe0d5c261c3a0c88b38894981a7b332da93e7dd",
+      "path": "java/src/com/android/inputmethod/latin/LatinIME.java",
+      "url": "https://android.googlesource.com/platform/packages/inputmethods/LatinIME/+/afe0d5c261c3a0c88b38894981a7b332da93e7dd/java/src/com/android/inputmethod/latin/LatinIME.java",
+      "bytes": 94295,
+      "sha256": "f96661c795c9334f226071336e7e664fc8c0c90bcf871588857bdce56fd54b0e",
+      "localPath": "/workspace/scratch/raw-latinime-2026-11-01/LatinIME.java",
+      "reviewedLineRanges": [
+        "777-780",
+        "847-865",
+        "925-974",
+        "1003-1064",
+        "1245-1283",
+        "1299-1313",
+        "1342-1364",
+        "1683-1696"
+      ]
+    },
+    {
+      "commit": "afe0d5c261c3a0c88b38894981a7b332da93e7dd",
+      "path": "java/src/com/android/inputmethod/keyboard/KeyboardSwitcher.java",
+      "url": "https://android.googlesource.com/platform/packages/inputmethods/LatinIME/+/afe0d5c261c3a0c88b38894981a7b332da93e7dd/java/src/com/android/inputmethod/keyboard/KeyboardSwitcher.java",
+      "bytes": 21072,
+      "sha256": "226e8499a544c0a4bddc449d801eacc2b0789310fb00f708d2c8df86ab9699c5",
+      "localPath": "/workspace/scratch/raw-latinime-2026-11-01/KeyboardSwitcher.java",
+      "reviewedLineRanges": [
+        "114-135",
+        "148-174",
+        "182-186",
+        "274-291",
+        "434-444",
+        "461-483"
+      ]
+    },
+    {
+      "commit": "afe0d5c261c3a0c88b38894981a7b332da93e7dd",
+      "path": "java/src/com/android/inputmethod/latin/InputView.java",
+      "url": "https://android.googlesource.com/platform/packages/inputmethods/LatinIME/+/afe0d5c261c3a0c88b38894981a7b332da93e7dd/java/src/com/android/inputmethod/latin/InputView.java",
+      "bytes": 10509,
+      "sha256": "e2dfc6136decf9d29ab4e13a2b6ac4a2d801b3acbfbc55d147099bc90549a3a7",
+      "localPath": "/workspace/scratch/raw-latinime-2026-11-01/InputView.java",
+      "reviewedLineRanges": [
+        "31-55",
+        "58-108"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "normal_create_has_no_explicit_null_branch",
+      "status": "SOURCE_PATH_VERIFIED",
+      "source": [
+        "LatinIME.java:847-852",
+        "KeyboardSwitcher.java:461-483"
+      ],
+      "text": "LatinIME delegates onCreateInputView to KeyboardSwitcher. The latter inflates R.layout.input_view, assigns its keyboard/frame/emoji children, initializes them and returns mCurrentInputView. Neither reviewed method has an explicit return-null or catch-and-return-empty fallback. Inflate/resource/cast failures are not converted to a successful null view here. This is not proof that the on-device implementation ran or a child obtained positive geometry."
+    },
+    {
+      "id": "start_input_can_return_before_keyboard_loading",
+      "status": "SOURCE_PATH_VERIFIED",
+      "source": [
+        "LatinIME.java:925-974"
+      ],
+      "conditions": [
+        "editorInfo==null: logs and returns when debug disabled; throws in debug mode.",
+        "mainKeyboardView==null: returns; the source comment describes a landscape lifecycle case."
+      ],
+      "text": "These early exits abort initialization; they do not explicitly set an empty or null input view. Base IMS callback flags alone cannot prove this subclass completed its keyboard load."
+    },
+    {
+      "id": "keyboard_load_exception_is_caught",
+      "status": "SOURCE_PATH_VERIFIED",
+      "source": [
+        "KeyboardSwitcher.java:114-135",
+        "KeyboardSwitcher.java:148-174"
+      ],
+      "text": "loadKeyboard constructs a layout set and catches KeyboardLayoutSetException from the load-state path, logging loading keyboard failed. The reviewed catch does not install a replacement keyboard or prove whether old/null content remains. No such runtime exception is established by this review."
+    },
+    {
+      "id": "explicit_keyboard_hidden_branch",
+      "status": "SOURCE_PATH_VERIFIED",
+      "source": [
+        "KeyboardSwitcher.java:274-291",
+        "LatinIME.java:777-780"
+      ],
+      "condition": "settingsValues.mHasHardwareKeyboard && toggleState==KeyboardSwitchState.HIDDEN",
+      "text": "setMainKeyboardFrame chooses GONE for the keyboard and its frame under this condition; it also hides the emoji palettes. LatinIME additional helper requires !onEvaluateInputViewShown(). The IMMS/base-IMS dump does not independently expose this LatinIME settings cache or toggleState, so Configuration or SettingsObserver alone does not establish this branch."
+    },
+    {
+      "id": "latinime_insets_override_early_returns",
+      "status": "SOURCE_PATH_VERIFIED",
+      "source": [
+        "LatinIME.java:1245-1265",
+        "KeyboardSwitcher.java:434-444"
+      ],
+      "conditions": [
+        "mInputView==null: retains super.onComputeInsets output.",
+        "visibleKeyboardView==null or missing suggestionStripView: retains super output.",
+        "isImeSuppressedByHardwareKeyboard() && !visibleKeyboardView.isShown(): sets contentTopInsets/visibleTopInsets to inputHeight, invokes outline updater and returns."
+      ],
+      "text": "getVisibleKeyboardView chooses shown emoji palettes, otherwise the main keyboard. Its name alone is not a visibility assertion. The later dump cannot identify which early-return branch ran without the unobserved subclass state."
+    },
+    {
+      "id": "region_is_conditional_on_child_shown_and_geometry",
+      "status": "SOURCE_PATH_VERIFIED",
+      "source": [
+        "LatinIME.java:1266-1283"
+      ],
+      "condition": "visibleKeyboardView.isShown() gates switching touchableInsets to TOUCHABLE_INSETS_REGION and setting the rectangle.",
+      "rectangle": {
+        "left": 0,
+        "top": "0 if more-keys panel, otherwise inputHeight-visibleKeyboardHeight-suggestionsHeight",
+        "right": "visibleKeyboardView.getWidth()",
+        "bottom": "mInputView.getHeight()"
+      },
+      "text": "Even after this branch, nonpositive width or bottom<=top gives an empty rectangle. If the child is not shown, this branch does not replace the superclass touchable mode/region. IMS mInputViewStarted/mIsInputViewShown are not measurements of this child width, height or isShown. No on-device zero geometry has yet been observed."
+    },
+    {
+      "id": "root_input_view_does_not_force_zero_geometry_in_reviewed_file",
+      "status": "BOUNDED_NEGATIVE_SOURCE_FINDING",
+      "source": [
+        "InputView.java:31-55",
+        "LatinIME.java:1342-1364"
+      ],
+      "text": "The reviewed InputView class is a FrameLayout focused on child references and input-event forwarding; it has no onMeasure/onLayout override or explicit zero-size path. LatinIME expands its input root/area to MATCH_PARENT outside fullscreen and uses WRAP_CONTENT in fullscreen. The layout XML, geometry resource helpers and MainKeyboardView are outside the frozen three-file scope, so no conclusion about their positive dimensions or rendering follows."
+    }
+  ],
+  "interpretationLimits": [
+    "This is a fixed-tag source precheck, not a device execution result or APK/source equivalence attestation.",
+    "Wait for the current run original dump before deciding which finding is relevant; neither an IMS cache nor one later screenshot proves an earlier callback state.",
+    "The three-file bound intentionally excludes XML overlays, geometry helpers, MainKeyboardView implementation and device logs.",
+    "No new stimulus, retry, timeout extension, guard change, or data collection was performed."
+  ],
+  "observedRunFollowup": {
+    "reviewedAt": "2026-11-01T09:45:14.089217+00:00",
+    "previousPrecheckReceiptSha256": "974f281c4ae585b73753dd3c920ae28b0c4aeb52447fc1d4043ee3d30fe3377d",
+    "source": {
+      "repository": "ecojust/Agent-OS",
+      "commit": "de150f4c975eec6c9d0b2f2b44e825c60fd0130a",
+      "runId": 41293997835,
+      "attempt": 1
+    },
+    "rawStatus": "failed",
+    "rawFailureReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED",
+    "positiveCallbackCount": 0,
+    "imeStateStatus": "recorded",
+    "originalDump": {
+      "path": "/workspace/scratch/ime-state-run-41293997835/ime-state-original.txt",
+      "bytes": 49154,
+      "sha256": "de08af98c9e8c9831671dbba26614cb4022504df1c0b86b2bb8be10fe5182894"
+    },
+    "archiveDirectory": "/workspace/Agent-OS/screenshots/window-infos-raw-41293997835-1",
+    "observedFields": {
+      "configuration": {
+        "keyboard": 2,
+        "keyboardHidden": 1,
+        "hardKeyboardHidden": 1,
+        "printedToken": "qwerty/v/v"
+      },
+      "mViewsCreated": true,
+      "mInputStarted": true,
+      "mInputViewStarted": true,
+      "mShowInputRequested": true,
+      "mIsInputViewShown": false,
+      "mDecorViewVisible": true,
+      "mWindowVisible": true,
+      "mCandidatesVisibility": 4,
+      "contentTopInsets": 616,
+      "visibleTopInsets": 616,
+      "touchableInsets": 2,
+      "touchableRegion": {
+        "rectangles": [],
+        "empty": true,
+        "coordinateOrder": "left_top_right_bottom",
+        "scope": "InputMethodService_mTmpInsets_touchableRegion_only"
+      },
+      "settingsObserver": {
+        "observerPresent": true,
+        "cachedShowImeWithHardKeyboard": 1,
+        "cacheMeaning": "FALSE"
+      },
+      "inputEditorInfo": {
+        "isNull": false,
+        "inputType": 2097153,
+        "packageName": "dev.agentos.compat",
+        "fixturePackageMatches": true
+      }
+    },
+    "additionalUnparsedSuffixObservation": {
+      "line": 485,
+      "literal": "  Keyboard mode = -1",
+      "scope": "Read from preserved ordinary dump suffix; not a new parser field, acceptance condition or assertion of HIDDEN state."
+    },
+    "reusedExistingFrameworkSource": {
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "path": "core/java/android/inputmethodservice/InputMethodService.java",
+      "localPath": "/workspace/scratch/ime-identity-2026-10-31/core__java__android__inputmethodservice__InputMethodService.java",
+      "sha256": "327bc0eae0c5cbc12fd103aef3f50121b49bca728fdcf59d84b99faa3edd3c1c",
+      "reviewedLineRanges": [
+        "1570-1578",
+        "1613-1628",
+        "2347-2361",
+        "2390-2403",
+        "3208-3230",
+        "3393-3411"
+      ],
+      "note": "Reused earlier fixed-source cache; no additional source download or expanded file search."
+    },
+    "boundedConclusions": [
+      {
+        "id": "latinime_override_delegates_except_internal_force_flag",
+        "source": [
+          "LatinIME.java:1285-1293",
+          "LatinIME.java:1308-1314"
+        ],
+        "conclusion": "Yes, LatinIME overrides onEvaluateInputViewShown. It returns true only when its private mIsExecutingStartShowingInputView flag is true; otherwise it returns super.onEvaluateInputViewShown(). The startShowingInputView helper sets that flag around showWindow(true). No unconditional LatinIME bypass of the framework predicate exists in these fixed lines.",
+        "limit": "The private flag and exact historical call path are not in the parsed dump; the installed APK was not proven byte-equivalent."
+      },
+      {
+        "id": "recorded_inputs_match_false_framework_predicate",
+        "source": [
+          "InputMethodService.java:1613-1628",
+          "InputMethodService.java:2390-2403"
+        ],
+        "conclusion": "Using the recorded non-null SettingsObserver cache FALSE (1), keyboard QWERTY (2), and hardKeyboardHidden NO (1), the fixed base method evaluates false: the cache does not opt in, keyboard is not NOKEYS, and hardKeyboardHidden is not YES. This precisely matches a source condition capable of keeping the input area hidden despite show requested.",
+        "limit": "This is fixed-source evaluation using observed inputs, not proof of the exact executed branch, a live settings read, or the same values throughout the earlier raw collection."
+      },
+      {
+        "id": "started_callback_and_created_scaffolding_are_not_visible_keyboard",
+        "source": [
+          "InputMethodService.java:2347-2361",
+          "InputMethodService.java:3208-3230",
+          "InputMethodService.java:3393-3411",
+          "LatinIME.java:925-974"
+        ],
+        "conclusion": "The measured mInputViewStarted=true and mViewsCreated=true do not contradict mIsInputViewShown=false. Fixed startViews/doStartInput set the started flag and invoke the callback from show-request state without requiring mIsInputViewShown=true. mViewsCreated is set in the candidate-view setup path. updateInputViewShown creates the input view inside its changed-visibility branch; if false stays false, that branch need not run. LatinIME can also return early when its main keyboard view is null.",
+        "limit": "The observation does not independently prove mInputView==null, which callback returned early, or actual keyboard child geometry."
+      },
+      {
+        "id": "insets_do_not_establish_final_surface_region_or_zero_child_geometry",
+        "source": [
+          "LatinIME.java:1245-1283",
+          "KeyboardSwitcher.java:440-445"
+        ],
+        "conclusion": "The later dump records VISIBLE mode (2), contentTopInsets=visibleTopInsets=616 and empty IMS cached touchableRegion. LatinIME replaces the mode with REGION only in a shown-child branch; its early returns can retain superclass mode/region. Thus these values are consistent with an unshown or unavailable child, but do not select a specific branch. Empty IMS region in VISIBLE mode is not a final WMS/SF region measurement.",
+        "limit": "Do not infer child width/height zero, missing view, LatinIME HIDDEN enum state, or causal equivalence with the earlier raw callback merely from these cached insets."
+      },
+      {
+        "id": "keyboard_mode_minus_one_is_not_hidden_enum_attestation",
+        "source": [
+          "LatinIME.java:1984-2003",
+          "KeyboardSwitcher.java:182-186",
+          "KeyboardSwitcher.java:312-340"
+        ],
+        "conclusion": "The preserved suffix prints Keyboard mode=-1. Fixed LatinIME.dump prints keyboard.mId.mMode when a Keyboard exists and -1 otherwise. This is a different value from KeyboardSwitcher.KeyboardSwitchState.HIDDEN; the shared numeric -1 does not equate the two. getKeyboard returns null when mKeyboardView is null or its own keyboard is null.",
+        "limit": "This is compatible with the null-keyboard fallback but cannot distinguish a null MainKeyboardView from a null Keyboard model, prove the inverse without further mode-domain review, or attest the runtime HIDDEN state. No extra source files were read to broaden that claim."
+      }
+    ],
+    "remainingUnverified": [
+      "Byte-equivalence of the emulator LatinIME/framework implementation and the pinned AOSP tag sources.",
+      "Private forced-show flag, actual input/main-keyboard view existence, child visibility and positive dimensions.",
+      "Which fixed-source initialization/visibility/insets branch executed, including any layout-load exception.",
+      "The values at each earlier raw callback; the dump is deliberately later and non-atomic.",
+      "Final WMS/SF input-region derivation from the cached IMS insets."
+    ],
+    "scope": {
+      "newDeviceCommands": 0,
+      "newSourceDownloads": 0,
+      "codeChanges": false,
+      "settingsChanges": false,
+      "rawAcceptanceUpgraded": false,
+      "additionalDeviceTrialPlannedByThisReview": false
+    },
+    "conclusion": "This run successfully recorded the intended IME diagnostic and gives concrete evidence matching the fixed-source hardware-keyboard visibility gate. The precise runtime path and full cause are not yet established; raw positive-control acceptance remains failed with zero qualifying callbacks."
+  }
+}

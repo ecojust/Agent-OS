@@ -1,0 +1,2081 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-raw-window-original-analysis",
+  "auditedAt": "2026-11-01T09:43:14.114082+00:00",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "de150f4c975eec6c9d0b2f2b44e825c60fd0130a",
+    "runId": 41293997835,
+    "attempt": 1
+  },
+  "manifestStatus": "failed",
+  "reportStatus": "failed",
+  "failureReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED",
+  "newDeviceRunsByReviewer": 0,
+  "originalNotesCasesRerun": 0,
+  "limitations": [
+    "Serialized Binder IDs derive from the frozen producer comparing held objects; this audit does not recreate Binder endpoints",
+    "package/UID/type/display candidate does not independently identify the configured IME service component",
+    "raw SF subset, initial cache, independent later screenshot and original Notes failure are distinct evidence"
+  ],
+  "manifestFilesVerified": 12,
+  "manifestPayloadBytes": 262666,
+  "manifestSha256": "47199604f1c286e3fcb100008bd1beae61528d92e8e50b60efd4f7aa3a6a7bee",
+  "commandsVerified": 30,
+  "commandOutcomes": [
+    {
+      "id": "devices",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 4,
+      "byteCount": 47
+    },
+    {
+      "id": "property_ro.kernel.qemu",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 44,
+      "byteCount": 2
+    },
+    {
+      "id": "property_ro.boot.qemu",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 46,
+      "byteCount": 2
+    },
+    {
+      "id": "property_ro.build.version.sdk",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 32,
+      "byteCount": 3
+    },
+    {
+      "id": "property_ro.product.cpu.abi",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 41,
+      "byteCount": 7
+    },
+    {
+      "id": "property_sys.boot_completed",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 43,
+      "byteCount": 2
+    },
+    {
+      "id": "property_ro.build.fingerprint",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 44,
+      "byteCount": 85
+    },
+    {
+      "id": "extra_vm_options",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 44,
+      "byteCount": 1
+    },
+    {
+      "id": "current_user",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 76,
+      "byteCount": 2
+    },
+    {
+      "id": "shell_uid",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 41,
+      "byteCount": 5
+    },
+    {
+      "id": "timeout_available",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 32,
+      "byteCount": 0
+    },
+    {
+      "id": "installed_packages",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 73,
+      "byteCount": 7542
+    },
+    {
+      "id": "ime_before",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 49,
+      "byteCount": 40
+    },
+    {
+      "id": "ime_list",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 82,
+      "byteCount": 40
+    },
+    {
+      "id": "ime_uid",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 57,
+      "byteCount": 48
+    },
+    {
+      "id": "apk_badging",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 217,
+      "byteCount": 576
+    },
+    {
+      "id": "install_fixture",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 445,
+      "byteCount": 36
+    },
+    {
+      "id": "fixture_paths",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 47,
+      "byteCount": 98
+    },
+    {
+      "id": "fixture_uid",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 82,
+      "byteCount": 37
+    },
+    {
+      "id": "push_probe",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 9,
+      "byteCount": 133
+    },
+    {
+      "id": "probe_digest",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 27,
+      "byteCount": 125
+    },
+    {
+      "id": "raw_probe",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 12293,
+      "byteCount": 26364
+    },
+    {
+      "id": "fixture_start",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 1582,
+      "byteCount": 207
+    },
+    {
+      "id": "ime_state",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 39,
+      "byteCount": 49154
+    },
+    {
+      "id": "screenshot",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 122,
+      "byteCount": 14800
+    },
+    {
+      "id": "fixture_receipt",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 27,
+      "byteCount": 453
+    },
+    {
+      "id": "ime_after",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 21,
+      "byteCount": 40
+    },
+    {
+      "id": "ime_uid_after",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 27,
+      "byteCount": 48
+    },
+    {
+      "id": "cleanup_fixture",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 49,
+      "byteCount": 0
+    },
+    {
+      "id": "cleanup_probe",
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 26,
+      "byteCount": 0
+    }
+  ],
+  "fixture": {
+    "phase": "ime_visible",
+    "sdkInt": 37,
+    "uid": 10156,
+    "displayId": 0,
+    "showImeAttempts": 1,
+    "showImeAccepted": true,
+    "imeVisibleObserved": true,
+    "startedElapsedMs": 32513,
+    "showRequestedElapsedMs": 33567,
+    "firstImeVisibleElapsedMs": 34137,
+    "receiptWrittenElapsedMs": 34137
+  },
+  "rawMarkerJsonBytes": 26044,
+  "rawMarkerTotalBytesExcludingNewline": 26071,
+  "rawResultStatus": "RECORDED",
+  "process": {
+    "sdk": 37,
+    "uid": 2000,
+    "startedElapsedMs": 31952,
+    "finishedElapsedMs": 43955,
+    "fingerprintSha256": "35abb7613e43fefcf91fd83137ec1d613853bc67499c826f80f06cb034ad8fc8"
+  },
+  "times": {
+    "constructedElapsedMs": 31953,
+    "registeredElapsedMs": 31954,
+    "readyElapsedMs": 31954,
+    "observationDeadlineElapsedMs": 43954,
+    "freezeElapsedMs": 43954,
+    "unregisteredElapsedMs": 43955
+  },
+  "admission": {
+    "class.raw": "MATCHED",
+    "class.handle": "MATCHED",
+    "class.display": "MATCHED",
+    "class.inputConfig": "MATCHED",
+    "constructor.raw": "MATCHED",
+    "method.raw.register": "MATCHED",
+    "method.raw.unregister": "MATCHED",
+    "method.raw.callback": "MATCHED",
+    "method.handle.getWindowToken": "MATCHED",
+    "field.handle.inputConfig": "MATCHED",
+    "field.handle.frame": "MATCHED",
+    "field.handle.touchableRegion": "MATCHED",
+    "field.handle.layoutParamsType": "MATCHED",
+    "field.handle.ownerUid": "MATCHED",
+    "field.handle.packageName": "MATCHED",
+    "field.handle.displayId": "MATCHED",
+    "constant.inputConfig.NOT_VISIBLE": "MATCHED",
+    "constant.inputConfig.CLONE": "MATCHED"
+  },
+  "lifecycle": {
+    "constructionStatus": "CONSTRUCTED",
+    "registrationStatus": "REGISTERED",
+    "unregistrationStatus": "RETURNED",
+    "constructAttempts": 1,
+    "registerAttempts": 1,
+    "unregisterAttempts": 1,
+    "collectionFrozen": true,
+    "callbacksSeen": 69,
+    "callbacksStored": 69,
+    "callbacksDropped": 0,
+    "callbacksOutsideWindow": 0,
+    "binderIdsAssigned": 1,
+    "outputTruncated": false,
+    "outputOmittedCallbacks": 0,
+    "unregisterReturnMeaning": "Java invocation returned; native status not exposed and SF removal acknowledgement unverified"
+  },
+  "hostCleanup": {
+    "fixture": "RETURNED_ZERO",
+    "probeFile": "RETURNED_ZERO"
+  },
+  "remoteProcessExit": "NORMAL",
+  "ime": {
+    "componentBefore": "com.android.inputmethod.latin/.LatinIME",
+    "componentAfter": "com.android.inputmethod.latin/.LatinIME",
+    "package": "com.android.inputmethod.latin",
+    "uid": 10112,
+    "uidAfter": 10112,
+    "displayId": 0
+  },
+  "rawSamplesAnalyzed": 70,
+  "rawRowsAnalyzed": 25,
+  "derivedFieldAndIdentityChecks": 455,
+  "binderIdsSeenInExport": [
+    1
+  ],
+  "positiveCallbacksIndependent": 0,
+  "distinctCandidateGeometries": [
+    {
+      "inputConfigSigned": 260,
+      "frame": [
+        0,
+        24,
+        320,
+        640
+      ],
+      "regionEmpty": true
+    },
+    {
+      "inputConfigSigned": 260,
+      "frame": [
+        0,
+        32,
+        320,
+        648
+      ],
+      "regionEmpty": true
+    },
+    {
+      "inputConfigSigned": 260,
+      "frame": [
+        0,
+        36,
+        320,
+        652
+      ],
+      "regionEmpty": true
+    },
+    {
+      "inputConfigSigned": 260,
+      "frame": [
+        0,
+        41,
+        320,
+        657
+      ],
+      "regionEmpty": true
+    },
+    {
+      "inputConfigSigned": 260,
+      "frame": [
+        0,
+        48,
+        320,
+        664
+      ],
+      "regionEmpty": true
+    },
+    {
+      "inputConfigSigned": 260,
+      "frame": [
+        0,
+        57,
+        320,
+        673
+      ],
+      "regionEmpty": true
+    },
+    {
+      "inputConfigSigned": 260,
+      "frame": [
+        0,
+        67,
+        320,
+        683
+      ],
+      "regionEmpty": true
+    },
+    {
+      "inputConfigSigned": 260,
+      "frame": [
+        0,
+        81,
+        320,
+        697
+      ],
+      "regionEmpty": true
+    },
+    {
+      "inputConfigSigned": 262,
+      "frame": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "regionEmpty": true
+    },
+    {
+      "inputConfigSigned": 262,
+      "frame": [
+        0,
+        0,
+        320,
+        616
+      ],
+      "regionEmpty": true
+    },
+    {
+      "inputConfigSigned": 262,
+      "frame": [
+        0,
+        24,
+        320,
+        640
+      ],
+      "regionEmpty": true
+    }
+  ],
+  "samples": [
+    {
+      "kind": "INITIAL",
+      "sequence": 0,
+      "elapsedRealtimeMs": 31954,
+      "relativeToShowRequestMs": -1613,
+      "rawWindowCount": 0,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 1,
+      "elapsedRealtimeMs": 31973,
+      "relativeToShowRequestMs": -1594,
+      "rawWindowCount": 8,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 2,
+      "elapsedRealtimeMs": 32090,
+      "relativeToShowRequestMs": -1477,
+      "rawWindowCount": 8,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 3,
+      "elapsedRealtimeMs": 32106,
+      "relativeToShowRequestMs": -1461,
+      "rawWindowCount": 8,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 4,
+      "elapsedRealtimeMs": 32157,
+      "relativeToShowRequestMs": -1410,
+      "rawWindowCount": 8,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 5,
+      "elapsedRealtimeMs": 32174,
+      "relativeToShowRequestMs": -1393,
+      "rawWindowCount": 8,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 6,
+      "elapsedRealtimeMs": 32189,
+      "relativeToShowRequestMs": -1378,
+      "rawWindowCount": 9,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 7,
+      "elapsedRealtimeMs": 32210,
+      "relativeToShowRequestMs": -1357,
+      "rawWindowCount": 9,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 8,
+      "elapsedRealtimeMs": 32222,
+      "relativeToShowRequestMs": -1345,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 9,
+      "elapsedRealtimeMs": 32242,
+      "relativeToShowRequestMs": -1325,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 10,
+      "elapsedRealtimeMs": 32258,
+      "relativeToShowRequestMs": -1309,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 11,
+      "elapsedRealtimeMs": 32273,
+      "relativeToShowRequestMs": -1294,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 12,
+      "elapsedRealtimeMs": 32292,
+      "relativeToShowRequestMs": -1275,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 13,
+      "elapsedRealtimeMs": 32314,
+      "relativeToShowRequestMs": -1253,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 14,
+      "elapsedRealtimeMs": 32324,
+      "relativeToShowRequestMs": -1243,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 15,
+      "elapsedRealtimeMs": 32340,
+      "relativeToShowRequestMs": -1227,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 16,
+      "elapsedRealtimeMs": 32356,
+      "relativeToShowRequestMs": -1211,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 17,
+      "elapsedRealtimeMs": 32374,
+      "relativeToShowRequestMs": -1193,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 18,
+      "elapsedRealtimeMs": 32391,
+      "relativeToShowRequestMs": -1176,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 19,
+      "elapsedRealtimeMs": 32408,
+      "relativeToShowRequestMs": -1159,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 20,
+      "elapsedRealtimeMs": 32424,
+      "relativeToShowRequestMs": -1143,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 21,
+      "elapsedRealtimeMs": 32442,
+      "relativeToShowRequestMs": -1125,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 22,
+      "elapsedRealtimeMs": 32458,
+      "relativeToShowRequestMs": -1109,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 23,
+      "elapsedRealtimeMs": 32474,
+      "relativeToShowRequestMs": -1093,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 24,
+      "elapsedRealtimeMs": 32488,
+      "relativeToShowRequestMs": -1079,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 25,
+      "elapsedRealtimeMs": 32508,
+      "relativeToShowRequestMs": -1059,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 26,
+      "elapsedRealtimeMs": 32522,
+      "relativeToShowRequestMs": -1045,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 27,
+      "elapsedRealtimeMs": 32539,
+      "relativeToShowRequestMs": -1028,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 28,
+      "elapsedRealtimeMs": 32621,
+      "relativeToShowRequestMs": -946,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 29,
+      "elapsedRealtimeMs": 32638,
+      "relativeToShowRequestMs": -929,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 30,
+      "elapsedRealtimeMs": 32721,
+      "relativeToShowRequestMs": -846,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 31,
+      "elapsedRealtimeMs": 32737,
+      "relativeToShowRequestMs": -830,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 32,
+      "elapsedRealtimeMs": 32788,
+      "relativeToShowRequestMs": -779,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 33,
+      "elapsedRealtimeMs": 32805,
+      "relativeToShowRequestMs": -762,
+      "rawWindowCount": 11,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 34,
+      "elapsedRealtimeMs": 33471,
+      "relativeToShowRequestMs": -96,
+      "rawWindowCount": 11,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 35,
+      "elapsedRealtimeMs": 33497,
+      "relativeToShowRequestMs": -70,
+      "rawWindowCount": 11,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 36,
+      "elapsedRealtimeMs": 33537,
+      "relativeToShowRequestMs": -30,
+      "rawWindowCount": 11,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 37,
+      "elapsedRealtimeMs": 33555,
+      "relativeToShowRequestMs": -12,
+      "rawWindowCount": 11,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 38,
+      "elapsedRealtimeMs": 33678,
+      "relativeToShowRequestMs": 111,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 39,
+      "elapsedRealtimeMs": 33682,
+      "relativeToShowRequestMs": 115,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 40,
+      "elapsedRealtimeMs": 33723,
+      "relativeToShowRequestMs": 156,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 41,
+      "elapsedRealtimeMs": 33740,
+      "relativeToShowRequestMs": 173,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 42,
+      "elapsedRealtimeMs": 33774,
+      "relativeToShowRequestMs": 207,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 43,
+      "elapsedRealtimeMs": 33774,
+      "relativeToShowRequestMs": 207,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 44,
+      "elapsedRealtimeMs": 33805,
+      "relativeToShowRequestMs": 238,
+      "rawWindowCount": 10,
+      "typeCount": 0,
+      "displayTypeCount": 0,
+      "uidTypeDisplayCount": 0,
+      "candidateRows": 0,
+      "nullTokens": 0,
+      "distinctBinders": 0,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": []
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 45,
+      "elapsedRealtimeMs": 33890,
+      "relativeToShowRequestMs": 323,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 3,
+          "binderId": 1,
+          "inputConfigSigned": 262,
+          "inputConfigHex": "0x00000106",
+          "frame": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "regionEmpty": true,
+          "notVisible": true,
+          "isClone": false,
+          "frameEmpty": true,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 46,
+      "elapsedRealtimeMs": 34113,
+      "relativeToShowRequestMs": 546,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 3,
+          "binderId": 1,
+          "inputConfigSigned": 262,
+          "inputConfigHex": "0x00000106",
+          "frame": [
+            0,
+            0,
+            320,
+            616
+          ],
+          "regionEmpty": true,
+          "notVisible": true,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 47,
+      "elapsedRealtimeMs": 34120,
+      "relativeToShowRequestMs": 553,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 3,
+          "binderId": 1,
+          "inputConfigSigned": 262,
+          "inputConfigHex": "0x00000106",
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": true,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 48,
+      "elapsedRealtimeMs": 34175,
+      "relativeToShowRequestMs": 608,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 3,
+          "binderId": 1,
+          "inputConfigSigned": 262,
+          "inputConfigHex": "0x00000106",
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": true,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 49,
+      "elapsedRealtimeMs": 34182,
+      "relativeToShowRequestMs": 615,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 3,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            81,
+            320,
+            697
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 50,
+      "elapsedRealtimeMs": 34196,
+      "relativeToShowRequestMs": 629,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 3,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            67,
+            320,
+            683
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 51,
+      "elapsedRealtimeMs": 34207,
+      "relativeToShowRequestMs": 640,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 3,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            57,
+            320,
+            673
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 52,
+      "elapsedRealtimeMs": 34225,
+      "relativeToShowRequestMs": 658,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 3,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            48,
+            320,
+            664
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 53,
+      "elapsedRealtimeMs": 34242,
+      "relativeToShowRequestMs": 675,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 3,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            41,
+            320,
+            657
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 54,
+      "elapsedRealtimeMs": 34259,
+      "relativeToShowRequestMs": 692,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 3,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            36,
+            320,
+            652
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 55,
+      "elapsedRealtimeMs": 34362,
+      "relativeToShowRequestMs": 795,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 3,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            32,
+            320,
+            648
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 56,
+      "elapsedRealtimeMs": 34369,
+      "relativeToShowRequestMs": 802,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 3,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 57,
+      "elapsedRealtimeMs": 34401,
+      "relativeToShowRequestMs": 834,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 3,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 58,
+      "elapsedRealtimeMs": 34425,
+      "relativeToShowRequestMs": 858,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 2,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 59,
+      "elapsedRealtimeMs": 34441,
+      "relativeToShowRequestMs": 874,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 2,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 60,
+      "elapsedRealtimeMs": 34457,
+      "relativeToShowRequestMs": 890,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 2,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 61,
+      "elapsedRealtimeMs": 34475,
+      "relativeToShowRequestMs": 908,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 2,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 62,
+      "elapsedRealtimeMs": 34490,
+      "relativeToShowRequestMs": 923,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 2,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 63,
+      "elapsedRealtimeMs": 34504,
+      "relativeToShowRequestMs": 937,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 2,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 64,
+      "elapsedRealtimeMs": 34525,
+      "relativeToShowRequestMs": 958,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 2,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 65,
+      "elapsedRealtimeMs": 34542,
+      "relativeToShowRequestMs": 975,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 2,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 66,
+      "elapsedRealtimeMs": 34556,
+      "relativeToShowRequestMs": 989,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 2,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 67,
+      "elapsedRealtimeMs": 34571,
+      "relativeToShowRequestMs": 1004,
+      "rawWindowCount": 11,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 2,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 68,
+      "elapsedRealtimeMs": 34590,
+      "relativeToShowRequestMs": 1023,
+      "rawWindowCount": 10,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 2,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    },
+    {
+      "kind": "CALLBACK",
+      "sequence": 69,
+      "elapsedRealtimeMs": 34607,
+      "relativeToShowRequestMs": 1040,
+      "rawWindowCount": 10,
+      "typeCount": 1,
+      "displayTypeCount": 1,
+      "uidTypeDisplayCount": 1,
+      "candidateRows": 1,
+      "nullTokens": 0,
+      "distinctBinders": 1,
+      "complete": true,
+      "issues": [],
+      "positive": false,
+      "rows": [
+        {
+          "rowIndex": 2,
+          "binderId": 1,
+          "inputConfigSigned": 260,
+          "inputConfigHex": "0x00000104",
+          "frame": [
+            0,
+            24,
+            320,
+            640
+          ],
+          "regionEmpty": true,
+          "notVisible": false,
+          "isClone": false,
+          "frameEmpty": false,
+          "passesFourPredicates": false
+        }
+      ]
+    }
+  ],
+  "initialEmptyDoesNotProveWindowAbsent": true,
+  "beforeAfterConfigNotAtomic": true
+}

@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 2,
+  "kind": "independent-raw-window-ime-original-audit",
+  "auditedAt": "2026-11-01T09:44:41.176425+00:00",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 41293997835,
+    "attempt": 1,
+    "commit": "de150f4c975eec6c9d0b2f2b44e825c60fd0130a"
+  },
+  "archiveCommit": "758db509a825b5e10953918897817839cb15b4e6",
+  "status": "passed",
+  "originalDiagnosticStatus": "failed",
+  "originalArchiveStatus": "failed",
+  "payloadFiles": 12,
+  "payloadBytes": 262666,
+  "sourceFiles": 18,
+  "sourceBytes": 273757,
+  "commandCount": 30,
+  "commandOutputBytes": 99897,
+  "rawSummary": {
+    "status": "RECORDED",
+    "callbacksSeen": 69,
+    "callbacksStored": 69,
+    "callbacksDropped": 0,
+    "positiveCallbacksRecomputed": 0,
+    "totalStoredCandidateRows": 25,
+    "filteredRowsPreserved": 25,
+    "initialRawWindowCount": 0,
+    "candidateCallbacks": 25,
+    "fourPredicateFailureCounts": {
+      "notVisible": 4,
+      "clone": 0,
+      "emptyFrame": 1,
+      "emptyRegion": 25
+    },
+    "failureCountsMayOverlap": true,
+    "visibleNonemptyFrameButRegionEmptyRows": 21,
+    "constructRegisterUnregisterAttempts": [
+      1,
+      1,
+      1
+    ],
+    "rawMarkerStatus": "RECORDED",
+    "positiveControlStatus": "failed"
+  },
+  "gitBlobComparison": "passed",
+  "sourceRunJobArtifactBinding": "passed",
+  "sourceFilesAtExactCommit": "passed",
+  "originalCommandBytesAndRawMarker": "passed",
+  "fourPredicatesRecomputed": "passed",
+  "limits": [
+    "This audit does not assert source AOSP tag equals device image bytes.",
+    "Candidate package/UID/type identity is not independent proof of a particular IME service component.",
+    "Screenshot is later than raw collection and is not an atomic snapshot.",
+    "APK bytes are absent from this bundle; their digest is not independently recomputed here.",
+    "Fixed raw records do not contain discarded noncandidate window fields, so selector counts cannot be recomputed from a complete system dump.",
+    "Recorded IME observation means complete bounded parsed fields, not successful raw positive control.",
+    "The later service dump does not associate its objects with the earlier callback Binder or establish historical causality.",
+    "mInputViewStarted and mViewsCreated do not prove a non-null visible software keyboard view.",
+    "The settings observer value is a cached tri-state, not an independent live setting read.",
+    "The service computed insets and empty region do not independently prove final WMS or SurfaceFlinger region equivalence.",
+    "No new callbacks near freeze is not continuous full-system window polling.",
+    "Current IME process UID remains unverified; InputBinding UID belongs to the editor client."
+  ],
+  "originalFailureReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED",
+  "auditStatus": "passed",
+  "diagnosticAcceptance": "failed",
+  "reportVersion": 2,
+  "hostValidatorAtExactSource": "passed",
+  "imeOriginalRecomputation": "passed",
+  "imeFieldsIndependentlyCompared": "15/15",
+  "imeStatus": "recorded",
+  "imeObservationIsRawPositiveAcceptance": false,
+  "rawTimeline": {
+    "clock": "device elapsedRealtime milliseconds",
+    "registered": 31954,
+    "fixtureStarted": 32513,
+    "showRequested": 33567,
+    "firstImeInsetsVisible": 34137,
+    "firstCandidate": 33890,
+    "lastCandidate": 34607,
+    "firstNotVisibleFalseCandidate": 34182,
+    "collectionFrozen": 43954,
+    "processFinished": 43955,
+    "firstCandidateAfterShowMs": 323,
+    "lastCandidateAfterShowMs": 1040,
+    "noNewCandidateCallbackToFreezeMs": 9347
+  },
+  "postRunTimeline": {
+    "clock": "host UTC command timestamps; not an atomic device snapshot",
+    "rawExit": "2026-11-01T09:41:15.681044+00:00",
+    "imeDumpStart": "2026-11-01T09:41:15.685024+00:00",
+    "imeDumpEnd": "2026-11-01T09:41:15.724765+00:00",
+    "screenshotStart": "2026-11-01T09:41:15.733022+00:00",
+    "screenshotEnd": "2026-11-01T09:41:15.855712+00:00",
+    "fixtureCleanupStart": "2026-11-01T09:41:15.941462+00:00",
+    "rawExitToDumpStartMs": 3.98,
+    "dumpEndToScreenshotStartMs": 8.257,
+    "orderingVerified": true
+  },
+  "imeObservation": {
+    "inputBytes": 49154,
+    "inputSha256": "de08af98c9e8c9831671dbba26614cb4022504df1c0b86b2bb8be10fe5182894",
+    "serviceBodyBytes": 2133,
+    "identity": {
+      "matched": true,
+      "expectedComponent": "com.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME",
+      "expectedPackage": "com.android.inputmethod.latin",
+      "configuredUid": 10112,
+      "uidSource": "external_expected_only",
+      "expectedUserId": 0,
+      "managerUserId": 0,
+      "userId": 0,
+      "selectedImeId": "com.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME",
+      "currentImeId": "com.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME",
+      "currentDisplayId": 0,
+      "currentImePresent": true,
+      "serviceClass": "com.android.inputmethod.latin.LatinIME"
+    },
+    "fields": {
+      "configuration": {
+        "keyboard": 2,
+        "keyboardHidden": 1,
+        "hardKeyboardHidden": 1,
+        "printedToken": "qwerty/v/v"
+      },
+      "mViewsCreated": true,
+      "mInputStarted": true,
+      "mInputViewStarted": true,
+      "mShowInputRequested": true,
+      "mIsInputViewShown": false,
+      "mDecorViewVisible": true,
+      "mWindowVisible": true,
+      "mCandidatesVisibility": 4,
+      "contentTopInsets": 616,
+      "visibleTopInsets": 616,
+      "touchableInsets": 2,
+      "touchableRegion": {
+        "rectangles": [],
+        "empty": true,
+        "coordinateOrder": "left_top_right_bottom",
+        "scope": "InputMethodService_mTmpInsets_touchableRegion_only"
+      },
+      "settingsObserver": {
+        "observerPresent": true,
+        "cachedShowImeWithHardKeyboard": 1,
+        "cacheMeaning": "FALSE"
+      },
+      "inputEditorInfo": {
+        "isNull": false,
+        "inputType": 2097153,
+        "packageName": "dev.agentos.compat",
+        "fixturePackageMatches": true
+      }
+    },
+    "scope": {
+      "observation": "later_non_atomic_current_ime_service_dump",
+      "configuredUidSource": "external_expected_only",
+      "currentImeProcessUidVerified": false,
+      "rawWindowBinderAssociation": false,
+      "rawPositiveResultMayBeUpgraded": false,
+      "settingsObserverIsLiveSettingRead": false,
+      "computedInsetsAreFinalWmsOrSfRegion": false,
+      "viewsCreatedProvesNonNullInputView": false,
+      "sourceImageEquivalenceVerified": false
+    }
+  },
+  "screenshotVisualInspection": {
+    "width": 320,
+    "height": 640,
+    "keyboardVisible": false,
+    "observed": "Synthetic editor with text and cursor; no software keyboard is visible in the later screenshot.",
+    "scope": "Visual inspection of actual screenshot.png, after raw exit and IME dump but before fixture cleanup."
+  },
+  "separateIndependentProvenanceReview": {
+    "scratchPath": "/workspace/scratch/raw-41293997835-independent-provenance.json",
+    "bytes": 9053,
+    "sha256": "158179455c274cf07e1a6ad67e9ad4c00ddaf03ede841f33bb376ca410023ff1",
+    "status": "passed",
+    "scope": "Independent Git/source-run/job/artifact/bytes review without repository validator"
+  },
+  "reviewScripts": [
+    {
+      "name": "audit.py",
+      "bytes": 14716,
+      "sha256": "4addb6e33682e874eaaa367268bdcf436ad7a2534faf9f8c83b217f3278a2970"
+    },
+    {
+      "name": "base_audit.py",
+      "bytes": 10171,
+      "sha256": "b9a8ceb49fe11aff221400ed35225a3bf99f7f36ca997ee8cda92b02e20ace10"
+    }
+  ]
+}

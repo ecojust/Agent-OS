@@ -1,0 +1,223 @@
+{
+  "syntheticHostOnly": true,
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "runId": 123,
+    "attempt": 1
+  },
+  "stdoutBytes": 3286,
+  "hostParser": "passed",
+  "ready": {
+    "imePackage": "test.ime",
+    "schemaVersion": 1,
+    "imeUid": 10001,
+    "registered": true,
+    "elapsedRealtimeMs": 486622,
+    "source": {
+      "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "runId": 123,
+      "repository": "ecojust/Agent-OS",
+      "attempt": 1
+    },
+    "displayId": 0
+  },
+  "result": {
+    "registrationStatus": "REGISTERED",
+    "constructionStatus": "CONSTRUCTED",
+    "source": {
+      "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "runId": 123,
+      "repository": "ecojust/Agent-OS",
+      "attempt": 1
+    },
+    "constructAttempts": 1,
+    "outputTruncated": false,
+    "unregistrationStatus": "RETURNED",
+    "times": {
+      "registeredElapsedMs": 486622,
+      "unregisteredElapsedMs": 498623,
+      "freezeElapsedMs": 498623,
+      "constructedElapsedMs": 486620,
+      "observationDeadlineElapsedMs": 498622,
+      "readyElapsedMs": 486622
+    },
+    "imeUid": 10001,
+    "callbacksOutsideWindow": 0,
+    "binderIdsAssigned": 1,
+    "unregisterAttempts": 1,
+    "registerAttempts": 1,
+    "limits": {
+      "admissionMs": 5000,
+      "maxBinderIds": 16,
+      "observationMs": 12000,
+      "maxWindows": 256,
+      "maxCandidateRows": 16,
+      "maxCallbacks": 128,
+      "maxMarkerBytes": 131072
+    },
+    "collectionFrozen": true,
+    "process": {
+      "uid": 2000,
+      "finishedElapsedMs": 498624,
+      "sdk": 37,
+      "startedElapsedMs": 486580,
+      "fingerprintSha256": "80f3e925c164c1acf9d9a423b885b9a922814f61a869d66a8fa7d7da3e3ebfb5"
+    },
+    "schemaVersion": 1,
+    "callbacksDropped": 0,
+    "initial": {
+      "candidateRowCount": 0,
+      "kind": "INITIAL",
+      "elapsedRealtimeMs": 486622,
+      "displayTypeCount": 0,
+      "rawWindowCount": 0,
+      "rows": [],
+      "issues": [],
+      "nullTokenCount": 0,
+      "sequence": 0,
+      "uidTypeDisplayCount": 0,
+      "nullPackageCount": 0,
+      "distinctBinderCount": 0,
+      "complete": true,
+      "typeCount": 0
+    },
+    "callbacksStored": 1,
+    "admission": [
+      {
+        "id": "class.raw",
+        "status": "MATCHED"
+      },
+      {
+        "id": "class.handle",
+        "status": "MATCHED"
+      },
+      {
+        "id": "class.display",
+        "status": "MATCHED"
+      },
+      {
+        "id": "class.inputConfig",
+        "status": "MATCHED"
+      },
+      {
+        "id": "constructor.raw",
+        "status": "MATCHED"
+      },
+      {
+        "id": "method.raw.register",
+        "status": "MATCHED"
+      },
+      {
+        "id": "method.raw.unregister",
+        "status": "MATCHED"
+      },
+      {
+        "id": "method.raw.callback",
+        "status": "MATCHED"
+      },
+      {
+        "id": "method.handle.getWindowToken",
+        "status": "MATCHED"
+      },
+      {
+        "id": "field.handle.inputConfig",
+        "status": "MATCHED"
+      },
+      {
+        "id": "field.handle.frame",
+        "status": "MATCHED"
+      },
+      {
+        "id": "field.handle.touchableRegion",
+        "status": "MATCHED"
+      },
+      {
+        "id": "field.handle.layoutParamsType",
+        "status": "MATCHED"
+      },
+      {
+        "id": "field.handle.ownerUid",
+        "status": "MATCHED"
+      },
+      {
+        "id": "field.handle.packageName",
+        "status": "MATCHED"
+      },
+      {
+        "id": "field.handle.displayId",
+        "status": "MATCHED"
+      },
+      {
+        "id": "constant.inputConfig.NOT_VISIBLE",
+        "status": "MATCHED"
+      },
+      {
+        "id": "constant.inputConfig.CLONE",
+        "status": "MATCHED"
+      }
+    ],
+    "samples": [
+      {
+        "candidateRowCount": 2,
+        "kind": "CALLBACK",
+        "elapsedRealtimeMs": 486722,
+        "displayTypeCount": 2,
+        "rawWindowCount": 2,
+        "rows": [
+          {
+            "inputConfig": 0,
+            "binderId": 1,
+            "notVisible": false,
+            "regionEmpty": false,
+            "layoutParamsType": 2011,
+            "rowIndex": 0,
+            "ownerUid": 10001,
+            "displayId": 0,
+            "isClone": false,
+            "frameEmpty": false,
+            "frame": [
+              0,
+              600,
+              1000,
+              1000
+            ],
+            "passesFourPredicates": true
+          },
+          {
+            "inputConfig": 65536,
+            "binderId": 1,
+            "notVisible": false,
+            "regionEmpty": false,
+            "layoutParamsType": 2011,
+            "rowIndex": 1,
+            "ownerUid": 10001,
+            "displayId": 0,
+            "isClone": true,
+            "frameEmpty": false,
+            "frame": [
+              0,
+              600,
+              1000,
+              1000
+            ],
+            "passesFourPredicates": false
+          }
+        ],
+        "issues": [],
+        "nullTokenCount": 0,
+        "sequence": 1,
+        "uidTypeDisplayCount": 2,
+        "nullPackageCount": 0,
+        "distinctBinderCount": 1,
+        "complete": true,
+        "typeCount": 2
+      }
+    ],
+    "resultStatus": "RECORDED",
+    "imePackage": "test.ime",
+    "outputOmittedCallbacks": 0,
+    "callbacksSeen": 1,
+    "displayId": 0
+  }
+}

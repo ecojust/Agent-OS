@@ -1,0 +1,38 @@
+{
+  "scope": "archive/workflow local validation only; all end-to-end driver fixtures are synthetic, no Android device was run",
+  "at": "2026-11-01T05:47:04.853739+00:00",
+  "tests": {
+    "command": "PYTHONPATH=scripts python3 -m unittest -v test_window_infos_raw_archive",
+    "passed": 23,
+    "failed": 0
+  },
+  "integration": {
+    "passedBundle": "all 8 original payloads (including synthetic PNG and structural dex) and 3 source metadata files revalidated and byte-preserved",
+    "failedBundle": "NOT_VISIBLE candidate retained byte-for-byte, source/probe failure preserved, zero passed cases",
+    "tamperRejection": [
+      "foreign source marker after recomputing command bytes/hash",
+      "changed Java source bytes after receipt"
+    ],
+    "sourceFileVerificationMocked": false,
+    "runtimeClaims": false
+  },
+  "actionlint": "1.7.12 passed",
+  "independentStaticReview": "passed",
+  "files": [
+    {
+      "path": ".github/workflows/window-infos-raw.yml",
+      "bytes": 9860,
+      "sha256": "dfa205a15665a32cca0229efcb9fab3fd6c44e58b9585a776aaffae72297c203"
+    },
+    {
+      "path": "scripts/window_infos_raw_archive.py",
+      "bytes": 17005,
+      "sha256": "f64423c653a2807dd26c6151f41aa3ec2ca2ee9fb989582f62ad4b65db4c4eeb"
+    },
+    {
+      "path": "scripts/test_window_infos_raw_archive.py",
+      "bytes": 19986,
+      "sha256": "d21da0d24e7511a3f89552652840dead8dcd3acf8fdf2af0a754e6f111a8b153"
+    }
+  ]
+}

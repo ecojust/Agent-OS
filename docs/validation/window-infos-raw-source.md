@@ -68,3 +68,8 @@ ForTest 的 `buildParams()` 遍历原始 handles，保留 `getWindowToken()`，�
 本页来源审查提交 `dc9326735157345e94af5181cebe895b5b8586a1` 的[整体录像](../../screenshots/demos/41218742663-1/demo.mp4)来自[运行41218742663](https://github.com/ecojust/Agent-OS/actions/runs/41218742663)，归档运行41219142131。视频38.130秒、640×1280、451,726字节、513帧，13阶段/8确认通过；30载荷/1,185,549字节、22PNG与来源、摘要、完整解码及关键画面均已核验。详见[原清单](../../screenshots/demos/41218742663-1/manifest.json)、[来源/合同审核](diagnostics/window-infos-raw-source-2026-10-31/overall-video-audit.json)和[独立审计](diagnostics/window-infos-raw-source-2026-10-31/independent-video-audit.json)。
 
 录像展示API35 Fixture及本地合成HTTP模型，没有运行本页API37 shell监听实验。历史cdea就绪失败保留，本次成功不构成稳定修复；原Notes32项本轮没有重跑。README每类保留最新实际影片，真实APK视频仍绑定72f源码。
+
+
+## 后续实现
+
+[有界原始窗口采集](window-infos-raw.md)已实现单次准入、注册、受控键盘请求、原始候选采集和清理；本地协议/构建验证与实际设备运行分别列在该页。本页仍是固定源码可行性记录，不升级为设备证据。

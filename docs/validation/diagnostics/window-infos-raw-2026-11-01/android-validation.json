@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "kind": "window-infos-raw-android-local-validation",
+  "validatedAt": "2026-11-01T05:48:23.184115+00:00",
+  "baselineCommit": "84140f833a030fb54e418825fe527800bcf8a5b7",
+  "status": "passed",
+  "scope": "Source implementation, JVM controlled substitutions and actual javac/d8 build; no Android device run or real listener registration is claimed",
+  "sourceFiles": [
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/RawCollector.java",
+      "bytes": 7900,
+      "sha256": "4d34e2f69be404d9f74740227f4c63d512f95dee0a04d1bc1cf68a27aeba4549"
+    },
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/RawListenerSession.java",
+      "bytes": 2016,
+      "sha256": "aaaae56c8491e6fff71d77a01d87ec731ce99625e163697b21fa8c29dd6d767d"
+    },
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/RawSession.java",
+      "bytes": 207,
+      "sha256": "0b8a7ef6e1e72b4da85e75027c78c7a728b259643ae8679e51a8b9fd51f7b7bc"
+    },
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/WindowInfosRawMain.java",
+      "bytes": 17052,
+      "sha256": "bad12cfc199c1d06089fd4d436ffb910ea377da2cd2968c50e0385ec4fafbbaf"
+    },
+    {
+      "path": "tools/window-infos-raw/stubs/android/view/InputWindowHandle.java",
+      "bytes": 531,
+      "sha256": "87bc82903fc7792fd2c0e93e6825013fe295152d6a8676c917e1412652946f1d"
+    },
+    {
+      "path": "tools/window-infos-raw/stubs/android/window/WindowInfosListener.java",
+      "bytes": 689,
+      "sha256": "8f487e37aed7f02c05173f7d842e03d717f1d4895a5ba18425b8fc11762d4c8b"
+    },
+    {
+      "path": "tools/window-infos-raw/tests/dev/agentos/raw/RawCollectorHostTest.java",
+      "bytes": 9035,
+      "sha256": "a30ce90ec58bbc4a4360069c204276a6184eace5a257662b5c5e2735b2230ffa"
+    },
+    {
+      "path": "scripts/build_window_infos_raw.py",
+      "bytes": 7314,
+      "sha256": "6caf61f8a956213d8932398d7f5bd95a008d44990a5769ebef107a4fdd9fb280"
+    },
+    {
+      "path": "scripts/test_window_infos_raw_build.py",
+      "bytes": 4619,
+      "sha256": "1424100beef483a6a8f8c762968525b50a489bcbfce6e2e47e21feaae9b3f679"
+    }
+  ],
+  "pythonTests": {
+    "command": "JAVA_HOME=/workspace/scratch/jdk17 python3 -m unittest discover -s scripts -p test_window_infos_raw_build.py -v",
+    "passed": 13,
+    "failed": 0,
+    "javaCollectorAssertions": 37
+  },
+  "actualBuild": {
+    "jar": {
+      "path": "/workspace/scratch/window-infos-raw-first.jar",
+      "bytes": 11317,
+      "sha256": "15db65c205ab3d2e1f3fc4f83b39e515a46d1cdf04a242dc19dc5a784e627813"
+    },
+    "metadata": {
+      "path": "/workspace/scratch/window-infos-raw-first.jar.json",
+      "bytes": 4183,
+      "sha256": "edb128a0d85de9e75cc174839d43ceff8a394170f12aa49144187869d165ff2e"
+    },
+    "javacVersion": "javac 17.0.21",
+    "d8Version": "D8 8.6.2-dev (build abaab469b5ebd4dd2bb91ba0ed6f45277faae4ca from go/r8bot (luci-r8-custom-ci-archive-0-77gl))",
+    "classesDexBytes": 22376,
+    "classesDexSha256": "4392712fcf03c0098e271b906df1a45f40ebfa48b6ec5e153ae25f85fb91a289",
+    "packagedClasses": [
+      "dev.agentos.raw.RawCollector",
+      "dev.agentos.raw.RawCollector$Reader",
+      "dev.agentos.raw.RawCollector$Row",
+      "dev.agentos.raw.RawCollector$Snapshot",
+      "dev.agentos.raw.RawListenerSession",
+      "dev.agentos.raw.RawListenerSession$Reader",
+      "dev.agentos.raw.RawSession",
+      "dev.agentos.raw.WindowInfosRawMain",
+      "dev.agentos.raw.WindowInfosRawMain$1",
+      "dev.agentos.raw.WindowInfosRawMain$ShapeMismatch"
+    ],
+    "compileOnlyStubClasses": [
+      "android.view.InputWindowHandle",
+      "android.window.WindowInfosListener",
+      "android.window.WindowInfosListener$DisplayInfo"
+    ],
+    "sourceBytesStillMatch": "passed",
+    "hostBuildValidator": "passed"
+  },
+  "actualJavaSyntheticScenarios": {
+    "total": 6,
+    "positiveStateAndProducerSchema": "passed",
+    "wrongInputFlagRefusesConstructor": "passed",
+    "missingPackageFieldDoesNotMislabelOtherClasses": "passed",
+    "crossDeadlineFlagInitializationRefusesConstructor": "passed",
+    "registerThrowStillAttemptsOneCleanup": "passed",
+    "oversizedSerializerPreservesPrefixAndMarksIncomplete": "passed",
+    "productionJavaSourceUnmodified": true,
+    "hostMarkerParser": "passed",
+    "deviceEvidence": false
+  },
+  "artifacts": [
+    {
+      "path": "/workspace/scratch/window-infos-raw-jvm/actual-java-host-crosscheck.json",
+      "bytes": 5354,
+      "sha256": "40908e290467b6e55180a4906a11da41cce48c7c44dce324e45d9832e059f1c6"
+    },
+    {
+      "path": "/workspace/scratch/window-infos-raw-jvm/actual-java-negative-paths.json",
+      "bytes": 15242,
+      "sha256": "ae661e78781a2eee77bb12e11ece5b3bef9d2d1f15687ce3099e0e79a4fd2c8b"
+    },
+    {
+      "path": "/workspace/scratch/window-infos-raw-jvm/output-limit/audit.json",
+      "bytes": 383,
+      "sha256": "ba809b0d15cf6ee55aa03e69975fa71bd080c57c620229a98d6642361cee30ce"
+    }
+  ],
+  "outputLimitCase": {
+    "syntheticHostOnly": true,
+    "status": "passed",
+    "case": "bounded_actual_java_serialization",
+    "resultStatus": "INCOMPLETE",
+    "callbacksStored": 128,
+    "serializedCallbacks": 32,
+    "outputOmittedCallbacks": 96,
+    "fullFinalMarkerBytes": 127261,
+    "exitCode": 1,
+    "stdoutSha256": "e06a5d0e6cf7449b88830fe69c4715b002c16e0de0e08a478e2554a915380332",
+    "hostParser": "passed"
+  },
+  "importantLimits": [
+    "Java collection bound cannot restrict JNI pre-callback array conversion",
+    "register/unregister may block synchronously; device watchdog is separate",
+    "unregister RETURNED is not an SF removal acknowledgment",
+    "explicit Java call counts are not native-finalizer/IPC call counts",
+    "retained Binder identity groups raw rows; it does not independently prove configured IME component identity"
+  ]
+}

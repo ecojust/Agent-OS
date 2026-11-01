@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "kind": "raw-window-local-validation",
+  "validatedAt": "2026-11-01T05:48:26.119850+00:00",
+  "repositoryBaseline": "84140f833a030fb54e418825fe527800bcf8a5b7",
+  "deviceExecuted": false,
+  "status": "passed",
+  "pythonChecks": {
+    "total": 58,
+    "host": 22,
+    "archive": 23,
+    "build": 13
+  },
+  "javaCollectorAssertions": 37,
+  "actualJavaProducer": "one positive and four negative synthetic-host paths; not Android runtime evidence",
+  "actionlint": "1.7.12 passed",
+  "build": {
+    "command": "./gradlew --offline --no-daemon :compat-smoke:assembleDebug :compat-smoke:lintDebug",
+    "result": "BUILD SUCCESSFUL in 32s",
+    "initialOnlineAttempt": "Cancelled with exit143 after dependency metadata HTTP connection stalled; existing pinned cache used for successful offline attempt"
+  },
+  "artifacts": {
+    "/workspace/scratch/window-infos-raw-first.jar": {
+      "bytes": 11317,
+      "sha256": "15db65c205ab3d2e1f3fc4f83b39e515a46d1cdf04a242dc19dc5a784e627813"
+    },
+    "compat-smoke/build/outputs/apk/debug/compat-smoke-debug.apk": {
+      "bytes": 14745,
+      "sha256": "80a88d838ab6046de90031470643f4eeaac627193b4f241fa058ebc97331661f"
+    }
+  },
+  "dexDefinitions": {
+    "count": 10,
+    "namespace": "dev.agentos.raw",
+    "androidStubDefinitionsPackaged": false
+  },
+  "sourceFiles": {
+    "scripts/window_infos_raw.py": {
+      "bytes": 66868,
+      "sha256": "4388c178d0a09e81fde58f11f19d6c7f4d44a3eac7e07d723152a89417701de2"
+    },
+    "scripts/window_infos_raw_archive.py": {
+      "bytes": 17005,
+      "sha256": "f64423c653a2807dd26c6151f41aa3ec2ca2ee9fb989582f62ad4b65db4c4eeb"
+    },
+    "scripts/build_window_infos_raw.py": {
+      "bytes": 7314,
+      "sha256": "6caf61f8a956213d8932398d7f5bd95a008d44990a5769ebef107a4fdd9fb280"
+    },
+    "scripts/window_infos_capability.py": {
+      "bytes": 48485,
+      "sha256": "723ae37d40a299c5db4b337cb0aff88a9a4dd18864dff73a8d4ba750d3e3a45c"
+    },
+    "scripts/third_party_smoke.py": {
+      "bytes": 27947,
+      "sha256": "e15ba7930e9daf6393e80156121316032bef6bfe6ffabf5e462fc2d082e5a30e"
+    },
+    "scripts/third_party_smoke_archive.py": {
+      "bytes": 23102,
+      "sha256": "84bf08eded010c1cb0d58f4f8b90ebecf7cc32768d66639348e79ba83621f0f2"
+    },
+    "compat-smoke/src/main/java/dev/agentos/compat/RawWindowFixtureActivity.java": {
+      "bytes": 5973,
+      "sha256": "6ab53d70864ae522e53438190e39eb564a3232b087d77fda7d1139c949b9dcee"
+    },
+    "compat-smoke/src/main/AndroidManifest.xml": {
+      "bytes": 892,
+      "sha256": "5c7fdf3b0b5eaf1000f902351671f63e5645b9ab9b12f5208099b161b931d3ec"
+    },
+    "compat-smoke/build.gradle": {
+      "bytes": 817,
+      "sha256": "fca4a5de7778383b232c9b3f501bd4eee4e43eed762160bc8afaf61d86c12e11"
+    },
+    ".github/workflows/window-infos-raw.yml": {
+      "bytes": 9860,
+      "sha256": "dfa205a15665a32cca0229efcb9fab3fd6c44e58b9585a776aaffae72297c203"
+    },
+    "tools/window-infos-raw/src/dev/agentos/raw/RawCollector.java": {
+      "bytes": 7900,
+      "sha256": "4d34e2f69be404d9f74740227f4c63d512f95dee0a04d1bc1cf68a27aeba4549"
+    },
+    "tools/window-infos-raw/src/dev/agentos/raw/RawListenerSession.java": {
+      "bytes": 2016,
+      "sha256": "aaaae56c8491e6fff71d77a01d87ec731ce99625e163697b21fa8c29dd6d767d"
+    },
+    "tools/window-infos-raw/src/dev/agentos/raw/RawSession.java": {
+      "bytes": 207,
+      "sha256": "0b8a7ef6e1e72b4da85e75027c78c7a728b259643ae8679e51a8b9fd51f7b7bc"
+    },
+    "tools/window-infos-raw/src/dev/agentos/raw/WindowInfosRawMain.java": {
+      "bytes": 17052,
+      "sha256": "bad12cfc199c1d06089fd4d436ffb910ea377da2cd2968c50e0385ec4fafbbaf"
+    },
+    "tools/window-infos-raw/stubs/android/view/InputWindowHandle.java": {
+      "bytes": 531,
+      "sha256": "87bc82903fc7792fd2c0e93e6825013fe295152d6a8676c917e1412652946f1d"
+    },
+    "tools/window-infos-raw/stubs/android/window/WindowInfosListener.java": {
+      "bytes": 689,
+      "sha256": "8f487e37aed7f02c05173f7d842e03d717f1d4895a5ba18425b8fc11762d4c8b"
+    },
+    "tools/window-infos-raw/tests/dev/agentos/raw/RawCollectorHostTest.java": {
+      "bytes": 9035,
+      "sha256": "a30ce90ec58bbc4a4360069c204276a6184eace5a257662b5c5e2735b2230ffa"
+    }
+  }
+}

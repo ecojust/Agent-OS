@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "kind": "raw-window-independent-design-review",
+  "reviewedAt": "2026-11-01T05:44:55.825924+00:00",
+  "status": "no_remaining_blocking_findings_in_reviewed_scope",
+  "scope": "Android准入/一次注册/回调采集/冻结/注销/输出，以及host的对应字段、fixture阶段、时序、候选和计数；不是整个archive/workflow审计",
+  "deviceExecuted": false,
+  "gradleExecuted": false,
+  "testsExecutedByReviewer": false,
+  "resolvedFindings": [
+    "Activity焦点回调内同步show改为一次post，失焦不重试",
+    "拒绝不存在的cmd package check-permission前置，保留实际register访问结果",
+    "admission最后同步查找跨5秒后禁止开始构造",
+    "metadata各槽按owner加载，避免缺无关类污染槽位结论",
+    "fixture新失败phase在host保留",
+    "initial与callback时间/Binder ID不强加导出顺序；outsideWindow序号间隔保留"
+  ],
+  "requiredInterpretations": [
+    "unregister正常返回不是SF确认移除",
+    "kill本地adb不等于远端同步停止",
+    "raw/ForTest同窗不是同帧，当前不注册ForTest",
+    "同package+uid+2011+display是候选，不是具体IME组件证明",
+    "原Notes24/8不改变"
+  ],
+  "filesAtReview": [
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/WindowInfosRawMain.java",
+      "bytes": 17052,
+      "sha256": "bad12cfc199c1d06089fd4d436ffb910ea377da2cd2968c50e0385ec4fafbbaf"
+    },
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/RawCollector.java",
+      "bytes": 7900,
+      "sha256": "4d34e2f69be404d9f74740227f4c63d512f95dee0a04d1bc1cf68a27aeba4549"
+    },
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/RawListenerSession.java",
+      "bytes": 2016,
+      "sha256": "aaaae56c8491e6fff71d77a01d87ec731ce99625e163697b21fa8c29dd6d767d"
+    },
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/RawSession.java",
+      "bytes": 207,
+      "sha256": "0b8a7ef6e1e72b4da85e75027c78c7a728b259643ae8679e51a8b9fd51f7b7bc"
+    },
+    {
+      "path": "compat-smoke/src/main/java/dev/agentos/compat/RawWindowFixtureActivity.java",
+      "bytes": 5973,
+      "sha256": "6ab53d70864ae522e53438190e39eb564a3232b087d77fda7d1139c949b9dcee"
+    },
+    {
+      "path": "scripts/window_infos_raw.py",
+      "bytes": 66123,
+      "sha256": "708ce508e6b60bf3889dba7d84e5d3981fb418e615035ff88f816016748ce056"
+    }
+  ]
+}

@@ -14,5 +14,10 @@
         android:fullBackupContent="false"
         android:label="Agent OS Compatibility Test"
         android:supportsRtl="true"
-        android:testOnly="true" />
+        android:testOnly="true">
+        <activity
+            android:name=".RawWindowFixtureActivity"
+            android:exported="true"
+            android:windowSoftInputMode="stateAlwaysHidden|adjustResize" />
+    </application>
 </manifest>

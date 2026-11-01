@@ -1,0 +1,546 @@
+{
+  "syntheticHostOnly": true,
+  "scope": "Actual production Java code with controlled Android class substitutes; not device access or registration evidence",
+  "cases": [
+    {
+      "case": "wrong-flag",
+      "status": "passed",
+      "exitCode": 1,
+      "stdoutBytes": 2063,
+      "stdoutSha256": "caa24388b432764666974515e47d7d32b9b751ee7a89eea04e231dc90f75104f",
+      "readyEmitted": false,
+      "result": {
+        "registrationStatus": "NOT_ATTEMPTED",
+        "constructionStatus": "NOT_ATTEMPTED",
+        "source": {
+          "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "runId": 123,
+          "repository": "ecojust/Agent-OS",
+          "attempt": 1
+        },
+        "constructAttempts": 0,
+        "outputTruncated": false,
+        "unregistrationStatus": "NOT_ATTEMPTED",
+        "times": {
+          "registeredElapsedMs": null,
+          "unregisteredElapsedMs": null,
+          "freezeElapsedMs": 570670,
+          "constructedElapsedMs": null,
+          "observationDeadlineElapsedMs": null,
+          "readyElapsedMs": null
+        },
+        "imeUid": 10001,
+        "callbacksOutsideWindow": 0,
+        "binderIdsAssigned": 0,
+        "unregisterAttempts": 0,
+        "registerAttempts": 0,
+        "limits": {
+          "admissionMs": 5000,
+          "maxBinderIds": 16,
+          "observationMs": 12000,
+          "maxWindows": 256,
+          "maxCandidateRows": 16,
+          "maxCallbacks": 128,
+          "maxMarkerBytes": 131072
+        },
+        "collectionFrozen": true,
+        "process": {
+          "uid": 2000,
+          "finishedElapsedMs": 570673,
+          "sdk": 37,
+          "startedElapsedMs": 570581,
+          "fingerprintSha256": "80f3e925c164c1acf9d9a423b885b9a922814f61a869d66a8fa7d7da3e3ebfb5"
+        },
+        "schemaVersion": 1,
+        "callbacksDropped": 0,
+        "initial": null,
+        "callbacksStored": 0,
+        "admission": [
+          {
+            "id": "class.raw",
+            "status": "MATCHED"
+          },
+          {
+            "id": "class.handle",
+            "status": "MATCHED"
+          },
+          {
+            "id": "class.display",
+            "status": "MATCHED"
+          },
+          {
+            "id": "class.inputConfig",
+            "status": "MATCHED"
+          },
+          {
+            "id": "constructor.raw",
+            "status": "MATCHED"
+          },
+          {
+            "id": "method.raw.register",
+            "status": "MATCHED"
+          },
+          {
+            "id": "method.raw.unregister",
+            "status": "MATCHED"
+          },
+          {
+            "id": "method.raw.callback",
+            "status": "MATCHED"
+          },
+          {
+            "id": "method.handle.getWindowToken",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.inputConfig",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.frame",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.touchableRegion",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.layoutParamsType",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.ownerUid",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.packageName",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.displayId",
+            "status": "MATCHED"
+          },
+          {
+            "id": "constant.inputConfig.NOT_VISIBLE",
+            "status": "MATCHED"
+          },
+          {
+            "id": "constant.inputConfig.CLONE",
+            "status": "TYPE_MISMATCH"
+          }
+        ],
+        "samples": [],
+        "resultStatus": "ADMISSION_FAILED",
+        "imePackage": "test.ime",
+        "outputOmittedCallbacks": 0,
+        "callbacksSeen": 0,
+        "displayId": 0
+      }
+    },
+    {
+      "case": "missing-package",
+      "status": "passed",
+      "exitCode": 1,
+      "stdoutBytes": 2071,
+      "stdoutSha256": "1b8dabd073bae66cf352a64c9a3100901e5272bb63cf5cb979fcae1f47f00869",
+      "readyEmitted": false,
+      "result": {
+        "registrationStatus": "NOT_ATTEMPTED",
+        "constructionStatus": "NOT_ATTEMPTED",
+        "source": {
+          "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "runId": 123,
+          "repository": "ecojust/Agent-OS",
+          "attempt": 1
+        },
+        "constructAttempts": 0,
+        "outputTruncated": false,
+        "unregistrationStatus": "NOT_ATTEMPTED",
+        "times": {
+          "registeredElapsedMs": null,
+          "unregisteredElapsedMs": null,
+          "freezeElapsedMs": 570630,
+          "constructedElapsedMs": null,
+          "observationDeadlineElapsedMs": null,
+          "readyElapsedMs": null
+        },
+        "imeUid": 10001,
+        "callbacksOutsideWindow": 0,
+        "binderIdsAssigned": 0,
+        "unregisterAttempts": 0,
+        "registerAttempts": 0,
+        "limits": {
+          "admissionMs": 5000,
+          "maxBinderIds": 16,
+          "observationMs": 12000,
+          "maxWindows": 256,
+          "maxCandidateRows": 16,
+          "maxCallbacks": 128,
+          "maxMarkerBytes": 131072
+        },
+        "collectionFrozen": true,
+        "process": {
+          "uid": 2000,
+          "finishedElapsedMs": 570632,
+          "sdk": 37,
+          "startedElapsedMs": 570517,
+          "fingerprintSha256": "80f3e925c164c1acf9d9a423b885b9a922814f61a869d66a8fa7d7da3e3ebfb5"
+        },
+        "schemaVersion": 1,
+        "callbacksDropped": 0,
+        "initial": null,
+        "callbacksStored": 0,
+        "admission": [
+          {
+            "id": "class.raw",
+            "status": "MATCHED"
+          },
+          {
+            "id": "class.handle",
+            "status": "MATCHED"
+          },
+          {
+            "id": "class.display",
+            "status": "MATCHED"
+          },
+          {
+            "id": "class.inputConfig",
+            "status": "MATCHED"
+          },
+          {
+            "id": "constructor.raw",
+            "status": "MATCHED"
+          },
+          {
+            "id": "method.raw.register",
+            "status": "MATCHED"
+          },
+          {
+            "id": "method.raw.unregister",
+            "status": "MATCHED"
+          },
+          {
+            "id": "method.raw.callback",
+            "status": "MATCHED"
+          },
+          {
+            "id": "method.handle.getWindowToken",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.inputConfig",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.frame",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.touchableRegion",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.layoutParamsType",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.ownerUid",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.packageName",
+            "status": "NOT_FOUND_OR_FILTERED"
+          },
+          {
+            "id": "field.handle.displayId",
+            "status": "MATCHED"
+          },
+          {
+            "id": "constant.inputConfig.NOT_VISIBLE",
+            "status": "MATCHED"
+          },
+          {
+            "id": "constant.inputConfig.CLONE",
+            "status": "MATCHED"
+          }
+        ],
+        "samples": [],
+        "resultStatus": "ADMISSION_FAILED",
+        "imePackage": "test.ime",
+        "outputOmittedCallbacks": 0,
+        "callbacksSeen": 0,
+        "displayId": 0
+      }
+    },
+    {
+      "case": "delayed-flag",
+      "status": "passed",
+      "exitCode": 1,
+      "stdoutBytes": 2073,
+      "stdoutSha256": "f9652fddfff1de5bf23531357beca6a8105206a3a2a78ecb7661490b8c25d602",
+      "readyEmitted": false,
+      "result": {
+        "registrationStatus": "NOT_ATTEMPTED",
+        "constructionStatus": "NOT_ATTEMPTED",
+        "source": {
+          "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "runId": 123,
+          "repository": "ecojust/Agent-OS",
+          "attempt": 1
+        },
+        "constructAttempts": 0,
+        "outputTruncated": false,
+        "unregistrationStatus": "NOT_ATTEMPTED",
+        "times": {
+          "registeredElapsedMs": null,
+          "unregisteredElapsedMs": null,
+          "freezeElapsedMs": 575780,
+          "constructedElapsedMs": null,
+          "observationDeadlineElapsedMs": null,
+          "readyElapsedMs": null
+        },
+        "imeUid": 10001,
+        "callbacksOutsideWindow": 0,
+        "binderIdsAssigned": 0,
+        "unregisterAttempts": 0,
+        "registerAttempts": 0,
+        "limits": {
+          "admissionMs": 5000,
+          "maxBinderIds": 16,
+          "observationMs": 12000,
+          "maxWindows": 256,
+          "maxCandidateRows": 16,
+          "maxCallbacks": 128,
+          "maxMarkerBytes": 131072
+        },
+        "collectionFrozen": true,
+        "process": {
+          "uid": 2000,
+          "finishedElapsedMs": 575784,
+          "sdk": 37,
+          "startedElapsedMs": 570631,
+          "fingerprintSha256": "80f3e925c164c1acf9d9a423b885b9a922814f61a869d66a8fa7d7da3e3ebfb5"
+        },
+        "schemaVersion": 1,
+        "callbacksDropped": 0,
+        "initial": null,
+        "callbacksStored": 0,
+        "admission": [
+          {
+            "id": "class.raw",
+            "status": "MATCHED"
+          },
+          {
+            "id": "class.handle",
+            "status": "MATCHED"
+          },
+          {
+            "id": "class.display",
+            "status": "MATCHED"
+          },
+          {
+            "id": "class.inputConfig",
+            "status": "MATCHED"
+          },
+          {
+            "id": "constructor.raw",
+            "status": "MATCHED"
+          },
+          {
+            "id": "method.raw.register",
+            "status": "MATCHED"
+          },
+          {
+            "id": "method.raw.unregister",
+            "status": "MATCHED"
+          },
+          {
+            "id": "method.raw.callback",
+            "status": "MATCHED"
+          },
+          {
+            "id": "method.handle.getWindowToken",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.inputConfig",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.frame",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.touchableRegion",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.layoutParamsType",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.ownerUid",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.packageName",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.displayId",
+            "status": "MATCHED"
+          },
+          {
+            "id": "constant.inputConfig.NOT_VISIBLE",
+            "status": "DEADLINE_EXCEEDED"
+          },
+          {
+            "id": "constant.inputConfig.CLONE",
+            "status": "NOT_ATTEMPTED"
+          }
+        ],
+        "samples": [],
+        "resultStatus": "ADMISSION_FAILED",
+        "imePackage": "test.ime",
+        "outputOmittedCallbacks": 0,
+        "callbacksSeen": 0,
+        "displayId": 0
+      }
+    },
+    {
+      "case": "register-throws",
+      "status": "passed",
+      "exitCode": 1,
+      "stdoutBytes": 2050,
+      "stdoutSha256": "d4a0ecfd5f85a1cf20b6bcf0672566b18e112318ee3c535ffcefc4a037b28081",
+      "readyEmitted": false,
+      "result": {
+        "registrationStatus": "FAILED",
+        "constructionStatus": "CONSTRUCTED",
+        "source": {
+          "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "runId": 123,
+          "repository": "ecojust/Agent-OS",
+          "attempt": 1
+        },
+        "constructAttempts": 1,
+        "outputTruncated": false,
+        "unregistrationStatus": "RETURNED",
+        "times": {
+          "registeredElapsedMs": null,
+          "unregisteredElapsedMs": 570553,
+          "freezeElapsedMs": 570553,
+          "constructedElapsedMs": 570553,
+          "observationDeadlineElapsedMs": null,
+          "readyElapsedMs": null
+        },
+        "imeUid": 10001,
+        "callbacksOutsideWindow": 0,
+        "binderIdsAssigned": 0,
+        "unregisterAttempts": 1,
+        "registerAttempts": 1,
+        "limits": {
+          "admissionMs": 5000,
+          "maxBinderIds": 16,
+          "observationMs": 12000,
+          "maxWindows": 256,
+          "maxCandidateRows": 16,
+          "maxCallbacks": 128,
+          "maxMarkerBytes": 131072
+        },
+        "collectionFrozen": true,
+        "process": {
+          "uid": 2000,
+          "finishedElapsedMs": 570554,
+          "sdk": 37,
+          "startedElapsedMs": 570529,
+          "fingerprintSha256": "80f3e925c164c1acf9d9a423b885b9a922814f61a869d66a8fa7d7da3e3ebfb5"
+        },
+        "schemaVersion": 1,
+        "callbacksDropped": 0,
+        "initial": null,
+        "callbacksStored": 0,
+        "admission": [
+          {
+            "id": "class.raw",
+            "status": "MATCHED"
+          },
+          {
+            "id": "class.handle",
+            "status": "MATCHED"
+          },
+          {
+            "id": "class.display",
+            "status": "MATCHED"
+          },
+          {
+            "id": "class.inputConfig",
+            "status": "MATCHED"
+          },
+          {
+            "id": "constructor.raw",
+            "status": "MATCHED"
+          },
+          {
+            "id": "method.raw.register",
+            "status": "MATCHED"
+          },
+          {
+            "id": "method.raw.unregister",
+            "status": "MATCHED"
+          },
+          {
+            "id": "method.raw.callback",
+            "status": "MATCHED"
+          },
+          {
+            "id": "method.handle.getWindowToken",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.inputConfig",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.frame",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.touchableRegion",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.layoutParamsType",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.ownerUid",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.packageName",
+            "status": "MATCHED"
+          },
+          {
+            "id": "field.handle.displayId",
+            "status": "MATCHED"
+          },
+          {
+            "id": "constant.inputConfig.NOT_VISIBLE",
+            "status": "MATCHED"
+          },
+          {
+            "id": "constant.inputConfig.CLONE",
+            "status": "MATCHED"
+          }
+        ],
+        "samples": [],
+        "resultStatus": "REGISTRATION_FAILED",
+        "imePackage": "test.ime",
+        "outputOmittedCallbacks": 0,
+        "callbacksSeen": 0,
+        "displayId": 0
+      }
+    }
+  ]
+}

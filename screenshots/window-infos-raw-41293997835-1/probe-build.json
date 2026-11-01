@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "kind": "window-infos-raw-dex-build",
+  "jarBytes": 11317,
+  "jarSha256": "15db65c205ab3d2e1f3fc4f83b39e515a46d1cdf04a242dc19dc5a784e627813",
+  "classesDexBytes": 22376,
+  "classesDexSha256": "4392712fcf03c0098e271b906df1a45f40ebfa48b6ec5e153ae25f85fb91a289",
+  "packagedClasses": [
+    "dev.agentos.raw.RawCollector",
+    "dev.agentos.raw.RawCollector$Reader",
+    "dev.agentos.raw.RawCollector$Row",
+    "dev.agentos.raw.RawCollector$Snapshot",
+    "dev.agentos.raw.RawListenerSession",
+    "dev.agentos.raw.RawListenerSession$Reader",
+    "dev.agentos.raw.RawSession",
+    "dev.agentos.raw.WindowInfosRawMain",
+    "dev.agentos.raw.WindowInfosRawMain$1",
+    "dev.agentos.raw.WindowInfosRawMain$ShapeMismatch"
+  ],
+  "compileOnlyStubClasses": [
+    "android.view.InputWindowHandle",
+    "android.window.WindowInfosListener",
+    "android.window.WindowInfosListener$DisplayInfo"
+  ],
+  "sourceFiles": [
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/RawCollector.java",
+      "bytes": 7900,
+      "sha256": "4d34e2f69be404d9f74740227f4c63d512f95dee0a04d1bc1cf68a27aeba4549"
+    },
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/RawListenerSession.java",
+      "bytes": 2016,
+      "sha256": "aaaae56c8491e6fff71d77a01d87ec731ce99625e163697b21fa8c29dd6d767d"
+    },
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/RawSession.java",
+      "bytes": 207,
+      "sha256": "0b8a7ef6e1e72b4da85e75027c78c7a728b259643ae8679e51a8b9fd51f7b7bc"
+    },
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/WindowInfosRawMain.java",
+      "bytes": 17052,
+      "sha256": "bad12cfc199c1d06089fd4d436ffb910ea377da2cd2968c50e0385ec4fafbbaf"
+    },
+    {
+      "path": "tools/window-infos-raw/stubs/android/view/InputWindowHandle.java",
+      "bytes": 531,
+      "sha256": "87bc82903fc7792fd2c0e93e6825013fe295152d6a8676c917e1412652946f1d"
+    },
+    {
+      "path": "tools/window-infos-raw/stubs/android/window/WindowInfosListener.java",
+      "bytes": 689,
+      "sha256": "8f487e37aed7f02c05173f7d842e03d717f1d4895a5ba18425b8fc11762d4c8b"
+    },
+    {
+      "path": "scripts/build_window_infos_raw.py",
+      "bytes": 7314,
+      "sha256": "6caf61f8a956213d8932398d7f5bd95a008d44990a5769ebef107a4fdd9fb280"
+    }
+  ],
+  "androidJar": {
+    "api": 35,
+    "bytes": 27092450,
+    "sha256": "4566663c3876e022b4fa4ced8c8697c4ab1688267f090114fd92d027b32e619b"
+  },
+  "javacVersion": "javac 17.0.21",
+  "d8Version": "D8 8.6.2-dev (build abaab469b5ebd4dd2bb91ba0ed6f45277faae4ca from go/r8bot (luci-r8-custom-ci-archive-0-77gl))",
+  "commands": [
+    [
+      "/opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.21-9/x64/bin/javac",
+      "--release",
+      "8",
+      "-encoding",
+      "UTF-8",
+      "-cp",
+      "/usr/local/lib/android/sdk/platforms/android-35/android.jar",
+      "-d",
+      "/tmp/window-infos-raw-build-tcxzv3wv/stub-classes",
+      "/home/runner/work/Agent-OS/Agent-OS/tools/window-infos-raw/stubs/android/view/InputWindowHandle.java",
+      "/home/runner/work/Agent-OS/Agent-OS/tools/window-infos-raw/stubs/android/window/WindowInfosListener.java"
+    ],
+    [
+      "/opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.21-9/x64/bin/javac",
+      "--release",
+      "8",
+      "-encoding",
+      "UTF-8",
+      "-cp",
+      "/usr/local/lib/android/sdk/platforms/android-35/android.jar:/tmp/window-infos-raw-build-tcxzv3wv/stub-classes",
+      "-d",
+      "/tmp/window-infos-raw-build-tcxzv3wv/classes",
+      "/home/runner/work/Agent-OS/Agent-OS/tools/window-infos-raw/src/dev/agentos/raw/RawCollector.java",
+      "/home/runner/work/Agent-OS/Agent-OS/tools/window-infos-raw/src/dev/agentos/raw/RawListenerSession.java",
+      "/home/runner/work/Agent-OS/Agent-OS/tools/window-infos-raw/src/dev/agentos/raw/RawSession.java",
+      "/home/runner/work/Agent-OS/Agent-OS/tools/window-infos-raw/src/dev/agentos/raw/WindowInfosRawMain.java"
+    ],
+    [
+      "/usr/local/lib/android/sdk/build-tools/35.0.0/d8",
+      "--lib",
+      "/usr/local/lib/android/sdk/platforms/android-35/android.jar",
+      "--min-api",
+      "30",
+      "--output",
+      "/tmp/window-infos-raw-build-tcxzv3wv/dex",
+      "/tmp/window-infos-raw-build-tcxzv3wv/owned-classes.jar"
+    ]
+  ],
+  "runtimeHiddenPolicyMutation": false,
+  "compileOnlyStubsPackaged": false
+}

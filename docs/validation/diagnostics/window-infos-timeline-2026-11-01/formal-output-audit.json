@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-formal-timeline-output-review",
+  "auditedAt": "2026-11-01T12:50:54.393527+00:00",
+  "auditStatus": "passed",
+  "productionAnalyzerImportedOrInvoked": false,
+  "analysisFile": "docs/validation/diagnostics/window-infos-timeline-2026-11-01/analysis.json",
+  "analysisIdentity": {
+    "bytes": 60778,
+    "sha256": "ff77fa403a99501db0314d8ac2613ea1b5182cca7a95c893a5b501c92fe955e4"
+  },
+  "analysisSourceCommit": "5ac5030a423bed97470b30b22bb031bcd65d7a16",
+  "analysisProgram": {
+    "bytes": 37812,
+    "sha256": "f8a880d5dba1e7b32a6a1e24f836e7236254155e31dfa66c54a6ca73cb65d946",
+    "path": "scripts/window_infos_timeline.py"
+  },
+  "analysisProgramGitBytesMatch": true,
+  "evidenceSource": {
+    "repository": "ecojust/Agent-OS",
+    "runId": 41305950037,
+    "attempt": 1,
+    "commit": "aee08f1976f29ebcb62ddd15d37ae30663445228"
+  },
+  "evidenceArchiveCommit": "73fa7067db671a2d66c52db32bae81bf021eff63",
+  "oldOriginalFilesChecked": 28,
+  "oldOriginalBytesChecked": 717192,
+  "oldOriginalGitBytesUnchanged": true,
+  "oldSourceFilesChecked": 22,
+  "allRawCallbackPointsChecked": 119,
+  "allHistoryEventsChecked": 21,
+  "arms": {
+    "baseline": {
+      "callbackCount": 66,
+      "candidateCallbackCount": 27,
+      "positiveCallbackCount": 0,
+      "fixtureShowElapsedMs": 36172,
+      "firstInsetsVisibleElapsedMs": 36750,
+      "showToInsetsVisibleMs": 578,
+      "firstPositiveElapsedMs": null,
+      "showToFirstPositiveMs": null,
+      "previousCallbackGapMs": null,
+      "withinFiveSecondsOfThisFixtureShow": null,
+      "historyCounts": {
+        "active": 0,
+        "completed": 6
+      },
+      "historyPrintSequenceOrder": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "historyElapsedStartSequenceOrder": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "allEventFieldsAndOffsetsIndependentlyCompared": true
+    },
+    "enabled": {
+      "callbackCount": 53,
+      "candidateCallbackCount": 22,
+      "positiveCallbackCount": 1,
+      "fixtureShowElapsedMs": 49126,
+      "firstInsetsVisibleElapsedMs": 49333,
+      "showToInsetsVisibleMs": 207,
+      "firstPositiveElapsedMs": 57261,
+      "showToFirstPositiveMs": 8135,
+      "previousCallbackGapMs": 7558,
+      "withinFiveSecondsOfThisFixtureShow": false,
+      "historyCounts": {
+        "active": 0,
+        "completed": 15
+      },
+      "historyPrintSequenceOrder": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        9,
+        10,
+        8,
+        11,
+        12,
+        7,
+        13,
+        14
+      ],
+      "historyElapsedStartSequenceOrder": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "allEventFieldsAndOffsetsIndependentlyCompared": true
+    }
+  },
+  "enabledFocusedHistory": {
+    "11": {
+      "reason": "SHOW_SOFT_INPUT",
+      "phase": "PHASE_SERVER_UPDATE_CLIENT_VISIBILITY",
+      "status": "STATUS_FAIL",
+      "startElapsedMs": 49130,
+      "trackingFinishElapsedMs": 49138,
+      "firstPositiveMinusStartMs": 8131,
+      "firstPositiveMinusFinishMs": 8123
+    },
+    "12": {
+      "reason": "IME_REQUESTED_CHANGED_LISTENER",
+      "phase": "PHASE_CLIENT_ANIMATION_FINISHED_SHOW",
+      "status": "STATUS_SUCCESS",
+      "startElapsedMs": 49141,
+      "trackingFinishElapsedMs": 49535,
+      "firstPositiveMinusStartMs": 8120,
+      "firstPositiveMinusFinishMs": 7726
+    },
+    "7": {
+      "reason": "CONTROLS_CHANGED",
+      "phase": "PHASE_SERVER_GET_CONTROL_WITH_LEASH",
+      "status": "STATUS_TIMEOUT",
+      "startElapsedMs": 46776,
+      "trackingFinishElapsedMs": 56782,
+      "firstPositiveMinusStartMs": 10485,
+      "firstPositiveMinusFinishMs": 479
+    },
+    "13": {
+      "reason": "RESET_NEW_CONFIGURATION",
+      "phase": "PHASE_SERVER_POST_LAYOUT_NOTIFY_CONTROLS_CHANGED",
+      "status": "STATUS_CANCEL",
+      "startElapsedMs": 57083,
+      "trackingFinishElapsedMs": 57177,
+      "firstPositiveMinusStartMs": 178,
+      "firstPositiveMinusFinishMs": 84
+    },
+    "14": {
+      "reason": "CONTROLS_CHANGED",
+      "phase": "PHASE_CLIENT_ON_CONTROLS_CHANGED",
+      "status": "STATUS_CANCEL",
+      "startElapsedMs": 57198,
+      "trackingFinishElapsedMs": 57200,
+      "firstPositiveMinusStartMs": 63,
+      "firstPositiveMinusFinishMs": 61
+    }
+  },
+  "baselineHistoryEntriesRepeatedInEnabled": 6,
+  "baselineNoPositiveAndNoDerivedTimingRemainNull": true,
+  "analysisRecordedMeansParsedTimingNotNewAcceptance": true,
+  "originalComparisonAndArmSummaryUnchanged": {
+    "expectedComparisons": 1,
+    "passedComparisons": 1,
+    "expectedArms": 2,
+    "passedArms": 1,
+    "failedArms": 1,
+    "unverifiedArms": 0,
+    "apiLevel": 37
+  },
+  "limits": [
+    "No new Android execution or old DEX validation was performed.",
+    "B completed-history contains the six earlier A records; snapshots are not independent event samples.",
+    "The 8135ms offset is from this synthetic fixture show request; it is not an original Notes five-second wait replay.",
+    "The 7558ms callback gap does not prove a continuously empty region.",
+    "Event proximity and tracker cancellation do not establish causality, Binder identity or UI rollback.",
+    "Elapsed-clock source review is not a proof that the device image exactly equals the source tag."
+  ],
+  "independentProvenanceReview": {
+    "scratchPath": "/workspace/scratch/timeline-41305950037-independent-provenance.json",
+    "bytes": 14309,
+    "sha256": "527419b3c2d7f5a64b42e50b413418eecce7c46e7d7efc92d78f75698b98b3c8",
+    "auditStatus": "passed",
+    "analyzerOrProductionValidatorsInvoked": false
+  },
+  "historyEventCountIsSumOfSnapshotEntries": true,
+  "distinctPrintedSequenceNumbersAcrossSnapshots": 15,
+  "auditScript": {
+    "name": "audit.py",
+    "bytes": 16069,
+    "sha256": "8d0a5538dc471230088e70dec30978ded33228227534c4d08a4500c2a10e3b1c"
+  }
+}

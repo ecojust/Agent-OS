@@ -58,3 +58,6 @@ axes[1].annotate('First raw positive: +8.135 s', xy=(8.135, 2), xytext=(7.86, 2.
 axes[1].set_xlabel('Detail near the first positive; temporal order does not establish causation')
 fig.savefig(HERE / 'timeline.svg', metadata={'Date': None,
             'Description': 'Existing elapsedRealtime observations only. Cancelled tracking events do not prove UI rollback.'})
+# Normalize generated XML whitespace without changing any plotted coordinates.
+svg = HERE / 'timeline.svg'
+svg.write_text('\n'.join(line.rstrip() for line in svg.read_text().splitlines()) + '\n')

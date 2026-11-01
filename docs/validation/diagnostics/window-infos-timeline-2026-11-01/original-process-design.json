@@ -1,0 +1,271 @@
+{
+  "kind": "notes-original-process-mapping-read-only-design",
+  "reviewedAt": "2026-11-01T12:41:10Z",
+  "workspaceHead": "801797dc6980dd5f28e300234602a3f935bc35db",
+  "implementationStatus": "NOT_IMPLEMENTED",
+  "deviceExecuted": false,
+  "repositoryModified": false,
+  "sourceFiles": [
+    {
+      "path": "compat-smoke/src/androidTest/java/dev/agentos/compat/ApplicationSetCompatibilityInstrumentedTest.java",
+      "bytes": 26458,
+      "sha256": "b029e1b5c84970709b07d4f333ddf00070116149ba71b1df4b09f575bc524000",
+      "relevantLines": [
+        74,
+        75,
+        76,
+        77,
+        217,
+        287,
+        289
+      ]
+    },
+    {
+      "path": "compat-smoke/src/androidTest/java/dev/agentos/compat/SmokeHarness.java",
+      "bytes": 114923,
+      "sha256": "4324b113631f1e3b1f1d2346abebc532450ee043eaa0a8995a2fa05aa1293acb",
+      "relevantLines": [
+        388,
+        433,
+        439,
+        524,
+        593,
+        624,
+        644,
+        653,
+        675,
+        721,
+        725,
+        735,
+        744,
+        749,
+        1080,
+        1095,
+        1097,
+        1264,
+        1268
+      ]
+    },
+    {
+      "path": "compat-smoke/src/androidTest/java/dev/agentos/compat/SmokeCapture.java",
+      "bytes": 33194,
+      "sha256": "43ee713a2a8c8410caadb4d95366fa7f7aa8456d0ba2b6731d27c65a3a4c1d96",
+      "relevantLines": [
+        158,
+        163,
+        178,
+        217,
+        226,
+        231,
+        241
+      ]
+    },
+    {
+      "path": "docs/validation/window-infos-capability.md",
+      "bytes": 12692,
+      "sha256": "d97c407b1eb022b8dbf3694e86df9056a4ff824782451094b975b5cafe7d591b",
+      "relevantLines": [
+        9,
+        15,
+        61,
+        62,
+        64,
+        65,
+        70
+      ]
+    },
+    {
+      "path": "docs/validation/window-infos-raw-source.md",
+      "bytes": 11202,
+      "sha256": "11d494e581bf0e00004138f13966c73d019d20c42e274899b53997a5d22ea93a",
+      "relevantLines": [
+        15,
+        18,
+        20,
+        24,
+        26,
+        32,
+        34,
+        38,
+        44,
+        45,
+        46
+      ]
+    },
+    {
+      "path": "docs/validation/diagnostics/notes-ime-attrs-scan-41178248694/findings.md",
+      "bytes": 5303,
+      "sha256": "6bc6769000b6365d8523d1f582fc90296741f133d1771e35d2e283529e52254d",
+      "relevantLines": [
+        3,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        34
+      ]
+    },
+    {
+      "path": "docs/validation/window-infos-keyboard.md",
+      "bytes": 13546,
+      "sha256": "bca9719ac9ae35de0a21eece29f831051d9938b33a32d555f9b4b2e1499a0eac",
+      "relevantLines": [
+        62,
+        64,
+        66,
+        68
+      ]
+    }
+  ],
+  "currentRoundDecision": "Only reconstruct the existing real B-arm timeline offline. The parent reports RESET_NEW_CONFIGURATION 178 ms before the only positive callback; that reason may arise from SettingsObserver or resource configuration, so it is not a unique causal attribution. This proposed identity bridge is a later independent task.",
+  "originalMatrix": {
+    "source": "cdea60c126af3cb50805f6e989eccbf7a7a1efb1",
+    "runId": 41178248694,
+    "planned": 32,
+    "passed": 24,
+    "failed": 8,
+    "unverified": 0,
+    "methods": [
+      "calculatorWithAgentDisabled",
+      "calculatorWithAgentBoundAndIdle",
+      "notesWithAgentDisabled",
+      "notesWithAgentBoundAndIdle"
+    ],
+    "note": "Four methods total: two Calculator and two Notes, across eight API lanes. All eight failures are Notes off/idle on API31,32,36,37.0; no rerun in current round."
+  },
+  "failureCohorts": [
+    {
+      "apis": [
+        31,
+        32
+      ],
+      "states": [
+        "off",
+        "idle"
+      ],
+      "phase": "HIDDEN_PREPARATION",
+      "backAttempts": 1,
+      "visibleSamples": 2,
+      "hiddenSamples": 4,
+      "confirmAttempts": 0,
+      "beforeBackImeCount": 1,
+      "lastInventoryImeCount": 0,
+      "wmsFourSamples": {
+        "isOnScreen": "TRUE",
+        "isVisible": "FALSE",
+        "isReadyForDisplay()": "FALSE",
+        "mLastHidden": "FALSE",
+        "mHasSurface": "TRUE",
+        "Surface: shown": "TRUE"
+      },
+      "conclusion": "BACK was authorized and submitted; the hidden-surface predicates still refused. Accessibility disappearance is not hidden-surface proof."
+    },
+    {
+      "apis": [
+        36,
+        "37.0"
+      ],
+      "states": [
+        "off",
+        "idle"
+      ],
+      "phase": "HIDDEN_PREPARATION",
+      "backAttempts": 0,
+      "visibleSamples": 0,
+      "hiddenSamples": 4,
+      "confirmAttempts": 0,
+      "beforeBackImeCount": 0,
+      "lastInventoryImeCount": 0,
+      "wmsFourSamples": {
+        "isOnScreen": "TRUE",
+        "isVisible": "TRUE",
+        "isReadyForDisplay()": "TRUE",
+        "mLastHidden": "FALSE",
+        "mHasSurface": "TRUE",
+        "Surface: shown": "TRUE"
+      },
+      "postFailureMatches": {
+        "populatorVisible": 0,
+        "populatorDisplayGroup": 0,
+        "finalAccessibility": 0
+      },
+      "conclusion": "No eligible accessibility IME was observed to authorize BACK. The WMS-selected candidate remained visible according to all four retained samples; final-list omission cannot authorize a blind BACK."
+    }
+  ],
+  "originalBudget": {
+    "clock": "SystemClock.elapsedRealtime",
+    "origin": "new NotesConfirmation creates exactly one NotesWait before title preparation and any BACK decision",
+    "deadlineMillis": 5000,
+    "sharedAcross": [
+      "title preparation",
+      "optional single BACK",
+      "hidden preparation",
+      "confirm submission and completion"
+    ],
+    "targetStableMillis": 600,
+    "visibleSampleLimit": 4,
+    "hiddenSampleLimit": 4,
+    "minimumSampleSpacingMillis": 150,
+    "hiddenReadiness": "Two retained same-identity successful hidden observations separated by at least150ms, with fresh app/title/button reacquisition after each shell read. Pending identity or geometry resets readiness but does not renew deadline or sample allowances.",
+    "hiddenDump": "dumpsys -t 2 window -a windows",
+    "observedLastHiddenSamplesMillisFromOriginalStart": [
+      1755,
+      2280
+    ],
+    "noContinuousSamplingClaim": true
+  },
+  "clockOriginWarning": "B raw positive at show+8135ms uses a different origin and event than Notes confirmation-start+5000ms. It is evidence of late raw publication on the standalone show axis; it is NOT a direct failure or acceptance measurement of the original Notes five-second contract. The existing docs must avoid converting one axis into the other. A future real v4 rerun must measure its own unchanged confirmation deadline and sample limits.",
+  "api37KnownLimits": {
+    "metadataProbeSource": "214e90afba8481655ae33d5ad99a7d49b0a4557d",
+    "runId": 41180160267,
+    "matchedDeclarations": 22,
+    "missingOrFiltered": [
+      "inputConfig",
+      "isClone",
+      "frame",
+      "layoutParamsType",
+      "ownerUid"
+    ],
+    "forTestConstructionAttempts": 1,
+    "forTestConstructionReturned": 1,
+    "appAccessSurfaceFlinger": "DENIED",
+    "forTestRegister": "NOT_ATTEMPTED",
+    "forTestFieldsRead": "NOT_READ",
+    "caveats": [
+      "ForTest is not Populator output and transforms bounds.",
+      "Shell app_process access/registration does not prove app instrumentation access or native SurfaceFlinger permission.",
+      "Binder strings/hashcodes/native input-channel pointers do not establish cross-process IWindow identity.",
+      "Final accessibility window-ID/token access cannot recover an omitted IME and may require SYSTEM_UID."
+    ]
+  },
+  "proposedLaterMinimalDeviceExperiment": {
+    "name": "API37 instrumentation-local real Binder identity bridge positive control",
+    "scope": "One standalone method in the existing compat instrumentation context on a dedicated API37 emulator; no original Notes methods, no Agent service, no old matrix status change.",
+    "prerequisite": "Fixed-source review of UiAutomation shell permission adoption all the way to the native SurfaceFlinger PermissionCache/check path. Effective ACCESS_SURFACE_FLINGER delegation is currently unproved; do not claim it from shell success.",
+    "permissionGate": "If the reviewed path permits it, adopt only ACCESS_SURFACE_FLINGER in this independent test, record actual pre/post permission observations and actual single ForTest registration outcome, then always drop adopted identity. Do not modify hidden-API policy, exemptions or root; denial, missing callback, process abort or unavailable cleanup remains a failed/unknown observation.",
+    "ipc": {
+      "direction": "Existing shell raw collector -> a narrowly guarded test-only endpoint in the same process that owns the ForTest listener",
+      "payload": "Real IBinder references plus bounded copied raw metadata and source/run/attempt/session binding; never Binder.toString/hash/native pointer identity",
+      "authorization": "Validate caller UID2000, one active per-run nonce/session, expected process identity, API37, display0, configured IME package/UID; one accepted handoff. No arbitrary operations or shell strings.",
+      "bounds": "Reuse raw handle/candidate/callback/binder caps and explicitly bound serialized IPC payload; hold at most the already frozen candidate Binder set. Any overflow or duplicate session is incomplete.",
+      "threading": "No IPC, waits, dumps or serialization in either listener callback. Copy bounded values only. Shell transfers the frozen snapshot outside its callback while both endpoints still retain their Binder references.",
+      "comparison": "In the receiving instrumentation process compare actual retained IBinder identities from the IPC and ForTest callback. Assign only local ordinals to output. Do not equate string representations across processes."
+    },
+    "stimulus": "One predeclared controlled editor show request after both listeners are ready; restore any dedicated-emulator keyboard setting at the end. Use an explicitly separate diagnostic observation interval, not the original v4 confirmation timer.",
+    "results": "Separate permission/admission, each registration/unregistration attempt, initial cache, natural callbacks, source/config stability, raw candidate counts and unique Binder count, real Binder match counts, and each stream clock. Record late matches without calling them original Notes passes.",
+    "successBoundary": "A unique raw configured-package/UID/type2011/display0 Binder observed and matched in the same instrumentation process establishes this new diagnostic identity channel only. It does not establish final accessibility window-ID mapping, a common SF transaction/frame, the original 8 failures cause, or API36/31/32 support.",
+    "cleanup": "Freeze collectors; at most one explicit unregister per registration attempt; retain thrown/aborted outcomes; drop adopted permissions; terminate only owned processes and restore settings. Native unregister return is not an independent SF removal acknowledgement."
+  },
+  "notAuthorizedThisRound": [
+    "No new source implementation",
+    "No device execution",
+    "No additional recordings",
+    "No extension of original v4 budgets or sample counts",
+    "No trigger retry until success",
+    "No rewrite of old failure evidence"
+  ]
+}

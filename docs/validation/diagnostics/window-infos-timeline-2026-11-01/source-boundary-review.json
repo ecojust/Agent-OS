@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-timeline-source-boundary-review",
+  "reviewedAt": "2026-11-01T12:48:59.892115+00:00",
+  "status": "passed",
+  "scope": "Read-only code/boundary review and local synthetic tests; real archive provenance/bytes replay only, no new device execution and no production timeline analysis output before source freeze",
+  "testCommand": "python3 -B -m unittest discover -s scripts -p test_window_infos_timeline.py -v",
+  "tests": {
+    "count": 20,
+    "passed": 20,
+    "durationSeconds": 7.201
+  },
+  "reviewedFiles": {
+    "scripts/window_infos_timeline.py": {
+      "bytes": 37812,
+      "sha256": "f8a880d5dba1e7b32a6a1e24f836e7236254155e31dfa66c54a6ca73cb65d946"
+    },
+    "scripts/test_window_infos_timeline.py": {
+      "bytes": 19305,
+      "sha256": "2e20db02ebaca93ea16ec7f4b32244ea4f1e35d522c4957ab5b319b42ccd9b16"
+    }
+  },
+  "findingsResolved": [
+    "Malformed JSON object/page/raw/ready boundaries now return unknown instead of uncaught AttributeError",
+    "Nonfinite JSON values, excessive structure depth and node count are rejected",
+    "Archive must have the evidence source as its unique parent",
+    "Completed source run and keyboard job, mutually consistent conclusions and repository/head repository/artifact origin identities are checked"
+  ],
+  "programBinding": {
+    "currentProgramMustEqualGitBlobAtAnalysisSourceCommit": true,
+    "staleOriginalExperimentCommitRejected": true,
+    "rejectionReason": "GIT_OBJECT_UNAVAILABLE",
+    "unknownArmsRemainsNull": true
+  },
+  "actualOriginalReplay": {
+    "source": {
+      "repository": "ecojust/Agent-OS",
+      "runId": 41305950037,
+      "attempt": 1,
+      "commit": "aee08f1976f29ebcb62ddd15d37ae30663445228"
+    },
+    "archiveCommit": "73fa7067db671a2d66c52db32bae81bf021eff63",
+    "manifest": {
+      "bytes": 6339,
+      "sha256": "d5bc9373393a3e48f4b9c786454cb9fbbd3ea7c67826e3d16add1542f1983213"
+    },
+    "filesChecked": 28,
+    "sourceFilesChecked": 22,
+    "totalArchiveBytes": 717192,
+    "allArchiveGitBytesEqual": true,
+    "oldEvidenceModified": false
+  },
+  "unknownSemantics": [
+    "Incomplete history has status unknown with events=null and counts=null",
+    "Complete explicit zero history may have events=[], distinct from unknown",
+    "Unknown raw timing does not synthesize first positive or offsets",
+    "Printed history order and elapsed start ordering remain separate; unavailable start clocks remain unknown"
+  ],
+  "outputIsolation": {
+    "cliRejectsOutputInsideOriginalArchive": true,
+    "cliRejectsExistingOutput": true
+  },
+  "remaining": "After the parent freezes the new analysis source, independently verify formal analysis.json source/program identity and recheck all old original bytes.",
+  "limitations": [
+    "No old DEX/binary validation was duplicated.",
+    "This review does not add device results or upgrade baseline/original Notes acceptance."
+  ]
+}

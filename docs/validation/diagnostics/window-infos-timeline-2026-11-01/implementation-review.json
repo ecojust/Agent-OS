@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-offline-timeline-clock-order-unknown-review",
+  "reviewedAt": "2026-11-01T12:48:17.996328+00:00",
+  "status": "accepted",
+  "scope": [
+    "Tracker fixed syntax and elapsed clock alignment",
+    "completed insertion order versus chronological order",
+    "unknown behavior for unsupported state and invalid callback time",
+    "five-second reference meaning relative to this fixture only"
+  ],
+  "repositoryFilesModified": false,
+  "deviceCommandsExecuted": 0,
+  "files": [
+    {
+      "path": "scripts/window_infos_timeline.py",
+      "bytes": 37812,
+      "sha256": "f8a880d5dba1e7b32a6a1e24f836e7236254155e31dfa66c54a6ca73cb65d946"
+    },
+    {
+      "path": "scripts/test_window_infos_timeline.py",
+      "bytes": 19305,
+      "sha256": "2e20db02ebaca93ea16ec7f4b32244ea4f1e35d522c4957ab5b319b42ccd9b16"
+    },
+    {
+      "path": "docs/validation/window-infos-timeline.md",
+      "bytes": 6853,
+      "sha256": "aeaf0d90a0fab4bf33a705dcfd4cf7366cccd6beb0e09e053242dc3829877315"
+    }
+  ],
+  "blockingFindings": [
+    {
+      "id": "completed_nonterminal_or_future_status",
+      "before": "completed STATUS_RUN or STATUS_FUTURE still produced recorded tracking finish",
+      "resolution": "Both now unknown HISTORY_STATUS_NOT_KNOWN_FOR_SECTION; no events derived",
+      "independentReplay": "passed"
+    },
+    {
+      "id": "nonmonotonic_callback_clock",
+      "before": "seq52 timestamp59999 followed by seq53 timestamp57261 produced recorded gap -2738",
+      "resolution": "Now raw unknown RAW_CALLBACK_ELAPSED_ORDER, no callbacks/firstPositive/gap result",
+      "independentReplay": "passed"
+    }
+  ],
+  "validation": {
+    "command": "python scripts/test_window_infos_timeline.py -v",
+    "testsRun": 20,
+    "testsPassed": 20,
+    "durationSeconds": 10.028,
+    "scope": "Synthetic immutable-Git original binding and parser checks; no device tests",
+    "independentActualReplays": {
+      "actual": "recorded",
+      "rawShowToPositiveMs": 8135,
+      "gapMs": 7558,
+      "resetToPositiveMs": 178,
+      "printedOrder": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        9,
+        10,
+        8,
+        11,
+        12,
+        7,
+        13,
+        14
+      ],
+      "startOrder": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "completed_STATUS_RUN": "HISTORY_STATUS_NOT_KNOWN_FOR_SECTION",
+      "completed_STATUS_FUTURE": "HISTORY_STATUS_NOT_KNOWN_FOR_SECTION",
+      "callback_clock_reversal": "RAW_CALLBACK_ELAPSED_ORDER"
+    }
+  },
+  "acceptedSemantics": [
+    "Actual original markers and fixture still yield 8135ms show-to-positive, 7558ms preceding callback gap, 178ms reset start-to-positive and84ms inferred finish-to-positive.",
+    "ImeTracker source fixed94b4 has elapsedRealtime start/finish and duration=finish-start; host UTC and printed device-local wall time are not substituted.",
+    "Completed print order is complete() insertion order; late onStart after onFinished can make it differ from actual finish time order. No incorrect strict finish-monotonicity gate is imposed.",
+    "Actual printed sequences0,1,2,3,4,5,6,9,10,8,11,12,7,13,14 are preserved; elapsed start sorting separately yields0..14.",
+    "Active pending-start entries preserve unknown clock and no finish/offsets. Known complete empty history is distinct from unknown malformed/truncated history.",
+    "CANCEL/FAIL/TIMEOUT retained; cancellation is not interpreted as UI rollback.",
+    "5,000ms is a reference from this fixture show request; false for8135ms does not replay original Notes timer/acceptance.",
+    "The callback gap carries no continuous-empty-state claim; source/image equivalence remains unverified."
+  ],
+  "remainingBlockers": [],
+  "notes": [
+    "Review covered the requested narrow scope, not a new device experiment or broad security audit.",
+    "Initial test invocation via module path failed import lookup; the repository direct-script command then ran20tests successfully."
+  ]
+}

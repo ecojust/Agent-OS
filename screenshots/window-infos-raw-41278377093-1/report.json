@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "kind": "window-infos-raw",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "2eeb64be2be468f1aac4d521a5cf89a85a9fcaa0",
+    "runId": 41278377093,
+    "attempt": 1
+  },
+  "apiLevel": 37,
+  "matrixLabel": "37.0",
+  "scope": {
+    "diagnosticOnly": true,
+    "executionContext": "DEDICATED_EMULATOR_SHELL_APP_PROCESS",
+    "rawRegistrationLimit": 1,
+    "showImeRequestLimit": 1,
+    "forTestListener": false,
+    "hiddenApiPolicyMutation": false,
+    "rootRequested": false,
+    "fixtureScreenshot": true,
+    "agentOrNotesInstalled": false,
+    "originalNotesCasesRerun": 0,
+    "applicationCompatibilityAcceptance": false,
+    "permissionPrecheck": "NOT_INDEPENDENTLY_QUERIED",
+    "nativeUnregisterReturnIsSfRemovalAcknowledgement": false
+  },
+  "sourceFiles": {
+    "scripts/window_infos_raw.py": {
+      "bytes": 66868,
+      "sha256": "4388c178d0a09e81fde58f11f19d6c7f4d44a3eac7e07d723152a89417701de2"
+    },
+    "scripts/window_infos_raw_archive.py": {
+      "bytes": 17005,
+      "sha256": "f64423c653a2807dd26c6151f41aa3ec2ca2ee9fb989582f62ad4b65db4c4eeb"
+    },
+    "scripts/build_window_infos_raw.py": {
+      "bytes": 7314,
+      "sha256": "6caf61f8a956213d8932398d7f5bd95a008d44990a5769ebef107a4fdd9fb280"
+    },
+    "scripts/window_infos_capability.py": {
+      "bytes": 48485,
+      "sha256": "723ae37d40a299c5db4b337cb0aff88a9a4dd18864dff73a8d4ba750d3e3a45c"
+    },
+    "scripts/third_party_smoke.py": {
+      "bytes": 27947,
+      "sha256": "e15ba7930e9daf6393e80156121316032bef6bfe6ffabf5e462fc2d082e5a30e"
+    },
+    "scripts/third_party_smoke_archive.py": {
+      "bytes": 23102,
+      "sha256": "84bf08eded010c1cb0d58f4f8b90ebecf7cc32768d66639348e79ba83621f0f2"
+    },
+    "compat-smoke/src/main/java/dev/agentos/compat/RawWindowFixtureActivity.java": {
+      "bytes": 5973,
+      "sha256": "6ab53d70864ae522e53438190e39eb564a3232b087d77fda7d1139c949b9dcee"
+    },
+    "compat-smoke/src/main/AndroidManifest.xml": {
+      "bytes": 892,
+      "sha256": "5c7fdf3b0b5eaf1000f902351671f63e5645b9ab9b12f5208099b161b931d3ec"
+    },
+    "compat-smoke/build.gradle": {
+      "bytes": 817,
+      "sha256": "fca4a5de7778383b232c9b3f501bd4eee4e43eed762160bc8afaf61d86c12e11"
+    },
+    ".github/workflows/window-infos-raw.yml": {
+      "bytes": 9860,
+      "sha256": "dfa205a15665a32cca0229efcb9fab3fd6c44e58b9585a776aaffae72297c203"
+    },
+    "tools/window-infos-raw/src/dev/agentos/raw/RawCollector.java": {
+      "bytes": 7900,
+      "sha256": "4d34e2f69be404d9f74740227f4c63d512f95dee0a04d1bc1cf68a27aeba4549"
+    },
+    "tools/window-infos-raw/src/dev/agentos/raw/RawListenerSession.java": {
+      "bytes": 2016,
+      "sha256": "aaaae56c8491e6fff71d77a01d87ec731ce99625e163697b21fa8c29dd6d767d"
+    },
+    "tools/window-infos-raw/src/dev/agentos/raw/RawSession.java": {
+      "bytes": 207,
+      "sha256": "0b8a7ef6e1e72b4da85e75027c78c7a728b259643ae8679e51a8b9fd51f7b7bc"
+    },
+    "tools/window-infos-raw/src/dev/agentos/raw/WindowInfosRawMain.java": {
+      "bytes": 17052,
+      "sha256": "bad12cfc199c1d06089fd4d436ffb910ea377da2cd2968c50e0385ec4fafbbaf"
+    },
+    "tools/window-infos-raw/stubs/android/view/InputWindowHandle.java": {
+      "bytes": 531,
+      "sha256": "87bc82903fc7792fd2c0e93e6825013fe295152d6a8676c917e1412652946f1d"
+    },
+    "tools/window-infos-raw/stubs/android/window/WindowInfosListener.java": {
+      "bytes": 689,
+      "sha256": "8f487e37aed7f02c05173f7d842e03d717f1d4895a5ba18425b8fc11762d4c8b"
+    },
+    "tools/window-infos-raw/tests/dev/agentos/raw/RawCollectorHostTest.java": {
+      "bytes": 9035,
+      "sha256": "a30ce90ec58bbc4a4360069c204276a6184eace5a257662b5c5e2735b2230ffa"
+    }
+  },
+  "status": "failed",
+  "stage": "postcheck",
+  "failureReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED",
+  "createdAt": "2026-11-01T05:50:18.316869+00:00",
+  "completedAt": "2026-11-01T05:52:09.030380+00:00",
+  "emulatorStepOutcome": "failure",
+  "device": {
+    "serial": "emulator-5554",
+    "properties": {
+      "ro.kernel.qemu": "1",
+      "ro.boot.qemu": "1",
+      "ro.build.version.sdk": "37",
+      "ro.product.cpu.abi": "x86_64",
+      "sys.boot_completed": "1",
+      "ro.build.fingerprint": "Android/sdk_phone64_x86_64/emu64x:17/CE2A.260420.051.A3/16571990:userdebug/test-keys"
+    }
+  },
+  "tools": {
+    "adb": "/usr/local/lib/android/sdk/platform-tools/adb",
+    "aapt": "/usr/local/lib/android/sdk/build-tools/35.0.0/aapt",
+    "fixtureApk": "/home/runner/work/_temp/window-infos-raw-binaries/fixture.apk",
+    "probeJar": "/home/runner/work/_temp/window-infos-raw-binaries/window-infos-raw.jar"
+  },
+  "inputs": {
+    "fixtureApk": {
+      "bytes": 13853,
+      "sha256": "1e12cc310f68641e727752fc16ff72f85e774fa4f99f6f588b241f4b3455051d",
+      "package": "dev.agentos.compat",
+      "minSdk": 30,
+      "targetSdk": 35,
+      "installedPaths": [
+        "/data/app/~~66qDV8yFwBqtOzr7ct7n8g==/dev.agentos.compat-V6zWGZrlhejBKDsHaA0pPg==/base.apk"
+      ],
+      "uid": 10156
+    },
+    "probeJar": {
+      "bytes": 11317,
+      "sha256": "15db65c205ab3d2e1f3fc4f83b39e515a46d1cdf04a242dc19dc5a784e627813"
+    }
+  },
+  "ime": {
+    "componentBefore": "com.android.inputmethod.latin/.LatinIME",
+    "componentAfter": "com.android.inputmethod.latin/.LatinIME",
+    "package": "com.android.inputmethod.latin",
+    "uid": 10112,
+    "uidAfter": 10112,
+    "displayId": 0
+  },
+  "rawAttempted": true,
+  "fixtureAttempted": true,
+  "positiveCallbackCount": 0,
+  "remoteProcessExit": "NORMAL",
+  "cleanup": {
+    "fixture": "RETURNED_ZERO",
+    "probeFile": "RETURNED_ZERO"
+  },
+  "emulatorTeardown": "WORKFLOW_RESPONSIBILITY_NOT_OBSERVED"
+}

@@ -102,3 +102,7 @@ v4首轮 [third-party-40674357809-1](third-party-40674357809-1/) 来自5436源�
 `window-infos-reset-trace-<run>-<attempt>` 保存独立有界Trace、未改合同的原A/B比较及离线派生状态。首版9ee的[41579567857-1](window-infos-reset-trace-41579567857-1/manifest.json)在6条只读预检后停止：Perfetto完整help返回1被误判失败；Trace未启动、A/B均未执行、设置未写。15索引/65,261字节、含manifest共16个Git原件/69,792字节已核验，失败原件保留；修正版另行冻结，不覆盖首轮。
 
 同源[整体演示41579571277-1](demos/41579571277-1/manifest.json)13阶段/8确认通过：[37.752秒视频](demos/41579571277-1/demo.mp4)459,108字节、511帧；30载荷/1,186,078字节、22PNG、31个Git原件与完整解码核验。API35 Fixture/本地模型、安全标志保留；stopped PNG仍等待确认，视频后段浮条消失。不替代本版未执行的API37专项、原Notes或历史ready失败。
+
+70b第二版[41580632157-1](window-infos-reset-trace-41580632157-1/manifest.json)保留11条命令：help已通过，794B配置传入及摘要核验成功，Perfetto启动报TraceConfig为空。A/B未执行、输入法设置未写；设备配置文件清理未确认，无本地Trace，不能推断远端文件状态。归档eea69017d保留失败；配置传输修正另行验证。
+
+70b同源[整体演示41580635370-1](demos/41580635370-1/manifest.json)13阶段/8确认通过：[36.916秒视频](demos/41580635370-1/demo.mp4)421,635字节、501帧，30载荷1,164,860字节、22PNG和31Git原件完整核验。API35 Fixture/本地模型，安全标志保留；不覆盖API37启动失败或旧Notes验收。

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "kind": "window-infos-reset-trace-pipe-local-validation",
+  "recordedAt": "2026-11-03T05:06:43.720313+00:00",
+  "command": "python3 -m unittest discover -s scripts -p 'test_window_infos_reset_trace*.py' -v",
+  "result": {
+    "tests": 88,
+    "capture": 39,
+    "analysis": 23,
+    "archive": 26,
+    "passed": true,
+    "seconds": 13.593
+  },
+  "sourceFiles": [
+    {
+      "path": "scripts/window_infos_reset_trace.py",
+      "bytes": 53453,
+      "sha256": "625bf10b7557b6ff23edf2d7aeec206c09daf57140c25437ca8aceb8e092c2b3"
+    },
+    {
+      "path": "scripts/test_window_infos_reset_trace.py",
+      "bytes": 39190,
+      "sha256": "a7f3bd0bd5b9581d7d220a94d8a54e832677730a75af780a9e66f14cda6d002d"
+    },
+    {
+      "path": "scripts/window_infos_reset_trace_analysis.py",
+      "bytes": 25957,
+      "sha256": "3ec29a5419788b8c9050e91242b893276b09a4094c12ff605f69f07d0108b672"
+    },
+    {
+      "path": "scripts/window_infos_reset_trace_archive.py",
+      "bytes": 26000,
+      "sha256": "b7f424733dc5d86f94592621e7d1858fcf805421df7a143458f19cd64e8b4c91"
+    }
+  ],
+  "log": {
+    "path": "docs/validation/diagnostics/window-infos-reset-trace-2026-11-03/pipe-unittest.log",
+    "bytes": 15551,
+    "sha256": "29db2bd15f7d9805778a88d81913731bce5252f4e0f013fd89ce315197ee3d61"
+  },
+  "scope": {
+    "actualHostChildrenTested": true,
+    "actualConfigBytesAndEof": true,
+    "timeoutOutputLimitCancellationBrokenPipe": true,
+    "hostParentExitedWithStdoutChildCleanup": true,
+    "deviceRunPending": true,
+    "originalNotesRerun": false,
+    "originalAandBSourceChanged": false,
+    "startDeadlineSeconds": 15,
+    "rawArmSeconds": 12
+  }
+}

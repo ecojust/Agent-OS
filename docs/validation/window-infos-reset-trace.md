@@ -34,6 +34,18 @@ Trace最长120秒、原文件最多32MiB、缓冲共8MiB，固定am/wm/view和�
 
 首版冻结源码为 `9ee0233a0db1fd79402f26eb13b80e40992828ae`。其唯一API37运行[41579567857](https://github.com/ecojust/Agent-OS/actions/runs/41579567857)在前置检查失败，[原始清单](../../screenshots/window-infos-reset-trace-41579567857-1/manifest.json)及[独立审核](diagnostics/window-infos-reset-trace-2026-11-03/first-attempt-audit.json)明确：只有6条只读命令，`perfetto --help`完成并输出4425字节完整Usage，正常退出码为1，采集器却要求0。A/B均为NOT_EXECUTED，设置未读写，Trace未启动，没有新调用路径结论。15索引文件65,261字节，含manifest共16个Git原件69,792字节；归档41579936245、提交fc9a81123bdf964b5706f8a1902ed3b1fceaea91，原字节保留。
 
-修正仅为help命令识别完整Usage并接受退出0/1，运行准入与证据校验共用相同判据；其他命令仍要求0，15秒启动时限、12秒raw窗口和区域四谓词不变。[修正审阅](diagnostics/window-infos-reset-trace-2026-11-03/help-exit-fix-review.json)绑定实际原help输出及窄修正；真实help字节也作为独立测试fixture归档。修正后[79项宿主测试](diagnostics/window-infos-reset-trace-2026-11-03/help-fix-local-validation.json)通过（30采集/23解析/26归档）；接着单独冻结源码，验证一次API37并录制一次新源码整体演示。首版失败不替换、不计作完成的A/B实验。
+修正仅为help命令识别完整Usage并接受退出0/1，运行准入与证据校验共用相同判据；其他命令仍要求0，15秒启动时限、12秒raw窗口和区域四谓词不变。[修正审阅](diagnostics/window-infos-reset-trace-2026-11-03/help-exit-fix-review.json)绑定实际原help输出及窄修正；真实help字节也作为独立测试fixture归档。修正后[79项宿主测试](diagnostics/window-infos-reset-trace-2026-11-03/help-fix-local-validation.json)通过（30采集/23解析/26归档）；该修正冻结为70b231c54af1ca10fd60de575aa9a58c2d9f0e78，已分别执行一次API37与整体演示。首版失败不替换、不计作完成的A/B实验。
 
 首版同源API35整体[41579571277](https://github.com/ecojust/Agent-OS/actions/runs/41579571277)通过13阶段/8确认，[37.752秒录像](../../screenshots/demos/41579571277-1/demo.mp4)及[审核](diagnostics/window-infos-reset-trace-2026-11-03/overall-video-audit-41579571277.json)记录30载荷、22PNG、511帧完整核验。仅Fixture/本地测试模型，不代替未执行的专项或原Notes24/8。
+
+## 第二版实际结果与配置输入问题
+
+70b源码唯一API37运行[41580632157](https://github.com/ecojust/Agent-OS/actions/runs/41580632157)仍失败，[原始清单](../../screenshots/window-infos-reset-trace-41580632157-1/manifest.json)保留11条命令：完整help退出1已通过，794字节配置成功传入并核对SHA256，但start_trace在38毫秒后退出1，原输出为`The TraceConfig is empty`。A/B均NOT_EXECUTED，输入法设置没有读写，没有本地Trace或调用路径分析。配置文件已写入设备，未取得PID，因此没有发送停止信号或确认远端文件清理；也没有启动后的文件检查，不能把“本地无Trace”扩写成已证明远端文件不存在。归档41581046848、提交eea69017dfeda2e6b6201f6c137f2c2d629bde7c，[独立审核](diagnostics/window-infos-reset-trace-2026-11-03/second-attempt-audit.json)核对16个Git原件74,293字节、26份源码，失败原字节保持。
+
+固定Perfetto实现先读配置，再后台化，不能归因为后台化先关闭stdin。旧成功工具通过ADB管道传入配置；本版使用远端shell重定向，继承的是普通文件描述符。现有记录没有SELinux AVC，不能确认具体拒读原因；下一修正将只替换配置输入传输并验证完整输入/EOF及原超时边界，不更改配置内容或原A/B实验。
+
+70b同源API35[整体演示41580635370](https://github.com/ecojust/Agent-OS/actions/runs/41580635370)完成13阶段/8确认，[36.916秒视频](../../screenshots/demos/41580635370-1/demo.mp4)为421,635字节、501帧。[独立审核](diagnostics/window-infos-reset-trace-2026-11-03/overall-video-audit-41580635370.json)核对30载荷1,164,860字节、22PNG与31Git原件；暂停画面保留控制条，后段视频确认浮条消失。仅Fixture/本地测试模型、安全标志保持，不替代尚未执行的API37 A/B或原Notes24/8。
+
+追加[真实处理器预检](diagnostics/window-infos-reset-trace-2026-11-03/real-processor-preflight.json)：固定v59.1对旧应用体验Trace的5,097,777字节原件执行当前六条SQL，均退出0且CSV结构解析通过，共98,307字节。该检查只核验处理器接口，没有加载A/B上下文或做重建归因，不能替代本轮专项。
+
+[原生接口与PIPE修正独立审阅](diagnostics/window-infos-reset-trace-2026-11-03/native-interface-and-pipe-review.json)已完成，绑定固定Perfetto、政策与参考kernel源码；镜像逐字对应及本次SELinux拒读原因仍未验证。配置输入修正已完成：start直接调用ADB的Perfetto命令，通过专用有界管道传入同一794字节配置，记录配置摘要、宿主实际写入量和EOF；仅exit0且完整输入才继续核对PID。宿主写入记录不冒充设备消费确认。原push/digest、15秒启动、12秒raw和身份/停止/恢复合同均保持，未增加失败回退。[88项整合测试](diagnostics/window-infos-reset-trace-2026-11-03/pipe-local-validation.json)通过（39采集/23解析/26归档），包含真实子进程的完整字节/EOF、超时、输出上限、取消、BrokenPipe及父进程先退出时的自有组清理。接着冻结该修正，分别执行一次API37及整体录像；原两份失败保持原源码与结果。

@@ -1,0 +1,620 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-reset-trace-second-source-review",
+  "checkedAt": "2026-11-03T05:00:20+00:00",
+  "auditStatus": "passed",
+  "productionValidatorsImportedOrInvoked": false,
+  "newDeviceExecution": false,
+  "originalsModified": false,
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "70b231c54af1ca10fd60de575aa9a58c2d9f0e78",
+    "runId": 41580632157,
+    "attempt": 1
+  },
+  "archiveCommit": "eea69017dfeda2e6b6201f6c137f2c2d629bde7c",
+  "archiveParentCommit": "70b231c54af1ca10fd60de575aa9a58c2d9f0e78",
+  "archiveRunIdProvidedByParent": 41581046848,
+  "sourceMetadata": {
+    "runConclusion": "failure",
+    "traceJob": {
+      "id": 125734759794,
+      "conclusion": "failure"
+    },
+    "jobsChecked": 7,
+    "artifact": {
+      "id": 13205342688,
+      "name": "window-infos-reset-trace-api-37.0-attempt-1",
+      "sizeInBytes": 16876
+    },
+    "runJobArtifactRepositoryCommitAttemptAndTimeBindings": "passed"
+  },
+  "filesIncludingManifest": 16,
+  "totalArchiveBytes": 74293,
+  "indexedFiles": 15,
+  "indexedBytes": 69764,
+  "payloadFilesWithoutMetadata": 12,
+  "payloadBytesWithoutMetadata": 39516,
+  "originalFiles": [
+    {
+      "path": "commands.json",
+      "bytes": 14464,
+      "sha256": "6a4962313b1d93e3b7aec3506645c2603ba672134ac01aab4ed9d755d1a89905",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/baseline/capture.json",
+      "bytes": 411,
+      "sha256": "0594f33c8c3bada95a26e0407edb743b179d80facf7881184fbf5b0fb811ef6a",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/baseline/commands.json",
+      "bytes": 240,
+      "sha256": "fc860a00822918b3ecf2e1bfc822390f0924f498f465e3067d2e0cd6a0d468ca",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/baseline/report.json",
+      "bytes": 4533,
+      "sha256": "349d7e30bf77aa9b42245b50e680ddd60c44f56eb53e1df31ea20faf88d0ef77",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/commands.json",
+      "bytes": 245,
+      "sha256": "8f3677a6feaf73f318ffa00cb8f341f2901cdb8ecca2b4c951814e6ab17d8abf",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/enabled/capture.json",
+      "bytes": 411,
+      "sha256": "0594f33c8c3bada95a26e0407edb743b179d80facf7881184fbf5b0fb811ef6a",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/enabled/commands.json",
+      "bytes": 240,
+      "sha256": "fc860a00822918b3ecf2e1bfc822390f0924f498f465e3067d2e0cd6a0d468ca",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/enabled/report.json",
+      "bytes": 4533,
+      "sha256": "a6c0b64469f2969cf72e1e7c1e20b4af08a79152153e591455bc2cad6928c429",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/journal.json",
+      "bytes": 366,
+      "sha256": "e866c0a4599e8c79a9bc213379b667557d2df33fa07232ef67541da8dafc07db",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/report.json",
+      "bytes": 6014,
+      "sha256": "7317e8a8316d1fea3794cf54c3b5d3d83f5267ee1557aa2961d923cbaf2f8214",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 4529,
+      "sha256": "1015e3c39ae4d9d30f7deccdf11660c600f9c424276de70673341992589b1631",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "report.json",
+      "bytes": 7265,
+      "sha256": "011cad5128b5954143218f30f4c7db0ce5a66a25214cf5c4e35e4312adfda97f",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "source-artifacts.json",
+      "bytes": 1866,
+      "sha256": "8627d448cd40c14db4b3606373b9a4ebfb4a38e87921f38e8271eb7bd3b1cf12",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "source-jobs.json",
+      "bytes": 15305,
+      "sha256": "cd9297149b9b20ffd9969e396733517d24a50cb520bcd776353f07f732239e14",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "source-run.json",
+      "bytes": 13077,
+      "sha256": "f324377ad9f887779d5c8934a035144617f6f1e7e5b15ec069f5cc7a896e1468",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "trace-config.pbtxt",
+      "bytes": 794,
+      "sha256": "5821fa826763553a7fffb97b9f493291f5db120e3d073483f3d6ace02d380992",
+      "gitBytesMatch": true
+    }
+  ],
+  "producerSourceFilesChecked": 26,
+  "producerSourceBytesChecked": 491659,
+  "pythonProducerFilesChecked": 15,
+  "producerSources": [
+    {
+      "path": ".github/workflows/window-infos-raw.yml",
+      "bytes": 26406,
+      "sha256": "f4c8795e9b0a6e2215845c4533ed32c974406a51ff81673be710c060f6e80e3d",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "compat-smoke/build.gradle",
+      "bytes": 817,
+      "sha256": "fca4a5de7778383b232c9b3f501bd4eee4e43eed762160bc8afaf61d86c12e11",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "compat-smoke/src/main/AndroidManifest.xml",
+      "bytes": 892,
+      "sha256": "5c7fdf3b0b5eaf1000f902351671f63e5645b9ab9b12f5208099b161b931d3ec",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "compat-smoke/src/main/java/dev/agentos/compat/RawWindowFixtureActivity.java",
+      "bytes": 5973,
+      "sha256": "6ab53d70864ae522e53438190e39eb564a3232b087d77fda7d1139c949b9dcee",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "scripts/build_window_infos_raw.py",
+      "bytes": 7314,
+      "sha256": "6caf61f8a956213d8932398d7f5bd95a008d44990a5769ebef107a4fdd9fb280",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "scripts/configure_emulator_phone.py",
+      "bytes": 2136,
+      "sha256": "6e47a74d6b62fe8c1d8e459e51748ca9ccac1f32f2c09a972215a1e634821eed",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "scripts/experience_trace.py",
+      "bytes": 22765,
+      "sha256": "2c57a53161ad3beb95643f1b8ffb1856cf8704cb8194af1c42d4e7bc5694d376",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "scripts/third_party_smoke.py",
+      "bytes": 27947,
+      "sha256": "e15ba7930e9daf6393e80156121316032bef6bfe6ffabf5e462fc2d082e5a30e",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "scripts/third_party_smoke_archive.py",
+      "bytes": 23102,
+      "sha256": "84bf08eded010c1cb0d58f4f8b90ebecf7cc32768d66639348e79ba83621f0f2",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "scripts/window_infos_capability.py",
+      "bytes": 48485,
+      "sha256": "723ae37d40a299c5db4b337cb0aff88a9a4dd18864dff73a8d4ba750d3e3a45c",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "scripts/window_infos_ime_state.py",
+      "bytes": 20876,
+      "sha256": "648b46728ae57367884068daff2a43455d5245cdae85765ba3f289bca6b4dbff",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "scripts/window_infos_input_state.py",
+      "bytes": 14926,
+      "sha256": "a059ee1608e1b01580a9c7b67e72eaea270f8fa9de0e1d38ce4e53e38821fec0",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "scripts/window_infos_keyboard.py",
+      "bytes": 42814,
+      "sha256": "2fa9ee79d90797409f1e2cc9b88080d91e071feb232d0763b46707e31f81b15d",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "scripts/window_infos_keyboard_archive.py",
+      "bytes": 19841,
+      "sha256": "b80aa08fa676e93acb3443871853053fd5bec03b04e5d3de36accca910c21461",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "scripts/window_infos_raw.py",
+      "bytes": 73784,
+      "sha256": "a5f4df94c4a63ba9624cc7aa4ce4e0b0bf8cfb87b0b776f440e5faa80181db8e",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "scripts/window_infos_raw_archive.py",
+      "bytes": 17185,
+      "sha256": "aaba8be3f1b67dc9ab07e901bf07a46efacaf0424c492ba8b59a4693165e18ea",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "scripts/window_infos_reset_trace.py",
+      "bytes": 47009,
+      "sha256": "f67a0eaeddb49bcab8490704fb8cbf7080af72ee51ec848322b2b593c1988b06",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "scripts/window_infos_reset_trace_analysis.py",
+      "bytes": 25957,
+      "sha256": "3ec29a5419788b8c9050e91242b893276b09a4094c12ff605f69f07d0108b672",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "scripts/window_infos_reset_trace_archive.py",
+      "bytes": 26000,
+      "sha256": "b7f424733dc5d86f94592621e7d1858fcf805421df7a143458f19cd64e8b4c91",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/RawCollector.java",
+      "bytes": 7900,
+      "sha256": "4d34e2f69be404d9f74740227f4c63d512f95dee0a04d1bc1cf68a27aeba4549",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/RawListenerSession.java",
+      "bytes": 2016,
+      "sha256": "aaaae56c8491e6fff71d77a01d87ec731ce99625e163697b21fa8c29dd6d767d",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/RawSession.java",
+      "bytes": 207,
+      "sha256": "0b8a7ef6e1e72b4da85e75027c78c7a728b259643ae8679e51a8b9fd51f7b7bc",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/WindowInfosRawMain.java",
+      "bytes": 17052,
+      "sha256": "bad12cfc199c1d06089fd4d436ffb910ea377da2cd2968c50e0385ec4fafbbaf",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "tools/window-infos-raw/stubs/android/view/InputWindowHandle.java",
+      "bytes": 531,
+      "sha256": "87bc82903fc7792fd2c0e93e6825013fe295152d6a8676c917e1412652946f1d",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "tools/window-infos-raw/stubs/android/window/WindowInfosListener.java",
+      "bytes": 689,
+      "sha256": "8f487e37aed7f02c05173f7d842e03d717f1d4895a5ba18425b8fc11762d4c8b",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "tools/window-infos-raw/tests/dev/agentos/raw/RawCollectorHostTest.java",
+      "bytes": 9035,
+      "sha256": "a30ce90ec58bbc4a4360069c204276a6184eace5a257662b5c5e2735b2230ffa",
+      "gitBytesMatch": true
+    }
+  ],
+  "comparisonProducerSourceSubsetChecked": 22,
+  "arms": {
+    "baseline": {
+      "status": "unverified",
+      "failureReason": "NOT_EXECUTED",
+      "commands": 0,
+      "sourceFilesChecked": 18,
+      "rawAttempted": false,
+      "capture": {
+        "schemaVersion": 1,
+        "kind": "window-infos-raw-capture",
+        "source": {
+          "repository": "ecojust/Agent-OS",
+          "commit": "70b231c54af1ca10fd60de575aa9a58c2d9f0e78",
+          "runId": 41580632157,
+          "attempt": 1
+        },
+        "apiLevel": 37,
+        "status": "not_attempted",
+        "file": null,
+        "scope": "One dedicated synthetic editor screenshot; not proof of raw window identity",
+        "secureWindowFlagsChanged": false
+      }
+    },
+    "enabled": {
+      "status": "unverified",
+      "failureReason": "NOT_EXECUTED",
+      "commands": 0,
+      "sourceFilesChecked": 18,
+      "rawAttempted": false,
+      "capture": {
+        "schemaVersion": 1,
+        "kind": "window-infos-raw-capture",
+        "source": {
+          "repository": "ecojust/Agent-OS",
+          "commit": "70b231c54af1ca10fd60de575aa9a58c2d9f0e78",
+          "runId": 41580632157,
+          "attempt": 1
+        },
+        "apiLevel": 37,
+        "status": "not_attempted",
+        "file": null,
+        "scope": "One dedicated synthetic editor screenshot; not proof of raw window identity",
+        "secureWindowFlagsChanged": false
+      }
+    }
+  },
+  "commandsChecked": [
+    {
+      "ordinal": 1,
+      "id": "devices",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "devices"
+      ],
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 5,
+      "bytes": 47,
+      "sha256": "56ecd6ef0cc63935dccb7816ebed2d058f6ee037867f849447a1a2e566ab7488"
+    },
+    {
+      "ordinal": 2,
+      "id": "api",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "getprop",
+        "ro.build.version.sdk"
+      ],
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 81,
+      "bytes": 3,
+      "sha256": "b58a3da5fde2680191877ec88a1aa7d06927cc3b30cdf0d0db8c39b488891576"
+    },
+    {
+      "ordinal": 3,
+      "id": "qemu",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "getprop",
+        "ro.kernel.qemu"
+      ],
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 40,
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "ordinal": 4,
+      "id": "current_user",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "am",
+        "get-current-user"
+      ],
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 193,
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "ordinal": 5,
+      "id": "shell_uid",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "id",
+        "-u"
+      ],
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 33,
+      "bytes": 5,
+      "sha256": "1d8fa3c8ab49d50b30fccbbd901735d5896a5d7959a5ad7ccecb79c1c849cc66"
+    },
+    {
+      "ordinal": 6,
+      "id": "perfetto_help",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "/system/bin/perfetto",
+        "--help"
+      ],
+      "status": "completed",
+      "exitCode": 1,
+      "elapsedMillis": 39,
+      "bytes": 4425,
+      "sha256": "afbf6306421fa8b494d154535cf845cfa43f62f16e9b45f77094a135308613d2"
+    },
+    {
+      "ordinal": 7,
+      "id": "config_absent",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "sh",
+        "-c",
+        "'test ! -e /data/local/tmp/agentos-reset-trace-41580632157-1.pbtxt && test ! -L /data/local/tmp/agentos-reset-trace-41580632157-1.pbtxt'"
+      ],
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 201,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "ordinal": 8,
+      "id": "trace_absent",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "sh",
+        "-c",
+        "'test ! -e /data/misc/perfetto-traces/agentos-reset-trace-41580632157-1.pftrace && test ! -L /data/misc/perfetto-traces/agentos-reset-trace-41580632157-1.pftrace'"
+      ],
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 72,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "ordinal": 9,
+      "id": "push_config",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "push",
+        "/home/runner/work/_temp/window-infos-reset-trace/trace-config.pbtxt",
+        "/data/local/tmp/agentos-reset-trace-41580632157-1.pbtxt"
+      ],
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 10,
+      "bytes": 127,
+      "sha256": "1adbd5c100d9746951dae7e4a9d2125ec00cd483f243308b4d17c8abcb030462"
+    },
+    {
+      "ordinal": 10,
+      "id": "config_digest",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "sha256sum",
+        "/data/local/tmp/agentos-reset-trace-41580632157-1.pbtxt"
+      ],
+      "status": "completed",
+      "exitCode": 0,
+      "elapsedMillis": 27,
+      "bytes": 122,
+      "sha256": "264408b50d8bccc9be2d51e2e8e16c61c38f44f1c48ac1ee84c69e26ad9b5221"
+    },
+    {
+      "ordinal": 11,
+      "id": "start_trace",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "sh",
+        "-c",
+        "'exec /system/bin/perfetto --txt -c - -o /data/misc/perfetto-traces/agentos-reset-trace-41580632157-1.pftrace --background-wait < /data/local/tmp/agentos-reset-trace-41580632157-1.pbtxt'"
+      ],
+      "status": "completed",
+      "exitCode": 1,
+      "elapsedMillis": 38,
+      "bytes": 59,
+      "sha256": "e936705adb8afb7e3d20a00c2b48561147d90bbb55805d32ce0be461035a838e"
+    }
+  ],
+  "commandCount": 11,
+  "commandOutputBytes": 4792,
+  "readOnlyPreflightOnly": false,
+  "perfettoHelp": {
+    "bytes": 4425,
+    "sha256": "afbf6306421fa8b494d154535cf845cfa43f62f16e9b45f77094a135308613d2",
+    "status": "completed",
+    "exitCode": 1,
+    "elapsedMillis": 39,
+    "usageHeaderPresent": true,
+    "backgroundWaitOptionPresent": true,
+    "interpretation": "Identical complete Usage output with exit1 passed the updated help-only admission rule, as shown by five subsequent commands. This does not itself prove trace collection."
+  },
+  "capture": {
+    "reportedStatus": "unverified",
+    "failureReason": "RESET_COMMAND_FAILED_start_trace",
+    "tracePresent": false,
+    "reportedComparisonMatchesChild": true
+  },
+  "comparison": {
+    "status": "unverified",
+    "failureReason": "NOT_EXECUTED",
+    "arms": {
+      "baseline": {
+        "status": "unverified",
+        "failureReason": "NOT_EXECUTED",
+        "positiveCallbackCount": 0,
+        "imeStateStatus": "not_attempted",
+        "comparable": false
+      },
+      "enabled": {
+        "status": "unverified",
+        "failureReason": "NOT_EXECUTED",
+        "positiveCallbackCount": 0,
+        "imeStateStatus": "not_attempted",
+        "comparable": false
+      }
+    },
+    "restoration": {
+      "status": "not_needed",
+      "mutationAttempted": false,
+      "restoreAttempted": false
+    }
+  },
+  "analysis": {
+    "status": "missing",
+    "reportedStatus": null,
+    "completeFileSet": false,
+    "validationError": null
+  },
+  "summary": {
+    "expectedCaptures": 1,
+    "recordedCaptures": 0,
+    "expectedComparisons": 1,
+    "passedComparisons": 0,
+    "expectedArms": 2,
+    "passedArms": 0,
+    "failedArms": 0,
+    "unverifiedArms": 2,
+    "apiLevel": 37
+  },
+  "traceAttempted": true,
+  "traceConfirmedStarted": false,
+  "startTraceFailure": {
+    "status": "completed",
+    "exitCode": 1,
+    "bytes": 59,
+    "sha256": "e936705adb8afb7e3d20a00c2b48561147d90bbb55805d32ce0be461035a838e",
+    "elapsedMillis": 38,
+    "output": "[039.712]     perfetto_cmd.cc:652 The TraceConfig is empty\n",
+    "owner": null
+  },
+  "settingMutationAttempted": false,
+  "comparisonCommands": 0,
+  "traceConfigPushedAndRemoteDigestVerified": true,
+  "remoteConfigCleanupConfirmed": false,
+  "remoteTracePostStartExistenceObserved": false,
+  "limits": [
+    "Only this wrapper and nested diagnostic command receipts are reviewed. Config push is an observed device write; no keyboard setting mutation was attempted. Emulator setup is outside this command catalog.",
+    "A local 794-byte config was pushed and remotely hash-verified. No cleanup command ran; its later deletion is not confirmed. The trace output path was checked absent before start only, not after the start error. No local trace, screenshots, APK/jar payload or caller evidence was collected.",
+    "Actions metadata was read from the immutable archive, not re-queried over network; archive workflow success/run ID was supplied by the parent.",
+    "Producer source identities match original source Git blobs; current worktree may contain a later help-contract fix and is not substituted for original producer bytes.",
+    "No production archive/parser/validator was imported or invoked, no device execution or artifact download occurred."
+  ],
+  "auditScript": {
+    "bytes": 13666,
+    "sha256": "144576f1810878c10303564d152cb304524924afd59cf01bca6fd487cda1c266"
+  }
+}

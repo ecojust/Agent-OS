@@ -58,6 +58,7 @@ SCOPE = {'diagnosticOnly': True, 'originalNotesCasesRerun': 0,
          'bufferKiB': [4096, 4096], 'bufferPolicy': 'RING_BUFFER',
          'maxCommands': MAX_COMMANDS, 'maxCommandOutputBytes': MAX_TOTAL_OUTPUT,
          'perfettoHelpExitCodes': [0, 1], 'perfettoHelpRequiresCompleteUsage': True,
+         'configDelivery': 'HOST_STDIN_PIPE', 'completeConfigWriteAndEofRequired': True,
          'backgroundWaitRequired': True, 'traceStartLimit': 1, 'traceStopSignalLimit': 1,
          'stopPollLimit': STOP_POLLS, 'applicationCompatibilityAcceptance': False}
 require, Rejected = w.require, w.Rejected
@@ -273,7 +274,15 @@ def perfetto_help_accepted(command):
 
 
 def command_accepted(command):
-    return perfetto_help_accepted(command) if command.get('id') == 'perfetto_help' else w.command_ok(command)
+    if command.get('id') == 'perfetto_help': return perfetto_help_accepted(command)
+    if command.get('id') == 'start_trace': return w.command_ok(command) and complete_config_input(command)
+    return w.command_ok(command)
+
+
+def complete_config_input(command):
+    expected = {'path': 'trace-config.pbtxt', **w.identity(trace_config()),
+                'writtenBytes': len(trace_config()), 'eofSent': True}
+    return type(command.get('stdin')) is dict and equal(command['stdin'], expected)
 
 
 def command_argv(name, report):
@@ -290,8 +299,8 @@ def command_argv(name, report):
         'trace_absent': ['shell', 'sh', '-c', shlex.quote('test ! -e ' + paths['trace'] + ' && test ! -L ' + paths['trace'])],
         'push_config': ['push', report['tools']['config'], paths['config']],
         'config_digest': ['shell', 'sha256sum', paths['config']],
-        'start_trace': ['shell', 'sh', '-c', shlex.quote('exec /system/bin/perfetto --txt -c - -o '
-                        + paths['trace'] + ' --background-wait < ' + paths['config'])],
+        'start_trace': ['shell', '/system/bin/perfetto', '--txt', '-c', '-',
+                        '-o', paths['trace'], '--background-wait'],
         'ready_file': ['shell', 'sh', '-c', shlex.quote('test -f ' + paths['trace'] + ' && test ! -L ' + paths['trace'])],
         'trace_size': ['shell', 'sh', '-c', shlex.quote('test -f ' + paths['trace'] + ' && test ! -L ' + paths['trace'] + ' && stat -c %s ' + paths['trace'])],
         'trace_pull': ['exec-out', 'cat', paths['trace']],
@@ -324,6 +333,78 @@ def expected_cmdline(report):
 
 def validate_owner_cmdline(data, report):
     require(data.endswith(b'\0') and data.split(b'\0')[:-1] == expected_cmdline(report), 'RESET_OWNER_CMDLINE')
+
+
+def bounded_input_capture(argv, seconds, limit, input_data):
+    """Write the finite config to a real pipe, close EOF, and drain output.
+
+    Both directions share the original command deadline. An inherited regular
+    file descriptor is not used: the Android consumer receives adb's stdin
+    stream, as in the previously verified app-experience capture interface.
+    writtenBytes counts host pipe writes, not a claim about device consumption.
+    """
+    require(type(input_data) is bytes and 0 < len(input_data) <= MAX_CONFIG_BYTES, 'RESET_STDIN_BOUND')
+    receipt = {'writtenBytes': 0, 'eofSent': False}
+    if w.common.CANCELLED:
+        return b'', {'status': 'cancelled', 'exitCode': None, 'exceptionType': None}, receipt
+    output = bytearray(); process = None; outcome = 'completed'; exception = None; code = None
+    deadline = time.monotonic() + seconds
+    try:
+        process = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT, start_new_session=True, bufsize=0)
+        os.set_blocking(process.stdin.fileno(), False)
+        os.set_blocking(process.stdout.fileno(), False)
+        with selectors.DefaultSelector() as selector:
+            selector.register(process.stdin, selectors.EVENT_WRITE, 'stdin')
+            selector.register(process.stdout, selectors.EVENT_READ, 'stdout')
+            abort = False
+            while selector.get_map() or process.poll() is None:
+                if w.common.CANCELLED or time.monotonic() >= deadline:
+                    outcome = 'cancelled' if w.common.CANCELLED else 'timed_out'
+                    exception = None; break
+                for key, _ in selector.select(min(.1, max(0, deadline - time.monotonic()))):
+                    if key.data == 'stdin':
+                        try:
+                            written = os.write(key.fd, input_data[receipt['writtenBytes']:])
+                            if written <= 0: raise BrokenPipeError('stdin write made no progress')
+                            receipt['writtenBytes'] += written
+                            if receipt['writtenBytes'] == len(input_data):
+                                selector.unregister(key.fileobj); process.stdin.close()
+                                receipt['eofSent'] = True
+                        except BlockingIOError:
+                            continue
+                        except OSError as error:
+                            # Keep draining available child diagnostics after a
+                            # failed write, within the same time/output budget.
+                            outcome = 'exception'; exception = type(error).__name__
+                            selector.unregister(key.fileobj); process.stdin.close()
+                    else:
+                        try: chunk = os.read(key.fd, 16384)
+                        except BlockingIOError: continue
+                        if not chunk: selector.unregister(key.fileobj); continue
+                        left = limit - len(output); output.extend(chunk[:left])
+                        if len(chunk) > left:
+                            outcome = 'output_limit'; exception = None; abort = True; break
+                if abort: break
+    except Exception as error:
+        outcome = 'exception'; exception = type(error).__name__
+    finally:
+        if process is not None:
+            # A group member can retain stdout after the leader exits. Always
+            # clean up our group, rather than checking only the leader's poll.
+            try: os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError: pass
+            except OSError as error:
+                if outcome == 'completed': outcome, exception = 'exception', type(error).__name__
+            for stream in (process.stdin, process.stdout):
+                if stream is not None and not stream.closed:
+                    try: stream.close()
+                    except OSError as error:
+                        if outcome == 'completed': outcome, exception = 'exception', type(error).__name__
+            try: code = process.wait(timeout=1)
+            except subprocess.TimeoutExpired: code = None
+    if outcome == 'completed' and w.common.CANCELLED: outcome = 'cancelled'
+    return bytes(output), {'status': outcome, 'exitCode': code, 'exceptionType': exception}, receipt
 
 
 def stream_trace(argv, seconds, limit, destination):
@@ -362,8 +443,10 @@ def stream_trace(argv, seconds, limit, destination):
 
 
 class CommandRunner:
-    def __init__(self, directory, source, execute=w.common.bounded_capture, stream=stream_trace):
+    def __init__(self, directory, source, execute=w.common.bounded_capture, stream=stream_trace,
+                 input_execute=bounded_input_capture):
         self.directory, self.source, self.execute, self.stream = Path(directory), source, execute, stream
+        self.input_execute = input_execute
         self.commands = decode_json(w.read_bounded(self.directory / 'commands.json', MAX_COMMAND_BYTES))['commands']
 
     def flush(self):
@@ -378,10 +461,22 @@ class CommandRunner:
         item = {'ordinal': len(self.commands) + 1, 'id': name, 'argv': list(argv),
                 'timeoutSeconds': seconds, 'byteLimit': limit, 'startedAt': now(), 'endedAt': None,
                 'elapsedMillis': 0, 'status': 'running', 'exitCode': None, 'exceptionType': None,
-                **w.identity(b''), 'outputBase64': '', 'streamFile': None}
+                **w.identity(b''), 'outputBase64': '', 'streamFile': None, 'stdin': None}
+        if name == 'start_trace':
+            item['stdin'] = {'path': 'trace-config.pbtxt', **w.identity(trace_config()),
+                             'writtenBytes': 0, 'eofSent': False}
         self.commands.append(item); self.flush(); started = time.monotonic()
         try:
-            if name == 'trace_pull':
+            if name == 'start_trace':
+                config = w.read_bounded(self.directory / 'trace-config.pbtxt', MAX_CONFIG_BYTES)
+                require(config == trace_config(), 'RESET_STDIN_CONFIG_CHANGED')
+                data, result, receipt = self.input_execute(argv, seconds, limit, config)
+                require(type(receipt) is dict and set(receipt) == {'writtenBytes', 'eofSent'}
+                        and w.integer(receipt['writtenBytes'], 0, len(config))
+                        and type(receipt['eofSent']) is bool
+                        and (not receipt['eofSent'] or receipt['writtenBytes'] == len(config)), 'RESET_STDIN_RECEIPT')
+                item['stdin'].update(receipt)
+            elif name == 'trace_pull':
                 data, result = self.stream(argv, seconds, limit, self.directory / 'trace.pftrace')
                 if (self.directory / 'trace.pftrace').is_file():
                     item['streamFile'] = {'path': 'trace.pftrace', **w.identity(w.read_bounded(self.directory / 'trace.pftrace', MAX_TRACE_BYTES))}
@@ -526,7 +621,7 @@ def validate_commands(value, report):
             and value['kind'] == KIND + '-commands' and equal(value['source'], report['source']), 'RESET_COMMANDS_SOURCE')
     entries = value['commands']; require(type(entries) is list and len(entries) <= MAX_COMMANDS, 'RESET_COMMAND_COUNT')
     keys = {'ordinal', 'id', 'argv', 'timeoutSeconds', 'byteLimit', 'startedAt', 'endedAt',
-            'elapsedMillis', 'status', 'exitCode', 'exceptionType', 'bytes', 'sha256', 'outputBase64', 'streamFile'}
+            'elapsedMillis', 'status', 'exitCode', 'exceptionType', 'bytes', 'sha256', 'outputBase64', 'streamFile', 'stdin'}
     result = {}; position = -1; end = w.common.timestamp(report['createdAt']); total = 0
     for ordinal, item in enumerate(entries, 1):
         w.exact(item, keys, 'RESET_COMMAND_FIELDS'); name = item['id']
@@ -550,6 +645,13 @@ def validate_commands(value, report):
         data = w.command_data(item)
         require(len(data) <= limit and equal(w.identity(data), {'bytes': item['bytes'], 'sha256': item['sha256']}), 'RESET_COMMAND_BYTES')
         require(item['streamFile'] is None or name == 'trace_pull', 'RESET_COMMAND_STREAM')
+        if name == 'start_trace':
+            stdin = item['stdin']; w.exact(stdin, {'path', 'bytes', 'sha256', 'writtenBytes', 'eofSent'}, 'RESET_STDIN_FIELDS')
+            require(stdin['path'] == 'trace-config.pbtxt'
+                    and equal({key: stdin[key] for key in ('bytes', 'sha256')}, w.identity(trace_config()))
+                    and w.integer(stdin['writtenBytes'], 0, stdin['bytes']) and type(stdin['eofSent']) is bool
+                    and (not stdin['eofSent'] or stdin['writtenBytes'] == stdin['bytes']), 'RESET_STDIN_SOURCE')
+        else: require(item['stdin'] is None, 'RESET_UNEXPECTED_STDIN')
         if item['streamFile'] is not None:
             w.exact(item['streamFile'], {'path', 'bytes', 'sha256'}, 'RESET_STREAM_FIELDS')
             require(item['streamFile']['path'] == 'trace.pftrace', 'RESET_STREAM_PATH')
@@ -619,7 +721,7 @@ def validate_evidence(payloads, source=None):
             stem = name.split('_')[0]
             require(trace[stem + 'Attempted'] and w.common.timestamp(trace[stem + 'AttemptedAt']) <= w.common.timestamp(commands[name]['startedAt']), 'RESET_COMMAND_WITHOUT_INTENT')
     if owner is not None:
-        require('start_trace' in commands and w.command_ok(commands['start_trace']) and parse_pid(w.command_data(commands['start_trace'])) == owner['pid'], 'RESET_OWNER_PID_SOURCE')
+        require('start_trace' in commands and command_accepted(commands['start_trace']) and parse_pid(w.command_data(commands['start_trace'])) == owner['pid'], 'RESET_OWNER_PID_SOURCE')
         if owner['startTimeTicks'] is not None:
             require('start_stat' in commands and w.command_ok(commands['start_stat']), 'RESET_OWNER_STAT_SOURCE')
             info = parse_stat(w.command_data(commands['start_stat']), owner['pid'])

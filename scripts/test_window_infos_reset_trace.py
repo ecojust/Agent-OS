@@ -2,11 +2,15 @@
 import base64
 import copy
 import json
+import os
+import signal
 import shlex
 import subprocess
 from pathlib import Path
 import sys
 import tempfile
+import threading
+import time
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -66,6 +70,7 @@ class SyntheticCapture:
         self.commands = []
         self.comparison_calls = 0
         self.setting_restore_preceded_stop = False
+        self.stdin_received = []
 
     def report(self):
         return json.loads((self.output / 'report.json').read_text())
@@ -128,8 +133,20 @@ class SyntheticCapture:
         return b'', {'status': 'completed', 'exitCode': 1 if self.fault == 'pull_failed' else 0,
                      'exceptionType': None}
 
+    def input_execute(self, argv, seconds, limit, input_data):
+        assert type(input_data) is bytes and input_data == capture.trace_config()
+        assert len(input_data) == 794
+        self.stdin_received.append(input_data)
+        output, result = self.execute(argv, seconds, limit)
+        receipt = {'writtenBytes': len(input_data), 'eofSent': True}
+        if self.fault == 'stdin_short':
+            receipt['writtenBytes'] -= 1; receipt['eofSent'] = False
+        if self.fault == 'stdin_no_eof': receipt['eofSent'] = False
+        return output, result, receipt
+
     def runner(self, directory, source):
-        return capture.CommandRunner(directory, source, self.execute, self.stream)
+        return capture.CommandRunner(directory, source, self.execute, self.stream,
+                                     input_execute=self.input_execute)
 
     def compare(self, args, source):
         self.comparison_calls += 1
@@ -180,6 +197,12 @@ class CaptureTests(unittest.TestCase):
         self.assertEqual(1, driver.comparison_calls)
         self.assertEqual(1, driver.commands.count('start_trace'))
         self.assertEqual(1, driver.commands.count('stop_trace'))
+        self.assertEqual([capture.trace_config()], driver.stdin_received)
+        start = next(item for item in values['commands.json']['commands'] if item['id'] == 'start_trace')
+        self.assertEqual({'path': 'trace-config.pbtxt', **raw.identity(capture.trace_config()),
+                          'writtenBytes': 794, 'eofSent': True}, start['stdin'])
+        self.assertTrue(all(item['stdin'] is None for item in values['commands.json']['commands']
+                            if item['id'] != 'start_trace'))
         self.assertEqual(TRACE, values['trace.pftrace'])
         for arm in ('baseline', 'enabled'):
             self.assertEqual(1, values[f'comparison/{arm}/fixture.json']['showImeAttempts'])
@@ -304,6 +327,30 @@ class CaptureTests(unittest.TestCase):
         self.assertNotIn('start_stat', driver.commands)
         self.assertNotIn('stop_trace', driver.commands)
         self.assertEqual('unverified', values['report.json']['status'])
+
+    def test_partial_or_unclosed_stdin_never_advances_to_process_identity(self):
+        for fault in ('stdin_short', 'stdin_no_eof'):
+            with self.subTest(fault=fault), tempfile.TemporaryDirectory() as root:
+                driver = SyntheticCapture(root, fault=fault); capture.prepare(driver.output, SOURCE)
+                self.assertFalse(driver.run())
+                values = self.values(driver)
+                self.assertEqual([capture.trace_config()], driver.stdin_received)
+                self.assertEqual(0, driver.comparison_calls)
+                self.assertNotIn('start_stat', driver.commands)
+                self.assertNotIn('stop_trace', driver.commands)
+                self.assertIsNone(values['report.json']['trace']['owner'])
+                self.assertEqual('unverified', values['report.json']['status'])
+
+    def test_start_stdin_identity_and_delivery_cannot_be_forged(self):
+        driver = self.driver(); self.assertTrue(driver.run())
+        original = self.values(driver)
+        for change in ({'writtenBytes': 793}, {'eofSent': False}, {'bytes': 793},
+                       {'sha256': '0' * 64}, {'path': 'unrelated.pbtxt'}):
+            with self.subTest(change=change):
+                values = copy.deepcopy(original)
+                command = next(item for item in values['commands.json']['commands'] if item['id'] == 'start_trace')
+                command['stdin'].update(change)
+                with self.assertRaises(ValueError): capture.validate_evidence(values, SOURCE)
 
     def test_start_identity_errors_never_signal_an_unidentified_process(self):
         for fault in ('ambiguous_pid', 'wrong_start_pid', 'wrong_start_cmdline'):
@@ -486,8 +533,8 @@ class CaptureTests(unittest.TestCase):
         report['trace']['owner'] = {'pid': 5731, 'startTimeTicks': 271828,
                                     'cmdlineSha256': 'a' * 64}
         scripts = {}
-        for name in ('start_trace', 'start_stat', 'stop_stat', 'stop_poll_0',
-                     'stop_trace', 'cleanup_absent'):
+        for name in ('start_stat', 'stop_stat', 'stop_poll_0', 'stop_trace',
+                     'config_absent', 'trace_absent', 'ready_file', 'trace_size', 'cleanup_absent'):
             with self.subTest(command=name):
                 argv = capture.command_argv(name, report)
                 self.assertEqual('shell', argv[3])
@@ -500,13 +547,118 @@ class CaptureTests(unittest.TestCase):
                 parsed = subprocess.run(['/bin/sh', '-n', '-c', remote[2]],
                                         capture_output=True, timeout=2)
                 self.assertEqual(0, parsed.returncode, parsed.stderr.decode())
-        start = shlex.split(scripts['start_trace'])
-        self.assertEqual('exec', start[0])
-        redirect = start.index('<')
-        self.assertEqual(['/system/bin/perfetto', '--txt', '-c', '-', '-o',
-                          capture.remote_paths(SOURCE)['trace'], '--background-wait'],
-                         start[1:redirect])
-        self.assertEqual([capture.remote_paths(SOURCE)['config']], start[redirect + 1:])
+        start = capture.command_argv('start_trace', report)
+        self.assertEqual(['/synthetic/adb', '-s', 'emulator-5554', 'shell',
+                          '/system/bin/perfetto', '--txt', '-c', '-', '-o',
+                          capture.remote_paths(SOURCE)['trace'], '--background-wait'], start)
+        self.assertNotIn('sh', start)
+        self.assertNotIn('<', ' '.join(start))
+        self.assertNotIn('|', ' '.join(start))
+
+    def test_real_host_pipe_delivers_fixed_config_fully_and_closes_eof(self):
+        command = [sys.executable, '-c',
+                   'import sys,json,hashlib; data=sys.stdin.buffer.read(); '
+                   'print(json.dumps({"bytes":len(data),"sha256":hashlib.sha256(data).hexdigest()}))']
+        with patch.object(raw.common, 'CANCELLED', False):
+            output, result, receipt = capture.bounded_input_capture(
+                command, 3, 4096, capture.trace_config())
+        self.assertEqual({'bytes': 794, 'sha256': raw.sha(capture.trace_config())}, json.loads(output))
+        self.assertEqual('completed', result['status'])
+        self.assertEqual(0, result['exitCode'])
+        self.assertEqual({'writtenBytes': 794, 'eofSent': True}, receipt)
+
+    def test_real_host_pipe_timeout_uses_one_finite_deadline(self):
+        command = [sys.executable, '-c', 'import time; time.sleep(10)']
+        started = time.monotonic()
+        with patch.object(raw.common, 'CANCELLED', False):
+            output, result, receipt = capture.bounded_input_capture(command, .2, 4096, capture.trace_config())
+        self.assertEqual('timed_out', result['status'])
+        self.assertLess(time.monotonic() - started, 3)
+        self.assertLessEqual(receipt['writtenBytes'], 794)
+        self.assertEqual(b'', output)
+
+    def test_real_host_pipe_output_limit_preserves_only_bounded_prefix(self):
+        command = [sys.executable, '-c', 'import os,time; os.write(1,b"x"*8192); time.sleep(10)']
+        with patch.object(raw.common, 'CANCELLED', False):
+            output, result, receipt = capture.bounded_input_capture(command, 3, 128, capture.trace_config())
+        self.assertEqual('output_limit', result['status'])
+        self.assertLessEqual(len(output), 128)
+        self.assertEqual(b'x' * len(output), output)
+        self.assertLessEqual(receipt['writtenBytes'], 794)
+
+    def test_real_host_pipe_pre_cancel_does_not_spawn_a_process(self):
+        marker = Path(self.temporary.name) / 'must-not-start'
+        command = [sys.executable, '-c', 'from pathlib import Path; import sys; Path(sys.argv[1]).write_text("started")', str(marker)]
+        with patch.object(raw.common, 'CANCELLED', True):
+            output, result, receipt = capture.bounded_input_capture(command, 3, 4096, capture.trace_config())
+        self.assertEqual('cancelled', result['status'])
+        self.assertEqual({'writtenBytes': 0, 'eofSent': False}, receipt)
+        self.assertEqual(b'', output)
+        self.assertFalse(marker.exists())
+
+    def test_real_host_pipe_cancellation_after_process_start_cleans_up(self):
+        marker = Path(self.temporary.name) / 'did-start'
+        command = [sys.executable, '-c',
+                   'from pathlib import Path; import sys,time; Path(sys.argv[1]).write_text("started"); time.sleep(10)', str(marker)]
+        stop = threading.Event()
+        def cancel_after_start():
+            while not stop.wait(.01):
+                if marker.exists():
+                    raw.common.CANCELLED = True
+                    return
+        with patch.object(raw.common, 'CANCELLED', False):
+            thread = threading.Thread(target=cancel_after_start, daemon=True); thread.start()
+            try:
+                output, result, receipt = capture.bounded_input_capture(command, 3, 4096, capture.trace_config())
+            finally:
+                stop.set(); thread.join(timeout=1)
+        self.assertTrue(marker.exists())
+        self.assertEqual('cancelled', result['status'])
+        self.assertLessEqual(receipt['writtenBytes'], 794)
+
+    def test_real_host_pipe_timeout_kills_child_that_outlives_exited_group_leader(self):
+        program = ('import os,json,time; leader=os.getpid(); child=os.fork()\n'
+                   'if child:\n'
+                   ' os.write(1,(json.dumps({"leader":leader,"child":child})+"\\n").encode()); os._exit(0)\n'
+                   'time.sleep(10)\n')
+        command = [sys.executable, '-c', program]
+        with patch.object(raw.common, 'CANCELLED', False):
+            output, result, receipt = capture.bounded_input_capture(command, 1, 4096, capture.trace_config())
+        descendants = json.loads(output)
+        child_pid, group = descendants['child'], descendants['leader']
+        def child_state():
+            try: data = Path(f'/proc/{child_pid}/stat').read_bytes()
+            except FileNotFoundError: return None
+            return data[data.rfind(b')') + 2:].split()[0].decode()
+        state = child_state()
+        try:
+            deadline = time.monotonic() + 1
+            while state not in (None, 'Z') and time.monotonic() < deadline:
+                threading.Event().wait(.01)
+                state = child_state()
+            self.assertEqual('timed_out', result['status'])
+            self.assertIn(state, (None, 'Z'), 'owned child survived its group cleanup')
+        finally:
+            # Only this test's newly created group is eligible for fallback
+            # cleanup if the implementation regresses; no unrelated PID is used.
+            if state not in (None, 'Z'):
+                try:
+                    if os.getpgid(child_pid) == group: os.killpg(group, signal.SIGKILL)
+                except ProcessLookupError: pass
+
+    def test_real_host_pipe_closed_reader_preserves_short_write_failure(self):
+        command = [sys.executable, '-c', 'import os,time; os.close(0); time.sleep(.3)']
+        actual_popen = subprocess.Popen
+        def small_pipe(*args, **kwargs):
+            kwargs['pipesize'] = 4096
+            return actual_popen(*args, **kwargs)
+        payload = b'x' * capture.MAX_CONFIG_BYTES
+        with patch.object(capture.subprocess, 'Popen', side_effect=small_pipe), patch.object(raw.common, 'CANCELLED', False):
+            output, result, receipt = capture.bounded_input_capture(command, 3, 4096, payload)
+        self.assertFalse(result['status'] == 'completed' and result['exitCode'] == 0)
+        self.assertLess(receipt['writtenBytes'], len(payload))
+        self.assertFalse(receipt['eofSent'])
+        self.assertLessEqual(len(output), 4096)
 
     def test_local_stream_uses_os_file_size_bound_and_retains_prefix(self):
         destination = Path(self.temporary.name) / 'bounded.pftrace'

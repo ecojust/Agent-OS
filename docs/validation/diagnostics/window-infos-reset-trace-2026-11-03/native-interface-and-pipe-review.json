@@ -1,0 +1,734 @@
+{
+  "schemaVersion": 1,
+  "kind": "readonly-native-perfetto-interface-and-pipe-fix-review",
+  "checkedAt": "2026-11-03T05:07:16.073288+00:00",
+  "status": "source_review_passed_runtime_validation_pending",
+  "reviewer": "reset_source",
+  "repoModified": false,
+  "deviceExecuted": false,
+  "gradleExecuted": false,
+  "testsExecutedByReviewer": false,
+  "reviewedImplementation": [
+    {
+      "path": "scripts/window_infos_reset_trace.py",
+      "bytes": 53453,
+      "sha256": "625bf10b7557b6ff23edf2d7aeec206c09daf57140c25437ca8aceb8e092c2b3"
+    },
+    {
+      "path": "scripts/test_window_infos_reset_trace.py",
+      "bytes": 39190,
+      "sha256": "a7f3bd0bd5b9581d7d220a94d8a54e832677730a75af780a9e66f14cda6d002d"
+    }
+  ],
+  "sourceComparison": {
+    "baselineCommit": "70b231c54af1ca10fd60de575aa9a58c2d9f0e78",
+    "boundProducerFiles": 26,
+    "unchanged": [
+      {
+        "path": "scripts/window_infos_raw.py",
+        "bytes": 73784,
+        "sha256": "a5f4df94c4a63ba9624cc7aa4ce4e0b0bf8cfb87b0b776f440e5faa80181db8e"
+      },
+      {
+        "path": "scripts/window_infos_raw_archive.py",
+        "bytes": 17185,
+        "sha256": "aaba8be3f1b67dc9ab07e901bf07a46efacaf0424c492ba8b59a4693165e18ea"
+      },
+      {
+        "path": "scripts/build_window_infos_raw.py",
+        "bytes": 7314,
+        "sha256": "6caf61f8a956213d8932398d7f5bd95a008d44990a5769ebef107a4fdd9fb280"
+      },
+      {
+        "path": "scripts/window_infos_capability.py",
+        "bytes": 48485,
+        "sha256": "723ae37d40a299c5db4b337cb0aff88a9a4dd18864dff73a8d4ba750d3e3a45c"
+      },
+      {
+        "path": "scripts/third_party_smoke.py",
+        "bytes": 27947,
+        "sha256": "e15ba7930e9daf6393e80156121316032bef6bfe6ffabf5e462fc2d082e5a30e"
+      },
+      {
+        "path": "scripts/third_party_smoke_archive.py",
+        "bytes": 23102,
+        "sha256": "84bf08eded010c1cb0d58f4f8b90ebecf7cc32768d66639348e79ba83621f0f2"
+      },
+      {
+        "path": "compat-smoke/src/main/java/dev/agentos/compat/RawWindowFixtureActivity.java",
+        "bytes": 5973,
+        "sha256": "6ab53d70864ae522e53438190e39eb564a3232b087d77fda7d1139c949b9dcee"
+      },
+      {
+        "path": "compat-smoke/src/main/AndroidManifest.xml",
+        "bytes": 892,
+        "sha256": "5c7fdf3b0b5eaf1000f902351671f63e5645b9ab9b12f5208099b161b931d3ec"
+      },
+      {
+        "path": "compat-smoke/build.gradle",
+        "bytes": 817,
+        "sha256": "fca4a5de7778383b232c9b3f501bd4eee4e43eed762160bc8afaf61d86c12e11"
+      },
+      {
+        "path": ".github/workflows/window-infos-raw.yml",
+        "bytes": 26406,
+        "sha256": "f4c8795e9b0a6e2215845c4533ed32c974406a51ff81673be710c060f6e80e3d"
+      },
+      {
+        "path": "scripts/window_infos_ime_state.py",
+        "bytes": 20876,
+        "sha256": "648b46728ae57367884068daff2a43455d5245cdae85765ba3f289bca6b4dbff"
+      },
+      {
+        "path": "tools/window-infos-raw/src/dev/agentos/raw/RawCollector.java",
+        "bytes": 7900,
+        "sha256": "4d34e2f69be404d9f74740227f4c63d512f95dee0a04d1bc1cf68a27aeba4549"
+      },
+      {
+        "path": "tools/window-infos-raw/src/dev/agentos/raw/RawListenerSession.java",
+        "bytes": 2016,
+        "sha256": "aaaae56c8491e6fff71d77a01d87ec731ce99625e163697b21fa8c29dd6d767d"
+      },
+      {
+        "path": "tools/window-infos-raw/src/dev/agentos/raw/RawSession.java",
+        "bytes": 207,
+        "sha256": "0b8a7ef6e1e72b4da85e75027c78c7a728b259643ae8679e51a8b9fd51f7b7bc"
+      },
+      {
+        "path": "tools/window-infos-raw/src/dev/agentos/raw/WindowInfosRawMain.java",
+        "bytes": 17052,
+        "sha256": "bad12cfc199c1d06089fd4d436ffb910ea377da2cd2968c50e0385ec4fafbbaf"
+      },
+      {
+        "path": "tools/window-infos-raw/stubs/android/view/InputWindowHandle.java",
+        "bytes": 531,
+        "sha256": "87bc82903fc7792fd2c0e93e6825013fe295152d6a8676c917e1412652946f1d"
+      },
+      {
+        "path": "tools/window-infos-raw/stubs/android/window/WindowInfosListener.java",
+        "bytes": 689,
+        "sha256": "8f487e37aed7f02c05173f7d842e03d717f1d4895a5ba18425b8fc11762d4c8b"
+      },
+      {
+        "path": "tools/window-infos-raw/tests/dev/agentos/raw/RawCollectorHostTest.java",
+        "bytes": 9035,
+        "sha256": "a30ce90ec58bbc4a4360069c204276a6184eace5a257662b5c5e2735b2230ffa"
+      },
+      {
+        "path": "scripts/window_infos_keyboard.py",
+        "bytes": 42814,
+        "sha256": "2fa9ee79d90797409f1e2cc9b88080d91e071feb232d0763b46707e31f81b15d"
+      },
+      {
+        "path": "scripts/window_infos_keyboard_archive.py",
+        "bytes": 19841,
+        "sha256": "b80aa08fa676e93acb3443871853053fd5bec03b04e5d3de36accca910c21461"
+      },
+      {
+        "path": "scripts/window_infos_input_state.py",
+        "bytes": 14926,
+        "sha256": "a059ee1608e1b01580a9c7b67e72eaea270f8fa9de0e1d38ce4e53e38821fec0"
+      },
+      {
+        "path": "scripts/configure_emulator_phone.py",
+        "bytes": 2136,
+        "sha256": "6e47a74d6b62fe8c1d8e459e51748ca9ccac1f32f2c09a972215a1e634821eed"
+      },
+      {
+        "path": "scripts/window_infos_reset_trace_analysis.py",
+        "bytes": 25957,
+        "sha256": "3ec29a5419788b8c9050e91242b893276b09a4094c12ff605f69f07d0108b672"
+      },
+      {
+        "path": "scripts/window_infos_reset_trace_archive.py",
+        "bytes": 26000,
+        "sha256": "b7f424733dc5d86f94592621e7d1858fcf805421df7a143458f19cd64e8b4c91"
+      },
+      {
+        "path": "scripts/experience_trace.py",
+        "bytes": 22765,
+        "sha256": "2c57a53161ad3beb95643f1b8ffb1856cf8704cb8194af1c42d4e7bc5694d376"
+      }
+    ],
+    "changed": [
+      {
+        "path": "scripts/window_infos_reset_trace.py",
+        "bytes": 53453,
+        "sha256": "625bf10b7557b6ff23edf2d7aeec206c09daf57140c25437ca8aceb8e092c2b3"
+      }
+    ]
+  },
+  "failedRun": {
+    "source": {
+      "repository": "ecojust/Agent-OS",
+      "commit": "70b231c54af1ca10fd60de575aa9a58c2d9f0e78",
+      "runId": 41580632157,
+      "attempt": 1
+    },
+    "runUrl": "https://github.com/ecojust/Agent-OS/actions/runs/41580632157",
+    "archiveCommit": "eea69017dfeda2e6b6201f6c137f2c2d629bde7c",
+    "originalFiles": [
+      {
+        "path": "screenshots/window-infos-reset-trace-41580632157-1/commands.json",
+        "bytes": 14464,
+        "sha256": "6a4962313b1d93e3b7aec3506645c2603ba672134ac01aab4ed9d755d1a89905",
+        "matchesArchiveGitBytes": true
+      },
+      {
+        "path": "screenshots/window-infos-reset-trace-41580632157-1/report.json",
+        "bytes": 7265,
+        "sha256": "011cad5128b5954143218f30f4c7db0ce5a66a25214cf5c4e35e4312adfda97f",
+        "matchesArchiveGitBytes": true
+      },
+      {
+        "path": "screenshots/window-infos-reset-trace-41580632157-1/manifest.json",
+        "bytes": 4529,
+        "sha256": "1015e3c39ae4d9d30f7deccdf11660c600f9c424276de70673341992589b1631",
+        "matchesArchiveGitBytes": true
+      },
+      {
+        "path": "screenshots/window-infos-reset-trace-41580632157-1/trace-config.pbtxt",
+        "bytes": 794,
+        "sha256": "5821fa826763553a7fffb97b9f493291f5db120e3d073483f3d6ace02d380992",
+        "matchesArchiveGitBytes": true
+      }
+    ],
+    "commandCount": 11,
+    "start": {
+      "id": "start_trace",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "sh",
+        "-c",
+        "'exec /system/bin/perfetto --txt -c - -o /data/misc/perfetto-traces/agentos-reset-trace-41580632157-1.pftrace --background-wait < /data/local/tmp/agentos-reset-trace-41580632157-1.pbtxt'"
+      ],
+      "status": "completed",
+      "exitCode": 1,
+      "exceptionType": null,
+      "bytes": 59,
+      "sha256": "e936705adb8afb7e3d20a00c2b48561147d90bbb55805d32ce0be461035a838e",
+      "elapsedMillis": 38,
+      "timeoutSeconds": 15
+    },
+    "startOutput": "[039.712]     perfetto_cmd.cc:652 The TraceConfig is empty\n",
+    "config": {
+      "bytes": 794,
+      "sha256": "5821fa826763553a7fffb97b9f493291f5db120e3d073483f3d6ace02d380992"
+    },
+    "owner": null,
+    "traceFile": null,
+    "comparison": {
+      "status": "unverified",
+      "failureReason": "NOT_EXECUTED",
+      "arms": {
+        "baseline": {
+          "status": "unverified",
+          "failureReason": "NOT_EXECUTED",
+          "positiveCallbackCount": 0,
+          "imeStateStatus": "not_attempted",
+          "comparable": false
+        },
+        "enabled": {
+          "status": "unverified",
+          "failureReason": "NOT_EXECUTED",
+          "positiveCallbackCount": 0,
+          "imeStateStatus": "not_attempted",
+          "comparable": false
+        }
+      },
+      "restoration": {
+        "status": "not_needed",
+        "mutationAttempted": false,
+        "restoreAttempted": false
+      }
+    },
+    "traceStartedSuccessfully": false,
+    "interpretation": "The nonempty 794-byte remote regular file was pushed and SHA-256 verified, but this regular-FD stdin delivery returned The TraceConfig is empty. No acknowledged capture, owned PID, trace file, A/B arm, setting mutation, or restoration action was established. This run supplies no IME reset/caller/clock evidence.",
+    "causalityNotEstablished": [
+      "No AVC, errno, runtime fd target, compiled policy, or binary-equivalent Perfetto source was collected.",
+      "Do not attribute the observed failure to daemonization closing stdin: the reviewed native implementation reads/parses config before daemonization.",
+      "SELinux inherited-fd revalidation provides a possible mechanism, not a proven root cause of this runtime failure."
+    ]
+  },
+  "fixedNativeSources": [
+    {
+      "url": "https://raw.githubusercontent.com/google/perfetto/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/protos/perfetto/config/process_stats/process_stats_config.proto",
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "tag": "v59.1",
+      "bytes": 4068,
+      "sha256": "614aa4647d8f9f04b12c01996479f6bfbf4ba5895da5e0221b4179f108dcba42",
+      "imageByteEquivalenceProven": false,
+      "path": "protos/perfetto/config/process_stats/process_stats_config.proto"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/perfetto/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/src/perfetto_cmd/perfetto_cmd.cc",
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "tag": "v59.1",
+      "bytes": 70573,
+      "sha256": "b8dc5831b5cc74f6489d48045855b050e511d5f64af58fd8bf40ab5b7ddc4170",
+      "imageByteEquivalenceProven": false,
+      "path": "src/perfetto_cmd/perfetto_cmd.cc"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/perfetto/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/src/base/ctrl_c_handler.cc",
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "tag": "v59.1",
+      "bytes": 2244,
+      "sha256": "34dbb74500801735acd5218e3dda2e892883a2f93898f50c9d2e879bf98311ab",
+      "imageByteEquivalenceProven": false,
+      "path": "src/base/ctrl_c_handler.cc"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/perfetto/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/src/base/utils.cc",
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "tag": "v59.1",
+      "bytes": 11288,
+      "sha256": "f9d4a8b518bb0c5b78f8b0426791c7767a1bf856f17dedd0d57401327ec4e34a",
+      "imageByteEquivalenceProven": false,
+      "path": "src/base/utils.cc"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/perfetto/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/src/perfetto_cmd/main.cc",
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "tag": "v59.1",
+      "bytes": 765,
+      "sha256": "444c114c16631f2e775b8558266a7d7f661a4da46762f1e376594b47ef463484",
+      "imageByteEquivalenceProven": false,
+      "path": "src/perfetto_cmd/main.cc"
+    }
+  ],
+  "nativeInterfaceEvidence": [
+    {
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "path": "src/perfetto_cmd/perfetto_cmd.cc",
+      "lines": [
+        334,
+        341
+      ],
+      "url": "https://github.com/google/perfetto/blob/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/src/perfetto_cmd/perfetto_cmd.cc#L334",
+      "meaning": "-c - consumes std::cin into trace_config_raw before daemonization. This iterator path does not record errno or distinguish empty input from an underlying read failure in the later empty diagnostic."
+    },
+    {
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "path": "src/perfetto_cmd/perfetto_cmd.cc",
+      "lines": [
+        690,
+        704
+      ],
+      "url": "https://github.com/google/perfetto/blob/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/src/perfetto_cmd/perfetto_cmd.cc#L690",
+      "meaning": "The empty-config check returns 1 before parsing or opening the trace output. The runtime error refers to line 652, so this reference revision is not asserted to be byte-equivalent to the image."
+    },
+    {
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "path": "src/perfetto_cmd/perfetto_cmd.cc",
+      "lines": [
+        911,
+        950
+      ],
+      "url": "https://github.com/google/perfetto/blob/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/src/perfetto_cmd/perfetto_cmd.cc#L911",
+      "meaning": "Output opening precedes background daemonization. The parent callback prints the actual fork child PID and, for --background-wait, returns WaitOnBgProcessPipe status."
+    },
+    {
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "path": "src/perfetto_cmd/perfetto_cmd.cc",
+      "lines": [
+        985,
+        1014
+      ],
+      "url": "https://github.com/google/perfetto/blob/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/src/perfetto_cmd/perfetto_cmd.cc#L985",
+      "meaning": "Background readiness waits up to 30000ms; timeout, EOF, or non-success status is nonzero. Wrapper retains its stricter original 15000ms host bound and does not accept merely seeing a PID."
+    },
+    {
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "path": "src/base/utils.cc",
+      "lines": [
+        197,
+        234
+      ],
+      "url": "https://github.com/google/perfetto/blob/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/src/base/utils.cc#L197",
+      "meaning": "Daemonize forks once; child setsid and duplicates /dev/null onto stdin/stdout/stderr only after the caller has parsed config. Parent waits for setsid handshake before its callback. This reviewed path does not exec a replacement or rewrite argv."
+    },
+    {
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "path": "src/perfetto_cmd/perfetto_cmd.cc",
+      "lines": [
+        1100,
+        1122
+      ],
+      "url": "https://github.com/google/perfetto/blob/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/src/perfetto_cmd/perfetto_cmd.cc#L1100",
+      "meaning": "The connected consumer installs its stop handler and observes TYPE_ALL_DATA_SOURCES_STARTED when background-wait is requested."
+    },
+    {
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "path": "src/perfetto_cmd/perfetto_cmd.cc",
+      "lines": [
+        1350,
+        1374
+      ],
+      "url": "https://github.com/google/perfetto/blob/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/src/perfetto_cmd/perfetto_cmd.cc#L1350",
+      "meaning": "Finalization closes the writer and quits; tracing_succeeded_ is documented to mark finalization even after write/readback errors, not complete loss-free content."
+    },
+    {
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "path": "src/perfetto_cmd/perfetto_cmd.cc",
+      "lines": [
+        1377,
+        1414
+      ],
+      "url": "https://github.com/google/perfetto/blob/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/src/perfetto_cmd/perfetto_cmd.cc#L1377",
+      "meaning": "Explicit output paths are opened O_RDWR|O_CREAT with O_TRUNC unless no-clobber is selected, mode 0600. Readiness/file existence is separate from quality and loss evidence."
+    },
+    {
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "path": "src/perfetto_cmd/perfetto_cmd.cc",
+      "lines": [
+        1431,
+        1458
+      ],
+      "url": "https://github.com/google/perfetto/blob/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/src/perfetto_cmd/perfetto_cmd.cc#L1431",
+      "meaning": "SIGINT/SIGTERM handling requests a final flush then DisableTracing, including when the flush reports unsuccessful. Signal delivery is not trace completeness proof."
+    },
+    {
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "path": "src/base/ctrl_c_handler.cc",
+      "lines": [
+        49,
+        75
+      ],
+      "url": "https://github.com/google/perfetto/blob/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/src/base/ctrl_c_handler.cc#L49",
+      "meaning": "The Linux/Android path installs the same handler for SIGINT and SIGTERM; a single SIGINT is supported by this reference source."
+    },
+    {
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "path": "src/perfetto_cmd/main.cc",
+      "lines": [
+        18,
+        24
+      ],
+      "url": "https://github.com/google/perfetto/blob/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/src/perfetto_cmd/main.cc#L18",
+      "meaning": "main forwards argc/argv to PerfettoCmdMain. Combined with the reviewed normal daemonization path, no process command-line rewriting was found; runtime exact cmdline remains mandatory."
+    }
+  ],
+  "policyReference": {
+    "originalReceipt": {
+      "path": "/workspace/scratch/reset-perfetto-sepolicy-2026-11-03/policy-review.json",
+      "bytes": 14208,
+      "sha256": "65c8d19b2e50d41a3f06d4ab0ce65c06d62f7c2b1ad4fd561c1da41fb796b5c2"
+    },
+    "sourcePolicy": {
+      "ref": "refs/tags/android-17.0.0_r1",
+      "commit": "e066568e98d86db31a9346d30977f3632fa7073c",
+      "tagAndAndroid17ReleaseMatch": true
+    },
+    "sources": [
+      {
+        "selection": "Reference branch only, device kernel not bound",
+        "commit": "01c7e6b174af760d2ae7d975ab8d6f2597c2d1ec",
+        "url": "https://android.googlesource.com/kernel/common/+/01c7e6b174af760d2ae7d975ab8d6f2597c2d1ec/security/selinux/hooks.c?format=TEXT",
+        "path": "security/selinux/hooks.c",
+        "bytes": 205075,
+        "sha256": "f8353944bb3c2a6dedff5e8966dfbaf248933d0c95bd05d182b82c1a0638aed7"
+      },
+      {
+        "ref": "refs/tags/android-17.0.0_r1",
+        "commit": "e066568e98d86db31a9346d30977f3632fa7073c",
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/private/attributes?format=TEXT",
+        "path": "private/attributes",
+        "bytes": 1120,
+        "sha256": "1568605ab35b913bc56d1ce7ca8468b6c3ade4f91e7b9529f92a7ef530ef48be"
+      },
+      {
+        "ref": "refs/tags/android-17.0.0_r1",
+        "commit": "e066568e98d86db31a9346d30977f3632fa7073c",
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/private/domain.te?format=TEXT",
+        "path": "private/domain.te",
+        "bytes": 83027,
+        "sha256": "793eb29f8621bc3318cdb9c40cce39f954999d2152b2bd45b812955ce5b1de16"
+      },
+      {
+        "ref": "refs/tags/android-17.0.0_r1",
+        "commit": "e066568e98d86db31a9346d30977f3632fa7073c",
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/private/file_contexts?format=TEXT",
+        "path": "private/file_contexts",
+        "bytes": 55552,
+        "sha256": "2288d333f5a7a4c8ff20f348c2ab78626c4b819b8d547ce118ef5f0dbec9b77a"
+      },
+      {
+        "ref": "refs/tags/android-17.0.0_r1",
+        "commit": "e066568e98d86db31a9346d30977f3632fa7073c",
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/private/perfetto.te?format=TEXT",
+        "path": "private/perfetto.te",
+        "bytes": 4918,
+        "sha256": "69ebc26ce69e7b08802db943162ba5d1f174372d2027e52ebb5bf00cb7e69630"
+      },
+      {
+        "ref": "refs/tags/android-17.0.0_r1",
+        "commit": "e066568e98d86db31a9346d30977f3632fa7073c",
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/private/shell.te?format=TEXT",
+        "path": "private/shell.te",
+        "bytes": 22859,
+        "sha256": "a06ae61869fe11bf6e14790b4a87d014ce2653e11436a473a7d42c3c14b19e56"
+      },
+      {
+        "ref": "refs/tags/android-17.0.0_r1",
+        "commit": "e066568e98d86db31a9346d30977f3632fa7073c",
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/public/attributes?format=TEXT",
+        "path": "public/attributes",
+        "bytes": 16523,
+        "sha256": "f0b0a13a415d3a907a8e9692d6d400f2c87843b4a8158336bf6a239b4e4deb0f"
+      },
+      {
+        "ref": "refs/tags/android-17.0.0_r1",
+        "commit": "e066568e98d86db31a9346d30977f3632fa7073c",
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/public/global_macros?format=TEXT",
+        "path": "public/global_macros",
+        "bytes": 3954,
+        "sha256": "e5b311ddafb1066f228c21c2ede892f70fd0e5280fef9ea17eac5eeb2ea6ceee"
+      },
+      {
+        "ref": "refs/tags/android-17.0.0_r1",
+        "commit": "e066568e98d86db31a9346d30977f3632fa7073c",
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/public/perfetto.te?format=TEXT",
+        "path": "public/perfetto.te",
+        "bytes": 242,
+        "sha256": "2d4f340a56ab76580ce436e348ddac6bcd07da44989f400e52f8fc50dbcd0838"
+      },
+      {
+        "ref": "refs/tags/android-17.0.0_r1",
+        "commit": "e066568e98d86db31a9346d30977f3632fa7073c",
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/public/te_macros?format=TEXT",
+        "path": "public/te_macros",
+        "bytes": 44868,
+        "sha256": "9825ba9b9bd742070683f21ad636e930ec24c73e3ec9dcb22b85e2dcb9b0367d"
+      }
+    ],
+    "policyEvidence": [
+      {
+        "path": "public/perfetto.te",
+        "lines": [
+          1,
+          1
+        ],
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/public/perfetto.te#1",
+        "meaning": "perfetto has domain and coredomain attributes, not appdomain."
+      },
+      {
+        "path": "private/shell.te",
+        "lines": [
+          48,
+          53
+        ],
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/private/shell.te#48",
+        "meaning": "shell executing perfetto_exec automatically changes SELinux domain; explicit signal permission allows SIGINT to daemonized perfetto."
+      },
+      {
+        "path": "public/te_macros",
+        "lines": [
+          10,
+          34
+        ],
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/public/te_macros#10",
+        "meaning": "domain_auto_trans expands execution/transition permissions and a process type_transition; it does not grant inherited inode access."
+      },
+      {
+        "path": "private/file_contexts",
+        "lines": [
+          344,
+          344
+        ],
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/private/file_contexts#344",
+        "meaning": "/system/bin/perfetto is perfetto_exec."
+      },
+      {
+        "path": "private/file_contexts",
+        "lines": [
+          645,
+          645
+        ],
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/private/file_contexts#645",
+        "meaning": "/data/local/tmp subtree is shell_data_file."
+      },
+      {
+        "path": "private/shell.te",
+        "lines": [
+          597,
+          615
+        ],
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/private/shell.te#597",
+        "meaning": "Direct open of shell_data_file by domains including perfetto is prohibited by the reviewed neverallow; comments distinguish passing file descriptors from direct opening."
+      },
+      {
+        "path": "private/perfetto.te",
+        "lines": [
+          38,
+          55
+        ],
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/private/perfetto.te#38",
+        "meaning": "Explicit read on perfetto_configs_data_file and system_perfetto_config_file; inherited fd use plus shell fifo read; adbd fd use and stream read/write. No shell_data_file:file read grant in this file."
+      },
+      {
+        "path": "private/file_contexts",
+        "lines": [
+          724,
+          727
+        ],
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/private/file_contexts#724",
+        "meaning": "Dedicated trace and config subtrees have perfetto-specific labels."
+      },
+      {
+        "path": "private/shell.te",
+        "lines": [
+          64,
+          76
+        ],
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/private/shell.te#64",
+        "meaning": "Shell can read/stat/unlink trace files and create/remove dedicated config files."
+      },
+      {
+        "path": "private/perfetto.te",
+        "lines": [
+          21,
+          23
+        ],
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/private/perfetto.te#21",
+        "meaning": "Perfetto can create/write/unlink files in dedicated trace directory."
+      },
+      {
+        "path": "private/shell.te",
+        "lines": [
+          448,
+          459
+        ],
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/private/shell.te#448",
+        "meaning": "Shell gets search/open/read/getattr on domain-labelled proc directories, open/read/getattr on associated files/symlinks, and process getattr."
+      },
+      {
+        "path": "public/global_macros",
+        "lines": [
+          25,
+          43
+        ],
+        "url": "https://android.googlesource.com/platform/system/sepolicy/+/e066568e98d86db31a9346d30977f3632fa7073c/public/global_macros#25",
+        "meaning": "r_file_perms includes getattr/open/read; rw_dir_perms includes search/remove_name, which together with unlink supports trace removal."
+      }
+    ],
+    "kernelMechanismReference": {
+      "scope": "Fixed android17-6.18 branch commit for SELinux semantics only. Actual emulator kernel/image policy was not matched or read.",
+      "evidence": [
+        {
+          "path": "security/selinux/hooks.c",
+          "commit": "01c7e6b174af760d2ae7d975ab8d6f2597c2d1ec",
+          "lines": [
+            1751,
+            1785
+          ],
+          "url": "https://android.googlesource.com/kernel/common/+/01c7e6b174af760d2ae7d975ab8d6f2597c2d1ec/security/selinux/hooks.c#1751",
+          "meaning": "file_has_perm checks FD__USE when descriptor SID differs, then separately checks requested inode permissions."
+        },
+        {
+          "path": "security/selinux/hooks.c",
+          "commit": "01c7e6b174af760d2ae7d975ab8d6f2597c2d1ec",
+          "lines": [
+            2001,
+            2025
+          ],
+          "url": "https://android.googlesource.com/kernel/common/+/01c7e6b174af760d2ae7d975ab8d6f2597c2d1ec/security/selinux/hooks.c#2001",
+          "meaning": "file_to_av maps an opened readable file to FILE__READ, independently of pathname open."
+        },
+        {
+          "path": "security/selinux/hooks.c",
+          "commit": "01c7e6b174af760d2ae7d975ab8d6f2597c2d1ec",
+          "lines": [
+            2432,
+            2483
+          ],
+          "url": "https://android.googlesource.com/kernel/common/+/01c7e6b174af760d2ae7d975ab8d6f2597c2d1ec/security/selinux/hooks.c#2432",
+          "meaning": "Inherited file revalidation uses file_has_perm; unauthorized inherited descriptors are replaced with the SELinux null file (or closed if null open fails)."
+        },
+        {
+          "path": "security/selinux/hooks.c",
+          "commit": "01c7e6b174af760d2ae7d975ab8d6f2597c2d1ec",
+          "lines": [
+            2489,
+            2501
+          ],
+          "url": "https://android.googlesource.com/kernel/common/+/01c7e6b174af760d2ae7d975ab8d6f2597c2d1ec/security/selinux/hooks.c#2489",
+          "meaning": "SELinux process SID transition at exec invokes inherited-file revalidation."
+        },
+        {
+          "path": "security/selinux/hooks.c",
+          "commit": "01c7e6b174af760d2ae7d975ab8d6f2597c2d1ec",
+          "lines": [
+            1603,
+            1623
+          ],
+          "url": "https://android.googlesource.com/kernel/common/+/01c7e6b174af760d2ae7d975ab8d6f2597c2d1ec/security/selinux/hooks.c#1603",
+          "meaning": "Ordinary signals such as SIGINT map to PROCESS__SIGNAL."
+        },
+        {
+          "path": "security/selinux/hooks.c",
+          "commit": "01c7e6b174af760d2ae7d975ab8d6f2597c2d1ec",
+          "lines": [
+            4459,
+            4470
+          ],
+          "url": "https://android.googlesource.com/kernel/common/+/01c7e6b174af760d2ae7d975ab8d6f2597c2d1ec/security/selinux/hooks.c#4459",
+          "meaning": "kill(pid,0) uses PROCESS__SIGNULL, distinct from PROCESS__SIGNAL."
+        }
+      ]
+    },
+    "interpretation": {
+      "regularRedirect": "exec perfetto ... -c - < /data/local/tmp/config opens the regular file while still in the shell domain, then inherits it into perfetto. fd use alone does not authorize reading its shell_data_file inode. The reviewed domain/global/perfetto rules provide no such inode read grant; device-specific compiled policy was not exhaustively reconstructed.",
+      "whyEmptyPossible": "The reference kernel explicitly revalidates inherited descriptors on the domain transition and substitutes a null file for unauthorized ones. This provides a source-supported possible route from a nonempty verified remote regular file to empty stdin. No AVC, errno, runtime descriptor target or policy dump was collected for run41580632157, so this is not a proven attribution of that observed failure.",
+      "supportedInputs": "Host stdin over the adb stream, or a shell-created pipe, has explicit reviewed permissions. A config under /data/misc/perfetto-configs also has explicit regular-file read permission. Retain source/path/hash and actual CLI result checks; do not add root, relabel files, change policy or use hidden exemptions.",
+      "signalLiveness": "SIGINT permission is explicit; kill -0 needs a separate signull permission not found in the reviewed shell/domain/perfetto rules. Do not equate a nonzero kill -0 result with absence of the process. Prefer bounded proc identity reads and separate missing/unreadable states.",
+      "procIdentity": "Read-only stat/comm/cmdline is supported by reviewed shell domain-file permissions, assuming normal proc labels and applicable DAC/procfs controls. This is not proof that every field will be visible on the runtime image.",
+      "traceOutput": "Reviewed policy permits perfetto creation and shell cat/stat/hash/unlink within /data/misc/perfetto-traces; shell is not granted trace-content modification by the cited rule. Directory/file labels, DAC ownership/mode, and runtime results remain independently checked."
+    },
+    "limits": [
+      "No repository files or device state were changed.",
+      "The Android17 policy tag exists and is pinned; no moving HEAD was used for policy conclusions.",
+      "The kernel reference is a separate pinned branch commit, not asserted to match the emulator.",
+      "No entire policy repository was downloaded or built; absence of an allow in reviewed files is not a compiled policy proof.",
+      "Policy source and file hashes do not establish the errno or fd disposition in the failed run."
+    ]
+  },
+  "pipeFixReview": {
+    "command": "adb -s <recorded-serial> shell /system/bin/perfetto --txt -c - -o <unique-owned-trace-path> --background-wait",
+    "delivery": "Popen stdin=PIPE, binary/unbuffered and nonblocking; exact local frozen config bytes are written with selectors while merged stdout/stderr is drained under the same original 15-second deadline. No inherited regular configuration fd remains in the launch path.",
+    "receipt": "The command receipt binds trace-config.pbtxt bytes/SHA-256, actual successful host write count, and EOF closure. Start command admission, owner admission, and recorded receipt validation require exact config identity, full writtenBytes, eofSent=true, completed status, and exit 0. Host pipe writes do not establish device consumption by themselves.",
+    "failureBoundaries": "Partial/no-EOF delivery, write error, command exception, timeout, cancellation, output truncation, and exit 1 remain unsuccessful. PID-shaped output cannot bypass start admission; failed/unowned start cannot signal a device PID or enter A/B.",
+    "hostCleanup": "The new input process is started in its own session. Finally attempts SIGKILL on that local group even if its leader has exited, handling ESRCH and retaining other cleanup errors; streams close and child wait remains bounded. This covers a descendant holding stdout after leader exit. This host cleanup is distinct from the separately owned remote Perfetto SIGINT stop.",
+    "remoteOwnership": "Native printed PID is followed by positive start ticks, comm=perfetto, and exact NUL-delimited cmdline. Before the single SIGINT, current start ticks and exact command line are checked again; the finite shell rechecks comm/ticks/cmdline hash immediately before signalling. PID/start-time checks are not an atomic pidfd operation.",
+    "procAndSignal": "Pinned Android17 policy permits shell reads of domain proc files and SIGINT-style signal to perfetto; signull/kill -0 is a distinct permission and is not used. Actual runtime proc fields/exit/trace-file permissions still require direct command success.",
+    "stopAndFile": "SIGINT is a supported graceful stop in the reference implementation. Exit confirmation, regular/non-symlink file, bounded nonempty size, byte-complete pull, SHA-256, and cleanup remain required independently. Early exit or PID reuse is preserved as unverified; there is no global kill or root.",
+    "unchangedBudgets": "Raw/keyboard implementation, each original 12-second arm and one-show contract, trace 120-second/32-MiB limits, command budgets, generic non-help exit-0 requirement, and separate setting restoration before own trace stop are unchanged. The reviewed producer binding has 25 unchanged files and only the new wrapper differs.",
+    "precedent": {
+      "path": "scripts/run_app_experience_trace.py",
+      "lines": [
+        23,
+        25,
+        49,
+        52
+      ],
+      "bytes": 8375,
+      "sha256": "1a4bb6cd1685286b86ecbbdde5a520f2f8788bca49dfe4526c111da56d2a7023",
+      "meaning": "Existing implementation passes config via subprocess input_text to adb shell perfetto --txt -c -. This is interface precedent, not proof that the new source has now succeeded on API37."
+    },
+    "blockingFindings": []
+  },
+  "runtimeValidationStillRequired": [
+    "Confirm actual background readiness exit 0 and expected native PID/cmdline/start ticks with the new frozen source.",
+    "Complete both unchanged raw A/B arms, independently restore the setting, stop only the owned process, and preserve original trace bytes plus missing/invalid outcomes.",
+    "Only analyze real trace parent IDs, process/main-thread identity, clocks, loss/coverage after a trace exists. Timestamp resemblance to 10 seconds cannot establish SettingsObserver entry.",
+    "Fixed upstream Perfetto, Android17 policy and kernel reference revisions were not byte-matched to the installed image; their SHA-256 values bind reference evidence, not runtime code equivalence."
+  ],
+  "testAttribution": {
+    "wrapperTestsReportedByHarness": 38,
+    "postCleanupTargetedCasesReportedByHarness": 2,
+    "rootIntegration": "Parent owns integration result; not independently executed here."
+  }
+}

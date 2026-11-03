@@ -50,14 +50,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 保留首版Trace预检失败：Perfetto完整help返回1被误拒，A/B和设置写入均未开始；窄修正通过79项测试，待新源码验证。9ee同源37.752秒整体演示13阶段/8确认通过并更新README。
+**本次更新：** Archive actual API35 walkthrough evidence; local synthetic model, secure flags preserved
 
-**记录时间：** 2026-11-03T04:52:18Z
+**记录时间：** 2026-11-03T04:59:18Z
 
 [最近测试截图与清单](screenshots/window-infos-reset-trace-41579567857-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41579567857)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/41579571277-1/demo.mp4) · [录制与验证清单](screenshots/demos/41579571277-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41579571277)。
-录制版本：[`9ee0233a0`](https://github.com/ecojust/Agent-OS/commit/9ee0233a0db1fd79402f26eb13b80e40992828ae)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/41580635370-1/demo.mp4) · [录制与验证清单](screenshots/demos/41580635370-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41580635370)。
+录制版本：[`70b231c54`](https://github.com/ecojust/Agent-OS/commit/70b231c54af1ca10fd60de575aa9a58c2d9f0e78)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 最近更新时间记录该条状态或进度说明的修改时间，采用 UTC；测试发生时间以对应证据为准。
 

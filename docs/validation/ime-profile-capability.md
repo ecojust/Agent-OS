@@ -26,9 +26,9 @@
 
 [独立工作流](../../.github/workflows/ime-profile-probe.yml)提供 test 与 archive 两种模式。原命令输出、状态与可取得的方法文件按原字节保存；归档核对固定源码、原运行、当前 attempt、唯一 job 和 artifact。通过、失败、未执行与捕获结果分别保留。
 
-本项无 UI 操作，不能用截图证明 profiling 可用。整体操作演示另行记录并按实际源码列在 README；现有919bee的34.445秒视频保持原来源，新的录制尚未执行。
+本项无 UI 操作，不能用截图证明 profiling 可用。整体操作演示另行记录并按实际源码列在 README；普通 Fixture 录像不作为输入法方法追踪的证据。
 
-当前实现与宿主验证已完成，设备可用性、实际格式、停止及清理结果待冻结源码后的单次实测确认。
+当前实现与宿主验证已完成。首次设备校验未满足目标进程准入条件，尚未执行方法追踪；实际格式、停止及清理能力仍未验证。
 
 本地原生格式模块[35项测试](diagnostics/ime-profile-capability-2026-11-03/parser-test-review.json)通过，测试字节是按固定ART源码构造的格式样本，不是设备证据；支持现代完整summary及非streaming V1磁盘格式2/3，其他格式保留未验证。符号表方法ID0、线程内部索引、时钟维度、overflow、截断和初始未配对exit分别校验。初始exit允许存在，不据此宣称调用栈已完整；summary的is_precise_trace也不单独证明非采样，请求模式以原命令为准。
 
@@ -36,4 +36,16 @@
 
 失败保存是有界的：有可读大小记录时，超限或不稳定文件可保留有限前缀，始终未验证；如果大小查询本身失败，可能仅保留命令回执而无二进制。不存在把这种缺失升级为完整原件的回退路径。
 
-[最终独立合同审阅](diagnostics/ime-profile-capability-2026-11-03/contract-review.json)已核对真实平台CLI、正常FD=null状态、UID及native PID绑定、失败保存、受限停止和可信源码加载，结论限定为实现合同通过，实际设备能力仍待单次验证。
+[最终独立合同审阅](diagnostics/ime-profile-capability-2026-11-03/contract-review.json)已核对真实平台CLI、正常FD=null状态、UID及native PID绑定、失败保存、受限停止和可信源码加载，结论限定为实现合同通过，不替代设备结果。
+
+## 首次设备结果与下一步
+
+冻结源码 `048f1501f9c7607ff711eacbef6e1d0070d011b2` 的唯一运行 [41641068620](https://github.com/ecojust/Agent-OS/actions/runs/41641068620)（2026-11-03、attempt 1）失败；[原始清单](../../screenshots/ime-profile-probe-41641068620-1/manifest.json)保留 `unverified`，计数为0 recorded / 1 unverified。归档运行 [41641542579](https://github.com/ecojust/Agent-OS/actions/runs/41641542579)成功，固定证据提交为 `ff7b12f5133f80e374ea59a0dd647a86fdc8dd5c`。[独立审计](diagnostics/ime-profile-capability-2026-11-03/failure-audit-41641068620.json)核对6个Git原件共210,799字节、5个索引载荷共208,341字节、5份来源文件及13条命令的原字节和运行身份，均一致。
+
+13条原始命令中，前12条通过：实际镜像为 Android17/API37、x86_64，`ro.debuggable=1`、shell UID2000、user0；默认输入法是 `com.android.inputmethod.latin/.LatinIME`，包UID为10112。第13条 `pidof com.android.inputmethod.latin` 正常结束但退出1、输出0字节，错误为 `COMMAND_FAILED_ime_pid`。这只证明该次查询未枚举到目标进程，不能由此确定冷启动、服务绑定或进程名称的具体原因。
+
+`target=null`、`startAttempted=false`；未进入进程身份及全局槽校验，没有发出 profile start/stop、拉取或清理命令，归档也没有方法文件。实际方法格式、缓冲容量和 ART 请求是否可用均未测到，不能把此结果写成“平台不支持方法追踪”，更不能据此判断重建调用方。
+
+[下一步的前提审阅](diagnostics/ime-profile-capability-2026-11-03/precondition-review.json)建议先补有界的只读 PID、进程列表与完整 `dumpsys input_method` 观测，确认默认配置、活动客户端和绑定进程之间的状态。如果需要启动输入法，另行引入明确标注的合成编辑器初始化并记录安装、焦点及显示请求；之后重新执行原有 UID/PID/开始时间/命令行与全局槽准入。该路径会改变本轮“无APK、无UI”的实验前提，必须作为新来源验证，不能静默预热或将本次失败回填为通过。原 A/B、Notes 用例和5秒预算保持不变。
+
+同源[整体演示](../../screenshots/demos/41641074840-1/demo.mp4)已完成并独立核验：34.750秒、453帧、402,782字节，13阶段/8确认及仪器1/1通过。它仅覆盖API35 Fixture与本地模型，安全标志保留；与本项未执行的API37方法追踪分开统计，详见[录制说明](operation-demo.md)。

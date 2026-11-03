@@ -110,3 +110,7 @@ v4首轮 [third-party-40674357809-1](third-party-40674357809-1/) 来自5436源�
 919bee第三版[41582067066-1](window-infos-reset-trace-41582067066-1/manifest.json)有界Trace采集recorded、A/B比较passed，内部A失败/B通过分别保留，设置0→1→0恢复与自有进程/文件清理确认。Trace4,393,006字节；B有效回调show后8648ms，约108ms前的reset真实parent为空，调用入口未知。原analysis因7条notice=0未被枚举接受而unknown，离线修正另存，不覆盖原件、不重跑原Notes。
 
 919bee[整体演示41582071423-1](demos/41582071423-1/manifest.json)13阶段/8确认通过：[34.445秒视频](demos/41582071423-1/demo.mp4)423,534字节、446帧，30载荷1,156,629字节、22PNG和31Git原件完整核验。API35 Fixture/本地模型，安全标志保留；原就绪失败与原Notes结果均未关闭。
+
+048f首轮[IME方法追踪能力41641068620-1](ime-profile-probe-41641068620-1/manifest.json)保持unverified：13条只读命令中pidof退出1且空输出，未取得目标PID，未发出profile请求，无方法文件；6Git原件210,799字节及5份来源已独立核验。不能判断ART支持与重建调用方，原A/B和Notes未重跑，详见[专项说明](../docs/validation/ime-profile-capability.md)。
+
+同源[整体演示41641074840-1](demos/41641074840-1/manifest.json)13阶段/8确认通过：[34.750秒视频](demos/41641074840-1/demo.mp4)402,782字节、453帧，30载荷1,137,702字节、22PNG和31Git原件完整核验。API35 Fixture/本地模型，安全标志保留，实际暂停和最终浮条移除已看；stopped PNG仍等待确认，不能代替末帧，也不替代API37专项或原Notes验收。

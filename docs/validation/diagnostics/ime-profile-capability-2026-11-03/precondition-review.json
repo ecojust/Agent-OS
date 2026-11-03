@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "kind": "ime-profile-precondition-review",
+  "recordedAt": "2026-11-03T13:13:55.073200+00:00",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "048f1501f9c7607ff711eacbef6e1d0070d011b2",
+    "runId": 41641068620,
+    "attempt": 1
+  },
+  "failureReason": "COMMAND_FAILED_ime_pid",
+  "evidenceFiles": [
+    {
+      "path": "screenshots/ime-profile-probe-41641068620-1/commands.json",
+      "bytes": 185024,
+      "sha256": "10119a65bd1d81c29b39b87073e29a183f169f607ad652d6784de19f295c666d"
+    },
+    {
+      "path": "screenshots/ime-profile-probe-41641068620-1/manifest.json",
+      "bytes": 2458,
+      "sha256": "8b1840ae5ff6bf528f9a1f9b3ea464a2b94a36baae44d201e77fe3c67a9eb14e"
+    },
+    {
+      "path": "screenshots/ime-profile-probe-41641068620-1/report.json",
+      "bytes": 3273,
+      "sha256": "842816f1786efe1239006ec2594995507a63aae1be348d24ac5b203036cc1cf7"
+    },
+    {
+      "path": "screenshots/ime-profile-probe-41641068620-1/source-artifacts.json",
+      "bytes": 959,
+      "sha256": "696f64aa8887e858e159c37527ce9fc21aabceaea7488a25ab16b4e648d5e2ed"
+    },
+    {
+      "path": "screenshots/ime-profile-probe-41641068620-1/source-jobs.json",
+      "bytes": 6009,
+      "sha256": "1f892a8ea9814e14db6a39306ac1fa0744a9ae3fcfc56468d40c417a9706caae"
+    },
+    {
+      "path": "screenshots/ime-profile-probe-41641068620-1/source-run.json",
+      "bytes": 13076,
+      "sha256": "fc245e712b6b921e6fdb71c77f540047a966c583543e18f26abe7b848d596678"
+    }
+  ],
+  "fixedRepositorySources": [
+    {
+      "path": "scripts/ime_profile_probe.py",
+      "bytes": 48439,
+      "sha256": "ca72d780500292e6e0ac34eb7d5a1501d08b46543b70e1018007f5d4c0224180"
+    },
+    {
+      "path": "scripts/window_infos_raw.py",
+      "bytes": 73784,
+      "sha256": "a5f4df94c4a63ba9624cc7aa4ce4e0b0bf8cfb87b0b776f440e5faa80181db8e"
+    },
+    {
+      "path": "scripts/window_infos_keyboard.py",
+      "bytes": 42814,
+      "sha256": "2fa9ee79d90797409f1e2cc9b88080d91e071feb232d0763b46707e31f81b15d"
+    },
+    {
+      "path": "compat-smoke/src/main/java/dev/agentos/compat/RawWindowFixtureActivity.java",
+      "bytes": 5973,
+      "sha256": "6ab53d70864ae522e53438190e39eb564a3232b087d77fda7d1139c949b9dcee"
+    },
+    {
+      "path": "compat-smoke/src/main/AndroidManifest.xml",
+      "bytes": 892,
+      "sha256": "5c7fdf3b0b5eaf1000f902351671f63e5645b9ab9b12f5208099b161b931d3ec"
+    }
+  ],
+  "observation": {
+    "commandCount": 13,
+    "outputBytes": 131969,
+    "allCommandsReadOnly": true,
+    "defaultComponent": "com.android.inputmethod.latin/.LatinIME",
+    "packageUid": 10112,
+    "roDebuggable": "1",
+    "imePidCommand": {
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "pidof",
+        "com.android.inputmethod.latin"
+      ],
+      "status": "completed",
+      "exitCode": 1,
+      "bytes": 0,
+      "elapsedMillis": 179
+    },
+    "target": null,
+    "profileStartAttempted": false,
+    "profileStopAttempted": false,
+    "globalSlotReadAttempted": false,
+    "tracePresent": false,
+    "analysis": null
+  },
+  "interpretation": {
+    "supported": "At this command observation, pidof returned no matching process. A configured and installed default IME does not prove that its process is already running. Profiling was not attempted.",
+    "notEstablished": [
+      "No process-lifecycle/log/input_method snapshot was captured, so the evidence does not distinguish not-yet-started, recently-exited or other transient causes.",
+      "The result does not prove the profiling interface is unavailable, denied, successful, or capable of capturing a reset.",
+      "Previous raw/reset success cannot be relabeled as this capability run success."
+    ]
+  },
+  "existingFixture": {
+    "activity": "dev.agentos.compat/.RawWindowFixtureActivity",
+    "sourceLines": {
+      "guardedApi37AndSourceIntent": "34-52",
+      "explicitEditorFocus": "61-74",
+      "exactlyOnePostedShowRequest": "77-96",
+      "boundedReceipt": "100-124"
+    },
+    "behavior": [
+      "Requires its explicit rawWindowProbe=true and source/run identity extras.",
+      "Creates a synthetic EditText, disables automatic show-on-focus, requests focus, and then separately posts exactly one showSoftInput(SHOW_IMPLICIT).",
+      "Records request count/acceptance/visible observation as different fields. Neither accepted show nor a screenshot is proof of IME process/binding identity."
+    ],
+    "reusingItRequiresScopeChange": true,
+    "cannotPreserveClaimShowRequestsZero": true,
+    "originalFixtureAndRawABMustRemainUnchanged": true
+  },
+  "recommendedNextStep": {
+    "stage1ReadOnly": "Add bounded original input_method/process state before preparation to explain whether the configured IME is bound and has a PID. Do not manufacture a cold-start cause from absent pidof output.",
+    "stage2SeparateSyntheticPreparation": "In a separately frozen revision, install only a checksum-bound synthetic fixture and launch it once to create a normal editor client through Android IME APIs. Explicitly record the installation and visible preparation. Do not write settings/properties/permissions or start the IME service directly.",
+    "preferredReviewableOption": "Reuse the existing unmodified RawWindowFixtureActivity only if the new capability contract explicitly permits and records its one preparation show request, independent of all raw/A-B/Notes cases. Alternatively add a distinct focus-only preparation activity only after source/runtime proof that it establishes the required binding; do not alter the old fixture to silently change its behavior.",
+    "afterPreparation": "Require source-bound fixture receipt, unchanged configured IME component/UID, bounded post-launch unique-PID readiness and actual /proc PID/UID/start-time/cmdline identity before any profiler start. Preserve all initial unavailable observations. Do not relaunch or add shows on a failed readiness check.",
+    "profilingContract": "Retain the existing unfiltered complete AMS empty-slot preflight, single start, ownership rechecks, guarded single stop, file identity/format checks, original failure retention and native/host time limits. The one-second hold is not the entire native tracing duration.",
+    "cleanup": "Stop/finish only the synthetic fixture in finally after the profiling attempt; keep the old global ownership checks and never force-stop the IME as a substitute for profiler cleanup.",
+    "scopeAndArchiveChanges": [
+      "Replace the old no-APK/no-UI/showRequests0 claims with exact preparation scope; original 048 evidence remains unchanged.",
+      "Freeze an explicit preparation command/time/file budget rather than silently reusing or exceeding the current 32-command contract.",
+      "Bind and archive the fixture APK/build source, install/start/result receipt and any real setup screenshot separately from nonvisual profiling results.",
+      "Extend sourceFiles/executing-module and archive validation consistently; do not use unrecorded shell precommands outside the producer.",
+      "A new success establishes only the new prepared-process capability; it does not retroactively pass the first attempt or original Notes24/8."
+    ]
+  },
+  "rejectedShortcuts": [
+    {
+      "option": "Repeat pidof or wait until it happens to succeed without an editor client",
+      "reason": "No explicit activation or readiness contract; does not explain the missing prerequisite and can hide the original unavailable state."
+    },
+    {
+      "option": "am startservice for the IME component",
+      "reason": "The observed service declares BIND_INPUT_METHOD. A started service is not the framework-controlled IME binding/session protocol, even apart from permission behavior."
+    },
+    {
+      "option": "Launch LatinIME SettingsActivity and call that a bound IME",
+      "reason": "It may start the package process but does not itself establish that InputMethodService is bound to an editor; source review and scope would have to distinguish this weaker process-only capability."
+    },
+    {
+      "option": "Enable debug/profileable, root, set show_ime_with_hard_keyboard, or add a show to the old raw experiment",
+      "reason": "Unnecessary scope/contract changes; not authorized as a repair of the original capability precondition."
+    }
+  ],
+  "reviewActions": {
+    "repositoryFilesEdited": false,
+    "deviceActionsExecuted": false,
+    "ciDispatched": false,
+    "productionValidatorUsedForConclusion": false,
+    "scratchOnly": true
+  }
+}

@@ -16,7 +16,7 @@ Tracker的RESET_NEW_CONFIGURATION只覆盖重建中部分show/hide分支。没�
 
 本轮仅在同一IME进程的主线程、完整且一致的实际parent链中，重建slice被完整clientTransactionExecuted祖先包含时，标记 **configuration_dispatch_supported**。这一解释依赖所审固定源码及没有嵌套消息循环的边界，尚未逐字核验镜像与源码一致。没有该祖先、缺失或冲突时保持 **unknown**，不反推SettingsObserver。主Looper的Trace tag默认0，不能假定必有能识别ContentObserver Runnable的专属父事件。
 
-[固定源码审阅](diagnostics/window-infos-reset-trace-2026-11-03/source-review.json)记录19份文件的URL、摘要、调用链及判据。原生IME tracing的where和配置快照也没有直接记录这两个reset调用者，因此不将它们当作入口标签。
+[固定源码审阅](diagnostics/window-infos-reset-trace-2026-11-03/source-review.json)记录19份文件的URL、摘要、调用链及判据。原生IME tracing的where和配置快照也没有直接记录这两个reset调用者，因此不将它们当作入口标签。固定LatinIME的onComputeInsets先调用父类，再修改自己的几何与触摸区域；因此IMS.onComputeInsets slice只覆盖父类阶段，不表示最终区域已更新。实际区域仍以原raw回调和后置状态分别核对。
 
 ## 预先固定的采集范围
 
@@ -32,4 +32,8 @@ Trace最长120秒、原文件最多32MiB、缓冲共8MiB，固定am/wm/view和�
 
 [采集wrapper](../../scripts/window_infos_reset_trace.py)、[离线解析](../../scripts/window_infos_reset_trace_analysis.py)及[独立归档](../../scripts/window_infos_reset_trace_archive.py)已完成。[本地验证](diagnostics/window-infos-reset-trace-2026-11-03/local-validation.json)的新模块72项（23采集/23解析/26归档）、既有196项回归及workflow语法检查通过；[实现独立审查](diagnostics/window-infos-reset-trace-2026-11-03/implementation-review.json)核对最终源码、原21份执行源码未改、未知和恢复边界。[归档集成](diagnostics/window-infos-reset-trace-2026-11-03/archive-local-validation.json)实际调用prepare和临时Git来源校验，绑定26份生产源文件及15份Python执行文件；损坏派生分析保留invalid，不丢原Trace/对照，也不升级结论。
 
-冻结源码后只执行一次API37专项，并独立尝试一次同源API35整体演示。当前尚无本模块的新设备结果，不提前关闭旧Notes、API行为矩阵或就绪失败。后续以实际归档补充源码、运行、Trace完整性、逐事件归因和剩余工作。
+首版冻结源码为 `9ee0233a0db1fd79402f26eb13b80e40992828ae`。其唯一API37运行[41579567857](https://github.com/ecojust/Agent-OS/actions/runs/41579567857)在前置检查失败，[原始清单](../../screenshots/window-infos-reset-trace-41579567857-1/manifest.json)及[独立审核](diagnostics/window-infos-reset-trace-2026-11-03/first-attempt-audit.json)明确：只有6条只读命令，`perfetto --help`完成并输出4425字节完整Usage，正常退出码为1，采集器却要求0。A/B均为NOT_EXECUTED，设置未读写，Trace未启动，没有新调用路径结论。15索引文件65,261字节，含manifest共16个Git原件69,792字节；归档41579936245、提交fc9a81123bdf964b5706f8a1902ed3b1fceaea91，原字节保留。
+
+修正仅为help命令识别完整Usage并接受退出0/1，运行准入与证据校验共用相同判据；其他命令仍要求0，15秒启动时限、12秒raw窗口和区域四谓词不变。[修正审阅](diagnostics/window-infos-reset-trace-2026-11-03/help-exit-fix-review.json)绑定实际原help输出及窄修正；真实help字节也作为独立测试fixture归档。修正后[79项宿主测试](diagnostics/window-infos-reset-trace-2026-11-03/help-fix-local-validation.json)通过（30采集/23解析/26归档）；接着单独冻结源码，验证一次API37并录制一次新源码整体演示。首版失败不替换、不计作完成的A/B实验。
+
+首版同源API35整体[41579571277](https://github.com/ecojust/Agent-OS/actions/runs/41579571277)通过13阶段/8确认，[37.752秒录像](../../screenshots/demos/41579571277-1/demo.mp4)及[审核](diagnostics/window-infos-reset-trace-2026-11-03/overall-video-audit-41579571277.json)记录30载荷、22PNG、511帧完整核验。仅Fixture/本地测试模型，不代替未执行的专项或原Notes24/8。

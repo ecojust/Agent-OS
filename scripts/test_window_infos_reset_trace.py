@@ -1,4 +1,5 @@
 """Synthetic orchestration and failure evidence; these tests never run Android."""
+import base64
 import copy
 import json
 import shlex
@@ -23,6 +24,22 @@ RAW_IDENTITIES = {name: value for name, value in KEYBOARD_IDENTITIES.items()
 IDENTITIES = dict(KEYBOARD_IDENTITIES, **{
     name: {'bytes': 1, 'sha256': 'e' * 64} for name in capture.EXTRA_SOURCES})
 TRACE = b'\x0a\x12synthetic-perfetto-original\x00\xff'
+# Original API37 --help output only: source 9ee0233a0db1fd79402f26eb13b80e40992828ae,
+# run 41579567857 attempt 1, commands.json id=perfetto_help, archive
+# fc9a81123bdf964b5706f8a1902ed3b1fceaea91. This fixture is not new device-success evidence.
+HELP_FIXTURE = Path(__file__).resolve().parent / 'fixtures/perfetto-api37-help.txt'
+HELP_SHA256 = 'afbf6306421fa8b494d154535cf845cfa43f62f16e9b45f77094a135308613d2'
+
+
+def help_bytes():
+    return HELP_FIXTURE.read_bytes()
+
+
+def help_command(data=None, *, exit_code=1, status='completed'):
+    data = help_bytes() if data is None else data
+    return {'id': 'perfetto_help', 'status': status, 'exitCode': exit_code,
+            'exceptionType': 'RuntimeError' if status == 'exception' else None,
+            **raw.identity(data), 'outputBase64': base64.b64encode(data).decode()}
 
 
 def proc_stat(pid=5731, start=271828, state='S', comm='perfetto'):
@@ -34,7 +51,8 @@ def proc_stat(pid=5731, start=271828, state='S', comm='perfetto'):
 
 class SyntheticCapture:
     """Fake only device transport; execute the existing keyboard/raw host code."""
-    def __init__(self, root, *, fault=None, enabled_positive=True, restore_wrong=False):
+    def __init__(self, root, *, fault=None, enabled_positive=True, restore_wrong=False,
+                 help_output=None, help_exit=1, help_status='completed'):
         self.root = Path(root)
         self.keyboard = keyboard_tests.SyntheticDriver(
             root, enabled_positive=enabled_positive, restore_wrong=restore_wrong)
@@ -43,6 +61,8 @@ class SyntheticCapture:
         self.args = SimpleNamespace(**vars(self.keyboard.args))
         self.args.output = self.output
         self.fault = fault
+        self.help_output = help_bytes() if help_output is None else help_output
+        self.help_exit, self.help_status = help_exit, help_status
         self.commands = []
         self.comparison_calls = 0
         self.setting_restore_preceded_stop = False
@@ -68,11 +88,14 @@ class SyntheticCapture:
         elif name == 'current_user': data = b'0\n'
         elif name == 'shell_uid': data = b'2000\n'
         elif name == 'perfetto_help':
-            data = b'--background\n' if self.fault == 'unsupported' else b'--background-wait\n'
+            data = b'--background\n' if self.fault == 'unsupported' else self.help_output
+            return data, {'status': self.help_status, 'exitCode': self.help_exit,
+                          'exceptionType': 'RuntimeError' if self.help_status == 'exception' else None}
         elif name == 'config_digest':
             data = (raw.sha(capture.trace_config()) + '  ' + capture.remote_paths(SOURCE)['config'] + '\n').encode()
         elif name == 'start_trace':
             data = b'5731\n5732\n' if self.fault == 'ambiguous_pid' else b'5731\n'
+            if self.fault == 'start_exit_one': code = 1
         elif name == 'start_stat':
             data = proc_stat(pid=5732 if self.fault == 'wrong_start_pid' else 5731)
         elif name == 'start_cmdline':
@@ -146,6 +169,11 @@ class CaptureTests(unittest.TestCase):
         values = self.values(driver)
         report = values['report.json']
         self.assertEqual('recorded', report['status'])
+        help_result = next(item for item in values['commands.json']['commands'] if item['id'] == 'perfetto_help')
+        self.assertEqual(1, help_result['exitCode'])
+        self.assertEqual(help_bytes(), raw.command_data(help_result))
+        self.assertTrue(capture.perfetto_help_accepted(help_result))
+        self.assertTrue(capture.command_accepted(help_result))
         self.assertEqual('failed', report['comparison']['arms']['baseline']['status'])
         self.assertEqual('passed', report['comparison']['arms']['enabled']['status'])
         self.assertTrue(driver.setting_restore_preceded_stop)
@@ -172,7 +200,110 @@ class CaptureTests(unittest.TestCase):
         self.assertEqual(0, driver.comparison_calls)
         self.assertNotIn('start_trace', driver.commands)
         self.assertNotIn('stop_trace', driver.commands)
-        self.assertEqual('RESET_BACKGROUND_WAIT_UNSUPPORTED', self.values(driver)['report.json']['failureReason'])
+        self.assertEqual('RESET_PERFETTO_HELP_UNSUPPORTED_OR_INCOMPLETE', self.values(driver)['report.json']['failureReason'])
+
+    def test_observed_help_fixture_is_exact_and_has_no_screenshot_dependency(self):
+        self.assertEqual(4425, len(help_bytes()))
+        self.assertEqual(HELP_SHA256, raw.sha(help_bytes()))
+        self.assertEqual('fixtures', HELP_FIXTURE.parent.name)
+        self.assertEqual(Path(__file__).resolve().parent, HELP_FIXTURE.parent.parent)
+
+    def test_complete_help_exit_zero_is_also_accepted_across_capture_and_validation(self):
+        driver = self.driver(help_exit=0)
+        self.assertTrue(driver.run())
+        values = self.values(driver)
+        command = next(item for item in values['commands.json']['commands'] if item['id'] == 'perfetto_help')
+        self.assertEqual(0, command['exitCode'])
+        self.assertTrue(capture.perfetto_help_accepted(command))
+        self.assertTrue(capture.command_accepted(command))
+        self.assertEqual('recorded', values['report.json']['status'])
+
+    def test_help_acceptance_is_semantic_not_an_exact_runtime_fixture_hash(self):
+        changed = help_bytes().replace(b'Exits immediately', b'Exits promptly')
+        self.assertNotEqual(HELP_SHA256, raw.sha(changed))
+        for data in (changed, changed.replace(b'\n', b'\r\n')):
+            with self.subTest(crlf=b'\r\n' in data):
+                command = help_command(data)
+                self.assertTrue(capture.perfetto_help_accepted(command))
+                self.assertTrue(capture.command_accepted(command))
+        driver = self.driver(help_output=changed)
+        self.assertTrue(driver.run())
+        self.assertEqual('recorded', self.values(driver)['report.json']['status'])
+
+    def test_help_command_state_and_output_identity_are_required(self):
+        original = help_command()
+        changes = ({'status': 'timed_out'}, {'status': 'output_limit'},
+                   {'status': 'cancelled'}, {'status': 'running'},
+                   {'status': 'exception', 'exceptionType': 'RuntimeError'},
+                   {'exitCode': 2}, {'exitCode': None}, {'exitCode': True},
+                   {'exceptionType': 'RuntimeError'}, {'bytes': 4424},
+                   {'sha256': '0' * 64}, {'outputBase64': 'not base64'})
+        for change in changes:
+            with self.subTest(change=change):
+                command = dict(original, **change)
+                self.assertFalse(capture.perfetto_help_accepted(command))
+                self.assertFalse(capture.command_accepted(command))
+
+    def test_invalid_help_has_no_start_or_comparison_and_is_preserved(self):
+        original = help_bytes()
+        without_line = lambda start: b'\n'.join(line for line in original.split(b'\n') if not line.startswith(start))
+        cases = {
+            'unknown_exit': {'help_exit': 2},
+            'timeout': {'help_status': 'timed_out', 'help_exit': None},
+            'output_limit': {'help_status': 'output_limit', 'help_exit': None},
+            'transport_error': {'help_status': 'exception', 'help_exit': None},
+            'error_prefix': {'help_output': b'adb: error: connection closed\n' + original},
+            'error_suffix': {'help_output': original + b'Error: permission denied\n'},
+            'embedded_error': {'help_output': original.replace(b'\nLight configuration flags:', b'\n  Error: permission denied\n\nLight configuration flags:')},
+            'truncated': {'help_output': original[:-50]},
+            'missing_final_newline': {'help_output': original.rstrip(b'\n')},
+            'missing_wait': {'help_output': without_line(b'  --background-wait ')},
+            'missing_config': {'help_output': without_line(b'  --config ')},
+            'missing_output': {'help_output': without_line(b'  --out ')},
+            'missing_text_format': {'help_output': without_line(b'  --txt ')},
+            'missing_section': {'help_output': without_line(b'Statsd-specific ')},
+            'wrong_usage': {'help_output': original.replace(b'Usage: /system/bin/perfetto', b'Usage: /vendor/bin/perfetto')},
+            'wrong_footer': {'help_output': original.replace(b'Exit code:  0:Yes, 2:No, 1:Error.', b'Exit code: unknown.')},
+        }
+        for name, options in cases.items():
+            with self.subTest(case=name), tempfile.TemporaryDirectory() as root:
+                driver = SyntheticCapture(root, **options); capture.prepare(driver.output, SOURCE)
+                self.assertFalse(driver.run())
+                values = self.values(driver)
+                self.assertEqual(0, driver.comparison_calls)
+                self.assertNotIn('start_trace', driver.commands)
+                self.assertNotIn('stop_trace', driver.commands)
+                self.assertEqual('unverified', values['report.json']['status'])
+                self.assertEqual('RESET_PERFETTO_HELP_UNSUPPORTED_OR_INCOMPLETE', values['report.json']['failureReason'])
+                command = next(item for item in values['commands.json']['commands'] if item['id'] == 'perfetto_help')
+                self.assertFalse(capture.perfetto_help_accepted(command))
+                self.assertFalse(capture.command_accepted(command))
+
+    def test_recorded_receipt_rejects_forged_help_success(self):
+        driver = self.driver(); self.assertTrue(driver.run())
+        original = self.values(driver)
+        bad_text = help_bytes().replace(b'--background-wait', b'--background-unsupported')
+        cases = ({'exitCode': 2}, {'status': 'timed_out', 'exitCode': None},
+                 {**raw.identity(bad_text), 'outputBase64': base64.b64encode(bad_text).decode()})
+        for change in cases:
+            with self.subTest(change=list(change)):
+                values = copy.deepcopy(original)
+                command = next(item for item in values['commands.json']['commands'] if item['id'] == 'perfetto_help')
+                command.update(change)
+                with self.assertRaises(ValueError): capture.validate_evidence(values, SOURCE)
+
+    def test_start_exit_one_with_valid_pid_is_not_a_help_exception(self):
+        driver = self.driver(fault='start_exit_one')
+        self.assertFalse(driver.run())
+        values = self.values(driver)
+        command = next(item for item in values['commands.json']['commands'] if item['id'] == 'start_trace')
+        self.assertEqual(b'5731\n', raw.command_data(command))
+        self.assertEqual(1, command['exitCode'])
+        self.assertFalse(capture.command_accepted(command))
+        self.assertEqual(0, driver.comparison_calls)
+        self.assertNotIn('start_stat', driver.commands)
+        self.assertNotIn('stop_trace', driver.commands)
+        self.assertEqual('unverified', values['report.json']['status'])
 
     def test_start_identity_errors_never_signal_an_unidentified_process(self):
         for fault in ('ambiguous_pid', 'wrong_start_pid', 'wrong_start_cmdline'):

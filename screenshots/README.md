@@ -98,3 +98,7 @@ v4首轮 [third-party-40674357809-1](third-party-40674357809-1/) 来自5436源�
 同源API35[整体录制41305953660-1](demos/41305953660-1/manifest.json)在ready阶段因控制条不可用而取消，**0/13阶段、0确认、0PNG**；[6.185秒失败短片](demos/41305953660-1/demo.mp4)58,367字节/98帧完整解码。8载荷69,087字节/9Git原件及blocked截图记录已核验，具体失效子条件未记录；末段浮层出现不证明失败时可用。该失败未重录，归档时README保留上轮de150成功整体视频；后续入口随已核验新录像更新。
 
 离线时间线源码5ac的唯一[整体演示41308310840-1](demos/41308310840-1/manifest.json)在2026-11-01完成13阶段/8确认：[39.495秒录像](demos/41308310840-1/demo.mp4)440,420字节、529帧；30载荷/1,167,518字节、31个Git原件、22PNG和视频完整解码通过[独立审核](../docs/validation/diagnostics/window-infos-timeline-2026-11-01/overall-video-audit.json)。API35 Fixture/本地合成模型，安全标志保持；这次成功不解释旧ready失败，也不代替API37时间线或原Notes验收。
+
+`window-infos-reset-trace-<run>-<attempt>` 保存独立有界Trace、未改合同的原A/B比较及离线派生状态。首版9ee的[41579567857-1](window-infos-reset-trace-41579567857-1/manifest.json)在6条只读预检后停止：Perfetto完整help返回1被误判失败；Trace未启动、A/B均未执行、设置未写。15索引/65,261字节、含manifest共16个Git原件/69,792字节已核验，失败原件保留；修正版另行冻结，不覆盖首轮。
+
+同源[整体演示41579571277-1](demos/41579571277-1/manifest.json)13阶段/8确认通过：[37.752秒视频](demos/41579571277-1/demo.mp4)459,108字节、511帧；30载荷/1,186,078字节、22PNG、31个Git原件与完整解码核验。API35 Fixture/本地模型、安全标志保留；stopped PNG仍等待确认，视频后段浮条消失。不替代本版未执行的API37专项、原Notes或历史ready失败。

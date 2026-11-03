@@ -57,6 +57,7 @@ SCOPE = {'diagnosticOnly': True, 'originalNotesCasesRerun': 0,
          'durationMs': DURATION_MS, 'traceByteLimit': MAX_TRACE_BYTES,
          'bufferKiB': [4096, 4096], 'bufferPolicy': 'RING_BUFFER',
          'maxCommands': MAX_COMMANDS, 'maxCommandOutputBytes': MAX_TOTAL_OUTPUT,
+         'perfettoHelpExitCodes': [0, 1], 'perfettoHelpRequiresCompleteUsage': True,
          'backgroundWaitRequired': True, 'traceStartLimit': 1, 'traceStopSignalLimit': 1,
          'stopPollLimit': STOP_POLLS, 'applicationCompatibilityAcceptance': False}
 require, Rejected = w.require, w.Rejected
@@ -228,6 +229,51 @@ def command_limits(name):
     if name == 'trace_pull': return 30, 65536
     if name == 'perfetto_help': return 10, 262144
     return 10, 65536
+
+
+def perfetto_help_accepted(command):
+    """Perfetto prints complete --help usage with exit 1 on the observed API37.
+
+    This exception is confined to this read-only command. A timeout, output
+    limit, transport failure or a usage prefix is never evidence of support.
+    Unknown help layouts remain unavailable instead of silently falling back.
+    """
+    try:
+        require(command['id'] == 'perfetto_help' and command['status'] == 'completed'
+                and type(command['exitCode']) is int and command['exitCode'] in (0, 1)
+                and command['exceptionType'] is None, 'RESET_HELP_COMMAND_STATE')
+        data = w.command_data(command)
+        require(0 < len(data) <= command_limits('perfetto_help')[1]
+                and equal(w.identity(data), {'bytes': command['bytes'], 'sha256': command['sha256']}), 'RESET_HELP_BYTES')
+        text = data.decode('utf-8').replace('\r\n', '\n')
+        require(text.endswith('\n') and not any(ord(char) < 32 and char not in '\n\t' for char in text), 'RESET_HELP_TEXT')
+        lines = [line for line in text.splitlines() if line.strip()]
+        require(10 <= len(lines) <= 256 and lines[0] == 'Usage: /system/bin/perfetto'
+                and lines[-1].strip() == 'Exit code:  0:Yes, 2:No, 1:Error.', 'RESET_HELP_BOUNDARIES')
+        headers = ('Light configuration flags: (only when NOT using -c/--config)',
+                   'Statsd-specific and other Android-only flags:',
+                   'Detach mode. DISCOURAGED, read https://perfetto.dev/docs/concepts/detached-mode')
+        require(all(lines.count(header) == 1 for header in headers)
+                and [lines.index(header) for header in headers] == sorted(lines.index(header) for header in headers)
+                and all(line.startswith('  ') or line in headers for line in lines[1:]), 'RESET_HELP_SECTIONS')
+        body_line = r'  --[A-Za-z0-9_-]+.*|  (?:FTRACE_GROUP/FTRACE_NAME|ATRACE_CAT)\s+: .+| {20,}\S.*'
+        require(all(line in headers or re.fullmatch(body_line, line) is not None
+                    for line in lines[1:]), 'RESET_HELP_UNEXPECTED_OUTPUT')
+        options = (r'  --background\s+-d\s+: .+', r'  --background-wait\s+-D\s+: .+',
+                   r'  --config\s+-c\s+: /path/to/trace/config/file or - for stdin',
+                   r'  --out\s+-o\s+: /path/to/out/trace/file or - for stdout',
+                   r'  --txt\s+: Parse config as pbtxt\..+', r'  --help\s+-h',
+                   r'  --detach=key\s+: .+', r'  --attach=key \[--stop\]\s+: .+',
+                   r'  --is_detached=key\s+: Check if the session can be re-attached\.')
+        require(all(sum(re.fullmatch(pattern, line) is not None for line in lines) == 1
+                    for pattern in options), 'RESET_HELP_OPTIONS')
+        return True
+    except (KeyError, TypeError, UnicodeError, ValueError):
+        return False
+
+
+def command_accepted(command):
+    return perfetto_help_accepted(command) if command.get('id') == 'perfetto_help' else w.command_ok(command)
 
 
 def command_argv(name, report):
@@ -411,7 +457,8 @@ def run_probe(args, source, runner_factory=CommandRunner, comparison_runner=k.ru
     save(); runner = runner_factory(directory, source)
     def checked(name):
         data, command = runner.call(name, command_argv(name, report))
-        require(w.command_ok(command), 'RESET_COMMAND_FAILED_' + name)
+        require(command_accepted(command), 'RESET_PERFETTO_HELP_UNSUPPORTED_OR_INCOMPLETE'
+                if name == 'perfetto_help' else 'RESET_COMMAND_FAILED_' + name)
         return data
     try:
         report['device'] = {'serial': w.devices.select_emulator(checked('devices').decode().strip())}; save()
@@ -561,7 +608,7 @@ def validate_evidence(payloads, source=None):
     if commands: require(report['runAttempted'] and report['tools'] is not None, 'RESET_UNREPORTED_RUN')
     if trace['startAttempted']:
         needed = COMMAND_IDS[:COMMAND_IDS.index('start_trace')]
-        require(all(name in commands and w.command_ok(commands[name]) for name in needed), 'RESET_START_PREFLIGHT')
+        require(all(name in commands and command_accepted(commands[name]) for name in needed), 'RESET_START_PREFLIGHT')
         require(w.devices.select_emulator(w.command_text(commands['devices'])) == report['device']['serial'], 'RESET_DEVICE_SOURCE')
         for name, expected in [('api', '37'), ('qemu', '1'), ('current_user', '0'), ('shell_uid', '2000')]:
             require(w.command_text(commands[name]) == expected, 'RESET_PREFLIGHT_SOURCE')
@@ -616,7 +663,7 @@ def validate_evidence(payloads, source=None):
         required = set(COMMAND_IDS[:COMMAND_IDS.index('stop_trace') + 1]) | {'trace_size', 'trace_pull', 'trace_digest', 'cleanup_trace', 'cleanup_config', 'cleanup_absent'}
         require(report['runAttempted'] and report['failureReason'] is None and report['completedAt'] is not None
                 and report['emulatorStepOutcome'] in {None, 'success'} and required <= set(commands)
-                and all(w.command_ok(item) for item in commands.values()), 'RESET_RECORDED_COMMANDS')
+                and all(command_accepted(item) for item in commands.values()), 'RESET_RECORDED_COMMANDS')
         require(trace['stopConfirmed'] and trace['cleanupConfirmed'] and trace['file'] is not None
                 and 0 < trace['file']['bytes'] < MAX_TRACE_BYTES and trace['file']['bytes'] == trace['remoteBytes'], 'RESET_RECORDED_FILE')
         require(w.command_data(commands['trace_digest']).decode().strip() == trace['file']['sha256'] + '  ' + trace['paths']['trace'], 'RESET_RECORDED_REMOTE_DIGEST')

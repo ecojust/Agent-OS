@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "kind": "readonly-perfetto-help-exit-fix-review",
+  "reviewedAt": "2026-11-03T04:50:44+00:00",
+  "status": "passed",
+  "reviewedProgram": {
+    "path": "scripts/window_infos_reset_trace.py",
+    "bytes": 47009,
+    "sha256": "f67a0eaeddb49bcab8490704fb8cbf7080af72ee51ec848322b2b593c1988b06"
+  },
+  "failedRun": {
+    "source": {
+      "repository": "ecojust/Agent-OS",
+      "commit": "9ee0233a0db1fd79402f26eb13b80e40992828ae",
+      "runId": 41579567857,
+      "attempt": 1
+    },
+    "archiveCommit": "fc9a81123bdf964b5706f8a1902ed3b1fceaea91",
+    "path": "screenshots/window-infos-reset-trace-41579567857-1",
+    "failureReason": "RESET_COMMAND_FAILED_perfetto_help",
+    "commands": 6,
+    "traceStarted": false,
+    "comparisonAttempted": false,
+    "settingMutationAttempted": false,
+    "settingRestoreAttempted": false,
+    "originalSelectedFilesGitBytesMatch": true
+  },
+  "actualHelp": {
+    "argv": [
+      "/usr/local/lib/android/sdk/platform-tools/adb",
+      "-s",
+      "emulator-5554",
+      "shell",
+      "/system/bin/perfetto",
+      "--help"
+    ],
+    "status": "completed",
+    "exitCode": 1,
+    "bytes": 4425,
+    "sha256": "afbf6306421fa8b494d154535cf845cfa43f62f16e9b45f77094a135308613d2",
+    "elapsedMillis": 24,
+    "completeUsageHeaderOptionsSectionsAndFooterObserved": true
+  },
+  "cause": "The original host applied its generic exit-zero command predicate to this read-only --help command. The observed API37 binary completed and printed its full usage with exit1, so the host stopped before capture or comparison. This does not describe a trace/IME/setting failure.",
+  "fixReview": [
+    "Only perfetto_help may accept completed integer exit0 or exit1; exception, timeout, output_limit, cancelled and unknown codes remain rejected.",
+    "The captured bytes/digest must match; text must have trusted Usage header, three ordered unique sections, nine required unique options and terminal footer with no unsupported control characters or extra unindented error lines. Unknown layouts are rejected.",
+    "run checked(), start preflight verification and recorded all-command verification use the same narrow predicate.",
+    "start_trace, settings/comparison commands, stop/pull/cleanup and all other commands retain exit-zero requirements. Existing 15-second start command limit and all raw/setting budgets remain unchanged.",
+    "The failing source/run and original six-command evidence are preserved; no old record is rewritten as success."
+  ],
+  "limits": [
+    "Read-only source and original-byte inspection; no helper/analyzer invocation, device run, Gradle or test execution by this reviewer.",
+    "The observed help describes background-wait support but does not establish successful native capture, process ownership, caller attribution or original Notes repair.",
+    "No claim is made that every Perfetto version returns the same help layout or code.",
+    "The new source still requires its own one-shot runtime validation; this receipt is not that validation."
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "kind": "reset-trace-help-fix-local-validation",
+  "checkedAt": "2026-11-03T04:52:18+00:00",
+  "status": "passed",
+  "newModuleTests": 79,
+  "captureTests": 30,
+  "analysisTests": 23,
+  "archiveTests": 26,
+  "command": "python3 -m unittest discover -s scripts -p 'test_window_infos_reset_trace*.py'",
+  "elapsedSeconds": 12.694,
+  "sourceFiles": {
+    "scripts/window_infos_reset_trace.py": {
+      "bytes": 47009,
+      "sha256": "f67a0eaeddb49bcab8490704fb8cbf7080af72ee51ec848322b2b593c1988b06"
+    },
+    "scripts/test_window_infos_reset_trace.py": {
+      "bytes": 30283,
+      "sha256": "9f546b50bd6ceb405559a0aaf7e9766fc3d4071b3260155efc5e9f092e174d62"
+    },
+    "scripts/fixtures/perfetto-api37-help.txt": {
+      "bytes": 4425,
+      "sha256": "afbf6306421fa8b494d154535cf845cfa43f62f16e9b45f77094a135308613d2"
+    }
+  },
+  "actualHelpEvidence": {
+    "path": "screenshots/window-infos-reset-trace-41579567857-1/commands.json",
+    "sourceCommit": "9ee0233a0db1fd79402f26eb13b80e40992828ae",
+    "archiveCommit": "fc9a81123bdf964b5706f8a1902ed3b1fceaea91",
+    "runId": 41579567857,
+    "commandId": "perfetto_help",
+    "status": "completed",
+    "exitCode": 1,
+    "bytes": 4425,
+    "fixtureMatchesOriginal": true
+  },
+  "scope": "Only complete perfetto_help accepts exit0/1; all other commands retain exit0. No new device execution for this fix yet; first failure is unchanged."
+}

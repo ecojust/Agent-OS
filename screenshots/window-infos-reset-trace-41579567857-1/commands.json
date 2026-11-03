@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "kind": "window-infos-reset-trace-commands",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "9ee0233a0db1fd79402f26eb13b80e40992828ae",
+    "runId": 41579567857,
+    "attempt": 1
+  },
+  "commands": [
+    {
+      "ordinal": 1,
+      "id": "devices",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "devices"
+      ],
+      "timeoutSeconds": 10,
+      "byteLimit": 65536,
+      "startedAt": "2026-11-03T04:44:33.877938+00:00",
+      "endedAt": "2026-11-03T04:44:33.881940+00:00",
+      "elapsedMillis": 3,
+      "status": "completed",
+      "exitCode": 0,
+      "exceptionType": null,
+      "bytes": 47,
+      "sha256": "56ecd6ef0cc63935dccb7816ebed2d058f6ee037867f849447a1a2e566ab7488",
+      "outputBase64": "TGlzdCBvZiBkZXZpY2VzIGF0dGFjaGVkCmVtdWxhdG9yLTU1NTQJZGV2aWNlCgo=",
+      "streamFile": null
+    },
+    {
+      "ordinal": 2,
+      "id": "api",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "getprop",
+        "ro.build.version.sdk"
+      ],
+      "timeoutSeconds": 10,
+      "byteLimit": 65536,
+      "startedAt": "2026-11-03T04:44:33.883122+00:00",
+      "endedAt": "2026-11-03T04:44:33.942452+00:00",
+      "elapsedMillis": 57,
+      "status": "completed",
+      "exitCode": 0,
+      "exceptionType": null,
+      "bytes": 3,
+      "sha256": "b58a3da5fde2680191877ec88a1aa7d06927cc3b30cdf0d0db8c39b488891576",
+      "outputBase64": "MzcK",
+      "streamFile": null
+    },
+    {
+      "ordinal": 3,
+      "id": "qemu",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "getprop",
+        "ro.kernel.qemu"
+      ],
+      "timeoutSeconds": 10,
+      "byteLimit": 65536,
+      "startedAt": "2026-11-03T04:44:33.943041+00:00",
+      "endedAt": "2026-11-03T04:44:34.011700+00:00",
+      "elapsedMillis": 68,
+      "status": "completed",
+      "exitCode": 0,
+      "exceptionType": null,
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "outputBase64": "MQo=",
+      "streamFile": null
+    },
+    {
+      "ordinal": 4,
+      "id": "current_user",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "am",
+        "get-current-user"
+      ],
+      "timeoutSeconds": 10,
+      "byteLimit": 65536,
+      "startedAt": "2026-11-03T04:44:34.012306+00:00",
+      "endedAt": "2026-11-03T04:44:34.086218+00:00",
+      "elapsedMillis": 73,
+      "status": "completed",
+      "exitCode": 0,
+      "exceptionType": null,
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "outputBase64": "MAo=",
+      "streamFile": null
+    },
+    {
+      "ordinal": 5,
+      "id": "shell_uid",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "id",
+        "-u"
+      ],
+      "timeoutSeconds": 10,
+      "byteLimit": 65536,
+      "startedAt": "2026-11-03T04:44:34.086854+00:00",
+      "endedAt": "2026-11-03T04:44:34.113205+00:00",
+      "elapsedMillis": 25,
+      "status": "completed",
+      "exitCode": 0,
+      "exceptionType": null,
+      "bytes": 5,
+      "sha256": "1d8fa3c8ab49d50b30fccbbd901735d5896a5d7959a5ad7ccecb79c1c849cc66",
+      "outputBase64": "MjAwMAo=",
+      "streamFile": null
+    },
+    {
+      "ordinal": 6,
+      "id": "perfetto_help",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "/system/bin/perfetto",
+        "--help"
+      ],
+      "timeoutSeconds": 10,
+      "byteLimit": 262144,
+      "startedAt": "2026-11-03T04:44:34.113990+00:00",
+      "endedAt": "2026-11-03T04:44:34.138657+00:00",
+      "elapsedMillis": 24,
+      "status": "completed",
+      "exitCode": 1,
+      "exceptionType": null,
+      "bytes": 4425,
+      "sha256": "afbf6306421fa8b494d154535cf845cfa43f62f16e9b45f77094a135308613d2",
+      "outputBase64": "ClVzYWdlOiAvc3lzdGVtL2Jpbi9wZXJmZXR0bwogIC0tYmFja2dyb3VuZCAgICAgLWQgICAgICA6IEV4aXRzIGltbWVkaWF0ZWx5IGFuZCBjb250aW51ZXMgaW4gdGhlIGJhY2tncm91bmQuCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgUHJpbnRzIHRoZSBQSUQgb2YgdGhlIGJnIHByb2Nlc3MuIFRoZSBwcmludGVkIFBJRAogICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNhbiB1c2VkIHRvIGdyYWNlZnVsbHkgdGVybWluYXRlIHRoZSB0cmFjaW5nCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgc2Vzc2lvbiBieSBpc3N1aW5nIGEgYGtpbGwgLVRFUk0gJFBSSU5URURfUElEYC4KICAtLWJhY2tncm91bmQtd2FpdCAtRCAgICAgOiBMaWtlIC0tYmFja2dyb3VuZCwgYnV0IHdhaXRzICh1cCB0byAzMHMpIGZvciBhbGwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICBkYXRhIHNvdXJjZXMgdG8gYmUgc3RhcnRlZCBiZWZvcmUgZXhpdGluZy4gRXhpdAogICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNvZGUgaXMgemVybyBpZiBhIHN1Y2Nlc3NmdWwgYWNrbm93bGVkZ2VtZW50IGlzCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgcmVjZWl2ZWQsIG5vbi16ZXJvIG90aGVyd2lzZSAoZXJyb3Igb3IgdGltZW91dCkuCiAgLS1ub3RpZnktZmQgRkQgICAgICAgICAgIDogTGlrZSAtLWJhY2tncm91bmQtd2FpdCwgYnV0IGluc3RlYWQgb2YgZGFlbW9uaXppbmcKICAgICAgICAgICAgICAgICAgICAgICAgICAgICBhbmQgd2FpdGluZyBmb3IgZGF0YSBzb3VyY2VzIHRvIGJlIHN0YXJ0ZWQgYmVmb3JlCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgZXhpdGluZywgd3JpdGVzIHN0YXR1cyBhbmQgY2xvc2VzIEZEIGFmdGVyIHdhaXRpbmcKICAgICAgICAgICAgICAgICAgICAgICAgICAgICBmb3IgZGF0YSBzb3VyY2VzIHRvIGJlIHN0YXJ0ZWQuIFdyaXRlcyBhIHplcm8KICAgICAgICAgICAgICAgICAgICAgICAgICAgICBieXRlIGlmIGEgc3VjY2Vzc2Z1bCBhY2tub3dsZWRnZW1lbnQgaXMgcmVjZWl2ZWQsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgbm9uLXplcm8gb3RoZXJ3aXNlIChlcnJvciBvciB0aW1lb3V0KS4KICAtLWNsb25lIFRTSUQgICAgICAgICAgICAgOiBDcmVhdGVzIGEgcmVhZC1vbmx5IGNsb25lIG9mIGFuIGV4aXN0aW5nIHRyYWNpbmcKICAgICAgICAgICAgICAgICAgICAgICAgICAgICBzZXNzaW9uLCBpZGVudGlmaWVkIGJ5IGl0cyBJRCAoc2VlIC0tcXVlcnkpLgogIC0tY2xvbmUtYnktbmFtZSBOQU1FICAgICA6IENyZWF0ZXMgYSByZWFkLW9ubHkgY2xvbmUgb2YgYW4gZXhpc3RpbmcgdHJhY2luZwogICAgICAgICAgICAgICAgICAgICAgICAgICAgIHNlc3Npb24sIGlkZW50aWZpZWQgYnkgaXRzIHVuaXF1ZV9zZXNzaW9uX25hbWUgaW4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICB0aGUgY29uZmlnLgogIC0tY2xvbmUtZm9yLWJ1Z3JlcG9ydCAgICA6IENhbiBvbmx5IGJlIHVzZWQgd2l0aCAtLWNsb25lLiBJdCBkaXNhYmxlcyB0aGUKICAgICAgICAgICAgICAgICAgICAgICAgICAgICB0cmFjZV9maWx0ZXIgb24gdGhlIGNsb25lZCBzZXNzaW9uLgogIC0tY29uZmlnICAgICAgICAgLWMgICAgICA6IC9wYXRoL3RvL3RyYWNlL2NvbmZpZy9maWxlIG9yIC0gZm9yIHN0ZGluCiAgLS1vdXQgICAgICAgICAgICAtbyAgICAgIDogL3BhdGgvdG8vb3V0L3RyYWNlL2ZpbGUgb3IgLSBmb3Igc3Rkb3V0CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgSWYgdXNpbmcgQ0xPTkVfU05BUFNIT1QgdHJpZ2dlcnMsIGVhY2ggc25hcHNob3QKICAgICAgICAgICAgICAgICAgICAgICAgICAgICB3aWxsIGJlIHNhdmVkIGluIGEgbmV3IGZpbGUgd2l0aCBhIGNvdW50ZXIgc3VmZml4CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKGUuZy4sIGZpbGUuMCwgZmlsZS4xLCBmaWxlLjIpLgogIC0tbm8tY2xvYmJlciAgICAgICAgICAgICA6IERvIG5vdCBvdmVyd3JpdGUgYW4gZXhpc3Rpbmcgb3V0cHV0IGZpbGUuCiAgLS10eHQgICAgICAgICAgICAgICAgICAgIDogUGFyc2UgY29uZmlnIGFzIHBidHh0LiBOb3QgZm9yIHByb2R1Y3Rpb24gdXNlLgogICAgICAgICAgICAgICAgICAgICAgICAgICAgIE5vdCBhIHN0YWJsZSBBUEkuCiAgLS1xdWVyeSBbLS1sb25nXSAgICAgICAgIDogUXVlcmllcyB0aGUgc2VydmljZSBzdGF0ZSBhbmQgcHJpbnRzIGl0IGFzCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgaHVtYW4tcmVhZGFibGUgdGV4dC4gLS1sb25nIGFsbG93cyB0aGUgb3V0cHV0IHRvCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgZXh0ZW5kIHBhc3QgODAgY2hhcnMuCiAgLS1xdWVyeS1yYXcgICAgICAgICAgICAgIDogTGlrZSAtLXF1ZXJ5LCBidXQgcHJpbnRzIHJhdyBwcm90by1lbmNvZGVkIGJ5dGVzCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgb2YgdHJhY2luZ19zZXJ2aWNlX3N0YXRlLnByb3RvLgogIC0tYWRkLW5vdGUga2V5Wz12YWx1ZV0gICA6IEFkZCB1c2VyIG5vdGVzIHRvIHRyYWNlLiBJZiAiPXZhbHVlIiBpcyBvbWl0dGVkLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgIHRoZSB2YWx1ZSBpcyB0aGUgZW1wdHkgc3RyaW5nLgogIC0taGVscCAgICAgICAgICAgLWgKCkxpZ2h0IGNvbmZpZ3VyYXRpb24gZmxhZ3M6IChvbmx5IHdoZW4gTk9UIHVzaW5nIC1jLy0tY29uZmlnKQogIC0tdGltZSAgICAgICAgICAgLXQgICAgICA6IFRyYWNlIGR1cmF0aW9uIE5bcyxtLGhdIChkZWZhdWx0OiAxMHMpCiAgLS1idWZmZXIgICAgICAgICAtYiAgICAgIDogUmluZyBidWZmZXIgc2l6ZSBOW21iLGdiXSAoZGVmYXVsdDogMzJtYikKICAtLXNpemUgICAgICAgICAgIC1zICAgICAgOiBNYXggZmlsZSBzaXplIE5bbWIsZ2JdCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAoZGVmYXVsdDogaW4tbWVtb3J5IHJpbmctYnVmZmVyIG9ubHkpCiAgLS1hcHAgICAgICAgICAgICAtYSAgICAgIDogQW5kcm9pZCAoYXRyYWNlKSBhcHAgbmFtZQogIEZUUkFDRV9HUk9VUC9GVFJBQ0VfTkFNRSA6IFJlY29yZCBmdHJhY2UgZXZlbnQgKGUuZy4gc2NoZWQvc2NoZWRfc3dpdGNoKQogIEFUUkFDRV9DQVQgICAgICAgICAgICAgICA6IFJlY29yZCBBVFJBQ0VfQ0FUIChlLmcuIHdtKSAoQW5kcm9pZCBvbmx5KQoKU3RhdHNkLXNwZWNpZmljIGFuZCBvdGhlciBBbmRyb2lkLW9ubHkgZmxhZ3M6CiAgLS1hbGVydC1pZCAgICAgICAgICAgOiBJRCBvZiB0aGUgYWxlcnQgdGhhdCB0cmlnZ2VyZWQgdGhpcyB0cmFjZS4KICAtLWNvbmZpZy1pZCAgICAgICAgICA6IElEIG9mIHRoZSB0cmlnZ2VyaW5nIGNvbmZpZy4KICAtLWNvbmZpZy11aWQgICAgICAgICA6IFVJRCBvZiBhcHAgd2hpY2ggcmVnaXN0ZXJlZCB0aGUgY29uZmlnLgogIC0tc3Vic2NyaXB0aW9uLWlkICAgIDogSUQgb2YgdGhlIHN1YnNjcmlwdGlvbiB0aGF0IHRyaWdnZXJlZCB0aGlzIHRyYWNlLgogIC0tdXBsb2FkICAgICAgICAgICAgIDogVXBsb2FkIHRyYWNlLgogIC0tZHJvcGJveCAgICAgICAgVEFHIDogREVQUkVDQVRFRDogVXNlIC0tdXBsb2FkIGluc3RlYWQKICAgICAgICAgICAgICAgICAgICAgICAgIFRBRyBzaG91bGQgYWx3YXlzIGJlIHNldCB0byAncGVyZmV0dG8nLgogIC0tc2F2ZS1mb3ItYnVncmVwb3J0IDogSWYgYSB0cmFjZSB3aXRoIGJ1Z3JlcG9ydF9zY29yZSA+IDAgaXMgcnVubmluZywgaXQKICAgICAgICAgICAgICAgICAgICAgICAgIHNhdmVzIGl0IGludG8gYSBmaWxlLiBPdXRwdXRzIHRoZSBwYXRoIHdoZW4gZG9uZS4KICAtLW5vLWd1YXJkcmFpbHMgICAgICA6IElnbm9yZSBndWFyZHJhaWxzIHRyaWdnZXJlZCB3aGVuIHVzaW5nIC0tdXBsb2FkCiAgICAgICAgICAgICAgICAgICAgICAgICAodGVzdGluZyBvbmx5KS4KICAtLXJlc2V0LWd1YXJkcmFpbHMgICA6IFJlc2V0cyB0aGUgc3RhdGUgb2YgdGhlIGd1YXJkYWlscyBhbmQgZXhpdHMKICAgICAgICAgICAgICAgICAgICAgICAgICh0ZXN0aW5nIG9ubHkpLgoKRGV0YWNoIG1vZGUuIERJU0NPVVJBR0VELCByZWFkIGh0dHBzOi8vcGVyZmV0dG8uZGV2L2RvY3MvY29uY2VwdHMvZGV0YWNoZWQtbW9kZQogIC0tZGV0YWNoPWtleSAgICAgICAgICA6IERldGFjaCBmcm9tIHRoZSB0cmFjaW5nIHNlc3Npb24gd2l0aCB0aGUgZ2l2ZW4ga2V5LgogIC0tYXR0YWNoPWtleSBbLS1zdG9wXSA6IFJlLWF0dGFjaCB0byB0aGUgc2Vzc2lvbiAob3B0aW9uYWxseSBzdG9wIHRyYWNpbmcKICAgICAgICAgICAgICAgICAgICAgICAgICBvbmNlIHJlYXR0YWNoZWQpLgogIC0taXNfZGV0YWNoZWQ9a2V5ICAgICA6IENoZWNrIGlmIHRoZSBzZXNzaW9uIGNhbiBiZSByZS1hdHRhY2hlZC4KICAgICAgICAgICAgICAgICAgICAgICAgICBFeGl0IGNvZGU6ICAwOlllcywgMjpObywgMTpFcnJvci4K",
+      "streamFile": null
+    }
+  ]
+}

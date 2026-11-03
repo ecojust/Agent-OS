@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: Run one raw diagnostic, one fixed keyboard A/B comparison, or archive original evidence
+        description: Run a raw diagnostic, keyboard comparison, bounded reset trace, or archive originals
         required: true
         default: test
         type: choice
-        options: [test, archive, keyboard, archive_keyboard]
+        options: [test, archive, keyboard, archive_keyboard, reset_trace, archive_reset_trace]
       run_id:
         description: Completed source run ID, required for archive
         required: false
@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   build:
-    if: github.ref == 'refs/heads/master' && (inputs.mode == 'test' || inputs.mode == 'keyboard')
+    if: github.ref == 'refs/heads/master' && (inputs.mode == 'test' || inputs.mode == 'keyboard' || inputs.mode == 'reset_trace')
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -52,6 +52,7 @@ jobs:
           python3 -m unittest discover -s scripts -p 'test_window_infos_ime_state.py'
           python3 -m unittest discover -s scripts -p 'test_window_infos_input_state.py'
           python3 -m unittest discover -s scripts -p 'test_window_infos_keyboard*.py'
+          python3 -m unittest discover -s scripts -p 'test_window_infos_reset_trace*.py'
       - name: Prepare fixed build SDK
         run: |
           sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
@@ -219,6 +220,87 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  reset_trace:
+    needs: build
+    if: inputs.mode == 'reset_trace'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+            app
+            core
+            fixture
+            compat-smoke
+            upgrade-smoke
+            gradle
+            docs
+            scripts
+            tools
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Preserve an initial unverified reset trace receipt
+        run: python3 scripts/window_infos_reset_trace.py prepare --output "$RUNNER_TEMP/window-infos-reset-trace"
+      - uses: actions/download-artifact@v4
+        with:
+          name: window-infos-raw-binaries-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/window-infos-raw-binaries
+      - name: Prepare API37 SDK tooling
+        run: |
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk_root" >> "$GITHUB_ENV"
+          echo "$sdk_root/platform-tools" >> "$GITHUB_PATH"
+          printf 'y\n%.0s' {1..100} | "$sdk_root/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$sdk_root" 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0' 'cmdline-tools;23.0'
+          test -x "$sdk_root/cmdline-tools/23.0/bin/sdkmanager"
+          mv "$sdk_root/cmdline-tools/latest" "$sdk_root/cmdline-tools/pre-api37"
+          ln -s 23.0 "$sdk_root/cmdline-tools/latest"
+      - name: Enable hardware virtualization
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Capture a bounded trace around unchanged keyboard comparison arms
+        id: diagnostic
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: '35'
+          system-image-api-level: '37.0'
+          emulator-build: '16428233'
+          arch: x86_64
+          target: default
+          avd-name: agent-os-window-infos-reset-trace
+          enable-hw-keyboard: false
+          pre-emulator-launch-script: python3 scripts/configure_emulator_phone.py --avd-name agent-os-window-infos-reset-trace
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            python3 scripts/configure_emulator_phone.py --avd-name agent-os-window-infos-reset-trace --check
+            python3 scripts/window_infos_reset_trace.py run --output "$RUNNER_TEMP/window-infos-reset-trace" --sdk-root "$ANDROID_HOME" --fixture-apk "$RUNNER_TEMP/window-infos-raw-binaries/fixture.apk" --probe-jar "$RUNNER_TEMP/window-infos-raw-binaries/window-infos-raw.jar" --avd-name agent-os-window-infos-reset-trace
+      - name: Finalize the trace and preserve comparison and restoration results
+        if: always()
+        env:
+          EMULATOR_OUTCOME: ${{ steps.diagnostic.outcome }}
+        run: python3 scripts/window_infos_reset_trace.py finalize --output "$RUNNER_TEMP/window-infos-reset-trace" --outcome "${EMULATOR_OUTCOME:-unknown}" --sdk-root "${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+      - name: Analyze the original trace with the pinned offline processor
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/window-infos-reset-trace/trace.pftrace" ]]; then
+            python3 scripts/experience_trace.py download --cache "$RUNNER_TEMP/reset-trace-processor"
+            python3 scripts/window_infos_reset_trace_analysis.py analyze --trace "$RUNNER_TEMP/window-infos-reset-trace/trace.pftrace" --comparison "$RUNNER_TEMP/window-infos-reset-trace/comparison" --processor "$RUNNER_TEMP/reset-trace-processor/trace_processor_shell-v59.1" --output "$RUNNER_TEMP/window-infos-reset-trace/analysis"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: window-infos-reset-trace-api-37.0-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/window-infos-reset-trace/
+          if-no-files-found: error
+          retention-days: 30
+
   archive:
     if: github.ref == 'refs/heads/master' && inputs.mode == 'archive'
     runs-on: ubuntu-latest
@@ -353,5 +435,74 @@ jobs:
           git add -- "$EVIDENCE_PATH" README.md docs/progress.json docs/diagrams/development-progress.svg
           git diff --cached --check
           git commit -m "Archive WindowInfos keyboard comparison $SOURCE_RUN_ID [skip ci]"
+          git push origin "HEAD:refs/heads/$branch"
+          echo "Evidence branch: https://github.com/$GITHUB_REPOSITORY/tree/$branch" >> "$GITHUB_STEP_SUMMARY"
+
+  archive_reset_trace:
+    if: github.ref == 'refs/heads/master' && inputs.mode == 'archive_reset_trace'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify source run, current-attempt reset trace job and artifact
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.run_id }}
+        run: |
+          [[ "$SOURCE_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > "$RUNNER_TEMP/reset-trace-source.json"
+          attempt="$(jq -r .run_attempt "$RUNNER_TEMP/reset-trace-source.json")"
+          [[ "$attempt" =~ ^[1-9][0-9]*$ ]]
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/attempts/$attempt/jobs?per_page=100" > "$RUNNER_TEMP/reset-trace-jobs.json"
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/reset-trace-artifacts.json"
+          python3 scripts/window_infos_reset_trace_archive.py validate-source --source-run-json "$RUNNER_TEMP/reset-trace-source.json" --source-jobs-json "$RUNNER_TEMP/reset-trace-jobs.json" --artifact-index "$RUNNER_TEMP/reset-trace-artifacts.json" --github-output "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.source.outputs.commit }}
+          persist-credentials: false
+      - name: Verify exact trusted source checkout
+        env:
+          SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_COMMIT"
+      - uses: actions/download-artifact@v4
+        if: steps.source.outputs.artifactIds != ''
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.source.outputs.runId }}
+          artifact-ids: ${{ steps.source.outputs.artifactIds }}
+          merge-multiple: false
+          path: ${{ runner.temp }}/reset-trace-input
+      - name: Archive the trace, original comparison arms and separate analysis states
+        env:
+          EVIDENCE_PATH: ${{ steps.source.outputs.evidencePath }}
+        run: |
+          python3 scripts/window_infos_reset_trace_archive.py archive --source-run-json "$RUNNER_TEMP/reset-trace-source.json" --source-jobs-json "$RUNNER_TEMP/reset-trace-jobs.json" --artifact-index "$RUNNER_TEMP/reset-trace-artifacts.json" --incoming "$RUNNER_TEMP/reset-trace-input" --output "$EVIDENCE_PATH"
+          python3 scripts/update_progress.py --note '归档API37有界重建Trace、原A/B对照与离线解析；采集、调用路径证据和原始对照结果分开，缺失调用来源保留未知，不回填旧Notes验收。'
+          python3 scripts/update_progress.py --check
+      - name: Commit evidence on an immutable isolated branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVIDENCE_PATH: ${{ steps.source.outputs.evidencePath }}
+          SOURCE_RUN_ID: ${{ steps.source.outputs.runId }}
+          SOURCE_ATTEMPT: ${{ steps.source.outputs.attempt }}
+        run: |
+          branch="evidence/window-infos-reset-trace-$SOURCE_RUN_ID-$SOURCE_ATTEMPT"
+          gh auth setup-git
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            echo 'Evidence branch already exists; refusing to overwrite it.'
+            exit 1
+          fi
+          git switch -c "$branch"
+          git config user.name agent
+          git config user.email 30574854+ecojust@users.noreply.github.com
+          git add -- "$EVIDENCE_PATH" README.md docs/progress.json docs/diagrams/development-progress.svg
+          git diff --cached --check
+          git commit -m "Archive WindowInfos reset trace $SOURCE_RUN_ID [skip ci]"
           git push origin "HEAD:refs/heads/$branch"
           echo "Evidence branch: https://github.com/$GITHUB_REPOSITORY/tree/$branch" >> "$GITHUB_STEP_SUMMARY"

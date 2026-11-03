@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-readonly-reset-trace-implementation-review",
+  "reviewedAt": "2026-11-03T04:39:42+00:00",
+  "status": "passed",
+  "baselineCommit": "42ec0334b",
+  "reviewedWorktreeFiles": {
+    "scripts/window_infos_reset_trace.py": {
+      "bytes": 43812,
+      "sha256": "241b6f0ec4b6dd349a83243a2e9d70a754ec192583875979952bcd9482f47d86"
+    },
+    "scripts/window_infos_reset_trace_analysis.py": {
+      "bytes": 25957,
+      "sha256": "3ec29a5419788b8c9050e91242b893276b09a4094c12ff605f69f07d0108b672"
+    },
+    "scripts/window_infos_reset_trace_archive.py": {
+      "bytes": 26000,
+      "sha256": "b7f424733dc5d86f94592621e7d1858fcf805421df7a143458f19cd64e8b4c91"
+    },
+    ".github/workflows/window-infos-raw.yml": {
+      "bytes": 26406,
+      "sha256": "f4c8795e9b0a6e2215845c4533ed32c974406a51ff81673be710c060f6e80e3d"
+    },
+    "docs/validation/window-infos-reset-trace.md": {
+      "bytes": 4711,
+      "sha256": "51de09b05132252bb50d6241453cf004472311100fc5d6ab783f10f611f09719"
+    }
+  },
+  "method": "Read-only code and fixed-source contract inspection; no production modules imported, no tests, Gradle, device commands or new source downloads executed by this implementation review.",
+  "originalProducerFilesUnchangedFromBaseline": [
+    "compat-smoke/build.gradle",
+    "compat-smoke/src/main/AndroidManifest.xml",
+    "compat-smoke/src/main/java/dev/agentos/compat/RawWindowFixtureActivity.java",
+    "scripts/build_window_infos_raw.py",
+    "scripts/configure_emulator_phone.py",
+    "scripts/third_party_smoke.py",
+    "scripts/third_party_smoke_archive.py",
+    "scripts/window_infos_capability.py",
+    "scripts/window_infos_ime_state.py",
+    "scripts/window_infos_input_state.py",
+    "scripts/window_infos_keyboard.py",
+    "scripts/window_infos_keyboard_archive.py",
+    "scripts/window_infos_raw.py",
+    "scripts/window_infos_raw_archive.py",
+    "tools/window-infos-raw/src/dev/agentos/raw/RawCollector.java",
+    "tools/window-infos-raw/src/dev/agentos/raw/RawListenerSession.java",
+    "tools/window-infos-raw/src/dev/agentos/raw/RawSession.java",
+    "tools/window-infos-raw/src/dev/agentos/raw/WindowInfosRawMain.java",
+    "tools/window-infos-raw/stubs/android/view/InputWindowHandle.java",
+    "tools/window-infos-raw/stubs/android/window/WindowInfosListener.java",
+    "tools/window-infos-raw/tests/dev/agentos/raw/RawCollectorHostTest.java"
+  ],
+  "sourceContractReview": "docs/validation/diagnostics/window-infos-reset-trace-2026-11-03/source-review.json",
+  "parser": [
+    "Only a complete positive-duration reset nested through actual acyclic parent IDs under clientTransactionExecuted may yield configuration_dispatch_supported; mere timestamp overlap or configChanged ancestry does not.",
+    "The entire ancestry uses the same thread track/utid/upid/tid/pid/main-thread identity, contiguous depths and depth-zero root; known process lifetime bounds apply to reset and ancestors.",
+    "Unique exact IME package/UID process instance is required, and main-thread tid=pid must match the process PID. Missing/ambiguous instances remain unknown; this is not Binder/service-process identity proof.",
+    "Missing parent, zero/incomplete durations, unknown or nonzero loss/error stats, missing readiness/end/bounds and invalid thread identity cannot create positive caller evidence.",
+    "BOOTTIME metadata and clock snapshots are required for raw elapsed-time comparisons; unknown mapping leaves window/offset unknown while preserving any otherwise valid trace-local ancestry.",
+    "Both raw windows must be fully covered for overall recorded analysis; individual observed facts remain available without promoting incomplete capture or original comparison.",
+    "No SettingsObserver inference is made from absent transaction ancestry, absent reset slices, final configuration snapshots, or old tracker counts.",
+    "CSV/JSON shapes, integer/finite-number limits, symlinks/nonregular files, row/query/file/resource limits and executing program/pinned-processor hashes are checked."
+  ],
+  "capture": [
+    "The wrapper calls the existing keyboard comparison once without modifying original arm commands, show/registration budgets, 12-second raw windows or four region predicates. No wrapper command is inserted between original raw READY and show.",
+    "Configuration remains am/wm/view plus bounded process/task metadata, 120 seconds, 32 MiB file limit and two 4 MiB buffers. Input category removed to match declared scope; process stats poll is fixed at 1000ms.",
+    "Perfetto start ownership requires returned PID, recorded /proc start ticks and exact command-line digest. Stop rechecks comm/start time/cmdline in one finite shell before SIGINT; no global kill or root.",
+    "Settings restoration is attempted through the existing journal-guarded one-restore function before stopping capture. Summary-read exceptions do not bypass the independent stop/collection path.",
+    "A naturally ended, zombie or reused PID is never signalled. BEFORE_STOP remains unverified while preserving bounded trace originals; stop/exit/capture completeness are separate.",
+    "Oversize/empty traces preserve bounded file output and resource-limit failure, never recorded. Pull result, actual file bytes/digest and remote size are distinct.",
+    "Run-specific remote paths must be absent and not symlinks before creation. Ready/size paths must be regular and not symlinks; cleanup verifies both no entry and no dangling link.",
+    "Native trace duration limits residual capture when ownership cannot be proved. The shell recheck is explicitly not an atomic pidfd guarantee."
+  ],
+  "archive": [
+    "Source repository/commit/run/attempt, test-only job and artifact association are verified separately; other executed modes are rejected.",
+    "Declared producer files match immutable Git blobs and verified checkout bytes; Python import origins and actual module bytes are checked before importing validators.",
+    "Capture report, original keyboard comparison/arm outcomes and analysis states stay independent. Missing/partial analysis is retained and never reclassified as complete.",
+    "Analysis validates the archived query bytes and their deterministic derivation with the source-bound parser; this review has not replayed an actual new device trace.",
+    "Source run/job failure cannot promote capture to recorded. Original payload bytes are scanned again after validation, then published exclusively with hashes and metadata.",
+    "Malformed or interrupted derived analysis bytes are retained separately as partial/invalid with validationError; original context/source validation remains mandatory, and reportedStatus is populated only after full deterministic validation.",
+    "An interrupted unverified wrapper may retain its older comparison summary; archive reports whether it matched the independently validated child summary. Completed/recorded mismatches are rejected and original bytes remain unchanged."
+  ],
+  "workflowAndDocs": [
+    "New reset_trace/archive_reset_trace modes are separate from unchanged test/keyboard action paths; source checkout and archive branch are pinned to source commit/run/attempt.",
+    "A per-run finalize exists, but online restoration/stop correctness does not depend solely on the post-emulator workflow step.",
+    "Documentation states source-image and non-nested-loop assumptions, ten-second notification delay as a hypothesis, unverified original Notes24/8 and different five-second timing origin, and trace overhead as a new diagnostic intervention."
+  ],
+  "issuesResolvedDuringReview": [
+    "Zero-duration reset could otherwise create supported classification.",
+    "Missing PID/TID or process-PID mismatch and missing depth-zero ancestor root needed explicit unknown handling.",
+    "FIFO opening and pre-validation path resolution needed bounded regular-file and symlink handling.",
+    "Early Perfetto exit previously discarded available trace evidence; it now preserves bounded originals without signalling or promotion.",
+    "Comparison summary failure previously could bypass stop handling; it is now isolated.",
+    "Remote dangling symlinks previously passed ! -e checks; ! -L is now also required."
+  ],
+  "limits": [
+    "No new API37 trace exists within this review; runtime category support/readiness/data coverage remain to be observed.",
+    "Configuration-dispatch support remains conditional on the reviewed fixed framework implementation and no nested main-message-loop dispatch.",
+    "A trace without positive caller ancestry cannot establish SettingsObserver, and the ten-second mechanism is not yet the measured root cause.",
+    "No original Notes replay or acceptance repair, physical-device, real-model, Binder-identity, performance-budget or stable-fix claim is made.",
+    "Tests are run by implementation authors/root separately; this receipt does not claim independent test execution."
+  ]
+}

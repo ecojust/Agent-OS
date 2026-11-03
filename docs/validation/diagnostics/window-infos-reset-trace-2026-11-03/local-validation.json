@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "kind": "reset-trace-root-local-validation",
+  "checkedAt": "2026-11-03T04:41:06+00:00",
+  "status": "passed",
+  "newModuleTests": {
+    "command": "python3 -m unittest discover -s scripts -p 'test_window_infos_reset_trace*.py'",
+    "tests": 72,
+    "capture": 23,
+    "analysis": 23,
+    "archive": 26,
+    "elapsedSeconds": 8.89
+  },
+  "existingRegressionTests": {
+    "tests": 196,
+    "raw": 74,
+    "imeState": 33,
+    "inputState": 27,
+    "keyboardAndArchive": 62,
+    "initialEnvironmentIssue": "The first raw suite had 73 passes and one Java toolchain lookup failure; the existing Java17 was added to PATH and that exact Java test passed. No product source changed to resolve it."
+  },
+  "actionlint": "passed",
+  "progressCheck": "passed",
+  "sourceFiles": {
+    "scripts/test_window_infos_reset_trace.py": {
+      "bytes": 22031,
+      "sha256": "f4e69f325fe3d85744ce13b83ad93d071e6ab554e62c6fbeb2e70295132d5565"
+    },
+    "scripts/test_window_infos_reset_trace_analysis.py": {
+      "bytes": 12815,
+      "sha256": "a6b3babab882973da31cd5d02d81b2a5ac062940f3abe36bdac4c32218075a5b"
+    },
+    "scripts/test_window_infos_reset_trace_archive.py": {
+      "bytes": 24379,
+      "sha256": "54ac11f230cc1779005103949155b616837cd471e9bbad776b206620358ad6b9"
+    },
+    "scripts/window_infos_reset_trace.py": {
+      "bytes": 43812,
+      "sha256": "241b6f0ec4b6dd349a83243a2e9d70a754ec192583875979952bcd9482f47d86"
+    },
+    "scripts/window_infos_reset_trace_analysis.py": {
+      "bytes": 25957,
+      "sha256": "3ec29a5419788b8c9050e91242b893276b09a4094c12ff605f69f07d0108b672"
+    },
+    "scripts/window_infos_reset_trace_archive.py": {
+      "bytes": 26000,
+      "sha256": "b7f424733dc5d86f94592621e7d1858fcf805421df7a143458f19cd64e8b4c91"
+    },
+    ".github/workflows/window-infos-raw.yml": {
+      "bytes": 26406,
+      "sha256": "f4c8795e9b0a6e2215845c4533ed32c974406a51ff81673be710c060f6e80e3d"
+    }
+  },
+  "scope": "Host synthetic and immutable-source checks only. No new Android result yet; original Notes24/8 and budgets unchanged."
+}

@@ -1,0 +1,244 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-existing-reset-evidence-review",
+  "reviewedAt": "2026-11-03T04:26:51+00:00",
+  "status": "recorded",
+  "evidenceSource": {
+    "commit": "aee08f1976f29ebcb62ddd15d37ae30663445228",
+    "runId": 41305950037,
+    "attempt": 1,
+    "archiveCommit": "73fa7067db671a2d66c52db32bae81bf021eff63"
+  },
+  "method": "Python stdlib direct original base64 command decoding and JSON; no production analyzer/validator imported; no device execution, no old originals changed. Targeted review, not repeated full archive audit.",
+  "newHardConstraint": {
+    "baselineRawFinishedElapsedMs": 46458,
+    "enabledRawStartedElapsedMs": 48018,
+    "resetTrackerStartElapsedMs": 57083,
+    "settingOperationElapsedBracketMs": [
+      46458,
+      48018
+    ],
+    "settingToObservedResetIntervalMs": [
+      9065,
+      10625
+    ],
+    "derivation": "Coordinator source runs baseline and its cleanup to return, then enable_setting/settings_enabled readback, then enabled arm and its raw process. Device elapsed stamps at A process finish and B process start therefore bracket the setting operation. No host UTC is subtracted from device clocks. Bounds are conservative integer-ms bounds.",
+    "implication": "An observed reset occurs 9065–10625ms after the successful setting operation. The interval includes 10000ms; this permits investigating delayed notification, but does not identify the caller or prove a timer/queue mechanism.",
+    "producerControlFlow": {
+      "path": "scripts/window_infos_keyboard.py",
+      "lineStart": 565,
+      "lineEnd": 590,
+      "gitBlobIdenticalToOriginalSource": true
+    }
+  },
+  "settingCommands": [
+    {
+      "id": "enable_setting",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "settings",
+        "--user",
+        "0",
+        "put",
+        "secure",
+        "show_ime_with_hard_keyboard",
+        "1"
+      ],
+      "startedAt": "2026-11-01T12:22:56.547741+00:00",
+      "endedAt": "2026-11-01T12:22:56.620266+00:00",
+      "elapsedMillis": 72,
+      "status": "completed",
+      "exitCode": 0,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "settings_enabled",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "settings",
+        "--user",
+        "0",
+        "list",
+        "secure"
+      ],
+      "startedAt": "2026-11-01T12:22:56.623663+00:00",
+      "endedAt": "2026-11-01T12:22:56.686843+00:00",
+      "elapsedMillis": 63,
+      "status": "completed",
+      "exitCode": 0,
+      "bytes": 2997,
+      "sha256": "5813f9c645569c002c55a7c53dfa8a7836032329f05baad0a5a10b39c73d1fd9"
+    },
+    {
+      "id": "restore_setting",
+      "argv": [
+        "/usr/local/lib/android/sdk/platform-tools/adb",
+        "-s",
+        "emulator-5554",
+        "shell",
+        "settings",
+        "--user",
+        "0",
+        "put",
+        "secure",
+        "show_ime_with_hard_keyboard",
+        "0"
+      ],
+      "startedAt": "2026-11-01T12:23:10.039895+00:00",
+      "endedAt": "2026-11-01T12:23:10.072729+00:00",
+      "elapsedMillis": 32,
+      "status": "completed",
+      "exitCode": 0,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "arms": {
+    "baseline": {
+      "rawProcess": {
+        "sdk": 37,
+        "uid": 2000,
+        "startedElapsedMs": 34456,
+        "finishedElapsedMs": 46458,
+        "fingerprintSha256": "35abb7613e43fefcf91fd83137ec1d613853bc67499c826f80f06cb034ad8fc8"
+      },
+      "commandIds": [
+        "devices",
+        "property_ro.kernel.qemu",
+        "property_ro.boot.qemu",
+        "property_ro.build.version.sdk",
+        "property_ro.product.cpu.abi",
+        "property_sys.boot_completed",
+        "property_ro.build.fingerprint",
+        "extra_vm_options",
+        "current_user",
+        "shell_uid",
+        "timeout_available",
+        "installed_packages",
+        "ime_before",
+        "ime_list",
+        "ime_uid",
+        "apk_badging",
+        "install_fixture",
+        "fixture_paths",
+        "fixture_uid",
+        "push_probe",
+        "probe_digest",
+        "raw_probe",
+        "fixture_start",
+        "ime_state",
+        "screenshot",
+        "fixture_receipt",
+        "ime_after",
+        "ime_uid_after",
+        "cleanup_fixture",
+        "cleanup_probe"
+      ],
+      "imeDumpCommand": {
+        "id": "ime_state",
+        "startedAt": "2026-11-01T12:22:56.022256+00:00",
+        "endedAt": "2026-11-01T12:22:56.048077+00:00",
+        "bytes": 48469,
+        "sha256": "b5d15619535c11ebe1c9967140cd95b458ff0c5bdcfb227e7a9edb758696613b"
+      },
+      "configuration": [
+        "{1.0 310mcc260mnc [en_US] ldltr sw320dp w320dp h640dp 160dpi nrml long compactNeeded port finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 320, 640) mAppBounds=Rect(0, 0 - 320, 640) mMaxBounds=Rect(0, 0 - 320, 640) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} as.2 s.21 fontWeightAdjustment=0}"
+      ],
+      "settingsObserver": [
+        "SettingsObserver{mShowImeWithHardKeyboard=1}"
+      ]
+    },
+    "enabled": {
+      "rawProcess": {
+        "sdk": 37,
+        "uid": 2000,
+        "startedElapsedMs": 48018,
+        "finishedElapsedMs": 60019,
+        "fingerprintSha256": "35abb7613e43fefcf91fd83137ec1d613853bc67499c826f80f06cb034ad8fc8"
+      },
+      "commandIds": [
+        "devices",
+        "property_ro.kernel.qemu",
+        "property_ro.boot.qemu",
+        "property_ro.build.version.sdk",
+        "property_ro.product.cpu.abi",
+        "property_sys.boot_completed",
+        "property_ro.build.fingerprint",
+        "extra_vm_options",
+        "current_user",
+        "shell_uid",
+        "timeout_available",
+        "installed_packages",
+        "ime_before",
+        "ime_list",
+        "ime_uid",
+        "apk_badging",
+        "install_fixture",
+        "fixture_paths",
+        "fixture_uid",
+        "push_probe",
+        "probe_digest",
+        "raw_probe",
+        "fixture_start",
+        "ime_state",
+        "screenshot",
+        "fixture_receipt",
+        "ime_after",
+        "ime_uid_after",
+        "cleanup_fixture",
+        "cleanup_probe"
+      ],
+      "imeDumpCommand": {
+        "id": "ime_state",
+        "startedAt": "2026-11-01T12:23:09.587078+00:00",
+        "endedAt": "2026-11-01T12:23:09.613681+00:00",
+        "bytes": 54488,
+        "sha256": "dff6f6bf1b3efa93298b227d8277ab80f9b6d799412f3c05441650ffcccec2ad"
+      },
+      "configuration": [
+        "{1.0 310mcc260mnc [en_US] ldltr sw320dp w320dp h640dp 160dpi nrml long compactNeeded port finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 320, 640) mAppBounds=Rect(0, 0 - 320, 640) mMaxBounds=Rect(0, 0 - 320, 640) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} as.2 s.21 fontWeightAdjustment=0}"
+      ],
+      "settingsObserver": [
+        "SettingsObserver{mShowImeWithHardKeyboard=2}"
+      ]
+    }
+  },
+  "resetTrackerOriginal": {
+    "sequence": 13,
+    "status": "STATUS_CANCEL",
+    "origin": "ORIGIN_IME",
+    "reason": "RESET_NEW_CONFIGURATION",
+    "phase": "PHASE_SERVER_POST_LAYOUT_NOTIFY_CONTROLS_CHANGED",
+    "deviceWallClockPrinted": "2026-11-01 12:23:06.325",
+    "elapsedStartMs": 57083,
+    "durationMs": 94
+  },
+  "missingAttributionEvidence": [
+    "No archived logcat, Perfetto, atrace or IME tracing file/command.",
+    "No device elapsed stamp in settings put/readback or notification enqueue/delivery. Host timestamps and tracker device wall/elapsed remain distinct clocks.",
+    "No IMS SettingsObserver callback receipt, configuration diff, reset caller stack or per-call reset counters.",
+    "Final Configuration strings match including as.2/s.21; these are two snapshots, not a continuous resource-configuration history.",
+    "No original LatinIME process identity chain proving service continuity; same printed service object text alone is not strong identity proof."
+  ],
+  "trackerCoverageLimit": {
+    "sourcePath": "/workspace/scratch/ime-identity-2026-10-31/core__java__android__inputmethodservice__InputMethodService.java",
+    "sourceCommit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+    "lineStart": 1914,
+    "lineEnd": 1956,
+    "finding": "reset always enters trace/initViews/restart-input work, but RESET_NEW_CONFIGURATION show/hide tracking is inside visible/state-dependent branches. One recorded reason is not proof of exactly one reset call; earlier hidden reset calls may have no such tracker token.",
+    "codeTextIsNotDeviceImageEquivalence": true
+  },
+  "secondaryPostStateDifferences": {
+    "baseline": "LatinIME Keyboard mode=-1, InputAttributes inputType=0 targetApp=null; cache enum FALSE=1, input view not shown.",
+    "enabled": "LatinIME Keyboard mode=0, InputAttributes inputType=0x00200001 targetApp=dev.agentos.compat; cache enum TRUE=2, input view shown.",
+    "limit": "Post-state only; does not date the transition or identify reset caller. Differences such as autocorrection/voice-key settings are evaluated input settings, not an independently proved secure-setting mutation source."
+  },
+  "remainingWork": "A new bounded observation should capture notification enqueue/delivery, IMS reset span and configuration-delivery span on the same clock. A new experiment cannot retroactively establish old-run causality. Original Notes24/8 and original timing/action budgets remain unchanged."
+}

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "kind": "reset-trace-archive-local-validation",
+  "checkedAt": "2026-11-03T04:39:23+00:00",
+  "status": "passed",
+  "tests": 26,
+  "command": "python3 -m unittest discover -s scripts -p 'test_window_infos_reset_trace_archive.py'",
+  "elapsedSeconds": 0.651,
+  "sourceFiles": {
+    "scripts/window_infos_reset_trace_archive.py": {
+      "bytes": 26000,
+      "sha256": "b7f424733dc5d86f94592621e7d1858fcf805421df7a143458f19cd64e8b4c91"
+    },
+    "scripts/test_window_infos_reset_trace_archive.py": {
+      "bytes": 24379,
+      "sha256": "54ac11f230cc1779005103949155b616837cd471e9bbad776b206620358ad6b9"
+    }
+  },
+  "realProducerIntegration": {
+    "preparedOnly": true,
+    "temporaryGitProducerSnapshot": true,
+    "actualCaptureAndOldKeyboardValidators": true,
+    "sourceFilesBound": 26,
+    "runtimePythonFilesBound": 15,
+    "newDeviceExecution": false,
+    "result": "unverified source preparation preserved; two unverified arms, no invented trace or analysis"
+  },
+  "derivedOutputFailurePolicy": "Only analysis parse/derivation ValueError becomes invalid with bounded stable error code; original source/capture/child/Git identity and I/O errors still reject. Empty/truncated JSON originals are preserved."
+}

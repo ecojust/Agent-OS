@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-reset-trace-archive-code-review",
+  "reviewedAt": "2026-11-03T04:39:38+00:00",
+  "status": "passed",
+  "files": {
+    "scripts/window_infos_reset_trace_archive.py": {
+      "bytes": 26000,
+      "sha256": "b7f424733dc5d86f94592621e7d1858fcf805421df7a143458f19cd64e8b4c91"
+    },
+    "scripts/test_window_infos_reset_trace_archive.py": {
+      "bytes": 24379,
+      "sha256": "54ac11f230cc1779005103949155b616837cd471e9bbad776b206620358ad6b9"
+    }
+  },
+  "scope": "Read-only code review plus four targeted synthetic archive-policy tests; no Android/device operations, no repository edits, no full-source integration rerun.",
+  "findings": [
+    {
+      "id": "INTERRUPTED_ANALYSIS_JSON",
+      "initialProblem": "Derived analysis.json was eagerly decoded during artifact scanning. A killed final JSON write could reject the whole artifact and lose otherwise valid trace/comparison originals.",
+      "resolution": "analysis/* retained as original bytes; malformed or mismatching complete derived output becomes invalid with stable validationError and no reportedStatus. Source/context, path, size, source bytes, capture and comparison errors remain hard failures.",
+      "status": "resolved"
+    }
+  ],
+  "reviewedBoundaries": [
+    "Run/repository/workflow/master/manual event/attempt metadata and source job/artifact timestamp association.",
+    "Required producer Python set is checked against Git, checkout and module resolution before validator import; verified original comparison source subset remains separate.",
+    "Canonical payload allowlist, per-file/aggregate JSON and binary limits, symlinks/nonregular evidence rejection and non-overwriting atomic archive destination.",
+    "Capture recorded, original comparison result and derived analysis validation remain independent; original failed arm cannot be promoted by successful capture.",
+    "Incomplete parent summary may lag original child only in explicitly unfinished capture stages, and mismatches are recorded rather than rewriting originals.",
+    "Missing/expired artifacts retain unverified denominators. Incomplete analysis files are preserved without validation; complete bad derived output remains invalid.",
+    "All scanned payload bytes are read again after validation and compared before publishing."
+  ],
+  "targetedTests": {
+    "executed": 4,
+    "passed": 4,
+    "names": [
+      "test_empty_and_truncated_analysis_json_preserve_original_evidence",
+      "test_tampered_caller_is_preserved_as_invalid_not_validated",
+      "test_analysis_context_identity_and_io_errors_are_not_tolerated",
+      "test_mutation_while_parser_reads_is_rejected"
+    ]
+  },
+  "dependencyNote": "The current archive validation path is covered by the 15 local Python producer entries. An additional lazy third_party_smoke_set_archive import exists only inside the unrelated legacy standalone CLI main; that branch is not called here.",
+  "limits": [
+    "The four targeted tests deliberately stub host/parser semantics and are archive-policy tests, not Android or parser acceptance.",
+    "No claim of tracing completeness or reset caller causality follows from this code review."
+  ],
+  "parentVerification": {
+    "tests": 26,
+    "passed": 26,
+    "includesRealPreparedWrapperAndGitIntegration": true,
+    "reportedBy": "/root/reset_prior",
+    "sameFrozenFileHashesConfirmed": true,
+    "independentlyRerunByReviewer": false
+  }
+}

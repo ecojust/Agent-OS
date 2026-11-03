@@ -21,7 +21,7 @@
 
 上表保留各类最新完成流程的已归档录像，并标注实际源码。真实 APK 日常流程对应 `72f77af85`，普通任务演示对应 `5ac5030a4`，繁忙停止演示对应 `c7bfa7c21`；`f45fbb152` 的性能专项数值与原始记录见[目标进程／启动／帧报告](docs/validation/performance-app-experience.md)。此前 ready 阶段失败的[原始记录](screenshots/demos/40907100293-1/manifest.json)继续保留。普通流程录像不代替 Settings 来源拒绝、旋转或完整 API 矩阵验收。
 
-此前 `aee08f197` 的API37设置对照完成：原设置组失败，开启软键盘显示后取得正对照并恢复原值，但有效回调在show后8.135秒才出现，见[实际结果](docs/validation/window-infos-keyboard.md)。原Notes的5秒起点不同，不能直接替代验收；本轮[离线时间线分析](docs/validation/window-infos-timeline.md)已完成原件复算，发现正回调前178毫秒的IME重建追踪，触发原因仍未确定。aee08同源整体录像在ready阶段因控制条不可用而失败，保留[6.2秒部分视频](screenshots/demos/41305953660-1/demo.mp4)和[失败清单](screenshots/demos/41305953660-1/manifest.json)。历史cdea辅助服务未连接的[11.3秒失败短片](screenshots/demos/41178250336-1/demo.mp4)仍保留，两个ready失败不合并为同一根因。
+此前 `aee08f197` 的API37设置对照完成：原设置组失败，开启软键盘显示后取得正对照并恢复原值，但有效回调在show后8.135秒才出现，见[实际结果](docs/validation/window-infos-keyboard.md)。原Notes的5秒起点不同，不能直接替代验收；[离线时间线分析](docs/validation/window-infos-timeline.md)已完成原件复算，发现正回调前178毫秒的IME重建追踪；本轮[重建来源核查](docs/validation/window-infos-reset-trace.md)继续验证配置事务与后台设置通知的候选机制，尚未确定触发原因。aee08同源整体录像在ready阶段因控制条不可用而失败，保留[6.2秒部分视频](screenshots/demos/41305953660-1/demo.mp4)和[失败清单](screenshots/demos/41305953660-1/manifest.json)。历史cdea辅助服务未连接的[11.3秒失败短片](screenshots/demos/41178250336-1/demo.mp4)仍保留，两个ready失败不合并为同一根因。
 
 繁忙停止录像仅覆盖 API35 的一次在途平台调用，不作为 MODEL 首停止帧或八档性能验收；专项失败与未完成进度见[停止诊断记录](docs/validation/performance-busy-stop.md)。
 
@@ -50,9 +50,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 离线时间线正式分析及独立复算完成：20项测试通过，119回调点与旧28原件一致；IME重建触发方仍未确定，原Notes24/8保持。5ac同源API35整体录像13阶段/8确认通过并归档，README更新39.495秒最新视频。
+**本次更新：** IME重建Trace模块完成72项新测试、196项既有回归及独立审查；设置通知延迟10秒仍是候选原因。原Notes24/8和原采集预算保持，单次API37专项与同源整体录像待执行。
 
-**记录时间：** 2026-11-01T12:57:06Z
+**记录时间：** 2026-11-03T04:41:06Z
 
 [最近测试截图与清单](screenshots/window-infos-keyboard-41305950037-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41305950037)。通过、失败及未截图原因见清单。
 
@@ -81,7 +81,7 @@
 <tr><td nowrap>绑定界面版本的坐标操作</td><td nowrap>进行中</td><td>已验证：只读坐标定位可解析绑定当前观察版本的节点候选。未完成：坐标点击/滑动仍关闭，图片到屏幕映射、捕获身份/时效及最终提交校验待完成。下一步：冻结最小手势合同，验证过期、遮挡、取消与未知结果不重试。 <a href="docs/VISUAL_PIPELINE.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
 <tr><td nowrap>普通操作连续执行与接管</td><td nowrap>进行中</td><td>5ac最新整体演示13阶段/8确认通过：39.495秒、529帧，30载荷及22PNG核验；c7b繁忙停止1/1保持。aee08控制条不可用与cdea服务未连接的旧ready失败原因仍未查明。连续写和真实模型接管未验收；下一步补就绪性原状态诊断，再冻结连续写范围。 <a href="screenshots/demos/41308310840-1/manifest.json">依据</a></td><td nowrap>2026-11-01 12:57:06</td></tr>
 <tr><td nowrap>真实模型跨应用任务验收</td><td nowrap>待实现</td><td>已验证：本地合成HTTP模型到执行器的链路；现有录像未使用外部模型。未完成：真实模型自主完成受控跨应用目标尚无验收证据。下一步：冻结实际模型服务、版本、授权应用和可独立核对结果的任务，在模拟器实跑并保留失败。 <a href="docs/PRODUCT_PLAN.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
-<tr><td nowrap>冻结常用应用样本与日常使用验收</td><td nowrap>进行中</td><td>已完成离线分析和20项测试；28原件、22源码及119回调点独立核验通过。B正回调前178ms有IME重建追踪，但设置监听/资源配置两入口未区分；原Notes5秒起点不同，24/8保持。下一步固定入口与视图几何观测合同，再验证原进程Binder映射；API36适配及原32项复测未完成。 <a href="docs/validation/window-infos-timeline.md">依据</a></td><td nowrap>2026-11-01 12:51:39</td></tr>
+<tr><td nowrap>冻结常用应用样本与日常使用验收</td><td nowrap>进行中</td><td>已完成有界Trace采集/解析/归档：72项新测试、196项回归及来源绑定集成通过。旧时序9.065–10.625秒符合后台通知10秒候选，但原因未定；新判据只接受实际配置事务祖先，缺席保留未知。下一步单次API37采集核对入口；原Notes24/8、API36适配和原32项复测未完成。 <a href="docs/validation/window-infos-reset-trace.md">依据</a></td><td nowrap>2026-11-03 04:41:06</td></tr>
 <tr><td nowrap>跨厂商近五年真机与资源档验证</td><td nowrap>待外部条件</td><td>已完成：定义跨厂商、芯片、上市年份及资源档的选样要求。阻塞：尚无参考手机或真机测试环境，暂无机型验收。下一步：确定可用设备清单，按固定任务验证权限、后台行为与资源表现。 <a href="docs/COMPATIBILITY.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
 <tr><td nowrap>参考机 AOSP 集成与平台兼容套件</td><td nowrap>待外部条件</td><td>已完成：定义系统集成、特权桥接与兼容验证目标。阻塞：参考机、可解锁性、内核和厂商驱动未确定，尚无可刷写镜像。下一步：确定机型和可维护源码基线，再完成构建、启动及平台兼容套件验证。 <a href="docs/PRODUCT_PLAN.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
 <tr><td nowrap>机型 OTA 与失败启动恢复</td><td nowrap>待外部条件</td><td>已完成：定义OTA、降级限制与失败启动恢复要求。阻塞：尚无参考机镜像和可验证恢复环境，未完成实际OTA/恢复。下一步：在机型确定后验证签名、升级、失败恢复及数据保留边界。 <a href="docs/DESIGN_RULES.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>

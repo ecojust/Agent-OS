@@ -223,6 +223,10 @@ def _trace_quality(raw):
     bad = [r for r in stats if r['value'] not in (None, 0) and
            (r['severity'] in ('error','data_loss') or
             re.search(r'(?i)(lost|loss|overrun|overwrite|error|discard|dropped)', r['name']))]
+    # Pinned v59.1 has four severities, including "notice". Its notice counters
+    # include skipped packets and setup failures; zero is valid, while nonzero
+    # remains conservatively unknown without calling every notice data loss.
+    notices = [r for r in stats if r['severity'] == 'notice' and r['value'] not in (None, 0)]
     metadata = raw['trace-metadata.csv']
     started = _metadata(metadata, 'all_data_source_started_ns')
     disabled = _metadata(metadata, 'tracing_disabled_ns')
@@ -233,15 +237,16 @@ def _trace_quality(raw):
     if len(started) != 1 or not integer(started[0]): reasons.append('DATA_SOURCE_READY_UNKNOWN')
     if len(disabled) != 1 or not integer(disabled[0]): reasons.append('TRACE_END_UNKNOWN')
     if not stats: reasons.append('TRACE_STATS_MISSING')
-    if any(not r['name'] or r['value'] is None or r['severity'] not in ('info','error','data_loss') for r in stats):
+    if any(not r['name'] or r['value'] is None or r['severity'] not in ('info','notice','error','data_loss') for r in stats):
         reasons.append('TRACE_STATS_INVALID')
     if bad: reasons.append('TRACE_LOSS_OR_ERROR')
+    if notices: reasons.append('TRACE_NOTICE_NONZERO')
     begin = started[0] if len(started) == 1 and integer(started[0]) else None
     end = disabled[0] if len(disabled) == 1 and integer(disabled[0]) else None
     if begin is not None and end is not None and begin >= end: reasons.append('TRACE_READY_AFTER_END')
     return {'status': 'recorded' if not reasons else 'unknown', 'reasons': reasons,
             'allDataSourcesStartedNs': begin, 'tracingDisabledNs': end,
-            'bounds': bounds, 'nonzeroLossOrErrorStats': bad,
+            'bounds': bounds, 'nonzeroLossOrErrorStats': bad, 'nonzeroNoticeStats': notices,
             'noLossDoesNotProveEveryCallWasTraced': True}
 
 

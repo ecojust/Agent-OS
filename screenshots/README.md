@@ -106,3 +106,7 @@ v4首轮 [third-party-40674357809-1](third-party-40674357809-1/) 来自5436源�
 70b第二版[41580632157-1](window-infos-reset-trace-41580632157-1/manifest.json)保留11条命令：help已通过，794B配置传入及摘要核验成功，Perfetto启动报TraceConfig为空。A/B未执行、输入法设置未写；设备配置文件清理未确认，无本地Trace，不能推断远端文件状态。归档eea69017d保留失败；配置传输修正另行验证。
 
 70b同源[整体演示41580635370-1](demos/41580635370-1/manifest.json)13阶段/8确认通过：[36.916秒视频](demos/41580635370-1/demo.mp4)421,635字节、501帧，30载荷1,164,860字节、22PNG和31Git原件完整核验。API35 Fixture/本地模型，安全标志保留；不覆盖API37启动失败或旧Notes验收。
+
+919bee第三版[41582067066-1](window-infos-reset-trace-41582067066-1/manifest.json)有界Trace采集recorded、A/B比较passed，内部A失败/B通过分别保留，设置0→1→0恢复与自有进程/文件清理确认。Trace4,393,006字节；B有效回调show后8648ms，约108ms前的reset真实parent为空，调用入口未知。原analysis因7条notice=0未被枚举接受而unknown，离线修正另存，不覆盖原件、不重跑原Notes。
+
+919bee[整体演示41582071423-1](demos/41582071423-1/manifest.json)13阶段/8确认通过：[34.445秒视频](demos/41582071423-1/demo.mp4)423,534字节、446帧，30载荷1,156,629字节、22PNG和31Git原件完整核验。API35 Fixture/本地模型，安全标志保留；原就绪失败与原Notes结果均未关闭。

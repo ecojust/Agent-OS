@@ -1,0 +1,350 @@
+{
+  "schemaVersion": 1,
+  "kind": "window-infos-reset-stats-notice-local-validation",
+  "recordedAt": "2026-11-03T05:18:06.162152+00:00",
+  "sourceBaseCommit": "919bee887c78bd0de23b2d853320e0f1908107ea",
+  "sourceState": "local two-file patch awaiting root freeze; exact bytes below",
+  "programFiles": [
+    {
+      "path": "scripts/window_infos_reset_trace_analysis.py",
+      "bytes": 26382,
+      "sha256": "0a18b1c7756943a1b660807b0fcfddf54873ff1badaacdc2354b2e245b72d17e"
+    },
+    {
+      "path": "scripts/test_window_infos_reset_trace_analysis.py",
+      "bytes": 17907,
+      "sha256": "8eadedf2114c557f3b945bc93faaed28d31a0d419e0229f7dea725b870232f00"
+    }
+  ],
+  "fixedProcessorSource": [
+    {
+      "url": "https://raw.githubusercontent.com/google/perfetto/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/src/trace_processor/storage/stats.h",
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "tag": "v59.1",
+      "path": "src/trace_processor/storage/stats.h",
+      "bytes": 95163,
+      "sha256": "7ad550df253f023018374f83e29c5e5ca3d1330f295c5566115ea6c36b10fb18"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/perfetto/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/src/trace_processor/importers/common/global_stats_tracker.cc",
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "tag": "v59.1",
+      "path": "src/trace_processor/importers/common/global_stats_tracker.cc",
+      "bytes": 8945,
+      "sha256": "e84ac05163da9cffd11f62938ccbc81048fcb9a30d401234f64cb7a6556dc813"
+    }
+  ],
+  "sourceFindings": {
+    "severityEnumLines": "stats.h:1043-1052",
+    "severitySqlTextMappingLines": "global_stats_tracker.cc:35-38",
+    "zeroRowPreEmissionLines": "global_stats_tracker.cc:41-51",
+    "noticeCounterDefinitionLines": [
+      "stats.h:112",
+      "stats.h:963-1005"
+    ],
+    "meaning": "notice is normal but noteworthy; nonzero notice remains conservatively unknown without reclassifying every notice as data loss"
+  },
+  "original": {
+    "source": {
+      "repository": "ecojust/Agent-OS",
+      "commit": "919bee887c78bd0de23b2d853320e0f1908107ea",
+      "runId": 41582067066,
+      "attempt": 1
+    },
+    "archiveCommit": "b907b52e4bfc6c433ce35410c84740b34f955ac6",
+    "filesCheckedAgainstGit": 39,
+    "totalBytes": 5288247,
+    "trace": {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/trace.pftrace",
+      "bytes": 4393006,
+      "sha256": "23a4d39370353f9fd9799fd4d773f32cdfbc134c96e32fc11298851183e9975a"
+    },
+    "analysis": {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/analysis/analysis.json",
+      "bytes": 31657,
+      "sha256": "4a9d46e44df67fb84cf8de569e37f2c3b4e0daf2c18a1c7818e53d714fb631c2"
+    },
+    "reportedAnalysisStatus": "unknown",
+    "reportedTraceQuality": {
+      "status": "unknown",
+      "reasons": [
+        "TRACE_STATS_INVALID"
+      ],
+      "allDataSourcesStartedNs": 23006521392,
+      "tracingDisabledNs": 50645274868,
+      "bounds": [
+        {
+          "start_ts": 22985571976,
+          "end_ts": 50611763645
+        }
+      ],
+      "nonzeroLossOrErrorStats": [],
+      "noLossDoesNotProveEveryCallWasTraced": true
+    },
+    "noticeFixtureIdentity": {
+      "bytes": 1057,
+      "sha256": "5144da4d543c397d722239f1be58f1c695d882fac3b62c3f162cb6ab5d80c869"
+    },
+    "noticeRows": [
+      {
+        "name": "ftrace_setup_errors",
+        "idx": null,
+        "severity": "notice",
+        "source": "trace",
+        "value": 0
+      },
+      {
+        "name": "interned_data_skipped_incremental_state_invalid",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "packet_skipped_seq_needs_incremental_state_invalid",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "thread_descriptor_skipped_incremental_state_invalid",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "track_event_skipped_thread_instruction_delta_without_valid_state",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "track_event_skipped_thread_time_delta_without_valid_state",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "track_event_skipped_timestamp_delta_without_valid_state",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      }
+    ],
+    "originalBytesChanged": false
+  },
+  "tests": {
+    "command": "python3 -m unittest discover -s scripts -p 'test_window_infos_reset_trace_analysis.py' -v",
+    "exitCode": 0,
+    "count": 28,
+    "seconds": 0.2,
+    "log": {
+      "path": "/workspace/scratch/reset-stats-notice-2026-11-03/unittest.log",
+      "bytes": 4703,
+      "sha256": "ac2bd3fa53e1b8fe35132c802303f5c17c8aaf4fb7ee92a0a08d32d5d313f569"
+    },
+    "newCases": [
+      "actual seven notice zero rows accepted",
+      "missing actual caller remains unknown",
+      "all seven notice and unknown-name nonzero notice blocked including negative values",
+      "unknown severities invalid even zero",
+      "error and data_loss still block despite zero notices"
+    ]
+  },
+  "replay": {
+    "command": [
+      "python3",
+      "scripts/window_infos_reset_trace_analysis.py",
+      "analyze",
+      "--trace",
+      "screenshots/window-infos-reset-trace-41582067066-1/trace.pftrace",
+      "--comparison",
+      "screenshots/window-infos-reset-trace-41582067066-1/comparison",
+      "--processor",
+      "/workspace/scratch/ime-reset-parser-2026-11-03/trace_processor_shell-v59.1",
+      "--output",
+      "/workspace/scratch/reset-stats-notice-2026-11-03/replay-analysis"
+    ],
+    "exitCode": 0,
+    "processor": {
+      "path": "/workspace/scratch/ime-reset-parser-2026-11-03/trace_processor_shell-v59.1",
+      "bytes": 15885448,
+      "sha256": "2434129a3af4dc9e2034a476f7b76447b490975213e301769310d3bd0d5d6458"
+    },
+    "queryCsvIdenticalToArchive": {
+      "trace-slices.csv": true,
+      "trace-clocks.csv": true,
+      "trace-processes.csv": true,
+      "trace-stats.csv": false,
+      "trace-bounds.csv": true,
+      "trace-metadata.csv": true
+    },
+    "statsDifferences": [
+      {
+        "original": {
+          "name": "guess_trace_type_duration_ns",
+          "idx": null,
+          "severity": "info",
+          "source": "analysis",
+          "value": 215424
+        },
+        "replay": {
+          "name": "guess_trace_type_duration_ns",
+          "idx": null,
+          "severity": "info",
+          "source": "analysis",
+          "value": 158442
+        }
+      },
+      {
+        "original": {
+          "name": "parse_trace_duration_ns",
+          "idx": null,
+          "severity": "info",
+          "source": "analysis",
+          "value": 18830747
+        },
+        "replay": {
+          "name": "parse_trace_duration_ns",
+          "idx": null,
+          "severity": "info",
+          "source": "analysis",
+          "value": 41283526
+        }
+      }
+    ],
+    "statsDifferenceExplanation": "two info/analysis counters measure actual processor execution time and vary between CI and this host; original CSV and replay CSV are retained separately",
+    "outputFiles": [
+      {
+        "path": "/workspace/scratch/reset-stats-notice-2026-11-03/replay-analysis/analysis.json",
+        "bytes": 31728,
+        "sha256": "ddc17a5c41af695c2530eefa0b985bf3adb6af10aa5f6f0a5f6b681f91a5bf22"
+      },
+      {
+        "path": "/workspace/scratch/reset-stats-notice-2026-11-03/replay-analysis/trace-bounds.csv",
+        "bytes": 44,
+        "sha256": "2f9029b886be6289a2b48095e2da9a0dfef7e0d7b5ae95d9f56c4af00c1ea96e"
+      },
+      {
+        "path": "/workspace/scratch/reset-stats-notice-2026-11-03/replay-analysis/trace-clocks.csv",
+        "bytes": 5495,
+        "sha256": "bef14ef78c2f5bfeb55dc6c08f7f2a74176390096b2f9b8f58136908c115c6af"
+      },
+      {
+        "path": "/workspace/scratch/reset-stats-notice-2026-11-03/replay-analysis/trace-metadata.csv",
+        "bytes": 4304,
+        "sha256": "60118d49e9e34f38d97051918569b9bdec551ddea0142a097881af9d7c38d87a"
+      },
+      {
+        "path": "/workspace/scratch/reset-stats-notice-2026-11-03/replay-analysis/trace-processes.csv",
+        "bytes": 50612,
+        "sha256": "822a2b072ed53c734120a37ae961d18eb22bec3adcb854d5093558fdbb6c4b67"
+      },
+      {
+        "path": "/workspace/scratch/reset-stats-notice-2026-11-03/replay-analysis/trace-slices.csv",
+        "bytes": 3911,
+        "sha256": "117118d962a5283c00af35073514f3000caa12621016378b1c4dd9b0f60d748e"
+      },
+      {
+        "path": "/workspace/scratch/reset-stats-notice-2026-11-03/replay-analysis/trace-stats.csv",
+        "bytes": 38393,
+        "sha256": "6539682214c11a16ef4b38359e21c5d99b63b83617c088f33adb577d68441a80"
+      }
+    ],
+    "stdout": {
+      "status": "recorded",
+      "resetCountObserved": 1,
+      "configurationDispatchSupportedCount": 0
+    },
+    "traceQuality": {
+      "status": "recorded",
+      "reasons": [],
+      "allDataSourcesStartedNs": 23006521392,
+      "tracingDisabledNs": 50645274868,
+      "bounds": [
+        {
+          "start_ts": 22985571976,
+          "end_ts": 50611763645
+        }
+      ],
+      "nonzeroLossOrErrorStats": [],
+      "nonzeroNoticeStats": [],
+      "noLossDoesNotProveEveryCallWasTraced": true
+    },
+    "armCoverage": {
+      "baseline": {
+        "status": "recorded",
+        "rawWindowFullyCovered": true
+      },
+      "enabled": {
+        "status": "recorded",
+        "rawWindowFullyCovered": true
+      }
+    },
+    "resetEvents": [
+      {
+        "slice": {
+          "id": 38577,
+          "parent_id": null,
+          "ts": 47182630102,
+          "dur": 56789493,
+          "depth": 0,
+          "track_id": 1130,
+          "name": "IMS.resetStateForNewConfiguration",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        },
+        "process": {
+          "upid": 244,
+          "pid": 1661,
+          "name": "com.android.inputmethod.latin",
+          "uid": 10112,
+          "start_ts": null,
+          "end_ts": null,
+          "cmdline": "com.android.inputmethod.latin",
+          "machine_id": 0
+        },
+        "ancestors": [],
+        "clientTransactionAncestorIds": [],
+        "configChangedAncestorIds": [],
+        "callerClassification": "unknown",
+        "classificationReasons": [
+          "NO_POSITIVE_CALLER_EVIDENCE"
+        ],
+        "rawContext": [
+          {
+            "arm": "baseline",
+            "phase": "after_raw_window",
+            "showOffsetNs": 21508630102,
+            "windowFullyCovered": true
+          },
+          {
+            "arm": "enabled",
+            "phase": "after_show_in_raw_window",
+            "showOffsetNs": 8539630102,
+            "windowFullyCovered": true
+          }
+        ]
+      }
+    ],
+    "sameProgramDeterministicReplayValidation": "passed; not independent causal audit"
+  },
+  "scope": {
+    "deviceRerun": false,
+    "originalEvidenceOverwritten": false,
+    "originalCaptureSourceRelabeled": false,
+    "causalRuleChanged": false,
+    "settingsObserverCauseProved": false,
+    "originalNotesRerun": false,
+    "nonzeroNoticeRule": "all nonzero notice rows retain TRACE_NOTICE_NONZERO/unknown; zero valid enum rows accepted",
+    "callerStillUnknown": true
+  }
+}

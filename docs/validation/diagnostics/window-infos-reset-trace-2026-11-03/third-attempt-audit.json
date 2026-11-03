@@ -1,0 +1,783 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-reset-trace-third-source-review",
+  "checkedAt": "2026-11-03T05:16:16+00:00",
+  "auditStatus": "passed",
+  "productionValidatorsImportedOrInvoked": false,
+  "deviceExecution": false,
+  "originalsModified": false,
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "919bee887c78bd0de23b2d853320e0f1908107ea",
+    "runId": 41582067066,
+    "attempt": 1
+  },
+  "archiveCommit": "b907b52e4bfc6c433ce35410c84740b34f955ac6",
+  "archiveParentCommit": "919bee887c78bd0de23b2d853320e0f1908107ea",
+  "archiveRunIdProvidedByParent": 41582444992,
+  "filesIncludingManifest": 39,
+  "totalArchiveBytes": 5288247,
+  "indexedFiles": 38,
+  "indexedBytes": 5279989,
+  "payloadFilesWithoutMetadata": 35,
+  "payloadBytesWithoutMetadata": 5249741,
+  "files": [
+    {
+      "path": "analysis/analysis.json",
+      "bytes": 31657,
+      "sha256": "4a9d46e44df67fb84cf8de569e37f2c3b4e0daf2c18a1c7818e53d714fb631c2",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "analysis/trace-bounds.csv",
+      "bytes": 44,
+      "sha256": "2f9029b886be6289a2b48095e2da9a0dfef7e0d7b5ae95d9f56c4af00c1ea96e",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "analysis/trace-clocks.csv",
+      "bytes": 5495,
+      "sha256": "bef14ef78c2f5bfeb55dc6c08f7f2a74176390096b2f9b8f58136908c115c6af",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "analysis/trace-metadata.csv",
+      "bytes": 4304,
+      "sha256": "60118d49e9e34f38d97051918569b9bdec551ddea0142a097881af9d7c38d87a",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "analysis/trace-processes.csv",
+      "bytes": 50612,
+      "sha256": "822a2b072ed53c734120a37ae961d18eb22bec3adcb854d5093558fdbb6c4b67",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "analysis/trace-slices.csv",
+      "bytes": 3911,
+      "sha256": "117118d962a5283c00af35073514f3000caa12621016378b1c4dd9b0f60d748e",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "analysis/trace-stats.csv",
+      "bytes": 38393,
+      "sha256": "5155bc89b2c8c98566c18b0e31af06383ae39b39bb5c0d538af2410b3d8e73b7",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "commands.json",
+      "bytes": 27841,
+      "sha256": "84272a53ede4088b3631276f92e5531e7855ab1ea3e239e0da23c839e7d1c329",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/avd-config.ini",
+      "bytes": 3502,
+      "sha256": "5fd25703acfb1cab9452dfa51b1a2300bd9c8eec993f5d705d1a7995908c7176",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/baseline/capture.json",
+      "bytes": 575,
+      "sha256": "e0874846f77b34428213d51dcc24c90dd30093c40d653589e545e3c58b7ffad3",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/baseline/commands.json",
+      "bytes": 149911,
+      "sha256": "aa241ed74d912daa56d9aa1a100da38b15c9df5cd40296eacbf59901b3ec2cdd",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/baseline/fixture.json",
+      "bytes": 540,
+      "sha256": "20fc535b7feefd4dda483ced95af8e8642dd21a463836798ce2e97d72ea993da",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/baseline/ime-state.json",
+      "bytes": 4400,
+      "sha256": "e9110d503e883fa0856fa4f316b6bb4cfd392c6bec102f762be9e3a302ef1da6",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/baseline/probe-build.json",
+      "bytes": 4333,
+      "sha256": "8fdc836ed57284f37e6cd964cc39436eed4c8aac3174715141bf7b9174e19765",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/baseline/probe.jar",
+      "bytes": 11317,
+      "sha256": "15db65c205ab3d2e1f3fc4f83b39e515a46d1cdf04a242dc19dc5a784e627813",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/baseline/raw-result.json",
+      "bytes": 36604,
+      "sha256": "1426eb7dac07ae95de7326b2f5eaaa4dcd2ba55c6e9593beefe486eb0a2a8e90",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/baseline/report.json",
+      "bytes": 5917,
+      "sha256": "f9e6872bcbe148140b8b3630f2faff9d167d95f6724692685b9dbbd4c7707c1f",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/baseline/screenshot.png",
+      "bytes": 14558,
+      "sha256": "6e57a286e2ec29ce543acf8d6d03ca70ba17bd283b51b42217b82c63908aa3c3",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/commands.json",
+      "bytes": 143141,
+      "sha256": "796093a44d03b35cee05245d4d740841a467e77ba14f7f9b26140217839315b4",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/enabled/capture.json",
+      "bytes": 575,
+      "sha256": "5483e3eccf5fa713a6427451e43a4e8b90c7546043dbba3a9c26e58b95dbbb7b",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/enabled/commands.json",
+      "bytes": 180076,
+      "sha256": "8aee60bb62a87fb25d6e4fab65c0cea9cc20b65ad04c3cb5a12d851a465cb81e",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/enabled/fixture.json",
+      "bytes": 540,
+      "sha256": "fae33d48149767a9d0348feb34d552c6847011256f09823a53324cfa3d6249dc",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/enabled/ime-state.json",
+      "bytes": 4511,
+      "sha256": "05b3566effd061c45a8ec3409f0a9175dae0b96af16572e8f67bcdf8de4e621b",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/enabled/probe-build.json",
+      "bytes": 4333,
+      "sha256": "8fdc836ed57284f37e6cd964cc39436eed4c8aac3174715141bf7b9174e19765",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/enabled/probe.jar",
+      "bytes": 11317,
+      "sha256": "15db65c205ab3d2e1f3fc4f83b39e515a46d1cdf04a242dc19dc5a784e627813",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/enabled/raw-result.json",
+      "bytes": 38363,
+      "sha256": "5b18117b9acd1d518812743dc6ce535e8e60169152cfe498046d78414f8ff9f8",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/enabled/report.json",
+      "bytes": 5884,
+      "sha256": "0df5618db9884fccf3cd3e3f229225dc2776e222316f365bf15d0529923eacf8",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/enabled/screenshot.png",
+      "bytes": 30332,
+      "sha256": "b9dd0eb7a6c5d0494c3a55afae342e60b23ad01d1cb1629cb232df01398c1035",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/fixture.apk",
+      "bytes": 13853,
+      "sha256": "2e772a4c1c4a727a40e33cdb889bd8e340d3453db61e337388b6f65001701ec9",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/input-devices.json",
+      "bytes": 14202,
+      "sha256": "50d772304f46f58f9943252ad49163e300a7134d20eafff6018284012b6a8fbe",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/journal.json",
+      "bytes": 463,
+      "sha256": "ebcc4fd427568eb4227e4f65240aae5c43dffe17a3cecb16c67bd6421ea6f42a",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "comparison/report.json",
+      "bytes": 6818,
+      "sha256": "c5f39700ba19d9568ef84a95c59420fdcdfd2e87a3efc35f7cea5854c7b23740",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 8258,
+      "sha256": "94c9e470017644e44766c08e709dc580855177a7167d209497837889c969bd77",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "report.json",
+      "bytes": 7619,
+      "sha256": "9c26a3f4f3cadf7c889500adf2a104b49cce95480b5c750c106d2ccb37d8c7d3",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "source-artifacts.json",
+      "bytes": 1868,
+      "sha256": "03632fe4fb1483a06e33904eaff28e3ec64686ef6f7261d68d7af82e56718cda",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "source-jobs.json",
+      "bytes": 15305,
+      "sha256": "71c568e4261185d7d660faa54120a7be31b86381c59bafc75f010afba5429bad",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "source-run.json",
+      "bytes": 13075,
+      "sha256": "e12e83a69ad6ecaacd7c7eea8ae45f15ff5fa98ee6ea96be69b406ec81a560c4",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "trace-config.pbtxt",
+      "bytes": 794,
+      "sha256": "5821fa826763553a7fffb97b9f493291f5db120e3d073483f3d6ace02d380992",
+      "gitBytesMatch": true
+    },
+    {
+      "path": "trace.pftrace",
+      "bytes": 4393006,
+      "sha256": "23a4d39370353f9fd9799fd4d773f32cdfbc134c96e32fc11298851183e9975a",
+      "gitBytesMatch": true
+    }
+  ],
+  "sourceMetadata": {
+    "runConclusion": "success",
+    "traceJobId": 125739386234,
+    "traceJobConclusion": "success",
+    "jobsChecked": 7,
+    "artifactId": 13205669111,
+    "artifactName": "window-infos-reset-trace-api-37.0-attempt-1",
+    "repositoryCommitAttemptAndTimeBindings": "passed"
+  },
+  "producerSourceFilesChecked": 26,
+  "producerSourceBytesChecked": 498103,
+  "pythonProducerFilesChecked": 15,
+  "producerSources": [
+    {
+      "path": ".github/workflows/window-infos-raw.yml",
+      "bytes": 26406,
+      "sha256": "f4c8795e9b0a6e2215845c4533ed32c974406a51ff81673be710c060f6e80e3d"
+    },
+    {
+      "path": "compat-smoke/build.gradle",
+      "bytes": 817,
+      "sha256": "fca4a5de7778383b232c9b3f501bd4eee4e43eed762160bc8afaf61d86c12e11"
+    },
+    {
+      "path": "compat-smoke/src/main/AndroidManifest.xml",
+      "bytes": 892,
+      "sha256": "5c7fdf3b0b5eaf1000f902351671f63e5645b9ab9b12f5208099b161b931d3ec"
+    },
+    {
+      "path": "compat-smoke/src/main/java/dev/agentos/compat/RawWindowFixtureActivity.java",
+      "bytes": 5973,
+      "sha256": "6ab53d70864ae522e53438190e39eb564a3232b087d77fda7d1139c949b9dcee"
+    },
+    {
+      "path": "scripts/build_window_infos_raw.py",
+      "bytes": 7314,
+      "sha256": "6caf61f8a956213d8932398d7f5bd95a008d44990a5769ebef107a4fdd9fb280"
+    },
+    {
+      "path": "scripts/configure_emulator_phone.py",
+      "bytes": 2136,
+      "sha256": "6e47a74d6b62fe8c1d8e459e51748ca9ccac1f32f2c09a972215a1e634821eed"
+    },
+    {
+      "path": "scripts/experience_trace.py",
+      "bytes": 22765,
+      "sha256": "2c57a53161ad3beb95643f1b8ffb1856cf8704cb8194af1c42d4e7bc5694d376"
+    },
+    {
+      "path": "scripts/third_party_smoke.py",
+      "bytes": 27947,
+      "sha256": "e15ba7930e9daf6393e80156121316032bef6bfe6ffabf5e462fc2d082e5a30e"
+    },
+    {
+      "path": "scripts/third_party_smoke_archive.py",
+      "bytes": 23102,
+      "sha256": "84bf08eded010c1cb0d58f4f8b90ebecf7cc32768d66639348e79ba83621f0f2"
+    },
+    {
+      "path": "scripts/window_infos_capability.py",
+      "bytes": 48485,
+      "sha256": "723ae37d40a299c5db4b337cb0aff88a9a4dd18864dff73a8d4ba750d3e3a45c"
+    },
+    {
+      "path": "scripts/window_infos_ime_state.py",
+      "bytes": 20876,
+      "sha256": "648b46728ae57367884068daff2a43455d5245cdae85765ba3f289bca6b4dbff"
+    },
+    {
+      "path": "scripts/window_infos_input_state.py",
+      "bytes": 14926,
+      "sha256": "a059ee1608e1b01580a9c7b67e72eaea270f8fa9de0e1d38ce4e53e38821fec0"
+    },
+    {
+      "path": "scripts/window_infos_keyboard.py",
+      "bytes": 42814,
+      "sha256": "2fa9ee79d90797409f1e2cc9b88080d91e071feb232d0763b46707e31f81b15d"
+    },
+    {
+      "path": "scripts/window_infos_keyboard_archive.py",
+      "bytes": 19841,
+      "sha256": "b80aa08fa676e93acb3443871853053fd5bec03b04e5d3de36accca910c21461"
+    },
+    {
+      "path": "scripts/window_infos_raw.py",
+      "bytes": 73784,
+      "sha256": "a5f4df94c4a63ba9624cc7aa4ce4e0b0bf8cfb87b0b776f440e5faa80181db8e"
+    },
+    {
+      "path": "scripts/window_infos_raw_archive.py",
+      "bytes": 17185,
+      "sha256": "aaba8be3f1b67dc9ab07e901bf07a46efacaf0424c492ba8b59a4693165e18ea"
+    },
+    {
+      "path": "scripts/window_infos_reset_trace.py",
+      "bytes": 53453,
+      "sha256": "625bf10b7557b6ff23edf2d7aeec206c09daf57140c25437ca8aceb8e092c2b3"
+    },
+    {
+      "path": "scripts/window_infos_reset_trace_analysis.py",
+      "bytes": 25957,
+      "sha256": "3ec29a5419788b8c9050e91242b893276b09a4094c12ff605f69f07d0108b672"
+    },
+    {
+      "path": "scripts/window_infos_reset_trace_archive.py",
+      "bytes": 26000,
+      "sha256": "b7f424733dc5d86f94592621e7d1858fcf805421df7a143458f19cd64e8b4c91"
+    },
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/RawCollector.java",
+      "bytes": 7900,
+      "sha256": "4d34e2f69be404d9f74740227f4c63d512f95dee0a04d1bc1cf68a27aeba4549"
+    },
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/RawListenerSession.java",
+      "bytes": 2016,
+      "sha256": "aaaae56c8491e6fff71d77a01d87ec731ce99625e163697b21fa8c29dd6d767d"
+    },
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/RawSession.java",
+      "bytes": 207,
+      "sha256": "0b8a7ef6e1e72b4da85e75027c78c7a728b259643ae8679e51a8b9fd51f7b7bc"
+    },
+    {
+      "path": "tools/window-infos-raw/src/dev/agentos/raw/WindowInfosRawMain.java",
+      "bytes": 17052,
+      "sha256": "bad12cfc199c1d06089fd4d436ffb910ea377da2cd2968c50e0385ec4fafbbaf"
+    },
+    {
+      "path": "tools/window-infos-raw/stubs/android/view/InputWindowHandle.java",
+      "bytes": 531,
+      "sha256": "87bc82903fc7792fd2c0e93e6825013fe295152d6a8676c917e1412652946f1d"
+    },
+    {
+      "path": "tools/window-infos-raw/stubs/android/window/WindowInfosListener.java",
+      "bytes": 689,
+      "sha256": "8f487e37aed7f02c05173f7d842e03d717f1d4895a5ba18425b8fc11762d4c8b"
+    },
+    {
+      "path": "tools/window-infos-raw/tests/dev/agentos/raw/RawCollectorHostTest.java",
+      "bytes": 9035,
+      "sha256": "a30ce90ec58bbc4a4360069c204276a6184eace5a257662b5c5e2735b2230ffa"
+    }
+  ],
+  "comparisonProducerSubsetChecked": 22,
+  "commandGroups": {
+    "commands.json": {
+      "commands": 25,
+      "outputBytes": 6080
+    },
+    "comparison/commands.json": {
+      "commands": 13,
+      "outputBytes": 100669
+    },
+    "comparison/baseline/commands.json": {
+      "commands": 30,
+      "outputBytes": 96572
+    },
+    "comparison/enabled/commands.json": {
+      "commands": 30,
+      "outputBytes": 119197
+    }
+  },
+  "commandCount": 98,
+  "commandOutputBytes": 322518,
+  "stdin": {
+    "receipt": {
+      "path": "trace-config.pbtxt",
+      "bytes": 794,
+      "sha256": "5821fa826763553a7fffb97b9f493291f5db120e3d073483f3d6ace02d380992",
+      "writtenBytes": 794,
+      "eofSent": true
+    },
+    "configIdentity": {
+      "bytes": 794,
+      "sha256": "5821fa826763553a7fffb97b9f493291f5db120e3d073483f3d6ace02d380992"
+    },
+    "startArgv": [
+      "/usr/local/lib/android/sdk/platform-tools/adb",
+      "-s",
+      "emulator-5554",
+      "shell",
+      "/system/bin/perfetto",
+      "--txt",
+      "-c",
+      "-",
+      "-o",
+      "/data/misc/perfetto-traces/agentos-reset-trace-41582067066-1.pftrace",
+      "--background-wait"
+    ],
+    "startElapsedMillis": 645,
+    "startExitCode": 0,
+    "pidOutput": "1862\n",
+    "sourceTracksActualOsWriteCountAndPipeClose": true,
+    "scope": "writtenBytes is a host pipe write receipt, not independent observation of device read count. Native startup success/PID and later trace are separate evidence."
+  },
+  "trace": {
+    "identity": {
+      "bytes": 4393006,
+      "sha256": "23a4d39370353f9fd9799fd4d773f32cdfbc134c96e32fc11298851183e9975a"
+    },
+    "remoteSizeAndDigestMatch": true,
+    "owner": {
+      "pid": 1862,
+      "startTimeTicks": 2248,
+      "cmdlineSha256": "c4d3e72532a4f81b5c5b6bb8322c8589676de2df86519cbb217bc3aef72cb751"
+    },
+    "ownerStatReads": {
+      "start_stat": {
+        "state": "S",
+        "startTimeTicks": 2248
+      },
+      "stop_stat": {
+        "state": "S",
+        "startTimeTicks": 2248
+      },
+      "stop_poll_0": {
+        "state": "S",
+        "startTimeTicks": 2248
+      }
+    },
+    "cmdlineIdentity": {
+      "bytes": 122,
+      "sha256": "c4d3e72532a4f81b5c5b6bb8322c8589676de2df86519cbb217bc3aef72cb751"
+    },
+    "stopSignalAttempts": 1,
+    "stopPolls": 2,
+    "stopPollLast": "ABSENT",
+    "exitReason": "AFTER_OWN_STOP",
+    "remoteFilesDeletionReadbackConfirmed": true,
+    "cleanupScope": "Only the two run-scoped config/trace paths and owned native trace PID are covered; emulator teardown itself is not independently observed."
+  },
+  "settings": {
+    "original": {
+      "present": true,
+      "value": "0"
+    },
+    "reads": {
+      "settings_before": "0",
+      "settings_enabled": "1",
+      "settings_restored": "0"
+    },
+    "enableWrites": 1,
+    "restoreWrites": 1,
+    "restoration": "confirmed",
+    "restorationFinishedBeforeTraceStop": true
+  },
+  "arms": {
+    "baseline": {
+      "status": "failed",
+      "failureReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED",
+      "sourceFilesChecked": 18,
+      "commands": 30,
+      "callbackCount": 61,
+      "candidateRows": 22,
+      "rowConditions": {
+        "regionEmpty": 22,
+        "notVisible": 8,
+        "frameEmpty": 3,
+        "isClone": 0
+      },
+      "positiveCallbackCount": 0,
+      "rawReadyElapsedMs": 24608,
+      "rawFreezeElapsedMs": 36608,
+      "showElapsedMs": 25674,
+      "firstInsetsElapsedMs": 26100,
+      "showAttempts": 1
+    },
+    "enabled": {
+      "status": "passed",
+      "failureReason": null,
+      "sourceFilesChecked": 18,
+      "commands": 30,
+      "callbackCount": 56,
+      "candidateRows": 30,
+      "rowConditions": {
+        "regionEmpty": 29,
+        "notVisible": 3,
+        "frameEmpty": 0,
+        "isClone": 0
+      },
+      "positiveCallbackCount": 1,
+      "rawReadyElapsedMs": 37907,
+      "rawFreezeElapsedMs": 49907,
+      "showElapsedMs": 38643,
+      "firstInsetsElapsedMs": 38766,
+      "showAttempts": 1,
+      "firstPositiveElapsedMs": 47291,
+      "firstPositiveSequence": 56,
+      "showToFirstPositiveMs": 8648,
+      "previousCallbackGapMs": 8038
+    }
+  },
+  "pngs": [
+    {
+      "path": "comparison/baseline/screenshot.png",
+      "bytes": 14558,
+      "sha256": "6e57a286e2ec29ce543acf8d6d03ca70ba17bd283b51b42217b82c63908aa3c3",
+      "width": 320,
+      "height": 640,
+      "crcAndZlibDecoded": true
+    },
+    {
+      "path": "comparison/enabled/screenshot.png",
+      "bytes": 30332,
+      "sha256": "b9dd0eb7a6c5d0494c3a55afae342e60b23ad01d1cb1629cb232df01398c1035",
+      "width": 320,
+      "height": 640,
+      "crcAndZlibDecoded": true
+    }
+  ],
+  "binaryArchives": [
+    {
+      "path": "comparison/fixture.apk",
+      "bytes": 13853,
+      "sha256": "2e772a4c1c4a727a40e33cdb889bd8e340d3453db61e337388b6f65001701ec9",
+      "zipEntries": 5,
+      "crcChecked": true
+    },
+    {
+      "path": "comparison/baseline/probe.jar",
+      "bytes": 11317,
+      "sha256": "15db65c205ab3d2e1f3fc4f83b39e515a46d1cdf04a242dc19dc5a784e627813",
+      "zipEntries": 1,
+      "crcChecked": true
+    },
+    {
+      "path": "comparison/enabled/probe.jar",
+      "bytes": 11317,
+      "sha256": "15db65c205ab3d2e1f3fc4f83b39e515a46d1cdf04a242dc19dc5a784e627813",
+      "zipEntries": 1,
+      "crcChecked": true
+    }
+  ],
+  "capture": {
+    "reportedStatus": "recorded",
+    "failureReason": null,
+    "tracePresent": true,
+    "reportedComparisonMatchesChild": true
+  },
+  "comparison": {
+    "status": "passed",
+    "failureReason": null,
+    "arms": {
+      "baseline": {
+        "status": "failed",
+        "failureReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED",
+        "positiveCallbackCount": 0,
+        "imeStateStatus": "recorded",
+        "comparable": true
+      },
+      "enabled": {
+        "status": "passed",
+        "failureReason": null,
+        "positiveCallbackCount": 1,
+        "imeStateStatus": "recorded",
+        "comparable": true
+      }
+    },
+    "restoration": {
+      "status": "confirmed",
+      "mutationAttempted": true,
+      "restoreAttempted": true
+    }
+  },
+  "analysis": {
+    "status": "validated",
+    "reportedStatus": "unknown",
+    "completeFileSet": true,
+    "validationError": null
+  },
+  "summary": {
+    "expectedCaptures": 1,
+    "recordedCaptures": 1,
+    "expectedComparisons": 1,
+    "passedComparisons": 1,
+    "expectedArms": 2,
+    "passedArms": 1,
+    "failedArms": 1,
+    "unverifiedArms": 0,
+    "apiLevel": 37
+  },
+  "analysisOriginalReview": {
+    "status": "unknown",
+    "reason": "TRACE_STATS_INVALID",
+    "csvs": [
+      {
+        "path": "analysis/trace-slices.csv",
+        "bytes": 3911,
+        "sha256": "117118d962a5283c00af35073514f3000caa12621016378b1c4dd9b0f60d748e",
+        "rows": 36,
+        "sqlSha256": "878fd1bb4268bf72b8cd3179623d652dbc82633bdbea5c9fde455d0c3d169f88"
+      },
+      {
+        "path": "analysis/trace-clocks.csv",
+        "bytes": 5495,
+        "sha256": "bef14ef78c2f5bfeb55dc6c08f7f2a74176390096b2f9b8f58136908c115c6af",
+        "rows": 98,
+        "sqlSha256": "0f316e9850ac440f90c3fbbeb00aa0d2d7b04a7765b19218e72ffdb5ad4006c1"
+      },
+      {
+        "path": "analysis/trace-processes.csv",
+        "bytes": 50612,
+        "sha256": "822a2b072ed53c734120a37ae961d18eb22bec3adcb854d5093558fdbb6c4b67",
+        "rows": 403,
+        "sqlSha256": "b7489cebbdf2dd94b360bfcd54ca08a7a63ab1e44eb6ed255c1906687e8d0042"
+      },
+      {
+        "path": "analysis/trace-stats.csv",
+        "bytes": 38393,
+        "sha256": "5155bc89b2c8c98566c18b0e31af06383ae39b39bb5c0d538af2410b3d8e73b7",
+        "rows": 388,
+        "sqlSha256": "13f8eab3371c84a36a9171f05d77df252d3cc4f5307ceb17c769798c6a4bd0ca"
+      },
+      {
+        "path": "analysis/trace-bounds.csv",
+        "bytes": 44,
+        "sha256": "2f9029b886be6289a2b48095e2da9a0dfef7e0d7b5ae95d9f56c4af00c1ea96e",
+        "rows": 1,
+        "sqlSha256": "57b1633e64505dbf1d53baa07e2e079227ccc91093bd6b91b1f01f5072634e7b"
+      },
+      {
+        "path": "analysis/trace-metadata.csv",
+        "bytes": 4304,
+        "sha256": "60118d49e9e34f38d97051918569b9bdec551ddea0142a097881af9d7c38d87a",
+        "rows": 30,
+        "sqlSha256": "788e8518545c8c807baa4757e9305b3d5072033f812cfca59a3825fdbf9d64db"
+      }
+    ],
+    "noticeStats": [
+      {
+        "name": "ftrace_setup_errors",
+        "idx": null,
+        "severity": "notice",
+        "source": "trace",
+        "value": 0
+      },
+      {
+        "name": "interned_data_skipped_incremental_state_invalid",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "packet_skipped_seq_needs_incremental_state_invalid",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "thread_descriptor_skipped_incremental_state_invalid",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "track_event_skipped_thread_instruction_delta_without_valid_state",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "track_event_skipped_thread_time_delta_without_valid_state",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "track_event_skipped_timestamp_delta_without_valid_state",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      }
+    ],
+    "nonzeroErrorOrLossStats": [],
+    "resetSlice": {
+      "id": 38577,
+      "parent_id": null,
+      "ts": 47182630102,
+      "dur": 56789493,
+      "depth": 0,
+      "track_id": 1130,
+      "name": "IMS.resetStateForNewConfiguration",
+      "utid": 244,
+      "upid": 244,
+      "tid": 1661,
+      "pid": 1661,
+      "is_main_thread": 1
+    },
+    "resetAncestors": [],
+    "callerClassification": "unknown",
+    "positiveMinusResetStartNs": 108369898,
+    "positiveMinusResetEndNs": 51580405,
+    "clockBoottimeMappingsChecked": 14,
+    "imeProcess": {
+      "upid": 244,
+      "pid": 1661,
+      "name": "com.android.inputmethod.latin",
+      "uid": 10112,
+      "start_ts": null,
+      "end_ts": null,
+      "cmdline": "com.android.inputmethod.latin",
+      "machine_id": 0
+    }
+  },
+  "limits": [
+    "Recorded capture, passed setting comparison and unknown analysis are separate preserved states.",
+    "Seven zero-valued notice statistics are outside the frozen parser severity allowlist; this review does not rewrite the original unknown result.",
+    "No recorded reset ancestor is not proof of the SettingsObserver path. Temporal proximity to the first positive callback is not causality.",
+    "CSV/analysis identity and selected raw fields were independently checked with stdlib; no production parser or archive validator was invoked, and TraceProcessor was not rerun by this audit.",
+    "This synthetic API37 observation does not replay or repair original Notes24/8.",
+    "Actions metadata is from the immutable archive; archive run success/ID was supplied by the parent."
+  ],
+  "auditScript": {
+    "bytes": 20809,
+    "sha256": "3873d4062cedaa988f4bd64574664707fce25bbb48e09445d8dc774595c3ebac"
+  }
+}

@@ -1,0 +1,1514 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-actual-ime-reset-trace-review",
+  "checkedAt": "2026-11-03T05:17:12.287004+00:00",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "919bee887c78bd0de23b2d853320e0f1908107ea",
+    "runId": 41582067066,
+    "attempt": 1
+  },
+  "archiveCommit": "b907b52e4bfc6c433ce35410c84740b34f955ac6",
+  "archiveRunId": 41582444992,
+  "method": {
+    "repoModified": false,
+    "deviceExecuted": false,
+    "productionAnalyzerInvoked": false,
+    "producerDeriveInvoked": false,
+    "queryCount": 8,
+    "queryTimeoutSeconds": 60,
+    "queryOutputByteLimit": 4194304,
+    "queryMemoryBytes": 2147483648,
+    "queryCpuSeconds": [
+      55,
+      60
+    ],
+    "description": "Read originals independently; verified all 39 local files byte-for-byte against archive Git objects; ran eight independently written SQL queries directly on the original trace with the pinned processor. Compared actual parent IDs and identity, not time proximity."
+  },
+  "originalFiles": [
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/analysis/analysis.json",
+      "bytes": 31657,
+      "sha256": "4a9d46e44df67fb84cf8de569e37f2c3b4e0daf2c18a1c7818e53d714fb631c2"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/analysis/trace-bounds.csv",
+      "bytes": 44,
+      "sha256": "2f9029b886be6289a2b48095e2da9a0dfef7e0d7b5ae95d9f56c4af00c1ea96e"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/analysis/trace-clocks.csv",
+      "bytes": 5495,
+      "sha256": "bef14ef78c2f5bfeb55dc6c08f7f2a74176390096b2f9b8f58136908c115c6af"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/analysis/trace-metadata.csv",
+      "bytes": 4304,
+      "sha256": "60118d49e9e34f38d97051918569b9bdec551ddea0142a097881af9d7c38d87a"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/analysis/trace-processes.csv",
+      "bytes": 50612,
+      "sha256": "822a2b072ed53c734120a37ae961d18eb22bec3adcb854d5093558fdbb6c4b67"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/analysis/trace-slices.csv",
+      "bytes": 3911,
+      "sha256": "117118d962a5283c00af35073514f3000caa12621016378b1c4dd9b0f60d748e"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/analysis/trace-stats.csv",
+      "bytes": 38393,
+      "sha256": "5155bc89b2c8c98566c18b0e31af06383ae39b39bb5c0d538af2410b3d8e73b7"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/commands.json",
+      "bytes": 27841,
+      "sha256": "84272a53ede4088b3631276f92e5531e7855ab1ea3e239e0da23c839e7d1c329"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/avd-config.ini",
+      "bytes": 3502,
+      "sha256": "5fd25703acfb1cab9452dfa51b1a2300bd9c8eec993f5d705d1a7995908c7176"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/baseline/capture.json",
+      "bytes": 575,
+      "sha256": "e0874846f77b34428213d51dcc24c90dd30093c40d653589e545e3c58b7ffad3"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/baseline/commands.json",
+      "bytes": 149911,
+      "sha256": "aa241ed74d912daa56d9aa1a100da38b15c9df5cd40296eacbf59901b3ec2cdd"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/baseline/fixture.json",
+      "bytes": 540,
+      "sha256": "20fc535b7feefd4dda483ced95af8e8642dd21a463836798ce2e97d72ea993da"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/baseline/ime-state.json",
+      "bytes": 4400,
+      "sha256": "e9110d503e883fa0856fa4f316b6bb4cfd392c6bec102f762be9e3a302ef1da6"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/baseline/probe-build.json",
+      "bytes": 4333,
+      "sha256": "8fdc836ed57284f37e6cd964cc39436eed4c8aac3174715141bf7b9174e19765"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/baseline/probe.jar",
+      "bytes": 11317,
+      "sha256": "15db65c205ab3d2e1f3fc4f83b39e515a46d1cdf04a242dc19dc5a784e627813"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/baseline/raw-result.json",
+      "bytes": 36604,
+      "sha256": "1426eb7dac07ae95de7326b2f5eaaa4dcd2ba55c6e9593beefe486eb0a2a8e90"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/baseline/report.json",
+      "bytes": 5917,
+      "sha256": "f9e6872bcbe148140b8b3630f2faff9d167d95f6724692685b9dbbd4c7707c1f"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/baseline/screenshot.png",
+      "bytes": 14558,
+      "sha256": "6e57a286e2ec29ce543acf8d6d03ca70ba17bd283b51b42217b82c63908aa3c3"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/commands.json",
+      "bytes": 143141,
+      "sha256": "796093a44d03b35cee05245d4d740841a467e77ba14f7f9b26140217839315b4"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/enabled/capture.json",
+      "bytes": 575,
+      "sha256": "5483e3eccf5fa713a6427451e43a4e8b90c7546043dbba3a9c26e58b95dbbb7b"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/enabled/commands.json",
+      "bytes": 180076,
+      "sha256": "8aee60bb62a87fb25d6e4fab65c0cea9cc20b65ad04c3cb5a12d851a465cb81e"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/enabled/fixture.json",
+      "bytes": 540,
+      "sha256": "fae33d48149767a9d0348feb34d552c6847011256f09823a53324cfa3d6249dc"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/enabled/ime-state.json",
+      "bytes": 4511,
+      "sha256": "05b3566effd061c45a8ec3409f0a9175dae0b96af16572e8f67bcdf8de4e621b"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/enabled/probe-build.json",
+      "bytes": 4333,
+      "sha256": "8fdc836ed57284f37e6cd964cc39436eed4c8aac3174715141bf7b9174e19765"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/enabled/probe.jar",
+      "bytes": 11317,
+      "sha256": "15db65c205ab3d2e1f3fc4f83b39e515a46d1cdf04a242dc19dc5a784e627813"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/enabled/raw-result.json",
+      "bytes": 38363,
+      "sha256": "5b18117b9acd1d518812743dc6ce535e8e60169152cfe498046d78414f8ff9f8"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/enabled/report.json",
+      "bytes": 5884,
+      "sha256": "0df5618db9884fccf3cd3e3f229225dc2776e222316f365bf15d0529923eacf8"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/enabled/screenshot.png",
+      "bytes": 30332,
+      "sha256": "b9dd0eb7a6c5d0494c3a55afae342e60b23ad01d1cb1629cb232df01398c1035"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/fixture.apk",
+      "bytes": 13853,
+      "sha256": "2e772a4c1c4a727a40e33cdb889bd8e340d3453db61e337388b6f65001701ec9"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/input-devices.json",
+      "bytes": 14202,
+      "sha256": "50d772304f46f58f9943252ad49163e300a7134d20eafff6018284012b6a8fbe"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/journal.json",
+      "bytes": 463,
+      "sha256": "ebcc4fd427568eb4227e4f65240aae5c43dffe17a3cecb16c67bd6421ea6f42a"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/comparison/report.json",
+      "bytes": 6818,
+      "sha256": "c5f39700ba19d9568ef84a95c59420fdcdfd2e87a3efc35f7cea5854c7b23740"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/manifest.json",
+      "bytes": 8258,
+      "sha256": "94c9e470017644e44766c08e709dc580855177a7167d209497837889c969bd77"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/report.json",
+      "bytes": 7619,
+      "sha256": "9c26a3f4f3cadf7c889500adf2a104b49cce95480b5c750c106d2ccb37d8c7d3"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/source-artifacts.json",
+      "bytes": 1868,
+      "sha256": "03632fe4fb1483a06e33904eaff28e3ec64686ef6f7261d68d7af82e56718cda"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/source-jobs.json",
+      "bytes": 15305,
+      "sha256": "71c568e4261185d7d660faa54120a7be31b86381c59bafc75f010afba5429bad"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/source-run.json",
+      "bytes": 13075,
+      "sha256": "e12e83a69ad6ecaacd7c7eea8ae45f15ff5fa98ee6ea96be69b406ec81a560c4"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/trace-config.pbtxt",
+      "bytes": 794,
+      "sha256": "5821fa826763553a7fffb97b9f493291f5db120e3d073483f3d6ace02d380992"
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/trace.pftrace",
+      "bytes": 4393006,
+      "sha256": "23a4d39370353f9fd9799fd4d773f32cdfbc134c96e32fc11298851183e9975a"
+    }
+  ],
+  "trace": {
+    "bytes": 4393006,
+    "sha256": "23a4d39370353f9fd9799fd4d773f32cdfbc134c96e32fc11298851183e9975a"
+  },
+  "processor": {
+    "version": "v59.1",
+    "path": "/workspace/scratch/ime-reset-parser-2026-11-03/trace_processor_shell-v59.1",
+    "bytes": 15885448,
+    "sha256": "2434129a3af4dc9e2034a476f7b76447b490975213e301769310d3bd0d5d6458"
+  },
+  "queries": [
+    {
+      "name": "bounds",
+      "sql": "SELECT start_ts,end_ts FROM trace_bounds;\n",
+      "command": [
+        "trace_processor_shell-v59.1",
+        "--full-sort",
+        "query",
+        "--format",
+        "csv",
+        "trace.pftrace"
+      ],
+      "exitCode": 0,
+      "output": {
+        "path": "/workspace/scratch/reset-actual-independent-41582067066/bounds.csv",
+        "bytes": 44,
+        "sha256": "2f9029b886be6289a2b48095e2da9a0dfef7e0d7b5ae95d9f56c4af00c1ea96e"
+      },
+      "stderr": {
+        "bytes": 66,
+        "sha256": "82ba69fb1c738328b6714c0731a836fbea8b5d7fef81cde4ed55430422ad49bb"
+      }
+    },
+    {
+      "name": "clock",
+      "sql": "SELECT snapshot_id,ts,clock_id,hex(clock_name) clock_name,clock_value,machine_id FROM clock_snapshot WHERE clock_id=6 ORDER BY snapshot_id;\n",
+      "command": [
+        "trace_processor_shell-v59.1",
+        "--full-sort",
+        "query",
+        "--format",
+        "csv",
+        "trace.pftrace"
+      ],
+      "exitCode": 0,
+      "output": {
+        "path": "/workspace/scratch/reset-actual-independent-41582067066/clock.csv",
+        "bytes": 760,
+        "sha256": "36d758d77bad79a31b59fe5aba709108b60f42170f447496ccf395c0c7494e63"
+      },
+      "stderr": {
+        "bytes": 65,
+        "sha256": "b587da2ec185567197599a378278ceb33668a986ae0ef4ecc46b74b253ec9719"
+      }
+    },
+    {
+      "name": "ime-slice-counts",
+      "sql": "SELECT hex(s.name) name,COUNT(*) count,MIN(s.ts) first_ns,MAX(s.ts+s.dur) last_end_ns\nFROM slice s JOIN thread_track tt ON tt.id=s.track_id JOIN thread t ON t.utid=tt.utid JOIN process p ON p.upid=t.upid\nWHERE p.uid=10112 AND p.name='com.android.inputmethod.latin' AND (s.name GLOB 'IMS.*' OR s.name='clientTransactionExecuted' OR s.name='configChanged') GROUP BY s.name ORDER BY s.name;\n",
+      "command": [
+        "trace_processor_shell-v59.1",
+        "--full-sort",
+        "query",
+        "--format",
+        "csv",
+        "trace.pftrace"
+      ],
+      "exitCode": 0,
+      "output": {
+        "path": "/workspace/scratch/reset-actual-independent-41582067066/ime-slice-counts.csv",
+        "bytes": 709,
+        "sha256": "a227b01317d5d414116908ce54b79200a0ea73e7e72befb27fc12b0c078fa1b0"
+      },
+      "stderr": {
+        "bytes": 507,
+        "sha256": "699c9c3160cd9f57d20310df2be96433b56cea8c879693fae0b36f43a5a5e4aa"
+      }
+    },
+    {
+      "name": "metadata",
+      "sql": "SELECT hex(name) name,int_value,hex(str_value) str_value,machine_id FROM metadata WHERE name IN ('trace_time_clock_id','all_data_source_started_ns','tracing_disabled_ns','tracing_service_version','system_release','android_build_fingerprint') ORDER BY name;\n",
+      "command": [
+        "trace_processor_shell-v59.1",
+        "--full-sort",
+        "query",
+        "--format",
+        "csv",
+        "trace.pftrace"
+      ],
+      "exitCode": 0,
+      "output": {
+        "path": "/workspace/scratch/reset-actual-independent-41582067066/metadata.csv",
+        "bytes": 700,
+        "sha256": "f516552802ef6a3bd40c76f34f74913a0e010cf66327ec091c27007c29a49766"
+      },
+      "stderr": {
+        "bytes": 65,
+        "sha256": "8228cf8cf433abbf0055df31a95a139f410feadf85b68ff1e126ff9bc8b3013f"
+      }
+    },
+    {
+      "name": "near-reset-main-thread",
+      "sql": "SELECT s.id,s.parent_id,s.ts,s.dur,s.depth,s.track_id,hex(s.name) name\nFROM slice s JOIN thread_track tt ON tt.id=s.track_id JOIN thread t ON t.utid=tt.utid JOIN process p ON p.upid=t.upid\nWHERE p.uid=10112 AND p.name='com.android.inputmethod.latin' AND t.is_main_thread=1 AND s.ts>=47170000000 AND s.ts<47260000000 ORDER BY s.ts,s.id LIMIT 1000;\n",
+      "command": [
+        "trace_processor_shell-v59.1",
+        "--full-sort",
+        "query",
+        "--format",
+        "csv",
+        "trace.pftrace"
+      ],
+      "exitCode": 0,
+      "output": {
+        "path": "/workspace/scratch/reset-actual-independent-41582067066/near-reset-main-thread.csv",
+        "bytes": 34327,
+        "sha256": "9b41212d478d617cf31b50d8c126792bf7dab3d8d64554a22b0d87053e0db365"
+      },
+      "stderr": {
+        "bytes": 507,
+        "sha256": "374e3f5d2361a1d2a2087240e23154ed6c3ebc0d3e22c860a8ecd4b0c960171b"
+      }
+    },
+    {
+      "name": "process-identity",
+      "sql": "SELECT p.upid,p.pid,p.uid,hex(p.name) name,hex(p.cmdline) cmdline,p.start_ts,p.end_ts,p.machine_id,t.utid,t.tid,hex(t.name) thread_name,t.is_main_thread,t.start_ts thread_start_ts,t.end_ts thread_end_ts\nFROM process p LEFT JOIN thread t ON t.upid=p.upid AND t.is_main_thread=1 WHERE p.uid=10112 OR p.name='com.android.inputmethod.latin' ORDER BY p.upid,t.utid;\n",
+      "command": [
+        "trace_processor_shell-v59.1",
+        "--full-sort",
+        "query",
+        "--format",
+        "csv",
+        "trace.pftrace"
+      ],
+      "exitCode": 0,
+      "output": {
+        "path": "/workspace/scratch/reset-actual-independent-41582067066/process-identity.csv",
+        "bytes": 336,
+        "sha256": "c831c8047f259dcc9291ebca0a2d94d968f97c4a39df9f52ebe52bdaca0ba2cb"
+      },
+      "stderr": {
+        "bytes": 505,
+        "sha256": "af122603d2806fcbd13891a1ba3ed835c2cbd272062fd96cbdc30e5eb4b014f9"
+      }
+    },
+    {
+      "name": "reset-lineage",
+      "sql": "WITH RECURSIVE walk(reset_id,id,parent_id,hop) AS (\n SELECT id,id,parent_id,0 FROM slice WHERE name='IMS.resetStateForNewConfiguration'\n UNION ALL\n SELECT w.reset_id,s.id,s.parent_id,w.hop+1 FROM walk w JOIN slice s ON w.parent_id=s.id WHERE w.hop<100\n)\nSELECT w.reset_id,w.hop,s.id,s.parent_id,s.ts,s.dur,s.depth,s.track_id,hex(s.name) name,t.utid,t.upid,t.tid,t.is_main_thread,p.pid,p.uid,hex(p.name) process_name,hex(p.cmdline) cmdline,p.start_ts,p.end_ts,p.machine_id\nFROM walk w JOIN slice s ON s.id=w.id LEFT JOIN thread_track tt ON tt.id=s.track_id LEFT JOIN thread t ON t.utid=tt.utid LEFT JOIN process p ON p.upid=t.upid ORDER BY w.reset_id,w.hop;\n",
+      "command": [
+        "trace_processor_shell-v59.1",
+        "--full-sort",
+        "query",
+        "--format",
+        "csv",
+        "trace.pftrace"
+      ],
+      "exitCode": 0,
+      "output": {
+        "path": "/workspace/scratch/reset-actual-independent-41582067066/reset-lineage.csv",
+        "bytes": 466,
+        "sha256": "8d32c3a7896f9b0f43fa9013a1432f824164278349f579f8137df4d1424e228e"
+      },
+      "stderr": {
+        "bytes": 507,
+        "sha256": "6ed084ab20c14673086ea8cd24a1784fc3ec4904c26e10bd44d7332978c152e7"
+      }
+    },
+    {
+      "name": "stats",
+      "sql": "SELECT hex(name) name,idx,hex(severity) severity,hex(source) source,value FROM stats ORDER BY name,idx;\n",
+      "command": [
+        "trace_processor_shell-v59.1",
+        "--full-sort",
+        "query",
+        "--format",
+        "csv",
+        "trace.pftrace"
+      ],
+      "exitCode": 0,
+      "output": {
+        "path": "/workspace/scratch/reset-actual-independent-41582067066/stats.csv",
+        "bytes": 38394,
+        "sha256": "b2fc61c93f242bea01ad4b268cf004194dec9ce4869014062ae6852bfb1b4f2b"
+      },
+      "stderr": {
+        "bytes": 66,
+        "sha256": "218eb117bdeaba2ed750112c765ace10cb0a628ba0e07f836301c1cea676732b"
+      }
+    }
+  ],
+  "metadata": [
+    {
+      "name": "all_data_source_started_ns",
+      "int_value": 23006521392,
+      "str_value": "",
+      "machine_id": 0
+    },
+    {
+      "name": "android_build_fingerprint",
+      "int_value": null,
+      "str_value": "Android/sdk_phone64_x86_64/emu64x:17/CE2A.260420.051.A3/16571990:userdebug/test-keys",
+      "machine_id": 0
+    },
+    {
+      "name": "system_release",
+      "int_value": null,
+      "str_value": "6.12.81-android16-6-g4f69fc7b210c-ab16167562",
+      "machine_id": 0
+    },
+    {
+      "name": "trace_time_clock_id",
+      "int_value": 6,
+      "str_value": "",
+      "machine_id": null
+    },
+    {
+      "name": "tracing_disabled_ns",
+      "int_value": 50645274868,
+      "str_value": "",
+      "machine_id": 0
+    },
+    {
+      "name": "tracing_service_version",
+      "int_value": null,
+      "str_value": "Perfetto v54.0 (N/A)",
+      "machine_id": 0
+    }
+  ],
+  "captureObservation": {
+    "archivedStatus": "recorded",
+    "failureReason": null,
+    "comparison": {
+      "status": "passed",
+      "failureReason": null,
+      "arms": {
+        "baseline": {
+          "status": "failed",
+          "failureReason": "RAW_POSITIVE_CALLBACK_NOT_OBSERVED",
+          "positiveCallbackCount": 0,
+          "imeStateStatus": "recorded",
+          "comparable": true
+        },
+        "enabled": {
+          "status": "passed",
+          "failureReason": null,
+          "positiveCallbackCount": 1,
+          "imeStateStatus": "recorded",
+          "comparable": true
+        }
+      },
+      "restoration": {
+        "status": "confirmed",
+        "mutationAttempted": true,
+        "restoreAttempted": true
+      }
+    },
+    "owner": {
+      "pid": 1862,
+      "startTimeTicks": 2248,
+      "cmdlineSha256": "c4d3e72532a4f81b5c5b6bb8322c8589676de2df86519cbb217bc3aef72cb751"
+    },
+    "stopConfirmed": true,
+    "exitReason": "AFTER_OWN_STOP",
+    "cleanupConfirmed": true,
+    "directCommandChecks": "Original start returned exit 0 and PID 1862 after recorded 794/794 host PIPE bytes and EOF. Start and stop /proc stat show comm perfetto/startTicks2248, exact cmdline hashes agree, SIGINT command returned 0, own stop exit was recorded, pulled 4393006 bytes match remote digest. These support capture completion, not all reset call coverage or caller causality."
+  },
+  "independentResetLineage": [
+    {
+      "reset_id": 38577,
+      "hop": 0,
+      "id": 38577,
+      "parent_id": null,
+      "ts": 47182630102,
+      "dur": 56789493,
+      "depth": 0,
+      "track_id": 1130,
+      "name": "IMS.resetStateForNewConfiguration",
+      "utid": 244,
+      "upid": 244,
+      "tid": 1661,
+      "is_main_thread": 1,
+      "pid": 1661,
+      "uid": 10112,
+      "process_name": "com.android.inputmethod.latin",
+      "cmdline": "com.android.inputmethod.latin",
+      "start_ts": null,
+      "end_ts": null,
+      "machine_id": 0
+    }
+  ],
+  "imeProcessIdentity": [
+    {
+      "upid": 244,
+      "pid": 1661,
+      "uid": 10112,
+      "name": "com.android.inputmethod.latin",
+      "cmdline": "com.android.inputmethod.latin",
+      "start_ts": null,
+      "end_ts": null,
+      "machine_id": 0,
+      "utid": 244,
+      "tid": 1661,
+      "thread_name": "",
+      "is_main_thread": 1,
+      "thread_start_ts": null,
+      "thread_end_ts": null
+    }
+  ],
+  "imeSliceCounts": [
+    {
+      "name": "IMS.bindInput",
+      "count": 4,
+      "first_ns": 25685560669,
+      "last_end_ns": 50225504702
+    },
+    {
+      "name": "IMS.hideSoftInput",
+      "count": 2,
+      "first_ns": 36837858166,
+      "last_end_ns": 50141186779
+    },
+    {
+      "name": "IMS.initViews",
+      "count": 1,
+      "first_ns": 47182641499,
+      "last_end_ns": 47183131730
+    },
+    {
+      "name": "IMS.onComputeInsets",
+      "count": 10,
+      "first_ns": 25737865253,
+      "last_end_ns": 50232906552
+    },
+    {
+      "name": "IMS.resetStateForNewConfiguration",
+      "count": 1,
+      "first_ns": 47182630102,
+      "last_end_ns": 47239419595
+    },
+    {
+      "name": "IMS.showSoftInput",
+      "count": 2,
+      "first_ns": 25711795028,
+      "last_end_ns": 38720029376
+    },
+    {
+      "name": "IMS.showWindow",
+      "count": 3,
+      "first_ns": 25711986854,
+      "last_end_ns": 47239417242
+    },
+    {
+      "name": "IMS.startInput",
+      "count": 4,
+      "first_ns": 25685747698,
+      "last_end_ns": 50225822396
+    },
+    {
+      "name": "IMS.updateFullscreenMode",
+      "count": 6,
+      "first_ns": 25711994766,
+      "last_end_ns": 50132486462
+    },
+    {
+      "name": "clientTransactionExecuted",
+      "count": 4,
+      "first_ns": 25949166510,
+      "last_end_ns": 47244469237
+    }
+  ],
+  "callerConclusion": {
+    "classification": "unknown",
+    "resetSlicesObserved": 1,
+    "configurationDispatchSupported": 0,
+    "settingsObserverSupported": 0,
+    "reason": "The sole observed reset slice is depth 0 with parent_id NULL on the bound IME main thread. The recursive parent-ID query has no ancestor. Neither configuration dispatch nor SettingsObserver entry is established.",
+    "directChildren": [
+      {
+        "id": 38578,
+        "parent_id": 38577,
+        "ts": 47182641499,
+        "dur": 490231,
+        "depth": 1,
+        "track_id": 1130,
+        "name": "IMS.initViews"
+      },
+      {
+        "id": 38595,
+        "parent_id": 38577,
+        "ts": 47183440030,
+        "dur": 55977212,
+        "depth": 1,
+        "track_id": 1130,
+        "name": "IMS.showWindow"
+      }
+    ],
+    "nearbyTransaction": {
+      "slice": {
+        "id": 39125,
+        "parent_id": null,
+        "ts": 47244444740,
+        "dur": 24497,
+        "depth": 0,
+        "track_id": 1130,
+        "name": "clientTransactionExecuted"
+      },
+      "children": [
+        {
+          "id": 39126,
+          "parent_id": 39125,
+          "ts": 47244448105,
+          "dur": 20451,
+          "depth": 1,
+          "track_id": 1130,
+          "name": "windowResized"
+        }
+      ],
+      "startsAfterResetEndNs": 5025145,
+      "isAncestor": false
+    },
+    "boundaries": [
+      "The same IME process contains four clientTransactionExecuted slices, but none is an ancestor of this reset. Their presence elsewhere does not classify the reset.",
+      "parent_id NULL means no captured parent slice; it does not prove no Java caller or distinguish an untraced configuration path from a settings callback.",
+      "IMS.initViews and IMS.showWindow children confirm the reset body performed traced work, not its caller.",
+      "Ten IMS.onComputeInsets slices were observed. The framework slice covers its traced base method, not every subclass geometry operation or every call.",
+      "Only one traced reset was observed. ImeTracker reset-show reasons and traced slices are not exhaustive counts of all reset invocations.",
+      "No timing correlation is promoted to SettingsObserver evidence. No absence is promoted to configuration exclusion."
+    ]
+  },
+  "clockMapping": {
+    "traceClockId": 6,
+    "boottimeSnapshots": [
+      {
+        "snapshot_id": 0,
+        "ts": 22492239652,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 22492239652,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 1,
+        "ts": 22492250468,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 22492250468,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 2,
+        "ts": 23006520201,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 23006520201,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 3,
+        "ts": 25009719659,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 25009719659,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 4,
+        "ts": 30000854858,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 30000854858,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 5,
+        "ts": 30003190141,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 30003190141,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 6,
+        "ts": 35003199947,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 35003199947,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 7,
+        "ts": 40000961015,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 40000961015,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 8,
+        "ts": 40003125664,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 40003125664,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 9,
+        "ts": 45002459884,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 45002459884,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 10,
+        "ts": 50001103759,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 50001103759,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 11,
+        "ts": 50004531051,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 50004531051,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 12,
+        "ts": 50612304983,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 50612304983,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 13,
+        "ts": 50645273376,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 50645273376,
+        "machine_id": 0
+      }
+    ],
+    "mapping": "trace ns == device BOOTTIME ns; compare raw elapsedRealtimeMs at millisecond precision",
+    "traceBounds": [
+      {
+        "start_ts": 22985571976,
+        "end_ts": 50611763645
+      }
+    ],
+    "metadataReadyNs": 23006521392,
+    "metadataDisabledNs": 50645274868,
+    "bothRawWindowsCovered": true
+  },
+  "rawArmIndependentSummary": {
+    "baseline": {
+      "process": {
+        "sdk": 37,
+        "uid": 2000,
+        "startedElapsedMs": 24605,
+        "finishedElapsedMs": 36608,
+        "fingerprintSha256": "35abb7613e43fefcf91fd83137ec1d613853bc67499c826f80f06cb034ad8fc8"
+      },
+      "times": {
+        "constructedElapsedMs": 24606,
+        "registeredElapsedMs": 24608,
+        "readyElapsedMs": 24608,
+        "observationDeadlineElapsedMs": 36608,
+        "freezeElapsedMs": 36608,
+        "unregisteredElapsedMs": 36608
+      },
+      "callbacksStored": 61,
+      "callbacksDropped": 0,
+      "outputTruncated": false,
+      "showRequestedElapsedMs": 25674,
+      "firstImeVisibleElapsedMs": 26100,
+      "positiveCallbackSequences": [],
+      "positiveCallbackElapsedMs": []
+    },
+    "enabled": {
+      "process": {
+        "sdk": 37,
+        "uid": 2000,
+        "startedElapsedMs": 37906,
+        "finishedElapsedMs": 49907,
+        "fingerprintSha256": "35abb7613e43fefcf91fd83137ec1d613853bc67499c826f80f06cb034ad8fc8"
+      },
+      "times": {
+        "constructedElapsedMs": 37906,
+        "registeredElapsedMs": 37907,
+        "readyElapsedMs": 37907,
+        "observationDeadlineElapsedMs": 49907,
+        "freezeElapsedMs": 49907,
+        "unregisteredElapsedMs": 49907
+      },
+      "callbacksStored": 56,
+      "callbacksDropped": 0,
+      "outputTruncated": false,
+      "showRequestedElapsedMs": 38643,
+      "firstImeVisibleElapsedMs": 38766,
+      "positiveCallbackSequences": [
+        56
+      ],
+      "positiveCallbackElapsedMs": [
+        47291
+      ]
+    }
+  },
+  "timing": {
+    "resetStartNs": 47182630102,
+    "resetDurationNs": 56789493,
+    "resetEndNs": 47239419595,
+    "phase": "enabled_observation",
+    "resetAfterBShowNominalMs": 8539.630102,
+    "firstPositiveAfterBShowMs": 8648,
+    "firstPositiveAfterResetStartNominalMs": 108.369898,
+    "firstPositiveAfterResetEndNominalMs": 51.580405,
+    "lastNegativeElapsedMs": 39253,
+    "firstPositiveElapsedMs": 47291,
+    "callbackGapMs": 8038,
+    "settingsWriteToResetNominalBoundsMs": [
+      9276.630102,
+      10574.630102
+    ],
+    "settingsWriteToResetQuantizationConservativeOpenBoundsMs": [
+      9275.630102,
+      10574.630102
+    ],
+    "limits": "Trace ns and device elapsed markers share BOOTTIME, but raw/fixture markers are millisecond-floor values. The setting write is bracketed only by command order between A raw process finish and B raw process start. The interval includes 10 seconds without measuring a delayed task or proving SettingsObserver. No host UTC subtraction or host/device clock fit was used; the 8038ms callback gap is not continuous empty-region proof."
+  },
+  "statsIndependentReview": {
+    "rowCount": 388,
+    "severityCounts": {
+      "error": 169,
+      "info": 162,
+      "data_loss": 50,
+      "notice": 7
+    },
+    "noticeRows": [
+      {
+        "name": "ftrace_setup_errors",
+        "idx": null,
+        "severity": "notice",
+        "source": "trace",
+        "value": 0
+      },
+      {
+        "name": "interned_data_skipped_incremental_state_invalid",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "packet_skipped_seq_needs_incremental_state_invalid",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "thread_descriptor_skipped_incremental_state_invalid",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "track_event_skipped_thread_instruction_delta_without_valid_state",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "track_event_skipped_thread_time_delta_without_valid_state",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "track_event_skipped_timestamp_delta_without_valid_state",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      }
+    ],
+    "nonzeroErrorLossOrNotice": [],
+    "originalAnalysisStatus": "unknown",
+    "originalUnknownReason": "TRACE_STATS_INVALID",
+    "explanation": "The frozen analyzer admitted only info/error/data_loss; it rejected seven formally valid notice rows, all zero. Original archive remains unchanged. These zero notices are not evidence of actual trace loss.",
+    "differencesFromArchivedStats": [
+      {
+        "name": "guess_trace_type_duration_ns",
+        "idx": null,
+        "independent": {
+          "name": "guess_trace_type_duration_ns",
+          "idx": null,
+          "severity": "info",
+          "source": "analysis",
+          "value": 219467
+        },
+        "archived": {
+          "name": "guess_trace_type_duration_ns",
+          "idx": null,
+          "severity": "info",
+          "source": "analysis",
+          "value": 215424
+        }
+      },
+      {
+        "name": "parse_trace_duration_ns",
+        "idx": null,
+        "independent": {
+          "name": "parse_trace_duration_ns",
+          "idx": null,
+          "severity": "info",
+          "source": "analysis",
+          "value": 141539339
+        },
+        "archived": {
+          "name": "parse_trace_duration_ns",
+          "idx": null,
+          "severity": "info",
+          "source": "analysis",
+          "value": 18830747
+        }
+      }
+    ],
+    "differenceExplanation": "Only two info/analysis duration counters differ because trace parsing was executed again. All names/indices/severities and the error/data_loss/notice values match. CSV byte equality is not claimed for these runtime duration counters.",
+    "zeroStatsLimit": "No nonzero error/data_loss/notice was observed; this does not prove every call was instrumented or every Java caller was represented by a trace slice."
+  },
+  "runtimeVersionBoundary": "Actual trace reports service Perfetto v54.0 (N/A), Android17 API37 build CE2A.260420.051.A3/16571990, and kernel6.12.81-android16-6-g4f69fc7b210c-ab16167562. The processor is independently pinned v59.1. Prior v59.1 command source and android17-6.18 kernel source were reference evidence, not binary-equivalent image proof.",
+  "independentClockReview": {
+    "receipt": {
+      "path": "/workspace/scratch/reset-trace-clock-review-41582067066/review.json",
+      "bytes": 18712,
+      "sha256": "8639a6e7ce608b81d757c910c8109d119fb6982f8656b58d995228954afd3389"
+    },
+    "review": {
+      "schemaVersion": 1,
+      "kind": "independent-reset-trace-clock-and-raw-phase-review",
+      "checkedAt": "2026-11-03T05:16:12+00:00",
+      "status": "passed",
+      "scope": {
+        "productionAnalyzerImportedOrExecuted": false,
+        "deriveImportedOrExecuted": false,
+        "deviceExecuted": false,
+        "traceProcessorExecuted": false,
+        "repoModified": false,
+        "csvParentColumnsOnly": true,
+        "traceSqlReexecutionByParentSeparate": true
+      },
+      "source": {
+        "repository": "ecojust/Agent-OS",
+        "commit": "919bee887c78bd0de23b2d853320e0f1908107ea",
+        "runId": 41582067066,
+        "attempt": 1
+      },
+      "archiveCommit": "b907b52e4bfc6c433ce35410c84740b34f955ac6",
+      "archiveDirectParentMatchesSource": true,
+      "inputs": [
+        {
+          "path": "manifest.json",
+          "bytes": 8258,
+          "sha256": "94c9e470017644e44766c08e709dc580855177a7167d209497837889c969bd77",
+          "archiveGitBytesMatch": true
+        },
+        {
+          "path": "analysis/trace-metadata.csv",
+          "bytes": 4304,
+          "sha256": "60118d49e9e34f38d97051918569b9bdec551ddea0142a097881af9d7c38d87a",
+          "archiveGitBytesMatch": true
+        },
+        {
+          "path": "analysis/trace-clocks.csv",
+          "bytes": 5495,
+          "sha256": "bef14ef78c2f5bfeb55dc6c08f7f2a74176390096b2f9b8f58136908c115c6af",
+          "archiveGitBytesMatch": true
+        },
+        {
+          "path": "analysis/trace-bounds.csv",
+          "bytes": 44,
+          "sha256": "2f9029b886be6289a2b48095e2da9a0dfef7e0d7b5ae95d9f56c4af00c1ea96e",
+          "archiveGitBytesMatch": true
+        },
+        {
+          "path": "analysis/trace-slices.csv",
+          "bytes": 3911,
+          "sha256": "117118d962a5283c00af35073514f3000caa12621016378b1c4dd9b0f60d748e",
+          "archiveGitBytesMatch": true
+        },
+        {
+          "path": "comparison/baseline/commands.json",
+          "bytes": 149911,
+          "sha256": "aa241ed74d912daa56d9aa1a100da38b15c9df5cd40296eacbf59901b3ec2cdd",
+          "archiveGitBytesMatch": true
+        },
+        {
+          "path": "comparison/baseline/raw-result.json",
+          "bytes": 36604,
+          "sha256": "1426eb7dac07ae95de7326b2f5eaaa4dcd2ba55c6e9593beefe486eb0a2a8e90",
+          "archiveGitBytesMatch": true
+        },
+        {
+          "path": "comparison/baseline/fixture.json",
+          "bytes": 540,
+          "sha256": "20fc535b7feefd4dda483ced95af8e8642dd21a463836798ce2e97d72ea993da",
+          "archiveGitBytesMatch": true
+        },
+        {
+          "path": "comparison/enabled/commands.json",
+          "bytes": 180076,
+          "sha256": "8aee60bb62a87fb25d6e4fab65c0cea9cc20b65ad04c3cb5a12d851a465cb81e",
+          "archiveGitBytesMatch": true
+        },
+        {
+          "path": "comparison/enabled/raw-result.json",
+          "bytes": 38363,
+          "sha256": "5b18117b9acd1d518812743dc6ce535e8e60169152cfe498046d78414f8ff9f8",
+          "archiveGitBytesMatch": true
+        },
+        {
+          "path": "comparison/enabled/fixture.json",
+          "bytes": 540,
+          "sha256": "fae33d48149767a9d0348feb34d552c6847011256f09823a53324cfa3d6249dc",
+          "archiveGitBytesMatch": true
+        },
+        {
+          "path": "comparison/commands.json",
+          "bytes": 143141,
+          "sha256": "796093a44d03b35cee05245d4d740841a467e77ba14f7f9b26140217839315b4",
+          "archiveGitBytesMatch": true
+        }
+      ],
+      "clockSourceFiles": [
+        {
+          "path": "tools/window-infos-raw/src/dev/agentos/raw/WindowInfosRawMain.java",
+          "bytes": 17052,
+          "sha256": "bad12cfc199c1d06089fd4d436ffb910ea377da2cd2968c50e0385ec4fafbbaf"
+        },
+        {
+          "path": "tools/window-infos-raw/src/dev/agentos/raw/RawListenerSession.java",
+          "bytes": 2016,
+          "sha256": "aaaae56c8491e6fff71d77a01d87ec731ce99625e163697b21fa8c29dd6d767d"
+        },
+        {
+          "path": "tools/window-infos-raw/src/dev/agentos/raw/RawCollector.java",
+          "bytes": 7900,
+          "sha256": "4d34e2f69be404d9f74740227f4c63d512f95dee0a04d1bc1cf68a27aeba4549"
+        },
+        {
+          "path": "compat-smoke/src/main/java/dev/agentos/compat/RawWindowFixtureActivity.java",
+          "bytes": 5973,
+          "sha256": "6ab53d70864ae522e53438190e39eb564a3232b087d77fda7d1139c949b9dcee"
+        },
+        {
+          "path": "scripts/window_infos_keyboard.py",
+          "bytes": 42814,
+          "sha256": "2fa9ee79d90797409f1e2cc9b88080d91e071feb232d0763b46707e31f81b15d"
+        }
+      ],
+      "clock": {
+        "traceClockId": 6,
+        "traceClockName": "BOOTTIME",
+        "machineId": 0,
+        "snapshotCount": 14,
+        "allSnapshotTraceTsEqualBootClockValue": true,
+        "firstSnapshotTsNs": 22492239652,
+        "lastSnapshotTsNs": 50645273376,
+        "traceBoundsNs": {
+          "start_ts": 22985571976,
+          "end_ts": 50611763645
+        },
+        "nativeTimesNsAndSystemClockElapsedRealtimeMsShareBootElapsedDomain": true,
+        "conversion": "Recorded elapsedRealtimeMs * 1000000 versus normalized trace BOOTTIME ns; millisecond timestamps have millisecond precision.",
+        "hostUtcOrDeviceRealtimeUsedForTimingDifferences": false
+      },
+      "arms": {
+        "baseline": {
+          "callbackCount": 61,
+          "candidateRows": 22,
+          "emptyRegionRows": 22,
+          "notVisibleRows": 8,
+          "frameEmptyRows": 3,
+          "positiveCallbacks": [],
+          "lastNegativeCandidate": {
+            "sequence": 61,
+            "elapsedRealtimeMs": 26370
+          },
+          "times": {
+            "constructedElapsedMs": 24606,
+            "registeredElapsedMs": 24608,
+            "readyElapsedMs": 24608,
+            "observationDeadlineElapsedMs": 36608,
+            "freezeElapsedMs": 36608,
+            "unregisteredElapsedMs": 36608
+          },
+          "process": {
+            "sdk": 37,
+            "uid": 2000,
+            "startedElapsedMs": 24605,
+            "finishedElapsedMs": 36608,
+            "fingerprintSha256": "35abb7613e43fefcf91fd83137ec1d613853bc67499c826f80f06cb034ad8fc8"
+          },
+          "fixture": {
+            "schemaVersion": 1,
+            "kind": "agent-os-raw-window-fixture",
+            "source": {
+              "repository": "ecojust/Agent-OS",
+              "commit": "919bee887c78bd0de23b2d853320e0f1908107ea",
+              "runId": 41582067066,
+              "attempt": 1
+            },
+            "phase": "ime_visible",
+            "sdkInt": 37,
+            "uid": 10156,
+            "displayId": 0,
+            "startedElapsedMs": 24890,
+            "showImeAttempts": 1,
+            "showImeAccepted": true,
+            "showRequestedElapsedMs": 25674,
+            "imeVisibleObserved": true,
+            "firstImeVisibleElapsedMs": 26100,
+            "receiptWrites": 3,
+            "receiptWrittenElapsedMs": 26100
+          },
+          "historyCount": 7,
+          "commandRawAndFixtureBytesReplayedWithoutAnalyzer": true
+        },
+        "enabled": {
+          "callbackCount": 56,
+          "candidateRows": 30,
+          "emptyRegionRows": 29,
+          "notVisibleRows": 3,
+          "frameEmptyRows": 0,
+          "positiveCallbacks": [
+            {
+              "sequence": 56,
+              "elapsedRealtimeMs": 47291
+            }
+          ],
+          "lastNegativeCandidate": {
+            "sequence": 55,
+            "elapsedRealtimeMs": 39253
+          },
+          "times": {
+            "constructedElapsedMs": 37906,
+            "registeredElapsedMs": 37907,
+            "readyElapsedMs": 37907,
+            "observationDeadlineElapsedMs": 49907,
+            "freezeElapsedMs": 49907,
+            "unregisteredElapsedMs": 49907
+          },
+          "process": {
+            "sdk": 37,
+            "uid": 2000,
+            "startedElapsedMs": 37906,
+            "finishedElapsedMs": 49907,
+            "fingerprintSha256": "35abb7613e43fefcf91fd83137ec1d613853bc67499c826f80f06cb034ad8fc8"
+          },
+          "fixture": {
+            "schemaVersion": 1,
+            "kind": "agent-os-raw-window-fixture",
+            "source": {
+              "repository": "ecojust/Agent-OS",
+              "commit": "919bee887c78bd0de23b2d853320e0f1908107ea",
+              "runId": 41582067066,
+              "attempt": 1
+            },
+            "phase": "ime_visible",
+            "sdkInt": 37,
+            "uid": 10157,
+            "displayId": 0,
+            "startedElapsedMs": 38025,
+            "showImeAttempts": 1,
+            "showImeAccepted": true,
+            "showRequestedElapsedMs": 38643,
+            "imeVisibleObserved": true,
+            "firstImeVisibleElapsedMs": 38766,
+            "receiptWrites": 3,
+            "receiptWrittenElapsedMs": 38766
+          },
+          "historyCount": 17,
+          "commandRawAndFixtureBytesReplayedWithoutAnalyzer": true
+        }
+      },
+      "resetSlice": {
+        "id": 38577,
+        "tsNs": 47182630102,
+        "durNs": 56789493,
+        "endNs": 47239419595,
+        "parentId": null,
+        "depth": 0,
+        "pid": 1661,
+        "tid": 1661,
+        "mainThread": true,
+        "withinEnabledRawObservation": true
+      },
+      "enabledRecordedTimestampDifferences": {
+        "showToFirstPositiveMs": 8648,
+        "firstInsetsVisibleAfterShowMs": 123,
+        "lastNegativeToFirstPositiveMs": 8038,
+        "resetAfterShowMs": "8539.630102",
+        "resetAfterFirstInsetsVisibleMs": "8416.630102",
+        "resetAfterLastNegativeMs": "7929.630102",
+        "firstPositiveAfterResetStartMs": "108.369898",
+        "firstPositiveAfterResetEndMs": "51.580405"
+      },
+      "settingWriteDeviceBracket": {
+        "lowerEvent": "baseline raw result process.finishedElapsedMs recorded before baseline command returned",
+        "lowerRecordedElapsedMs": 36608,
+        "upperEvent": "enabled raw process.startedElapsedMs recorded after enable_setting command completed",
+        "upperRecordedElapsedMs": 37906,
+        "nominalResetAfterSettingMsRange": [
+          "9276.630102",
+          "10574.630102"
+        ],
+        "conservativeRangeAccountingForMillisecondFloorMs": [
+          "9275.630102",
+          "10574.630102"
+        ],
+        "conservativeBoundsAreOpen": true,
+        "tenSecondCandidateInsideConservativeRange": true,
+        "basis": "The unchanged coordinator runs baseline to completion, then enable_setting, then enabled raw. The setting command has no device elapsed marker. These event-order bounds are all in the device boot-elapsed domain; no UTC fit is used.",
+        "hostCommandOrderOnly": {
+          "baselineRawEnd": "2026-11-03T05:11:03.907584+00:00",
+          "settingStart": "2026-11-03T05:11:04.344267+00:00",
+          "settingEnd": "2026-11-03T05:11:04.391887+00:00",
+          "enabledRawStart": "2026-11-03T05:11:05.091026+00:00"
+        },
+        "notifyScheduledOrObserverDeliveryMeasured": false
+      },
+      "imeHistory": {
+        "baselineCount": 7,
+        "enabledCount": 17,
+        "enabledRecords": [
+          {
+            "sequence": 0,
+            "type": "TYPE_HIDE",
+            "status": "STATUS_CANCEL",
+            "tag": "com.android.settings:1497c3c3",
+            "durationMs": 9,
+            "deviceWallTimeText": "2026-11-03 05:10:46.490",
+            "startElapsedMs": 20016,
+            "trackingFinishElapsedMs": 20025,
+            "origin": "ORIGIN_SERVER",
+            "reason": "HIDE_UNSPECIFIED_WINDOW",
+            "phase": "PHASE_CLIENT_ALREADY_HIDDEN"
+          },
+          {
+            "sequence": 1,
+            "type": "TYPE_HIDE",
+            "status": "STATUS_CANCEL",
+            "tag": "system_server:2b04db7e",
+            "durationMs": 11,
+            "deviceWallTimeText": "2026-11-03 05:10:48.231",
+            "startElapsedMs": 21757,
+            "trackingFinishElapsedMs": 21768,
+            "origin": "ORIGIN_SERVER",
+            "reason": "IME_REQUESTED_CHANGED_LISTENER",
+            "phase": "PHASE_SERVER_SHOULD_HIDE"
+          },
+          {
+            "sequence": 2,
+            "type": "TYPE_HIDE",
+            "status": "STATUS_CANCEL",
+            "tag": "com.android.launcher3:5e500a45",
+            "durationMs": 59,
+            "deviceWallTimeText": "2026-11-03 05:10:48.456",
+            "startElapsedMs": 21982,
+            "trackingFinishElapsedMs": 22041,
+            "origin": "ORIGIN_SERVER",
+            "reason": "HIDE_UNSPECIFIED_WINDOW",
+            "phase": "PHASE_CLIENT_ALREADY_HIDDEN"
+          },
+          {
+            "sequence": 3,
+            "type": "TYPE_HIDE",
+            "status": "STATUS_CANCEL",
+            "tag": "system_server:bec4688b",
+            "durationMs": 4,
+            "deviceWallTimeText": "2026-11-03 05:10:48.512",
+            "startElapsedMs": 22038,
+            "trackingFinishElapsedMs": 22042,
+            "origin": "ORIGIN_SERVER",
+            "reason": "IME_REQUESTED_CHANGED_LISTENER",
+            "phase": "PHASE_SERVER_SHOULD_HIDE"
+          },
+          {
+            "sequence": 5,
+            "type": "TYPE_HIDE",
+            "status": "STATUS_CANCEL",
+            "tag": "dev.agentos.compat:35db1986",
+            "durationMs": 0,
+            "deviceWallTimeText": "2026-11-03 05:10:52.159",
+            "startElapsedMs": 25685,
+            "trackingFinishElapsedMs": 25685,
+            "origin": "ORIGIN_SERVER",
+            "reason": "HIDE_SOFT_INPUT",
+            "phase": "PHASE_SERVER_SHOULD_HIDE"
+          },
+          {
+            "sequence": 4,
+            "type": "TYPE_SHOW",
+            "status": "STATUS_FAIL",
+            "tag": "dev.agentos.compat:9a12fd7b",
+            "durationMs": 9,
+            "deviceWallTimeText": "2026-11-03 05:10:52.157",
+            "startElapsedMs": 25682,
+            "trackingFinishElapsedMs": 25691,
+            "origin": "ORIGIN_CLIENT",
+            "reason": "SHOW_SOFT_INPUT",
+            "phase": "PHASE_SERVER_UPDATE_CLIENT_VISIBILITY"
+          },
+          {
+            "sequence": 6,
+            "type": "TYPE_SHOW",
+            "status": "STATUS_SUCCESS",
+            "tag": "system_server:252e1477",
+            "durationMs": 628,
+            "deviceWallTimeText": "2026-11-03 05:10:52.170",
+            "startElapsedMs": 25696,
+            "trackingFinishElapsedMs": 26324,
+            "origin": "ORIGIN_SERVER",
+            "reason": "IME_REQUESTED_CHANGED_LISTENER",
+            "phase": "PHASE_CLIENT_ANIMATION_FINISHED_SHOW"
+          },
+          {
+            "sequence": 7,
+            "type": "TYPE_HIDE",
+            "status": "STATUS_SUCCESS",
+            "tag": "dev.agentos.compat:d6519bc0",
+            "durationMs": 11,
+            "deviceWallTimeText": "2026-11-03 05:11:03.311",
+            "startElapsedMs": 36837,
+            "trackingFinishElapsedMs": 36848,
+            "origin": "ORIGIN_SERVER",
+            "reason": "HIDE_REMOVE_CLIENT",
+            "phase": "PHASE_SERVER_NOTIFY_IME_VISIBILITY_CHANGED_FROM_CLIENT"
+          },
+          {
+            "sequence": 10,
+            "type": "TYPE_HIDE",
+            "status": "STATUS_CANCEL",
+            "tag": "system_server:f481c0d3",
+            "durationMs": 6,
+            "deviceWallTimeText": "2026-11-03 05:11:03.680",
+            "startElapsedMs": 37206,
+            "trackingFinishElapsedMs": 37212,
+            "origin": "ORIGIN_SERVER",
+            "reason": "IME_REQUESTED_CHANGED_LISTENER",
+            "phase": "PHASE_SERVER_SHOULD_HIDE"
+          },
+          {
+            "sequence": 12,
+            "type": "TYPE_HIDE",
+            "status": "STATUS_CANCEL",
+            "tag": "system_server:3cd1daa2",
+            "durationMs": 0,
+            "deviceWallTimeText": "2026-11-03 05:11:03.847",
+            "startElapsedMs": 37373,
+            "trackingFinishElapsedMs": 37373,
+            "origin": "ORIGIN_SERVER",
+            "reason": "IME_REQUESTED_CHANGED_LISTENER",
+            "phase": "PHASE_SERVER_SHOULD_HIDE"
+          },
+          {
+            "sequence": 9,
+            "type": "TYPE_HIDE",
+            "status": "STATUS_CANCEL",
+            "tag": "com.android.launcher3:daf93d22",
+            "durationMs": 279,
+            "deviceWallTimeText": "2026-11-03 05:11:03.659",
+            "startElapsedMs": 37185,
+            "trackingFinishElapsedMs": 37464,
+            "origin": "ORIGIN_SERVER",
+            "reason": "HIDE_UNSPECIFIED_WINDOW",
+            "phase": "PHASE_CLIENT_ALREADY_HIDDEN"
+          },
+          {
+            "sequence": 11,
+            "type": "TYPE_SHOW",
+            "status": "STATUS_CANCEL",
+            "tag": "system_server:b264afce",
+            "durationMs": 186,
+            "deviceWallTimeText": "2026-11-03 05:11:03.766",
+            "startElapsedMs": 37292,
+            "trackingFinishElapsedMs": 37478,
+            "origin": "ORIGIN_SERVER",
+            "reason": "CONTROLS_CHANGED",
+            "phase": "PHASE_CLIENT_ON_CONTROLS_CHANGED"
+          },
+          {
+            "sequence": 13,
+            "type": "TYPE_SHOW",
+            "status": "STATUS_FAIL",
+            "tag": "dev.agentos.compat:63a640be",
+            "durationMs": 2,
+            "deviceWallTimeText": "2026-11-03 05:11:05.117",
+            "startElapsedMs": 38643,
+            "trackingFinishElapsedMs": 38645,
+            "origin": "ORIGIN_CLIENT",
+            "reason": "SHOW_SOFT_INPUT",
+            "phase": "PHASE_SERVER_UPDATE_CLIENT_VISIBILITY"
+          },
+          {
+            "sequence": 14,
+            "type": "TYPE_SHOW",
+            "status": "STATUS_SUCCESS",
+            "tag": "system_server:ec136657",
+            "durationMs": 318,
+            "deviceWallTimeText": "2026-11-03 05:11:05.122",
+            "startElapsedMs": 38648,
+            "trackingFinishElapsedMs": 38966,
+            "origin": "ORIGIN_SERVER",
+            "reason": "IME_REQUESTED_CHANGED_LISTENER",
+            "phase": "PHASE_CLIENT_ANIMATION_FINISHED_SHOW"
+          },
+          {
+            "sequence": 8,
+            "type": "TYPE_SHOW",
+            "status": "STATUS_TIMEOUT",
+            "tag": "system_server:39608229",
+            "durationMs": 10005,
+            "deviceWallTimeText": "2026-11-03 05:11:03.357",
+            "startElapsedMs": 36883,
+            "trackingFinishElapsedMs": 46888,
+            "origin": "ORIGIN_SERVER",
+            "reason": "CONTROLS_CHANGED",
+            "phase": "PHASE_SERVER_GET_CONTROL_WITH_LEASH"
+          },
+          {
+            "sequence": 15,
+            "type": "TYPE_SHOW",
+            "status": "STATUS_CANCEL",
+            "tag": "com.android.inputmethod.latin:f85b1e53",
+            "durationMs": 57,
+            "deviceWallTimeText": "2026-11-03 05:11:13.657",
+            "startElapsedMs": 47183,
+            "trackingFinishElapsedMs": 47240,
+            "origin": "ORIGIN_IME",
+            "reason": "RESET_NEW_CONFIGURATION",
+            "phase": "PHASE_SERVER_POST_LAYOUT_NOTIFY_CONTROLS_CHANGED"
+          },
+          {
+            "sequence": 16,
+            "type": "TYPE_SHOW",
+            "status": "STATUS_CANCEL",
+            "tag": "system_server:696e646e",
+            "durationMs": 1,
+            "deviceWallTimeText": "2026-11-03 05:11:13.741",
+            "startElapsedMs": 47266,
+            "trackingFinishElapsedMs": 47267,
+            "origin": "ORIGIN_SERVER",
+            "reason": "CONTROLS_CHANGED",
+            "phase": "PHASE_CLIENT_ON_CONTROLS_CHANGED"
+          }
+        ],
+        "resetRecords": [
+          {
+            "sequence": 15,
+            "type": "TYPE_SHOW",
+            "status": "STATUS_CANCEL",
+            "tag": "com.android.inputmethod.latin:f85b1e53",
+            "durationMs": 57,
+            "deviceWallTimeText": "2026-11-03 05:11:13.657",
+            "startElapsedMs": 47183,
+            "trackingFinishElapsedMs": 47240,
+            "origin": "ORIGIN_IME",
+            "reason": "RESET_NEW_CONFIGURATION",
+            "phase": "PHASE_SERVER_POST_LAYOUT_NOTIFY_CONTROLS_CHANGED"
+          }
+        ],
+        "trackingCancellationDoesNotProveUiRollback": true
+      },
+      "limits": [
+        "The 8038ms callback gap is absence of recorded callbacks, not continuous empty-region evidence.",
+        "The recorded 108.369898ms reset-to-positive difference uses a millisecond raw timestamp; it is not submillisecond measurement precision for the callback.",
+        "The setting-write bracket includes 10s but neither notification scheduling nor SettingsObserver entry was measured.",
+        "A reset slice with no parent does not identify SettingsObserver or exclude other configuration delivery paths.",
+        "Existing original Notes tests were not rerun and their confirmation-preparation deadline has a different origin.",
+        "Source clocks and normalized trace clocks support elapsed-domain comparison; no inference uses device wall-clock strings or host UTC as a common clock."
+      ]
+    }
+  },
+  "acceptanceBoundary": "This run completed bounded capture and the diagnostic A/B comparison: A had no positive callback; B had one at show+8648ms; setting restoration was confirmed. It did not rerun the original 32 Notes cases, establish its original 5-second acceptance, establish device-phone compatibility, or solve the reset caller question."
+}

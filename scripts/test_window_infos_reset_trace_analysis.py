@@ -1,5 +1,6 @@
 import copy
 import csv
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -7,6 +8,20 @@ import tempfile
 import unittest
 
 import window_infos_reset_trace_analysis as a
+
+
+# Exact header and seven notice rows from archived API37 run 41582067066,
+# processed by pinned v59.1; the full original CSV is never edited by tests.
+REAL_NOTICE_STATS_CSV = (
+    b'"name","idx","severity","source","value"\n'
+    b'"6674726163655F73657475705F6572726F7273","[NULL]","6E6F74696365","7472616365",0\n'
+    b'"696E7465726E65645F646174615F736B69707065645F696E6372656D656E74616C5F73746174655F696E76616C6964","[NULL]","6E6F74696365","616E616C79736973",0\n'
+    b'"7061636B65745F736B69707065645F7365715F6E656564735F696E6372656D656E74616C5F73746174655F696E76616C6964","[NULL]","6E6F74696365","616E616C79736973",0\n'
+    b'"7468726561645F64657363726970746F725F736B69707065645F696E6372656D656E74616C5F73746174655F696E76616C6964","[NULL]","6E6F74696365","616E616C79736973",0\n'
+    b'"747261636B5F6576656E745F736B69707065645F7468726561645F696E737472756374696F6E5F64656C74615F776974686F75745F76616C69645F7374617465","[NULL]","6E6F74696365","616E616C79736973",0\n'
+    b'"747261636B5F6576656E745F736B69707065645F7468726561645F74696D655F64656C74615F776974686F75745F76616C69645F7374617465","[NULL]","6E6F74696365","616E616C79736973",0\n'
+    b'"747261636B5F6576656E745F736B69707065645F74696D657374616D705F64656C74615F776974686F75745F76616C69645F7374617465","[NULL]","6E6F74696365","616E616C79736973",0\n'
+)
 
 
 def csv_bytes(name, rows):
@@ -136,6 +151,65 @@ class AncestryTests(unittest.TestCase):
     def test_loss_even_info_severity_blocks_classification(self):
         self.tables['trace-stats.csv'].append(dict(name='ftrace_cpu_overrun_end',idx=0,severity='info',source='trace',value=1))
         self.assertIn('TRACE_LOSS_OR_ERROR',self.reset()['classificationReasons'])
+
+    def test_actual_zero_notice_rows_are_valid_stats(self):
+        self.assertEqual('5144da4d543c397d722239f1be58f1c695d882fac3b62c3f162cb6ab5d80c869',
+                         hashlib.sha256(REAL_NOTICE_STATS_CSV).hexdigest())
+        notices=a.parse_csv('trace-stats.csv',REAL_NOTICE_STATS_CSV)
+        self.assertEqual(7,len(notices))
+        self.assertTrue(all(r['severity']=='notice' and r['value']==0 for r in notices))
+        self.tables['trace-stats.csv'].extend(notices)
+        result=self.run_analysis()
+        self.assertEqual('recorded',result['traceQuality']['status'])
+        self.assertEqual([],result['traceQuality']['nonzeroNoticeStats'])
+        self.assertEqual('configuration_dispatch_supported',result['events'][0]['callerClassification'])
+
+    def test_valid_notice_stats_do_not_supply_a_missing_caller(self):
+        self.tables['trace-stats.csv'].extend(a.parse_csv('trace-stats.csv',REAL_NOTICE_STATS_CSV))
+        self.tables['trace-slices.csv'][1].update(parent_id=None,depth=0)
+        self.tables['trace-slices.csv'][2]['depth']=1
+        result=self.run_analysis()
+        self.assertEqual('recorded',result['traceQuality']['status'])
+        self.assertEqual('unknown',result['events'][0]['callerClassification'])
+        self.assertEqual([],result['events'][0]['clientTransactionAncestorIds'])
+        self.assertEqual(0,result['configurationDispatchSupportedCount'])
+
+    def test_nonzero_notice_is_unknown_even_without_error_or_loss_name(self):
+        notices=a.parse_csv('trace-stats.csv',REAL_NOTICE_STATS_CSV)
+        notices.append(dict(name='future_notice_counter',idx=None,severity='notice',source='analysis',value=0))
+        for notice in notices:
+            for value in (-1,1):
+                with self.subTest(name=notice['name'],value=value):
+                    tables,context=fixture();row=dict(notice,value=value)
+                    tables['trace-stats.csv'].append(row)
+                    result=derive(tables,context)
+                    self.assertEqual('unknown',result['traceQuality']['status'])
+                    self.assertIn('TRACE_NOTICE_NONZERO',result['traceQuality']['reasons'])
+                    self.assertEqual([row],result['traceQuality']['nonzeroNoticeStats'])
+                    self.assertEqual('unknown',result['events'][0]['callerClassification'])
+                    self.assertEqual(0,result['configurationDispatchSupportedCount'])
+
+    def test_unknown_stat_severity_remains_invalid_even_at_zero(self):
+        for severity in ('warning','NOTICE',''):
+            for value in (0,1):
+                with self.subTest(severity=severity,value=value):
+                    tables,context=fixture()
+                    tables['trace-stats.csv'].append(dict(name='unknown_counter',idx=None,
+                        severity=severity,source='analysis',value=value))
+                    result=derive(tables,context)
+                    self.assertIn('TRACE_STATS_INVALID',result['traceQuality']['reasons'])
+                    self.assertEqual('unknown',result['events'][0]['callerClassification'])
+
+    def test_error_and_data_loss_still_block_with_normal_notice_rows(self):
+        for severity in ('error','data_loss'):
+            with self.subTest(severity=severity):
+                tables,context=fixture()
+                tables['trace-stats.csv'].extend(a.parse_csv('trace-stats.csv',REAL_NOTICE_STATS_CSV))
+                tables['trace-stats.csv'].append(dict(name='counter',idx=None,
+                    severity=severity,source='analysis',value=1))
+                result=derive(tables,context)
+                self.assertIn('TRACE_LOSS_OR_ERROR',result['traceQuality']['reasons'])
+                self.assertEqual('unknown',result['events'][0]['callerClassification'])
 
     def test_readiness_and_trace_end_required(self):
         self.tables['trace-metadata.csv']=self.tables['trace-metadata.csv'][:1]

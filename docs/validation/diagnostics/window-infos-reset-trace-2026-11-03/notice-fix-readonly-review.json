@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "kind": "readonly-notice-enum-parser-fix-review",
+  "checkedAt": "2026-11-03T05:18:10.175047+00:00",
+  "status": "review_passed_for_listed_hashes",
+  "repoModified": false,
+  "productionAnalyzerInvoked": false,
+  "testsExecutedByReviewer": false,
+  "deviceExecuted": false,
+  "reviewedFiles": [
+    {
+      "path": "scripts/window_infos_reset_trace_analysis.py",
+      "bytes": 26382,
+      "sha256": "0a18b1c7756943a1b660807b0fcfddf54873ff1badaacdc2354b2e245b72d17e"
+    },
+    {
+      "path": "scripts/test_window_infos_reset_trace_analysis.py",
+      "bytes": 17907,
+      "sha256": "8eadedf2114c557f3b945bc93faaed28d31a0d419e0229f7dea725b870232f00"
+    }
+  ],
+  "fixedSources": [
+    {
+      "url": "https://raw.githubusercontent.com/google/perfetto/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/src/trace_processor/storage/stats.h",
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "tag": "v59.1",
+      "path": "src/trace_processor/storage/stats.h",
+      "bytes": 95163,
+      "sha256": "7ad550df253f023018374f83e29c5e5ca3d1330f295c5566115ea6c36b10fb18"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/google/perfetto/1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d/src/trace_processor/importers/common/global_stats_tracker.cc",
+      "commit": "1e9c61e9844affd7dccd3d42d9ea9f3a3d10cf6d",
+      "tag": "v59.1",
+      "path": "src/trace_processor/importers/common/global_stats_tracker.cc",
+      "bytes": 8945,
+      "sha256": "e84ac05163da9cffd11f62938ccbc81048fcb9a30d401234f64cb7a6556dc813"
+    }
+  ],
+  "sourceEvidence": [
+    {
+      "path": "src/trace_processor/storage/stats.h",
+      "lines": [
+        1043,
+        1052
+      ],
+      "finding": "Severity formally includes kInfo, kNotice, kDataLoss and kError; kNotice is normal but noteworthy, explicitly not itself a bug or data loss."
+    },
+    {
+      "path": "src/trace_processor/importers/common/global_stats_tracker.cc",
+      "lines": [
+        35,
+        38
+      ],
+      "finding": "Stats table output maps kNotice to the literal notice alongside info/data_loss/error."
+    },
+    {
+      "path": "src/trace_processor/importers/common/global_stats_tracker.cc",
+      "lines": [
+        42,
+        45
+      ],
+      "finding": "The processor pre-emits zero rows for every global single stat, so the existence of a zero notice row does not imply that its condition occurred."
+    }
+  ],
+  "actualEvidence": {
+    "source": {
+      "repository": "ecojust/Agent-OS",
+      "commit": "919bee887c78bd0de23b2d853320e0f1908107ea",
+      "runId": 41582067066,
+      "attempt": 1
+    },
+    "archiveCommit": "b907b52e4bfc6c433ce35410c84740b34f955ac6",
+    "trace": {
+      "bytes": 4393006,
+      "sha256": "23a4d39370353f9fd9799fd4d773f32cdfbc134c96e32fc11298851183e9975a"
+    },
+    "processor": {
+      "version": "v59.1",
+      "path": "/workspace/scratch/ime-reset-parser-2026-11-03/trace_processor_shell-v59.1",
+      "bytes": 15885448,
+      "sha256": "2434129a3af4dc9e2034a476f7b76447b490975213e301769310d3bd0d5d6458"
+    },
+    "independentReview": {
+      "path": "/workspace/scratch/reset-actual-independent-41582067066/actual-trace-review.json",
+      "bytes": 54621,
+      "sha256": "4f35e3346d7c6bb39db871eb5b9ccc7c99e52ced58d81cf8301ab4085e205b93"
+    },
+    "statsRows": 388,
+    "noticeRows": [
+      {
+        "name": "ftrace_setup_errors",
+        "idx": null,
+        "severity": "notice",
+        "source": "trace",
+        "value": 0
+      },
+      {
+        "name": "interned_data_skipped_incremental_state_invalid",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "packet_skipped_seq_needs_incremental_state_invalid",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "thread_descriptor_skipped_incremental_state_invalid",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "track_event_skipped_thread_instruction_delta_without_valid_state",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "track_event_skipped_thread_time_delta_without_valid_state",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      },
+      {
+        "name": "track_event_skipped_timestamp_delta_without_valid_state",
+        "idx": null,
+        "severity": "notice",
+        "source": "analysis",
+        "value": 0
+      }
+    ],
+    "originalAnalyzerStatus": "unknown",
+    "originalReason": "TRACE_STATS_INVALID"
+  },
+  "implementationReview": {
+    "allowedSeverity": "Exact recognized notice is now a valid severity. Zero notice values no longer manufacture an invalid-stats result.",
+    "nonzeroNotice": "Any nonzero notice, including negative values and names without a loss/error substring, is explicitly retained as nonzeroNoticeStats and blocks quality/classification with TRACE_NOTICE_NONZERO. It is not automatically labelled as actual data loss.",
+    "unchangedRejections": "Null/missing value, empty name, unknown severity, loss/error counters, missing readiness/end/coverage, bad process identity, and incomplete parent chain retain existing unknown handling.",
+    "callerBoundary": "The change touches quality severity admission and notice reporting only. It does not add a caller fallback. The actual reset has parent NULL/depth0, so neither configuration_dispatch_supported nor SettingsObserver inference is authorized even when the trace stats gate is satisfied.",
+    "outputBoundary": "The original 919bee source/archive is immutable. A revised analysis must be stored as separately labelled offline interpretation bound to the original trace and the new parser source; it is not a new device run or application pass."
+  },
+  "testsReadOnlyReviewed": [
+    "Exact seven original zero-notice rows accepted under the pinned CSV schema.",
+    "Valid notices cannot supply a missing clientTransactionExecuted ancestor.",
+    "Positive and negative nonzero values of all actual notice counters and a generic notice remain unknown.",
+    "Unknown severity including warning/uppercase NOTICE/empty remains invalid even at zero.",
+    "Error/data_loss stays blocking alongside normal notice rows."
+  ],
+  "versionBoundary": "Actual tracing service reports Perfetto v54.0 (N/A); the stats table and severity strings here are produced by independently pinned trace_processor v59.1. The cited v59.1 stats source explains the processor schema, not the device binary.",
+  "blockingFindings": []
+}

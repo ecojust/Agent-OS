@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "kind": "method-trace-parser-independent-test-review",
+  "recordedAt": "2026-11-03T12:55:05.336501+00:00",
+  "sourceFiles": [
+    {
+      "path": "scripts/test_ime_method_trace.py",
+      "bytes": 15510,
+      "sha256": "0ae6b88a69587c876928f692cc652075a73b9b279587f488a6bb7205a6059f5e"
+    },
+    {
+      "path": "scripts/ime_method_trace.py",
+      "bytes": 11949,
+      "sha256": "1bfe251dc41ef43b960cb3de0ee6fbb87fb277ed0cdddba130c36d90f48a62d8"
+    }
+  ],
+  "testResult": {
+    "command": "python3 -m unittest discover -s scripts -p 'test_ime_method_trace.py' -v",
+    "count": 35,
+    "passed": true,
+    "seconds": 0.363
+  },
+  "syntheticFixtures": {
+    "sourceDerived": true,
+    "deviceEvidence": false,
+    "versions": [
+      2,
+      3
+    ],
+    "clocks": [
+      "dual",
+      "wall",
+      "thread-cpu"
+    ],
+    "zeroMethodId": true,
+    "sameThreadClockChecks": true,
+    "differentThreadClockOrderNotGlobal": true,
+    "openStartAndEndFramesPermitted": true,
+    "nullAndEmptySourceFilesAccepted": true,
+    "allResourceLimitPathsExercised": true,
+    "callerInferenceMade": false
+  },
+  "sourceFormatCorrections": [
+    {
+      "source": "https://android.googlesource.com/platform/art/+/b753cf97923c3695338d21466fa14c57b480a59a/runtime/trace_common.h",
+      "bytes": 8050,
+      "sha256": "698faae8f07292a8df0ee2cbaa7673e9fc49dd283578b86159edf42c55e21834",
+      "lines": "44-50",
+      "finding": "GetMethodInfoLine is inline in the header; trace_common.cc does not exist in this tree. It writes class/name/signature/source, no source-line number. Prepended method ID gives five table fields."
+    },
+    {
+      "source": "https://android.googlesource.com/platform/art/+/b753cf97923c3695338d21466fa14c57b480a59a/runtime/trace.h",
+      "lines": "394",
+      "finding": "current_method_index_ starts at0. The method zero row is valid; GetMethodLine uses printf %#x, whose zero spelling is 0."
+    },
+    {
+      "source": "https://android.googlesource.com/platform/art/+/b753cf97923c3695338d21466fa14c57b480a59a/runtime/trace.cc",
+      "lines": "1440-1476",
+      "finding": "Non-streaming flushes each per-thread event buffer synchronously; intra-thread ordering is required, but the file need not be globally sorted across threads."
+    },
+    {
+      "source": "https://android.googlesource.com/platform/art/+/b753cf97923c3695338d21466fa14c57b480a59a/runtime/trace.cc",
+      "lines": "1093-1114",
+      "finding": "The same timestamp conversion used for record wall deltas is used for final elapsed; source stops recording before final summary. Wall delta exceeding declared elapsed is not accepted."
+    }
+  ],
+  "limitations": {
+    "actualDeviceFormatStillUnverified": true,
+    "referenceImageByteEquivalenceVerified": false,
+    "stackBalanceOrCallerProof": false,
+    "repositoryFilesModified": [
+      "scripts/test_ime_method_trace.py"
+    ],
+    "deviceRun": false,
+    "ciDispatched": false
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "kind": "ime-profile-archive-local-validation",
+  "recordedAt": "2026-11-03T13:02:55.266665+00:00",
+  "baseCommit": "25478d21e8808288f63c9cc6a8c8493e62af8ee5",
+  "command": "python3 -m unittest discover -s scripts -p test_ime_profile_archive.py -v",
+  "result": {
+    "tests": 24,
+    "passed": true,
+    "seconds": 0.546
+  },
+  "sourceFiles": [
+    {
+      "path": "scripts/ime_profile_archive.py",
+      "bytes": 21916,
+      "sha256": "49160537c4f205ac718d255832ae50c0b2be56ad9cce79e19943b299832cff05"
+    },
+    {
+      "path": "scripts/test_ime_profile_archive.py",
+      "bytes": 21253,
+      "sha256": "aae4dc9061b5d509a167289aeba831458c9a15356ee0cd5469a50ac23e5e9db2"
+    }
+  ],
+  "verification": [
+    "completed master manual source/run/attempt/job/artifact bindings",
+    "all five source files bound to immutable Git and checked checkout",
+    "four Python paths and bytes verified before fresh compile of producer/parser",
+    "preloaded stale module ignored for execution; original module mapping restored",
+    "metadata-only missing/expired and failed job remain unverified",
+    "partial native trace retained without repaired state",
+    "actual producer preparation archived against temporary Git without adb execution",
+    "relative output identity, nonoverwrite, direct and ancestor symlinks, byte bounds",
+    "payload bytes rescanned after semantic validation"
+  ],
+  "limits": {
+    "payloadBytes": 33554432,
+    "traceBytes": 16777216,
+    "commandJsonBytes": 12582912,
+    "jsonBytes": 4194304
+  },
+  "scope": {
+    "syntheticFixturesNotDeviceEvidence": true,
+    "deviceRun": false,
+    "workflowDispatch": false,
+    "committedOrPushed": false,
+    "producerFinalFreezeAndIntegratedRunPending": false,
+    "finalArchiveOnlyRetest": true
+  },
+  "notes": "Final change trims only a surplus EOF blank line; 24 archive tests rerun against frozen producer."
+}

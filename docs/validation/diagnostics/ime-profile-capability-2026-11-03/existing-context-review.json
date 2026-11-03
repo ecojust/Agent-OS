@@ -1,0 +1,437 @@
+{
+  "schemaVersion": 1,
+  "kind": "existing-reset-trace-additional-context-review",
+  "checkedAt": "2026-11-03T12:48:44.728523+00:00",
+  "repositoryHead": "25478d21e8808288f63c9cc6a8c8493e62af8ee5",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "919bee887c78bd0de23b2d853320e0f1908107ea",
+    "runId": 41582067066,
+    "attempt": 1
+  },
+  "archiveCommit": "b907b52e4bfc6c433ce35410c84740b34f955ac6",
+  "originalBindings": [
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/manifest.json",
+      "bytes": 8258,
+      "sha256": "94c9e470017644e44766c08e709dc580855177a7167d209497837889c969bd77",
+      "gitOriginalMatches": true
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/trace.pftrace",
+      "bytes": 4393006,
+      "sha256": "23a4d39370353f9fd9799fd4d773f32cdfbc134c96e32fc11298851183e9975a",
+      "gitOriginalMatches": true
+    },
+    {
+      "path": "screenshots/window-infos-reset-trace-41582067066-1/trace-config.pbtxt",
+      "bytes": 794,
+      "sha256": "5821fa826763553a7fffb97b9f493291f5db120e3d073483f3d6ace02d380992",
+      "gitOriginalMatches": true
+    }
+  ],
+  "processor": {
+    "path": "/workspace/scratch/ime-reset-parser-2026-11-03/trace_processor_shell-v59.1",
+    "bytes": 15885448,
+    "sha256": "2434129a3af4dc9e2034a476f7b76447b490975213e301769310d3bd0d5d6458"
+  },
+  "method": "Eleven independent bounded SQL queries against the original trace; stdlib/Git source checks; no production analyzer, no new device run, no repository edits. Query text and output hashes are retained. Existing reset ancestry was not recomputed.",
+  "queries": [
+    {
+      "name": "schema",
+      "command": [
+        "/workspace/scratch/ime-reset-parser-2026-11-03/trace_processor_shell-v59.1",
+        "--full-sort",
+        "query",
+        "--format",
+        "csv",
+        "/workspace/Agent-OS/screenshots/window-infos-reset-trace-41582067066-1/trace.pftrace"
+      ],
+      "sql": "SELECT name,type FROM sqlite_master WHERE lower(name) LIKE '%log%' OR lower(name) LIKE '%ftrace%' OR lower(name) LIKE '%binder%' OR name IN ('raw','flow','slice','args') ORDER BY name LIMIT 500;",
+      "exitCode": 0,
+      "stdout": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/schema.csv",
+        "bytes": 307,
+        "sha256": "5868d7939ce1e111b352fa08b364aa6f55f177a2baaedb176655075f5bfdba23"
+      },
+      "stderr": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/schema.stderr",
+        "bytes": 66,
+        "sha256": "e6e6c6fd2004a49ec350c6a167ec0f8c54760be5f51f827a9e788d0600fd0116"
+      }
+    },
+    {
+      "name": "candidate_slice_names",
+      "command": [
+        "/workspace/scratch/ime-reset-parser-2026-11-03/trace_processor_shell-v59.1",
+        "--full-sort",
+        "query",
+        "--format",
+        "csv",
+        "/workspace/Agent-OS/screenshots/window-infos-reset-trace-41582067066-1/trace.pftrace"
+      ],
+      "sql": "SELECT hex(name) name_hex,COUNT(*) n,MIN(ts) first_ns,MAX(ts+dur) last_end_ns FROM slice WHERE lower(name) LIKE '%content%' OR lower(name) LIKE '%observer%' OR lower(name) LIKE '%notifychange%' OR lower(name) LIKE '%setting%' OR lower(name) LIKE '%binder%' OR lower(name) LIKE '%dispatch%' GROUP BY name ORDER BY name LIMIT 2000;",
+      "exitCode": 0,
+      "stdout": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/candidate_slice_names.csv",
+        "bytes": 122672,
+        "sha256": "91d58d5e6ec1d9aba7f0111295e755e19dad9f33681854fd73b0e008340447b9"
+      },
+      "stderr": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/candidate_slice_names.stderr",
+        "bytes": 66,
+        "sha256": "cc34e6dff153edfba711c361721011a710cc89077cd47c4d039c3e908e8fa2bb"
+      }
+    },
+    {
+      "name": "ftrace_event_names",
+      "command": [
+        "/workspace/scratch/ime-reset-parser-2026-11-03/trace_processor_shell-v59.1",
+        "--full-sort",
+        "query",
+        "--format",
+        "csv",
+        "/workspace/Agent-OS/screenshots/window-infos-reset-trace-41582067066-1/trace.pftrace"
+      ],
+      "sql": "SELECT hex(name) name_hex,COUNT(*) n FROM ftrace_event GROUP BY name ORDER BY name LIMIT 500;",
+      "exitCode": 0,
+      "stdout": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/ftrace_event_names.csv",
+        "bytes": 181,
+        "sha256": "1d7ff3a3180ffc3e00551305b661407390bae5ae133279ba458ca10f9f6bf4fc"
+      },
+      "stderr": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/ftrace_event_names.stderr",
+        "bytes": 66,
+        "sha256": "7cec53530590df1b00d51b2162bae98fc06ebc45f9df9bc1c55d4f01c0b0f9de"
+      }
+    },
+    {
+      "name": "android_log_count",
+      "command": [
+        "/workspace/scratch/ime-reset-parser-2026-11-03/trace_processor_shell-v59.1",
+        "--full-sort",
+        "query",
+        "--format",
+        "csv",
+        "/workspace/Agent-OS/screenshots/window-infos-reset-trace-41582067066-1/trace.pftrace"
+      ],
+      "sql": "SELECT COUNT(*) n FROM android_logs;",
+      "exitCode": 0,
+      "stdout": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/android_log_count.csv",
+        "bytes": 6,
+        "sha256": "7a1eb4f22f51857d5352e63620fad2ed6a14831c007776471610a697c663b3f5"
+      },
+      "stderr": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/android_log_count.stderr",
+        "bytes": 66,
+        "sha256": "cd1c3c2354ba2fe22ed7d4b8a9f613c11279a8ddcc2a3327d456260a25d6543e"
+      }
+    },
+    {
+      "name": "flow_count",
+      "command": [
+        "/workspace/scratch/ime-reset-parser-2026-11-03/trace_processor_shell-v59.1",
+        "--full-sort",
+        "query",
+        "--format",
+        "csv",
+        "/workspace/Agent-OS/screenshots/window-infos-reset-trace-41582067066-1/trace.pftrace"
+      ],
+      "sql": "SELECT COUNT(*) n FROM flow;",
+      "exitCode": 0,
+      "stdout": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/flow_count.csv",
+        "bytes": 6,
+        "sha256": "7a1eb4f22f51857d5352e63620fad2ed6a14831c007776471610a697c663b3f5"
+      },
+      "stderr": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/flow_count.stderr",
+        "bytes": 66,
+        "sha256": "28f72c677a0c48fa520fc72f9f417b85390b966be08d8c67d1bdf0b3baf9fcaa"
+      }
+    },
+    {
+      "name": "arg_candidates",
+      "command": [
+        "/workspace/scratch/ime-reset-parser-2026-11-03/trace_processor_shell-v59.1",
+        "--full-sort",
+        "query",
+        "--format",
+        "csv",
+        "/workspace/Agent-OS/screenshots/window-infos-reset-trace-41582067066-1/trace.pftrace"
+      ],
+      "sql": "SELECT hex(key) key_hex,hex(string_value) value_hex,int_value,real_value FROM args WHERE lower(key) LIKE '%observer%' OR lower(key) LIKE '%content%' OR lower(key) LIKE '%binder%' OR lower(COALESCE(string_value,'')) LIKE '%contentobserver%' OR lower(COALESCE(string_value,'')) LIKE '%notifychange%' LIMIT 1000;",
+      "exitCode": 0,
+      "stdout": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/arg_candidates.csv",
+        "bytes": 47,
+        "sha256": "6acbcb6bce1e25f938f70f35c84917dd1cf0df13bab10b9550b6341e193e47fc"
+      },
+      "stderr": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/arg_candidates.stderr",
+        "bytes": 67,
+        "sha256": "a27114adc1f0a54fa0a8d57278a55953c8f3bc2557b8ebfbde8ace7514133d29"
+      }
+    },
+    {
+      "name": "explicit_observer_labels",
+      "command": [
+        "/workspace/scratch/ime-reset-parser-2026-11-03/trace_processor_shell-v59.1",
+        "--full-sort",
+        "query",
+        "--format",
+        "csv",
+        "/workspace/Agent-OS/screenshots/window-infos-reset-trace-41582067066-1/trace.pftrace"
+      ],
+      "sql": "SELECT hex(name) name_hex,COUNT(*) n FROM slice WHERE lower(name) LIKE '%contentobserver%' OR lower(name) LIKE '%settingsobserver%' OR lower(name) LIKE '%notifychange%' OR lower(name) LIKE '%onchangeetc%' GROUP BY name ORDER BY name LIMIT 1000;",
+      "exitCode": 0,
+      "stdout": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/explicit_observer_labels.csv",
+        "bytes": 15,
+        "sha256": "b327847ba31ed7e48d96aa53968fa9a628c5ca37e0c81f23f8b635952738d4d1"
+      },
+      "stderr": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/explicit_observer_labels.stderr",
+        "bytes": 67,
+        "sha256": "c985a98a992309ee8dc05cacb934f886d9eb856e135c3faa9c92d3a6ea33c5cf"
+      }
+    },
+    {
+      "name": "ime_entry_labels",
+      "command": [
+        "/workspace/scratch/ime-reset-parser-2026-11-03/trace_processor_shell-v59.1",
+        "--full-sort",
+        "query",
+        "--format",
+        "csv",
+        "/workspace/Agent-OS/screenshots/window-infos-reset-trace-41582067066-1/trace.pftrace"
+      ],
+      "sql": "SELECT hex(s.name) name_hex,COUNT(*) n FROM slice s JOIN thread_track tt ON tt.id=s.track_id JOIN thread t ON t.utid=tt.utid JOIN process p ON p.upid=t.upid WHERE p.uid=10112 AND p.name='com.android.inputmethod.latin' AND (lower(s.name) LIKE '%handler%' OR lower(s.name) LIKE '%dispatch%' OR lower(s.name) LIKE '%change%' OR lower(s.name) LIKE '%setting%' OR lower(s.name) LIKE '%observer%') GROUP BY s.name ORDER BY s.name LIMIT 1000;",
+      "exitCode": 0,
+      "stdout": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/ime_entry_labels.csv",
+        "bytes": 539,
+        "sha256": "ca948b7947b3ec6f38ae7a5a4c8f5c2c9788832d7410c488794e2a9abaedcf56"
+      },
+      "stderr": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/ime_entry_labels.stderr",
+        "bytes": 66,
+        "sha256": "eb24a041d74e6edbfa3485a182322eed1b08377d8e9199c91cb9103e068d3df2"
+      }
+    },
+    {
+      "name": "settings_processes_args",
+      "command": [
+        "/workspace/scratch/ime-reset-parser-2026-11-03/trace_processor_shell-v59.1",
+        "--full-sort",
+        "query",
+        "--format",
+        "csv",
+        "/workspace/Agent-OS/screenshots/window-infos-reset-trace-41582067066-1/trace.pftrace"
+      ],
+      "sql": "SELECT hex(p.name) process_name,p.pid,p.uid,s.arg_set_id,COUNT(*) n,COUNT(a.id) args FROM slice s LEFT JOIN thread_track tt ON tt.id=s.track_id LEFT JOIN thread t ON t.utid=tt.utid LEFT JOIN process p ON p.upid=t.upid LEFT JOIN args a ON a.arg_set_id=s.arg_set_id WHERE s.name='call: settings' GROUP BY p.name,p.pid,p.uid,s.arg_set_id ORDER BY p.uid,p.pid LIMIT 1000;",
+      "exitCode": 0,
+      "stdout": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/settings_processes_args.csv",
+        "bytes": 105,
+        "sha256": "eadf35590ee1ee494ea7f652f174676871882cc99c4226b8d580734a6f532dd2"
+      },
+      "stderr": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/settings_processes_args.stderr",
+        "bytes": 66,
+        "sha256": "84419296d5b0f37d7c4d088f9e937409f97229c793ad87fa043e48fde02f98a4"
+      }
+    },
+    {
+      "name": "other_log_counts",
+      "command": [
+        "/workspace/scratch/ime-reset-parser-2026-11-03/trace_processor_shell-v59.1",
+        "--full-sort",
+        "query",
+        "--format",
+        "csv",
+        "/workspace/Agent-OS/screenshots/window-infos-reset-trace-41582067066-1/trace.pftrace"
+      ],
+      "sql": "SELECT 'logs' table_name,COUNT(*) n FROM logs UNION ALL SELECT 'protolog',COUNT(*) FROM protolog UNION ALL SELECT 'raw',COUNT(*) FROM raw;",
+      "exitCode": 0,
+      "stdout": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/other_log_counts.csv",
+        "bytes": 51,
+        "sha256": "4e58c040ba6b36128c8cc3c2d039cc06f1d2f0d611fb8e5be81e08e5e01f3c60"
+      },
+      "stderr": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/other_log_counts.stderr",
+        "bytes": 66,
+        "sha256": "8724d6be93d122946cac0e8a22f2a45e17a575d5dc917385a706c6232ee601e1"
+      }
+    },
+    {
+      "name": "config_labels",
+      "command": [
+        "/workspace/scratch/ime-reset-parser-2026-11-03/trace_processor_shell-v59.1",
+        "--full-sort",
+        "query",
+        "--format",
+        "csv",
+        "/workspace/Agent-OS/screenshots/window-infos-reset-trace-41582067066-1/trace.pftrace"
+      ],
+      "sql": "SELECT id,parent_id,ts,dur,hex(name) name_hex,hex(category) category_hex,arg_set_id FROM slice WHERE lower(name) LIKE '%notifychange%' OR lower(name) LIKE '%onconfigurationchanged%' OR lower(name) LIKE '%configchanged%' ORDER BY ts LIMIT 1000;",
+      "exitCode": 0,
+      "stdout": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/config_labels.csv",
+        "bytes": 6592,
+        "sha256": "580c739f6e38c19a3738f4313cbd4a4214df4e9e01ec5512010ac28f18d5434d"
+      },
+      "stderr": {
+        "path": "/workspace/scratch/reset-existing-context-2026-11-03/config_labels.stderr",
+        "bytes": 67,
+        "sha256": "b2d94f38f0a061c8e786ece37129696c132d8469923a7a5194ebf7107a48f2e5"
+      }
+    }
+  ],
+  "observations": {
+    "candidateDistinctSliceNames": 485,
+    "candidateNameLimit": 2000,
+    "explicitContentObserverSettingsObserverNotifyChangeOnChangeEtcSlices": 0,
+    "ftraceEventKinds": [
+      {
+        "name": "print",
+        "count": 82312
+      },
+      {
+        "name": "sched_process_exit",
+        "count": 572
+      },
+      {
+        "name": "sched_process_free",
+        "count": 566
+      },
+      {
+        "name": "task_newtask",
+        "count": 945
+      },
+      {
+        "name": "task_rename",
+        "count": 1199
+      }
+    ],
+    "binderKernelEventsObserved": 0,
+    "androidLogRows": 0,
+    "otherLogRowCounts": [
+      {
+        "table_name": "logs",
+        "n": "0"
+      },
+      {
+        "table_name": "protolog",
+        "n": "0"
+      },
+      {
+        "table_name": "raw",
+        "n": "85594"
+      }
+    ],
+    "flowRows": 0,
+    "contentObserverNotifyChangeOrBinderArgs": 0,
+    "genericSettingsTransportSlices": {
+      "name": "call: settings",
+      "processName": "system_server",
+      "pid": 606,
+      "uid": 1000,
+      "sliceCount": 1954,
+      "argSetId": null,
+      "argCount": 0
+    },
+    "imeLabelsMatchingHandlerDispatchChangeSettingObserver": [
+      {
+        "name": "MSG_KEEP_CLEAR_RECTS_CHANGED",
+        "count": 3
+      },
+      {
+        "name": "MSG_SYSTEM_GESTURE_EXCLUSION_CHANGED",
+        "count": 4
+      },
+      {
+        "name": "VRI[InputMethod] handleResized frameChanged=false configChanged=false seqId=2 mSeqId=2 buf=false displayChanged=false compatScaleChanged=false attachedFrameChanged=false",
+        "count": 4
+      },
+      {
+        "name": "dispatchApplyInsets",
+        "count": 3
+      }
+    ],
+    "configQueryCaveat": "Substring configChanged matches VRI handleResized ... configChanged=false labels. Those zero-duration resize records are not InputMethodService.onConfigurationChanged entry evidence."
+  },
+  "fixedSourceReview": {
+    "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+    "files": [
+      {
+        "reference": {
+          "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/services/core/java/com/android/server/content/ContentService.java?format=TEXT",
+          "sha256": "6cb7a19a7121d497bc1b1d7e1a0c5a055d9916a09c396dcc0c016105d157ff94",
+          "bytes": 84542
+        },
+        "checkedIdentity": {
+          "path": "/workspace/scratch/reset-source-2026-11-03/services__core__java__com__android__server__content__ContentService.java",
+          "bytes": 84542,
+          "sha256": "6cb7a19a7121d497bc1b1d7e1a0c5a055d9916a09c396dcc0c016105d157ff94"
+        },
+        "traceDotCalls": 0
+      },
+      {
+        "reference": {
+          "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+          "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/database/ContentObserver.java?format=TEXT",
+          "path": "core/java/android/database/ContentObserver.java",
+          "bytes": 13896,
+          "sha256": "125756577ee4c12e5d9658d53e6c62c9fafc5f0f646446bd9e8bd1634de9b100"
+        },
+        "checkedIdentity": {
+          "path": "/workspace/scratch/ime-reset-trace-chain-2026-11-03/ContentObserver.java",
+          "bytes": 13896,
+          "sha256": "125756577ee4c12e5d9658d53e6c62c9fafc5f0f646446bd9e8bd1634de9b100"
+        },
+        "traceDotCalls": 0
+      }
+    ],
+    "contentService": {
+      "dispatchLines": [
+        583,
+        610
+      ],
+      "backgroundDelayMillis": 10000,
+      "traceAtDispatchOrEnqueue": false,
+      "observation": "Runnable invokes observer.onChangeEtc; dispatch chooses task.run or BackgroundThread.postDelayed using UID process state and NOTIFY_NO_DELAY. No dedicated Trace label in reviewed file."
+    },
+    "contentObserver": {
+      "dispatchLines": [
+        321,
+        338
+      ],
+      "transportLines": [
+        347,
+        359
+      ],
+      "traceAtTransportOrHandlerDelivery": false,
+      "observation": "Transport calls dispatchChange; mHandler path posts a lambda, later calling onChange. No dedicated Trace label in reviewed file."
+    },
+    "referenceDoesNotProveImageBytes": true
+  },
+  "conclusion": {
+    "status": "unknown",
+    "directCallerEvidenceFound": false,
+    "why": "The existing capture has no binder transaction events, Android/proto logs, flow edges or explicit observer delivery labels. Generic settings calls are all argument-free system_server spans and cannot identify the changed key, the observer, caller UID or posted task identity. The retained VRI resize labels do not identify IMS configuration callbacks.",
+    "absenceDoesNotProveNoNotification": true,
+    "timeAdjacencyDoesNotProveCause": true,
+    "nextObservationRequirement": "A direct bounded call-stack/method-entry chain or separately identified enqueue-to-delivery relation is needed; another nearest-timestamp join of the same raw file cannot distinguish the two reset entry paths."
+  },
+  "scope": {
+    "repoModified": false,
+    "newDeviceRun": false,
+    "originalNotesRerun": false,
+    "stableFixEstablished": false,
+    "projectCheckpointChanged": false
+  }
+}

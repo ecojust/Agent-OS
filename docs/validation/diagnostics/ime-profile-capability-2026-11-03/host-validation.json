@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "kind": "ime-profile-capability-host-validation",
+  "recordedAt": "2026-11-03T13:03:32.789798+00:00",
+  "command": "python3 -m unittest discover -s scripts -p 'test_ime_*.py' -v",
+  "result": {
+    "tests": 94,
+    "capture": 35,
+    "format": 35,
+    "archive": 24,
+    "passed": true,
+    "seconds": 4.177
+  },
+  "sourceFiles": [
+    {
+      "path": "scripts/ime_profile_probe.py",
+      "bytes": 48439,
+      "sha256": "ca72d780500292e6e0ac34eb7d5a1501d08b46543b70e1018007f5d4c0224180"
+    },
+    {
+      "path": "scripts/ime_method_trace.py",
+      "bytes": 11949,
+      "sha256": "1bfe251dc41ef43b960cb3de0ee6fbb87fb277ed0cdddba130c36d90f48a62d8"
+    },
+    {
+      "path": "scripts/ime_profile_archive.py",
+      "bytes": 21916,
+      "sha256": "49160537c4f205ac718d255832ae50c0b2be56ad9cce79e19943b299832cff05"
+    },
+    {
+      "path": "scripts/configure_emulator_phone.py",
+      "bytes": 2136,
+      "sha256": "6e47a74d6b62fe8c1d8e459e51748ca9ccac1f32f2c09a972215a1e634821eed"
+    },
+    {
+      "path": ".github/workflows/ime-profile-probe.yml",
+      "bytes": 7754,
+      "sha256": "5b217ee21785de5fc9b355e445bc44855ea3fe586be1a57e7e8bc657a78c64b6"
+    }
+  ],
+  "log": {
+    "path": "docs/validation/diagnostics/ime-profile-capability-2026-11-03/local-tests.txt",
+    "bytes": 15802,
+    "sha256": "e0f963f84b82d578dfb706e34500657151224f039e058ddf60540294d98118e4"
+  },
+  "additionalChecks": [
+    "actionlint new workflow passed",
+    "py_compile all three modules passed",
+    "git diff --check passed"
+  ],
+  "scope": {
+    "deviceRunPending": true,
+    "nativeFixturesAreSynthetic": true,
+    "oldApplicationAndABSourcesUnchanged": true,
+    "originalNotesRerun": false,
+    "permissionOrPropertyMutation": false
+  }
+}

@@ -1,0 +1,158 @@
+name: Bounded IME method profiling capability
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Run one short nonvisual capability probe or archive its originals
+        required: true
+        default: test
+        type: choice
+        options: [test, archive]
+      run_id:
+        description: Completed source run ID, required for archive
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ime-profile-probe-${{ inputs.mode }}-${{ inputs.run_id || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    if: github.ref == 'refs/heads/master' && inputs.mode == 'test'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
+            docs
+            scripts
+      - name: Preserve an initial unverified capability receipt
+        run: python3 scripts/ime_profile_probe.py prepare --output "$RUNNER_TEMP/ime-profile-probe"
+      - name: Verify bounded capture, native format and archive contracts
+        run: |
+          python3 scripts/update_progress.py --check
+          python3 -m unittest discover -s scripts -p 'test_ime_profile*.py'
+          python3 -m unittest discover -s scripts -p 'test_ime_method_trace.py'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Prepare API37 SDK tooling
+        run: |
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
+          echo "$sdk_root/platform-tools" >> "$GITHUB_PATH"
+          printf 'y\n%.0s' {1..100} | "$sdk_root/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$sdk_root" 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0' 'cmdline-tools;23.0'
+          test -x "$sdk_root/cmdline-tools/23.0/bin/sdkmanager"
+          mv "$sdk_root/cmdline-tools/latest" "$sdk_root/cmdline-tools/pre-api37"
+          ln -s 23.0 "$sdk_root/cmdline-tools/latest"
+      - name: Enable hardware virtualization
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Inspect and briefly profile only the existing IME process
+        id: diagnostic
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: '35'
+          system-image-api-level: '37.0'
+          emulator-build: '16428233'
+          arch: x86_64
+          target: default
+          avd-name: agent-os-ime-profile
+          enable-hw-keyboard: false
+          pre-emulator-launch-script: python3 scripts/configure_emulator_phone.py --avd-name agent-os-ime-profile
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            python3 scripts/configure_emulator_phone.py --avd-name agent-os-ime-profile --check
+            python3 scripts/ime_profile_probe.py run --output "$RUNNER_TEMP/ime-profile-probe" --sdk-root "$ANDROID_HOME"
+      - name: Preserve success, unavailable capability and interrupted runs
+        if: always()
+        env:
+          EMULATOR_OUTCOME: ${{ steps.diagnostic.outcome }}
+        run: python3 scripts/ime_profile_probe.py finalize --output "$RUNNER_TEMP/ime-profile-probe" --outcome "${EMULATOR_OUTCOME:-unknown}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ime-profile-probe-api-37.0-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ime-profile-probe/
+          if-no-files-found: warn
+          retention-days: 14
+
+  archive:
+    if: github.ref == 'refs/heads/master' && inputs.mode == 'archive'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify the fixed source run, current-attempt job and artifact
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.run_id }}
+        run: |
+          [[ "$SOURCE_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > "$RUNNER_TEMP/ime-profile-source.json"
+          attempt="$(jq -r .run_attempt "$RUNNER_TEMP/ime-profile-source.json")"
+          [[ "$attempt" =~ ^[1-9][0-9]*$ ]]
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/attempts/$attempt/jobs?per_page=100" > "$RUNNER_TEMP/ime-profile-jobs.json"
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/ime-profile-artifacts.json"
+          python3 scripts/ime_profile_archive.py validate-source --source-run-json "$RUNNER_TEMP/ime-profile-source.json" --source-jobs-json "$RUNNER_TEMP/ime-profile-jobs.json" --artifact-index "$RUNNER_TEMP/ime-profile-artifacts.json" --github-output "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.source.outputs.commit }}
+          persist-credentials: false
+      - name: Verify the exact trusted source checkout
+        env:
+          SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_COMMIT"
+      - uses: actions/download-artifact@v4
+        if: steps.source.outputs.artifactIds != ''
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.source.outputs.runId }}
+          artifact-ids: ${{ steps.source.outputs.artifactIds }}
+          merge-multiple: false
+          path: ${{ runner.temp }}/ime-profile-input
+      - name: Archive exact originals and separate capability outcomes
+        env:
+          EVIDENCE_PATH: ${{ steps.source.outputs.evidencePath }}
+        run: |
+          python3 scripts/ime_profile_archive.py archive --source-run-json "$RUNNER_TEMP/ime-profile-source.json" --source-jobs-json "$RUNNER_TEMP/ime-profile-jobs.json" --artifact-index "$RUNNER_TEMP/ime-profile-artifacts.json" --incoming "$RUNNER_TEMP/ime-profile-input" --output "$EVIDENCE_PATH"
+          python3 scripts/update_progress.py --note '归档独立API37短时IME方法追踪能力校验；实际准入、请求与文件结果分开，原Notes和A/B实验未重跑，缺失与失败保留。'
+          python3 scripts/update_progress.py --check
+      - name: Commit an immutable evidence branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVIDENCE_PATH: ${{ steps.source.outputs.evidencePath }}
+          SOURCE_RUN_ID: ${{ steps.source.outputs.runId }}
+          SOURCE_ATTEMPT: ${{ steps.source.outputs.attempt }}
+        run: |
+          branch="evidence/ime-profile-probe-$SOURCE_RUN_ID-$SOURCE_ATTEMPT"
+          gh auth setup-git
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            echo 'Evidence branch already exists; refusing to overwrite it.'
+            exit 1
+          fi
+          git switch -c "$branch"
+          git config user.name agent
+          git config user.email 30574854+ecojust@users.noreply.github.com
+          git add -- "$EVIDENCE_PATH" README.md docs/progress.json docs/diagrams/development-progress.svg
+          git diff --cached --check
+          git commit -m "Archive IME profile capability $SOURCE_RUN_ID [skip ci]"
+          git push origin "HEAD:refs/heads/$branch"
+          echo "Evidence branch: https://github.com/$GITHUB_REPOSITORY/tree/$branch" >> "$GITHUB_STEP_SUMMARY"

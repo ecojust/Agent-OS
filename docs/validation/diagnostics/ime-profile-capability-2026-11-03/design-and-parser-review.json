@@ -1,0 +1,265 @@
+{
+  "schemaVersion": 1,
+  "kind": "ime-method-trace-design-and-parser-review",
+  "recordedAt": "2026-11-03T12:57:20.843514+00:00",
+  "scope": {
+    "deviceExecuted": false,
+    "ciDispatched": false,
+    "sourceImageByteEquivalenceVerified": false,
+    "originalNotesRerun": false,
+    "callerInference": false
+  },
+  "producerFiles": [
+    {
+      "path": "scripts/ime_method_trace.py",
+      "bytes": 11949,
+      "sha256": "1bfe251dc41ef43b960cb3de0ee6fbb87fb277ed0cdddba130c36d90f48a62d8"
+    },
+    {
+      "path": "scripts/test_ime_method_trace.py",
+      "bytes": 15510,
+      "sha256": "0ae6b88a69587c876928f692cc652075a73b9b279587f488a6bb7205a6059f5e"
+    }
+  ],
+  "frameworkReferenceCommit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+  "frameworkSources": [
+    {
+      "path": "services/core/java/com/android/server/am/AppProfiler.java",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/services/core/java/com/android/server/am/AppProfiler.java",
+      "bytes": 119196,
+      "sha256": "a58e8d011ae44d6745644a30e5d99e70fc1f7be0cd7c24e5e78815f877ccbbfc",
+      "local": "/workspace/scratch/reset-next-design-2026-11-03/services__core__java__com__android__server__am__AppProfiler.java"
+    },
+    {
+      "path": "core/java/android/app/ProfilerInfo.java",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/app/ProfilerInfo.java",
+      "bytes": 13352,
+      "sha256": "566d798ecf5d70b26fc5c07801d96f68e681d6f5f48b49326004a67dde5b618e",
+      "local": "/workspace/scratch/reset-next-design-2026-11-03/core__java__android__app__ProfilerInfo.java"
+    },
+    {
+      "path": "packages/Shell/AndroidManifest.xml",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/packages/Shell/AndroidManifest.xml",
+      "bytes": 76604,
+      "sha256": "f92041f368f9a7ae41dfda6dedd2fcc1fdf9ce70d5460313073de00f0f7310bd",
+      "local": "/workspace/scratch/reset-next-design-2026-11-03/packages__Shell__AndroidManifest.xml"
+    },
+    {
+      "path": "core/java/android/app/ActivityThread.java",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/app/ActivityThread.java",
+      "bytes": 431950,
+      "sha256": "2d7bd7d9a9978258776a98ffe60589585a215688da303da7c71be7af961dc210",
+      "local": "/workspace/scratch/reset-next-design-2026-11-03/core__java__android__app__ActivityThread.java"
+    },
+    {
+      "path": "services/core/java/com/android/server/am/ActivityManagerService.java",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/services/core/java/com/android/server/am/ActivityManagerService.java",
+      "bytes": 946188,
+      "sha256": "17923170a97fb001c3892ab4e0d71f9e249f9ea0b427a7aaf29916aae5208797",
+      "local": "/workspace/scratch/reset-next-design-2026-11-03/services__core__java__com__android__server__am__ActivityManagerService.java"
+    },
+    {
+      "path": "services/core/java/com/android/server/am/ActivityManagerShellCommand.java",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/services/core/java/com/android/server/am/ActivityManagerShellCommand.java",
+      "bytes": 235519,
+      "sha256": "1f474272dc40c55deceb89ddbc98d10cff78091e2fbfa379d23ef35be8d22ee5",
+      "local": "/workspace/scratch/reset-next-design-2026-11-03/services__core__java__com__android__server__am__ActivityManagerShellCommand.java"
+    },
+    {
+      "path": "core/java/android/os/Build.java",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/core/java/android/os/Build.java",
+      "bytes": 87675,
+      "sha256": "710f5dedfc70541f5bac3427f206e19d561038e8f8df51134909e3353e98ca42",
+      "local": "/workspace/scratch/reset-next-design-2026-11-03/core__java__android__os__Build.java"
+    },
+    {
+      "path": "services/core/java/com/android/server/am/ProcessList.java",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/services/core/java/com/android/server/am/ProcessList.java",
+      "bytes": 282564,
+      "sha256": "96bfea0a32f822a04e46a16279100d5fdc718b909999df4962f2bd15c8ac55fc",
+      "local": "/workspace/scratch/reset-next-design-2026-11-03/services__core__java__com__android__server__am__ProcessList.java"
+    },
+    {
+      "path": "services/core/java/com/android/server/am/ProcessRecord.java",
+      "commit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+      "url": "https://android.googlesource.com/platform/frameworks/base/+/94b4c163b7dfe5ce3607f7bb8456f9573f7de57d/services/core/java/com/android/server/am/ProcessRecord.java",
+      "bytes": 65264,
+      "sha256": "f4f07c1ba18fe28c66664c7300b9e5d22d5136358b136d3562aab401b0d616a0",
+      "local": "/workspace/scratch/reset-next-design-2026-11-03/services__core__java__com__android__server__am__ProcessRecord.java"
+    }
+  ],
+  "artSources": [
+    {
+      "path": "runtime/trace.cc",
+      "commit": "b753cf97923c3695338d21466fa14c57b480a59a",
+      "url": "https://android.googlesource.com/platform/art/+/b753cf97923c3695338d21466fa14c57b480a59a/runtime/trace.cc",
+      "bytes": 83741,
+      "sha256": "c5e15f0e1a6a6e844944d2bc9e118d35596ac795f7d6e026ebb8aa5678423422"
+    },
+    {
+      "path": "runtime/trace.h",
+      "commit": "b753cf97923c3695338d21466fa14c57b480a59a",
+      "url": "https://android.googlesource.com/platform/art/+/b753cf97923c3695338d21466fa14c57b480a59a/runtime/trace.h",
+      "bytes": 29916,
+      "sha256": "e457c8520139ae5247b43efa6ba222f670b53a9a160fae9d5106ed3fa7bcf4b3"
+    },
+    {
+      "path": "runtime/instrumentation.cc",
+      "commit": "b753cf97923c3695338d21466fa14c57b480a59a",
+      "url": "https://android.googlesource.com/platform/art/+/b753cf97923c3695338d21466fa14c57b480a59a/runtime/instrumentation.cc",
+      "bytes": 74425,
+      "sha256": "cec78fb927db52c7b8d8cde71775a6565fdb82019cedb865e9d0966579a44a2d"
+    },
+    {
+      "path": "runtime/instrumentation.h",
+      "commit": "b753cf97923c3695338d21466fa14c57b480a59a",
+      "url": "https://android.googlesource.com/platform/art/+/b753cf97923c3695338d21466fa14c57b480a59a/runtime/instrumentation.h",
+      "bytes": 39669,
+      "sha256": "fcd3e99d9b4254f441c0a6835e34eabb80f4aecd306a23f02e76541adef16882"
+    },
+    {
+      "path": "runtime/native/dalvik_system_VMDebug.cc",
+      "commit": "b753cf97923c3695338d21466fa14c57b480a59a",
+      "url": "https://android.googlesource.com/platform/art/+/b753cf97923c3695338d21466fa14c57b480a59a/runtime/native/dalvik_system_VMDebug.cc",
+      "bytes": 33128,
+      "sha256": "8f836c27ccf58b282aaeedf40f5dc3d8bb2b3ebaa81b7b944db0f1f2cc2bbb37"
+    },
+    {
+      "path": "runtime/runtime_globals.h",
+      "commit": "b753cf97923c3695338d21466fa14c57b480a59a",
+      "url": "https://android.googlesource.com/platform/art/+/b753cf97923c3695338d21466fa14c57b480a59a/runtime/runtime_globals.h",
+      "bytes": 6485,
+      "sha256": "22f7d0e602cb0a214bfcf23e9e66dbeb0e879f33ce7c329816881e1b225f6847"
+    },
+    {
+      "path": "libartbase/base/time_utils.cc",
+      "commit": "b753cf97923c3695338d21466fa14c57b480a59a",
+      "url": "https://android.googlesource.com/platform/art/+/b753cf97923c3695338d21466fa14c57b480a59a/libartbase/base/time_utils.cc",
+      "bytes": 7590,
+      "sha256": "57d9da8802ff4313e65aec616af020bee27f788f4a6f9104b68033217cc0bb6b"
+    },
+    {
+      "path": "runtime/trace_common.h",
+      "commit": "b753cf97923c3695338d21466fa14c57b480a59a",
+      "url": "https://android.googlesource.com/platform/art/+/b753cf97923c3695338d21466fa14c57b480a59a/runtime/trace_common.h",
+      "bytes": 8050,
+      "sha256": "698faae8f07292a8df0ee2cbaa7673e9fc49dd283578b86159edf42c55e21834"
+    }
+  ],
+  "findings": [
+    {
+      "id": "actual_admission",
+      "source": [
+        "ActivityManagerService.java:16850-16879",
+        "ActivityManagerService.java:8332-8348",
+        "Build.java:1903-1904",
+        "packages/Shell/AndroidManifest.xml:187"
+      ],
+      "claim": "profileControl requires SET_ACTIVITY_WATCHER. setProfileApp skips app debug/profileable flags only if actual ro.debuggable==1. Build type userdebug alone is not the boolean. Shell declares the permission; actual run must check current grant. On ro.debuggable!=1, absent/unproved package flags remain unavailable. No root or flag/property mutation is required or authorized."
+    },
+    {
+      "id": "global_slot_side_effect",
+      "source": [
+        "AppProfiler.java:1973-1984",
+        "AppProfiler.java:1928-1959"
+      ],
+      "claim": "A start calls stopProfilerLPf(null) before target admission. Require a complete unfiltered global slot empty before start. This is an observed precondition, not atomic ownership or an assertion that directly app-started method tracing is universally discoverable."
+    },
+    {
+      "id": "owned_slot",
+      "source": [
+        "AppProfiler.java:1978-2006",
+        "AppProfiler.java:2045-2060",
+        "AppProfiler.java:2495-2521",
+        "ProcessRecord.java:1494-1546"
+      ],
+      "claim": "Numeric CLI PID is resolved to ProcessRecord; mProfileApp stores proc.processName, not the PID text. At normal start return the global profileFd has been closed and set null. Slot app/name, ProcessRecord PID/UID, unique profileFile and sampling0/streamingfalse/flags0/type0 must match. ProcessRecord hex identityHash is not a stable process identity. Same /proc PID/start time/UID must be rechecked before own stop; no global stop fallback."
+    },
+    {
+      "id": "dump_completeness",
+      "source": [
+        "ActivityManagerService.java:11642-11652",
+        "ProcessList.java:4675-4761",
+        "ActivityManagerService.java:12181-12224"
+      ],
+      "claim": "processes invokes dumpAll=true; unfiltered dump starts with ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes), profile section is in dumpOtherProcessesInfoLSP, and its final mForceBackgroundCheck boolean follows Total persistent processes/mProcessesReady/mBooting. Empty global slot produces no profile lines, not a null status row. Package filtering can hide another owner and cannot be used for empty-slot admission."
+    },
+    {
+      "id": "request_not_runtime_ack",
+      "source": [
+        "ActivityManagerShellCommand.java:1313-1432",
+        "ActivityThread.java:1692",
+        "ActivityThread.java:1109-1130",
+        "ActivityThread.java:7632-7684"
+      ],
+      "claim": "start/stop dispatch asynchronously to ActivityThread. Native runtime exceptions are logged rather than returned through command exit. Exit0 and AMS slot only prove request/server state; require actual bounded original complete native file and matching PID plus source command receipts."
+    },
+    {
+      "id": "buffer_not_total_limit",
+      "source": [
+        "ActivityThread.java:1116-1119",
+        "runtime/trace.cc:1100-1204"
+      ],
+      "claim": "SystemProperties.getInt(debug.traceview-buffer-size-mb,8) controls binary buffer. Read without mutation; empty means default8. Unsupported property lexical values may conservatively fail admission. Text summary/symbol tables are additional, so MAX_TRACE_BYTES16MiB is a distinct total-file/host parser limit, not an on-device allocation bound. ART64 reference buffer pool additionally costs approximately128MiB; no measured device memory claim."
+    },
+    {
+      "id": "exact_supported_format",
+      "source": [
+        "runtime/trace.cc:1004-1048",
+        "runtime/trace.cc:1100-1148",
+        "runtime/trace.cc:1347-1349",
+        "runtime/trace.cc:1940-1989",
+        "runtime/trace_common.h:44-50",
+        "runtime/trace.h:394"
+      ],
+      "claim": "Support modern ART V1 nonstreaming on-disk2(single-clock10B) or3(dual14B), 32B SLOW little-endian header. Fixed method rows have exactly5 fields including ID, with no source line number. Method encoding begins0 and native printf spells it 0; thread encodings begin1 and are not Linux TIDs. Unsupported6-field/streaming/new packet formats remain unverified."
+    },
+    {
+      "id": "format_integrity_not_stack",
+      "claim": "Validate complete bounded summary, unique numeric dictionaries, resolved record references, count and framing, actions0/1/2, PID, clock/version/header/reserved bytes, finite unsigned counters and per-thread clock order. No stack balance or caller classification is attempted: boundary exits/unwinds and open frames are permitted. is_precise_trace is not sampling admission; commands must establish sampling0. Count is event-record count, not method invocation count. No absence or future8s-window coverage inference."
+    },
+    {
+      "id": "runtime_intrusion_and_time",
+      "source": [
+        "runtime/trace.cc:700-786",
+        "runtime/instrumentation.cc:1402-1427",
+        "runtime/trace.cc:1004-1030",
+        "libartbase/base/time_utils.cc:179-189"
+      ],
+      "claim": "Non-sampling profiling suspends threads/JIT, invalidates code and deoptimizes; stop may return runtime to nondebuggable but does not restore previous JIT/cache history. It is a separate disposable-device observation, not unchanged timing/performance. MONOTONIC/thread-CPU clocks are not mapped to BOOTTIME by this parser."
+    }
+  ],
+  "parserContract": {
+    "entrypoint": "parse_trace(data: bytes) -> dict",
+    "status": [
+      "recorded",
+      "unverified"
+    ],
+    "limits": {
+      "traceBytes": 16777216,
+      "summaryBytes": 4194304,
+      "lineBytes": 4096,
+      "threads": 4096,
+      "methods": 100000,
+      "records": 1500000
+    },
+    "recordedRequires": "Supported complete structural output, no overflow, nonempty actual records and dictionaries; no call-stack or native-stop conclusion by itself.",
+    "producerMustBind": "Original file identity, precise source and target PID/UID/startTime, command sampling/streaming flags, own start/stop and cleanup receipts."
+  },
+  "tests": {
+    "count": 35,
+    "passed": true,
+    "seconds": 0.363,
+    "syntheticSourceDerivedFixturesOnly": true,
+    "independentTestReceipt": "/workspace/scratch/reset-next-method-trace-format-2026-11-03/parser-test-review.json"
+  },
+  "recommendedCurrentStep": "One short capability on a dedicated emulator; no A/B, setting writes, UI action or reset stimulation; report unavailable/unverified if admission or native file evidence is missing."
+}

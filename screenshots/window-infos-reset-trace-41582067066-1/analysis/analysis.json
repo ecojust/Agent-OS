@@ -1,0 +1,1233 @@
+{
+  "schemaVersion": 1,
+  "kind": "window-infos-reset-trace-analysis",
+  "scope": {
+    "diagnosticOnly": true,
+    "applicationCompatibilityAcceptance": false,
+    "originalNotesReplayed": false,
+    "comparisonStatusChanged": false,
+    "settingsObserverInferredFromMissingAncestor": false,
+    "sourceImageEquivalenceVerified": false,
+    "binderIdentityProved": false,
+    "fixedSourceInference": true,
+    "noNestedLooperDispatchAssumed": true,
+    "sourceCommit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+    "resetTrackingReasonIsCompleteResetCount": false,
+    "absentSlicesProveNoCalls": false,
+    "captureStatusValidatedByParent": true
+  },
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "919bee887c78bd0de23b2d853320e0f1908107ea",
+    "runId": 41582067066,
+    "attempt": 1
+  },
+  "context": {
+    "source": {
+      "repository": "ecojust/Agent-OS",
+      "commit": "919bee887c78bd0de23b2d853320e0f1908107ea",
+      "runId": 41582067066,
+      "attempt": 1
+    },
+    "arms": {
+      "baseline": {
+        "status": "recorded",
+        "reason": null,
+        "package": "com.android.inputmethod.latin",
+        "uid": 10112,
+        "readyElapsedMs": 24608,
+        "freezeElapsedMs": 36608,
+        "showElapsedMs": 25674
+      },
+      "enabled": {
+        "status": "recorded",
+        "reason": null,
+        "package": "com.android.inputmethod.latin",
+        "uid": 10112,
+        "readyElapsedMs": 37907,
+        "freezeElapsedMs": 49907,
+        "showElapsedMs": 38643
+      }
+    },
+    "inputFiles": {
+      "report.json": {
+        "bytes": 6818,
+        "sha256": "c5f39700ba19d9568ef84a95c59420fdcdfd2e87a3efc35f7cea5854c7b23740"
+      },
+      "baseline/report.json": {
+        "bytes": 5917,
+        "sha256": "f9e6872bcbe148140b8b3630f2faff9d167d95f6724692685b9dbbd4c7707c1f"
+      },
+      "baseline/raw-result.json": {
+        "bytes": 36604,
+        "sha256": "1426eb7dac07ae95de7326b2f5eaaa4dcd2ba55c6e9593beefe486eb0a2a8e90"
+      },
+      "baseline/fixture.json": {
+        "bytes": 540,
+        "sha256": "20fc535b7feefd4dda483ced95af8e8642dd21a463836798ce2e97d72ea993da"
+      },
+      "enabled/report.json": {
+        "bytes": 5884,
+        "sha256": "0df5618db9884fccf3cd3e3f229225dc2776e222316f365bf15d0529923eacf8"
+      },
+      "enabled/raw-result.json": {
+        "bytes": 38363,
+        "sha256": "5b18117b9acd1d518812743dc6ce535e8e60169152cfe498046d78414f8ff9f8"
+      },
+      "enabled/fixture.json": {
+        "bytes": 540,
+        "sha256": "fae33d48149767a9d0348feb34d552c6847011256f09823a53324cfa3d6249dc"
+      }
+    }
+  },
+  "trace": {
+    "bytes": 4393006,
+    "sha256": "23a4d39370353f9fd9799fd4d773f32cdfbc134c96e32fc11298851183e9975a"
+  },
+  "processor": {
+    "version": "v59.1",
+    "bytes": 15885448,
+    "sha256": "2434129a3af4dc9e2034a476f7b76447b490975213e301769310d3bd0d5d6458",
+    "url": "https://commondatastorage.googleapis.com/perfetto-luci-artifacts/v59.1/linux-amd64/trace_processor_shell",
+    "arguments": [
+      "--full-sort"
+    ],
+    "queryTimeoutSeconds": 60,
+    "perQueryOutputByteLimit": 4194304
+  },
+  "program": {
+    "path": "scripts/window_infos_reset_trace_analysis.py",
+    "bytes": 25957,
+    "sha256": "3ec29a5419788b8c9050e91242b893276b09a4094c12ff605f69f07d0108b672"
+  },
+  "queries": {
+    "trace-slices.csv": {
+      "bytes": 3911,
+      "sha256": "117118d962a5283c00af35073514f3000caa12621016378b1c4dd9b0f60d748e",
+      "sqlSha256": "878fd1bb4268bf72b8cd3179623d652dbc82633bdbea5c9fde455d0c3d169f88"
+    },
+    "trace-clocks.csv": {
+      "bytes": 5495,
+      "sha256": "bef14ef78c2f5bfeb55dc6c08f7f2a74176390096b2f9b8f58136908c115c6af",
+      "sqlSha256": "0f316e9850ac440f90c3fbbeb00aa0d2d7b04a7765b19218e72ffdb5ad4006c1"
+    },
+    "trace-processes.csv": {
+      "bytes": 50612,
+      "sha256": "822a2b072ed53c734120a37ae961d18eb22bec3adcb854d5093558fdbb6c4b67",
+      "sqlSha256": "b7489cebbdf2dd94b360bfcd54ca08a7a63ab1e44eb6ed255c1906687e8d0042"
+    },
+    "trace-stats.csv": {
+      "bytes": 38393,
+      "sha256": "5155bc89b2c8c98566c18b0e31af06383ae39b39bb5c0d538af2410b3d8e73b7",
+      "sqlSha256": "13f8eab3371c84a36a9171f05d77df252d3cc4f5307ceb17c769798c6a4bd0ca"
+    },
+    "trace-bounds.csv": {
+      "bytes": 44,
+      "sha256": "2f9029b886be6289a2b48095e2da9a0dfef7e0d7b5ae95d9f56c4af00c1ea96e",
+      "sqlSha256": "57b1633e64505dbf1d53baa07e2e079227ccc91093bd6b91b1f01f5072634e7b"
+    },
+    "trace-metadata.csv": {
+      "bytes": 4304,
+      "sha256": "60118d49e9e34f38d97051918569b9bdec551ddea0142a097881af9d7c38d87a",
+      "sqlSha256": "788e8518545c8c807baa4757e9305b3d5072033f812cfca59a3825fdbf9d64db"
+    }
+  },
+  "status": "unknown",
+  "traceQuality": {
+    "status": "unknown",
+    "reasons": [
+      "TRACE_STATS_INVALID"
+    ],
+    "allDataSourcesStartedNs": 23006521392,
+    "tracingDisabledNs": 50645274868,
+    "bounds": [
+      {
+        "start_ts": 22985571976,
+        "end_ts": 50611763645
+      }
+    ],
+    "nonzeroLossOrErrorStats": [],
+    "noLossDoesNotProveEveryCallWasTraced": true
+  },
+  "clockMapping": {
+    "status": "recorded",
+    "traceClockIds": [
+      6
+    ],
+    "boottimeSnapshots": [
+      {
+        "snapshot_id": 0,
+        "ts": 22492239652,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 22492239652,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 1,
+        "ts": 22492250468,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 22492250468,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 2,
+        "ts": 23006520201,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 23006520201,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 3,
+        "ts": 25009719659,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 25009719659,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 4,
+        "ts": 30000854858,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 30000854858,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 5,
+        "ts": 30003190141,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 30003190141,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 6,
+        "ts": 35003199947,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 35003199947,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 7,
+        "ts": 40000961015,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 40000961015,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 8,
+        "ts": 40003125664,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 40003125664,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 9,
+        "ts": 45002459884,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 45002459884,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 10,
+        "ts": 50001103759,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 50001103759,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 11,
+        "ts": 50004531051,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 50004531051,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 12,
+        "ts": 50612304983,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 50612304983,
+        "machine_id": 0
+      },
+      {
+        "snapshot_id": 13,
+        "ts": 50645273376,
+        "clock_id": 6,
+        "clock_name": "BOOTTIME",
+        "clock_value": 50645273376,
+        "machine_id": 0
+      }
+    ],
+    "elapsedRealtimeMapping": "trace_ns_equals_boottime_ns",
+    "reason": null
+  },
+  "imeIdentity": {
+    "status": "recorded",
+    "matchingProcesses": [
+      {
+        "upid": 244,
+        "pid": 1661,
+        "name": "com.android.inputmethod.latin",
+        "uid": 10112,
+        "start_ts": null,
+        "end_ts": null,
+        "cmdline": "com.android.inputmethod.latin",
+        "machine_id": 0
+      }
+    ],
+    "openLifecycleEndpointsRemainNull": true,
+    "identityBasis": "unique trace process instance, exact package/UID, main thread; not Binder identity"
+  },
+  "armCoverage": {
+    "baseline": {
+      "status": "unknown",
+      "rawWindowFullyCovered": false
+    },
+    "enabled": {
+      "status": "unknown",
+      "rawWindowFullyCovered": false
+    }
+  },
+  "events": [
+    {
+      "slice": {
+        "id": 12356,
+        "parent_id": 12061,
+        "ts": 25737865253,
+        "dur": 4327,
+        "depth": 2,
+        "track_id": 1130,
+        "name": "IMS.onComputeInsets",
+        "utid": 244,
+        "upid": 244,
+        "tid": 1661,
+        "pid": 1661,
+        "is_main_thread": 1
+      },
+      "process": {
+        "upid": 244,
+        "pid": 1661,
+        "name": "com.android.inputmethod.latin",
+        "uid": 10112,
+        "start_ts": null,
+        "end_ts": null,
+        "cmdline": "com.android.inputmethod.latin",
+        "machine_id": 0
+      },
+      "ancestors": [
+        {
+          "id": 12061,
+          "parent_id": 12060,
+          "ts": 25716936627,
+          "dur": 232146218,
+          "depth": 1,
+          "track_id": 1130,
+          "name": "traversal",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        },
+        {
+          "id": 12060,
+          "parent_id": null,
+          "ts": 25716931419,
+          "dur": 232155502,
+          "depth": 0,
+          "track_id": 1130,
+          "name": "Choreographer#doFrame 2960",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        }
+      ],
+      "clientTransactionAncestorIds": [],
+      "configChangedAncestorIds": [],
+      "callerClassification": "unknown",
+      "classificationReasons": [
+        "TRACE_STATS_INVALID"
+      ],
+      "rawContext": [
+        {
+          "arm": "baseline",
+          "phase": "after_show_in_raw_window",
+          "showOffsetNs": 63865253,
+          "windowFullyCovered": false
+        },
+        {
+          "arm": "enabled",
+          "phase": "before_raw_window",
+          "showOffsetNs": -12905134747,
+          "windowFullyCovered": false
+        }
+      ]
+    },
+    {
+      "slice": {
+        "id": 15761,
+        "parent_id": 15757,
+        "ts": 25976807835,
+        "dur": 8563,
+        "depth": 3,
+        "track_id": 1130,
+        "name": "IMS.onComputeInsets",
+        "utid": 244,
+        "upid": 244,
+        "tid": 1661,
+        "pid": 1661,
+        "is_main_thread": 1
+      },
+      "process": {
+        "upid": 244,
+        "pid": 1661,
+        "name": "com.android.inputmethod.latin",
+        "uid": 10112,
+        "start_ts": null,
+        "end_ts": null,
+        "cmdline": "com.android.inputmethod.latin",
+        "machine_id": 0
+      },
+      "ancestors": [
+        {
+          "id": 15757,
+          "parent_id": 15756,
+          "ts": 25976539705,
+          "dur": 320027,
+          "depth": 2,
+          "track_id": 1130,
+          "name": "traversal",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        },
+        {
+          "id": 15756,
+          "parent_id": 15755,
+          "ts": 25976533987,
+          "dur": 327398,
+          "depth": 1,
+          "track_id": 1130,
+          "name": "Choreographer#doFrame - resynced to 3045 in 22.9ms",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        },
+        {
+          "id": 15755,
+          "parent_id": null,
+          "ts": 25976420267,
+          "dur": 441519,
+          "depth": 0,
+          "track_id": 1130,
+          "name": "Choreographer#doFrame 2981",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        }
+      ],
+      "clientTransactionAncestorIds": [],
+      "configChangedAncestorIds": [],
+      "callerClassification": "unknown",
+      "classificationReasons": [
+        "TRACE_STATS_INVALID"
+      ],
+      "rawContext": [
+        {
+          "arm": "baseline",
+          "phase": "after_show_in_raw_window",
+          "showOffsetNs": 302807835,
+          "windowFullyCovered": false
+        },
+        {
+          "arm": "enabled",
+          "phase": "before_raw_window",
+          "showOffsetNs": -12666192165,
+          "windowFullyCovered": false
+        }
+      ]
+    },
+    {
+      "slice": {
+        "id": 27573,
+        "parent_id": 27562,
+        "ts": 36849948800,
+        "dur": 4426,
+        "depth": 2,
+        "track_id": 1130,
+        "name": "IMS.onComputeInsets",
+        "utid": 244,
+        "upid": 244,
+        "tid": 1661,
+        "pid": 1661,
+        "is_main_thread": 1
+      },
+      "process": {
+        "upid": 244,
+        "pid": 1661,
+        "name": "com.android.inputmethod.latin",
+        "uid": 10112,
+        "start_ts": null,
+        "end_ts": null,
+        "cmdline": "com.android.inputmethod.latin",
+        "machine_id": 0
+      },
+      "ancestors": [
+        {
+          "id": 27562,
+          "parent_id": 27561,
+          "ts": 36849437778,
+          "dur": 549249,
+          "depth": 1,
+          "track_id": 1130,
+          "name": "traversal",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        },
+        {
+          "id": 27561,
+          "parent_id": null,
+          "ts": 36849425730,
+          "dur": 746012,
+          "depth": 0,
+          "track_id": 1130,
+          "name": "Choreographer#doFrame 3779",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        }
+      ],
+      "clientTransactionAncestorIds": [],
+      "configChangedAncestorIds": [],
+      "callerClassification": "unknown",
+      "classificationReasons": [
+        "TRACE_STATS_INVALID"
+      ],
+      "rawContext": [
+        {
+          "arm": "baseline",
+          "phase": "after_raw_window",
+          "showOffsetNs": 11175948800,
+          "windowFullyCovered": false
+        },
+        {
+          "arm": "enabled",
+          "phase": "before_raw_window",
+          "showOffsetNs": -1793051200,
+          "windowFullyCovered": false
+        }
+      ]
+    },
+    {
+      "slice": {
+        "id": 29446,
+        "parent_id": 29440,
+        "ts": 37371477263,
+        "dur": 5868,
+        "depth": 2,
+        "track_id": 1130,
+        "name": "IMS.onComputeInsets",
+        "utid": 244,
+        "upid": 244,
+        "tid": 1661,
+        "pid": 1661,
+        "is_main_thread": 1
+      },
+      "process": {
+        "upid": 244,
+        "pid": 1661,
+        "name": "com.android.inputmethod.latin",
+        "uid": 10112,
+        "start_ts": null,
+        "end_ts": null,
+        "cmdline": "com.android.inputmethod.latin",
+        "machine_id": 0
+      },
+      "ancestors": [
+        {
+          "id": 29440,
+          "parent_id": 29439,
+          "ts": 37366260702,
+          "dur": 5280075,
+          "depth": 1,
+          "track_id": 1130,
+          "name": "traversal",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        },
+        {
+          "id": 29439,
+          "parent_id": null,
+          "ts": 37366247552,
+          "dur": 5296230,
+          "depth": 0,
+          "track_id": 1130,
+          "name": "Choreographer#doFrame 3894",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        }
+      ],
+      "clientTransactionAncestorIds": [],
+      "configChangedAncestorIds": [],
+      "callerClassification": "unknown",
+      "classificationReasons": [
+        "TRACE_STATS_INVALID"
+      ],
+      "rawContext": [
+        {
+          "arm": "baseline",
+          "phase": "after_raw_window",
+          "showOffsetNs": 11697477263,
+          "windowFullyCovered": false
+        },
+        {
+          "arm": "enabled",
+          "phase": "before_raw_window",
+          "showOffsetNs": -1271522737,
+          "windowFullyCovered": false
+        }
+      ]
+    },
+    {
+      "slice": {
+        "id": 33257,
+        "parent_id": 33212,
+        "ts": 38722979055,
+        "dur": 4166,
+        "depth": 3,
+        "track_id": 1130,
+        "name": "IMS.onComputeInsets",
+        "utid": 244,
+        "upid": 244,
+        "tid": 1661,
+        "pid": 1661,
+        "is_main_thread": 1
+      },
+      "process": {
+        "upid": 244,
+        "pid": 1661,
+        "name": "com.android.inputmethod.latin",
+        "uid": 10112,
+        "start_ts": null,
+        "end_ts": null,
+        "cmdline": "com.android.inputmethod.latin",
+        "machine_id": 0
+      },
+      "ancestors": [
+        {
+          "id": 33212,
+          "parent_id": 33211,
+          "ts": 38720102485,
+          "dur": 6006929,
+          "depth": 2,
+          "track_id": 1130,
+          "name": "traversal",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        },
+        {
+          "id": 33211,
+          "parent_id": 33210,
+          "ts": 38720098579,
+          "dur": 6012998,
+          "depth": 1,
+          "track_id": 1130,
+          "name": "Choreographer#doFrame - resynced to 4811 in 29.2ms",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        },
+        {
+          "id": 33210,
+          "parent_id": null,
+          "ts": 38720083366,
+          "dur": 6028492,
+          "depth": 0,
+          "track_id": 1130,
+          "name": "Choreographer#doFrame 4807",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        }
+      ],
+      "clientTransactionAncestorIds": [],
+      "configChangedAncestorIds": [],
+      "callerClassification": "unknown",
+      "classificationReasons": [
+        "TRACE_STATS_INVALID"
+      ],
+      "rawContext": [
+        {
+          "arm": "baseline",
+          "phase": "after_raw_window",
+          "showOffsetNs": 13048979055,
+          "windowFullyCovered": false
+        },
+        {
+          "arm": "enabled",
+          "phase": "after_show_in_raw_window",
+          "showOffsetNs": 79979055,
+          "windowFullyCovered": false
+        }
+      ]
+    },
+    {
+      "slice": {
+        "id": 38577,
+        "parent_id": null,
+        "ts": 47182630102,
+        "dur": 56789493,
+        "depth": 0,
+        "track_id": 1130,
+        "name": "IMS.resetStateForNewConfiguration",
+        "utid": 244,
+        "upid": 244,
+        "tid": 1661,
+        "pid": 1661,
+        "is_main_thread": 1
+      },
+      "process": {
+        "upid": 244,
+        "pid": 1661,
+        "name": "com.android.inputmethod.latin",
+        "uid": 10112,
+        "start_ts": null,
+        "end_ts": null,
+        "cmdline": "com.android.inputmethod.latin",
+        "machine_id": 0
+      },
+      "ancestors": [],
+      "clientTransactionAncestorIds": [],
+      "configChangedAncestorIds": [],
+      "callerClassification": "unknown",
+      "classificationReasons": [
+        "TRACE_STATS_INVALID"
+      ],
+      "rawContext": [
+        {
+          "arm": "baseline",
+          "phase": "after_raw_window",
+          "showOffsetNs": 21508630102,
+          "windowFullyCovered": false
+        },
+        {
+          "arm": "enabled",
+          "phase": "after_show_in_raw_window",
+          "showOffsetNs": 8539630102,
+          "windowFullyCovered": false
+        }
+      ]
+    },
+    {
+      "slice": {
+        "id": 38578,
+        "parent_id": 38577,
+        "ts": 47182641499,
+        "dur": 490231,
+        "depth": 1,
+        "track_id": 1130,
+        "name": "IMS.initViews",
+        "utid": 244,
+        "upid": 244,
+        "tid": 1661,
+        "pid": 1661,
+        "is_main_thread": 1
+      },
+      "process": {
+        "upid": 244,
+        "pid": 1661,
+        "name": "com.android.inputmethod.latin",
+        "uid": 10112,
+        "start_ts": null,
+        "end_ts": null,
+        "cmdline": "com.android.inputmethod.latin",
+        "machine_id": 0
+      },
+      "ancestors": [
+        {
+          "id": 38577,
+          "parent_id": null,
+          "ts": 47182630102,
+          "dur": 56789493,
+          "depth": 0,
+          "track_id": 1130,
+          "name": "IMS.resetStateForNewConfiguration",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        }
+      ],
+      "clientTransactionAncestorIds": [],
+      "configChangedAncestorIds": [],
+      "callerClassification": "unknown",
+      "classificationReasons": [
+        "TRACE_STATS_INVALID"
+      ],
+      "rawContext": [
+        {
+          "arm": "baseline",
+          "phase": "after_raw_window",
+          "showOffsetNs": 21508641499,
+          "windowFullyCovered": false
+        },
+        {
+          "arm": "enabled",
+          "phase": "after_show_in_raw_window",
+          "showOffsetNs": 8539641499,
+          "windowFullyCovered": false
+        }
+      ]
+    },
+    {
+      "slice": {
+        "id": 39034,
+        "parent_id": 39023,
+        "ts": 47240155643,
+        "dur": 6730,
+        "depth": 3,
+        "track_id": 1130,
+        "name": "IMS.onComputeInsets",
+        "utid": 244,
+        "upid": 244,
+        "tid": 1661,
+        "pid": 1661,
+        "is_main_thread": 1
+      },
+      "process": {
+        "upid": 244,
+        "pid": 1661,
+        "name": "com.android.inputmethod.latin",
+        "uid": 10112,
+        "start_ts": null,
+        "end_ts": null,
+        "cmdline": "com.android.inputmethod.latin",
+        "machine_id": 0
+      },
+      "ancestors": [
+        {
+          "id": 39023,
+          "parent_id": 39022,
+          "ts": 47239472504,
+          "dur": 4702114,
+          "depth": 2,
+          "track_id": 1130,
+          "name": "traversal",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        },
+        {
+          "id": 39022,
+          "parent_id": 39021,
+          "ts": 47239468638,
+          "dur": 4708593,
+          "depth": 1,
+          "track_id": 1130,
+          "name": "Choreographer#doFrame - resynced to 9074 in 26.5ms",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        },
+        {
+          "id": 39021,
+          "parent_id": null,
+          "ts": 47239441728,
+          "dur": 4735764,
+          "depth": 0,
+          "track_id": 1130,
+          "name": "Choreographer#doFrame 9071",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        }
+      ],
+      "clientTransactionAncestorIds": [],
+      "configChangedAncestorIds": [],
+      "callerClassification": "unknown",
+      "classificationReasons": [
+        "TRACE_STATS_INVALID"
+      ],
+      "rawContext": [
+        {
+          "arm": "baseline",
+          "phase": "after_raw_window",
+          "showOffsetNs": 21566155643,
+          "windowFullyCovered": false
+        },
+        {
+          "arm": "enabled",
+          "phase": "after_show_in_raw_window",
+          "showOffsetNs": 8597155643,
+          "windowFullyCovered": false
+        }
+      ]
+    },
+    {
+      "slice": {
+        "id": 39168,
+        "parent_id": 39167,
+        "ts": 47249755999,
+        "dur": 5638,
+        "depth": 2,
+        "track_id": 1130,
+        "name": "IMS.onComputeInsets",
+        "utid": 244,
+        "upid": 244,
+        "tid": 1661,
+        "pid": 1661,
+        "is_main_thread": 1
+      },
+      "process": {
+        "upid": 244,
+        "pid": 1661,
+        "name": "com.android.inputmethod.latin",
+        "uid": 10112,
+        "start_ts": null,
+        "end_ts": null,
+        "cmdline": "com.android.inputmethod.latin",
+        "machine_id": 0
+      },
+      "ancestors": [
+        {
+          "id": 39167,
+          "parent_id": 39164,
+          "ts": 47249722599,
+          "dur": 235256043,
+          "depth": 1,
+          "track_id": 1130,
+          "name": "traversal",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        },
+        {
+          "id": 39164,
+          "parent_id": null,
+          "ts": 47249681978,
+          "dur": 235302673,
+          "depth": 0,
+          "track_id": 1130,
+          "name": "Choreographer#doFrame 9114",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        }
+      ],
+      "clientTransactionAncestorIds": [],
+      "configChangedAncestorIds": [],
+      "callerClassification": "unknown",
+      "classificationReasons": [
+        "TRACE_STATS_INVALID"
+      ],
+      "rawContext": [
+        {
+          "arm": "baseline",
+          "phase": "after_raw_window",
+          "showOffsetNs": 21575755999,
+          "windowFullyCovered": false
+        },
+        {
+          "arm": "enabled",
+          "phase": "after_show_in_raw_window",
+          "showOffsetNs": 8606755999,
+          "windowFullyCovered": false
+        }
+      ]
+    },
+    {
+      "slice": {
+        "id": 39467,
+        "parent_id": 39462,
+        "ts": 47544676203,
+        "dur": 4317,
+        "depth": 3,
+        "track_id": 1130,
+        "name": "IMS.onComputeInsets",
+        "utid": 244,
+        "upid": 244,
+        "tid": 1661,
+        "pid": 1661,
+        "is_main_thread": 1
+      },
+      "process": {
+        "upid": 244,
+        "pid": 1661,
+        "name": "com.android.inputmethod.latin",
+        "uid": 10112,
+        "start_ts": null,
+        "end_ts": null,
+        "cmdline": "com.android.inputmethod.latin",
+        "machine_id": 0
+      },
+      "ancestors": [
+        {
+          "id": 39462,
+          "parent_id": 39461,
+          "ts": 47544162547,
+          "dur": 2421131,
+          "depth": 2,
+          "track_id": 1130,
+          "name": "traversal",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        },
+        {
+          "id": 39461,
+          "parent_id": 39460,
+          "ts": 47544156097,
+          "dur": 2430165,
+          "depth": 1,
+          "track_id": 1130,
+          "name": "Choreographer#doFrame - resynced to 9282 in 21.8ms",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        },
+        {
+          "id": 39460,
+          "parent_id": null,
+          "ts": 47544111691,
+          "dur": 2474842,
+          "depth": 0,
+          "track_id": 1130,
+          "name": "Choreographer#doFrame 9280",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        }
+      ],
+      "clientTransactionAncestorIds": [],
+      "configChangedAncestorIds": [],
+      "callerClassification": "unknown",
+      "classificationReasons": [
+        "TRACE_STATS_INVALID"
+      ],
+      "rawContext": [
+        {
+          "arm": "baseline",
+          "phase": "after_raw_window",
+          "showOffsetNs": 21870676203,
+          "windowFullyCovered": false
+        },
+        {
+          "arm": "enabled",
+          "phase": "after_show_in_raw_window",
+          "showOffsetNs": 8901676203,
+          "windowFullyCovered": false
+        }
+      ]
+    },
+    {
+      "slice": {
+        "id": 40703,
+        "parent_id": 40691,
+        "ts": 50141729789,
+        "dur": 8853,
+        "depth": 2,
+        "track_id": 1130,
+        "name": "IMS.onComputeInsets",
+        "utid": 244,
+        "upid": 244,
+        "tid": 1661,
+        "pid": 1661,
+        "is_main_thread": 1
+      },
+      "process": {
+        "upid": 244,
+        "pid": 1661,
+        "name": "com.android.inputmethod.latin",
+        "uid": 10112,
+        "start_ts": null,
+        "end_ts": null,
+        "cmdline": "com.android.inputmethod.latin",
+        "machine_id": 0
+      },
+      "ancestors": [
+        {
+          "id": 40691,
+          "parent_id": 40689,
+          "ts": 50141281850,
+          "dur": 2819276,
+          "depth": 1,
+          "track_id": 1130,
+          "name": "traversal",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        },
+        {
+          "id": 40689,
+          "parent_id": null,
+          "ts": 50141271826,
+          "dur": 2852664,
+          "depth": 0,
+          "track_id": 1130,
+          "name": "Choreographer#doFrame 10445",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        }
+      ],
+      "clientTransactionAncestorIds": [],
+      "configChangedAncestorIds": [],
+      "callerClassification": "unknown",
+      "classificationReasons": [
+        "TRACE_STATS_INVALID"
+      ],
+      "rawContext": [
+        {
+          "arm": "baseline",
+          "phase": "after_raw_window",
+          "showOffsetNs": 24467729789,
+          "windowFullyCovered": false
+        },
+        {
+          "arm": "enabled",
+          "phase": "after_raw_window",
+          "showOffsetNs": 11498729789,
+          "windowFullyCovered": false
+        }
+      ]
+    },
+    {
+      "slice": {
+        "id": 41117,
+        "parent_id": 41116,
+        "ts": 50232899251,
+        "dur": 7301,
+        "depth": 2,
+        "track_id": 1130,
+        "name": "IMS.onComputeInsets",
+        "utid": 244,
+        "upid": 244,
+        "tid": 1661,
+        "pid": 1661,
+        "is_main_thread": 1
+      },
+      "process": {
+        "upid": 244,
+        "pid": 1661,
+        "name": "com.android.inputmethod.latin",
+        "uid": 10112,
+        "start_ts": null,
+        "end_ts": null,
+        "cmdline": "com.android.inputmethod.latin",
+        "machine_id": 0
+      },
+      "ancestors": [
+        {
+          "id": 41116,
+          "parent_id": 41115,
+          "ts": 50232830879,
+          "dur": 9438228,
+          "depth": 1,
+          "track_id": 1130,
+          "name": "traversal",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        },
+        {
+          "id": 41115,
+          "parent_id": null,
+          "ts": 50232825151,
+          "dur": 9447381,
+          "depth": 0,
+          "track_id": 1130,
+          "name": "Choreographer#doFrame 10526",
+          "utid": 244,
+          "upid": 244,
+          "tid": 1661,
+          "pid": 1661,
+          "is_main_thread": 1
+        }
+      ],
+      "clientTransactionAncestorIds": [],
+      "configChangedAncestorIds": [],
+      "callerClassification": "unknown",
+      "classificationReasons": [
+        "TRACE_STATS_INVALID"
+      ],
+      "rawContext": [
+        {
+          "arm": "baseline",
+          "phase": "after_raw_window",
+          "showOffsetNs": 24558899251,
+          "windowFullyCovered": false
+        },
+        {
+          "arm": "enabled",
+          "phase": "after_raw_window",
+          "showOffsetNs": 11589899251,
+          "windowFullyCovered": false
+        }
+      ]
+    }
+  ],
+  "unmatchedTargetSliceIds": [],
+  "resetCountObserved": 1,
+  "configurationDispatchSupportedCount": 0,
+  "resetObservation": "observed",
+  "resetAbsenceProvesNoCalls": false
+}

@@ -1,0 +1,211 @@
+{
+  "schemaVersion": 1,
+  "kind": "ime-profile-probe",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "63a307dfc05f399dea997105c59589c6d7677a6b",
+    "runId": 42026098407,
+    "attempt": 1
+  },
+  "sourceFiles": {
+    "scripts/ime_profile_probe.py": {
+      "bytes": 54021,
+      "sha256": "35b05b6406c6857bde1d76dcd1e5329c6d44c6d7373e452d81e9d1b444138832"
+    },
+    "scripts/ime_method_trace.py": {
+      "bytes": 11949,
+      "sha256": "1bfe251dc41ef43b960cb3de0ee6fbb87fb277ed0cdddba130c36d90f48a62d8"
+    },
+    "scripts/ime_profile_archive.py": {
+      "bytes": 21916,
+      "sha256": "49160537c4f205ac718d255832ae50c0b2be56ad9cce79e19943b299832cff05"
+    },
+    "scripts/configure_emulator_phone.py": {
+      "bytes": 2136,
+      "sha256": "6e47a74d6b62fe8c1d8e459e51748ca9ccac1f32f2c09a972215a1e634821eed"
+    },
+    ".github/workflows/ime-profile-probe.yml": {
+      "bytes": 7774,
+      "sha256": "3269cee435153b3bab2869d0c3a246e1637e20660fcf144a83729598e69d973a"
+    }
+  },
+  "apiLevel": 37,
+  "scope": {
+    "diagnosticOnly": true,
+    "nonvisual": true,
+    "originalNotesCasesRerun": 0,
+    "comparisonArmsRun": 0,
+    "showRequests": 0,
+    "apkInstalledOrModified": false,
+    "rootRequested": false,
+    "settingsWritten": false,
+    "propertiesWritten": false,
+    "permissionsChanged": false,
+    "startLimit": 1,
+    "stopLimit": 1,
+    "samplingInterval": 0,
+    "streaming": false,
+    "profilerFlags": 0,
+    "holdAfterOwnedSlotSeconds": 1,
+    "maxCommands": 32,
+    "traceFileByteLimit": 16777216,
+    "artifactByteLimit": 33554432,
+    "profilerMayPauseThreadsAndChangeJitState": true,
+    "stopDoesNotRestorePriorCompiledCode": true,
+    "methodTraceThreadIdsAreNotClaimedLinuxTids": true,
+    "methodTraceClockNotMappedToBoottime": true,
+    "callerIdentityEstablished": false,
+    "longWindowCapacityEstablished": false,
+    "exclusiveSyntheticAvdRequired": true,
+    "profileOwnershipChecksAtomic": false,
+    "stopTargetRecheckedInRemoteShell": true,
+    "applicationCompatibilityAcceptance": false,
+    "pidAbsenceDiagnostics": {
+      "trigger": "completed_exit_1_empty_output",
+      "maxAdditionalCommands": 3,
+      "commandTimeoutSeconds": 5,
+      "admissionBudgetSeconds": 20,
+      "cleanupReservePerCommandSeconds": 1,
+      "hardWallClockDeadlineClaimed": false,
+      "bindingSemanticsInferred": false,
+      "latePidAllowsProfiling": false,
+      "outputByteLimits": {
+        "absence_ps": 1048576,
+        "absence_input_method": 2097152,
+        "absence_pid_after": 65536
+      }
+    }
+  },
+  "createdAt": "2026-11-05T12:19:16.654783+00:00",
+  "completedAt": "2026-11-05T12:20:40.540672+00:00",
+  "status": "recorded",
+  "stage": "finalized",
+  "failureReason": null,
+  "runAttempted": true,
+  "emulatorStepOutcome": "success",
+  "device": {
+    "serial": "emulator-5554",
+    "properties": {
+      "api": "37",
+      "qemu": "1",
+      "shell_uid": "2000",
+      "current_user": "0",
+      "debuggable": "1",
+      "fingerprint": "Android/sdk_phone64_x86_64/emu64x:17/CE2A.260420.051.A3/16571990:userdebug/test-keys",
+      "buffer_property": ""
+    }
+  },
+  "target": {
+    "component": "com.android.inputmethod.latin/.LatinIME",
+    "package": "com.android.inputmethod.latin",
+    "uid": 10112,
+    "pid": 1512,
+    "process": {
+      "pid": 1512,
+      "comm": "putmethod.latin",
+      "state": "S",
+      "startTimeTicks": 2081
+    },
+    "processUid": 10112,
+    "cmdlineSha256": "4cc330c0cfbca1767bc3638bdb2cbf7bb904c22483771994d50ee41ae4bd4f2e"
+  },
+  "tools": {
+    "adb": "/usr/local/lib/android/sdk/platform-tools/adb"
+  },
+  "profile": {
+    "path": "/data/local/tmp/agentos-ime-profile-42026098407-1.trace",
+    "startAttempted": true,
+    "startRequestedAt": "2026-11-05T12:20:35.623715+00:00",
+    "startAccepted": true,
+    "slotObservedOwned": true,
+    "stopAttempted": true,
+    "stopRequestedAt": "2026-11-05T12:20:37.482544+00:00",
+    "stopAccepted": true,
+    "globalSlotClear": true,
+    "traceFile": {
+      "path": "method.trace",
+      "bytes": 271550,
+      "sha256": "7e88955b88f7ff2be94cb6db64c628525a6c516b288cd5968387c4efc2c0a309"
+    },
+    "remoteBytes": 271550,
+    "fileStable": true,
+    "fileLimited": false,
+    "cleanupConfirmed": true
+  },
+  "analysis": {
+    "schemaVersion": 1,
+    "kind": "ime-method-trace-capability-analysis",
+    "status": "recorded",
+    "reasons": [],
+    "scope": {
+      "structuralCapabilityOnly": true,
+      "resetCallerEstablished": false,
+      "methodInvocationCountEstablished": false,
+      "absenceOfCallsProved": false,
+      "stackBalanceAssessed": false,
+      "encodedThreadIdsAreLinuxTids": false,
+      "nonSamplingProvedByFile": false,
+      "clockMappedToBoottime": false,
+      "nativeMemoryBoundedByFileLimit": false,
+      "sourceImageByteEquivalenceVerified": false,
+      "referenceArtCommit": "b753cf97923c3695338d21466fa14c57b480a59a"
+    },
+    "trace": {
+      "bytes": 271550,
+      "sha256": "7e88955b88f7ff2be94cb6db64c628525a6c516b288cd5968387c4efc2c0a309"
+    },
+    "format": {
+      "name": "ART_V1_NON_STREAMING",
+      "version": 3,
+      "headerBytes": 32,
+      "recordBytes": 14,
+      "summaryBytes": 73782,
+      "binaryBytes": 197768,
+      "endianness": "little",
+      "startMonotonicUs": 24321353,
+      "clockDomain": "MONOTONIC_and_optional_per_thread_CPU",
+      "encodedThreadIdsAreLinuxTids": false
+    },
+    "summary": {
+      "pid": 1512,
+      "vm": "art",
+      "clock": "dual",
+      "overflow": false,
+      "elapsedUs": 1893651,
+      "declaredRecordCount": 14124,
+      "clockCallOverheadNs": 633,
+      "isStreaming": false,
+      "isPreciseTrace": true,
+      "endMonotonicNs": 26213915221,
+      "endTimestampCounter": 74939548716,
+      "compilationFilter": "verify",
+      "allocationCounters": {}
+    },
+    "dictionaries": {
+      "threadCount": 5,
+      "methodCount": 797,
+      "threadIdKind": "encoded_index_not_linux_tid"
+    },
+    "records": {
+      "count": 14124,
+      "actions": {
+        "enter": 7066,
+        "exit": 7058,
+        "unwind": 0
+      },
+      "observedEncodedThreadCount": 4,
+      "referencedMethodCount": 797,
+      "cpuDeltaRangeUs": [
+        0,
+        10770
+      ],
+      "wallDeltaRangeUs": [
+        90437,
+        1822209
+      ],
+      "stackBalanceAssessed": false,
+      "recordCountIsMethodInvocationCount": false
+    }
+  },
+  "emulatorTeardown": "WORKFLOW_RESPONSIBILITY_NOT_OBSERVED"
+}

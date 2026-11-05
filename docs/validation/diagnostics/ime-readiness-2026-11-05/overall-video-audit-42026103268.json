@@ -1,0 +1,389 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-overall-video-audit",
+  "auditedAt": "2026-11-05T12:28:06.847307+00:00",
+  "reviewer": "/root/ime_readiness_video",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "63a307dfc05f399dea997105c59589c6d7677a6b",
+    "runId": 42026103268,
+    "attempt": 1
+  },
+  "archiveCommit": "4e4f2ca6f7cf0220d2e0cd330e80c2bede00b385",
+  "archiveParent": "63a307dfc05f399dea997105c59589c6d7677a6b",
+  "evidencePath": "screenshots/demos/42026103268-1",
+  "reviewMethod": "Independent stdlib manifest/file/Git checks plus ffprobe and full ffmpeg decoding; no production validator imported or invoked.",
+  "result": "passed",
+  "files": {
+    "payloadCount": 30,
+    "payloadBytes": 1166593,
+    "gitFileCount": 31,
+    "gitFileBytes": 1174050,
+    "allPayloadHashesAndGitBlobsMatch": true,
+    "manifest": {
+      "bytes": 7457,
+      "sha256": "d6b0722905342362f9d3ffa23f2dab39b7a61e40b29178907010401dc4677595"
+    }
+  },
+  "video": {
+    "bytes": 439182,
+    "sha256": "c24f9d3f01cedc9ef512becc67edd04572427d0ff747088ca27f0a338bbe44eb",
+    "durationMs": 36813,
+    "width": 640,
+    "height": 1280,
+    "codec": "h264",
+    "pixelFormat": "yuv420p",
+    "ffprobeDurationSeconds": 36.81344,
+    "frames": 487,
+    "fullDecode": "passed",
+    "stderrBytes": 0
+  },
+  "flow": {
+    "status": "passed",
+    "ordinaryStages": 13,
+    "confirmations": 8,
+    "requiredNames": [
+      "ready",
+      "text_entered",
+      "text_saved",
+      "counter_verified",
+      "scrolled_down",
+      "scrolled_up",
+      "second_page",
+      "returned_to_fixture",
+      "controls_waiting",
+      "paused",
+      "resumed",
+      "stopped",
+      "stale_approval_rejected"
+    ],
+    "instrumentationTestsPassed": 1,
+    "flowElapsedMs": 35207,
+    "junitStatus": "not_produced_direct_adb"
+  },
+  "screenshots": {
+    "count": 22,
+    "allCrcsAndFullDecode": "passed",
+    "allSecureWindowTemporarilyClearedFalse": true,
+    "entries": [
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-confirmation-1-1.png",
+        "bytes": 39005,
+        "sha256": "5d9bd80bd5ac1d4d4fda1fbe339705b1d5065b8cbb1693f7032aec93f7bd694f",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-confirmation-2-3.png",
+        "bytes": 37331,
+        "sha256": "3beeaea497f5f0904756c95feadf5eb46a7fef5fc45a78fcf79b1fb375bbf4ed",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-confirmation-3-5.png",
+        "bytes": 38751,
+        "sha256": "656e4b1a9f92977cdcbf65c96e64afaa37a066384b77661b665dd831839add34",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-confirmation-4-7.png",
+        "bytes": 36763,
+        "sha256": "5405f2acf630ed74b38db28980cc01c96f01c052b0f527d1c4634ea6a4f904a5",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-confirmation-5-9.png",
+        "bytes": 36790,
+        "sha256": "820119222237392dede9e6e70e7bca391825dd538847f06c50d019a27878bc43",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-confirmation-6-11.png",
+        "bytes": 39104,
+        "sha256": "024a80b05151b1e9624e14d46254f4cab4c19a2b79f90da1c39a37bcd7db7f9e",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-confirmation-7-13.png",
+        "bytes": 21666,
+        "sha256": "76df07c1fb99845d1e00c13299352adccb5906f1542b850cb3a762013cb7100b",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-confirmation-8-14.png",
+        "bytes": 21666,
+        "sha256": "76df07c1fb99845d1e00c13299352adccb5906f1542b850cb3a762013cb7100b",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-controls_waiting-16.png",
+        "bytes": 38584,
+        "sha256": "10c7f473d60cefc5468b87665de8e232e3abdf10fc993adb2257739bb01fe30e",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-counter_verified-6.png",
+        "bytes": 31954,
+        "sha256": "470921d2776f5565806ae3022ef7637ca857758bca00cb60b1b8209f51894743",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-finished-21.png",
+        "bytes": 25867,
+        "sha256": "901fd9d98508aae5fdbf0331cdea4f554dcc9a5c3f261e5a1a67a0f87aaaeedb",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-paused-17.png",
+        "bytes": 31780,
+        "sha256": "bb7ee98f1930eb6b63a797735a848be890be0f2860e70f6cd346b795d504e98a",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-ready-0.png",
+        "bytes": 28485,
+        "sha256": "8c10859d5e4b4b7e4719f2833e468c2b303723a5e02197deb72f7cbd18ba2d78",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-resumed-18.png",
+        "bytes": 38584,
+        "sha256": "10c7f473d60cefc5468b87665de8e232e3abdf10fc993adb2257739bb01fe30e",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-returned_to_fixture-15.png",
+        "bytes": 25859,
+        "sha256": "291ae0a672befbfa3a302ee6b6f27e64413d6ceb991402c3484a15cd597fff44",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-scrolled_down-8.png",
+        "bytes": 31078,
+        "sha256": "76e599e4ac2b852719ef4fcfc3c6c2349498666314d08e02598408238d8b5df5",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-scrolled_up-10.png",
+        "bytes": 32002,
+        "sha256": "d5c93e4723d709200e5784d10459e0d7521b5f55ed8c8745e1b61b66cf51ea68",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-second_page-12.png",
+        "bytes": 12995,
+        "sha256": "10f30c51e48063407a9dde075b89316b324eb86424d30f45e25e2599d71d277c",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-stale_approval_rejected-20.png",
+        "bytes": 25867,
+        "sha256": "901fd9d98508aae5fdbf0331cdea4f554dcc9a5c3f261e5a1a67a0f87aaaeedb",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-stopped-19.png",
+        "bytes": 38584,
+        "sha256": "10c7f473d60cefc5468b87665de8e232e3abdf10fc993adb2257739bb01fe30e",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-text_entered-2.png",
+        "bytes": 31093,
+        "sha256": "c1126937d7279ed45b0f6c789c341ef9d226092bc1bd61a0f619fa3c24c98f1c",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      },
+      {
+        "path": "screenshots/api-35-observedActionsRequireConfirmationAndRespectUserControls-448bf334-text_saved-4.png",
+        "bytes": 32120,
+        "sha256": "a8ca1c20fa7a1493f9ee4d8291251fff788e11615235f0766294835384bdb91c",
+        "width": 320,
+        "height": 640,
+        "pngChunkCrcs": "passed",
+        "fullDecode": "passed"
+      }
+    ]
+  },
+  "visualReview": {
+    "pending": false,
+    "reviewedBy": "/root/ime_readiness_video via view_image",
+    "pausedFrame": {
+      "path": "paused-video-32s.png",
+      "atSeconds": 32,
+      "observed": "Agent control bar visibly says 已暂停 and shows 继续 / 停止; saved synthetic text and Count:1 visible."
+    },
+    "finalFrame": {
+      "path": "final-video.png",
+      "frameIndex": 486,
+      "observed": "Final decoded video frame shows Fixture with saved synthetic text and Count:1; Agent control bar removed."
+    },
+    "stoppedPng": {
+      "path": "stopped-original.png",
+      "observed": "Original stopped-stage PNG still displays 等待确认 (60秒内有效) and approval controls; it is not the final video frame.",
+      "byteIdenticalToResumed": true
+    },
+    "files": {
+      "paused-video-32s.png": {
+        "bytes": 161671,
+        "sha256": "edb1b35dfca65e3580c36101af14983432c2a2bd779c27594e465bf9a67d32f6"
+      },
+      "final-video.png": {
+        "bytes": 126531,
+        "sha256": "aa770311eb2aaa2f05c2fe5eac45a5a77c82c07e0153e9ba942fc10850f4eca0"
+      },
+      "stopped-original.png": {
+        "bytes": 38584,
+        "sha256": "10c7f473d60cefc5468b87665de8e232e3abdf10fc993adb2257739bb01fe30e"
+      }
+    }
+  },
+  "limits": [
+    "API35 dedicated synthetic Fixture and local synthetic HTTP model only; no external model or physical-phone acceptance.",
+    "Source is63a307dfc, not the later a123 archive-attribute correction.",
+    "Video does not execute or validate API37 profiling, original Notes32 cases, or old ready failures.",
+    "RawVideo metadata is recorded by producer but raw pre-transcode video is not in this archive; independently audited file is demo.mp4."
+  ],
+  "independentProvenanceReview": {
+    "receiptBytes": 2684,
+    "receiptSha256": "e453eae819c5222177ef17d0d1a548708e86bb2075301983afbcc0f37874eff6",
+    "result": {
+      "schemaVersion": 1,
+      "kind": "independent-demo-provenance",
+      "checkedAt": "2026-11-05T12:27:41.262100+00:00",
+      "reviewer": "/root/ime_readiness_video/provenance",
+      "source": {
+        "repository": "ecojust/Agent-OS",
+        "commit": "63a307dfc05f399dea997105c59589c6d7677a6b",
+        "runId": 42026103268,
+        "attempt": 1
+      },
+      "sourceRun": {
+        "url": "https://github.com/ecojust/Agent-OS/actions/runs/42026103268",
+        "workflow": ".github/workflows/demo-video.yml",
+        "workflowId": 398315761,
+        "ref": "master",
+        "event": "workflow_dispatch",
+        "status": "completed",
+        "conclusion": "success",
+        "createdAt": "2026-11-05T12:19:06Z",
+        "completedBy": "2026-11-05T12:23:23Z"
+      },
+      "recordJob": {
+        "id": 127240600285,
+        "name": "record-demo (API 35)",
+        "conclusion": "success",
+        "startedAt": "2026-11-05T12:19:11Z",
+        "completedAt": "2026-11-05T12:23:22Z",
+        "currentAttempt": 1
+      },
+      "archiveJobSkippedInRecordingRun": true,
+      "artifact": {
+        "id": 13413597961,
+        "name": "demo-video-api-35-attempt-1",
+        "expired": false,
+        "createdAt": "2026-11-05T12:23:02Z",
+        "workflowRunMatches": true,
+        "createdInsideRecordJob": true,
+        "zipDigestReportedByGitHub": "sha256:7acce45d06833592abae8c9c2e4099f575837dbb209876e17f55b25598b76663",
+        "zipIndependentlyDownloadedOrHashed": false
+      },
+      "archive": {
+        "runId": 42026844227,
+        "url": "https://github.com/ecojust/Agent-OS/actions/runs/42026844227",
+        "conclusion": "success",
+        "headSha": "63a307dfc05f399dea997105c59589c6d7677a6b",
+        "commit": "4e4f2ca6f7cf0220d2e0cd330e80c2bede00b385",
+        "parents": [
+          "63a307dfc05f399dea997105c59589c6d7677a6b"
+        ],
+        "parentMatchesRecordingSource": true
+      },
+      "manifestSourceMatches": true,
+      "rawMetadataFiles": {
+        "source-run.json": {
+          "bytes": 11766,
+          "sha256": "71569edf6dff6ef1af1f8c8915a5ba027a01626b35dd51a2d77328b38b2df2c4"
+        },
+        "source-jobs.json": {
+          "bytes": 4764,
+          "sha256": "d45c0067f1d65837d1b34870996e35212b65340665351d2abe713132c1cda3f3"
+        },
+        "source-artifacts.json": {
+          "bytes": 722,
+          "sha256": "403b3282ccaf618642433436c2a971d48c2bacd12c675ee6c80ecc1c581d594a"
+        },
+        "archive-run.json": {
+          "bytes": 11766,
+          "sha256": "7284c26c871a7f670362e176e3dc7b79bb323b9c11e72d96afcd6dfca831e6ce"
+        }
+      },
+      "limits": [
+        "This independently validates GitHub metadata and Git parent identity, not video content or native API37 method-trace capability.",
+        "The later a123 archive-attribute fix is not the video recording source.",
+        "Artifact zip digest is reported by GitHub; only archive payloads are available for separate file-byte auditing."
+      ]
+    }
+  }
+}

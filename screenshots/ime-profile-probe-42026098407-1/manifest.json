@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 1,
+  "kind": "ime-profile-probe-archive",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "63a307dfc05f399dea997105c59589c6d7677a6b",
+    "runId": 42026098407,
+    "attempt": 1
+  },
+  "workflow": ".github/workflows/ime-profile-probe.yml",
+  "runUrl": "https://github.com/ecojust/Agent-OS/actions/runs/42026098407",
+  "sourceConclusion": "success",
+  "probeJob": {
+    "id": 127240587633,
+    "conclusion": "success"
+  },
+  "archivedAt": "2026-11-05T12:27:15.388593+00:00",
+  "status": "recorded",
+  "capture": {
+    "reportedStatus": "recorded",
+    "failureReason": null,
+    "tracePresent": true
+  },
+  "profile": {
+    "path": "/data/local/tmp/agentos-ime-profile-42026098407-1.trace",
+    "startAttempted": true,
+    "startRequestedAt": "2026-11-05T12:20:35.623715+00:00",
+    "startAccepted": true,
+    "slotObservedOwned": true,
+    "stopAttempted": true,
+    "stopRequestedAt": "2026-11-05T12:20:37.482544+00:00",
+    "stopAccepted": true,
+    "globalSlotClear": true,
+    "traceFile": {
+      "path": "method.trace",
+      "bytes": 271550,
+      "sha256": "7e88955b88f7ff2be94cb6db64c628525a6c516b288cd5968387c4efc2c0a309"
+    },
+    "remoteBytes": 271550,
+    "fileStable": true,
+    "fileLimited": false,
+    "cleanupConfirmed": true
+  },
+  "analysis": {
+    "schemaVersion": 1,
+    "kind": "ime-method-trace-capability-analysis",
+    "status": "recorded",
+    "reasons": [],
+    "scope": {
+      "structuralCapabilityOnly": true,
+      "resetCallerEstablished": false,
+      "methodInvocationCountEstablished": false,
+      "absenceOfCallsProved": false,
+      "stackBalanceAssessed": false,
+      "encodedThreadIdsAreLinuxTids": false,
+      "nonSamplingProvedByFile": false,
+      "clockMappedToBoottime": false,
+      "nativeMemoryBoundedByFileLimit": false,
+      "sourceImageByteEquivalenceVerified": false,
+      "referenceArtCommit": "b753cf97923c3695338d21466fa14c57b480a59a"
+    },
+    "trace": {
+      "bytes": 271550,
+      "sha256": "7e88955b88f7ff2be94cb6db64c628525a6c516b288cd5968387c4efc2c0a309"
+    },
+    "format": {
+      "name": "ART_V1_NON_STREAMING",
+      "version": 3,
+      "headerBytes": 32,
+      "recordBytes": 14,
+      "summaryBytes": 73782,
+      "binaryBytes": 197768,
+      "endianness": "little",
+      "startMonotonicUs": 24321353,
+      "clockDomain": "MONOTONIC_and_optional_per_thread_CPU",
+      "encodedThreadIdsAreLinuxTids": false
+    },
+    "summary": {
+      "pid": 1512,
+      "vm": "art",
+      "clock": "dual",
+      "overflow": false,
+      "elapsedUs": 1893651,
+      "declaredRecordCount": 14124,
+      "clockCallOverheadNs": 633,
+      "isStreaming": false,
+      "isPreciseTrace": true,
+      "endMonotonicNs": 26213915221,
+      "endTimestampCounter": 74939548716,
+      "compilationFilter": "verify",
+      "allocationCounters": {}
+    },
+    "dictionaries": {
+      "threadCount": 5,
+      "methodCount": 797,
+      "threadIdKind": "encoded_index_not_linux_tid"
+    },
+    "records": {
+      "count": 14124,
+      "actions": {
+        "enter": 7066,
+        "exit": 7058,
+        "unwind": 0
+      },
+      "observedEncodedThreadCount": 4,
+      "referencedMethodCount": 797,
+      "cpuDeltaRangeUs": [
+        0,
+        10770
+      ],
+      "wallDeltaRangeUs": [
+        90437,
+        1822209
+      ],
+      "stackBalanceAssessed": false,
+      "recordCountIsMethodInvocationCount": false
+    }
+  },
+  "summary": {
+    "expectedProbes": 1,
+    "recordedProbes": 1,
+    "unverifiedProbes": 0,
+    "apiLevel": 37
+  },
+  "scope": {
+    "diagnosticOnly": true,
+    "nonvisual": true,
+    "screenshotsExpected": 0,
+    "partialTracePromoted": false,
+    "traceCaptureProvesResetCaller": false,
+    "originalNotesCasesRerun": false,
+    "originalKeyboardComparisonRerun": false,
+    "applicationCompatibilityAcceptance": false
+  },
+  "artifact": {
+    "status": "archived",
+    "name": "ime-profile-probe-api-37.0-attempt-1",
+    "id": 13414785318
+  },
+  "files": [
+    {
+      "path": "commands.json",
+      "bytes": 1393149,
+      "sha256": "edc1cc3c2a7db3246df58833ccb2763ea6b75ea0acccd4df2c5726582db522fd"
+    },
+    {
+      "path": "method.trace",
+      "bytes": 271550,
+      "sha256": "7e88955b88f7ff2be94cb6db64c628525a6c516b288cd5968387c4efc2c0a309"
+    },
+    {
+      "path": "report.json",
+      "bytes": 6430,
+      "sha256": "a1738a5e39c9c5f5819f239eb166161ea2cf71d4c8561236584cf1a4b32ed17c"
+    },
+    {
+      "path": "source-artifacts.json",
+      "bytes": 960,
+      "sha256": "9cfefd8298f7af84e284683b5e2201d0ef0d6a44ee312639c894f4154d469fb4"
+    },
+    {
+      "path": "source-jobs.json",
+      "bytes": 6014,
+      "sha256": "3e43312ce461ea75d3e900c0998b8bb9f09e4b186650be2227e4db0b21a55a93"
+    },
+    {
+      "path": "source-run.json",
+      "bytes": 13098,
+      "sha256": "ab1e67680c620690834ced45253b7acffd868ad84b96adcbfea7f107a87bd53e"
+    }
+  ]
+}

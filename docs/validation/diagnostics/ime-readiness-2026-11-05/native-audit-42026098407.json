@@ -1,0 +1,266 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-native-method-trace-audit",
+  "auditedAt": "2026-11-05T12:28:11.696310+00:00",
+  "reviewer": "/root/ime_readiness_review/native_trace_audit",
+  "source": {
+    "repository": "ecojust/Agent-OS",
+    "commit": "63a307dfc05f399dea997105c59589c6d7677a6b",
+    "runId": 42026098407,
+    "attempt": 1
+  },
+  "archiveCommit": "9ce0c04b23c95a8821c240aa92a6b2ad5a71b912",
+  "nativeFile": {
+    "path": "screenshots/ime-profile-probe-42026098407-1/method.trace",
+    "bytes": 271550,
+    "sha256": "7e88955b88f7ff2be94cb6db64c628525a6c516b288cd5968387c4efc2c0a309",
+    "equalsGitArchiveBlob": true,
+    "equalsManifestIdentity": true
+  },
+  "implementation": {
+    "stdlibOnly": true,
+    "productionParserImportedOrCalled": false,
+    "referenceArtCommit": "b753cf97923c3695338d21466fa14c57b480a59a",
+    "referenceSources": [
+      {
+        "path": "/workspace/scratch/reset-next-method-trace-format-2026-11-03/runtime__trace.cc",
+        "bytes": 83741,
+        "sha256": "c5e15f0e1a6a6e844944d2bc9e118d35596ac795f7d6e026ebb8aa5678423422"
+      },
+      {
+        "path": "/workspace/scratch/reset-next-method-trace-format-2026-11-03/runtime__trace.h",
+        "bytes": 29916,
+        "sha256": "e457c8520139ae5247b43efa6ba222f670b53a9a160fae9d5106ed3fa7bcf4b3"
+      }
+    ],
+    "referenceImageByteEquivalenceEstablished": false
+  },
+  "metadata": {
+    "data-file-overflow": "false",
+    "clock": "dual",
+    "elapsed-time-usec": "1893651",
+    "num-method-calls": "14124",
+    "clock-call-overhead-nsec": "633",
+    "vm": "art",
+    "pid": "1512",
+    "is_streaming": "false",
+    "is_precise_trace": "true",
+    "end_time": "26213915221",
+    "end_tsc": "74939548716",
+    "compilation-filter": "verify"
+  },
+  "format": {
+    "summaryBytes": 73782,
+    "binaryBytes": 197768,
+    "magic": "SLOW",
+    "version": 3,
+    "headerBytes": 32,
+    "recordBytes": 14,
+    "recordBodyBytes": 197736,
+    "littleEndian": true,
+    "reservedBytesAllZero": true,
+    "startMonotonicUs": 24321353,
+    "endMonotonicNs": 26213915221,
+    "headerIntervalUs": 1892562.221
+  },
+  "dictionaries": {
+    "threads": {
+      "1": "Trace writer pool worker thread 0",
+      "2": "binder:1512_6",
+      "3": "main",
+      "4": "binder:1512_4",
+      "5": "Jit thread pool worker thread 0"
+    },
+    "threadCount": 5,
+    "methodCount": 797,
+    "methodIdZeroPresent": true
+  },
+  "records": {
+    "count": 14124,
+    "actions": {
+      "enter": 7066,
+      "exit": 7058,
+      "unwind": 0
+    },
+    "observedEncodedThreadCount": 4,
+    "referencedMethodCount": 797,
+    "cpuDeltaRangeUs": [
+      0,
+      10770
+    ],
+    "wallDeltaRangeUs": [
+      90437,
+      1822209
+    ],
+    "stackBalanceAssessed": false,
+    "recordCountIsMethodInvocationCount": false
+  },
+  "threadsObserved": {
+    "2": {
+      "name": "binder:1512_6",
+      "records": 5598,
+      "actions": {
+        "enter": 2799,
+        "exit": 2799
+      },
+      "cpuMinUs": 0,
+      "cpuMaxUs": 8701,
+      "wallMinUs": 90437,
+      "wallMaxUs": 1394309
+    },
+    "3": {
+      "name": "main",
+      "records": 7596,
+      "actions": {
+        "enter": 3802,
+        "exit": 3794
+      },
+      "cpuMinUs": 0,
+      "cpuMaxUs": 10770,
+      "wallMinUs": 90437,
+      "wallMaxUs": 1812428
+    },
+    "4": {
+      "name": "binder:1512_4",
+      "records": 858,
+      "actions": {
+        "enter": 429,
+        "exit": 429
+      },
+      "cpuMinUs": 0,
+      "cpuMaxUs": 1061,
+      "wallMinUs": 307862,
+      "wallMaxUs": 1812292
+    },
+    "5": {
+      "name": "Jit thread pool worker thread 0",
+      "records": 72,
+      "actions": {
+        "enter": 36,
+        "exit": 36
+      },
+      "cpuMinUs": 0,
+      "cpuMaxUs": 293,
+      "wallMinUs": 1820478,
+      "wallMaxUs": 1822209
+    }
+  },
+  "firstRecords": [
+    {
+      "ordinal": 1,
+      "encodedThreadId": 3,
+      "threadName": "main",
+      "encodedMethodId": 0,
+      "action": "enter",
+      "cpuDeltaUs": 0,
+      "wallDeltaUs": 90437,
+      "method": {
+        "class": "android.app.ProfilerInfo",
+        "name": "closeFd",
+        "descriptor": "()V",
+        "source": "ProfilerInfo.java"
+      }
+    },
+    {
+      "ordinal": 2,
+      "encodedThreadId": 3,
+      "threadName": "main",
+      "encodedMethodId": 4,
+      "action": "enter",
+      "cpuDeltaUs": 20,
+      "wallDeltaUs": 90458,
+      "method": {
+        "class": "android.os.ParcelFileDescriptor",
+        "name": "close",
+        "descriptor": "()V",
+        "source": "ParcelFileDescriptor.java"
+      }
+    },
+    {
+      "ordinal": 3,
+      "encodedThreadId": 3,
+      "threadName": "main",
+      "encodedMethodId": 8,
+      "action": "enter",
+      "cpuDeltaUs": 24,
+      "wallDeltaUs": 90462,
+      "method": {
+        "class": "android.os.ParcelFileDescriptor",
+        "name": "closeWithStatus",
+        "descriptor": "(ILjava/lang/String;)V",
+        "source": "ParcelFileDescriptor.java"
+      }
+    }
+  ],
+  "lastRecords": [
+    {
+      "ordinal": 14122,
+      "encodedThreadId": 2,
+      "threadName": "binder:1512_6",
+      "encodedMethodId": 220,
+      "action": "exit",
+      "cpuDeltaUs": 8699,
+      "wallDeltaUs": 1394308,
+      "method": {
+        "class": "android.os.ThreadLocalWorkSource",
+        "name": "parseUidFromToken",
+        "descriptor": "(J)I",
+        "source": "ThreadLocalWorkSource.java"
+      }
+    },
+    {
+      "ordinal": 14123,
+      "encodedThreadId": 2,
+      "threadName": "binder:1512_6",
+      "encodedMethodId": 180,
+      "action": "exit",
+      "cpuDeltaUs": 8700,
+      "wallDeltaUs": 1394309,
+      "method": {
+        "class": "android.os.ThreadLocalWorkSource",
+        "name": "restore",
+        "descriptor": "(J)V",
+        "source": "ThreadLocalWorkSource.java"
+      }
+    },
+    {
+      "ordinal": 14124,
+      "encodedThreadId": 2,
+      "threadName": "binder:1512_6",
+      "encodedMethodId": 2500,
+      "action": "exit",
+      "cpuDeltaUs": 8701,
+      "wallDeltaUs": 1394309,
+      "method": {
+        "class": "android.os.Binder",
+        "name": "execTransact",
+        "descriptor": "(IJJI)Z",
+        "source": "Binder.java"
+      }
+    }
+  ],
+  "checks": {
+    "summaryCompleteUtf8": true,
+    "allDictionaryRowsUniqueAndWellFormed": true,
+    "allMethodDescriptorsConsumed": true,
+    "nativePidEqualsExpectedTarget": true,
+    "headerAndTextVersionMatch": true,
+    "declaredRecordCountEqualsExactBody": true,
+    "allActionsKnown": true,
+    "allThreadAndMethodReferencesExist": true,
+    "allPerThreadClockDeltasNondecreasing": true,
+    "wallDeltasWithinElapsed": true,
+    "overflowFalse": true,
+    "producerComputedFactsAgree": true
+  },
+  "status": "structural_native_trace_verified",
+  "limits": [
+    "This audit establishes a complete structurally valid short native trace, not successful long-window capture.",
+    "Encoded thread IDs are table indexes, not Linux TIDs; a name main does not identify the prior reset trace thread.",
+    "No stack reconstruction, invocation counting, caller-identity finding or absence-of-calls inference is performed.",
+    "Initial unmatched exits and open frames can occur when tracing starts/stops within existing methods; no stack-completeness claim.",
+    "Non-sampling request is established from command provenance by parent, not by is_precise_trace alone.",
+    "MONOTONIC/header clocks are not mapped to previous BOOTTIME/raw callback timestamps.",
+    "The selected reference ART source is not proven byte-identical to the running image."
+  ]
+}

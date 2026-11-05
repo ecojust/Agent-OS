@@ -28,7 +28,7 @@
 
 本项无 UI 操作，不能用截图证明 profiling 可用。整体操作演示另行记录并按实际源码列在 README；普通 Fixture 录像不作为输入法方法追踪的证据。
 
-当前实现与宿主验证已完成。首次设备校验未满足目标进程准入条件，尚未执行方法追踪；实际格式、停止及清理能力仍未验证。
+短时方法追踪能力子项已完成：2026-11-05的63a/API37原件已验证格式、停止与清理。此前048f首次校验未取得PID，失败保持；缺PID原因、较长窗口容量与重建调用方仍未验证。
 
 本地原生格式模块[35项测试](diagnostics/ime-profile-capability-2026-11-03/parser-test-review.json)通过，测试字节是按固定ART源码构造的格式样本，不是设备证据；支持现代完整summary及非streaming V1磁盘格式2/3，其他格式保留未验证。符号表方法ID0、线程内部索引、时钟维度、overflow、截断和初始未配对exit分别校验。初始exit允许存在，不据此宣称调用栈已完整；summary的is_precise_trace也不单独证明非采样，请求模式以原命令为准。
 
@@ -62,6 +62,21 @@
 
 ### 方法文件的 Git 二进制属性
 
-冻结来源63a307dfc的API37运行42026098407已在CI通过，但首次归档42026446120在发布前的 `git diff --cached --check` 失败：[原始错误回执](diagnostics/ime-readiness-2026-11-05/archive-publish-failure-42026446120.json)显示，Git将长文本符号表开头的混合方法文件按文本检查，将后续原生记录字节报为行尾空白。产物校验此前已通过，证据分支尚未发布；设备能力仍待原件独立核验。
+冻结来源63a307dfc的API37运行42026098407已在CI通过，但首次归档42026446120在发布前的 `git diff --cached --check` 失败：[原始错误回执](diagnostics/ime-readiness-2026-11-05/archive-publish-failure-42026446120.json)显示，Git将长文本符号表开头的混合方法文件按文本检查，将后续原生记录字节报为行尾空白。产物校验此前已通过，当次证据分支没有发布；该失败保留，后续成功归档与独立核验见下文。
 
-修正只为 `/screenshots/ime-profile-probe-*/method.trace` 声明 `binary`，同时在归档的旧源码检出中于 `git add` 前设置同一条本地 Git 属性，兼容尚无此规则的历史源码。[独立Git验证](diagnostics/ime-readiness-2026-11-05/binary-transport-audit.json)已用超过8KiB的文本头及含NUL/CRLF的原生样本验证：索引blob与重新检出逐字节相同，普通文本和其他目录仍执行空白检查。不改原文件，不清除其空白，不跳过其他文件的检查；重新归档同一次运行，设备不重跑。整体录像42026103268也已在CI通过，原件复核与README入口更新待归档后完成。
+修正只为 `/screenshots/ime-profile-probe-*/method.trace` 声明 `binary`，同时在归档的旧源码检出中于 `git add` 前设置同一条本地 Git 属性，兼容尚无此规则的历史源码。[独立Git验证](diagnostics/ime-readiness-2026-11-05/binary-transport-audit.json)已用超过8KiB的文本头及含NUL/CRLF的原生样本验证：索引blob与重新检出逐字节相同，普通文本和其他目录仍执行空白检查。不改原文件，不清除其空白，不跳过其他文件的检查；重新归档同一次运行，设备不重跑。整体录像42026103268已归档并完成独立复核，README入口保持实际63a录制来源。
+
+
+## 第二次设备结果：短时能力子项已完成
+
+[唯一设备运行42026098407](https://github.com/ecojust/Agent-OS/actions/runs/42026098407)对应源码 `63a307dfc05f399dea997105c59589c6d7677a6b`（2026-11-05、attempt 1）。本次第一次 `pidof` 就返回1512，实际UID/Tgid为10112/1512，进程开始ticks为2081，前后命令行一致。镜像指纹与048f样本相同，但没有证明其进程启动时序相同或前次缺PID的原因。新增3条 `absence_*` 命令均未执行：它们已有宿主测试覆盖，本次没有取得缺失态的设备原文，也没有执行初始化或补发显示请求。
+
+Git归档修正来源 `a123a748d16e69f3551bfd558efc1f78210b1e39` 只重新归档同一设备运行。[第二次归档42027092540](https://github.com/ecojust/Agent-OS/actions/runs/42027092540)成功，证据提交 `9ce0c04b23c95a8821c240aa92a6b2ad5a71b912` 的父提交仍是63a；[原始清单](../../screenshots/ime-profile-probe-42026098407-1/manifest.json)保持真实测试来源，未重跑设备或改写失败记录。
+
+[独立原件审核](diagnostics/ime-readiness-2026-11-05/original-profile-audit-42026098407.json)确认7个Git原件共1,696,077字节、6个索引载荷共1,691,201字节、5份来源文件共97,796字节；31条命令、1,027,694字节输出均可追溯。完整AMS槽为空→本轮所有→仍为本轮所有→为空；一次启动、一次带身份保护的停止、连续两次稳定文件大小、远端与拉取摘要及自有文件清理均通过。方法文件[method.trace](../../screenshots/ime-profile-probe-42026098407-1/method.trace)为271,550字节，SHA-256 `7e88955b88f7ff2be94cb6db64c628525a6c516b288cd5968387c4efc2c0a309`，Git中的原字节一致。
+
+[独立原生格式复算](diagnostics/ime-readiness-2026-11-05/native-audit-42026098407.json)没有调用生产解析器：73,782字节文本summary、32字节头部、197,736字节记录体；ART V1非streaming磁盘格式3、双时钟、每条14字节，共14,124条记录，PID1512且无overflow。797个方法、5个编码线程字典，其中4个线程有记录；7066条enter、7058条exit、0条unwind，符号引用和各线程时钟核验通过。summary的elapsed为1,893,651µs；这不是先前Perfetto的BOOTTIME时间轴，编码main线程也不当作Linux TID，记录数不当作调用次数或完整调用栈。
+
+本子项完成范围仅为这套API37专用模拟器中已存在的默认IME进程能生成有界、完整、可解析的短时方法记录。没有重跑原A/B或Notes；原24通过/8失败、5秒预算及失败分母不变。缺PID的具体原因和稳定性、较长窗口是否溢出、重建入口仍未闭合。下一步设计有界较长窗口与调用栈完整性校验，再接原对照；不出现重建、溢出或调用链不完整时继续记录未知，不能靠延长原Notes预算关闭失败。应用验收检查点仍进行中，工程检查点保持10/20。
+
+同源[整体录像](../../screenshots/demos/42026103268-1/demo.mp4)为36.813秒、487帧、439,182字节，13阶段/8确认及仪器1/1通过。30载荷、22PNG、31Git原件与全段解码均经[独立核验](diagnostics/ime-readiness-2026-11-05/overall-video-audit-42026103268.json)，已查看暂停及最终浮条移除；stopped PNG仍等待确认，不充当末帧。仅API35 Fixture/本地模型，安全标志保留，不替代方法文件、原Notes或真实模型验收。

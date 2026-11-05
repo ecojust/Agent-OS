@@ -114,3 +114,7 @@ v4首轮 [third-party-40674357809-1](third-party-40674357809-1/) 来自5436源�
 048f首轮[IME方法追踪能力41641068620-1](ime-profile-probe-41641068620-1/manifest.json)保持unverified：13条只读命令中pidof退出1且空输出，未取得目标PID，未发出profile请求，无方法文件；6Git原件210,799字节及5份来源已独立核验。不能判断ART支持与重建调用方，原A/B和Notes未重跑，详见[专项说明](../docs/validation/ime-profile-capability.md)。
 
 同源[整体演示41641074840-1](demos/41641074840-1/manifest.json)13阶段/8确认通过：[34.750秒视频](demos/41641074840-1/demo.mp4)402,782字节、453帧，30载荷1,137,702字节、22PNG和31Git原件完整核验。API35 Fixture/本地模型，安全标志保留，实际暂停和最终浮条移除已看；stopped PNG仍等待确认，不能代替末帧，也不替代API37专项或原Notes验收。
+
+63a第二轮[IME方法追踪能力42026098407-1](ime-profile-probe-42026098407-1/manifest.json)recorded：首次PID1512已存在，31命令及7Git原件1,696,077字节核验；271,550字节方法文件、14,124条记录无overflow，自有停止、槽清空、远端文件清理通过。新增缺PID诊断未在本次设备执行，原048失败保留；首归档Git文本检查失败经窄binary属性修正后仅重归档，原设备不重跑，见[专项说明](../docs/validation/ime-profile-capability.md)。
+
+同源[整体演示42026103268-1](demos/42026103268-1/manifest.json)13阶段/8确认通过：[36.813秒视频](demos/42026103268-1/demo.mp4)439,182字节、487帧，30载荷1,166,593字节、22PNG和31Git原件完整核验。API35 Fixture/本地模型，安全标志保留；实际暂停与最终浮条移除已看，stopped PNG仍等待确认。a123归档修正不改变录像来源，不关闭原Notes或既有ready故障。

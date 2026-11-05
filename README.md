@@ -14,14 +14,14 @@
 | --- | --- | --- | --- |
 | 真实 APK 日常流程 | [计算器与 Notes · 46.7 秒](screenshots/demos/probes-41173740075-1/video/demo.mp4) | 计算 2+3、创建笔记、保存并重启读回；Agent 关闭与空闲两态，[4/4 通过](screenshots/demos/probes-41173740075-1/manifest.json) | [`72f77af85`](https://github.com/ecojust/Agent-OS/commit/72f77af85481eb90c0511a52e61c7cbab3ac6595) |
 | 计算器页面观察 | [播放视频 · 33.2 秒](screenshots/demos/probes-40876724624-1/video/demo.mp4) | 普通页面、菜单、历史、设置和单位换算的生产观察与允许/拒绝判断，[5/5 通过](screenshots/demos/probes-40876724624-1/manifest.json) | [`aee3d4e01`](https://github.com/ecojust/Agent-OS/commit/aee3d4e015ab864fada973b8bb8c67bb0c90227e) |
-| 普通任务与用户接管 | [播放视频 · 34.8 秒](screenshots/demos/41641074840-1/demo.mp4) | 输入、保存、导航，以及确认、暂停、恢复、停止；[13 个阶段通过](screenshots/demos/41641074840-1/manifest.json) | [`048f1501f`](https://github.com/ecojust/Agent-OS/commit/048f1501f9c7607ff711eacbef6e1d0070d011b2) |
+| 普通任务与用户接管 | [播放视频 · 36.8 秒](screenshots/demos/42026103268-1/demo.mp4) | 输入、保存、导航，以及确认、暂停、恢复、停止；[13 个阶段通过](screenshots/demos/42026103268-1/manifest.json) | [`63a307dfc`](https://github.com/ecojust/Agent-OS/commit/63a307dfc05f399dea997105c59589c6d7677a6b) |
 | 繁忙调用中停止 | [播放视频 · 7.0 秒](screenshots/demos/probes-41101012830-1/video/demo.mp4) | 真实平台点击在途时触摸停止；浮条移除后原调用释放并完成一次计数，[独立操作 1/1 通过](screenshots/demos/probes-41101012830-1/manifest.json) | [`c7bfa7c21`](https://github.com/ecojust/Agent-OS/commit/c7bfa7c21124a2384804ba15378ce7320edb0241) |
 
 前两类由测试程序操作官方原版 APK；普通任务与繁忙停止演示使用合成 Fixture 应用与本地测试模型。各自的录制范围与测试证据见[操作演示说明](docs/validation/operation-demo.md)。
 
-上表保留各类最新完成流程的已归档录像，并标注实际源码。真实 APK 日常流程对应 `72f77af85`，普通任务演示对应 `048f1501f`，繁忙停止演示对应 `c7bfa7c21`；`f45fbb152` 的性能专项数值与原始记录见[目标进程／启动／帧报告](docs/validation/performance-app-experience.md)。此前 ready 阶段失败的[原始记录](screenshots/demos/40907100293-1/manifest.json)继续保留。普通流程录像不代替 Settings 来源拒绝、旋转或完整 API 矩阵验收。
+上表保留各类最新完成流程的已归档录像，并标注实际源码。真实 APK 日常流程对应 `72f77af85`，普通任务演示对应 `63a307dfc`，繁忙停止演示对应 `c7bfa7c21`；`f45fbb152` 的性能专项数值与原始记录见[目标进程／启动／帧报告](docs/validation/performance-app-experience.md)。此前 ready 阶段失败的[原始记录](screenshots/demos/40907100293-1/manifest.json)继续保留。普通流程录像不代替 Settings 来源拒绝、旋转或完整 API 矩阵验收。
 
-此前 `aee08f197` 的API37设置对照完成：原设置组失败，开启软键盘显示后取得正对照并恢复原值，但有效回调在show后8.135秒才出现，见[实际结果](docs/validation/window-infos-keyboard.md)。原Notes的5秒起点不同，不能直接替代验收；[离线时间线分析](docs/validation/window-infos-timeline.md)已完成原件复算，发现正回调前178毫秒的IME重建追踪；本轮[重建来源核查](docs/validation/window-infos-reset-trace.md)已完成新Trace：有效回调在show后8.648秒出现，约108毫秒前有重建，但其实际调用祖先缺失，触发来源仍未知；[方法追踪能力校验](docs/validation/ime-profile-capability.md)已完成工具及94项宿主测试，首轮API37因未取得输入法PID而停在准入检查，实际追踪能力仍未验证；现已补缺PID只读状态诊断，106项宿主测试通过，待新来源单次实测。aee08同源整体录像在ready阶段因控制条不可用而失败，保留[6.2秒部分视频](screenshots/demos/41305953660-1/demo.mp4)和[失败清单](screenshots/demos/41305953660-1/manifest.json)。历史cdea辅助服务未连接的[11.3秒失败短片](screenshots/demos/41178250336-1/demo.mp4)仍保留，两个ready失败不合并为同一根因。
+此前 `aee08f197` 的API37设置对照完成：原设置组失败，开启软键盘显示后取得正对照并恢复原值，但有效回调在show后8.135秒才出现，见[实际结果](docs/validation/window-infos-keyboard.md)。原Notes的5秒起点不同，不能直接替代验收；[离线时间线分析](docs/validation/window-infos-timeline.md)已完成原件复算，发现正回调前178毫秒的IME重建追踪；本轮[重建来源核查](docs/validation/window-infos-reset-trace.md)已完成新Trace：有效回调在show后8.648秒出现，约108毫秒前有重建，但其实际调用祖先缺失，触发来源仍未知；[短时方法追踪能力校验](docs/validation/ime-profile-capability.md)已完成：63a/API37取得完整方法文件，停止与清理通过独立核验；扩展后106项宿主整合测试通过，但本次首次PID已存在，未执行该分支，不能据此关闭此前缺PID原因或原Notes失败。aee08同源整体录像在ready阶段因控制条不可用而失败，保留[6.2秒部分视频](screenshots/demos/41305953660-1/demo.mp4)和[失败清单](screenshots/demos/41305953660-1/manifest.json)。历史cdea辅助服务未连接的[11.3秒失败短片](screenshots/demos/41178250336-1/demo.mp4)仍保留，两个ready失败不合并为同一根因。
 
 繁忙停止录像仅覆盖 API35 的一次在途平台调用，不作为 MODEL 首停止帧或八档性能验收；专项失败与未完成进度见[停止诊断记录](docs/validation/performance-busy-stop.md)。
 
@@ -50,14 +50,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** 63a源码API37专项与整体录像CI通过；首次方法文件归档被Git文本空白检查拦下，补窄二进制属性后重归档同一运行，设备不重跑，实际原件待复核。
+**本次更新：** 63a/API37短时方法追踪子项完成：完整文件、停止与清理经独立核验；Git二进制归档问题已修，仅重归档同运行。36.813秒同源录像13阶段/8确认通过；缺PID设备分支未触发，原Notes24/8保持。
 
-**记录时间：** 2026-11-05T12:25:27Z
+**记录时间：** 2026-11-05T12:31:27Z
 
-[最近测试截图与清单](screenshots/ime-profile-probe-41641068620-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41641068620)。通过、失败及未截图原因见清单。
+[最近测试截图与清单](screenshots/ime-profile-probe-42026098407-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/42026098407)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/41641074840-1/demo.mp4) · [录制与验证清单](screenshots/demos/41641074840-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41641074840)。
-录制版本：[`048f1501f`](https://github.com/ecojust/Agent-OS/commit/048f1501f9c7607ff711eacbef6e1d0070d011b2)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/42026103268-1/demo.mp4) · [录制与验证清单](screenshots/demos/42026103268-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/42026103268)。
+录制版本：[`63a307dfc`](https://github.com/ecojust/Agent-OS/commit/63a307dfc05f399dea997105c59589c6d7677a6b)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 最近更新时间记录该条状态或进度说明的修改时间，采用 UTC；测试发生时间以对应证据为准。
 
@@ -79,9 +79,9 @@
 <tr><td nowrap>三态性能诊断与空闲交替配对</td><td nowrap>已完成</td><td>原诊断、压力、活跃及启动/帧子项已完成。c7b源码第四轮41101009371六档通过：27有效、2失败、3未执行；88载荷及7847项复核一致。v2已排除零UI阶段误配，API30/32仍缺首停止traversal报告，模型释放/排空未执行步骤不补成通过。独立停止/整体录像已归档。下一步验证保留原UI提交身份的原生trace方法，再判断正式1600样本；真机预算未验收。 <a href="docs/validation/performance-idle-pairs.md">依据</a></td><td nowrap>2026-10-31 02:43:08</td></tr>
 <tr><td nowrap>受控截图与视觉观察</td><td nowrap>进行中</td><td>已验证：内部验收构建在API34–37完成原生捕获、审阅和发送8/8；固定计算器页面专项20/20，最新API35录像5/5。未完成：普通APK截图入口仍关闭，旧超时根因及完整图像内存、真实模型披露待验收。下一步：明确支持页面和能力开放条件，补齐生产路径验收。 <a href="docs/VISUAL_PIPELINE.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
 <tr><td nowrap>绑定界面版本的坐标操作</td><td nowrap>进行中</td><td>已验证：只读坐标定位可解析绑定当前观察版本的节点候选。未完成：坐标点击/滑动仍关闭，图片到屏幕映射、捕获身份/时效及最终提交校验待完成。下一步：冻结最小手势合同，验证过期、遮挡、取消与未知结果不重试。 <a href="docs/VISUAL_PIPELINE.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
-<tr><td nowrap>普通操作连续执行与接管</td><td nowrap>进行中</td><td>048f最新整体演示13阶段/8确认通过：34.750秒、453帧，30载荷及22PNG核验，实际暂停和最终浮条移除已查看。仅Fixture/本地模型；旧aee08/cdea就绪失败原因、连续写和真实模型接管仍未验收，下一步补就绪原状态诊断。 <a href="screenshots/demos/41641074840-1/manifest.json">依据</a></td><td nowrap>2026-11-03 13:15:09</td></tr>
+<tr><td nowrap>普通操作连续执行与接管</td><td nowrap>进行中</td><td>63a最新整体演示13阶段/8确认通过：36.813秒、487帧，30载荷及22PNG核验，实际暂停与最终浮条移除已查看。仅Fixture/本地模型；旧aee08/cdea就绪失败原因、连续写和真实模型接管仍未验收，下一步补就绪原状态诊断。 <a href="screenshots/demos/42026103268-1/manifest.json">依据</a></td><td nowrap>2026-11-05 12:30:27</td></tr>
 <tr><td nowrap>真实模型跨应用任务验收</td><td nowrap>待实现</td><td>已验证：本地合成HTTP模型到执行器的链路；现有录像未使用外部模型。未完成：真实模型自主完成受控跨应用目标尚无验收证据。下一步：冻结实际模型服务、版本、授权应用和可独立核对结果的任务，在模拟器实跑并保留失败。 <a href="docs/PRODUCT_PLAN.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
-<tr><td nowrap>冻结常用应用样本与日常使用验收</td><td nowrap>进行中</td><td>63a/API37专项CI通过，首次归档因method.trace被当文本检查而停止；已补二进制属性，下一步归档同一原运行并独立核方法文件、停止与清理。缺PID诊断106项宿主测试通过；原048f失败与Notes24/8不变。 <a href="docs/validation/ime-profile-capability.md">依据</a></td><td nowrap>2026-11-05 12:25:27</td></tr>
+<tr><td nowrap>冻结常用应用样本与日常使用验收</td><td nowrap>进行中</td><td>63a/API37短时方法追踪子项完成：271550字节、14124条记录无溢出，停止与清理通过独立核验。首次PID已存在，缺PID诊断本次未触发，仅有宿主覆盖；下一步验证较长窗口与完整调用链。原048f失败、Notes24/8及5秒预算保持。 <a href="docs/validation/ime-profile-capability.md">依据</a></td><td nowrap>2026-11-05 12:31:27</td></tr>
 <tr><td nowrap>跨厂商近五年真机与资源档验证</td><td nowrap>待外部条件</td><td>已完成：定义跨厂商、芯片、上市年份及资源档的选样要求。阻塞：尚无参考手机或真机测试环境，暂无机型验收。下一步：确定可用设备清单，按固定任务验证权限、后台行为与资源表现。 <a href="docs/COMPATIBILITY.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
 <tr><td nowrap>参考机 AOSP 集成与平台兼容套件</td><td nowrap>待外部条件</td><td>已完成：定义系统集成、特权桥接与兼容验证目标。阻塞：参考机、可解锁性、内核和厂商驱动未确定，尚无可刷写镜像。下一步：确定机型和可维护源码基线，再完成构建、启动及平台兼容套件验证。 <a href="docs/PRODUCT_PLAN.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
 <tr><td nowrap>机型 OTA 与失败启动恢复</td><td nowrap>待外部条件</td><td>已完成：定义OTA、降级限制与失败启动恢复要求。阻塞：尚无参考机镜像和可验证恢复环境，未完成实际OTA/恢复。下一步：在机型确定后验证签名、升级、失败恢复及数据保留边界。 <a href="docs/DESIGN_RULES.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>

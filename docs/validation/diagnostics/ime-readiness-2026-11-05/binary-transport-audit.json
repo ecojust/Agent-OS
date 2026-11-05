@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "kind": "ime-method-trace-git-binary-transport-audit",
+  "auditedAt": "2026-11-05T12:25:33.804219+00:00",
+  "reviewerTask": "/root/ime_readiness_archive",
+  "scope": "Independent temporary-Git host regression. No device/CI dispatch, no production-code changes, no rewrite of actual trace evidence.",
+  "gitVersion": "git version 2.52.0",
+  "rule": "/screenshots/ime-profile-probe-*/method.trace binary",
+  "fixture": {
+    "syntheticNotArtTrace": true,
+    "textHeaderBytes": 20452,
+    "first8192BytesHaveNoNul": true,
+    "binaryContainsNulCrLfTrailingSpaceAndTab": true,
+    "bytes": 20507,
+    "sha256": "df70947acd1807566e25a439dc9de2dac1a3b144f238f74d02db19a6b7f87900"
+  },
+  "filesReviewed": {
+    ".gitattributes": {
+      "bytes": 3457,
+      "sha256": "728016583a881ed622a41aed8752ce900f29897b0693fcd3f35c704ebdbe05b5"
+    },
+    ".github/workflows/ime-profile-probe.yml": {
+      "bytes": 8081,
+      "sha256": "dce30fd25319247bce9a0ca6d8c18c9132c031dcb5072004315602664d878716"
+    }
+  },
+  "cases": [
+    {
+      "mode": "tracked_gitattributes",
+      "coreAutocrlf": true,
+      "baselineCommit": "6f92a27ba7241477564cfe73d2307da9d676ba4e",
+      "before": {
+        "checkExitCode": 2,
+        "diagnostic": "screenshots/ime-profile-probe-42026098407-1/method.trace:409: trailing whitespace.\n+record-with-trailing-space \r\nscreenshots/ime-profile-probe-42026098407-1/method.trace:410: trailing whitespace.\n+\u0001\u0002\u0000\r\nscreenshots/ime-profile-probe-42026098407-1/method.trace:411: trailing whitespace.\n+��tail",
+        "indexBlobIdentity": {
+          "bytes": 20507,
+          "sha256": "df70947acd1807566e25a439dc9de2dac1a3b144f238f74d02db19a6b7f87900"
+        },
+        "indexBytesEqualOriginal": true,
+        "attributes": [
+          "screenshots/ime-profile-probe-42026098407-1/method.trace: binary: unspecified",
+          "screenshots/ime-profile-probe-42026098407-1/method.trace: text: auto",
+          "screenshots/ime-profile-probe-42026098407-1/method.trace: diff: unspecified",
+          "screenshots/ime-profile-probe-42026098407-1/method.trace: merge: unspecified"
+        ]
+      },
+      "after": {
+        "checkExitCode": 0,
+        "indexBlobIdentity": {
+          "bytes": 20507,
+          "sha256": "df70947acd1807566e25a439dc9de2dac1a3b144f238f74d02db19a6b7f87900"
+        },
+        "indexAndFreshCheckoutBytesEqualOriginal": true,
+        "numstat": "-\t-\tscreenshots/ime-profile-probe-42026098407-1/method.trace",
+        "attributes": [
+          "screenshots/ime-profile-probe-42026098407-1/method.trace: binary: set",
+          "screenshots/ime-profile-probe-42026098407-1/method.trace: text: unset",
+          "screenshots/ime-profile-probe-42026098407-1/method.trace: diff: unset",
+          "screenshots/ime-profile-probe-42026098407-1/method.trace: merge: unset"
+        ]
+      },
+      "ordinaryTextControls": [
+        {
+          "path": "screenshots/ime-profile-probe-42026098407-1/notes.txt",
+          "checkExitCode": 2,
+          "diagnostic": "screenshots/ime-profile-probe-42026098407-1/notes.txt:1: trailing whitespace.\n+ordinary text still checked",
+          "attributes": [
+            "screenshots/ime-profile-probe-42026098407-1/notes.txt: binary: unspecified",
+            "screenshots/ime-profile-probe-42026098407-1/notes.txt: diff: unspecified"
+          ]
+        },
+        {
+          "path": "screenshots/other-diagnostic/method.trace",
+          "checkExitCode": 2,
+          "diagnostic": "screenshots/other-diagnostic/method.trace:1: trailing whitespace.\n+ordinary text still checked",
+          "attributes": [
+            "screenshots/other-diagnostic/method.trace: binary: unspecified",
+            "screenshots/other-diagnostic/method.trace: diff: unspecified"
+          ]
+        }
+      ],
+      "infoAttributesNotStaged": true
+    },
+    {
+      "mode": "runtime_info_attributes",
+      "coreAutocrlf": true,
+      "baselineCommit": "6f92a27ba7241477564cfe73d2307da9d676ba4e",
+      "before": {
+        "checkExitCode": 2,
+        "diagnostic": "screenshots/ime-profile-probe-42026098407-1/method.trace:409: trailing whitespace.\n+record-with-trailing-space \r\nscreenshots/ime-profile-probe-42026098407-1/method.trace:410: trailing whitespace.\n+\u0001\u0002\u0000\r\nscreenshots/ime-profile-probe-42026098407-1/method.trace:411: trailing whitespace.\n+��tail",
+        "indexBlobIdentity": {
+          "bytes": 20507,
+          "sha256": "df70947acd1807566e25a439dc9de2dac1a3b144f238f74d02db19a6b7f87900"
+        },
+        "indexBytesEqualOriginal": true,
+        "attributes": [
+          "screenshots/ime-profile-probe-42026098407-1/method.trace: binary: unspecified",
+          "screenshots/ime-profile-probe-42026098407-1/method.trace: text: auto",
+          "screenshots/ime-profile-probe-42026098407-1/method.trace: diff: unspecified",
+          "screenshots/ime-profile-probe-42026098407-1/method.trace: merge: unspecified"
+        ]
+      },
+      "after": {
+        "checkExitCode": 0,
+        "indexBlobIdentity": {
+          "bytes": 20507,
+          "sha256": "df70947acd1807566e25a439dc9de2dac1a3b144f238f74d02db19a6b7f87900"
+        },
+        "indexAndFreshCheckoutBytesEqualOriginal": true,
+        "numstat": "-\t-\tscreenshots/ime-profile-probe-42026098407-1/method.trace",
+        "attributes": [
+          "screenshots/ime-profile-probe-42026098407-1/method.trace: binary: set",
+          "screenshots/ime-profile-probe-42026098407-1/method.trace: text: unset",
+          "screenshots/ime-profile-probe-42026098407-1/method.trace: diff: unset",
+          "screenshots/ime-profile-probe-42026098407-1/method.trace: merge: unset"
+        ]
+      },
+      "ordinaryTextControls": [
+        {
+          "path": "screenshots/ime-profile-probe-42026098407-1/notes.txt",
+          "checkExitCode": 2,
+          "diagnostic": "screenshots/ime-profile-probe-42026098407-1/notes.txt:1: trailing whitespace.\n+ordinary text still checked",
+          "attributes": [
+            "screenshots/ime-profile-probe-42026098407-1/notes.txt: binary: unspecified",
+            "screenshots/ime-profile-probe-42026098407-1/notes.txt: diff: unspecified"
+          ]
+        },
+        {
+          "path": "screenshots/other-diagnostic/method.trace",
+          "checkExitCode": 2,
+          "diagnostic": "screenshots/other-diagnostic/method.trace:1: trailing whitespace.\n+ordinary text still checked",
+          "attributes": [
+            "screenshots/other-diagnostic/method.trace: binary: unspecified",
+            "screenshots/other-diagnostic/method.trace: diff: unspecified"
+          ]
+        }
+      ],
+      "infoAttributesNotStaged": true
+    }
+  ],
+  "conclusion": "Both narrow tracked and runtime attributes classify only the intended IME trace path as binary. The index blob and fresh checkout retain every original byte despite autocrlf=true, diff --cached --check passes for the trace, and ordinary text controls still fail whitespace checks.",
+  "limits": [
+    "The synthetic fixture tests Git transport behavior, not ART format or actual trace content.",
+    "Actual run 42026098407 and its native bytes must still be independently audited after re-archive.",
+    "A passing Git whitespace check is not proof of valid native profiling or application compatibility."
+  ]
+}

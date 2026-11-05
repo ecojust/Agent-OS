@@ -151,6 +151,10 @@ jobs:
           git switch -c "$branch"
           git config user.name agent
           git config user.email 30574854+ecojust@users.noreply.github.com
+          # Also support original source checkouts predating the binary attribute.
+          attributes_path="$(git rev-parse --git-path info/attributes)"
+          mkdir -p "$(dirname "$attributes_path")"
+          printf '%s\n' '/screenshots/ime-profile-probe-*/method.trace binary' >> "$attributes_path"
           git add -- "$EVIDENCE_PATH" README.md docs/progress.json docs/diagrams/development-progress.svg
           git diff --cached --check
           git commit -m "Archive IME profile capability $SOURCE_RUN_ID [skip ci]"

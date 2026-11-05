@@ -50,9 +50,9 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** IME缺PID只读诊断已完成，106项宿主测试与独立审阅通过；冻结后单次API37及整体录像待执行，首次失败和原Notes24/8保持。
+**本次更新：** 63a源码API37专项与整体录像CI通过；首次方法文件归档被Git文本空白检查拦下，补窄二进制属性后重归档同一运行，设备不重跑，实际原件待复核。
 
-**记录时间：** 2026-11-05T12:17:50Z
+**记录时间：** 2026-11-05T12:25:27Z
 
 [最近测试截图与清单](screenshots/ime-profile-probe-41641068620-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41641068620)。通过、失败及未截图原因见清单。
 
@@ -81,7 +81,7 @@
 <tr><td nowrap>绑定界面版本的坐标操作</td><td nowrap>进行中</td><td>已验证：只读坐标定位可解析绑定当前观察版本的节点候选。未完成：坐标点击/滑动仍关闭，图片到屏幕映射、捕获身份/时效及最终提交校验待完成。下一步：冻结最小手势合同，验证过期、遮挡、取消与未知结果不重试。 <a href="docs/VISUAL_PIPELINE.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
 <tr><td nowrap>普通操作连续执行与接管</td><td nowrap>进行中</td><td>048f最新整体演示13阶段/8确认通过：34.750秒、453帧，30载荷及22PNG核验，实际暂停和最终浮条移除已查看。仅Fixture/本地模型；旧aee08/cdea就绪失败原因、连续写和真实模型接管仍未验收，下一步补就绪原状态诊断。 <a href="screenshots/demos/41641074840-1/manifest.json">依据</a></td><td nowrap>2026-11-03 13:15:09</td></tr>
 <tr><td nowrap>真实模型跨应用任务验收</td><td nowrap>待实现</td><td>已验证：本地合成HTTP模型到执行器的链路；现有录像未使用外部模型。未完成：真实模型自主完成受控跨应用目标尚无验收证据。下一步：冻结实际模型服务、版本、授权应用和可独立核对结果的任务，在模拟器实跑并保留失败。 <a href="docs/PRODUCT_PLAN.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
-<tr><td nowrap>冻结常用应用样本与日常使用验收</td><td nowrap>进行中</td><td>缺PID时追加进程表/input_method/第二次PID的诊断已实现，106项测试及独立审阅通过，晚到PID不会启动追踪，中断原件可保留。下一步冻结来源单次API37实测；原048f失败、Notes24/8、A/B和5秒预算保持。 <a href="docs/validation/ime-profile-capability.md">依据</a></td><td nowrap>2026-11-05 12:17:50</td></tr>
+<tr><td nowrap>冻结常用应用样本与日常使用验收</td><td nowrap>进行中</td><td>63a/API37专项CI通过，首次归档因method.trace被当文本检查而停止；已补二进制属性，下一步归档同一原运行并独立核方法文件、停止与清理。缺PID诊断106项宿主测试通过；原048f失败与Notes24/8不变。 <a href="docs/validation/ime-profile-capability.md">依据</a></td><td nowrap>2026-11-05 12:25:27</td></tr>
 <tr><td nowrap>跨厂商近五年真机与资源档验证</td><td nowrap>待外部条件</td><td>已完成：定义跨厂商、芯片、上市年份及资源档的选样要求。阻塞：尚无参考手机或真机测试环境，暂无机型验收。下一步：确定可用设备清单，按固定任务验证权限、后台行为与资源表现。 <a href="docs/COMPATIBILITY.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
 <tr><td nowrap>参考机 AOSP 集成与平台兼容套件</td><td nowrap>待外部条件</td><td>已完成：定义系统集成、特权桥接与兼容验证目标。阻塞：参考机、可解锁性、内核和厂商驱动未确定，尚无可刷写镜像。下一步：确定机型和可维护源码基线，再完成构建、启动及平台兼容套件验证。 <a href="docs/PRODUCT_PLAN.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>
 <tr><td nowrap>机型 OTA 与失败启动恢复</td><td nowrap>待外部条件</td><td>已完成：定义OTA、降级限制与失败启动恢复要求。阻塞：尚无参考机镜像和可验证恢复环境，未完成实际OTA/恢复。下一步：在机型确定后验证签名、升级、失败恢复及数据保留边界。 <a href="docs/DESIGN_RULES.md">依据</a></td><td nowrap>2026-10-29 14:56:24</td></tr>

@@ -5,6 +5,9 @@ gradlew text eol=lf
 *.jar binary
 *.png binary
 
+# ART method files start with a long text table followed by native binary records.
+/screenshots/ime-profile-probe-*/method.trace binary
+
 # Immutable CI excerpts retain their original bytes and trailing spaces.
 docs/validation/diagnostics/font-control-safe-area-40630197321/*.txt -text whitespace=-blank-at-eol
 docs/validation/diagnostics/visual-generation-40633417256/*.txt -text whitespace=-blank-at-eol

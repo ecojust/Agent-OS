@@ -58,4 +58,10 @@
 
 进程表和输入法服务原文分别留存，不把它们当成同一时刻的原子快照。服务dump退出0也不单独证明所有子服务输出完整、IME已绑定或键盘可见；两次空PID不证明两次查询之间一直没有进程。未知布局保持未知，实际绑定状态由本轮原件审阅后再记录。
 
-本轮不安装APK、不发出显示请求、不修改设置或权限，不执行原A/B和Notes用例。[106项宿主整合测试](diagnostics/ime-readiness-2026-11-05/host-validation.json)已通过（44采集/27归档/35格式），工作流语法检查通过；[接口审阅](diagnostics/ime-readiness-2026-11-05/interface-review.json)和[独立实现审阅](diagnostics/ime-readiness-2026-11-05/implementation-review.json)均完成。新增测试覆盖晚到PID、超时/截断、取消、准入预算、回放隔离及原PID结果写入后被中断的保存边界。接下来冻结新来源，分别执行一次API37专项和一次整体操作录像；当前仍无这次扩展的设备结果。先前048f失败与34.750秒录像保持各自来源。
+本轮不安装APK、不发出显示请求、不修改设置或权限，不执行原A/B和Notes用例。[106项宿主整合测试](diagnostics/ime-readiness-2026-11-05/host-validation.json)已通过（44采集/27归档/35格式），工作流语法检查通过；[接口审阅](diagnostics/ime-readiness-2026-11-05/interface-review.json)和[独立实现审阅](diagnostics/ime-readiness-2026-11-05/implementation-review.json)均完成。新增测试覆盖晚到PID、超时/截断、取消、准入预算、回放隔离及原PID结果写入后被中断的保存边界。上述扩展已冻结为63a307dfc，API37专项和同源整体录像各执行一次，原件审查状态见下文。先前048f失败与34.750秒录像保持各自来源。
+
+### 方法文件的 Git 二进制属性
+
+冻结来源63a307dfc的API37运行42026098407已在CI通过，但首次归档42026446120在发布前的 `git diff --cached --check` 失败：[原始错误回执](diagnostics/ime-readiness-2026-11-05/archive-publish-failure-42026446120.json)显示，Git将长文本符号表开头的混合方法文件按文本检查，将后续原生记录字节报为行尾空白。产物校验此前已通过，证据分支尚未发布；设备能力仍待原件独立核验。
+
+修正只为 `/screenshots/ime-profile-probe-*/method.trace` 声明 `binary`，同时在归档的旧源码检出中于 `git add` 前设置同一条本地 Git 属性，兼容尚无此规则的历史源码。[独立Git验证](diagnostics/ime-readiness-2026-11-05/binary-transport-audit.json)已用超过8KiB的文本头及含NUL/CRLF的原生样本验证：索引blob与重新检出逐字节相同，普通文本和其他目录仍执行空白检查。不改原文件，不清除其空白，不跳过其他文件的检查；重新归档同一次运行，设备不重跑。整体录像42026103268也已在CI通过，原件复核与README入口更新待归档后完成。

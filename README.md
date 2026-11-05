@@ -50,14 +50,14 @@
 
 进度按下列固定工程检查点计数，不代表总工作量或手机兼容率。未验收的机型、应用及刷机镜像保持未验证。
 
-**本次更新：** IME缺PID只读诊断已完成，106项宿主测试与独立审阅通过；冻结后单次API37及整体录像待执行，首次失败和原Notes24/8保持。
+**本次更新：** Archive actual API35 walkthrough evidence; local synthetic model, secure flags preserved
 
-**记录时间：** 2026-11-05T12:17:50Z
+**记录时间：** 2026-11-05T12:25:49Z
 
 [最近测试截图与清单](screenshots/ime-profile-probe-41641068620-1/) · [对应测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41641068620)。通过、失败及未截图原因见清单。
 
-**整体操作演示：** [播放视频](screenshots/demos/41641074840-1/demo.mp4) · [录制与验证清单](screenshots/demos/41641074840-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/41641074840)。
-录制版本：[`048f1501f`](https://github.com/ecojust/Agent-OS/commit/048f1501f9c7607ff711eacbef6e1d0070d011b2)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
+**整体操作演示：** [播放视频](screenshots/demos/42026103268-1/demo.mp4) · [录制与验证清单](screenshots/demos/42026103268-1/manifest.json) · [测试运行](https://github.com/ecojust/Agent-OS/actions/runs/42026103268)。
+录制版本：[`63a307dfc`](https://github.com/ecojust/Agent-OS/commit/63a307dfc05f399dea997105c59589c6d7677a6b)。视频来自专用 API 35 模拟器，模型响应由本地测试服务提供；不是实际大模型或真机兼容验收。单个视频小于 100 MB。
 
 最近更新时间记录该条状态或进度说明的修改时间，采用 UTC；测试发生时间以对应证据为准。
 

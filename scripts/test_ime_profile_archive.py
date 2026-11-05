@@ -360,5 +360,88 @@ class ProducerIntegrationTests(unittest.TestCase):
                 self.assertEqual(data, (repo / a.evidence_path(source) / name).read_bytes())
 
 
+class MissingPidIntegrationTests(unittest.TestCase):
+    """Actual producer and trusted-source archive; only ADB transport is synthetic."""
+    def setUp(self):
+        import ime_profile_probe as host
+        self.host = host
+        temporary = tempfile.TemporaryDirectory(prefix='ime-profile-missing-pid-')
+        self.addCleanup(temporary.cleanup)
+        self.repo = Path(temporary.name)
+        original = Path(__file__).resolve().parents[1]
+        for name in host.SOURCE_PATHS:
+            target = self.repo / name; target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes((original / name).read_bytes())
+        def git(*args):
+            return subprocess.check_output(['git', '-C', str(self.repo), *args], text=True)
+        git('init', '-q'); git('add', '.')
+        git('-c', 'user.name=agent', '-c', 'user.email=agent@example.invalid',
+            'commit', '-qm', 'synthetic missing-PID source snapshot')
+        commit = git('rev-parse', 'HEAD').strip()
+        self.run = run_info(); self.run.update(head_sha=commit, conclusion='failure')
+        self.jobs = jobs_info()
+        for job in self.jobs['jobs']: job['head_sha'] = commit
+        self.jobs['jobs'][0]['conclusion'] = 'failure'
+        self.item = artifact_info(); self.item['workflow_run']['head_sha'] = commit
+        self.source = a.verify_source(self.run)
+        self.incoming = self.repo / 'incoming'; self.incoming.mkdir()
+        self.directory = self.incoming / self.item['name']
+        self.output = self.repo / a.evidence_path(self.source)
+
+    def missing_pid_payload(self, late_pid=False):
+        from test_ime_profile_probe import SyntheticDevice
+        absent = (b'', {'status': 'completed', 'exitCode': 1, 'exceptionType': None})
+        device = SyntheticDevice({'ime_pid': absent, 'absence_pid_after':
+                                  b'1777\n' if late_pid else absent})
+        with patch.object(self.host, 'now', return_value='2026-11-03T10:02:00Z'):
+            self.host.prepare(self.directory, self.source)
+            passed = self.host.run_probe(SimpleNamespace(output=self.directory,
+                sdk_root=self.repo / 'sdk'), self.source, runner_factory=device.factory)
+        self.assertFalse(passed)
+        self.assertEqual(32, self.host.MAX_COMMANDS)
+        self.assertEqual(16, len(device.calls))
+        self.assertEqual(['absence_ps', 'absence_input_method', 'absence_pid_after'],
+                         device.calls[-3:])
+        self.assertNotIn('profile_start', device.calls)
+        self.assertNotIn('profile_stop', device.calls)
+        originals = {p.name: p.read_bytes() for p in self.directory.iterdir()}
+        self.assertEqual({'report.json', 'commands.json'}, set(originals))
+        return originals
+
+    def archive(self):
+        return a.archive(self.incoming, a.evidence_path(self.source), self.run, self.jobs,
+            {'artifacts': [self.item]}, self.repo, self.repo)
+
+    def check_failed_archive(self, originals):
+        result = self.archive()
+        self.assertEqual('failure', result['sourceConclusion'])
+        self.assertEqual('unverified', result['status'])
+        self.assertEqual('COMMAND_FAILED_ime_pid', result['capture']['failureReason'])
+        self.assertFalse(result['capture']['tracePresent'])
+        self.assertFalse(result['profile']['startAttempted'])
+        self.assertIsNone(result['analysis'])
+        self.assertEqual({'expectedProbes': 1, 'recordedProbes': 0,
+                          'unverifiedProbes': 1, 'apiLevel': 37}, result['summary'])
+        for name, data in originals.items():
+            self.assertEqual(data, (self.output / name).read_bytes())
+
+    def test_complete_absence_diagnostics_keep_original_bytes_and_failed_status(self):
+        self.check_failed_archive(self.missing_pid_payload())
+
+    def test_later_pid_does_not_promote_capability_or_start_a_profile(self):
+        originals = self.missing_pid_payload(late_pid=True)
+        self.assertIsNone(json.loads(originals['report.json'])['target'])
+        self.check_failed_archive(originals)
+
+    def test_forged_capability_success_is_rejected_by_fresh_source_validator(self):
+        originals = self.missing_pid_payload(late_pid=True)
+        report = json.loads(originals['report.json'])
+        report.update(status='recorded', failureReason=None)
+        (self.directory / 'report.json').write_text(json.dumps(report) + '\n')
+        with self.assertRaises(ValueError):
+            self.archive()
+        self.assertFalse(self.output.exists())
+
+
 if __name__ == '__main__':
     unittest.main()

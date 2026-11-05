@@ -84,6 +84,9 @@ class SyntheticDevice:
             'ime_uid': b'package:com.android.inputmethod.latin uid:10112\n',
             'ime_package': b'Packages:\n  Package [com.android.inputmethod.latin] (ab):\n    flags=[ SYSTEM ]\n',
             'ime_pid': b'1661\n',
+            'absence_ps': b'  UID   PID  PPID NAME ARGS\n 1000   911     1 system_server system_server\n',
+            'absence_input_method': b'Current Input Method Manager state:\n  mCurClient=null\n',
+            'absence_pid_after': (b'', {'status': 'completed', 'exitCode': 1, 'exceptionType': None}),
             'target_stat': process_stat(), 'stop_stat': process_stat(),
             'target_status': b'Name:\tinputmethod.lat\nPid:\t1661\nUid:\t10112\t10112\t10112\t10112\n',
             'target_cmdline': TARGET['package'].encode() + b'\0',
@@ -272,6 +275,161 @@ class ProbeFlowTests(unittest.TestCase):
         self.assertEqual('recorded', report['analysis']['status'])
         self.assertEqual(method_fixture(), payloads['method.trace'])
         self.assertNotIn('size_poll_2', device.calls)
+
+    def test_absent_pid_collects_only_three_context_reads_without_profile(self):
+        missing = (b'', {'status': 'completed', 'exitCode': 1, 'exceptionType': None})
+        passed, report, payloads, device, _ = self.run_device({'ime_pid': missing})
+        self.assertFalse(passed)
+        self.assertEqual('COMMAND_FAILED_ime_pid', report['failureReason'])
+        self.assertEqual(list(p.PROFILE_COMMAND_IDS[:13]) + list(p.ABSENCE_COMMAND_IDS), device.calls)
+        self.assertEqual(16, len(device.calls))
+        self.assertIsNone(report['target'])
+        self.assertEqual(p.empty_report(SOURCE, FROZEN_FILES)['profile'], report['profile'])
+        self.assertNotIn('method.trace', payloads)
+        records = json.loads(payloads['commands.json'])['commands']
+        self.assertEqual(['shell', 'ps', '-A', '-w', '-o', 'UID,PID,PPID,NAME,ARGS'], records[-3]['argv'][3:])
+        self.assertEqual(['shell', 'dumpsys', 'input_method'], records[-2]['argv'][3:])
+        self.assertEqual(['shell', 'pidof', p.PACKAGE], records[-1]['argv'][3:])
+        self.assertEqual([5, 5, 5], [c['timeoutSeconds'] for c in records[-3:]])
+        self.assertEqual([1024 * 1024, 2 * 1024 * 1024, 65536], [c['byteLimit'] for c in records[-3:]])
+
+    def test_second_pid_appearance_does_not_admit_profile_or_change_first_failure(self):
+        missing = (b'', {'status': 'completed', 'exitCode': 1, 'exceptionType': None})
+        passed, report, payloads, device, directory = self.run_device({
+            'ime_pid': missing, 'absence_pid_after': b'1777\n'})
+        self.assertFalse(passed)
+        self.assertEqual('COMMAND_FAILED_ime_pid', report['failureReason'])
+        self.assertIsNone(report['target'])
+        self.assertNotIn('target_stat', device.calls)
+        self.assertNotIn('profile_start', device.calls)
+        self.assertEqual(b'1777\n', p.command_data(json.loads(payloads['commands.json'])['commands'][-1]))
+        self.assertFalse(p.finalize(directory, SOURCE, 'success'))
+        self.assertEqual('COMMAND_FAILED_ime_pid', p.validate_evidence(p.read_payloads(directory))['failureReason'])
+
+    def test_only_exact_completed_empty_exit_one_triggers_context_reads(self):
+        cases = [
+            (b'\n', {'status': 'completed', 'exitCode': 1, 'exceptionType': None}),
+            (b'permission denied\n', {'status': 'completed', 'exitCode': 1, 'exceptionType': None}),
+            (b'', {'status': 'completed', 'exitCode': 0, 'exceptionType': None}),
+            (b'', {'status': 'timed_out', 'exitCode': 1, 'exceptionType': None}),
+            (b'', {'status': 'completed', 'exitCode': 1, 'exceptionType': 'OSError'}),
+            b'1661 1777\n',
+        ]
+        for result in cases:
+            with self.subTest(result=result):
+                passed, report, _, device, _ = self.run_device({'ime_pid': result})
+                self.assertFalse(passed)
+                self.assertFalse(set(device.calls) & set(p.ABSENCE_COMMAND_IDS))
+                self.assertFalse(report['profile']['startAttempted'])
+
+    def test_failed_context_commands_preserve_raw_bytes_and_continue_independently(self):
+        missing = (b'', {'status': 'completed', 'exitCode': 1, 'exceptionType': None})
+        for status, code, exception, raw in [
+            ('completed', 1, None, b'permission denied\n'),
+            ('timed_out', -9, None, b'partial IMMS dump\n'),
+            ('output_limit', -9, None, b'x' * (2 * 1024 * 1024)),
+            ('exception', None, 'OSError', b''),
+        ]:
+            with self.subTest(status=status):
+                passed, report, payloads, device, _ = self.run_device({
+                    'ime_pid': missing,
+                    'absence_ps': (b'partial ps\n', {'status': 'timed_out', 'exitCode': -9, 'exceptionType': None}),
+                    'absence_input_method': (raw, {'status': status, 'exitCode': code, 'exceptionType': exception})})
+                self.assertFalse(passed)
+                self.assertEqual('COMMAND_FAILED_ime_pid', report['failureReason'])
+                self.assertEqual(list(p.ABSENCE_COMMAND_IDS), device.calls[-3:])
+                entries = json.loads(payloads['commands.json'])['commands']
+                self.assertEqual(raw, p.command_data(entries[-2]))
+                self.assertEqual(status, entries[-2]['status'])
+                self.assertFalse(report['profile']['stopAttempted'])
+
+    def test_cancelled_context_read_stops_later_queries_and_keeps_primary_failure(self):
+        missing = (b'', {'status': 'completed', 'exitCode': 1, 'exceptionType': None})
+        passed, report, payloads, device, _ = self.run_device({
+            'ime_pid': missing,
+            'absence_ps': (b'partial ps\n', {'status': 'cancelled', 'exitCode': -9, 'exceptionType': None})})
+        self.assertFalse(passed)
+        self.assertEqual('absence_ps', device.calls[-1])
+        self.assertEqual('COMMAND_FAILED_ime_pid', report['failureReason'])
+        self.assertNotIn('method.trace', payloads)
+
+    def test_admission_deadline_and_cancel_flag_bound_additional_command_starts(self):
+        for ticks, cancelled, expected in [
+            ([0, 15], False, []),
+            ([0, 0, 15], False, ['absence_ps']),
+            ([0, 0, 0, 0], False, list(p.ABSENCE_COMMAND_IDS)),
+            ([0], True, []),
+        ]:
+            with self.subTest(expected=expected, cancelled=cancelled):
+                report = p.empty_report(SOURCE, FROZEN_FILES)
+                report.update(tools={'adb': '/fake/sdk/platform-tools/adb'}, device={'serial': 'emulator-5554', 'properties': {}})
+                runner = mock.Mock()
+                runner.call.return_value = (b'', {'status': 'completed'})
+                with mock.patch.object(p, 'CANCELLED', cancelled):
+                    p._observe_pid_absence(report, runner, lambda: None, monotonic=mock.Mock(side_effect=ticks))
+                self.assertEqual(expected, [c.args[0] for c in runner.call.call_args_list])
+                self.assertEqual('COMMAND_FAILED_ime_pid', report['failureReason'])
+
+    def test_absence_replay_rejects_changed_trigger_prerequisites_command_and_upgrade(self):
+        missing = (b'', {'status': 'completed', 'exitCode': 1, 'exceptionType': None})
+        _, _, originals, _, _ = self.run_device({'ime_pid': missing})
+        def change_command(name, **changes):
+            def change(value):
+                next(c for c in value['commands'] if c['id'] == name).update(changes)
+            return rewrite_json(originals, 'commands.json', change)
+        def replace_bytes(name, raw):
+            return change_command(name, **p.identity(raw), outputBase64=base64.b64encode(raw).decode())
+        cases = [change_command('ime_pid', exitCode=0),
+                 change_command('ime_pid', status='timed_out'),
+                 replace_bytes('ime_pid', b'error\n'),
+                 replace_bytes('debuggable', b'0\n'),
+                 replace_bytes('default_ime', b'other/.IME\n'),
+                 replace_bytes('shell_package', b'no permission\n'),
+                 change_command('absence_ps', argv=['/fake/sdk/platform-tools/adb', 'shell', 'am', 'startservice']),
+                 change_command('absence_ps', timeoutSeconds=6),
+                 change_command('absence_ps', status='cancelled'),
+                 rewrite_json(originals, 'report.json', lambda r: r.update(status='recorded', failureReason=None)),
+                 rewrite_json(originals, 'report.json', lambda r: r['profile'].update(startAttempted=True)),
+                 rewrite_json(originals, 'report.json', lambda r: r.update(failureReason='METHOD_TRACE_NOT_VERIFIED'))]
+        for index, altered in enumerate(cases):
+            with self.subTest(index=index), self.assertRaises(p.Rejected):
+                p.validate_evidence(altered, SOURCE)
+
+    def test_interruption_between_primary_receipt_and_reason_is_preserved_and_finalized(self):
+        missing = (b'', {'status': 'completed', 'exitCode': 1, 'exceptionType': None})
+        _, _, originals, device, directory = self.run_device({'ime_pid': missing})
+        partial = rewrite_json(originals, 'commands.json', lambda r: r.update(commands=r['commands'][:13]))
+        partial = rewrite_json(partial, 'report.json',
+                               lambda r: r.update(failureReason=None, completedAt=None, stage='preflight'))
+        self.assertEqual('unverified', p.validate_evidence(partial, SOURCE)['status'])
+        count = len(device.calls)
+        for name, raw in partial.items():
+            (directory / name).write_bytes(raw)
+        self.assertFalse(p.finalize(directory, SOURCE, 'failure'))
+        final = p.read_payloads(directory)
+        self.assertEqual(partial['commands.json'], final['commands.json'])
+        self.assertEqual('COMMAND_FAILED_ime_pid', p.validate_evidence(final, SOURCE)['failureReason'])
+        self.assertEqual(count, len(device.calls))
+        self.assertFalse(p.finalize(directory, SOURCE, 'success'))
+        for mutate in [lambda r: r.update(status='recorded'),
+                       lambda r: r.update(completedAt=p.now()),
+                       lambda r: r.update(stage='complete')]:
+            with self.assertRaises(p.Rejected):
+                p.validate_evidence(rewrite_json(partial, 'report.json', mutate), SOURCE)
+
+    def test_interrupted_absence_capture_keeps_raw_partial_without_claiming_completion(self):
+        missing = (b'', {'status': 'completed', 'exitCode': 1, 'exceptionType': None})
+        _, _, originals, _, _ = self.run_device({'ime_pid': missing})
+        def interrupted_commands(value):
+            value['commands'] = value['commands'][:14]
+            value['commands'][-1].update(endedAt=None, elapsedMillis=0, status='running', exitCode=None,
+                                         outputBase64='', **p.identity(b''))
+        altered = rewrite_json(originals, 'commands.json', interrupted_commands)
+        altered = rewrite_json(altered, 'report.json', lambda r: r.update(completedAt=None, stage='preflight'))
+        report = p.validate_evidence(altered, SOURCE)
+        self.assertEqual('unverified', report['status'])
+        self.assertEqual('COMMAND_FAILED_ime_pid', report['failureReason'])
+        self.assertFalse(report['profile']['startAttempted'])
 
     def test_non_debuggable_device_does_not_start_any_profile(self):
         passed, report, _, device, _ = self.run_device({'debuggable': b'0\n'})

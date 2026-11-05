@@ -36,18 +36,26 @@ MAX_COMMAND_OUTPUT = 2 * 1024 * 1024
 MAX_TOTAL_OUTPUT = 8 * 1024 * 1024
 MAX_COMMANDS = 32
 HOLD_SECONDS = 1
+ABSENCE_ADMISSION_SECONDS = 20
+ABSENCE_COMMAND_SECONDS = 5
+ABSENCE_CLEANUP_RESERVE_SECONDS = 1
+ABSENCE_COMMAND_IDS = ('absence_ps', 'absence_input_method', 'absence_pid_after')
 CANCELLED = False
 FILES = {'report.json', 'commands.json', 'method.trace'}
 SOURCE_PATHS = ('scripts/ime_profile_probe.py', 'scripts/ime_method_trace.py',
                 'scripts/ime_profile_archive.py', 'scripts/configure_emulator_phone.py',
                 '.github/workflows/ime-profile-probe.yml')
-COMMAND_IDS = ('devices', 'api', 'qemu', 'shell_uid', 'current_user', 'debuggable',
+PROFILE_COMMAND_IDS = ('devices', 'api', 'qemu', 'shell_uid', 'current_user', 'debuggable',
                'fingerprint', 'buffer_property', 'shell_package', 'default_ime',
                'ime_uid', 'ime_package', 'ime_pid', 'target_stat', 'target_status', 'target_cmdline',
                'slot_before', 'path_absent', 'profile_start', 'slot_started',
                'stop_stat', 'stop_cmdline', 'slot_before_stop', 'profile_stop',
                'slot_after_stop', 'size_poll_0', 'size_poll_1', 'size_poll_2',
                'trace_pull', 'trace_digest', 'cleanup_trace', 'cleanup_absent')
+_PID_POSITION = PROFILE_COMMAND_IDS.index('ime_pid')
+COMMAND_IDS = (PROFILE_COMMAND_IDS[:_PID_POSITION + 1] + ABSENCE_COMMAND_IDS
+               + PROFILE_COMMAND_IDS[_PID_POSITION + 1:])
+START_PREFLIGHT_IDS = PROFILE_COMMAND_IDS[:PROFILE_COMMAND_IDS.index('profile_start')]
 SCOPE = {'diagnosticOnly': True, 'nonvisual': True, 'originalNotesCasesRerun': 0,
          'comparisonArmsRun': 0, 'showRequests': 0, 'apkInstalledOrModified': False,
          'rootRequested': False, 'settingsWritten': False, 'propertiesWritten': False,
@@ -62,7 +70,17 @@ SCOPE = {'diagnosticOnly': True, 'nonvisual': True, 'originalNotesCasesRerun': 0
          'callerIdentityEstablished': False, 'longWindowCapacityEstablished': False,
          'exclusiveSyntheticAvdRequired': True, 'profileOwnershipChecksAtomic': False,
          'stopTargetRecheckedInRemoteShell': True,
-         'applicationCompatibilityAcceptance': False}
+         'applicationCompatibilityAcceptance': False,
+         'pidAbsenceDiagnostics': {
+             'trigger': 'completed_exit_1_empty_output', 'maxAdditionalCommands': 3,
+             'commandTimeoutSeconds': ABSENCE_COMMAND_SECONDS,
+             'admissionBudgetSeconds': ABSENCE_ADMISSION_SECONDS,
+             'cleanupReservePerCommandSeconds': ABSENCE_CLEANUP_RESERVE_SECONDS,
+             'hardWallClockDeadlineClaimed': False, 'bindingSemanticsInferred': False,
+             'latePidAllowsProfiling': False,
+             'outputByteLimits': {'absence_ps': 1024 * 1024,
+                                  'absence_input_method': MAX_COMMAND_OUTPUT,
+                                  'absence_pid_after': 65536}}}
 
 
 class Rejected(ValueError):
@@ -303,6 +321,8 @@ def parse_process_uid(data, pid):
 
 
 def command_limits(name):
+    if name in ABSENCE_COMMAND_IDS:
+        return ABSENCE_COMMAND_SECONDS, SCOPE['pidAbsenceDiagnostics']['outputByteLimits'][name]
     if name.startswith('slot_') or name in ('shell_package', 'ime_package'): return 10, MAX_COMMAND_OUTPUT
     if name == 'trace_pull': return 15, 65536
     return 10, 65536
@@ -322,6 +342,9 @@ def command_argv(name, report):
               'ime_uid': ['shell', 'cmd', 'package', 'list', 'packages', '-U', '--user', '0', PACKAGE],
               'ime_package': ['shell', 'dumpsys', 'package', PACKAGE],
               'ime_pid': ['shell', 'pidof', PACKAGE],
+              'absence_ps': ['shell', 'ps', '-A', '-w', '-o', 'UID,PID,PPID,NAME,ARGS'],
+              'absence_input_method': ['shell', 'dumpsys', 'input_method'],
+              'absence_pid_after': ['shell', 'pidof', PACKAGE],
               'path_absent': ['shell', 'sh', '-c', shlex.quote('test ! -e ' + path + ' && test ! -L ' + path)],
               'trace_pull': ['exec-out', 'cat', path], 'trace_digest': ['shell', 'sha256sum', path],
               'cleanup_trace': ['shell', 'rm', '-f', path],
@@ -520,6 +543,50 @@ def _stop_collect(directory, report, runner, save, sleep):
         checked('cleanup_trace'); checked('cleanup_absent'); profile['cleanupConfirmed'] = True; save()
 
 
+def pid_absent(command):
+    """Only the exact observed pidof absence result authorizes extra reads."""
+    return (command['status'] == 'completed' and type(command['exitCode']) is int
+            and command['exitCode'] == 1 and command['exceptionType'] is None
+            and command_data(command) == b'')
+
+
+def _observe_pid_absence(report, runner, save, monotonic=time.monotonic):
+    """Read context once, without retrying profile admission or inferring binding.
+
+    Twenty seconds bounds command admission using a monotonic clock. Each call
+    reserves its five-second execution budget plus one second of child cleanup.
+    Host scheduling and JSON persistence are not a hard wall-clock guarantee.
+    Only transport outcomes are recorded; even exit zero is not a claim that an
+    IMMS client/service dump was semantically complete or that an IME is bound.
+    """
+    report['failureReason'] = 'COMMAND_FAILED_ime_pid'; save()
+    deadline = monotonic() + ABSENCE_ADMISSION_SECONDS
+    for name in ABSENCE_COMMAND_IDS:
+        if CANCELLED or deadline - monotonic() < ABSENCE_COMMAND_SECONDS + ABSENCE_CLEANUP_RESERVE_SECONDS:
+            break
+        try:
+            _, entry = runner.call(name, command_argv(name, report))
+        except Exception:
+            # A host/persistence failure cannot replace the primary absence or
+            # authorize more calls without a reliable original command receipt.
+            break
+        if entry['status'] == 'cancelled': break
+
+
+def _validate_preflight_outputs(data):
+    """Replay prerequisites shared by profile admission and absence-only reads."""
+    for name, expected in [('api', '37'), ('qemu', '1'), ('shell_uid', '2000'), ('current_user', '0'), ('debuggable', '1')]:
+        require(clean_text(data(name)).strip() == expected, 'START_PREFLIGHT')
+    require(clean_text(data('buffer_property')).strip() in ('', '8'), 'START_BUFFER_PROPERTY')
+    shell_permission(data('shell_package'))
+    require(0 < len(clean_text(data('fingerprint')).strip()) <= 512, 'START_FINGERPRINT')
+    component = clean_text(data('default_ime')).strip()
+    require(re.fullmatch(re.escape(PACKAGE) + r'/(?:\.LatinIME|' + re.escape(PACKAGE) + r'\.LatinIME)', component), 'DEFAULT_IME_UNEXPECTED')
+    parse_uid(data('ime_uid'))
+    package_dump = clean_text(data('ime_package'))
+    require(package_dump.endswith('\n') and len(re.findall(r'^\s*Package \[' + re.escape(PACKAGE) + r'\] \(', package_dump, re.M)) == 1, 'START_PACKAGE_DUMP')
+
+
 def run_probe(args, source, runner_factory=CommandRunner, sleep=time.sleep):
     global CANCELLED
     directory = Path(args.output); report = validate_evidence(read_payloads(directory), source)
@@ -546,7 +613,11 @@ def run_probe(args, source, runner_factory=CommandRunner, sleep=time.sleep):
         require(re.fullmatch(re.escape(PACKAGE) + r'/(?:\.LatinIME|' + re.escape(PACKAGE) + r'\.LatinIME)', component), 'DEFAULT_IME_UNEXPECTED')
         uid = parse_uid(checked('ime_uid')); package_dump = clean_text(checked('ime_package'))
         require(package_dump.endswith('\n') and len(re.findall(r'^\s*Package \[' + re.escape(PACKAGE) + r'\] \(', package_dump, re.M)) == 1, 'IME_PACKAGE_DUMP_IDENTITY')
-        pid_text = clean_text(checked('ime_pid')).strip()
+        pid_output, pid_command = runner.call('ime_pid', command_argv('ime_pid', report))
+        if pid_absent(pid_command):
+            _observe_pid_absence(report, runner, save)
+        require(command_ok(pid_command), 'COMMAND_FAILED_ime_pid')
+        pid_text = clean_text(pid_output).strip()
         require(re.fullmatch(r'[1-9][0-9]{0,8}', pid_text) and int(pid_text) > 1, 'IME_PID_NOT_UNIQUE')
         report['target'] = {'component': component, 'package': PACKAGE, 'uid': uid, 'pid': int(pid_text), 'process': None, 'processUid': None, 'cmdlineSha256': None}; save()
         before = checked('target_stat')
@@ -562,7 +633,9 @@ def run_probe(args, source, runner_factory=CommandRunner, sleep=time.sleep):
         require(parse_profile_slot(checked('slot_started'), report['target'], report['profile']['path'])['state'] == 'owned', 'PROFILE_START_SLOT_NOT_OWNED')
         report['profile']['slotObservedOwned'] = True; report['stage'] = 'observing'; save(); sleep(HOLD_SECONDS)
         require(not CANCELLED, 'CANCELLED')
-    except Exception as error: report['failureReason'] = str(error) if isinstance(error, Rejected) else 'HOST_' + type(error).__name__
+    except Exception as error:
+        if report['failureReason'] is None:
+            report['failureReason'] = str(error) if isinstance(error, Rejected) else 'HOST_' + type(error).__name__
     finally:
         cancelled = CANCELLED; CANCELLED = False
         if cancelled and report['failureReason'] is None: report['failureReason'] = 'CANCELLED'
@@ -651,14 +724,27 @@ def validate_evidence(payloads, source=None):
     for key in ('startAttempted','startAccepted','slotObservedOwned','stopAttempted','stopAccepted','globalSlotClear','fileStable','fileLimited','cleanupConfirmed'): require(type(profile[key]) is bool,'PROFILE_BOOLEAN')
     for name, flag in [('profile_start','startAttempted'),('profile_stop','stopAttempted')]:
         if name in entries: require(profile[flag] and timestamp(profile['startRequestedAt' if name=='profile_start' else 'stopRequestedAt'])<=timestamp(entries[name]['startedAt']),'COMMAND_WITHOUT_INTENT')
+    absence_names = [name for name in entries if name in ABSENCE_COMMAND_IDS]
+    first_pid_absent = 'ime_pid' in entries and pid_absent(entries['ime_pid'])
+    if first_pid_absent or absence_names:
+        # The primary command is durably written just before the failure reason.
+        # Preserve that interruption window, but never allow added reads there.
+        interrupted_before_reason = (not absence_names and report['failureReason'] is None
+                                     and report['completedAt'] is None and report['stage'] == 'preflight')
+        require(first_pid_absent and report['status'] == 'unverified'
+                and (report['failureReason'] == 'COMMAND_FAILED_ime_pid' or interrupted_before_reason),
+                'ABSENCE_TRIGGER_OR_RESULT')
+        require(all(ok(name) for name in PROFILE_COMMAND_IDS[:_PID_POSITION]), 'ABSENCE_PREFLIGHT_INCOMPLETE')
+        _validate_preflight_outputs(data)
+        require(target is None and report['analysis'] is None and 'method.trace' not in payloads
+                and equal(profile, empty_report(source, report['sourceFiles'])['profile']), 'ABSENCE_PROFILE_FORBIDDEN')
+        require(set(entries) <= set(PROFILE_COMMAND_IDS[:_PID_POSITION + 1]) | set(ABSENCE_COMMAND_IDS)
+                and absence_names == list(ABSENCE_COMMAND_IDS[:len(absence_names)]), 'ABSENCE_COMMAND_SEQUENCE')
+        require(not any(entries[name]['status'] in ('cancelled', 'running') for name in absence_names[:-1]), 'ABSENCE_AFTER_INTERRUPTION')
     if profile['startAttempted']:
-        require(all(ok(name) for name in COMMAND_IDS[:COMMAND_IDS.index('profile_start')]), 'START_PREFLIGHT_COMMANDS_INCOMPLETE')
+        require(all(ok(name) for name in START_PREFLIGHT_IDS), 'START_PREFLIGHT_COMMANDS_INCOMPLETE')
         require(target is not None and target['process'] is not None and target['cmdlineSha256'] is not None and target['processUid']==target['uid'],'START_WITHOUT_TARGET')
-        for name,expected in [('api','37'),('qemu','1'),('shell_uid','2000'),('current_user','0'),('debuggable','1')]:require(clean_text(data(name)).strip()==expected,'START_PREFLIGHT')
-        require(clean_text(data('buffer_property')).strip() in ('','8'),'START_BUFFER_PROPERTY');shell_permission(data('shell_package'))
-        require(0 < len(clean_text(data('fingerprint')).strip()) <= 512, 'START_FINGERPRINT')
-        package_dump = clean_text(data('ime_package'))
-        require(package_dump.endswith('\n') and len(re.findall(r'^\s*Package \[' + re.escape(PACKAGE) + r'\] \(', package_dump, re.M)) == 1, 'START_PACKAGE_DUMP')
+        _validate_preflight_outputs(data)
         require(parse_profile_slot(data('slot_before'))['state']=='empty' and ok('path_absent'),'START_SLOT_OR_PATH')
     require(not profile['startAccepted'] or ok('profile_start'),'START_ACCEPTED_SOURCE')
     if profile['slotObservedOwned']:require(parse_profile_slot(data('slot_started'),target,profile['path'])['state']=='owned','START_SLOT_SOURCE')
@@ -696,7 +782,13 @@ def validate_evidence(payloads, source=None):
 
 def finalize(directory, source, outcome):
     require(outcome in ('success','failure','cancelled','skipped','unknown'),'EMULATOR_OUTCOME')
-    directory=Path(directory);report=validate_evidence(read_payloads(directory),source)
+    directory=Path(directory);payloads=read_payloads(directory);report=validate_evidence(payloads,source)
+    if report['failureReason'] is None:
+        entries = decode_json(payloads['commands.json'])['commands']
+        if any(entry['id'] == 'ime_pid' and pid_absent(entry) for entry in entries):
+            # Recover only the already persisted primary absence after an
+            # interruption; finalization does not retry any device operation.
+            report['failureReason'] = 'COMMAND_FAILED_ime_pid'
     report['emulatorStepOutcome']=outcome
     if outcome!='success' or report['status']!='recorded':
         report['status']='unverified'

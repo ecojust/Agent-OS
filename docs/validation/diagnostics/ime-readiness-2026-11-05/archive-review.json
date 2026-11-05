@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "kind": "ime-readiness-archive-integration-review",
+  "reviewedAt": "2026-11-05T12:17:59.560598+00:00",
+  "reviewerTask": "/root/ime_readiness_archive",
+  "scope": "Host-only source-loading and archive integration tests. Transport responses and run metadata are synthetic; no device, UI, CI dispatch, method profiling or application acceptance.",
+  "productionArchiveChanged": false,
+  "productionArchiveMatchesParentGit": {
+    "bytes": 21916,
+    "sha256": "49160537c4f205ac718d255832ae50c0b2be56ad9cce79e19943b299832cff05"
+  },
+  "sourceAndTestFiles": {
+    "scripts/ime_profile_probe.py": {
+      "bytes": 54021,
+      "sha256": "35b05b6406c6857bde1d76dcd1e5329c6d44c6d7373e452d81e9d1b444138832"
+    },
+    "scripts/ime_method_trace.py": {
+      "bytes": 11949,
+      "sha256": "1bfe251dc41ef43b960cb3de0ee6fbb87fb277ed0cdddba130c36d90f48a62d8"
+    },
+    "scripts/ime_profile_archive.py": {
+      "bytes": 21916,
+      "sha256": "49160537c4f205ac718d255832ae50c0b2be56ad9cce79e19943b299832cff05"
+    },
+    "scripts/configure_emulator_phone.py": {
+      "bytes": 2136,
+      "sha256": "6e47a74d6b62fe8c1d8e459e51748ca9ccac1f32f2c09a972215a1e634821eed"
+    },
+    ".github/workflows/ime-profile-probe.yml": {
+      "bytes": 7774,
+      "sha256": "3269cee435153b3bab2869d0c3a246e1637e20660fcf144a83729598e69d973a"
+    },
+    "scripts/test_ime_profile_archive.py": {
+      "bytes": 25782,
+      "sha256": "958133bb867376530116ca993b4c52465a7e0582b8ab86f4e2b13a300ab6d8d9"
+    },
+    "scripts/test_ime_profile_probe.py": {
+      "bytes": 39751,
+      "sha256": "a5ec37ee6d3076bd9c4ea51e55910968e92c2a4b4e52f05edbf3bb2bf3df59eb"
+    }
+  },
+  "tests": {
+    "command": "python3 -m unittest discover -s scripts -p test_ime_profile_archive.py",
+    "passed": 27,
+    "previousTests": 24,
+    "newTests": 3,
+    "seconds": 0.486,
+    "log": {
+      "path": "/workspace/scratch/ime-readiness-archive-2026-11-05/archive-tests.txt",
+      "bytes": 126,
+      "sha256": "543f1d5e1aebc7c8cd2a45778718e3f0b5a4bae8a55bfaa58772465b0243ee86"
+    }
+  },
+  "newIntegrationCoverage": [
+    "Real prepare and run_probe with only the ADB transport replaced by finite synthetic responses, then real archive loading the complete catalog from a temporary Git snapshot.",
+    "13 original preflight commands plus absence_ps, absence_input_method and absence_pid_after produce 16 commands with no profile_start/profile_stop and no native trace.",
+    "Empty primary PID remains COMMAND_FAILED_ime_pid / unverified after archive; all report and command bytes are copied unchanged; source job remains failure, recordedProbes stays zero.",
+    "A PID appearing in the final lookup leaves target null and profile unattempted; its output is preserved without promotion.",
+    "Forging report.status=recorded and clearing the primary reason is rejected by the fresh source validator before an archive directory is published."
+  ],
+  "compatibility": {
+    "sourceCatalogUnchanged": true,
+    "payloadSetUnchanged": true,
+    "reportFieldsUnchanged": true,
+    "normalProfileCommandTupleEqualsParent": true,
+    "normalMaxCommands": 32,
+    "absencePathCommands": 16,
+    "reportSourceScope": "The new diagnostic scope is checked by the source-bound producer; archive does not replace or reinterpret original report fields.",
+    "newManifestFieldRequired": false
+  },
+  "reviewFindingResolved": {
+    "issue": "A process interruption after the primary PID result was saved but before the primary failure reason was saved would have made a valid unfinished receipt fail finalization.",
+    "resolution": "Capture owner now admits only the no-diagnostic, unfinished preflight interval with no target or profiling state, and finalization fills the reason solely from the persisted exact primary empty/exit1 result. Commands are not retried or repaired.",
+    "coverage": "Capture test test_interruption_between_primary_receipt_and_reason_is_preserved_and_finalized; archive suite rerun after this producer change. No additional mirrored archive test was needed."
+  },
+  "limits": [
+    "This validates source identity, receipt preservation and nonpromotion, not real API37 command output, IMMS binding or profiling support.",
+    "A transport exit-zero diagnostic result is not interpreted by the archive as a complete or semantically recognized process or input_method snapshot.",
+    "Synthetic fixture times remain the existing 2026-11-03 metadata interval; they are not represented as actual device execution dates."
+  ]
+}

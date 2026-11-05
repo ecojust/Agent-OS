@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: Run one short nonvisual capability probe or archive its originals
+        description: Run a bounded capability probe with missing-PID diagnostics or archive originals
         required: true
         default: test
         type: choice
@@ -58,7 +58,7 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Inspect and briefly profile only the existing IME process
+      - name: Inspect the existing IME or preserve bounded missing-PID state
         id: diagnostic
         uses: reactivecircus/android-emulator-runner@v2
         with:

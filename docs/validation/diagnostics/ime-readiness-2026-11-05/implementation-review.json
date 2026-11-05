@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "kind": "ime-readiness-implementation-review",
+  "reviewedAt": "2026-11-05T12:17:33.152398+00:00",
+  "reviewer": "/root/ime_readiness_review",
+  "reviewMethod": "Manual diff/control-flow/replay/CLI review plus existing synthetic and subprocess unit tests; reviewer did not edit producer or tests. This is not device evidence.",
+  "files": [
+    {
+      "path": "scripts/ime_profile_probe.py",
+      "bytes": 54022,
+      "sha256": "e630d5eee5551e2b106d12bc2dc0da5ed407cb1be210a61aacf245f56af7a0cf"
+    },
+    {
+      "path": "scripts/test_ime_profile_probe.py",
+      "bytes": 39751,
+      "sha256": "a5ec37ee6d3076bd9c4ea51e55910968e92c2a4b4e52f05edbf3bb2bf3df59eb"
+    }
+  ],
+  "status": "passed",
+  "reviewedContracts": {
+    "trigger": "Only completed primary ime_pid exit1, no exception, exactly empty bytes after original twelve prerequisite commands",
+    "profileIsolation": "Original32 PROFILE_COMMAND_IDS preserved; START_PREFLIGHT_IDS excludes diagnostic IDs. Missing-PID branch total16max, targetnull, analysisnull, entire empty profile object, no native trace; late PID never used for admission.",
+    "commands": [
+      "ps -A -w -o UID,PID,PPID,NAME,ARGS",
+      "dumpsys input_method",
+      "pidof com.android.inputmethod.latin"
+    ],
+    "bounds": "At most3 fixed append calls, each5s, output1MiB/2MiB/65536B; original32 count,8MiB output,16MiB trace,32MiB artifact caps unchanged.20s monotonic admission budget reserves6s per start; host JSON persistence and scheduling are explicitly not a hard elapsed guarantee.",
+    "failures": "Nonzero/timeout/output_limit/exception command receipts remain and independent next command may run; cancellation or unreliable host/persistence exception prevents more dispatch. Original missing-PID failure persisted first and retained.",
+    "replay": "Exact argv/count/order/source/output hashes; initial trigger and original prerequisite semantics; diagnostic fixed prefix only; no continuation after cancelled or running; rejects forged complete/profile/native evidence",
+    "interruptionFix": "Found independent boundary after primary durable command before failure reason save. Narrow incomplete preflight with no diagnostic calls may retain None reason; finalizer only derives COMMAND_FAILED_ime_pid from persisted primary bytes, changes no commands and executes none. Completed/recorded report still rejected.",
+    "semantics": "No parser infers IMMS binding from arbitrary dump text, exit0 or second PID; raw snapshots remain non-atomic."
+  },
+  "tests": {
+    "command": "python3 -m unittest discover -s scripts -p test_ime_profile*.py",
+    "result": "passed; see parent/root aggregate log for final combined counts",
+    "fixtureLimit": "Device branches use synthetic command outputs; existing bounded subprocess tests test transport mechanics, not API37 behavior."
+  },
+  "remaining": "Actual fixed-source single API37 execution and original-byte/archive audit pending; current review does not establish binding cause, ART support, reset caller, Notes repair or phone compatibility."
+}

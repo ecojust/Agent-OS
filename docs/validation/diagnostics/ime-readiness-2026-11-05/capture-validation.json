@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "kind": "ime-readiness-capture-validation",
+  "validatedAt": "2026-11-05T12:17:41.291551+00:00",
+  "files": {
+    "scripts/ime_profile_probe.py": {
+      "bytes": 54021,
+      "sha256": "35b05b6406c6857bde1d76dcd1e5329c6d44c6d7373e452d81e9d1b444138832"
+    },
+    "scripts/test_ime_profile_probe.py": {
+      "bytes": 39751,
+      "sha256": "a5ec37ee6d3076bd9c4ea51e55910968e92c2a4b4e52f05edbf3bb2bf3df59eb"
+    }
+  },
+  "tests": {
+    "command": "python3 -m unittest discover -s scripts -p test_ime_profile_probe.py",
+    "count": 44,
+    "elapsedSeconds": 2.809,
+    "result": "passed",
+    "scope": "host tests and synthetic finite transport; no device execution"
+  },
+  "contract": {
+    "trigger": "exact first pidof completed exit1, no exception, strictly zero output bytes",
+    "extraCommands": [
+      "ps -A -w -o UID,PID,PPID,NAME,ARGS",
+      "dumpsys input_method",
+      "pidof com.android.inputmethod.latin"
+    ],
+    "commandTimeoutSeconds": 5,
+    "outputLimitsBytes": [
+      1048576,
+      2097152,
+      65536
+    ],
+    "admissionBudgetSeconds": 20,
+    "perCommandCleanupReserveSeconds": 1,
+    "hardWallClockGuarantee": false,
+    "maxPathCommands": 32,
+    "missingPidPathCommands": 16,
+    "totalOutputByteLimit": 8388608,
+    "latePidAllowsProfiling": false,
+    "reportFieldsAdded": false
+  },
+  "coveredBoundaries": [
+    "exact absent PID only",
+    "late PID does not retry admission",
+    "diagnostic nonzero, timeout, output limit, exception preserve raw bytes and continue",
+    "cancelled command stops subsequent diagnostics",
+    "monotonic phase admission and global cancellation",
+    "replay rejects forged prerequisites, trigger, argv, resource limits, cancelled-prefix continuation and success promotion",
+    "interrupted diagnostic original retained",
+    "primary-command/reason-persistence interruption accepted only without added diagnostics and before completion; finalize preserves commands and derives original failure"
+  ],
+  "unchanged": [
+    "native trace parser",
+    "native profiling requests and 1 second hold",
+    "original ownership/UID/PID/cmdline/slot/file checks",
+    "original A/B and Notes paths",
+    "source catalog remains 5 files/4 Python"
+  ],
+  "limits": [
+    "No binding state parser or inference from exit-zero dump",
+    "No synthetic host test presented as actual API37 evidence",
+    "Reference ps command source not proven byte-equivalent to emulator image",
+    "No UI/APK/show/settings/properties/permission/root operation"
+  ]
+}

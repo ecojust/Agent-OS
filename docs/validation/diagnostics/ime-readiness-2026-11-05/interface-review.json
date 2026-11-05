@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "kind": "ime-readiness-interface-review",
+  "createdAt": "2026-11-05T12:14:17.313490+00:00",
+  "reviewer": "/root/ime_readiness_review",
+  "scope": "Read-only fixed native CLI and framework dump review; not actual image or device-capability acceptance",
+  "sourceFiles": [
+    {
+      "path": "/workspace/scratch/ime-readiness-review-2026-11-05/toybox-ps.c",
+      "bytes": 67569,
+      "sha256": "d3894748a2f2779c500c2a8836eb832d3d2f00e3449c15423d0f7d8b5909325c"
+    },
+    {
+      "path": "/workspace/scratch/raw-design-2026-11-01/InputMethodManagerService.java",
+      "bytes": 338892,
+      "sha256": "84333a7af594118a473b697a84c70cce29173adea904b69b5dd8b36a3b9191f4"
+    },
+    {
+      "path": "/workspace/scratch/raw-design-2026-11-01/ime-dump-review/InputMethodBindingController.java",
+      "bytes": 52620,
+      "sha256": "08eb9186542044ffc4613cdf18fa7962519a183fbb2391eb850e036c9fba49fd"
+    }
+  ],
+  "toyboxCommit": "59a869a838cfadbf6bc41cb400471ca9d2cae9b5",
+  "frameworkBaseCommit": "94b4c163b7dfe5ce3607f7bb8456f9573f7de57d",
+  "recommendedProcessCommand": [
+    "shell",
+    "ps",
+    "-A",
+    "-w",
+    "-o",
+    "UID,PID,PPID,NAME,ARGS"
+  ],
+  "processCommandReview": {
+    "selection": "-A includes all discoverable process entries; no grep or package filter",
+    "width": "-w suppresses individual field width truncation, but fixed source still has a 99999 character display row width; argv acquisition itself is bounded by applet implementation",
+    "identity": "UID numeric, PID, PPID; NAME derives PID argv[0], while CMD is task stat comm and could truncate the long package name; ARGS is CMDLINE minus initial path",
+    "lineReferences": [
+      "ps.c:48",
+      "ps.c:61-85",
+      "ps.c:352-360",
+      "ps.c:650-689",
+      "ps.c:1341-1344"
+    ],
+    "limits": "ps snapshot is not atomic, can miss exited/hidden/unreadable entries; outputs are not proof of continuous process absence or binding state"
+  },
+  "inputMethodCommand": [
+    "shell",
+    "dumpsys",
+    "input_method"
+  ],
+  "inputMethodReview": {
+    "lineReferences": [
+      "InputMethodManagerService.java:6486-6530",
+      "InputMethodManagerService.java:6540-6578",
+      "InputMethodManagerService.java:6580-6618"
+    ],
+    "stateFields": [
+      "mSystemReady",
+      "mInteractive",
+      "mPreventImeStartupUnlessTextEditor",
+      "mCurrentImeUserId",
+      "UserId",
+      "mSelectedImeId",
+      "mCurImeId",
+      "mMainConnection",
+      "mCurIme",
+      "mCurClient",
+      "mBoundToMethod",
+      "mEnabledSession",
+      "mVisibilityStateComputer"
+    ],
+    "limits": [
+      "Default selected component alone does not establish a running or bound InputMethodService.",
+      "The full dump can query other client/service processes using TransferPipe and report local IPC failures; exit0 is not itself a complete semantic snapshot.",
+      "Concurrent state can change across different sections and across PID/ps/dump/PID reads.",
+      "Reference-source field names may differ on actual image; preserve original bytes and treat unknown fields/partial dumps conservatively."
+    ]
+  },
+  "previousRun": {
+    "source": "048f1501f9c7607ff711eacbef6e1d0070d011b2",
+    "runId": 41641068620,
+    "commands": 13,
+    "lastCommand": "ime_pid",
+    "status": "completed",
+    "exitCode": 1,
+    "outputBytes": 0,
+    "startAttempted": false,
+    "inference": "Only no exact-name PID result at that query; no specific cold-start/binding cause or ART capability tested."
+  },
+  "reviewRequirements": [
+    "Append only after primary completed/exit1/zero output, after original device/default/package gates.",
+    "Persist original failure before append and never allow context or second PID to promote profile admission.",
+    "Retain fixed original32 profile path and command/output/trace limits; failed branch at most16 commands.",
+    "Append at most ps, unfiltered input_method, exact-name pidof once each in fixed order; no UI/show/APK/settings/root/property/permission changes.",
+    "Preserve per-command timeout/nonzero/limited output and partial receipts; cancellation prevents later dispatch.",
+    "Replay binds initial trigger and exclusive failed branch, prevents forged diagnostics mixed with native profile path."
+  ],
+  "implementationReview": "pending capture agent changes",
+  "actualRunReview": "pending frozen-source single execution; no device/CI by reviewer"
+}
